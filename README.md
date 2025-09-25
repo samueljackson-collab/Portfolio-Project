@@ -1,4 +1,4 @@
-# Hi, I'm Samuel Jackson!
+# Hi, I'm Sam Jackson!
 **[System Development Engineer](https://github.com/sams-jackson)** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **[Homelab Builder](https://www.youtube.com/@yourchannel)**
 
 ***Building reliable systems, documenting clearly, and sharing what I learn. I turn ambiguous requirements into runbooks, dashboards, and repeatable processes.***
