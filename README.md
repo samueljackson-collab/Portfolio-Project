@@ -77,4 +77,4 @@ System-minded engineer specializing in building, securing, and operating infrast
 
 ---
 ## 🤳 Connect
-[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) · [YouTube](https://www.youtube.com/@yourchannel)
+[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
