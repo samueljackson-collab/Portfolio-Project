@@ -73,7 +73,6 @@ System-minded engineer specializing in building, securing, and operating infrast
 ---
 ## 🎓 Education & Certifications
 **B.S., Information Systems** — Colorado State University (2016–2024)  
-**CompTIA A+**
 
 ---
 ## 🤳 Connect
