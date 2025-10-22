@@ -4,31 +4,45 @@
 ***Building reliable systems, documenting clearly, and sharing what I learn. I turn ambiguous requirements into runbooks, dashboards, and repeatable processes.***
 
 ## 📘 Featured Project: Reportify Pro – Enterprise Report Toolkit
-`Reportify Pro` bundles a production-grade Python document generator with an interactive cybersecurity reporting UI so I can author polished deliverables quickly and consistently.
+`Reportify Pro` combines a Python-powered Word generator with an analyst-friendly cybersecurity UI so I can assemble executive-ready documentation with consistent structure and branding.
 
 ### Why I built it
-- Provide a reusable framework for executive-ready portfolios, incident retrospectives, and compliance packages.
-- Combine strict data validation (Pydantic) with modular renderers so sections can be mixed-and-matched per engagement.
-- Offer a no-install HTML workspace for analysts who prefer guided forms, live tips, and JSON save/load workflows.
+- Ship polished assessment reports (security, DevOps, cloud, compliance, analytics) without rebuilding formatting every engagement.
+- Keep a reusable catalog of 21 opinionated templates that highlight the sections clients expect for each discipline.
+- Give analysts a lightweight UI that captures findings, tags, and guidance before handing content off for final document production.
 
 ### What’s inside
-- **Command-line engine** (`reportify_pro.py`): Validates JSON inputs, assembles DOCX reports with cover pages, timelines, risk tables, and appendices, and exposes CLI commands for templating, listing, and generation.
-- **Template catalog**: 25+ IT-focused templates across security, DevOps, cloud, networking, and compliance roles with smart-variable defaults and standards references.
-- **Cybersecurity Report Arsenal UI** (`cybersecurity_report_arsenal.html`): Tailwind-based SPA for selecting role-specific templates, capturing findings with modals, managing tags, and exporting/importing project JSON.
+- **Python generator** (`reportify_pro.py`): Provides a `DocumentGenerator` helper plus a rich template database spanning eight IT domains. It handles cover pages, headings, KPI tables, lists, and appendices with a consistent visual style.
+- **Template catalog**: 21 pre-defined report shells covering vulnerability assessments, incident response, project proposals, operational reports, and more. Each includes icons, recommended sections, and optional defaults.
+- **Cybersecurity Report Arsenal UI** (`cybersecurity_report_arsenal.html`): Tailwind-powered single page app for role-based template selection, findings capture, tag management, and JSON save/load workflows.
 
 ### Quick start
 ```bash
-# Install dependencies
-pip install python-docx pydantic pillow
-
-# Generate a report from validated data
-python reportify_pro.py generate -i sample_project.json -o reports/output.docx
-
-# Explore available templates
-python reportify_pro.py list-templates
+# Install dependency for DOCX creation
+pip install python-docx
 ```
 
-Open `cybersecurity_report_arsenal.html` in a browser to use the guided UI, apply role-based templates, and manage findings before handing JSON off to the CLI for final document generation.
+```python
+from pathlib import Path
+from reportify_pro import DocumentGenerator, REPORT_TEMPLATES, ReportData
+
+data = ReportData(
+    template_key="vulnerability_assessment",
+    category="Security",
+    title="Q3 Vulnerability Assessment",
+    author="Sam Jackson",
+    executive_summary="High-level summary of the assessment findings.",
+    objectives=["Identify vulnerabilities", "Provide remediation guidance"],
+    methodology="Automated scanning plus manual validation.",
+    findings=["Critical SQL injection in login flow", "Outdated OpenSSL on web tier"],
+    recommendations=["Patch web server", "Harden authentication flows"],
+)
+
+template = REPORT_TEMPLATES[data.template_key]
+DocumentGenerator.generate_report(data, template, Path("reports/q3_assessment.docx"))
+```
+
+Open `cybersecurity_report_arsenal.html` in a browser to draft findings, gather guidance, and export a JSON skeleton that you can map onto the Python generator.
 
 **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned
 
