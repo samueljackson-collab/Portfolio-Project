@@ -3,7 +3,7 @@
 
 ***Building reliable systems, documenting clearly, and sharing what I learn. I turn ambiguous requirements into runbooks, dashboards, and repeatable processes.***
 
-**Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned
+**Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild
 
 ---
 ## 🎯 Summary
@@ -41,9 +41,17 @@ System-minded engineer specializing in building, securing, and operating infrast
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
 **Links**: [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
 
-### Commercial E-commerce & Booking Systems
-**Description** Built and managed: resort booking site; high-SKU flooring store; tours site with complex variations.
-**Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets)
+---
+## 🔄 Past Projects Requiring Recovery
+
+Older commercial efforts live in cold storage while I recreate code, processes, and documentation that were lost when a retired workstation took the original knowledge base with it. Fresh assets will be posted as I rehydrate each workflow from backups and operational notes.
+
+### Commercial E-commerce & Booking Systems (Rebuild in Progress)
+**Status** 🔄 Recovering artifacts from backup exports and recreating runbooks.
+**Description** Previously built and managed: resort booking site; high-SKU flooring store; tours site with complex variations. Code and process docs are being rebuilt for publication.
+**Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets) *(placeholder while recovery completes)*
+
+> **Recovery plan & timeline:** Catalog and restore SQL workflows and automation scripts (Week 1), re-document content management processes and deployment steps (Week 2), publish refreshed artifacts and narratives (Week 3).
 
 ---
 ## 🟠 In-Progress Projects (Milestones)
