@@ -1,0 +1,30 @@
+groups:
+  - name: portfolio-api
+    rules:
+      - alert: PortfolioApiHighErrorRate
+        expr: rate(http_requests_total{app="portfolio-api",status=~"5.."}[5m]) / rate(http_requests_total{app="portfolio-api"}[5m]) > 0.02
+        for: 10m
+        labels:
+          severity: critical
+          service: portfolio-api
+        annotations:
+          summary: "Portfolio API high error rate"
+          description: "5xx responses exceed 2% over 10 minutes."
+      - alert: PortfolioApiLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{app="portfolio-api"}[5m])) by (le)) > 0.4
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Portfolio API latency above threshold"
+          description: "95th percentile latency exceeded 400ms."
+  - name: infrastructure
+    rules:
+      - alert: NodeDiskPressure
+        expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kubernetes node experiencing disk pressure"
+          description: "Node {{ $labels.node }} reporting DiskPressure for more than 5 minutes."

@@ -1,0 +1,44 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReadSecrets",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-west-2:123456789012:secret:portfolio/*"
+    },
+    {
+      "Sid": "AllowRDSIAMAuth",
+      "Effect": "Allow",
+      "Action": [
+        "rds-db:connect"
+      ],
+      "Resource": "arn:aws:rds-db:us-west-2:123456789012:dbuser:*/portfolio_app"
+    },
+    {
+      "Sid": "AllowSQSPublish",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": "arn:aws:sqs:us-west-2:123456789012:portfolio-exports"
+    },
+    {
+      "Sid": "AllowCloudWatchMetrics",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricData"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "cloudwatch:namespace": "Portfolio/API"
+        }
+      }
+    }
+  ]
+}

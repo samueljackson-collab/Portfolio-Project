@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-worker
+spec:
+  selector:
+    app: portfolio-worker
+  ports:
+    - name: grpc
+      port: 9000
+      targetPort: 9000
+  clusterIP: None

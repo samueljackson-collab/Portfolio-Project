@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: portfolio-app
+
+resources:
+  - ../../base
+  - ../../rbac/serviceaccounts.yaml
+  - ../../rbac/roles.yaml
+
+namePrefix: dev-
+
+patchesStrategicMerge:
+  - patch-replicas.yaml
+  - patch-ingress.yaml
+
+configMapGenerator:
+  - name: portfolio-api-config-override
+    behavior: merge
+    literals:
+      - LOG_LEVEL=debug
+      - FEATURE_EXPORTS=true
+
+images:
+  - name: ghcr.io/sams-jackson/portfolio-api
+    newTag: v1.4.0-dev
+  - name: ghcr.io/sams-jackson/portfolio-worker
+    newTag: v1.4.0-dev

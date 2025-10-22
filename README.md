@@ -1,3 +1,67 @@
+# Portfolio Export Overview
+
+This repository captures the exported structure of Sam Jackson's systems engineering portfolio. It provides runnable infrastructure-as-code, deployment automation, monitoring rules, and security guardrails alongside narrative documentation that explains how each component fits together.
+
+The goal of this export is twofold:
+
+- **Demonstrate reproducible engineering workflows.** Terraform and Kubernetes manifests define an environment that can be re-created quickly, while Bash utilities codify day-two operations.
+- **Share practitioner-focused documentation.** Architecture narratives, deployment runbooks, API references, and security policies document how the platform is designed, deployed, and defended.
+
+## Repository Layout
+
+| Path | Description |
+| --- | --- |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Deep dive into system architecture, design decisions, and component responsibilities. |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Deployment runbooks that cover Terraform provisioning, Kubernetes rollouts, and rollback strategies. |
+| [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) | HTTP API contract, request/response schemas, and example payloads. |
+| [SECURITY.md](./SECURITY.md) | Security posture, governance checklist, and references to policy artifacts. |
+| [infrastructure/](./infrastructure/) | IaC assets split between Terraform modules and Kubernetes manifests. |
+| [scripts/](./scripts/) | Operational Bash scripts for deployment, smoke testing, and teardown. |
+| [monitoring/](./monitoring/) | Prometheus configuration, alert rules, and golden-signal dashboards. |
+| [security/](./security/) | Baseline policies for IAM, Kubernetes, and supply-chain controls. |
+| [documentation/](./documentation/) | Human-readable guides: runbooks, onboarding notes, and decision records. |
+| [examples/](./examples/) | Copy-paste ready examples that demonstrate API usage and infrastructure overrides. |
+
+## Quick Start
+
+1. **Install prerequisites** – Terraform ≥ 1.5, kubectl ≥ 1.27, Helm ≥ 3.0, and jq for JSON parsing.
+2. **Provision infrastructure** – Use [`./scripts/deploy.sh`](./scripts/deploy.sh) to run Terraform, configure Kubernetes contexts, and apply manifests.
+3. **Verify health** – Run [`./scripts/smoke-test.sh`](./scripts/smoke-test.sh) to execute API readiness and Prometheus scrape checks.
+4. **Tear down** – When finished, run [`./scripts/teardown.sh`](./scripts/teardown.sh) to destroy Terraform-managed resources safely.
+
+> **Tip:** Each script accepts `--dry-run` to preview actions without mutating infrastructure. Refer to the inline help (`-h`) for full CLI usage.
+
+## Architecture Snapshot
+
+The service is composed of a public-facing API backed by a stateless application tier, a PostgreSQL data store, and an asynchronous worker queue. Networking and security controls are described in detail inside [ARCHITECTURE.md](./ARCHITECTURE.md), including diagrams and capacity planning notes. The Terraform stack in [`infrastructure/terraform/`](./infrastructure/terraform/) provisions VPC networking, managed databases, and IAM roles that align with the documented design.
+
+## Deployment Workflows
+
+Day-zero provisioning and day-two rollouts follow a GitOps-friendly pipeline. [DEPLOYMENT.md](./DEPLOYMENT.md) explains each stage, from workspace configuration and remote state management to blue/green deployments handled through the manifests in [`infrastructure/kubernetes/`](./infrastructure/kubernetes/). The scripts in [`scripts/`](./scripts/) orchestrate these steps locally or in CI.
+
+## API Overview
+
+Developers integrating with the Portfolio API should start with [API_DOCUMENTATION.md](./API_DOCUMENTATION.md). It covers authentication, versioning conventions, and endpoint-level examples. The [`examples/`](./examples/) directory contains ready-to-run HTTP requests and SDK snippets that mirror the documented flows.
+
+## Security & Compliance
+
+A defense-in-depth posture is captured in [SECURITY.md](./SECURITY.md). It references the IAM policies located under [`security/policies/`](./security/policies/), Kubernetes network boundaries, and continuous compliance checks. The monitoring rules in [`monitoring/`](./monitoring/) surface suspicious activity through alerting tied to these controls.
+
+## Additional Documentation
+
+Supplemental guides live in [`documentation/`](./documentation/) and include:
+
+- Onboarding walkthroughs for new contributors.
+- Runbooks describing incident response and backup drills.
+- Architecture decision records that track trade-offs over time.
+
+## Portfolio Narrative
+
+The following section retains the original portfolio narrative that accompanied this repository export.
+
+<details>
+<summary><strong>Original Portfolio README</strong></summary>
+
 # Hi, I'm Sam Jackson!
 **[System Development Engineer](https://github.com/sams-jackson)** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **Freelance Full-Stack Web Developer**
 
@@ -74,14 +138,17 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ---
 ## 💼 Experience
-**Desktop Support Technician — 3DM (Redmond, WA) · Feb 2025–Present**  
-**Freelance IT & Web Manager — Self-employed · 2015–2022**  
+**Desktop Support Technician — 3DM (Redmond, WA) · Feb 2025–Present**
+**Freelance IT & Web Manager — Self-employed · 2015–2022**
 **Web Designer, Content & SEO — IPM Corp. (Cambodia) · 2013–2014**
 
 ---
 ## 🎓 Education & Certifications
-**B.S., Information Systems** — Colorado State University (2016–2024)  
+**B.S., Information Systems** — Colorado State University (2016–2024)
 
 ---
 ## 🤳 Connect
-[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
+[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson)
+
+</details>
+

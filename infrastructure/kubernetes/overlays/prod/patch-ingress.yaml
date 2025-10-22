@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portfolio-api
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: api.portfolio.example.com
+spec:
+  tls:
+    - hosts:
+        - api.portfolio.example.com
+      secretName: portfolio-api-prod-cert
+  rules:
+    - host: api.portfolio.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: portfolio-api
+                port:
+                  number: 80
+          - path: /metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: portfolio-api
+                port:
+                  number: 9090

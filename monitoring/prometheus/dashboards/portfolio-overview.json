@@ -1,0 +1,47 @@
+{
+  "title": "Portfolio Platform Overview",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Request Rate",
+      "targets": [
+        {
+          "expr": "service:portfolio_api_request_rate5m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "req/s"
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate",
+      "targets": [
+        {
+          "expr": "service:portfolio_api_error_rate5m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "req/s"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p95",
+      "targets": [
+        {
+          "expr": "service:portfolio_api_latency_p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      }
+    }
+  ]
+}

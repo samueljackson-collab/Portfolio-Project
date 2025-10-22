@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: Portfolio API
+  version: 1.0.0
+servers:
+  - url: https://api.portfolio.example.com/api/v1
+paths:
+  /portfolio:
+    get:
+      summary: List portfolio entries
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioList'
+    post:
+      summary: Create portfolio entry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortfolioInput'
+      responses:
+        '201':
+          description: Created
+  /portfolio/{id}:
+    get:
+      summary: Get portfolio entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioEntry'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PortfolioEntry:
+      type: object
+      required: [id, title, summary, status]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        status:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    PortfolioList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioEntry'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+    PortfolioInput:
+      allOf:
+        - $ref: '#/components/schemas/PortfolioEntry'
+      required: [id, title, summary]
