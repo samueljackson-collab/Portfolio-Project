@@ -3,6 +3,33 @@
 
 ***Building reliable systems, documenting clearly, and sharing what I learn. I turn ambiguous requirements into runbooks, dashboards, and repeatable processes.***
 
+## 📘 Featured Project: Reportify Pro – Enterprise Report Toolkit
+`Reportify Pro` bundles a production-grade Python document generator with an interactive cybersecurity reporting UI so I can author polished deliverables quickly and consistently.
+
+### Why I built it
+- Provide a reusable framework for executive-ready portfolios, incident retrospectives, and compliance packages.
+- Combine strict data validation (Pydantic) with modular renderers so sections can be mixed-and-matched per engagement.
+- Offer a no-install HTML workspace for analysts who prefer guided forms, live tips, and JSON save/load workflows.
+
+### What’s inside
+- **Command-line engine** (`reportify_pro.py`): Validates JSON inputs, assembles DOCX reports with cover pages, timelines, risk tables, and appendices, and exposes CLI commands for templating, listing, and generation.
+- **Template catalog**: 25+ IT-focused templates across security, DevOps, cloud, networking, and compliance roles with smart-variable defaults and standards references.
+- **Cybersecurity Report Arsenal UI** (`cybersecurity_report_arsenal.html`): Tailwind-based SPA for selecting role-specific templates, capturing findings with modals, managing tags, and exporting/importing project JSON.
+
+### Quick start
+```bash
+# Install dependencies
+pip install python-docx pydantic pillow
+
+# Generate a report from validated data
+python reportify_pro.py generate -i sample_project.json -o reports/output.docx
+
+# Explore available templates
+python reportify_pro.py list-templates
+```
+
+Open `cybersecurity_report_arsenal.html` in a browser to use the guided UI, apply role-based templates, and manage findings before handing JSON off to the CLI for final document generation.
+
 **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned
 
 ---
