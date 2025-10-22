@@ -1,0 +1,18 @@
+# Local artifacts
+.sbom.json
+sbom.json
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+# Environment variables and secrets
+*.tfvars
+.env
+# Editor/temp
+.DS_Store
+*.swp
+# IDE
+.vscode/
+.idea/
+# Logs
+*.log
