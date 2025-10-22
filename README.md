@@ -15,6 +15,7 @@
 - **Python generator** (`reportify_pro.py`): Provides a `DocumentGenerator` helper plus a rich template database spanning eight IT domains. It handles cover pages, headings, KPI tables, lists, and appendices with a consistent visual style.
 - **Template catalog**: 21 pre-defined report shells covering vulnerability assessments, incident response, project proposals, operational reports, and more. Each includes icons, recommended sections, and optional defaults.
 - **Cybersecurity Report Arsenal UI** (`cybersecurity_report_arsenal.html`): Tailwind-powered single page app for role-based template selection, findings capture, tag management, and JSON save/load workflows.
+- **Desktop GUI** (`reportify_gui.py`): Tkinter-based three-panel workspace for analysts who prefer a native app to browse templates, enter report content, manage tags/lists, and export DOCX files without leaving the desktop.
 
 ### Quick start
 ```bash
@@ -42,7 +43,7 @@ template = REPORT_TEMPLATES[data.template_key]
 DocumentGenerator.generate_report(data, template, Path("reports/q3_assessment.docx"))
 ```
 
-Open `cybersecurity_report_arsenal.html` in a browser to draft findings, gather guidance, and export a JSON skeleton that you can map onto the Python generator.
+Open `cybersecurity_report_arsenal.html` in a browser to draft findings, gather guidance, and export a JSON skeleton that you can map onto the Python generator. Prefer a desktop workflow? Run `python reportify_gui.py` for the Tkinter-powered GUI and use the built-in save/export actions.
 
 **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned
 
