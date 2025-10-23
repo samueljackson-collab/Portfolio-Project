@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: portfolio-services
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - app: portfolio-frontend
+            repoURL: https://github.com/example/portfolio-frontend.git
+            path: deploy/overlays/production
+          - app: portfolio-backend
+            repoURL: https://github.com/example/portfolio-backend.git
+            path: deploy/overlays/production
+  template:
+    metadata:
+      name: "{{app}}"
+    spec:
+      project: default
+      source:
+        repoURL: "{{repoURL}}"
+        targetRevision: HEAD
+        path: "{{path}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: portfolio-production
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

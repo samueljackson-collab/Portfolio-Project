@@ -1,0 +1,65 @@
+project_name  = "p01-landing-zone"
+environment   = "prod"
+region        = "us-west-2"
+owner         = "Samuel Jackson"
+cost_center   = "CC-1234"
+
+vpc_cidr = "10.0.0.0/16"
+
+public_subnets = {
+  a = {
+    cidr = "10.0.1.0/24"
+    az   = "us-west-2a"
+  }
+  b = {
+    cidr = "10.0.2.0/24"
+    az   = "us-west-2b"
+  }
+  c = {
+    cidr = "10.0.3.0/24"
+    az   = "us-west-2c"
+  }
+}
+
+private_subnets = {
+  a = {
+    cidr = "10.0.11.0/24"
+    az   = "us-west-2a"
+  }
+  b = {
+    cidr = "10.0.12.0/24"
+    az   = "us-west-2b"
+  }
+  c = {
+    cidr = "10.0.13.0/24"
+    az   = "us-west-2c"
+  }
+}
+
+database_subnets = {
+  a = {
+    cidr = "10.0.21.0/24"
+    az   = "us-west-2a"
+  }
+  b = {
+    cidr = "10.0.22.0/24"
+    az   = "us-west-2b"
+  }
+}
+
+ami_id                = "ami-0abcdef1234567890"
+ssm_instance_profile  = "EC2InstanceProfile"
+acm_certificate_arn   = "arn:aws:acm:us-west-2:123456789012:certificate/abcd-efgh"
+kms_key_arn           = "arn:aws:kms:us-west-2:123456789012:key/abcd-efgh"
+enhanced_monitoring_role_arn = "arn:aws:iam::123456789012:role/rds-monitoring-role"
+cdn_certificate_arn   = "arn:aws:acm:us-east-1:123456789012:certificate/wxyz"
+
+ssm_prefix_list_ids = ["pl-123456"]
+
+database_username = "app_user"
+database_password = "REPLACE_WITH_SECRET"
+
+additional_tags = {
+  Confidentiality = "internal"
+}
+

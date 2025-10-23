@@ -1,0 +1,8 @@
+homelab:
+  hosts:
+    proxmox01.local:
+      ansible_host: 10.0.20.11
+    proxmox02.local:
+      ansible_host: 10.0.20.12
+    services.local:
+      ansible_host: 10.0.50.20

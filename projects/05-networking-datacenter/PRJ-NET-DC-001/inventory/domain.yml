@@ -1,0 +1,6 @@
+all:
+  children:
+    domain_controllers:
+      hosts:
+        dc1.lab.local:
+          ansible_host: 192.168.100.10

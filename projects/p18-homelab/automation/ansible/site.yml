@@ -1,0 +1,30 @@
+---
+- name: Configure homelab base services
+  hosts: homelab
+  become: true
+  vars:
+    traefik_domain: "lab.example.local"
+  roles:
+    - role: geerlingguy.docker
+    - role: community.traefik
+  tasks:
+    - name: Ensure base packages present
+      ansible.builtin.package:
+        name:
+          - htop
+          - jq
+          - rsync
+        state: present
+
+    - name: Deploy Traefik configuration
+      ansible.builtin.template:
+        src: templates/traefik.yaml.j2
+        dest: /etc/traefik/traefik.yaml
+        mode: "0644"
+      notify: restart traefik
+
+  handlers:
+    - name: restart traefik
+      ansible.builtin.service:
+        name: traefik
+        state: restarted

@@ -1,0 +1,9 @@
+reports/
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+.venv/
+/backup/
+terraform-outputs.json
+__pycache__/

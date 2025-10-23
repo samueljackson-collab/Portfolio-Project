@@ -1,0 +1,60 @@
+name: Portfolio CI
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+jobs:
+  terraform:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/p01-aws-infra/tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+      - name: Terraform integration checks
+        run: ./integration_test.sh
+
+  terratest:
+    name: Terratest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/p01-aws-infra/tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+      - name: Go test
+        run: go test ./...
+
+  docs:
+    name: Markdown Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run markdown-link-check
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          folder-path: '.'
+

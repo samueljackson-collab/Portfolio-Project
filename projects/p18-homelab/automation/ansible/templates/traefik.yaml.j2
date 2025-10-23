@@ -1,0 +1,31 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: ops@portfolio.local
+      storage: /var/lib/traefik/acme.json
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
+
+api:
+  dashboard: true
+
+log:
+  level: INFO
+
+metrics:
+  prometheus:
+    addRoutersLabels: true

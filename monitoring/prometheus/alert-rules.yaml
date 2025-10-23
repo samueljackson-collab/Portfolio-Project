@@ -1,0 +1,38 @@
+groups:
+- name: portfolio
+  rules:
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High error rate on portfolio application"
+      description: "Error rate is above 10% for the last 5 minutes."
+
+  - alert: HighLatency
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High latency on portfolio application"
+      description: "95th percentile latency is above 1 second for the last 5 minutes."
+
+  - alert: ContainerDown
+    expr: up{job="portfolio-backend"} == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Portfolio backend container is down"
+      description: "The portfolio backend container has been down for more than 2 minutes."
+
+  - alert: HighMemoryUsage
+    expr: container_memory_usage_bytes{container="portfolio-backend"} > 500 * 1024 * 1024
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on portfolio backend"
+      description: "Memory usage is above 500MB for the last 5 minutes."

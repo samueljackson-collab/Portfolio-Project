@@ -1,0 +1,15 @@
+service: p09-api
+slo:
+  objective: 99.9
+  period: 30d
+  indicator:
+    type: availability
+    good_event_query: sum(rate(http_requests_total{status!~"5..", job="portfolio-backend"}[5m]))
+    total_event_query: sum(rate(http_requests_total{job="portfolio-backend"}[5m]))
+alerts:
+  - name: p09-api-fast-burn
+    window: 5m
+    burn_rate_threshold: 14
+  - name: p09-api-slow-burn
+    window: 1h
+    burn_rate_threshold: 6
