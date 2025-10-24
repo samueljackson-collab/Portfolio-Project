@@ -10,6 +10,9 @@ jobs:
   lint:
     name: Run CodeRabbit Linters
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
 
     steps:
     - name: Checkout code
