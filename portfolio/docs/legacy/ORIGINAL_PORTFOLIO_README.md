@@ -1,9 +1,16 @@
+# Original Portfolio README
+
+The following content was present in the repository prior to initializing the consolidated monorepo structure. It is retained here for reference.
+
+---
+
+```
 # Hi, I'm Sam Jackson!
 **[System Development Engineer](https://github.com/sams-jackson)** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **Freelance Full-Stack Web Developer**
 
 ***Building reliable systems, documenting clearly, and sharing what I learn. I turn ambiguous requirements into runbooks, dashboards, and repeatable processes.***
 
-**Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild
+**Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned
 
 ---
 ## 🎯 Summary
@@ -41,21 +48,9 @@ System-minded engineer specializing in building, securing, and operating infrast
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
 **Links**: [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
 
-### AWS Multi-Tier Production Infrastructure
-**Description** Terraform-built, multi-AZ reference architecture with autoscaling web tier, Multi-AZ PostgreSQL, CloudWatch/CloudTrail observability, and AWS Backup runbooks tuned for SaaS reliability.
-**Links**: [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-002/) · [Architecture](./projects/02-cloud-architecture/PRJ-CLOUD-002/docs/architecture.md) · [Operations](./projects/02-cloud-architecture/PRJ-CLOUD-002/docs/operations.md)
-
----
-## 🔄 Past Projects Requiring Recovery
-
-Older commercial efforts live in cold storage while I recreate code, processes, and documentation that were lost when a retired workstation took the original knowledge base with it. Fresh assets will be posted as I rehydrate each workflow from backups and operational notes.
-
-### Commercial E-commerce & Booking Systems (Rebuild in Progress)
-**Status** 🔄 Recovering artifacts from backup exports and recreating runbooks.
-**Description** Previously built and managed: resort booking site; high-SKU flooring store; tours site with complex variations. Code and process docs are being rebuilt for publication.
-**Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets) *(placeholder while recovery completes)*
-
-> **Recovery plan & timeline:** Catalog and restore SQL workflows and automation scripts (Week 1), re-document content management processes and deployment steps (Week 2), publish refreshed artifacts and narratives (Week 3).
+### Commercial E-commerce & Booking Systems
+**Description** Built and managed: resort booking site; high-SKU flooring store; tours site with complex variations.
+**Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets)
 
 ---
 ## 🟠 In-Progress Projects (Milestones)
@@ -78,15 +73,15 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ---
 ## 💼 Experience
-**Desktop Support Technician — 3DM (Redmond, WA) · Feb 2025–Present**  
-**Freelance IT & Web Manager — Self-employed · 2015–2022**  
+**Desktop Support Technician — 3DM (Redmond, WA) · Feb 2025–Present**
+**Freelance IT & Web Manager — Self-employed · 2015–2022**
 **Web Designer, Content & SEO — IPM Corp. (Cambodia) · 2013–2014**
 
 ---
 ## 🎓 Education & Certifications
-**B.S., Information Systems** — Colorado State University (2016–2024)  
+**B.S., Information Systems** — Colorado State University (2016–2024)
 
 ---
 ## 🤳 Connect
-[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/samueljackson-collab/Portfolio-Project?utm_source=oss&utm_medium=github&utm_campaign=samueljackson-collab%2FPortfolio-Project&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson)
+```
