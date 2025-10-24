@@ -85,3 +85,4 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 ---
 ## 🤳 Connect
 [GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/samueljackson-collab/Portfolio-Project?utm_source=oss&utm_medium=github&utm_campaign=samueljackson-collab%2FPortfolio-Project&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
