@@ -1,0 +1,76 @@
+# CodeRabbit Configuration
+# This configuration enables CodeRabbit to review the entire repository
+
+# Enable reviews for all file changes
+reviews:
+  # Review all files in the repository
+  path_filters:
+    - "**/*"
+  
+  # Enable auto-review on pull requests
+  auto_review:
+    enabled: true
+    drafts: false
+  
+  # Request changes for important issues
+  request_changes_workflow: true
+  
+  # Enable high-level summary
+  high_level_summary: true
+  
+  # Enable poem in the review (CodeRabbit's signature feature)
+  poem: true
+  
+  # Review settings
+  profile: "chill"
+  
+  # Enable review for all file types
+  review_all_files: true
+
+# Language-specific settings
+language_settings:
+  markdown:
+    enabled: true
+  yaml:
+    enabled: true
+  python:
+    enabled: true
+  javascript:
+    enabled: true
+  typescript:
+    enabled: true
+  json:
+    enabled: true
+  shell:
+    enabled: true
+
+# Ignore patterns (only for generated files or dependencies)
+path_instructions:
+  - path: "**/*"
+    instructions: |
+      Review all files in this repository. Focus on:
+      - Code quality and best practices
+      - Documentation clarity and completeness
+      - Security concerns
+      - Performance issues
+      - Maintainability
+
+# Chat settings
+chat:
+  auto_reply: true
+
+# Knowledge base
+knowledge_base:
+  # Learn from the repository structure and patterns
+  learnings_scope: "global"
+  
+# Tools configuration
+tools:
+  ruff:
+    enabled: true
+  shellcheck:
+    enabled: true
+  markdownlint:
+    enabled: true
+  yamllint:
+    enabled: true
