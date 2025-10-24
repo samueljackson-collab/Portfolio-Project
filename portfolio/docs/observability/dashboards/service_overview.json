@@ -1,0 +1,35 @@
+{
+  "title": "Service Overview",
+  "description": "Starter dashboard for FastAPI service.",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request Rate",
+      "targets": [
+        {
+          "expr": "sum(rate(fastapi_requests_total[5m]))",
+          "legend": "requests/s"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Error Rate",
+      "targets": [
+        {
+          "expr": "sum(rate(fastapi_requests_total{status_code=~\"5..\"}[5m]))",
+          "legend": "errors/s"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "API Latency P95",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(fastapi_request_duration_seconds_bucket[5m])) by (le))"
+        }
+      ]
+    }
+  ]
+}

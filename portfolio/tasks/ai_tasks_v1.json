@@ -1,0 +1,16 @@
+[
+  {
+    "id": "task-001",
+    "domain": "backend",
+    "input": "Feature request describing new CRUD resource",
+    "tool": "FastAPI scaffold script",
+    "expected_output": "Generated router, schemas, tests"
+  },
+  {
+    "id": "task-002",
+    "domain": "frontend",
+    "input": "UI component spec",
+    "tool": "Vite component generator",
+    "expected_output": "React component with tests and stories"
+  }
+]

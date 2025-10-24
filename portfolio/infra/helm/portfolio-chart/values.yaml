@@ -1,0 +1,16 @@
+imageRegistry: ghcr.io/example
+backend:
+  image: backend:latest
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 8000
+frontend:
+  image: frontend:latest
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 80
+database:
+  host: postgres
+  url: postgresql+asyncpg://postgres:postgres@postgres:5432/app
