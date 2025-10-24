@@ -1,0 +1,4 @@
+# Specify code owners for important paths
+/docs/ @samueljackson-collab
+/terraform/ @samueljackson-collab
+/* @samueljackson-collab
