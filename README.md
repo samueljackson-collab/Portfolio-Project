@@ -33,6 +33,10 @@ System-minded engineer specializing in building, securing, and operating infrast
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
 **Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets)
 
+### Enterprise Architecture & Operations Diagrams
+**Description** Multi-region AWS reference architecture covering infrastructure, CI/CD, monitoring, security, and data flow patterns used across active projects.
+**Links**: [Interactive Diagrams](./projects/02-cloud-architecture/PRJ-CLOUD-001/index.html)
+
 ### Virtualization & Core Services
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
 **Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets)

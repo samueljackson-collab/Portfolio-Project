@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enterprise Architecture Diagrams</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            padding: 10px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: #334155;
+            border: none;
+            border-radius: 8px;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .tab:hover,
+        .tab:focus {
+            background: #475569;
+            transform: translateY(-2px);
+            outline: none;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .diagram-section {
+            display: none;
+        }
+
+        .diagram-section.active {
+            display: block;
+        }
+
+        .diagram-card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .diagram-title {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            color: #60a5fa;
+        }
+
+        .diagram-description {
+            color: #94a3b8;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .diagram-canvas {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(51, 65, 85, 0.5);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .code-block {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border-left: 4px solid #3b82f6;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            color: #86efac;
+            font-size: 0.9em;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+
+        .metric-label {
+            color: #94a3b8;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .diagram-card {
+                padding: 20px;
+            }
+
+            .diagram-title {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏗️ Enterprise Architecture Diagrams</h1>
+            <p>Complete visual documentation for all infrastructure components</p>
+        </header>
+
+        <div class="tabs" role="tablist" aria-label="Architecture diagram categories">
+            <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="infrastructure" id="tab-infrastructure" data-target="infrastructure">Infrastructure</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="network" id="tab-network" data-target="network">Network</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="cicd" id="tab-cicd" data-target="cicd">CI/CD</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="monitoring" id="tab-monitoring" data-target="monitoring">Monitoring</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="security" id="tab-security" data-target="security">Security</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="data" id="tab-data" data-target="data">Data Flow</button>
+        </div>
+
+        <!-- Infrastructure Diagram -->
+        <section id="infrastructure" class="diagram-section active" role="tabpanel" aria-labelledby="tab-infrastructure">
+            <div class="diagram-card">
+                <h2 class="diagram-title">Multi-Region Infrastructure Architecture</h2>
+                <p class="diagram-description">
+                    Complete AWS infrastructure spanning multiple regions with high availability,
+                    disaster recovery, and automatic failover capabilities.
+                </p>
+
+                <div class="diagram-canvas">
+                    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Region 1: US-EAST-1 -->
+                        <rect x="50" y="50" width="500" height="700" fill="#e3f2fd" stroke="#1976d2" stroke-width="3" rx="10" />
+                        <text x="300" y="80" text-anchor="middle" font-size="24" font-weight="bold" fill="#1976d2">US-EAST-1 (Primary)</text>
+
+                        <!-- VPC -->
+                        <rect x="80" y="100" width="440" height="600" fill="#fff" stroke="#0288d1" stroke-width="2" rx="8" />
+                        <text x="300" y="125" text-anchor="middle" font-size="18" font-weight="bold" fill="#0288d1">VPC: 10.0.0.0/16</text>
+
+                        <!-- Public Subnets -->
+                        <g>
+                            <rect x="100" y="140" width="180" height="120" fill="#c8e6c9" stroke="#388e3c" stroke-width="2" rx="6" />
+                            <text x="190" y="165" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32">Public Subnet A</text>
+                            <text x="190" y="185" text-anchor="middle" font-size="12" fill="#555">10.0.1.0/24</text>
+
+                            <!-- ALB -->
+                            <rect x="120" y="195" width="140" height="50" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="4" />
+                            <text x="190" y="218" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Application</text>
+                            <text x="190" y="233" text-anchor="middle" font-size="12" fill="white">Load Balancer</text>
+
+                            <rect x="320" y="140" width="180" height="120" fill="#c8e6c9" stroke="#388e3c" stroke-width="2" rx="6" />
+                            <text x="410" y="165" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32">Public Subnet B</text>
+                            <text x="410" y="185" text-anchor="middle" font-size="12" fill="#555">10.0.2.0/24</text>
+
+                            <!-- NAT Gateway -->
+                            <rect x="340" y="195" width="140" height="50" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="4" />
+                            <text x="410" y="218" text-anchor="middle" font-size="12" font-weight="bold" fill="white">NAT Gateway</text>
+                            <text x="410" y="233" text-anchor="middle" font-size="12" fill="white">High Availability</text>
+                        </g>
+
+                        <!-- Private Subnets -->
+                        <g>
+                            <rect x="100" y="280" width="180" height="180" fill="#bbdefb" stroke="#1976d2" stroke-width="2" rx="6" />
+                            <text x="190" y="305" text-anchor="middle" font-size="14" font-weight="bold" fill="#0d47a1">Private Subnet A</text>
+                            <text x="190" y="325" text-anchor="middle" font-size="12" fill="#555">10.0.3.0/24</text>
+
+                            <!-- ECS Tasks -->
+                            <rect x="120" y="335" width="60" height="40" fill="#2196f3" stroke="#0d47a1" stroke-width="2" rx="4" />
+                            <text x="150" y="358" text-anchor="middle" font-size="10" fill="white">ECS</text>
+                            <text x="150" y="370" text-anchor="middle" font-size="10" fill="white">Task</text>
+
+                            <rect x="190" y="335" width="60" height="40" fill="#2196f3" stroke="#0d47a1" stroke-width="2" rx="4" />
+                            <text x="220" y="358" text-anchor="middle" font-size="10" fill="white">ECS</text>
+                            <text x="220" y="370" text-anchor="middle" font-size="10" fill="white">Task</text>
+
+                            <!-- Auto Scaling -->
+                            <text x="190" y="395" text-anchor="middle" font-size="11" fill="#555">Auto Scaling Group</text>
+                            <text x="190" y="410" text-anchor="middle" font-size="10" fill="#777">Min: 2 | Max: 10</text>
+
+                            <rect x="320" y="280" width="180" height="180" fill="#bbdefb" stroke="#1976d2" stroke-width="2" rx="6" />
+                            <text x="410" y="305" text-anchor="middle" font-size="14" font-weight="bold" fill="#0d47a1">Private Subnet B</text>
+                            <text x="410" y="325" text-anchor="middle" font-size="12" fill="#555">10.0.4.0/24</text>
+
+                            <rect x="340" y="335" width="60" height="40" fill="#2196f3" stroke="#0d47a1" stroke-width="2" rx="4" />
+                            <text x="370" y="358" text-anchor="middle" font-size="10" fill="white">ECS</text>
+                            <text x="370" y="370" text-anchor="middle" font-size="10" fill="white">Task</text>
+
+                            <rect x="410" y="335" width="60" height="40" fill="#2196f3" stroke="#0d47a1" stroke-width="2" rx="4" />
+                            <text x="440" y="358" text-anchor="middle" font-size="10" fill="white">ECS</text>
+                            <text x="440" y="370" text-anchor="middle" font-size="10" fill="white">Task</text>
+                        </g>
+
+                        <!-- Database Subnets -->
+                        <g>
+                            <rect x="100" y="480" width="180" height="140" fill="#ffccbc" stroke="#d84315" stroke-width="2" rx="6" />
+                            <text x="190" y="505" text-anchor="middle" font-size="14" font-weight="bold" fill="#bf360c">Database Subnet A</text>
+                            <text x="190" y="525" text-anchor="middle" font-size="12" fill="#555">10.0.5.0/24</text>
+
+                            <!-- RDS Primary -->
+                            <rect x="120" y="535" width="140" height="70" fill="#ff5722" stroke="#bf360c" stroke-width="2" rx="4" />
+                            <text x="190" y="558" text-anchor="middle" font-size="12" font-weight="bold" fill="white">RDS PostgreSQL</text>
+                            <text x="190" y="573" text-anchor="middle" font-size="11" fill="white">Primary (Writer)</text>
+                            <text x="190" y="588" text-anchor="middle" font-size="10" fill="white">Multi-AZ</text>
+
+                            <rect x="320" y="480" width="180" height="140" fill="#ffccbc" stroke="#d84315" stroke-width="2" rx="6" />
+                            <text x="410" y="505" text-anchor="middle" font-size="14" font-weight="bold" fill="#bf360c">Database Subnet B</text>
+                            <text x="410" y="525" text-anchor="middle" font-size="12" fill="#555">10.0.6.0/24</text>
+
+                            <!-- RDS Replica -->
+                            <rect x="340" y="535" width="140" height="70" fill="#ff7043" stroke="#bf360c" stroke-width="2" rx="4" />
+                            <text x="410" y="558" text-anchor="middle" font-size="12" font-weight="bold" fill="white">RDS PostgreSQL</text>
+                            <text x="410" y="573" text-anchor="middle" font-size="11" fill="white">Standby (Reader)</text>
+                            <text x="410" y="588" text-anchor="middle" font-size="10" fill="white">Automated Failover</text>
+                        </g>
+
+                        <!-- Region 2: US-WEST-2 -->
+                        <rect x="650" y="50" width="500" height="700" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="3" rx="10" />
+                        <text x="900" y="80" text-anchor="middle" font-size="24" font-weight="bold" fill="#7b1fa2">US-WEST-2 (DR)</text>
+
+                        <!-- VPC -->
+                        <rect x="680" y="100" width="440" height="600" fill="#fff" stroke="#8e24aa" stroke-width="2" rx="8" />
+                        <text x="900" y="125" text-anchor="middle" font-size="18" font-weight="bold" fill="#8e24aa">VPC: 10.1.0.0/16</text>
+
+                        <!-- DR Components -->
+                        <rect x="700" y="180" width="400" height="100" fill="#ce93d8" stroke="#6a1b9a" stroke-width="2" rx="6" />
+                        <text x="900" y="215" text-anchor="middle" font-size="16" font-weight="bold" fill="#4a148c">Disaster Recovery</text>
+                        <text x="900" y="240" text-anchor="middle" font-size="13" fill="#6a1b9a">Automated Failover with Route53</text>
+                        <text x="900" y="260" text-anchor="middle" font-size="12" fill="#6a1b9a">RTO: 15 minutes | RPO: 5 minutes</text>
+
+                        <!-- Standby Infrastructure -->
+                        <rect x="700" y="300" width="400" height="180" fill="#e1bee7" stroke="#7b1fa2" stroke-width="2" rx="6" />
+                        <text x="900" y="325" text-anchor="middle" font-size="14" font-weight="bold" fill="#4a148c">Standby Infrastructure</text>
+
+                        <rect x="730" y="340" width="150" height="60" fill="#9c27b0" stroke="#4a148c" stroke-width="2" rx="4" />
+                        <text x="805" y="365" text-anchor="middle" font-size="12" fill="white">ECS Cluster</text>
+                        <text x="805" y="382" text-anchor="middle" font-size="11" fill="white">(Warm Standby)</text>
+
+                        <rect x="920" y="340" width="150" height="60" fill="#9c27b0" stroke="#4a148c" stroke-width="2" rx="4" />
+                        <text x="995" y="365" text-anchor="middle" font-size="12" fill="white">RDS Read Replica</text>
+                        <text x="995" y="382" text-anchor="middle" font-size="11" fill="white">(Cross-Region)</text>
+
+                        <!-- Replication -->
+                        <rect x="700" y="500" width="400" height="100" fill="#f8bbd0" stroke="#c2185b" stroke-width="2" rx="6" />
+                        <text x="900" y="535" text-anchor="middle" font-size="14" font-weight="bold" fill="#880e4f">Data Replication</text>
+                        <text x="900" y="555" text-anchor="middle" font-size="12" fill="#c2185b">S3 Cross-Region Replication</text>
+                        <text x="900" y="575" text-anchor="middle" font-size="12" fill="#c2185b">Database Async Replication</text>
+
+                        <!-- Arrows -->
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#1976d2"></polygon>
+                            </marker>
+                        </defs>
+
+                        <!-- ALB to ECS -->
+                        <line x1="190" y1="245" x2="190" y2="280" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowhead)" />
+
+                        <!-- Replication arrow -->
+                        <line x1="520" y1="570" x2="680" y2="550" stroke="#c2185b" stroke-width="3" stroke-dasharray="5,5" marker-end="url(#arrowhead)" />
+                        <text x="600" y="545" text-anchor="middle" font-size="12" fill="#c2185b" font-weight="bold">Async Replication</text>
+                    </svg>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #c8e6c9"></div>
+                        <span>Public Subnets</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #bbdefb"></div>
+                        <span>Private Subnets</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffccbc"></div>
+                        <span>Database Subnets</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e1bee7"></div>
+                        <span>DR Region</span>
+                    </div>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">99.99%</div>
+                        <div class="metric-label">Availability SLA</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">15 min</div>
+                        <div class="metric-label">Recovery Time (RTO)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">5 min</div>
+                        <div class="metric-label">Data Loss (RPO)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">2-10</div>
+                        <div class="metric-label">Auto Scaling Range</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CI/CD Pipeline Diagram -->
+        <section id="cicd" class="diagram-section" role="tabpanel" aria-labelledby="tab-cicd">
+            <div class="diagram-card">
+                <h2 class="diagram-title">Complete CI/CD Pipeline</h2>
+                <p class="diagram-description">
+                    Automated pipeline from code commit to production deployment with security scanning,
+                    testing, and approval gates.
+                </p>
+
+                <div class="diagram-canvas">
+                    <svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Pipeline Stages -->
+
+                        <!-- Stage 1: Source -->
+                        <rect x="50" y="50" width="150" height="500" fill="#e8f5e9" stroke="#4caf50" stroke-width="2" rx="8" />
+                        <text x="125" y="80" text-anchor="middle" font-size="16" font-weight="bold" fill="#2e7d32">Source</text>
+
+                        <rect x="70" y="100" width="110" height="60" fill="#66bb6a" stroke="#2e7d32" stroke-width="2" rx="4" />
+                        <text x="125" y="125" text-anchor="middle" font-size="13" fill="white">Git Push</text>
+                        <text x="125" y="143" text-anchor="middle" font-size="11" fill="white">GitHub</text>
+
+                        <rect x="70" y="180" width="110" height="60" fill="#66bb6a" stroke="#2e7d32" stroke-width="2" rx="4" />
+                        <text x="125" y="205" text-anchor="middle" font-size="13" fill="white">Webhook</text>
+                        <text x="125" y="223" text-anchor="middle" font-size="11" fill="white">Trigger</text>
+
+                        <!-- Stage 2: Build -->
+                        <rect x="250" y="50" width="150" height="500" fill="#e3f2fd" stroke="#2196f3" stroke-width="2" rx="8" />
+                        <text x="325" y="80" text-anchor="middle" font-size="16" font-weight="bold" fill="#1565c0">Build</text>
+
+                        <rect x="270" y="100" width="110" height="50" fill="#42a5f5" stroke="#1565c0" stroke-width="2" rx="4" />
+                        <text x="325" y="128" text-anchor="middle" font-size="12" fill="white">Install Deps</text>
+
+                        <rect x="270" y="165" width="110" height="50" fill="#42a5f5" stroke="#1565c0" stroke-width="2" rx="4" />
+                        <text x="325" y="193" text-anchor="middle" font-size="12" fill="white">Run Linter</text>
+
+                        <rect x="270" y="230" width="110" height="50" fill="#42a5f5" stroke="#1565c0" stroke-width="2" rx="4" />
+                        <text x="325" y="258" text-anchor="middle" font-size="12" fill="white">Unit Tests</text>
+
+                        <rect x="270" y="295" width="110" height="50" fill="#42a5f5" stroke="#1565c0" stroke-width="2" rx="4" />
+                        <text x="325" y="323" text-anchor="middle" font-size="12" fill="white">Build Image</text>
+
+                        <!-- Stage 3: Test -->
+                        <rect x="450" y="50" width="150" height="500" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="8" />
+                        <text x="525" y="80" text-anchor="middle" font-size="16" font-weight="bold" fill="#6a1b9a">Test</text>
+
+                        <rect x="470" y="100" width="110" height="50" fill="#ab47bc" stroke="#6a1b9a" stroke-width="2" rx="4" />
+                        <text x="525" y="128" text-anchor="middle" font-size="12" fill="white">Integration</text>
+
+                        <rect x="470" y="165" width="110" height="50" fill="#ab47bc" stroke="#6a1b9a" stroke-width="2" rx="4" />
+                        <text x="525" y="193" text-anchor="middle" font-size="12" fill="white">E2E Tests</text>
+
+                        <rect x="470" y="230" width="110" height="50" fill="#ab47bc" stroke="#6a1b9a" stroke-width="2" rx="4" />
+                        <text x="525" y="258" text-anchor="middle" font-size="12" fill="white">Performance</text>
+
+                        <!-- Stage 4: Security -->
+                        <rect x="650" y="50" width="150" height="500" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="8" />
+                        <text x="725" y="80" text-anchor="middle" font-size="16" font-weight="bold" fill="#e65100">Security</text>
+
+                        <rect x="670" y="100" width="110" height="50" fill="#ffa726" stroke="#e65100" stroke-width="2" rx="4" />
+                        <text x="725" y="128" text-anchor="middle" font-size="12" fill="white">SAST Scan</text>
+
+                        <rect x="670" y="165" width="110" height="50" fill="#ffa726" stroke="#e65100" stroke-width="2" rx="4" />
+                        <text x="725" y="193" text-anchor="middle" font-size="12" fill="white">Dependency</text>
+
+                        <rect x="670" y="230" width="110" height="50" fill="#ffa726" stroke="#e65100" stroke-width="2" rx="4" />
+                        <text x="725" y="258" text-anchor="middle" font-size="12" fill="white">Container Scan</text>
+
+                        <!-- Stage 5: Deploy Staging -->
+                        <rect x="850" y="50" width="150" height="230" fill="#e0f2f1" stroke="#009688" stroke-width="2" rx="8" />
+                        <text x="925" y="80" text-anchor="middle" font-size="16" font-weight="bold" fill="#00695c">Deploy Staging</text>
+
+                        <rect x="870" y="100" width="110" height="50" fill="#26a69a" stroke="#00695c" stroke-width="2" rx="4" />
+                        <text x="925" y="128" text-anchor="middle" font-size="12" fill="white">Push Image</text>
+
+                        <rect x="870" y="165" width="110" height="50" fill="#26a69a" stroke="#00695c" stroke-width="2" rx="4" />
+                        <text x="925" y="193" text-anchor="middle" font-size="12" fill="white">Deploy ECS</text>
+
+                        <rect x="870" y="230" width="110" height="40" fill="#26a69a" stroke="#00695c" stroke-width="2" rx="4" />
+                        <text x="925" y="253" text-anchor="middle" font-size="12" fill="white">Smoke Tests</text>
+
+                        <!-- Stage 6: Deploy Production -->
+                        <rect x="850" y="320" width="150" height="230" fill="#ffebee" stroke="#f44336" stroke-width="2" rx="8" />
+                        <text x="925" y="350" text-anchor="middle" font-size="16" font-weight="bold" fill="#c62828">Deploy Prod</text>
+
+                        <rect x="870" y="370" width="110" height="40" fill="#ef5350" stroke="#c62828" stroke-width="2" rx="4" />
+                        <text x="925" y="393" text-anchor="middle" font-size="11" fill="white">Manual Approval</text>
+
+                        <rect x="870" y="425" width="110" height="50" fill="#ef5350" stroke="#c62828" stroke-width="2" rx="4" />
+                        <text x="925" y="448" text-anchor="middle" font-size="12" fill="white">Canary 10%</text>
+
+                        <rect x="870" y="490" width="110" height="50" fill="#ef5350" stroke="#c62828" stroke-width="2" rx="4" />
+                        <text x="925" y="518" text-anchor="middle" font-size="12" fill="white">Full Deploy</text>
+
+                        <!-- Arrows -->
+                        <defs>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#666"></polygon>
+                            </marker>
+                        </defs>
+
+                        <line x1="200" y1="200" x2="250" y2="200" stroke="#666" stroke-width="2" marker-end="url(#arrow)" />
+                        <line x1="400" y1="200" x2="450" y2="200" stroke="#666" stroke-width="2" marker-end="url(#arrow)" />
+                        <line x1="600" y1="200" x2="650" y2="200" stroke="#666" stroke-width="2" marker-end="url(#arrow)" />
+                        <line x1="800" y1="165" x2="850" y2="165" stroke="#666" stroke-width="2" marker-end="url(#arrow)" />
+                        <line x1="925" y1="280" x2="925" y2="320" stroke="#666" stroke-width="2" marker-end="url(#arrow)" />
+
+                        <!-- Monitoring -->
+                        <rect x="1050" y="200" width="120" height="200" fill="#fce4ec" stroke="#e91e63" stroke-width="2" rx="8" />
+                        <text x="1110" y="230" text-anchor="middle" font-size="14" font-weight="bold" fill="#880e4f">Monitoring</text>
+
+                        <circle cx="1110" cy="270" r="30" fill="#ec407a" stroke="#880e4f" stroke-width="2"></circle>
+                        <text x="1110" y="278" text-anchor="middle" font-size="12" fill="white">Metrics</text>
+
+                        <circle cx="1110" cy="340" r="30" fill="#ec407a" stroke="#880e4f" stroke-width="2"></circle>
+                        <text x="1110" y="348" text-anchor="middle" font-size="12" fill="white">Logs</text>
+                    </svg>
+                </div>
+
+                <div class="code-block">
+                    <code>
+# Pipeline Execution Time: ~12 minutes<br />
+Build Stage: 3 minutes<br />
+Test Stage: 5 minutes<br />
+Security Scan: 2 minutes<br />
+Deployment: 2 minutes<br />
+<br />
+Success Rate: 94%<br />
+Failed Builds: 6% (mostly test failures)
+                    </code>
+                </div>
+            </div>
+        </section>
+
+        <!-- Monitoring Diagram -->
+        <section id="monitoring" class="diagram-section" role="tabpanel" aria-labelledby="tab-monitoring">
+            <div class="diagram-card">
+                <h2 class="diagram-title">Comprehensive Monitoring Stack</h2>
+                <p class="diagram-description">
+                    Complete observability solution with metrics, logs, traces, and alerting.
+                </p>
+
+                <div class="diagram-canvas">
+                    <svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Application Layer -->
+                        <rect x="400" y="50" width="400" height="100" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="8" />
+                        <text x="600" y="85" text-anchor="middle" font-size="18" font-weight="bold" fill="#1565c0">Application Services</text>
+                        <text x="600" y="110" text-anchor="middle" font-size="13" fill="#1976d2">Web Servers | APIs | Microservices</text>
+
+                        <!-- Data Collection -->
+                        <g>
+                            <!-- Metrics -->
+                            <rect x="100" y="250" width="200" height="120" fill="#c8e6c9" stroke="#388e3c" stroke-width="2" rx="8" />
+                            <text x="200" y="280" text-anchor="middle" font-size="16" font-weight="bold" fill="#2e7d32">Metrics</text>
+                            <circle cx="200" cy="320" r="35" fill="#4caf50" stroke="#2e7d32" stroke-width="2"></circle>
+                            <text x="200" y="328" text-anchor="middle" font-size="12" fill="white">Prometheus</text>
+
+                            <!-- Logs -->
+                            <rect x="350" y="250" width="200" height="120" fill="#fff9c4" stroke="#f57f17" stroke-width="2" rx="8" />
+                            <text x="450" y="280" text-anchor="middle" font-size="16" font-weight="bold" fill="#f57f17">Logs</text>
+                            <circle cx="450" cy="320" r="35" fill="#fbc02d" stroke="#f57f17" stroke-width="2"></circle>
+                            <text x="450" y="328" text-anchor="middle" font-size="12" fill="white">Loki</text>
+
+                            <!-- Traces -->
+                            <rect x="600" y="250" width="200" height="120" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="8" />
+                            <text x="700" y="280" text-anchor="middle" font-size="16" font-weight="bold" fill="#6a1b9a">Traces</text>
+                            <circle cx="700" cy="320" r="35" fill="#9c27b0" stroke="#6a1b9a" stroke-width="2"></circle>
+                            <text x="700" y="328" text-anchor="middle" font-size="12" fill="white">Tempo</text>
+
+                            <!-- Alerts -->
+                            <rect x="850" y="250" width="200" height="120" fill="#ffebee" stroke="#c62828" stroke-width="2" rx="8" />
+                            <text x="950" y="280" text-anchor="middle" font-size="16" font-weight="bold" fill="#c62828">Alerts</text>
+                            <circle cx="950" cy="320" r="35" fill="#f44336" stroke="#c62828" stroke-width="2"></circle>
+                            <text x="950" y="325" text-anchor="middle" font-size="11" fill="white">Alert</text>
+                            <text x="950" y="338" text-anchor="middle" font-size="11" fill="white">Manager</text>
+                        </g>
+
+                        <!-- Visualization Layer -->
+                        <rect x="300" y="450" width="600" height="100" fill="#e8eaf6" stroke="#3f51b5" stroke-width="3" rx="8" />
+                        <text x="600" y="485" text-anchor="middle" font-size="18" font-weight="bold" fill="#283593">Grafana Dashboards</text>
+                        <text x="600" y="510" text-anchor="middle" font-size="13" fill="#3f51b5">Real-time Visualization &amp; Analytics</text>
+
+                        <!-- Notification Channels -->
+                        <g>
+                            <rect x="150" y="600" width="150" height="60" fill="#bbdefb" stroke="#1976d2" stroke-width="2" rx="6" />
+                            <text x="225" y="635" text-anchor="middle" font-size="13" fill="#0d47a1">Slack</text>
+
+                            <rect x="350" y="600" width="150" height="60" fill="#c8e6c9" stroke="#388e3c" stroke-width="2" rx="6" />
+                            <text x="425" y="635" text-anchor="middle" font-size="13" fill="#2e7d32">PagerDuty</text>
+
+                            <rect x="550" y="600" width="150" height="60" fill="#fff9c4" stroke="#f57f17" stroke-width="2" rx="6" />
+                            <text x="625" y="635" text-anchor="middle" font-size="13" fill="#f57f17">Email</text>
+
+                            <rect x="750" y="600" width="150" height="60" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="6" />
+                            <text x="825" y="635" text-anchor="middle" font-size="13" fill="#6a1b9a">SMS</text>
+                        </g>
+
+                        <!-- Arrows -->
+                        <defs>
+                            <marker id="arrowMon" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#1976d2"></polygon>
+                            </marker>
+                        </defs>
+
+                        <!-- App to Collection -->
+                        <line x1="500" y1="150" x2="200" y2="250" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                        <line x1="550" y1="150" x2="450" y2="250" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                        <line x1="650" y1="150" x2="700" y2="250" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                        <line x1="700" y1="150" x2="950" y2="250" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+
+                        <!-- Collection to Grafana -->
+                        <line x1="200" y1="370" x2="400" y2="450" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                        <line x1="450" y1="370" x2="550" y2="450" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                        <line x1="700" y1="370" x2="650" y2="450" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+
+                        <!-- Grafana to Notifications -->
+                        <line x1="450" y1="550" x2="225" y2="600" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                        <line x1="550" y1="550" x2="425" y2="600" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                        <line x1="650" y1="550" x2="625" y2="600" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                        <line x1="750" y1="550" x2="825" y2="600" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowMon)" />
+                    </svg>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">15 sec</div>
+                        <div class="metric-label">Metric Scrape Interval</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">30 days</div>
+                        <div class="metric-label">Metric Retention</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">90 days</div>
+                        <div class="metric-label">Log Retention</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">50+</div>
+                        <div class="metric-label">Alert Rules</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Network Diagram -->
+        <section id="network" class="diagram-section" role="tabpanel" aria-labelledby="tab-network">
+            <div class="diagram-card">
+                <h2 class="diagram-title">Network Architecture &amp; Security</h2>
+                <p class="diagram-description">
+                    Multi-layer network architecture with security groups, NACLs, and WAF protection.
+                </p>
+
+                <div class="diagram-canvas">
+                    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Internet -->
+                        <ellipse cx="600" cy="50" rx="100" ry="30" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"></ellipse>
+                        <text x="600" y="58" text-anchor="middle" font-size="16" font-weight="bold" fill="#1565c0">Internet</text>
+
+                        <!-- CloudFront &amp; WAF -->
+                        <rect x="450" y="120" width="300" height="80" fill="#fff3e0" stroke="#ff6f00" stroke-width="2" rx="8" />
+                        <text x="600" y="150" text-anchor="middle" font-size="16" font-weight="bold" fill="#e65100">CloudFront CDN</text>
+                        <text x="600" y="175" text-anchor="middle" font-size="13" fill="#ff6f00">AWS WAF Enabled</text>
+
+                        <!-- Route 53 -->
+                        <rect x="150" y="120" width="200" height="80" fill="#e8f5e9" stroke="#388e3c" stroke-width="2" rx="8" />
+                        <text x="250" y="150" text-anchor="middle" font-size="16" font-weight="bold" fill="#2e7d32">Route 53</text>
+                        <text x="250" y="175" text-anchor="middle" font-size="13" fill="#388e3c">DNS &amp; Health Checks</text>
+
+                        <!-- VPC Border -->
+                        <rect x="100" y="250" width="1000" height="500" fill="#f5f5f5" stroke="#424242" stroke-width="3" rx="12" />
+                        <text x="600" y="285" text-anchor="middle" font-size="20" font-weight="bold" fill="#212121">VPC: 10.0.0.0/16</text>
+
+                        <!-- Internet Gateway -->
+                        <rect x="500" y="310" width="200" height="60" fill="#64b5f6" stroke="#1976d2" stroke-width="2" rx="6" />
+                        <text x="600" y="345" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Internet Gateway</text>
+
+                        <!-- Public Subnet Zone -->
+                        <rect x="150" y="400" width="900" height="120" fill="#c8e6c9" stroke="#388e3c" stroke-width="2" rx="8" />
+                        <text x="600" y="430" text-anchor="middle" font-size="16" font-weight="bold" fill="#2e7d32">Public Subnets (DMZ)</text>
+
+                        <!-- ALB -->
+                        <rect x="250" y="450" width="150" height="50" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="6" />
+                        <text x="325" y="478" text-anchor="middle" font-size="13" fill="white">Application LB</text>
+
+                        <!-- NAT Gateway -->
+                        <rect x="450" y="450" width="150" height="50" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="6" />
+                        <text x="525" y="478" text-anchor="middle" font-size="13" fill="white">NAT Gateway</text>
+
+                        <!-- Bastion -->
+                        <rect x="650" y="450" width="150" height="50" fill="#4caf50" stroke="#2e7d32" stroke-width="2" rx="6" />
+                        <text x="725" y="478" text-anchor="middle" font-size="13" fill="white">Bastion Host</text>
+
+                        <!-- Private Subnet Zone -->
+                        <rect x="150" y="550" width="900" height="120" fill="#bbdefb" stroke="#1976d2" stroke-width="2" rx="8" />
+                        <text x="600" y="580" text-anchor="middle" font-size="16" font-weight="bold" fill="#0d47a1">Private Subnets (Application)</text>
+
+                        <!-- App Servers -->
+                        <rect x="200" y="600" width="120" height="50" fill="#2196f3" stroke="#0d47a1" stroke-width="2" rx="6" />
+                        <text x="260" y="628" text-anchor="middle" font-size="12" fill="white">Web Servers</text>
+
+                        <rect x="370" y="600" width="120" height="50" fill="#2196f3" stroke="#0d47a1" stroke-width="2" rx="6" />
+                        <text x="430" y="628" text-anchor="middle" font-size="12" fill="white">API Servers</text>
+
+                        <rect x="540" y="600" width="120" height="50" fill="#2196f3" stroke="#0d47a1" stroke-width="2" rx="6" />
+                        <text x="600" y="628" text-anchor="middle" font-size="12" fill="white">Workers</text>
+
+                        <!-- Security Groups -->
+                        <rect x="150" y="690" width="400" height="50" fill="#ffccbc" stroke="#d84315" stroke-width="2" rx="6" />
+                        <text x="350" y="720" text-anchor="middle" font-size="13" fill="#bf360c">Security Groups &amp; NACLs</text>
+
+                        <!-- VPC Endpoints -->
+                        <rect x="600" y="690" width="450" height="50" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="6" />
+                        <text x="825" y="715" text-anchor="middle" font-size="13" fill="#6a1b9a">VPC Endpoints: S3, DynamoDB, ECR</text>
+
+                        <!-- Arrows and connections -->
+                        <defs>
+                            <marker id="arrowNet" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#1976d2"></polygon>
+                            </marker>
+                        </defs>
+
+                        <line x1="600" y1="80" x2="600" y2="120" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowNet)" />
+                        <line x1="600" y1="200" x2="600" y2="310" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowNet)" />
+                        <line x1="600" y1="370" x2="475" y2="400" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowNet)" />
+                        <line x1="325" y1="500" x2="260" y2="550" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowNet)" />
+                    </svg>
+                </div>
+
+                <div class="code-block">
+                    <code>
+# Security Rules Summary<br />
+<br />
+Public Subnet ACL:<br />
+  Inbound: 80/443 from 0.0.0.0/0<br />
+  Outbound: All traffic allowed<br />
+<br />
+Private Subnet ACL:<br />
+  Inbound: All from VPC CIDR<br />
+  Outbound: 80/443 to 0.0.0.0/0<br />
+<br />
+ALB Security Group:<br />
+  Inbound: 80/443 from 0.0.0.0/0<br />
+  Outbound: 8080 to App SG<br />
+<br />
+App Security Group:<br />
+  Inbound: 8080 from ALB SG<br />
+  Outbound: 5432 to DB SG
+                    </code>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security Diagram -->
+        <section id="security" class="diagram-section" role="tabpanel" aria-labelledby="tab-security">
+            <div class="diagram-card">
+                <h2 class="diagram-title">Security Architecture &amp; Compliance</h2>
+                <p class="diagram-description">
+                    Multi-layered security approach with defense in depth principles.
+                </p>
+
+                <div class="diagram-canvas">
+                    <svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Security Layers -->
+
+                        <!-- Layer 1: Perimeter -->
+                        <rect x="100" y="50" width="1000" height="100" fill="#ffebee" stroke="#c62828" stroke-width="3" rx="8" />
+                        <text x="600" y="85" text-anchor="middle" font-size="18" font-weight="bold" fill="#b71c1c">Layer 1: Perimeter Security</text>
+                        <text x="600" y="115" text-anchor="middle" font-size="13" fill="#c62828">WAF | DDoS Protection | CloudFront Shield</text>
+
+                        <!-- Layer 2: Network -->
+                        <rect x="150" y="180" width="900" height="100" fill="#fff3e0" stroke="#e65100" stroke-width="3" rx="8" />
+                        <text x="600" y="215" text-anchor="middle" font-size="18" font-weight="bold" fill="#bf360c">Layer 2: Network Security</text>
+                        <text x="600" y="245" text-anchor="middle" font-size="13" fill="#e65100">Security Groups | NACLs | VPC Flow Logs</text>
+
+                        <!-- Layer 3: Application -->
+                        <rect x="200" y="310" width="800" height="100" fill="#fff9c4" stroke="#f57f17" stroke-width="3" rx="8" />
+                        <text x="600" y="345" text-anchor="middle" font-size="18" font-weight="bold" fill="#f57f17">Layer 3: Application Security</text>
+                        <text x="600" y="375" text-anchor="middle" font-size="13" fill="#f57f17">HTTPS/TLS 1.3 | OAuth 2.0 | JWT Tokens</text>
+
+                        <!-- Layer 4: Data -->
+                        <rect x="250" y="440" width="700" height="100" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3" rx="8" />
+                        <text x="600" y="475" text-anchor="middle" font-size="18" font-weight="bold" fill="#1b5e20">Layer 4: Data Security</text>
+                        <text x="600" y="505" text-anchor="middle" font-size="13" fill="#2e7d32">Encryption at Rest (AES-256) | Encryption in Transit</text>
+
+                        <!-- Layer 5: Identity -->
+                        <rect x="300" y="570" width="600" height="100" fill="#e3f2fd" stroke="#0d47a1" stroke-width="3" rx="8" />
+                        <text x="600" y="605" text-anchor="middle" font-size="18" font-weight="bold" fill="#01579b">Layer 5: Identity &amp; Access</text>
+                        <text x="600" y="635" text-anchor="middle" font-size="13" fill="#0d47a1">IAM Roles | MFA | Least Privilege | RBAC</text>
+                    </svg>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">100%</div>
+                        <div class="metric-label">Encryption Coverage</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">MFA</div>
+                        <div class="metric-label">Required for All Users</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">90 days</div>
+                        <div class="metric-label">Security Log Retention</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">24/7</div>
+                        <div class="metric-label">Security Monitoring</div>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <code>
+# Compliance Standards<br />
+✓ SOC 2 Type II<br />
+✓ PCI DSS Level 1<br />
+✓ HIPAA Compliant<br />
+✓ GDPR Ready<br />
+✓ ISO 27001<br />
+<br />
+# Security Audits<br />
+- Quarterly penetration testing<br />
+- Monthly vulnerability scans<br />
+- Weekly dependency updates<br />
+- Daily security monitoring
+                    </code>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Flow Diagram -->
+        <section id="data" class="diagram-section" role="tabpanel" aria-labelledby="tab-data">
+            <div class="diagram-card">
+                <h2 class="diagram-title">Data Flow &amp; Event Architecture</h2>
+                <p class="diagram-description">
+                    Complete data flow from user request through microservices to storage.
+                </p>
+
+                <div class="diagram-canvas">
+                    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+                        <!-- User -->
+                        <circle cx="100" cy="100" r="40" fill="#3f51b5" stroke="#1a237e" stroke-width="2"></circle>
+                        <text x="100" y="108" text-anchor="middle" font-size="14" fill="white">User</text>
+
+                        <!-- API Gateway -->
+                        <rect x="250" y="60" width="150" height="80" fill="#5c6bc0" stroke="#1a237e" stroke-width="2" rx="8" />
+                        <text x="325" y="95" text-anchor="middle" font-size="15" font-weight="bold" fill="white">API Gateway</text>
+                        <text x="325" y="115" text-anchor="middle" font-size="11" fill="white">Rate Limiting</text>
+
+                        <!-- Authentication Service -->
+                        <rect x="250" y="200" width="150" height="80" fill="#7e57c2" stroke="#4a148c" stroke-width="2" rx="8" />
+                        <text x="325" y="235" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Auth Service</text>
+                        <text x="325" y="255" text-anchor="middle" font-size="11" fill="white">JWT/OAuth2</text>
+
+                        <!-- Microservices -->
+                        <rect x="500" y="50" width="130" height="70" fill="#26a69a" stroke="#00695c" stroke-width="2" rx="6" />
+                        <text x="565" y="90" text-anchor="middle" font-size="13" fill="white">User Service</text>
+
+                        <rect x="500" y="150" width="130" height="70" fill="#26a69a" stroke="#00695c" stroke-width="2" rx="6" />
+                        <text x="565" y="190" text-anchor="middle" font-size="13" fill="white">Order Service</text>
+
+                        <rect x="500" y="250" width="130" height="70" fill="#26a69a" stroke="#00695c" stroke-width="2" rx="6" />
+                        <text x="565" y="290" text-anchor="middle" font-size="13" fill="white">Payment Service</text>
+
+                        <!-- Message Queue -->
+                        <rect x="700" y="150" width="150" height="120" fill="#ffa726" stroke="#e65100" stroke-width="2" rx="8" />
+                        <text x="775" y="185" text-anchor="middle" font-size="15" font-weight="bold" fill="white">Message Queue</text>
+                        <text x="775" y="205" text-anchor="middle" font-size="12" fill="white">SQS/SNS</text>
+                        <text x="775" y="230" text-anchor="middle" font-size="11" fill="white">Async Processing</text>
+
+                        <!-- Event Bus -->
+                        <rect x="700" y="300" width="150" height="80" fill="#ef5350" stroke="#c62828" stroke-width="2" rx="8" />
+                        <text x="775" y="335" text-anchor="middle" font-size="15" font-weight="bold" fill="white">Event Bus</text>
+                        <text x="775" y="355" text-anchor="middle" font-size="11" fill="white">EventBridge</text>
+
+                        <!-- Databases -->
+                        <rect x="950" y="80" width="180" height="80" fill="#42a5f5" stroke="#0d47a1" stroke-width="2" rx="8" />
+                        <text x="1040" y="115" text-anchor="middle" font-size="14" font-weight="bold" fill="white">PostgreSQL</text>
+                        <text x="1040" y="135" text-anchor="middle" font-size="11" fill="white">Primary Database</text>
+
+                        <rect x="950" y="190" width="180" height="80" fill="#66bb6a" stroke="#2e7d32" stroke-width="2" rx="8" />
+                        <text x="1040" y="225" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Redis Cache</text>
+                        <text x="1040" y="245" text-anchor="middle" font-size="11" fill="white">Session &amp; Cache</text>
+
+                        <rect x="950" y="300" width="180" height="80" fill="#ec407a" stroke="#880e4f" stroke-width="2" rx="8" />
+                        <text x="1040" y="335" text-anchor="middle" font-size="14" font-weight="bold" fill="white">ElasticSearch</text>
+                        <text x="1040" y="355" text-anchor="middle" font-size="11" fill="white">Search &amp; Analytics</text>
+
+                        <!-- Analytics Pipeline -->
+                        <rect x="250" y="450" width="600" height="100" fill="#7986cb" stroke="#283593" stroke-width="2" rx="8" />
+                        <text x="550" y="485" text-anchor="middle" font-size="16" font-weight="bold" fill="white">Analytics Pipeline</text>
+                        <text x="550" y="515" text-anchor="middle" font-size="12" fill="white">Kinesis → S3 → Athena → QuickSight</text>
+
+                        <!-- Storage -->
+                        <rect x="250" y="600" width="250" height="80" fill="#8d6e63" stroke="#4e342e" stroke-width="2" rx="8" />
+                        <text x="375" y="635" text-anchor="middle" font-size="14" font-weight="bold" fill="white">S3 Storage</text>
+                        <text x="375" y="655" text-anchor="middle" font-size="11" fill="white">Objects &amp; Backups</text>
+
+                        <!-- CDN -->
+                        <rect x="600" y="600" width="250" height="80" fill="#ab47bc" stroke="#4a148c" stroke-width="2" rx="8" />
+                        <text x="725" y="635" text-anchor="middle" font-size="14" font-weight="bold" fill="white">CloudFront CDN</text>
+                        <text x="725" y="655" text-anchor="middle" font-size="11" fill="white">Static Assets</text>
+
+                        <!-- Arrows -->
+                        <defs>
+                            <marker id="arrowData" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#333"></polygon>
+                            </marker>
+                        </defs>
+
+                        <line x1="140" y1="100" x2="250" y2="100" stroke="#333" stroke-width="2" marker-end="url(#arrowData)" />
+                        <line x1="325" y1="140" x2="325" y2="200" stroke="#333" stroke-width="2" marker-end="url(#arrowData)" />
+                        <line x1="400" y1="100" x2="500" y2="85" stroke="#333" stroke-width="2" marker-end="url(#arrowData)" />
+                        <line x1="400" y1="240" x2="500" y2="185" stroke="#333" stroke-width="2" marker-end="url(#arrowData)" />
+                        <line x1="630" y1="185" x2="700" y2="210" stroke="#333" stroke-width="2" marker-end="url(#arrowData)" />
+                        <line x1="630" y1="120" x2="950" y2="120" stroke="#333" stroke-width="2" marker-end="url(#arrowData)" />
+                        <line x1="850" y1="270" x2="850" y2="450" stroke="#333" stroke-width="2" marker-end="url(#arrowData)" />
+                    </svg>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">&lt; 50ms</div>
+                        <div class="metric-label">API Response Time (p95)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">10K/sec</div>
+                        <div class="metric-label">Event Processing Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">99.95%</div>
+                        <div class="metric-label">Cache Hit Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">5TB</div>
+                        <div class="metric-label">Daily Data Processed</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = Array.from(document.querySelectorAll('.tab'));
+            const sections = Array.from(document.querySelectorAll('.diagram-section'));
+
+            const activateTab = (targetId) => {
+                tabs.forEach((tab) => {
+                    const isActive = tab.dataset.target === targetId;
+                    tab.classList.toggle('active', isActive);
+                    tab.setAttribute('aria-selected', String(isActive));
+                    tab.setAttribute('tabindex', isActive ? '0' : '-1');
+                });
+
+                sections.forEach((section) => {
+                    const isActive = section.id === targetId;
+                    section.classList.toggle('active', isActive);
+                });
+            };
+
+            const focusTab = (index) => {
+                const clampedIndex = (index + tabs.length) % tabs.length;
+                const tab = tabs[clampedIndex];
+                tab.focus();
+                activateTab(tab.dataset.target);
+            };
+
+            tabs.forEach((tab, index) => {
+                tab.addEventListener('click', () => activateTab(tab.dataset.target));
+                tab.addEventListener('keydown', (event) => {
+                    switch (event.key) {
+                        case 'ArrowRight':
+                            event.preventDefault();
+                            focusTab(index + 1);
+                            break;
+                        case 'ArrowLeft':
+                            event.preventDefault();
+                            focusTab(index - 1);
+                            break;
+                        case 'Home':
+                            event.preventDefault();
+                            focusTab(0);
+                            break;
+                        case 'End':
+                            event.preventDefault();
+                            focusTab(tabs.length - 1);
+                            break;
+                        default:
+                            break;
+                    }
+                });
+            });
+
+            const initialTab = tabs.find((tab) => tab.classList.contains('active')) || tabs[0];
+            if (initialTab) {
+                activateTab(initialTab.dataset.target);
+            }
+        });
+    </script>
+</body>
+</html>
