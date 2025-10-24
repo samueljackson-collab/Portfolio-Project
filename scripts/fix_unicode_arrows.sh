@@ -2,13 +2,13 @@
 # Fix common HTML-escaped tokens introduced into Python files that break syntax.
 # Replaces occurrences of "-\u003e", "-\\u003e", and similar encodings that
 # might have been committed in place of the Python "->" annotation arrow.
+# Also normalizes stray "- >" into "->".
 #
-# Usage: ./scripts/fix_unicode_arrows.sh
+# Usage: bash scripts/fix_unicode_arrows.sh
 set -euo pipefail
 
-ROOT_DIR="$(cd "
-$(dirname "
-${BASH_SOURCE[0]}")/.. && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+echo "Repository root: $ROOT_DIR"
 
 # Find .py files and perform in-place replacements with a safety backup extension
 find "$ROOT_DIR" -type f -name '*.py' -print0 |
@@ -22,17 +22,16 @@ find "$ROOT_DIR" -type f -name '*.py' -print0 |
     sed -i -e 's/-\\u003e/->/g' \
            -e 's/-\\\\u003e/->/g' \
            -e 's/\\u002d\\u003e/->/g' \
-           -e 's/\\u003e/>/g' \
            -e 's/&#45;&#62;/->/g' \
-           -e 's/-\s\+>/-\>/g' \
+           -e 's/-[[:space:]]\+>/->/g' \
            "$file"
 
     # Quick Python parse check: compile the file to ensure no immediate syntax error
-    python -m py_compile "$file" 2>/dev/null || {
+    if ! python -m py_compile "$file" 2>/dev/null; then
       echo "WARNING: $file fails Python compile after replacements. Restoring backup."
       mv "${file}.bak" "$file"
       continue
-    }
+    fi
 
     echo "Patched and validated: $file"
   done
