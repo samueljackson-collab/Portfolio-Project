@@ -41,6 +41,10 @@ System-minded engineer specializing in building, securing, and operating infrast
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
 **Links**: [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
 
+### AWS Multi-Tier Production Infrastructure
+**Description** Terraform-built, multi-AZ reference architecture with autoscaling web tier, Multi-AZ PostgreSQL, CloudWatch/CloudTrail observability, and AWS Backup runbooks tuned for SaaS reliability.
+**Links**: [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-002/) · [Architecture](./projects/02-cloud-architecture/PRJ-CLOUD-002/docs/architecture.md) · [Operations](./projects/02-cloud-architecture/PRJ-CLOUD-002/docs/operations.md)
+
 ### Commercial E-commerce & Booking Systems
 **Description** Built and managed: resort booking site; high-SKU flooring store; tours site with complex variations.
 **Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets)
