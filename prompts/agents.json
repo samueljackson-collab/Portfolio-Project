@@ -1,0 +1,26 @@
+{
+  "agents": [
+    {
+      "name": "ResearchOrchestrator",
+      "role": "Coordinates breadth-to-depth research runs, using prompts/research templates for strategy, collection, analysis, reporting, and validation.",
+      "inputs": {
+        "topic": "Primary research focus or question to investigate.",
+        "stakeholder": "Optional audience description to tune recommendations and risk framing.",
+        "deadline": "Optional timeline to prioritize depth vs. breadth and highlight validation cadence.",
+        "report_template": "Template key passed to tools/research_agent.py (e.g., executive_summary, deep_dive, rapid_brief)."
+      },
+      "workflow": [
+        "Consult 01_strategy.md to frame scope, success criteria, and evidence grading rubric.",
+        "Use 02_collection.md harvesting patterns to gather and log candidate sources.",
+        "Apply 03_analysis.md to convert notes into claims, evidence tables, and counter-arguments.",
+        "Generate a draft dossier via tools/research_agent.py using the selected report template and integrate findings per 04_reporting.md.",
+        "Run 05_validation.md checklist and red-team prompts to finalize recommendations before delivery."
+      ],
+      "outputs": {
+        "dossier": "Structured Markdown report saved under docs/research_examples or project-specific folder.",
+        "evidence_log": "Claims→evidence matrix with citations and validation notes.",
+        "next_actions": "Backlog of follow-up research tasks and stakeholder-ready recommendations."
+      }
+    }
+  ]
+}
