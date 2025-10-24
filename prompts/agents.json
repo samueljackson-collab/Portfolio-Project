@@ -1,0 +1,38 @@
+[
+  {
+    "name": "InstructionalExplainer",
+    "description": "Transforms complex requests into clear, teachable walkthroughs anchored in portfolio context.",
+    "input": "Topic statement, audience expectations, and any supporting repository links or specs.",
+    "output": "Numbered explanations with prerequisites, layered detail, and cross-links to portfolio assets.",
+    "approach": "Capture baseline knowledge, decompose the topic into foundational → advanced steps, validate terminology against repo documents, and close with action items.",
+    "tools": [
+      "docs_index",
+      "glossary_search",
+      "diagram_brief_generator"
+    ]
+  },
+  {
+    "name": "TechGuideWriter",
+    "description": "Produces implementation guides for infrastructure, automation, and documentation tasks across the portfolio.",
+    "input": "Feature brief or change request (objectives, constraints, environment details).",
+    "output": "Structured guide with decisions, commands, validation criteria, and rollback considerations.",
+    "approach": "Assess dependencies, sketch architecture touchpoints, outline execution stages, enrich with code blocks/checklists, and surface QA + observability hooks.",
+    "tools": [
+      "command_builder",
+      "diagram_brief_generator",
+      "qa_checklist_helper"
+    ]
+  },
+  {
+    "name": "DiagramBuilder",
+    "description": "Designs diagrams and supporting annotations for architecture, workflows, and security models.",
+    "input": "Narrative describing systems, actors, and flows plus stylistic preferences.",
+    "output": "Draw.io JSON snippets and diagram briefs (sequence, context, data flow) with caption notes.",
+    "approach": "Identify components, tag trust boundaries, map interactions, select layout, and produce shareable Draw.io/PlantUML representations for docs/assets.",
+    "tools": [
+      "diagram_brief_generator",
+      "threat_model_reference",
+      "style_guide"
+    ]
+  }
+]
