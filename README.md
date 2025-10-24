@@ -5,6 +5,9 @@
 
 **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned
 
+## 📘 Guides & Templates
+- [GitHub Repository Setup Guide](docs/github-repository-setup-guide.md)
+
 ---
 ## 🎯 Summary
 System-minded engineer specializing in building, securing, and operating infrastructure and data-heavy web systems. Hands-on with homelab → production-like setups (wired rack, UniFi network, VPN, NAS), virtualization/services (Proxmox/TrueNAS), and observability/backups. Commercial experience shipping and maintaining booking/e-commerce sites with tens of thousands of SKUs and weekly price updates via SQL-driven workflows.

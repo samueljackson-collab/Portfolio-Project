@@ -1,0 +1,25 @@
+# Terraform state
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Local configuration
+terraform.tfvars
+*.tfvars
+.env
+
+# Keys and certificates
+*.pem
+*.key
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build artifacts
+/dist/
+/build/
+node_modules/

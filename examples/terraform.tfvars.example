@@ -1,0 +1,26 @@
+aws_region   = "us-west-2"
+environment  = "dev"
+project_name = "portfolio-demo"
+vpc_cidr     = "10.0.0.0/16"
+az_count     = 2
+
+# Application sizing
+instance_type          = "t3.micro"
+asg_desired_capacity   = 2
+asg_min_size           = 2
+asg_max_size           = 4
+
+# Database credentials (replace before deploying)
+db_username = "portfolio_admin"
+# Never commit real passwords. Replace this value locally.
+db_password = "CHANGE_ME_IN_LOCAL_TFVARS"
+
+db_instance_class        = "db.t3.small"
+db_allocated_storage     = 20
+db_max_allocated_storage = 100
+
+tags = {
+  Owner       = "Your Name"
+  CostCenter  = "Portfolio"
+  Terraform   = "true"
+}
