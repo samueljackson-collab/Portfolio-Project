@@ -1,0 +1,90 @@
+# CodeRabbit Configuration
+# This configuration enables CodeRabbit to review the repository with safer defaults
+
+# Enable reviews for source files with explicit ignores
+reviews:
+  # Review source files by default, but explicitly ignore generated/vendor/artifacts
+  path_filters:
+    - "**/*"
+  ignores:
+    - "node_modules/**"
+    - "vendor/**" 
+    - ".venv/**"
+    - "venv/**"
+    - "dist/**"
+    - "build/**"
+    - ".git/**"
+    - ".github/**"
+    - "**/*.min.js"
+    - "**/*.lock"
+  
+  # Enable auto-review on pull requests (but not auto-request changes)
+  auto_review:
+    enabled: true
+    drafts: false
+  
+  # Do NOT auto-request changes - let maintainers decide
+  request_changes_workflow: false
+  
+  # Enable high-level summary
+  high_level_summary: true
+  
+  # Disable poem for cleaner automated reviews
+  poem: false
+  
+  # Review settings
+  profile: "chill"
+  
+  # Use path_filters instead of review_all_files for better control
+  review_all_files: false
+
+# Language-specific settings
+language_settings:
+  markdown:
+    enabled: true
+  yaml:
+    enabled: true
+  python:
+    enabled: true
+  javascript:
+    enabled: true
+  typescript:
+    enabled: true
+  json:
+    enabled: true
+  shell:
+    enabled: true
+
+# Path-specific instructions for better targeted reviews
+path_instructions:
+  - path: "src/**"
+    instructions: |
+      Focus on code quality, tests, security, and maintainability.
+  - path: "docs/**" 
+    instructions: |
+      Focus on clarity, typos, and completeness of documentation.
+  - path: "**/*.md"
+    instructions: |
+      Check formatting and headings.
+
+# Chat settings - disable auto-reply to avoid noise
+chat:
+  auto_reply: false
+
+# Knowledge base - restrict to repo scope for privacy
+knowledge_base:
+  # Learn only from this repository
+  learnings_scope: "repo"
+  
+# Tools configuration
+tools:
+  ruff:
+    enabled: true
+  shellcheck:
+    enabled: true
+  markdownlint:
+    enabled: true
+  yamllint:
+    enabled: true
+  eslint:
+    enabled: true
