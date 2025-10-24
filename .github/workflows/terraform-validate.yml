@@ -1,0 +1,45 @@
+name: Terraform Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform fmt
+        working-directory: infrastructure/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (no backend)
+        working-directory: infrastructure/terraform
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        working-directory: infrastructure/terraform
+        run: terraform validate
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Run tflint
+        working-directory: infrastructure/terraform
+        run: |
+          tflint --init
+          tflint
