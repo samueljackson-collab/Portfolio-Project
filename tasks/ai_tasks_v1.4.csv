@@ -1,0 +1,13 @@
+id,area,title,status
+1,backend,Implement JWT authentication,Done
+2,backend,Create content CRUD endpoints,Done
+3,frontend,Build authenticated dashboard,Done
+4,frontend,Style pages with Tailwind,Done
+5,infra,Provision AWS network module,Done
+6,infra,Add compute auto scaling,Done
+7,monitoring,Expose Prometheus metrics,Done
+8,monitoring,Import Grafana dashboard,Done
+9,testing,Author Postman collection,Done
+10,testing,Configure k6 scenarios,Done
+11,docs,Write onboarding guide,Done
+12,automation,Publish manifest generator,Done

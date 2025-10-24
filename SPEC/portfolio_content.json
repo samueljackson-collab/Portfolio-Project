@@ -1,0 +1,12 @@
+{
+  "owner": "Samuel Jackson",
+  "title": "Portfolio Monorepo",
+  "summary": "A consolidated repository demonstrating backend, frontend, infrastructure, monitoring, and automated testing capabilities.",
+  "services": [
+    {"name": "backend", "description": "FastAPI REST API with JWT auth"},
+    {"name": "frontend", "description": "React SPA with Tailwind CSS"},
+    {"name": "infra", "description": "Terraform AWS infrastructure"},
+    {"name": "monitoring", "description": "Prometheus exporter and Grafana dashboards"},
+    {"name": "e2e-tests", "description": "Postman, k6, and security tests"}
+  ]
+}

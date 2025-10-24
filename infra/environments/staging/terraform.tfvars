@@ -1,0 +1,10 @@
+environment = "staging"
+region      = "us-east-1"
+public_subnets  = ["10.2.1.0/24", "10.2.2.0/24"]
+private_subnets = ["10.2.11.0/24", "10.2.12.0/24"]
+data_subnets    = ["10.2.21.0/24", "10.2.22.0/24"]
+instance_type   = "t3.medium"
+min_size        = 2
+max_size        = 3
+db_instance_class = "db.t3.medium"
+db_password     = "change-me"

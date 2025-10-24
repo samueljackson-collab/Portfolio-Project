@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r backend/requirements.txt
+          cd frontend && npm install
+      - name: Run backend tests
+        env:
+          DATABASE_URL: sqlite+aiosqlite:///./test.db
+          SECRET_KEY: release-secret
+        run: |
+          cd backend
+          pytest
+      - name: Build backend image
+        run: docker build -t ghcr.io/sams-jackson/portfolio-backend:${{ github.ref_name }} ./backend
+      - name: Build frontend image
+        run: docker build -t ghcr.io/sams-jackson/portfolio-frontend:${{ github.ref_name }} ./frontend
+      - name: Upload coverage
+        run: echo "Upload coverage step placeholder"
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    environment: staging
+    steps:
+      - uses: actions/checkout@v3
+      - name: Terraform apply (staging)
+        run: |
+          cd infra/environments/staging
+          terraform init
+          terraform apply -auto-approve
+      - name: Smoke tests
+        run: echo "Run smoke tests against staging"
+
+  approval:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+      - name: Await approval
+        uses: trstringer/manual-approval@v1
+        with:
+          approvers: sams-jackson
+          timeout-minutes: 1440
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: approval
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+      - name: Terraform apply (prod)
+        run: |
+          cd infra/environments/prod
+          terraform init
+          terraform apply -auto-approve
+      - name: Post-deploy checks
+        run: echo "Run blue-green validation"

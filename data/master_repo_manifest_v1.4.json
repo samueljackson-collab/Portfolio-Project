@@ -1,0 +1,6 @@
+{
+  "version": "1.4.0",
+  "services": ["backend", "frontend", "infra", "monitoring", "e2e-tests"],
+  "total_projects": 5,
+  "maintainer": "Samuel Jackson"
+}

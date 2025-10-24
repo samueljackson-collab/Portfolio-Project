@@ -1,0 +1,26 @@
+{
+  "title": "Portfolio Application Metrics",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Request Rate",
+      "targets": [
+        {"expr": "rate(portfolio_requests_total[1m])"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Request Duration",
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(portfolio_request_duration_seconds_bucket[5m])) by (le))"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Active Users",
+      "targets": [
+        {"expr": "portfolio_active_users"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": "1.4.0",
+  "services": {
+    "backend": "FastAPI + PostgreSQL",
+    "frontend": "React + Vite",
+    "infra": "Terraform AWS",
+    "monitoring": "FastAPI metrics exporter",
+    "e2e-tests": "Postman and k6"
+  }
+}

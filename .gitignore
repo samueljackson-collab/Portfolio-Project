@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+.env.*
+!.env.example
+!**/.env.example
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Docker
+**/Dockerfile.*
+**/.docker-compose
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Generated assets
+reports/
+artifacts/

@@ -1,0 +1,18 @@
+{
+  "name": "portfolio-monorepo",
+  "version": "1.4.0",
+  "private": true,
+  "scripts": {
+    "lint": "npm run lint:backend && npm run lint:frontend && npm run lint:infra",
+    "lint:backend": "ruff check backend",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:infra": "tflint --chdir infra",
+    "format": "npm run format:frontend",
+    "format:frontend": "cd frontend && npm run format"
+  },
+  "devDependencies": {
+    "eslint": "^8.54.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,14 @@
+[
+  {"id": 1, "area": "backend", "title": "Implement JWT authentication", "status": "Done"},
+  {"id": 2, "area": "backend", "title": "Create content CRUD endpoints", "status": "Done"},
+  {"id": 3, "area": "frontend", "title": "Build authenticated dashboard", "status": "Done"},
+  {"id": 4, "area": "frontend", "title": "Style pages with Tailwind", "status": "Done"},
+  {"id": 5, "area": "infra", "title": "Provision AWS network module", "status": "Done"},
+  {"id": 6, "area": "infra", "title": "Add compute auto scaling", "status": "Done"},
+  {"id": 7, "area": "monitoring", "title": "Expose Prometheus metrics", "status": "Done"},
+  {"id": 8, "area": "monitoring", "title": "Import Grafana dashboard", "status": "Done"},
+  {"id": 9, "area": "testing", "title": "Author Postman collection", "status": "Done"},
+  {"id": 10, "area": "testing", "title": "Configure k6 scenarios", "status": "Done"},
+  {"id": 11, "area": "docs", "title": "Write onboarding guide", "status": "Done"},
+  {"id": 12, "area": "automation", "title": "Publish manifest generator", "status": "Done"}
+]

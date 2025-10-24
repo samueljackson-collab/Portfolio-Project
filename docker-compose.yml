@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio
+      POSTGRES_DB: portfolio
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: postgresql+asyncpg://portfolio:portfolio@db:5432/portfolio
+      SECRET_KEY: local-secret-key
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_MINUTES: 43200
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+  monitoring:
+    build: ./monitoring
+    ports:
+      - "9090:9090"
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9091:9090"
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  db-data:
+  grafana-data:

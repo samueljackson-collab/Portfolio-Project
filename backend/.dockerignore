@@ -1,0 +1,7 @@
+__pycache__
+*.pyc
+.env
+.venv
+.coverage
+pytest.ini
+alembic.ini

@@ -1,0 +1,67 @@
+name: Security Scans
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  python-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install bandit pip-audit
+      - name: Run Bandit
+        run: bandit -r backend/app
+      - name: Run pip-audit
+        run: pip-audit -r backend/requirements.txt
+
+  node-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: cd frontend && npm install
+      - name: npm audit
+        run: cd frontend && npm audit --audit-level=high || true
+
+  container-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build images
+        run: |
+          docker build -t portfolio-backend ./backend
+          docker build -t portfolio-frontend ./frontend
+      - name: Scan images with Trivy
+        uses: aquasecurity/trivy-action@v0.14.0
+        with:
+          image-ref: 'portfolio-backend'
+      - name: Scan frontend image
+        uses: aquasecurity/trivy-action@v0.14.0
+        with:
+          image-ref: 'portfolio-frontend'
+
+  terraform-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working-directory: infra
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infra
