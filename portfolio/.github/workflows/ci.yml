@@ -1,0 +1,122 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Node dependencies
+        run: |
+          npm install
+          cd projects/frontend && npm install
+      - name: Run linters
+        run: make lint
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: portfolio
+          POSTGRES_PASSWORD: portfolio
+          POSTGRES_DB: portfolio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://portfolio:portfolio@localhost:5432/portfolio
+      JWT_SECRET_KEY: test-secret
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: cd projects/frontend && npm install
+      - name: Run tests
+        run: make test
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Integration Test Stub
+        run: |
+          echo "Integration tests placeholder"
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker Build
+        run: |
+          docker build -t ghcr.io/example/portfolio-backend:sha-${GITHUB_SHA} projects/backend
+          docker build -t ghcr.io/example/portfolio-frontend:sha-${GITHUB_SHA} projects/frontend
+      - name: Docker Push Placeholder
+        run: echo "Push to GHCR skipped (placeholder)"
+
+  sbom:
+    runs-on: ubuntu-latest
+    needs: docker-build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate SBOM (CycloneDX)
+        run: |
+          npm install -g @cyclonedx/cyclonedx-npm
+          cyclonedx-npm --output sbom.json
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+
+  staging-deploy:
+    runs-on: ubuntu-latest
+    needs: sbom
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deployment Stub
+        run: echo "Deploy to staging environment placeholder"
+
+  perf-test:
+    runs-on: ubuntu-latest
+    needs: staging-deploy
+    steps:
+      - uses: actions/checkout@v4
+      - name: k6 Performance Test Stub
+        run: echo "k6 performance tests placeholder"
+
+  release-gate:
+    runs-on: ubuntu-latest
+    needs: perf-test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release Approval Stub
+        run: echo "Manual approval required for production release"
