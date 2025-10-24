@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: Portfolio API
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /api/v1/status:
+    get:
+      summary: Health probe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  build:
+                    type: string
+                    example: 2025-10-24T18:30:00Z
+  /api/v1/projects:
+    get:
+      summary: List projects
+      responses:
+        '200':
+          description: Array of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    name: { type: string }
+                    status: { type: string, example: recovered }
