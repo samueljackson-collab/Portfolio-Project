@@ -105,7 +105,7 @@ Accept: application/json
   "summary": "Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.",
   "status": "done",
   "links": {
-    "repository": "https://github.com/sams-jackson/portfolio",
+    "repository": "https://github.com/sams-jackson/Portfolio-Project",
     "evidence": "s3://portfolio-evidence/prj-sde-002/"
   },
   "artifacts": [
@@ -135,7 +135,7 @@ Content-Type: application/json
   "status": "planned",
   "tags": ["qa", "automation"],
   "links": {
-    "repository": "https://github.com/sams-jackson/portfolio"
+    "repository": "https://github.com/sams-jackson/Portfolio-Project"
   }
 }
 ```

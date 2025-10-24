@@ -52,5 +52,5 @@ Security is embedded throughout the Portfolio API platform. This document outlin
 
 - **Static Analysis:** GolangCI-Lint and Semgrep run on every pull request.
 - **Dynamic Testing:** OWASP ZAP integration tests API endpoints nightly; findings triaged via Jira.
-- **Penetration Tests:** Annual third-party pentests review architecture, configuration, and custom code. Reports are cataloged in `documentation/security/pentest-reports/` with restricted access.
+- **Penetration Tests:** Annual third-party pentests review architecture, configuration, and custom code. Reports are cataloged in [`documentation/security/pentest-reports/`](./documentation/security/pentest-reports/) with restricted access instructions.
 

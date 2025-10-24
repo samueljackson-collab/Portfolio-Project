@@ -94,9 +94,9 @@ The script retrieves credentials from AWS Secrets Manager, validates checksums, 
 
 GitHub Actions workflows automate the steps above:
 
-- `.github/workflows/terraform.yml` plans and applies Terraform after manual approval.
-- `.github/workflows/deploy.yml` builds containers, pushes to ECR, runs migrations, and deploys manifests.
-- `.github/workflows/security.yml` runs [`scripts/compliance-scan.sh`](./scripts/compliance-scan.sh) to ensure policies in [`security/`](./security/) remain compliant.
+- `.github/workflows/terraform.yml` enforces `terraform fmt`/`validate` on every pull request. When AWS credentials are available, maintainers can trigger `workflow_dispatch` with `apply=true` to execute a full plan/apply using the selected `env/<environment>.tfvars` file.
+- `.github/workflows/deploy.yml` always exercises [`scripts/deploy.sh`](./scripts/deploy.sh) in `--dry-run` mode. Setting the `execute` input to `true` (and providing AWS credentials plus a smoke-test URL) promotes the job to run live deploys, migrations, and post-deploy smoke tests.
+- `.github/workflows/security.yml` installs Trivy, Syft, and Conftest before invoking [`scripts/compliance-scan.sh`](./scripts/compliance-scan.sh). The workflow scans `alpine:3.18` by default and can target a release image via the optional `image` input or the `COMPLIANCE_IMAGE` secret.
 
 Pipeline status is surfaced in Grafana dashboards under *CI/CD* and in the `#portfolio-deployments` Slack channel via Alertmanager webhooks.
 

@@ -95,15 +95,15 @@ System-minded engineer specializing in building, securing, and operating infrast
 
 ### Homelab & Secure Network Build
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
-**Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets)
+**Links**: [Export mapping](./documentation/original-portfolio.md#homelab--secure-network-build)
 
 ### Virtualization & Core Services
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-**Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets)
+**Links**: [Export mapping](./documentation/original-portfolio.md#virtualization--core-services)
 
 ### Observability & Backups Stack
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
+**Links**: [Export mapping](./documentation/original-portfolio.md#observability--backups-stack)
 
 ---
 ## 🔄 Past Projects Requiring Recovery
@@ -113,28 +113,28 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 ### Commercial E-commerce & Booking Systems (Rebuild in Progress)
 **Status** 🔄 Recovering artifacts from backup exports and recreating runbooks.
 **Description** Previously built and managed: resort booking site; high-SKU flooring store; tours site with complex variations. Code and process docs are being rebuilt for publication.
-**Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets) *(placeholder while recovery completes)*
+**Links**: [Export mapping](./documentation/original-portfolio.md#commercial-e-commerce--booking-systems-rebuild-in-progress) *(placeholder while recovery completes)*
 
 > **Recovery plan & timeline:** Catalog and restore SQL workflows and automation scripts (Week 1), re-document content management processes and deployment steps (Week 2), publish refreshed artifacts and narratives (Week 3).
 
 ---
 ## 🟠 In-Progress Projects (Milestones)
-- **GitOps Platform with IaC (Terraform + ArgoCD)** · [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-001/)
-- **AWS Landing Zone (Organizations + SSO)** · [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-001/)
-- **Active Directory Design & Automation (DSC/Ansible)** · [Repo/Folder](./projects/05-networking-datacenter/PRJ-NET-DC-001/)
-- **Resume Set (SDE/Cloud/QA/Net/Cyber)** · [Folder](./professional/resume/)
+- **GitOps Platform with IaC (Terraform + ArgoCD)** · [Export mapping](./documentation/original-portfolio.md#gitops-platform-with-iac-terraform--argocd)
+- **AWS Landing Zone (Organizations + SSO)** · [Export mapping](./documentation/original-portfolio.md#aws-landing-zone-organizations--sso)
+- **Active Directory Design & Automation (DSC/Ansible)** · [Export mapping](./documentation/original-portfolio.md#active-directory-design--automation-dscansible)
+- **Resume Set (SDE/Cloud/QA/Net/Cyber)** · [Export mapping](./documentation/original-portfolio.md#resume-set-sdecloudqanetc)
 
 ---
 ## 🔵 Planned Projects (Roadmaps)
-- **SIEM Pipeline**: Sysmon → Ingest → Detections → Dashboards · ([Repo/Folder](./projects/03-cybersecurity/PRJ-CYB-BLUE-001/))
-- **Adversary Emulation**: Validate detections via safe ATT&CK TTP emulation · ([Repo/Folder](./projects/03-cybersecurity/PRJ-CYB-RED-001/))
-- **Incident Response Playbook**: Clear IR guidance for ransomware · ([Repo/Folder](./projects/03-cybersecurity/PRJ-CYB-OPS-002/))
-- **Web App Login Test Plan**: Functional, security, and performance test design · ([Repo/Folder](./projects/04-qa-testing/PRJ-QA-001/))
-- **Selenium + PyTest CI**: Automate UI sanity runs in GitHub Actions · ([Repo/Folder](./projects/04-qa-testing/PRJ-QA-002/))
-- **Multi-OS Lab**: Kali, SlackoPuppy, Ubuntu lab for comparative analysis · ([Repo/Folder](./projects/06-homelab/PRJ-HOME-003/))
-- **Document Packaging Pipeline**: One-click generation of Docs/PDFs/XLSX from prompts · ([Repo/Folder](./projects/07-aiml-automation/PRJ-AIML-001/))
-- **IT Playbook (E2E Lifecycle)**: Unifying playbook from intake to operations · ([Folder](./docs/PRJ-MASTER-PLAYBOOK/))
-- **Engineer’s Handbook (Standards/QA Gates)**: Practical standards and quality bars · ([Folder](./docs/PRJ-MASTER-HANDBOOK/))
+- **SIEM Pipeline**: Sysmon → Ingest → Detections → Dashboards · ([Export mapping](./documentation/original-portfolio.md#siem-pipeline))
+- **Adversary Emulation**: Validate detections via safe ATT&CK TTP emulation · ([Export mapping](./documentation/original-portfolio.md#adversary-emulation))
+- **Incident Response Playbook**: Clear IR guidance for ransomware · ([Export mapping](./documentation/original-portfolio.md#incident-response-playbook))
+- **Web App Login Test Plan**: Functional, security, and performance test design · ([Export mapping](./documentation/original-portfolio.md#web-app-login-test-plan))
+- **Selenium + PyTest CI**: Automate UI sanity runs in GitHub Actions · ([Export mapping](./documentation/original-portfolio.md#selenium--pytest-ci))
+- **Multi-OS Lab**: Kali, SlackoPuppy, Ubuntu lab for comparative analysis · ([Export mapping](./documentation/original-portfolio.md#multi-os-lab))
+- **Document Packaging Pipeline**: One-click generation of Docs/PDFs/XLSX from prompts · ([Export mapping](./documentation/original-portfolio.md#document-packaging-pipeline))
+- **IT Playbook (E2E Lifecycle)**: Unifying playbook from intake to operations · ([Export mapping](./documentation/original-portfolio.md#it-playbook-e2e-lifecycle))
+- **Engineer’s Handbook (Standards/QA Gates)**: Practical standards and quality bars · ([Export mapping](./documentation/original-portfolio.md#engineers-handbook-standardsqa-gates))
 
 ---
 ## 💼 Experience
