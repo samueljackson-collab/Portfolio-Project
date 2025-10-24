@@ -27,6 +27,10 @@ System-minded engineer specializing in building, securing, and operating infrast
 - **Quality & Process:** runbooks, acceptance criteria, regression checklists, change control
 
 ---
+## 📚 Guides & Artifacts
+- **AWS Cost Optimization & FinOps Guide** · [Read the guide](./docs/guides/aws-cost-optimization-finops-guide.md)
+
+---
 ## 🟢 Completed Projects
 
 ### Homelab & Secure Network Build
