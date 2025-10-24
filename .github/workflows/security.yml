@@ -1,4 +1,3 @@
-# Security workflow that runs policy and image checks using the exported tooling.
 name: Security
 
 on:
@@ -21,6 +20,7 @@ on:
         required: false
         default: ''
 
+# Resolve the scan target image from workflow inputs or repository secrets.
 env:
   SCAN_IMAGE: ${{ github.event.inputs.image || secrets.COMPLIANCE_IMAGE || 'alpine:3.18' }}
 
@@ -29,25 +29,31 @@ jobs:
     name: Run compliance checks
     runs-on: ubuntu-latest
     steps:
+      # Pull the repository so the compliance script and policies are available.
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install Trivy to scan container images for known vulnerabilities.
       - name: Install Trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
 
+      # Syft generates SBOM output consumed later in the workflow.
       - name: Install Syft
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
 
+      # Conftest enforces Rego policies against the tracked security manifests.
       - name: Install Conftest
         run: |
           curl -sSL https://github.com/open-policy-agent/conftest/releases/download/v0.45.0/conftest_0.45.0_Linux_x86_64.tar.gz | tar -xz
           sudo mv conftest /usr/local/bin/
 
+      # Run the exported compliance script using the resolved image reference.
       - name: Execute compliance scan
         run: ./scripts/compliance-scan.sh --image ${{ env.SCAN_IMAGE }}
 
+      # Preserve the SBOM even when earlier steps fail to aid in debugging.
       - name: Upload SBOM artifact
         if: always()
         uses: actions/upload-artifact@v4

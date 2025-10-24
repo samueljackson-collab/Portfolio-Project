@@ -1,3 +1,4 @@
+# Sample values for the dev environment. Provide real secrets via a private tfvars file or TF_VAR overrides before applying.
 environment = "dev"
 public_subnets = {
   az1 = {
