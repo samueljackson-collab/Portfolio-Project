@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-api
+spec:
+  selector:
+    app: portfolio-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+  type: ClusterIP

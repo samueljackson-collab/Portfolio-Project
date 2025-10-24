@@ -1,0 +1,88 @@
+name: Deploy
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - 'infrastructure/kubernetes/**'
+      - '.github/workflows/deploy.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/**'
+      - 'infrastructure/kubernetes/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment (dev/staging/prod)'
+        required: true
+        default: dev
+      execute:
+        description: 'Set to true to perform the live deploy and migrations'
+        required: true
+        default: 'false'
+
+# Selected deployment environment shared across steps.
+env:
+  DEPLOY_ENV: ${{ github.event.inputs.environment || 'dev' }}
+
+jobs:
+  deploy:
+    name: Run deployment automation
+    runs-on: ubuntu-latest
+    steps:
+      # Ensure the runner has the repository state that triggered this workflow.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Rehearse the deployment using the Bash automation without mutating infrastructure.
+      - name: Dry-run infrastructure and application deploy
+        run: ./scripts/deploy.sh --env ${{ env.DEPLOY_ENV }} --dry-run
+
+      # Install Terraform only when a live deploy was explicitly requested.
+      - name: Install Terraform for live runs
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.execute == 'true'
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      # Pin kubectl so Kubernetes operations match the target control plane version.
+      - name: Install kubectl
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.execute == 'true'
+        uses: azure/setup-kubectl@v3
+        with:
+          version: v1.29.0
+
+      # Flyway performs schema migrations after infrastructure changes are applied.
+      - name: Install Flyway CLI
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.execute == 'true'
+        run: |
+          curl -sSL https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/9.22.0/flyway-commandline-9.22.0-linux-x64.tar.gz | tar -xz
+          sudo ln -s "$PWD/flyway-9.22.0/flyway" /usr/local/bin/flyway
+
+      # Execute the live deploy when credentials are supplied and execution was approved.
+      - name: Execute deployment
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.execute == 'true' && secrets.AWS_ACCESS_KEY_ID != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: ./scripts/deploy.sh --env ${{ env.DEPLOY_ENV }}
+
+      # Apply database migrations after the application rollout to keep schema in sync.
+      - name: Apply database migrations
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.execute == 'true' && secrets.AWS_ACCESS_KEY_ID != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: ./scripts/run-migrations.sh --env ${{ env.DEPLOY_ENV }}
+
+      # Optionally run smoke tests against an externally provided endpoint.
+      - name: Run smoke tests
+        if: secrets.SMOKE_TEST_BASE_URL != ''
+        env:
+          SMOKE_URL: ${{ secrets.SMOKE_TEST_BASE_URL }}
+        run: ./scripts/smoke-test.sh --base-url "$SMOKE_URL"

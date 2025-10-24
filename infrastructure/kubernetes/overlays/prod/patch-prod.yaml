@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-api
+spec:
+  replicas: 4
+  template:
+    spec:
+      containers:
+        - name: api
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1
+              memory: 1024Mi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: portfolio-api
+spec:
+  maxReplicas: 20
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portfolio-api
+  annotations:
+    alb.ingress.kubernetes.io/waf-acl-id: waf-portfolio-prod

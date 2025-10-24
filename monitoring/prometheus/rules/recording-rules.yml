@@ -1,0 +1,9 @@
+groups:
+  - name: portfolio-api-recording
+    rules:
+      - record: service:portfolio_api_request_rate5m
+        expr: sum(rate(http_requests_total{app="portfolio-api",status!~"5.."}[5m]))
+      - record: service:portfolio_api_error_rate5m
+        expr: sum(rate(http_requests_total{app="portfolio-api",status=~"5.."}[5m]))
+      - record: service:portfolio_api_latency_p95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{app="portfolio-api"}[5m])) by (le))

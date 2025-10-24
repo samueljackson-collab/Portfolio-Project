@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-api
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          resources:
+            requests:
+              cpu: 300m
+              memory: 384Mi
+            limits:
+              cpu: 750m
+              memory: 768Mi
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portfolio-api
+  annotations:
+    external-dns.alpha.kubernetes.io/ttl: "60"

@@ -1,0 +1,17 @@
+### List portfolio entries
+GET https://api.staging.portfolio.example.com/api/v1/portfolio?page=1&limit=5
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Create portfolio entry
+POST https://api.staging.portfolio.example.com/api/v1/portfolio
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "id": "PRJ-SDE-010",
+  "title": "Infrastructure Export",
+  "summary": "Automated export of infrastructure and documentation assets.",
+  "status": "done",
+  "tags": ["terraform", "kubernetes"]
+}

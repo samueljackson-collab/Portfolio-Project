@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: portfolio-reindex
+spec:
+  schedule: "0 3 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: portfolio-worker
+          containers:
+            - name: reindex
+              image: ghcr.io/sams-jackson/portfolio-worker:latest
+              args: ["reindex"]
+              envFrom:
+                - configMapRef:
+                    name: portfolio-api-config
+                - secretRef:
+                    name: portfolio-api-secrets
+          restartPolicy: OnFailure

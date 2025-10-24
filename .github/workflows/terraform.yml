@@ -1,0 +1,75 @@
+name: Terraform
+
+on:
+  pull_request:
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Terraform tfvars environment (dev|staging/prod)'
+        required: true
+        default: dev
+      apply:
+        description: 'Set to true to run terraform apply using the saved plan'
+        required: true
+        default: 'false'
+
+# Directory containing the Terraform configuration used throughout the pipeline.
+env:
+  TERRAFORM_DIRECTORY: infrastructure/terraform
+
+jobs:
+  terraform:
+    name: Validate infrastructure changes
+    runs-on: ubuntu-latest
+    env:
+      TERRAFORM_ENV: ${{ github.event.inputs.environment || 'dev' }}
+      TF_IN_AUTOMATION: 'true'
+    steps:
+      # Make the repository contents available so Terraform runs against the PR branch state.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Pin the Terraform CLI to avoid drift between local and CI executions.
+      - name: Install Terraform CLI
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      # Fail fast if formatting diverges from `terraform fmt` output.
+      - name: Enforce formatting
+        run: terraform -chdir=${{ env.TERRAFORM_DIRECTORY }} fmt -check
+
+      # Initialize providers and modules before performing validation or planning.
+      - name: Initialize modules and providers
+        run: terraform -chdir=${{ env.TERRAFORM_DIRECTORY }} init -input=false
+
+      # Validate configuration semantics to catch obvious errors prior to planning.
+      - name: Validate configuration
+        run: terraform -chdir=${{ env.TERRAFORM_DIRECTORY }} validate
+
+      # Produce a plan when AWS credentials are provided, storing it for optional apply runs.
+      - name: Terraform plan
+        if: secrets.AWS_ACCESS_KEY_ID != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: terraform -chdir=${{ env.TERRAFORM_DIRECTORY }} plan -input=false -var-file=env/${{ env.TERRAFORM_ENV }}.tfvars -out=tfplan
+
+      # Manual `workflow_dispatch` runs can apply the saved plan after human approval.
+      - name: Terraform apply
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.apply == 'true' && secrets.AWS_ACCESS_KEY_ID != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: terraform -chdir=${{ env.TERRAFORM_DIRECTORY }} apply -input=false tfplan
