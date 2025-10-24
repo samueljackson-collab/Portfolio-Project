@@ -1,0 +1,29 @@
+[project]
+name = "portfolio-backend"
+version = "0.1.0"
+description = "FastAPI backend for the portfolio platform"
+authors = [{ name = "Portfolio Team" }]
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.109.2",
+  "uvicorn[standard]==0.27.0.post1",
+  "pydantic==2.5.3",
+  "pydantic-settings==2.1.0"
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra"
+
+[tool.coverage.report]
+omit = ["tests/*"]
+fail_under = 80
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "B", "UP"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]

@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Portfolio stack provisioning sample resources
+
+Parameters:
+  FrontendBucketName:
+    Type: String
+    Default: portfolio-frontend-sample
+
+Resources:
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref FrontendBucketName
+      Tags:
+        - Key: Project
+          Value: portfolio
+
+Outputs:
+  FrontendBucketName:
+    Description: Name of the S3 bucket hosting the frontend
+    Value: !Ref FrontendBucket

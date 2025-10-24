@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-frontend
+  labels:
+    app: portfolio-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: portfolio-frontend
+  template:
+    metadata:
+      labels:
+        app: portfolio-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/portfolio-platform/frontend:0.1.0
+          ports:
+            - containerPort: 4173
+          env:
+            - name: VITE_BACKEND_URL
+              value: http://portfolio-backend
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4173
+            initialDelaySeconds: 5
+            periodSeconds: 10

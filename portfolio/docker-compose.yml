@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  backend:
+    build:
+      context: ./projects/backend
+    env_file:
+      - ./projects/backend/.env.example
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./projects/backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+  frontend:
+    build:
+      context: ./projects/frontend
+    env_file:
+      - ./projects/frontend/.env.example
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./projects/frontend:/usr/src/app
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    depends_on:
+      - backend
+networks:
+  default:
+    name: portfolio

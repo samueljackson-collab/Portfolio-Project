@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/astral-sh/uv
+    rev: 0.1.2
+    hooks:
+      - id: uv-export
+        args: ["--format=requirements.txt", "--frozen"]
+  - repo: https://github.com/prettier/prettier
+    rev: 3.1.0
+    hooks:
+      - id: prettier
+        additional_dependencies:
+          - prettier@3.1.0
+          - prettier-plugin-organize-imports@3.2.3

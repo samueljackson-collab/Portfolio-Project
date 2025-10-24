@@ -1,0 +1,20 @@
+{
+  "name": "portfolio-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.0.0",
+    "npm": "^9.0.0"
+  },
+  "scripts": {
+    "frontend:install": "npm --prefix projects/frontend install",
+    "frontend:build": "npm --prefix projects/frontend run build",
+    "frontend:lint": "npm --prefix projects/frontend run lint",
+    "frontend:test": "npm --prefix projects/frontend run test",
+    "frontend:format": "npm --prefix projects/frontend run format",
+    "frontend:e2e": "npm --prefix projects/frontend run e2e",
+    "audit": "npm audit --omit=dev"
+  },
+  "devDependencies": {}
+}

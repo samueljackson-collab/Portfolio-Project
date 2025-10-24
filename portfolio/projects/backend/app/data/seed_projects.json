@@ -1,0 +1,16 @@
+[
+  {
+    "id": "proj-001",
+    "name": "Developer Portfolio",
+    "description": "Monorepo showcasing engineering accomplishments.",
+    "tags": ["fastapi", "react", "devops"],
+    "url": "https://example.com/portfolio"
+  },
+  {
+    "id": "proj-002",
+    "name": "Automation Toolkit",
+    "description": "Reusable scripts and pipelines that accelerate delivery.",
+    "tags": ["python", "ci", "infrastructure"],
+    "url": "https://example.com/automation"
+  }
+]

@@ -1,0 +1,15 @@
+- id: FEAT-001
+  title: Implement project CRUD APIs
+  owner: backend
+  quarter: 2024Q1
+  status: planned
+- id: FEAT-002
+  title: Add authentication and authorization
+  owner: fullstack
+  quarter: 2024Q1
+  status: planned
+- id: FEAT-003
+  title: Launch marketing landing pages
+  owner: frontend
+  quarter: 2024Q2
+  status: planned
