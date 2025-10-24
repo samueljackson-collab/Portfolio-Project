@@ -45,6 +45,10 @@ System-minded engineer specializing in building, securing, and operating infrast
 **Description** Built and managed: resort booking site; high-SKU flooring store; tours site with complex variations.
 **Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets)
 
+### AWS Multi-Tier Architecture with Terraform
+**Description** Production-ready three-tier AWS environment with Auto Scaling, ALB, and Multi-AZ RDS delivered via Terraform.
+**Links**: [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-002/) · [Guide](./projects/02-cloud-architecture/PRJ-CLOUD-002/README.md)
+
 ---
 ## 🟠 In-Progress Projects (Milestones)
 - **GitOps Platform with IaC (Terraform + ArgoCD)** · [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-001/)

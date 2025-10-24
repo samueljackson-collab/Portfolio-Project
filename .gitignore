@@ -1,0 +1,16 @@
+# Terraform state and local settings
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+
+# macOS / Windows cruft
+.DS_Store
+Thumbs.db
