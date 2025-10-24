@@ -1,0 +1,21 @@
+{
+  "title": "Service Health",
+  "description": "Placeholder dashboard for FastAPI service metrics.",
+  "panels": [
+    {
+      "id": "request_rate",
+      "title": "Request Rate",
+      "query": "sum(rate(fastapi_requests_total[1m]))"
+    },
+    {
+      "id": "error_ratio",
+      "title": "Error Ratio",
+      "query": "sum(rate(fastapi_requests_total{status=~'5..'}[5m])) / sum(rate(fastapi_requests_total[5m]))"
+    },
+    {
+      "id": "latency_p95",
+      "title": "Latency P95",
+      "query": "histogram_quantile(0.95, sum(rate(fastapi_request_duration_seconds_bucket[5m])) by (le))"
+    }
+  ]
+}
