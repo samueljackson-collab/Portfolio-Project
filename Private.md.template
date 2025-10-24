@@ -1,0 +1,13 @@
+PRIVATE AI INSTRUCTIONS (TEMPLATE)
+
+This file is a template for internal AI instructions, prompt engineering notes, and operational runbooks. DO NOT commit your filled Private.md to the public repository. Instead, store the completed Private.md in a private vault (private repo, secrets manager, or encrypted storage).
+
+Summary for senior developers (technical, concise):
+- Purpose: central store for system prompts, orchestration logic, input/output contracts, and safety/post-processing.
+- Token limits: prefer short, deterministic prompts. Record expected token consumption and model settings.
+- Auth: describe token formats, rotation cadence, and verification endpoints.
+- Safety: list content filters, sanitization steps, and allowed post-processing.
+- Tests: include sanitized sample inputs & expected outputs for regression tests.
+- Deployment: describe where prompts are accessed at runtime and how they are versioned.
+
+Access: restrict to designated roles and rotate any referenced keys immediately after moving.
