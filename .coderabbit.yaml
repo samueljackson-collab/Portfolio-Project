@@ -15,6 +15,7 @@ reviews:
   review_all_files: false
   
   # Targeted path filters for what should be reviewed
+  # Note: Some paths (src/, *.py, *.js) are for future use as the project grows
   path_filters:
     - "src/**"
     - "scripts/**"
@@ -27,6 +28,7 @@ reviews:
     - "**/*.yaml"
   
   # Explicitly ignore vendor, generated, and build directories
+  # Note: .github/** is excluded to avoid reviewing workflow configurations
   path_ignore:
     - "node_modules/**"
     - "vendor/**"
