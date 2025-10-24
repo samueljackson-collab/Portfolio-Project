@@ -1,0 +1,88 @@
+# CodeRabbit Configuration (safer defaults)
+# Narrower scope, safer automation, and excludes for generated/vendor files.
+
+reviews:
+  # Default path filter (covers repo) but we explicitly ignore common generated/vendor paths below.
+  path_filters:
+    - "**/*"
+
+  # Explicit ignore patterns to avoid reviewing/generated/vendor files and secrets.
+  ignores:
+    - "node_modules/**"
+    - "vendor/**"
+    - ".venv/**"
+    - "venv/**"
+    - "dist/**"
+    - "build/**"
+    - ".git/**"
+    - ".github/**"
+    - "**/*.min.js"
+    - "**/*.lock"
+
+  # Auto-review runs the checks but will not post change requests automatically.
+  auto_review:
+    enabled: true
+    drafts: false
+    # only_with_label: "autorun" # optional if supported by CodeRabbit
+
+  # Do not automatically request changes — require a human to review suggestions.
+  request_changes_workflow: false
+
+  # High-level summary kept on
+  high_level_summary: true
+
+  # Disable poem and other noisy features for automated CI reviews
+  poem: false
+  profile: "chill"
+
+  review_all_files: false
+
+language_settings:
+  markdown:
+    enabled: true
+  yaml:
+    enabled: true
+  python:
+    enabled: true
+  javascript:
+    enabled: true
+  typescript:
+    enabled: true
+  json:
+    enabled: true
+  shell:
+    enabled: true
+
+# Path-specific instructions (focus areas)
+path_instructions:
+  - path: "src/**"
+    instructions: |
+      Focus on code quality, tests, security, and maintainability.
+  - path: "docs/**"
+    instructions: |
+      Focus on documentation clarity, formatting, and completeness.
+  - path: "**/*.md"
+    instructions: |
+      Check formatting, headings, and links.
+
+chat:
+  # Disable automatic replies to avoid noisy bot comments
+  auto_reply: false
+
+knowledge_base:
+  # Restrict learning to this repository only to avoid cross-repo persistence
+  learnings_scope: "repo"
+
+tools:
+  ruff:
+    enabled: true
+  shellcheck:
+    enabled: true
+  markdownlint:
+    enabled: true
+  yamllint:
+    enabled: true
+  eslint:
+    enabled: true
+  mypy:
+    enabled: false
