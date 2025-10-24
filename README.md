@@ -53,6 +53,10 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 > **Recovery plan & timeline:** Catalog and restore SQL workflows and automation scripts (Week 1), re-document content management processes and deployment steps (Week 2), publish refreshed artifacts and narratives (Week 3).
 
+### AWS Multi-Tier Architecture with Terraform
+**Description** Production-ready three-tier AWS environment with Auto Scaling, ALB, and Multi-AZ RDS delivered via Terraform.
+**Links**: [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-002/) · [Guide](./projects/02-cloud-architecture/PRJ-CLOUD-002/README.md)
+
 ---
 ## 🟠 In-Progress Projects (Milestones)
 - **GitOps Platform with IaC (Terraform + ArgoCD)** · [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-001/)
