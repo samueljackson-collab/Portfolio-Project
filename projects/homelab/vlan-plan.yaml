@@ -1,0 +1,25 @@
+vlans:
+  - id: 10
+    name: trusted
+    cidr: 10.10.10.0/24
+    gateway: 10.10.10.1
+    dhcp_range: 10.10.10.50-10.10.10.200
+    notes: "Servers, desktops, NAS"
+  - id: 20
+    name: iot_guest
+    cidr: 10.10.20.0/24
+    gateway: 10.10.20.1
+    dhcp_range: 10.10.20.20-10.10.20.220
+    notes: "IoT + guest Wi-Fi"
+  - id: 30
+    name: management
+    cidr: 10.10.30.0/24
+    gateway: 10.10.30.1
+    dhcp_range: 10.10.30.10-10.10.30.80
+    notes: "IPMI, controllers, admin jumpbox"
+  - id: 40
+    name: dmz
+    cidr: 10.10.40.0/24
+    gateway: 10.10.40.1
+    dhcp_range: 10.10.40.100-10.10.40.150
+    notes: "Reverse proxy, WAF, public services"

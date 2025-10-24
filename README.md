@@ -29,21 +29,12 @@ System-minded engineer specializing in building, securing, and operating infrast
 ---
 ## 🟢 Completed Projects
 
-### Homelab & Secure Network Build
-**Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
-**Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets)
-
-### Virtualization & Core Services
-**Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-**Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets)
-
-### Observability & Backups Stack
-**Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
-
-### Commercial E-commerce & Booking Systems
-**Description** Built and managed: resort booking site; high-SKU flooring store; tours site with complex variations.
-**Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets)
+| Project | Summary | Key Artifacts |
+| --- | --- | --- |
+| [Homelab & Secure Network Build](projects/homelab/README.md) | Wired rack, segmented VLANs, secure remote access for trusted/IoT/guest zones. | VLAN plan YAML, WireGuard onboarding template |
+| [Virtualization & Core Services](projects/virtualization/README.md) | Proxmox + TrueNAS cluster powering core services behind Traefik with GitOps automation. | Service topology diagram, backup rotation policy |
+| [Observability & Backups Stack](projects/observability/README.md) | Prometheus/Grafana/Loki stack with alerting workflows tied to backup verification. | Alert playbook, dashboard catalog, Alertmanager routes |
+| [Commercial E-commerce & Booking Systems](projects/ecommerce/README.md) | Data-heavy commerce + booking platforms with automated pricing and QA gates. | Catalog sync process, pricing automation SQL, incident playbook |
 
 ---
 ## 🟠 In-Progress Projects (Milestones)

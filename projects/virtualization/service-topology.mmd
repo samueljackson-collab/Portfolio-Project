@@ -1,0 +1,30 @@
+%% Mermaid source for virtualization platform
+graph LR
+    subgraph Network
+        FW[Firewall]
+        VLAN10[Trusted VLAN]
+        VLAN30[Management VLAN]
+    end
+    subgraph Compute
+        PVE1(Proxmox Node 1)
+        PVE2(Proxmox Node 2)
+        CEPH[Ceph Shared Storage]
+    end
+    subgraph Services
+        Traefik
+        WikiJS
+        HomeAssistant
+        Immich
+        Vaultwarden
+    end
+    FW --> VLAN10
+    FW --> VLAN30
+    VLAN30 --> PVE1
+    VLAN30 --> PVE2
+    PVE1 --> CEPH
+    PVE2 --> CEPH
+    VLAN10 --> Traefik
+    Traefik --> WikiJS
+    Traefik --> HomeAssistant
+    Traefik --> Immich
+    Traefik --> Vaultwarden
