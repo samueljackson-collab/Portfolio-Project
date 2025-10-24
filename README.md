@@ -84,4 +84,31 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ---
 ## 🤳 Connect
-[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
+[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson)
+
+---
+
+## 🧰 Repository utilities
+
+This portfolio is occasionally distributed as a bundle of ZIP archives.
+To recreate the exact workspace that powers the project directories
+referenced above, use the helper script in [`scripts/setup_workspace.py`](./scripts/setup_workspace.py).
+
+```bash
+python scripts/setup_workspace.py --root /path/to/zip/folder --zip-output
+```
+
+The script performs the same safe extraction and auto-fix steps used when
+assembling the repository:
+
+- Guarded ZIP extraction that prevents path traversal.
+- Light JSON/YAML/Python validation with trivial auto-remediation
+  (removing JSON comments/trailing commas and adding missing colons on
+  simple Python block headers).
+- Automatic filling of minimal `package.json` metadata when fields such as
+  `name`, `version`, or `license` are absent.
+- Summary reports (CSV + Markdown) that highlight every file touched so
+  you can follow up on anything that still needs manual attention.
+
+Passing `--zip-output` mirrors the original packaging step by producing a
+single archive containing the processed workspace.
