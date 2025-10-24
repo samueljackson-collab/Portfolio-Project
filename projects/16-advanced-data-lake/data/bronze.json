@@ -1,0 +1,2 @@
+{"event_id": "evt-1", "status": "success", "ingested_at": "2024-01-01T12:00:00Z"}
+{"event_id": "evt-2", "status": "failed", "ingested_at": "2024-01-01T12:05:00Z"}
