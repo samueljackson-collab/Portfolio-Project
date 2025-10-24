@@ -27,6 +27,17 @@ System-minded engineer specializing in building, securing, and operating infrast
 - **Quality & Process:** runbooks, acceptance criteria, regression checklists, change control
 
 ---
+## 📚 Portfolio Guide
+- [Start Here](./START_HERE.md) – Week 0 onboarding plan.
+- [Portfolio Structure & Strategy](./portfolio_structure.md) – Why the system looks the way it does.
+- [Portfolio Guide Overview](./portfolio_guide/README.md) – Pillars and usage instructions.
+- [Soft Skills Framework](./portfolio_guide/soft_skills_framework.md) – Turning behaviors into evidence.
+- [Recruiter Positioning Guide](./portfolio_guide/recruiter_positioning.md) – Tailor the narrative to different personas.
+- [Project Template](./portfolio_guide/project_template.md) – Checklist for completing each elite project.
+
+These resources support the five flagship projects in `./projects/` and ensure consistent, recruiter-friendly delivery.
+
+---
 ## 🟢 Completed Projects
 
 ### Homelab & Secure Network Build
