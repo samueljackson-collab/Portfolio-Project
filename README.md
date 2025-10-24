@@ -1,79 +1,83 @@
-# Hi, I'm Sam Jackson!
-**[System Development Engineer](https://github.com/sams-jackson)** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **Freelance Full-Stack Web Developer**
+# Portfolio Monorepo
 
-***Building reliable systems, documenting clearly, and sharing what I learn. I turn ambiguous requirements into runbooks, dashboards, and repeatable processes.***
+This repository contains a production-style monorepo that powers a complete systems engineering portfolio. It demonstrates full-stack delivery across backend, frontend, infrastructure, testing, and observability concerns.
 
-**Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned
+## 🚀 Quick Start
 
----
-## 🎯 Summary
-System-minded engineer specializing in building, securing, and operating infrastructure and data-heavy web systems. Hands-on with homelab → production-like setups (wired rack, UniFi network, VPN, NAS), virtualization/services (Proxmox/TrueNAS), and observability/backups. Commercial experience shipping and maintaining booking/e-commerce sites with tens of thousands of SKUs and weekly price updates via SQL-driven workflows.
+```bash
+# bootstrap dev tools
+./setup.sh
 
-<details><summary><strong>Alternate summaries for tailoring</strong></summary>
+# run full stack locally
+make dev
 
-**DevOps-forward** DevOps-leaning systems engineer who builds and operates reliable services end-to-end: homelab→production patterns (networking, virtualization, reverse proxy + TLS, backups), metrics/alerts (Prometheus/Grafana/Loki/Alertmanager), and automation with PowerShell/Bash/SQL. Experienced with data-heavy e-commerce/booking systems and operational runbooks.
+# run quality gates
+make ci
+```
 
-**QA-forward** Quality-driven systems engineer turning ambiguous requirements into testable runbooks, acceptance criteria, and regression checklists. Builds monitoring dashboards for golden signals, designs reliable backup/restore procedures, and uses SQL/automation to validate data integrity across high-SKU catalogs and booking systems.
-</details>
+## 🧱 Repository Layout
 
----
-## 🛠️ Core Skills
-- **Systems & Infra:** Linux/Windows, networking, VLANs, VPN, UniFi, NAS, Active Directory
-- **Virtualization/Services:** Proxmox/TrueNAS, reverse proxy + TLS, RBAC/MFA, backup/restore drills
-- **Automation & Scripting:** PowerShell, Bash, SQL (catalog ops, reporting), Git
-- **Web & Data:** WordPress, e-commerce/booking systems, schema design, large-catalog data ops
-- **Observability & Reliability:** Prometheus, Grafana, Loki, Alertmanager, golden signals, SLOs, PBS
-- **Cloud & Tools:** AWS/Azure (baseline), GitHub, Docs/Sheets, Visio/diagramming
-- **Quality & Process:** runbooks, acceptance criteria, regression checklists, change control
+| Path | Description |
+| --- | --- |
+| `backend/` | FastAPI service with PostgreSQL persistence and JWT authentication |
+| `frontend/` | Vite + React + Tailwind SPA that consumes the backend APIs |
+| `e2e-tests/` | Postman, k6, and ZAP automation suites for end-to-end validation |
+| `infra/` | Terraform infrastructure modules and environment stacks |
+| `monitoring/` | Metrics exporter and Grafana dashboards |
+| `docs/` | Architecture and operational documentation |
+| `.github/` | CI/CD automation powered by GitHub Actions |
+| `tools/`, `scripts/` | Automation utilities and packaging helpers |
+| `tasks/`, `data/`, `prompts/`, `SPEC/` | Planning, metadata, and AI enablement assets |
 
----
-## 🟢 Completed Projects
+## 🔁 Development Lifecycle
 
-### Homelab & Secure Network Build
-**Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
-**Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets)
+1. Provision infrastructure with Terraform modules under `infra/`.
+2. Build and run backend/frontend services via Docker Compose.
+3. Execute automated tests (unit, integration, e2e) through `make ci`.
+4. Monitor health using the Prometheus exporter and Grafana dashboards in `monitoring/`.
+5. Deploy using the GitHub Actions pipelines defined in `.github/workflows/`.
 
-### Virtualization & Core Services
-**Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-**Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets)
+## 🧪 Testing Strategy
 
-### Observability & Backups Stack
-**Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
+The repository follows a testing pyramid:
 
-### Commercial E-commerce & Booking Systems
-**Description** Built and managed: resort booking site; high-SKU flooring store; tours site with complex variations.
-**Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets)
+- **Unit tests**: FastAPI and React units (`pytest`, `vitest`).
+- **Integration tests**: API workflow coverage and component interplay.
+- **End-to-end tests**: Postman flows, k6 load simulations, and ZAP security scans.
 
----
-## 🟠 In-Progress Projects (Milestones)
-- **GitOps Platform with IaC (Terraform + ArgoCD)** · [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-001/)
-- **AWS Landing Zone (Organizations + SSO)** · [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-001/)
-- **Active Directory Design & Automation (DSC/Ansible)** · [Repo/Folder](./projects/05-networking-datacenter/PRJ-NET-DC-001/)
-- **Resume Set (SDE/Cloud/QA/Net/Cyber)** · [Folder](./professional/resume/)
+Refer to [`docs/testing.md`](docs/testing.md) for detail on tooling, coverage targets, and execution commands.
 
----
-## 🔵 Planned Projects (Roadmaps)
-- **SIEM Pipeline**: Sysmon → Ingest → Detections → Dashboards · ([Repo/Folder](./projects/03-cybersecurity/PRJ-CYB-BLUE-001/))
-- **Adversary Emulation**: Validate detections via safe ATT&CK TTP emulation · ([Repo/Folder](./projects/03-cybersecurity/PRJ-CYB-RED-001/))
-- **Incident Response Playbook**: Clear IR guidance for ransomware · ([Repo/Folder](./projects/03-cybersecurity/PRJ-CYB-OPS-002/))
-- **Web App Login Test Plan**: Functional, security, and performance test design · ([Repo/Folder](./projects/04-qa-testing/PRJ-QA-001/))
-- **Selenium + PyTest CI**: Automate UI sanity runs in GitHub Actions · ([Repo/Folder](./projects/04-qa-testing/PRJ-QA-002/))
-- **Multi-OS Lab**: Kali, SlackoPuppy, Ubuntu lab for comparative analysis · ([Repo/Folder](./projects/06-homelab/PRJ-HOME-003/))
-- **Document Packaging Pipeline**: One-click generation of Docs/PDFs/XLSX from prompts · ([Repo/Folder](./projects/07-aiml-automation/PRJ-AIML-001/))
-- **IT Playbook (E2E Lifecycle)**: Unifying playbook from intake to operations · ([Folder](./docs/PRJ-MASTER-PLAYBOOK/))
-- **Engineer’s Handbook (Standards/QA Gates)**: Practical standards and quality bars · ([Folder](./docs/PRJ-MASTER-HANDBOOK/))
+## 🛡️ Security & Compliance
 
----
-## 💼 Experience
-**Desktop Support Technician — 3DM (Redmond, WA) · Feb 2025–Present**  
-**Freelance IT & Web Manager — Self-employed · 2015–2022**  
-**Web Designer, Content & SEO — IPM Corp. (Cambodia) · 2013–2014**
+- Secrets managed through environment variables with `.env.example` templates.
+- Automated dependency scanning (pip-audit, npm audit, Snyk) and infrastructure scanning (tfsec, Checkov).
+- JWT-based authentication with refresh token support for session continuity.
 
----
-## 🎓 Education & Certifications
-**B.S., Information Systems** — Colorado State University (2016–2024)  
+## 📈 Observability
 
----
-## 🤳 Connect
-[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
+The monitoring service exposes Prometheus metrics that feed Grafana dashboards bundled under `monitoring/grafana/dashboards/`. Alerting rules and runbooks are documented in [`docs/deployment.md`](docs/deployment.md).
+
+## 📊 Advanced Reporting
+
+Portfolio-wide analytics can be generated with the advanced report generator under `tools/reporting/`. It produces PDF, HTML, Markdown, JSON, and Excel outputs enriched with AI-driven predictions and interactive Plotly dashboards:
+
+```python
+import asyncio
+from tools.reporting import AdvancedReportGenerator
+
+async def main():
+    generator = AdvancedReportGenerator()
+    results = await generator.generate_portfolio_report(
+        report_type="executive", output_formats=("html", "pdf", "json")
+    )
+    print(results)
+
+asyncio.run(main())
+```
+
+Generated artefacts are written to the `reports/` directory alongside accompanying radar and trend visualisations when Plotly is available.
+
+## 📬 Support
+
+Open an issue using the templates under `.github/ISSUE_TEMPLATE/` or reach out via the contact details in the project documentation. Contributions are welcome—see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+

@@ -1,0 +1,8 @@
+pre-commit
+ruff
+pytest
+jinja2
+pandas
+plotly
+openpyxl
+fpdf2

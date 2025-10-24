@@ -1,0 +1,44 @@
+name: Security Scans
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: |
+          pip install pip-audit bandit
+          npm install
+          npm install -g snyk
+          pip install -r backend/requirements.txt
+      - name: Python security
+        run: |
+          pip-audit
+          bandit -r backend/app
+      - name: Node security
+        run: |
+          npm audit --audit-level=high || true
+          snyk test || true
+      - name: Container security
+        uses: aquasecurity/trivy-action@v0.22.0
+        with:
+          image-ref: "./backend"
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+      - name: Terraform security
+        run: |
+          pip install checkov
+          checkov -d infra
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          ./tfsec infra

@@ -1,0 +1,7 @@
+[
+  {"id": 1, "title": "Implement FastAPI backend", "owner": "Platform", "status": "Complete"},
+  {"id": 2, "title": "Build React frontend", "owner": "Experience", "status": "In Progress"},
+  {"id": 3, "title": "Provision Terraform infrastructure", "owner": "Platform", "status": "Complete"},
+  {"id": 4, "title": "Set up monitoring stack", "owner": "Reliability", "status": "Complete"},
+  {"id": 5, "title": "Automate end-to-end tests", "owner": "Quality", "status": "In Progress"}
+]

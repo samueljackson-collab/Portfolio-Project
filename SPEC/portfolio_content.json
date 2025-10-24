@@ -1,0 +1,16 @@
+{
+  "owner": "Samuel Jackson",
+  "role": "Systems Development Engineer",
+  "projects": [
+    {
+      "name": "Backend API",
+      "description": "FastAPI service powering authentication and content management.",
+      "roi": "$8,400 five-year savings"
+    },
+    {
+      "name": "CI/CD Automation",
+      "description": "GitHub Actions pipelines providing automated quality gates and deployments.",
+      "roi": "347 hours/year saved"
+    }
+  ]
+}

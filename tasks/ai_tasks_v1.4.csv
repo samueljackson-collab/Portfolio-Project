@@ -1,0 +1,6 @@
+id,title,owner,status
+1,Implement FastAPI backend,Platform,Complete
+2,Build React frontend,Experience,In Progress
+3,Provision Terraform infrastructure,Platform,Complete
+4,Set up monitoring stack,Reliability,Complete
+5,Automate end-to-end tests,Quality,In Progress

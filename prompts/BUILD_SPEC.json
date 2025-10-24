@@ -1,0 +1,15 @@
+{
+  "services": [
+    "backend",
+    "frontend",
+    "e2e-tests",
+    "infra",
+    "monitoring"
+  ],
+  "languages": {
+    "python": "3.11",
+    "typescript": "5.x"
+  },
+  "infrastructure": "aws",
+  "cicd": "github-actions"
+}

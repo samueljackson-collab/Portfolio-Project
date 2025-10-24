@@ -1,0 +1,11 @@
+variable "project" { type = string }
+variable "environment" { type = string }
+variable "subnet_ids" { type = list(string) }
+variable "alb_subnet_ids" { type = list(string) }
+variable "vpc_id" { type = string }
+variable "instance_type" { type = string }
+variable "desired_capacity" { type = number }
+variable "min_size" { type = number }
+variable "max_size" { type = number }
+variable "alb_security_group_id" { type = string }
+variable "backend_security_group_id" { type = string }

@@ -1,0 +1,16 @@
+region               = "us-east-1"
+project              = "portfolio"
+environment          = "staging"
+vpc_cidr             = "10.1.0.0/16"
+azs                  = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs  = ["10.1.1.0/24", "10.1.2.0/24"]
+private_subnet_cidrs = ["10.1.3.0/24", "10.1.4.0/24"]
+data_subnet_cidrs    = ["10.1.5.0/24", "10.1.6.0/24"]
+instance_type        = "t3.small"
+desired_capacity     = 2
+min_size             = 1
+max_size             = 3
+db_username          = "portfolio"
+db_password          = "change-me"
+enable_multi_az      = true
+frontend_bucket_acl  = "private"
