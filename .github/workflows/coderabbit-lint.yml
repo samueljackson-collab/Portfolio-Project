@@ -1,0 +1,76 @@
+name: CodeRabbit Linters
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    name: Run CodeRabbit Linters
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Python linters
+      run: |
+        pip install --upgrade pip
+        pip install ruff yamllint
+
+    - name: Install Node.js linters
+      run: |
+        npm install -g eslint markdownlint-cli
+
+    - name: Install ShellCheck
+      run: |
+        sudo apt-get update
+        sudo apt-get install shellcheck
+
+    - name: Run Ruff (Python linter)
+      run: |
+        echo "::group::Ruff Results"
+        ruff check . --output-format=github || true
+        echo "::endgroup::"
+      continue-on-error: true
+
+    - name: Run ShellCheck (Shell script linter)
+      run: |
+        echo "::group::ShellCheck Results"
+        find . -name "*.sh" -not -path "./node_modules/*" -not -path "./.venv/*" -not -path "./vendor/*" -exec shellcheck {} \; || true
+        echo "::endgroup::"
+      continue-on-error: true
+
+    - name: Run MarkdownLint
+      run: |
+        echo "::group::MarkdownLint Results"
+        markdownlint --ignore node_modules --ignore .venv --ignore vendor . || true
+        echo "::endgroup::"
+      continue-on-error: true
+
+    - name: Run YAMLLint
+      run: |
+        echo "::group::YAMLLint Results"
+        yamllint --format github . || true
+        echo "::endgroup::"
+      continue-on-error: true
+
+    - name: Run ESLint (JavaScript/TypeScript linter)
+      run: |
+        echo "::group::ESLint Results"
+        npx eslint --ext .js,.jsx,.ts,.tsx --ignore-path .gitignore . || true
+        echo "::endgroup::"
+      continue-on-error: true
