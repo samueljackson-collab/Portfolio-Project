@@ -50,6 +50,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 - **GitOps Platform with IaC (Terraform + ArgoCD)** · [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-001/)
 - **AWS Landing Zone (Organizations + SSO)** · [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-001/)
 - **Active Directory Design & Automation (DSC/Ansible)** · [Repo/Folder](./projects/05-networking-datacenter/PRJ-NET-DC-001/)
+- **Local AI Marketing Suite (MonkAI)** · [Repo/Folder](./projects/07-aiml-automation/PRJ-AIML-002/)
 - **Resume Set (SDE/Cloud/QA/Net/Cyber)** · [Folder](./professional/resume/)
 
 ---
