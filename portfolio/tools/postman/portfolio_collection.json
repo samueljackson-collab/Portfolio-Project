@@ -1,0 +1,41 @@
+{
+  "info": {
+    "name": "Portfolio API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "List Projects",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/projects",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "projects"]
+        }
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": ["pm.variables.set('baseUrl', pm.environment.get('baseUrl') || 'http://localhost:8000');"],
+        "type": "text/javascript"
+      }
+    }
+  ]
+}

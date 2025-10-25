@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r portfolio/requirements.txt
+      - name: Lint
+        run: ruff check portfolio/projects/backend/app portfolio/projects/backend/tests
+      - name: Test
+        run: pytest --cov=portfolio/projects/backend/app --cov-report=xml --cov-report=term-missing --cov-fail-under=80 portfolio/projects/backend/tests
+      - name: Upload coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-coverage
+          path: coverage.xml
+
+  frontend:
+    name: Frontend Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install --prefix portfolio/projects/frontend
+      - name: Lint
+        run: npm run lint --prefix portfolio/projects/frontend
+      - name: Test
+        run: npm test --prefix portfolio/projects/frontend -- --run --coverage
+
+  security:
+    name: Security Scans
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: |
+          python -m pip install bandit
+          npm install --package-lock-only --prefix portfolio/projects/frontend
+      - name: Bandit
+        run: bandit -r portfolio/projects/backend/app
+      - name: npm audit
+        run: npm audit --omit=dev --prefix portfolio/projects/frontend

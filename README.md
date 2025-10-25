@@ -1,4 +1,5 @@
 # Hi, I'm Sam Jackson!
+> **Note:** The production-ready engineering portfolio platform lives in [`portfolio/`](portfolio/).
 **[System Development Engineer](https://github.com/sams-jackson)** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **Freelance Full-Stack Web Developer**
 
 ***Building reliable systems, documenting clearly, and sharing what I learn. I turn ambiguous requirements into runbooks, dashboards, and repeatable processes.***
