@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Weekly Portfolio Report</title>
+</head>
+<body>
+  <h1>Weekly Portfolio Report</h1>
+  <p>Generated on {{ generated_at }}</p>
+  <h2>Projects</h2>
+  <ul>
+  {% for project in projects %}
+    <li><strong>{{ project.name }}</strong> – status: {{ project.status }}</li>
+  {% endfor %}
+  </ul>
+</body>
+</html>

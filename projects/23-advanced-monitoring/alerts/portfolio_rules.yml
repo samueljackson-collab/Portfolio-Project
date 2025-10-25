@@ -1,0 +1,12 @@
+groups:
+  - name: portfolio-slo
+    rules:
+      - alert: PortfolioHighErrorBurn
+        expr: |
+          (sum(rate(http_requests_total{job="portfolio",status=~"5.."}[5m]))
+          / sum(rate(http_requests_total{job="portfolio"}[5m]))) > 0.02
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error burn rate in portfolio services"

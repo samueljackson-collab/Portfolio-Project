@@ -1,0 +1,8 @@
+name: portfolio-aws-infrastructure
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+config:
+  portfolio-aws-infrastructure:environment:
+    value: dev

@@ -1,0 +1,25 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  profile: minimal
+  meshConfig:
+    accessLogFile: /dev/stdout
+    enableAutoMtls: true
+    trustDomain: portfolio.local
+  values:
+    global:
+      multiCluster:
+        clusterName: primary
+      meshNetworks:
+        aws:
+          endpoints:
+            - fromRegistry: primary
+          gateways:
+            - address: gw.aws.example.com
+              port: 15443
+        gke:
+          endpoints:
+            - fromRegistry: remote
+          gateways:
+            - address: gw.gke.example.com
+              port: 15443

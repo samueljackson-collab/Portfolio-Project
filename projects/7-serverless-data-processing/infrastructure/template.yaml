@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless data processing platform
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    MemorySize: 256
+    Tracing: Active
+
+Parameters:
+  CuratedTableName:
+    Type: String
+    Default: portfolio-curated-events
+  WorkflowArn:
+    Type: String
+    Description: ARN of Step Functions workflow orchestrating transformations
+
+Resources:
+  IngestionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../src
+      Handler: lambda_pipeline.ingestion_handler
+      Environment:
+        Variables:
+          CURATED_TABLE: !Ref CuratedTable
+          WORKFLOW_ARN: !Ref WorkflowArn
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /events
+            Method: post
+        StorageEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref RawEventBucket
+            Events: s3:ObjectCreated:*
+
+  AnalyticsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../src
+      Handler: lambda_pipeline.analytics_handler
+      Environment:
+        Variables:
+          CURATED_TABLE: !Ref CuratedTable
+
+  CuratedTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  RawEventBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/events
+  CuratedTableName:
+    Value: !Ref CuratedTable

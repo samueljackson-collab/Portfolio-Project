@@ -1,0 +1,16 @@
+name: customer-churn-prediction
+n_trials: 25
+random_state: 7
+test_size: 0.25
+
+dataset:
+  path: data/churn.csv
+  target_column: churned
+  categorical_features:
+    - plan_type
+    - region
+    - device
+  numeric_features:
+    - monthly_spend
+    - tenure_months
+    - support_calls
