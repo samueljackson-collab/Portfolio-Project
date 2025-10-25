@@ -83,6 +83,13 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 **B.S., Information Systems** — Colorado State University (2016–2024)  
 
 ---
+
+## 🧰 Bootstrap Kit
+- Run `python tools/bootstrap.py --dry-run` to preview the scaffold actions.
+- Execute `python tools/bootstrap.py` to create any missing kit directories and template files.
+- Package the repository with `./scripts/package_zip.sh` (or `./scripts/package_zip.ps1` on Windows) to generate a distributable archive that omits build artifacts.
+- Review `prompts/BUILD_SPEC.json` and `tasks/ai_tasks_v1.*` to customize automation policies before publishing updates.
+
 ## 🤳 Connect
 [GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/samueljackson-collab/Portfolio-Project?utm_source=oss&utm_medium=github&utm_campaign=samueljackson-collab%2FPortfolio-Project&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)

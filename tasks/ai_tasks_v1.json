@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "generated_at": "2024-05-01T00:00:00Z",
+  "tasks": [
+    {
+      "id": "DOC-GUIDE-001",
+      "domain": "documentation",
+      "input": "Feature summary, environment assumptions, and desired outcomes.",
+      "tool": "TechGuideWriter",
+      "expected_output": "Markdown implementation guide with architecture notes, command snippets, and validation steps."
+    },
+    {
+      "id": "ARCH-DIAG-001",
+      "domain": "architecture",
+      "input": "System context narrative and component inventory.",
+      "tool": "DiagramBuilder",
+      "expected_output": "Draw.io compatible JSON with context + data flow diagrams and caption callouts."
+    },
+    {
+      "id": "SEC-THREAT-001",
+      "domain": "security",
+      "input": "Service description, trust boundaries, and known assets.",
+      "tool": "DiagramBuilder",
+      "expected_output": "Threat model diagram outline plus list of mitigations for each vector."
+    },
+    {
+      "id": "QA-RUNBOOK-001",
+      "domain": "quality",
+      "input": "Regression scope, release notes, and acceptance criteria.",
+      "tool": "InstructionalExplainer",
+      "expected_output": "Stepwise QA execution plan with pass/fail recording table."
+    },
+    {
+      "id": "DOC-PRESENT-001",
+      "domain": "enablement",
+      "input": "Audience persona, core message, and supporting metrics.",
+      "tool": "InstructionalExplainer",
+      "expected_output": "15-slide presentation outline mapped to docs/presentation_outline.md format."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+id,domain,input,tool,expected_output
+DOC-GUIDE-001,documentation,"Feature summary, environment assumptions, and desired outcomes.",TechGuideWriter,"Markdown implementation guide with architecture notes, command snippets, and validation steps."
+ARCH-DIAG-001,architecture,"System context narrative and component inventory.",DiagramBuilder,"Draw.io compatible JSON with context + data flow diagrams and caption callouts."
+SEC-THREAT-001,security,"Service description, trust boundaries, and known assets.",DiagramBuilder,"Threat model diagram outline plus list of mitigations for each vector."
+QA-RUNBOOK-001,quality,"Regression scope, release notes, and acceptance criteria.",InstructionalExplainer,"Stepwise QA execution plan with pass/fail recording table."
+DOC-PRESENT-001,enablement,"Audience persona, core message, and supporting metrics.",InstructionalExplainer,"15-slide presentation outline mapped to docs/presentation_outline.md format."

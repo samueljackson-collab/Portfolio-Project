@@ -1,0 +1,62 @@
+{
+  "repository": {
+    "name": "portfolio",
+    "description": "Portfolio assets with automation scaffolding built from the Portfolio Bootstrap Kit.",
+    "stacks": {
+      "infrastructure": [
+        "terraform",
+        "ansible",
+        "packer"
+      ],
+      "application": [
+        "python",
+        "node",
+        "static-site"
+      ],
+      "documentation": [
+        "mkdocs",
+        "drawio",
+        "plantuml"
+      ]
+    }
+  },
+  "policies": {
+    "branching": "Use feature/* branches with squash merges back into main.",
+    "reviews": "Require at least one reviewer and automated lint/test checks before merge.",
+    "security": "Weekly secret scanning, SAST on CI, and quarterly dependency audits.",
+    "documentation": "Update architecture and security docs when system boundaries or controls change."
+  },
+  "quality_gates": {
+    "lint": {
+      "python": "ruff --select=E,F --fix --exit-non-zero-on-fix",
+      "markdown": "markdownlint docs/**/*.md"
+    },
+    "tests": {
+      "python": "pytest",
+      "node": "npm test"
+    },
+    "artifacts": [
+      "Architecture diagrams updated in docs/assets",
+      "Security controls matrix kept in docs/security.md",
+      "Presentation outline refreshed for executive reviews"
+    ]
+  },
+  "automation": {
+    "bootstrap": "python tools/bootstrap.py",
+    "package": {
+      "bash": "./scripts/package_zip.sh",
+      "powershell": "./scripts/package_zip.ps1"
+    },
+    "tasks_registry": "tasks/ai_tasks_v1.json"
+  },
+  "observability": {
+    "dashboards": [
+      "pipeline-health",
+      "portfolio-site-uptime"
+    ],
+    "alerts": [
+      "ci-regression-failure",
+      "doc-drift-detected"
+    ]
+  }
+}
