@@ -17,6 +17,41 @@ System-minded engineer specializing in building, securing, and operating infrast
 </details>
 
 ---
+## 📈 Project Context & Operations
+
+### Team & Ownership
+| Role | Primary Responsibilities | Required Skills | Est. Weekly Hours | Backup |
+| --- | --- | --- | --- | --- |
+| **Content Lead** | Own editorial roadmap, on-page SEO, and cross-channel messaging; coordinate subject-matter interviews. | SEO strategy, content ops tooling, CMS publishing, stakeholder facilitation. | 15 | Ads/Automation Lead for publishing cadence; Executive Sponsor for approvals. |
+| **Video Lead** | Plan storyboards, capture/edit footage, publish to YouTube/shorts, repurpose for socials. | Video production, motion graphics, audio sweetening, platform analytics. | 12 | Content Lead handles scripts & narration; Ads/Automation Lead can assist with edits. |
+| **Ads & Automation Lead** | Manage paid campaigns, lifecycle automations, and marketing ops integrations (UTM, CRM, email). | Paid media strategy, marketing automation platforms, API/Zapier workflow design. | 18 | Analytics Engineer maintains automations; Content Lead pauses/spins up campaigns. |
+| **Analytics Engineer** | Build dashboards, maintain data pipelines, track KPIs, and surface insights for iteration. | SQL, BI tooling, ETL orchestration, experimentation frameworks. | 10 | Ads & Automation Lead keeps key dashboards updated; Executive Sponsor prioritizes insights. |
+| **Executive Sponsor** | Define strategic goals, unblock resources, approve scope pivots, and align stakeholders. | Portfolio oversight, budgeting, stakeholder management, risk mitigation. | 5 | Content Lead briefs interim sponsor; Analytics Engineer supplies status snapshots. |
+
+### RACI Matrix
+| Role \ Workstream | SEO | Video | Advertising | Automation | Competitor Intelligence |
+| --- | --- | --- | --- | --- | --- |
+| Content Lead | **A/R** | C | C | I | **A** |
+| Video Lead | C | **A/R** | I | I | C |
+| Ads & Automation Lead | C | C | **A/R** | **A/R** | C |
+| Analytics Engineer | R | C | C | R | **R** |
+| Executive Sponsor | I | I | I | I | I |
+
+### Sprint Cadence & Communications
+- **Daily stand-up:** 15 minutes at 09:30 PT (Zoom + shared agenda doc). Focus on yesterday/today/blockers with the Analytics Engineer logging action items. Asynchronous check-in thread in Slack `#21d-sprint` posted by 10:00 PT for anyone who cannot attend.
+- **Escalations:** Blockers >12 hours old escalated in Slack to the Ads & Automation Lead (operations owner). If still unresolved within 24 hours, the Content Lead pings the Executive Sponsor via email + Slack DM for resource decisions.
+- **Response SLAs:**
+  - Critical production/ads outage — acknowledge in ≤30 minutes during business hours, mitigate within 4 hours.
+  - Content/video blockers — acknowledge in ≤2 hours, mitigation plan within same day.
+  - Analytics/data discrepancies — acknowledge in ≤4 hours, resolution or workaround within 1 business day.
+
+### Onboarding & Cross-Training
+- **Knowledge base:** Maintain role playbooks in Notion with checklists for campaign launches, video publishing, and analytics refreshes. Each owner updates their guide at the close of every sprint.
+- **Pairing rotations:** Weekly 1-hour shadow sessions (Content ↔ Video, Ads ↔ Analytics) ensure backups can execute essentials like CMS publishes, basic video edits, or dashboard refreshes.
+- **Emergency coverage drills:** Once per sprint, rehearse a 24-hour absence scenario where backups execute the top-priority tasks and document gaps for remediation.
+- **Access management:** Store credentials and API keys in shared vault folders with role-based permissions to ensure backups can assume responsibilities without delays.
+
+---
 ## 🛠️ Core Skills
 - **Systems & Infra:** Linux/Windows, networking, VLANs, VPN, UniFi, NAS, Active Directory
 - **Virtualization/Services:** Proxmox/TrueNAS, reverse proxy + TLS, RBAC/MFA, backup/restore drills
