@@ -29,21 +29,13 @@ System-minded engineer specializing in building, securing, and operating infrast
 ---
 ## 🟢 Completed Projects
 
-### Homelab & Secure Network Build
-**Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
-**Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets)
+| Project | Focus | Key Artifacts |
+| --- | --- | --- |
+| [Homelab & Secure Network Build](./projects/homelab/README.md) | Segmented VLANs, zero-trust remote access, rack wiring. | Rack elevation diagram<br>pfSense/UniFi configs<br>Backup drill notes |
+| [Virtualization & Core Services](./projects/virtualization/README.md) | Proxmox/TrueNAS cluster delivering core applications with IaC. | Terraform modules<br>Ceph/PBS policies<br>Failover procedures |
+| [Observability & Backups Stack](./projects/observability/README.md) | Federated metrics, centralized logging, SLO-aligned alerting. | Prometheus rules<br>Alertmanager mappings<br>Incident playbooks |
+| [Commercial E-commerce & Booking Systems](./projects/ecommerce/README.md) | Pricing automation, content QA, booking-site reliability. | dbt models<br>QA checklists<br>Release/incident process docs |
 
-### Virtualization & Core Services
-**Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-**Links**: [Repo/Folder](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets)
-
-### Observability & Backups Stack
-**Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
-
-### Commercial E-commerce & Booking Systems
-**Description** Built and managed: resort booking site; high-SKU flooring store; tours site with complex variations.
-**Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets)
 
 ---
 ## 🟠 In-Progress Projects (Milestones)
