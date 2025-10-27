@@ -1,0 +1,2 @@
+# Terraform variable overrides (contains sensitive data)
+infra/terraform.tfvars
