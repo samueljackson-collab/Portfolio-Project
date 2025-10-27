@@ -84,4 +84,31 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ---
 ## 🤳 Connect
-[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
+[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson)
+
+---
+## Success Metrics & Post-Launch Optimization
+
+To keep shipped work improving, each KPI is instrumented with clear ownership, alerting, and review cadences so the team can move from data to action immediately.
+
+| Metric | Data Source | Dashboard/Query | Update Frequency | Owner | Alert Threshold |
+| --- | --- | --- | --- | --- | --- |
+| Booking CTA Conversion Rate | Matomo Goal ID 5 (`booking_cta_click`) on production landing pages | Matomo Dashboard: **Acquisition → Booking CTA Performance** (dashboard ID `7`, filtered to `siteId=3`) | Hourly API sync into n8n cache | Analytics Engineer | < 2.5% rolling 4-hour average |
+| Completed Booking Volume | MySQL view `analytics.completed_bookings_vw` via Matomo SQL connector | n8n Workflow **`matomo-booking-sync`** writing to Google Looker Studio report `Bookings & Revenue` (page 2) | Hourly at :15 | Revenue Operations Lead | < 30 bookings/day (projected weekly pace) |
+| Checkout Error Rate | Matomo Custom Report `Checkout Funnel Health` using Event Category `checkout_error` | Matomo Dashboard widget `Checkout Errors by Step` (dashboard ID `12`, filter `eventCategory=checkout_error`) | Every 15 minutes | QA Lead | > 3% of sessions with checkout events |
+| Average Order Value (AOV) | REST API `/reports/revenue/aov` (internal commerce API v2) pulled by n8n **`commerce-aov-monitor`** | SQL notebook `analytics/notebooks/aov_trend.sql` rendered in Metabase dashboard `Revenue Pulse` (card ID `89`) | Daily at 02:00 UTC | Finance Analyst | < $145 7-day trailing average |
+
+### Instrumentation & Setup Notes
+- **Booking CTA Conversion Rate**: Ensure Matomo Goal ID 5 is enabled with the funnel step `Landing Page → CTA Click`. Configure Matomo segment `trafficSource=Paid` to allow filtering in dashboard ID 7. Grant API access token `MATOMO_KPI_READ` to the n8n credential store.
+- **Completed Booking Volume**: n8n workflow `matomo-booking-sync` requires read access to the MySQL replica and service account `svc_looker_bookings`. In Looker Studio, apply the filter `Environment = Production` and share the report with the Revenue Ops group.
+- **Checkout Error Rate**: Matomo Custom Report must have dimensions `eventCategory`, `eventAction`, and `pageTitle`. Add event tracking to emit `eventCategory=checkout_error` with error codes in `eventAction`. Widget filter `eventAction!=test` excludes QA sandbox noise.
+- **Average Order Value**: Create Metabase saved question (card ID 89) using query `SELECT order_date, total_revenue / order_count AS aov FROM revenue.daily_summary WHERE channel != 'Internal'`. Schedule the card to refresh daily with timezone UTC and notify Finance Analyst role.
+
+### Alerting Workflow
+1. Matomo thresholds are polled via the relevant API endpoints by n8n workflows (`matomo-kpi-alerts`, `matomo-booking-sync`, `commerce-aov-monitor`).
+2. When a KPI crosses its alert threshold, n8n posts a structured message to Slack channel `#growth-alerts` and opens a Jira ticket using project key `KPI` with the breached metric, timeframe, and remediation checklist link.
+3. For persistent breaches (>2 consecutive runs), n8n escalates to the on-call owner via Slack direct message and tags the backup owner stored in the workflow metadata.
+
+### Cadence & Accountability
+- **Monday KPI Review**: Analytics Engineer leads a 30-minute stand-up reviewing the dashboards above, confirms alert resolutions, and queues follow-up actions in Jira.
+- **Mid-week Spot Check (Thursday)**: Owners validate data freshness and document any anomalies directly in the Matomo dashboard annotations.
