@@ -46,6 +46,10 @@ System-minded engineer specializing in building, securing, and operating infrast
 **Links**: [Repo/Folder](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets)
 
 ---
+## 🟠 Highlighted Projects (Docs incoming)
+Flagship builds where I'm actively polishing the long-form documentation. Repos and assets linked here are living drafts until the case studies are complete.
+
+---
 ## 🟠 In-Progress Projects (Milestones)
 - **GitOps Platform with IaC (Terraform + ArgoCD)** · [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-001/)
 - **AWS Landing Zone (Organizations + SSO)** · [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-001/)
