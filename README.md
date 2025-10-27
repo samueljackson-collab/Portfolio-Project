@@ -54,6 +54,10 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 > **Recovery plan & timeline:** Catalog and restore SQL workflows and automation scripts (Week 1), re-document content management processes and deployment steps (Week 2), publish refreshed artifacts and narratives (Week 3).
 
 ---
+## 🟠 Highlighted Projects (Docs incoming)
+Flagship builds where I'm actively polishing the long-form documentation. Repos and assets linked here are living drafts until the case studies are complete.
+
+---
 ## 🟠 In-Progress Projects (Milestones)
 - **GitOps Platform with IaC (Terraform + ArgoCD)** · [Repo/Folder](./projects/01-sde-devops/PRJ-SDE-001/)
 - **AWS Landing Zone (Organizations + SSO)** · [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-001/)
