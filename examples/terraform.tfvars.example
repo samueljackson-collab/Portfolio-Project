@@ -1,0 +1,34 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars - it is excluded by .gitignore
+
+# Project Configuration
+project_name = "portfolio"
+environment  = "dev"  # dev, staging, prod
+
+# Database Configuration (for modules/database)
+db_username             = "dbadmin"
+db_password             = "CHANGE_ME_USE_SECRETS_MANAGER"  # NEVER commit real passwords
+vpc_id                  = "vpc-xxxxxxxxxxxxx"
+subnet_ids              = ["subnet-xxxxxxxxxxxxx", "subnet-yyyyyyyyyyyyy"]
+allowed_security_group_ids = ["sg-xxxxxxxxxxxxx"]
+
+# Database Instance Settings
+instance_class          = "db.t3.small"
+allocated_storage       = 20
+max_allocated_storage   = 100
+engine_version          = "15.4"
+multi_az                = true
+backup_retention_period = 7
+
+# Safety Settings
+deletion_protection     = true   # Set to true for production
+skip_final_snapshot     = false  # Set to false for production (creates snapshot on destroy)
+apply_immediately       = false  # Set to false for production (apply changes during maintenance window)
+
+# Tags
+tags = {
+  ManagedBy = "terraform"
+  Owner     = "sam-jackson"
+  Purpose   = "portfolio-infrastructure"
+}
