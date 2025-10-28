@@ -1,0 +1,183 @@
+{
+  "markdown_files": [
+    "DEPLOYMENT.md",
+    "RELEASE_NOTES.md",
+    "README.md",
+    "SECURITY.md",
+    "tags/v0.1.0.md",
+    "docs/github-repository-setup-guide.md"
+  ],
+  "broken_links": [
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/06-homelab/PRJ-HOME-001/",
+      "resolved_path": "projects/06-homelab/PRJ-HOME-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Evidence/Diagrams",
+      "link_target": "./projects/06-homelab/PRJ-HOME-001/assets",
+      "resolved_path": "projects/06-homelab/PRJ-HOME-001/assets",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/06-homelab/PRJ-HOME-002/",
+      "resolved_path": "projects/06-homelab/PRJ-HOME-002",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Backup Logs",
+      "link_target": "./projects/06-homelab/PRJ-HOME-002/assets",
+      "resolved_path": "projects/06-homelab/PRJ-HOME-002/assets",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/01-sde-devops/PRJ-SDE-002/",
+      "resolved_path": "projects/01-sde-devops/PRJ-SDE-002",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Dashboards",
+      "link_target": "./projects/01-sde-devops/PRJ-SDE-002/assets",
+      "resolved_path": "projects/01-sde-devops/PRJ-SDE-002/assets",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/08-web-data/PRJ-WEB-001/",
+      "resolved_path": "projects/08-web-data/PRJ-WEB-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Evidence",
+      "link_target": "./projects/08-web-data/PRJ-WEB-001/assets",
+      "resolved_path": "projects/08-web-data/PRJ-WEB-001/assets",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/01-sde-devops/PRJ-SDE-001/",
+      "resolved_path": "projects/01-sde-devops/PRJ-SDE-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/02-cloud-architecture/PRJ-CLOUD-001/",
+      "resolved_path": "projects/02-cloud-architecture/PRJ-CLOUD-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/05-networking-datacenter/PRJ-NET-DC-001/",
+      "resolved_path": "projects/05-networking-datacenter/PRJ-NET-DC-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Folder",
+      "link_target": "./professional/resume/",
+      "resolved_path": "professional/resume",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/03-cybersecurity/PRJ-CYB-BLUE-001/",
+      "resolved_path": "projects/03-cybersecurity/PRJ-CYB-BLUE-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/03-cybersecurity/PRJ-CYB-RED-001/",
+      "resolved_path": "projects/03-cybersecurity/PRJ-CYB-RED-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/03-cybersecurity/PRJ-CYB-OPS-002/",
+      "resolved_path": "projects/03-cybersecurity/PRJ-CYB-OPS-002",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/04-qa-testing/PRJ-QA-001/",
+      "resolved_path": "projects/04-qa-testing/PRJ-QA-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/04-qa-testing/PRJ-QA-002/",
+      "resolved_path": "projects/04-qa-testing/PRJ-QA-002",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/06-homelab/PRJ-HOME-003/",
+      "resolved_path": "projects/06-homelab/PRJ-HOME-003",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Repo/Folder",
+      "link_target": "./projects/07-aiml-automation/PRJ-AIML-001/",
+      "resolved_path": "projects/07-aiml-automation/PRJ-AIML-001",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Folder",
+      "link_target": "./docs/PRJ-MASTER-PLAYBOOK/",
+      "resolved_path": "docs/PRJ-MASTER-PLAYBOOK",
+      "reason": "Target does not exist"
+    },
+    {
+      "markdown_file": "README.md",
+      "link_text": "Folder",
+      "link_target": "./docs/PRJ-MASTER-HANDBOOK/",
+      "resolved_path": "docs/PRJ-MASTER-HANDBOOK",
+      "reason": "Target does not exist"
+    }
+  ],
+  "readmes_to_create": [
+    "docs/PRJ-MASTER-HANDBOOK",
+    "docs/PRJ-MASTER-PLAYBOOK",
+    "professional/resume",
+    "projects/01-sde-devops/PRJ-SDE-001",
+    "projects/01-sde-devops/PRJ-SDE-002",
+    "projects/01-sde-devops/PRJ-SDE-002/assets",
+    "projects/02-cloud-architecture/PRJ-CLOUD-001",
+    "projects/03-cybersecurity/PRJ-CYB-BLUE-001",
+    "projects/03-cybersecurity/PRJ-CYB-OPS-002",
+    "projects/03-cybersecurity/PRJ-CYB-RED-001",
+    "projects/04-qa-testing/PRJ-QA-001",
+    "projects/04-qa-testing/PRJ-QA-002",
+    "projects/05-networking-datacenter/PRJ-NET-DC-001",
+    "projects/06-homelab/PRJ-HOME-001",
+    "projects/06-homelab/PRJ-HOME-001/assets",
+    "projects/06-homelab/PRJ-HOME-002",
+    "projects/06-homelab/PRJ-HOME-002/assets",
+    "projects/06-homelab/PRJ-HOME-003",
+    "projects/07-aiml-automation/PRJ-AIML-001",
+    "projects/08-web-data/PRJ-WEB-001",
+    "projects/08-web-data/PRJ-WEB-001/assets"
+  ],
+  "links_to_update": []
+}
