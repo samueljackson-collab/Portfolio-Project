@@ -1,0 +1,499 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  quality:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare quality reports directory
+        run: mkdir -p reports/quality
+
+      - name: Detect project layout
+        id: detect
+        run: |
+          if [ -d backend ]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -d frontend ]; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if find . -type f -name '*.tf' -not -path '*/.terraform/*' -print -quit | grep -q .; then
+            echo "terraform=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "terraform=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements*.txt
+            backend/requirements*.txt
+            backend/pyproject.toml
+
+      - name: Install Python linters
+        if: steps.detect.outputs.backend == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black isort bandit
+
+      - name: Run Ruff
+        if: steps.detect.outputs.backend == 'true'
+        run: |
+          ruff check backend | tee reports/quality/ruff.txt
+
+      - name: Run Black
+        if: steps.detect.outputs.backend == 'true'
+        run: |
+          black --check backend | tee reports/quality/black.txt
+
+      - name: Run Isort
+        if: steps.detect.outputs.backend == 'true'
+        run: |
+          isort --check-only backend | tee reports/quality/isort.txt
+
+      - name: Run Bandit
+        if: steps.detect.outputs.backend == 'true'
+        run: |
+          bandit -r backend -f txt -o reports/quality/bandit.txt
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.frontend == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        if: steps.detect.outputs.frontend == 'true'
+        working-directory: frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f yarn.lock ]; then
+            corepack enable
+            yarn install --frozen-lockfile
+          else
+            npm install
+          fi
+
+      - name: Run ESLint
+        if: steps.detect.outputs.frontend == 'true'
+        working-directory: frontend
+        run: |
+          mkdir -p ../reports/quality
+          if compgen -G '.eslintrc*' > /dev/null; then
+            npx --yes eslint . | tee ../reports/quality/eslint.txt
+          else
+            echo 'No ESLint configuration found; skipping ESLint.' | tee ../reports/quality/eslint.txt
+          fi
+
+      - name: Run Prettier check
+        if: steps.detect.outputs.frontend == 'true'
+        working-directory: frontend
+        run: |
+          mkdir -p ../reports/quality
+          npx --yes prettier --check . | tee ../reports/quality/prettier.txt
+
+      - name: npm audit (soft fail)
+        if: steps.detect.outputs.frontend == 'true'
+        working-directory: frontend
+        continue-on-error: true
+        run: |
+          npm audit --audit-level=high | tee ../reports/quality/npm-audit.txt
+
+      - name: Cache Terraform plugins
+        if: steps.detect.outputs.terraform == 'true'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.terraform.d/plugin-cache
+            ~/.tflint.d/plugins
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
+      - name: Set up Terraform
+        if: steps.detect.outputs.terraform == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Run tfsec
+        if: steps.detect.outputs.terraform == 'true'
+        uses: aquasecurity/tfsec-action@v1
+        with:
+          working_directory: .
+
+      - name: Set up TFLint
+        if: steps.detect.outputs.terraform == 'true'
+        uses: terraform-linters/setup-tflint@v1
+
+      - name: Initialize TFLint plugins
+        if: steps.detect.outputs.terraform == 'true'
+        run: tflint --init
+
+      - name: Run TFLint
+        if: steps.detect.outputs.terraform == 'true'
+        run: tflint --recursive
+
+      - name: Upload quality artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports
+          path: reports/quality
+          if-no-files-found: warn
+
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    env:
+      PYTHONPATH: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements*.txt
+            backend/requirements*.txt
+            backend/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+          if [ -f backend/requirements-dev.txt ]; then pip install -r backend/requirements-dev.txt; fi
+
+      - name: Detect Python tests
+        id: detect_tests
+        run: |
+          if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print -quit | grep -q .; then
+            echo "has_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run pytest
+        run: |
+          mkdir -p reports/unit
+          if [ "${{ steps.detect_tests.outputs.has_tests }}" != "true" ]; then
+            echo "No Python unit tests found; skipping."
+            exit 0
+          fi
+          pytest --maxfail=1 --disable-warnings --cov=. --cov-report=xml --cov-report=term --junitxml=reports/unit/pytest.xml
+          mv coverage.xml reports/unit/coverage.xml
+
+      - name: Upload unit test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: reports/unit
+          if-no-files-found: warn
+
+  integ:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit
+    env:
+      PYTHONPATH: backend
+      DATABASE_URL: postgresql://app:app@localhost:5432/app
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U app; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Postgres did not become ready in time."
+          exit 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements*.txt
+            backend/requirements*.txt
+            backend/pyproject.toml
+
+      - name: Install integration test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov httpx
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+          if [ -f backend/requirements-dev.txt ]; then pip install -r backend/requirements-dev.txt; fi
+
+      - name: Detect integration tests
+        id: detect_integ
+        run: |
+          if find tests -type f -path '*/integration/*' -name 'test_*.py' -print -quit | grep -q .; then
+            echo "has_integration=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_integration=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run HTTPX integration tests
+        run: |
+          mkdir -p reports/integration
+          if [ "${{ steps.detect_integ.outputs.has_integration }}" != "true" ]; then
+            echo "No integration tests found; skipping."
+            exit 0
+          fi
+          pytest tests/integration -k "httpx" --maxfail=1 --disable-warnings --junitxml=reports/integration/pytest.xml --cov=. --cov-report=xml
+          mv coverage.xml reports/integration/coverage.xml
+
+      - name: Upload integration test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: reports/integration
+          if-no-files-found: warn
+
+  build:
+    name: Build & Publish Images
+    runs-on: ubuntu-latest
+    needs: integ
+    env:
+      REGISTRY: ghcr.io/your-org/your-app
+      BACKEND_IMAGE_NAME: backend
+      FRONTEND_IMAGE_NAME: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect build contexts
+        id: detect
+        run: |
+          if [ -f backend/Dockerfile ]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -f frontend/Dockerfile ]; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build backend image
+        if: steps.detect.outputs.backend == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        if: steps.detect.outputs.frontend == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate CycloneDX SBOM
+        uses: CycloneDX/gh-action-cyclonedx@v2
+        with:
+          project-path: .
+          output-format: json
+          output-directory: sbom
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyclonedx-sbom
+          path: sbom
+          if-no-files-found: error
+
+  stage_deploy:
+    name: Stage Deploy (Helm Dry Run)
+    runs-on: ubuntu-latest
+    needs: sbom
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Package and dry-run Helm charts
+        run: |
+          set -euo pipefail
+          mkdir -p packaged-charts
+          charts=$(find . -type f -name Chart.yaml)
+          if [ -z "$charts" ]; then
+            echo "No Helm charts detected; skipping packaging and dry-run."
+            exit 0
+          fi
+          for chart in $charts; do
+            chart_dir=$(dirname "$chart")
+            release_name=$(basename "$chart_dir")-staging
+            helm dependency build "$chart_dir" || true
+            helm package "$chart_dir" --destination packaged-charts
+            helm upgrade --install "$release_name" "$chart_dir" --namespace staging --dry-run --debug
+          done
+
+      - name: Upload packaged charts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-packages
+          path: packaged-charts
+          if-no-files-found: warn
+
+  perf:
+    name: Performance Smoke (k6)
+    runs-on: ubuntu-latest
+    needs: stage_deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Discover k6 scripts
+        id: discover_k6
+        run: |
+          files=$(find . -type f \( -name '*.k6.js' -o -name '*.k6.ts' \) | tr '\n' ' ')
+          if [ -z "$files" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No k6 scripts detected; skipping performance stage."
+          else
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "files=$files" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up k6
+        if: steps.discover_k6.outputs.found == 'true'
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 smoke tests
+        if: steps.discover_k6.outputs.found == 'true'
+        run: |
+          mkdir -p reports/perf
+          for script in ${{ steps.discover_k6.outputs.files }}; do
+            script_name=$(basename "$script")
+            k6 run --vus 1 --duration 10s --summary-export "reports/perf/${script_name}.json" "$script"
+          done
+
+      - name: Upload k6 reports
+        if: always() && steps.discover_k6.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-reports
+          path: reports/perf
+          if-no-files-found: warn
+
+  release:
+    name: Release Gate
+    runs-on: ubuntu-latest
+    needs: perf
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: production
+      url: https://example.com/production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Release approval gate
+        run: |
+          echo "Release tag detected (${GITHUB_REF})."
+          echo "Add deployment automation here once production approvals are granted."
