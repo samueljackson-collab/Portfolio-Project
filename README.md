@@ -18,6 +18,9 @@ System-minded engineer specializing in building, securing, and operating infrast
 **QA-forward** Quality-driven systems engineer turning ambiguous requirements into testable runbooks, acceptance criteria, and regression checklists. Builds monitoring dashboards for golden signals, designs reliable backup/restore procedures, and uses SQL/automation to validate data integrity across high-SKU catalogs and booking systems.
 </details>
 
+## 📊 Success Metrics & Analytics Operations
+Success criteria, dashboards, alert routing, and data-quality rituals for the portfolio are documented in [docs/success-metrics.md](./docs/success-metrics.md).
+
 ---
 ## 🛠️ Core Skills
 - **Systems & Infra:** Linux/Windows, networking, VLANs, VPN, UniFi, NAS, Active Directory
