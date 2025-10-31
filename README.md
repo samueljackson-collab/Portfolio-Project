@@ -19,6 +19,10 @@ System-minded engineer specializing in building, securing, and operating infrast
 </details>
 
 ---
+## 📚 Quick References
+- [Portfolio Projects – Master Cheat Sheet](./docs/master-cheat-sheet.md)
+
+---
 ## 🛠️ Core Skills
 - **Systems & Infra:** Linux/Windows, networking, VLANs, VPN, UniFi, NAS, Active Directory
 - **Virtualization/Services:** Proxmox/TrueNAS, reverse proxy + TLS, RBAC/MFA, backup/restore drills
