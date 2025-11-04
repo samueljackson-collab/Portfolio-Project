@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Twisted Monk Suite",
+    "settings": [
+      {
+        "type": "text",
+        "id": "twisted_monk_api_base_url",
+        "label": "API Base URL",
+        "default": "https://api.your-domain.com"
+      },
+      {
+        "type": "text",
+        "id": "twisted_monk_api_key",
+        "label": "API Key",
+        "default": ""
+      },
+      {
+        "type": "number",
+        "id": "twisted_monk_bundle_limit",
+        "label": "Bundle Recommendation Limit",
+        "min": 1,
+        "max": 10,
+        "default": 4
+      }
+    ]
+  }
+]
