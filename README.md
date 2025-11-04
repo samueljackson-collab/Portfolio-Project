@@ -5,7 +5,9 @@
 
 **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
-> **Portfolio Note:** This repository is actively being built. Projects marked 🟢 are technically complete but documentation/evidence is being prepared (📝). Projects marked 🔵 are planned roadmaps. All project links lead to folders with detailed READMEs explaining current status.
+> **Portfolio Note:** This repository is actively being built. Projects marked 🟢 are technically complete but documentation/evidence is being prepared (📝). Projects marked 🔵 are planned roadmap items, and 🔄 indicates recovery/rebuild efforts are underway.
+
+> **Note:** Some project directories referenced below contain planning documentation and structure but are awaiting evidence/asset uploads. Check individual project READMEs for current status.
 
 ---
 ## 🎯 Summary
@@ -102,5 +104,5 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ---
 ## 🤳 Connect
-[GitHub](https://github.com/sams-jackson) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/samueljackson-collab/Portfolio-Project?utm_source=oss&utm_medium=github&utm_campaign=samueljackson-collab%2FPortfolio-Project&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+[GitHub](https://github.com/samueljackson-collab) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
+[![GitHub Profile](https://img.shields.io/badge/GitHub-Portfolio-181717?style=flat&logo=github)](https://github.com/samueljackson-collab)
