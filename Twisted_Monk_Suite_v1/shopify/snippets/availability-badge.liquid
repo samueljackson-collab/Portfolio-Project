@@ -1,0 +1,202 @@
+{% comment %}
+  Twisted Monk Suite - Availability Badge Snippet
+  
+  Displays real-time stock availability badge for products
+  
+  Usage:
+    {% render 'availability-badge', product: product %}
+  
+  Parameters:
+    - product: Product object
+    - show_quantity: (optional) Boolean to show exact quantity, default false
+{% endcomment %}
+
+{% liquid
+  assign current_variant = product.selected_or_first_available_variant
+  assign inventory_quantity = current_variant.inventory_quantity
+  assign inventory_policy = current_variant.inventory_policy
+  assign available = current_variant.available
+  
+  assign low_stock_threshold = 50
+  assign critical_stock_threshold = 10
+  
+  if show_quantity == nil
+    assign show_quantity = false
+  endif
+  
+  # Determine stock status
+  if available == false
+    assign status = 'out-of-stock'
+    assign status_text = 'Out of Stock'
+    assign status_color = '#dc2626'
+  elsif inventory_quantity <= critical_stock_threshold
+    assign status = 'critical-stock'
+    if show_quantity
+      assign status_text = 'Only ' | append: inventory_quantity | append: ' left!'
+    else
+      assign status_text = 'Almost Gone!'
+    endif
+    assign status_color = '#ea580c'
+  elsif inventory_quantity <= low_stock_threshold
+    assign status = 'low-stock'
+    if show_quantity
+      assign status_text = inventory_quantity | append: ' in stock'
+    else
+      assign status_text = 'Low Stock'
+    endif
+    assign status_color = '#f59e0b'
+  else
+    assign status = 'in-stock'
+    assign status_text = 'In Stock'
+    assign status_color = '#16a34a'
+  endif
+%}
+
+<div class="availability-badge availability-badge--{{ status }}" 
+     data-product-id="{{ product.id }}"
+     data-variant-id="{{ current_variant.id }}"
+     data-inventory="{{ inventory_quantity }}">
+  
+  <style>
+    .availability-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin: 0.5rem 0;
+      transition: all 0.2s ease;
+    }
+    
+    .availability-badge__icon {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    .availability-badge--in-stock {
+      background-color: rgba(22, 163, 74, 0.1);
+      color: {{ status_color }};
+    }
+    
+    .availability-badge--in-stock .availability-badge__icon {
+      background-color: {{ status_color }};
+    }
+    
+    .availability-badge--low-stock {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: {{ status_color }};
+    }
+    
+    .availability-badge--low-stock .availability-badge__icon {
+      background-color: {{ status_color }};
+    }
+    
+    .availability-badge--critical-stock {
+      background-color: rgba(234, 88, 12, 0.1);
+      color: {{ status_color }};
+      animation: shake 0.5s ease-in-out;
+    }
+    
+    .availability-badge--critical-stock .availability-badge__icon {
+      background-color: {{ status_color }};
+    }
+    
+    .availability-badge--out-of-stock {
+      background-color: rgba(220, 38, 38, 0.1);
+      color: {{ status_color }};
+    }
+    
+    .availability-badge--out-of-stock .availability-badge__icon {
+      background-color: {{ status_color }};
+      animation: none;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+      20%, 40%, 60%, 80% { transform: translateX(2px); }
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      .availability-badge__icon {
+        animation: none;
+      }
+      .availability-badge--critical-stock {
+        animation: none;
+      }
+    }
+  </style>
+  
+  <span class="availability-badge__icon" 
+        style="background-color: {{ status_color }};"
+        aria-hidden="true"></span>
+  
+  <span class="availability-badge__text">{{ status_text }}</span>
+  
+  {% if status == 'out-of-stock' and product.tags contains 'notify-when-available' %}
+    <span class="availability-badge__notify">
+      <a href="#notify-form" 
+         class="availability-badge__notify-link"
+         style="margin-left: 0.5rem; text-decoration: underline;">
+        Notify Me
+      </a>
+    </span>
+  {% endif %}
+</div>
+
+<script>
+  // Real-time inventory updates
+  (function() {
+    const badge = document.querySelector('[data-product-id="{{ product.id }}"]');
+    
+    if (!badge) return;
+    
+    // Function to update badge from API
+    async function updateAvailability() {
+      try {
+        const productId = badge.dataset.productId;
+        const variantId = badge.dataset.variantId;
+        
+        // Call your backend API for real-time inventory
+        const response = await fetch(`/apps/twisted-monk/api/inventory/${productId}`, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Update badge if inventory changed
+          if (data.available !== undefined) {
+            const currentInventory = parseInt(badge.dataset.inventory);
+            if (currentInventory !== data.available) {
+              console.log('Inventory updated for product', productId);
+              // Reload or update badge dynamically
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update availability:', error);
+      }
+    }
+    
+    // Poll for updates every 30 seconds if on product page
+    if (window.location.pathname.includes('/products/')) {
+      setInterval(updateAvailability, 30000);
+    }
+  })();
+</script>
