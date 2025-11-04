@@ -200,30 +200,48 @@ backup_deployment() {
 rollback() {
     log_error "Rolling back deployment..."
     
-    cd "$PROJECT_ROOT"
+    cd "$PROJECT_ROOT" || {
+        log_error "Cannot change to project root directory"
+        return 1
+    }
     
-    # Stop current deployment
-    docker-compose down
+    # Stop current deployment (don't fail if it's not running)
+    docker-compose down || log_warn "Failed to stop current deployment"
     
     # Find latest backup
     local latest_backup=$(ls -t "$PROJECT_ROOT/backups"/*.docker-compose.yml 2>/dev/null | head -1)
     
     if [ -n "$latest_backup" ]; then
         log_info "Restoring from backup: $latest_backup"
-        cp "$latest_backup" "$PROJECT_ROOT/docker-compose.yml"
+        
+        # Backup current state before rollback
+        if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+            cp "$PROJECT_ROOT/docker-compose.yml" "$PROJECT_ROOT/docker-compose.yml.failed" || log_warn "Failed to backup failed state"
+        fi
+        
+        # Restore from backup
+        cp "$latest_backup" "$PROJECT_ROOT/docker-compose.yml" || {
+            log_error "Failed to restore docker-compose.yml from backup"
+            return 1
+        }
         
         # Restore .env if exists
         local env_backup="${latest_backup%.docker-compose.yml}.env"
         if [ -f "$env_backup" ]; then
-            cp "$env_backup" "$PROJECT_ROOT/.env"
+            cp "$env_backup" "$PROJECT_ROOT/.env" || log_warn "Failed to restore .env from backup"
         fi
         
         # Restart services
-        docker-compose up -d
-        
-        log_info "Rollback completed"
+        if docker-compose up -d; then
+            log_info "Rollback completed successfully"
+            return 0
+        else
+            log_error "Failed to start services after rollback"
+            return 1
+        fi
     else
         log_error "No backup found for rollback"
+        return 1
     fi
 }
 
@@ -291,8 +309,12 @@ main() {
     esac
 }
 
-# Trap errors and perform rollback if needed
-trap 'rollback' ERR
+# Trap errors and perform rollback if needed (only for deploy command)
+case "${1:-deploy}" in
+    deploy)
+        trap 'rollback || log_error "Rollback failed - manual intervention required"' ERR
+        ;;
+esac
 
 # Run main function
 main "$@"

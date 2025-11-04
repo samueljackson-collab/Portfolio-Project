@@ -276,8 +276,11 @@
     
     // Add social proof message if item is popular
     if ('{{ urgency_level }}' === 'warning' && Math.random() > 0.5) {
+      // Generate a realistic viewer count (separate from inventory)
+      const viewerCount = Math.floor(Math.random() * 8) + 3; // 3-10 viewers
+      
       const messages = [
-        '{{ inventory_quantity }} people are viewing this item',
+        `${viewerCount} people are viewing this item`,
         'Trending item - {{ inventory_quantity }} left',
         'High demand - {{ inventory_quantity }} available'
       ];

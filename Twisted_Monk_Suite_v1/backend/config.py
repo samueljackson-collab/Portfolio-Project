@@ -5,7 +5,8 @@ Loads settings from environment variables with sensible defaults.
 
 import os
 from typing import List
-from pydantic import BaseSettings, validator
+from pydantic_settings import BaseSettings
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -61,14 +62,16 @@ class Settings(BaseSettings):
         auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
         return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
     
-    @validator('ALLOWED_ORIGINS', 'ALLOWED_HOSTS', 'EMAIL_TO', pre=True)
+    @field_validator('ALLOWED_ORIGINS', 'ALLOWED_HOSTS', 'EMAIL_TO', mode='before')
+    @classmethod
     def parse_list_from_string(cls, v):
         """Parse comma-separated string into list."""
         if isinstance(v, str):
             return [item.strip() for item in v.split(',') if item.strip()]
         return v
     
-    @validator('DEBUG', 'REDIS_ENABLED', pre=True)
+    @field_validator('DEBUG', 'REDIS_ENABLED', mode='before')
+    @classmethod
     def parse_bool(cls, v):
         """Parse boolean from string."""
         if isinstance(v, str):

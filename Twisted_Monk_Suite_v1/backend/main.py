@@ -298,7 +298,7 @@ async def calculate_lead_time(
             await redis_client.setex(
                 cache_key,
                 settings.CACHE_TTL,
-                json.dumps(response.dict(exclude={'cached'}))
+                json.dumps(response.model_dump(exclude={'cached'}))
             )
             logger.info(f"Cached lead time for {cache_key}")
         except Exception as e:
@@ -366,7 +366,7 @@ async def get_inventory_status(
             await redis_client.setex(
                 cache_key,
                 300,  # 5 minutes for inventory
-                json.dumps(response.dict())
+                json.dumps(response.model_dump())
             )
         except Exception as e:
             logger.warning(f"Cache write failed: {e}")
