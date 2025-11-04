@@ -8,6 +8,7 @@ TF_OUTPUT_NAME="${DR_DRILL_TF_OUTPUT_NAME:-}"
 AWS_CLI="${DR_DRILL_AWS_CLI:-aws}"
 DB_INSTANCE_OVERRIDE="${DR_DRILL_DB_INSTANCE_ID:-}"
 
+# usage prints the script usage help text describing commands, options, and environment-variable overrides.
 usage() {
   cat <<'USAGE'
 Usage: dr-drill.sh <command> [options]
@@ -30,19 +31,23 @@ Environment overrides:
 USAGE
 }
 
+# log prints a timestamped message prefixed with a log level to stdout.
 log() {
   local level="$1"; shift
   printf '%s [%s] %s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$level" "$*"
 }
 
+# info logs an INFO-level message with a timestamped prefix.
 info() {
   log INFO "$@"
 }
 
+# error logs an ERROR-level message with the given arguments to stderr.
 error() {
   log ERROR "$@" >&2
 }
 
+# require_cmd ensures the given command is available in PATH; if the command is missing it logs an error and exits with status 1.
 require_cmd() {
   local cmd="$1"
   if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -51,6 +56,8 @@ require_cmd() {
   fi
 }
 
+# terraform_output_raw retrieves the raw Terraform output for the specified key from TERRAFORM_DIR and echoes it to stdout.
+# If the key is unset or empty, or Terraform fails to produce a value, the function returns a non-zero status.
 terraform_output_raw() {
   local key="$1"
   local output
@@ -62,6 +69,7 @@ terraform_output_raw() {
   return 1
 }
 
+# terraform_output_detect reads Terraform JSON outputs from TERRAFORM_DIR and heuristically prints a Terraform output value likely containing the DB instance identifier, trying any preferred output keys passed as arguments.
 terraform_output_detect() {
   local json
   if ! json=$(terraform -chdir="$TERRAFORM_DIR" output -json 2>/dev/null); then
@@ -108,6 +116,7 @@ sys.exit(1)
 PY
 }
 
+# resolve_db_instance_identifier Determines the RDS DB instance identifier to use and prints it to stdout; if DB_INSTANCE_OVERRIDE is set it is printed directly, otherwise Terraform outputs are queried and the function exits with status 1 on failure.
 resolve_db_instance_identifier() {
   local preferred_keys=("${TF_OUTPUT_NAME}")
   local heuristics=(
@@ -145,12 +154,14 @@ resolve_db_instance_identifier() {
   exit 1
 }
 
+# perform_report logs the resolved DB instance identifier that will be used as the disaster recovery drill target.
 perform_report() {
   local identifier
   identifier=$(resolve_db_instance_identifier)
   info "Disaster recovery drill target DB instance: ${identifier}"
 }
 
+# perform_failover initiates a Multi-AZ failover for the target RDS DB instance by issuing a forced reboot via the configured AWS CLI. It requires the AWS CLI to be available and a resolvable DB instance identifier (from DB_INSTANCE_OVERRIDE or Terraform outputs).
 perform_failover() {
   local identifier
   identifier=$(resolve_db_instance_identifier)
