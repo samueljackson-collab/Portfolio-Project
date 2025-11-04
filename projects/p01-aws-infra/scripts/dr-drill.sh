@@ -124,14 +124,14 @@ resolve_db_instance_identifier() {
 
   require_cmd terraform
 
+  local keys_to_try=()
   if [[ -n "${TF_OUTPUT_NAME}" ]]; then
-    if terraform_output_raw "$TF_OUTPUT_NAME"; then
-      return 0
-    fi
+    keys_to_try+=("$TF_OUTPUT_NAME")
   fi
+  keys_to_try+=("${heuristics[@]}")
 
   local key
-  for key in "${heuristics[@]}"; do
+  for key in "${keys_to_try[@]}"; do
     if terraform_output_raw "$key"; then
       return 0
     fi
