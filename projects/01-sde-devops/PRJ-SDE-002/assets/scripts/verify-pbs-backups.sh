@@ -23,6 +23,7 @@ COLOR_YELLOW="\033[1;33m"
 COLOR_RED="\033[1;31m"
 COLOR_RESET="\033[0m"
 
+# usage prints the script name and version, a brief usage synopsis with supported flags (-v, -d, -h), and the required PBS_TOKEN environment variable.
 usage() {
   cat <<USAGE
 ${SCRIPT_NAME} v${VERSION}
@@ -45,6 +46,7 @@ while getopts "vdh" opt; do
   esac
 done
 
+# log writes a timestamped message with a level to the log file and, if VERBOSE is true, echoes the same message to stdout with the provided color.
 log() {
   local level=$1 color=$2
   shift 2
@@ -57,6 +59,7 @@ log() {
   fi
 }
 
+# require_token ensures the PBS_TOKEN environment variable is set; logs an error and exits with code 2 if it is missing.
 require_token() {
   if [[ -z "${PBS_TOKEN:-}" ]]; then
     log ERROR "$COLOR_RED" "PBS_TOKEN environment variable is required"
@@ -64,6 +67,8 @@ require_token() {
   fi
 }
 
+# api_call performs an HTTP request against the Proxmox Backup Server API at PBS_ENDPOINT using PBS_TOKEN and echoes curl's response.
+# It accepts an HTTP method, an API path (appended to PBS_ENDPOINT), and optional JSON data to send as the request body.
 api_call() {
   local method=$1 path=$2 data=${3:-}
   local url="${PBS_ENDPOINT}${path}"
@@ -86,11 +91,14 @@ SNAPSHOT_ROWS=()
 DATASTORE_SUMMARY="Not available"
 DATASTORE_WARNINGS=()
 
+# fetch_jobs fetches backup entries for the configured PBS datastore and writes each entry as a compact JSON object on separate lines to stdout.
 fetch_jobs() {
   log INFO "$COLOR_GREEN" "Fetching backup jobs"
   api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/backups" | jq -c '.data[]'
 }
 
+# process_jobs reads newline-delimited JSON job objects from stdin, evaluates each backup's health (last run presence and age, last run status, duration, and size regression), updates EXIT_CODE accordingly, and appends an HTML table row for each job to the JOB_ROWS array.
+# For jobs it records human-readable issue notes and sets a CSS class of pass/warn/fail based on detected problems.
 process_jobs() {
   while IFS= read -r job; do
     [[ -z $job ]] && continue
@@ -146,11 +154,13 @@ process_jobs() {
   done
 }
 
+# fetch_snapshots collects snapshot metadata for the configured PBS datastore and emits each snapshot as a compact JSON object on its own line.
 fetch_snapshots() {
   log INFO "$COLOR_GREEN" "Collecting snapshot metadata"
   api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/snapshots" | jq -c '.data[]'
 }
 
+# process_snapshots processes newline-delimited snapshot JSON, queues verification for the latest snapshot of each backup, updates EXIT_CODE for aging/zero-size/verify failures, and appends an HTML row describing each snapshot to SNAPSHOT_ROWS.
 process_snapshots() {
   declare -A latest_snapshot_seen
   while IFS= read -r snap; do
@@ -200,6 +210,7 @@ process_snapshots() {
   done
 }
 
+# check_datastore retrieves the configured datastore status from the PBS API, populates DATASTORE_SUMMARY with a human-readable capacity/usage/GC summary, appends any warnings to DATASTORE_WARNINGS, and updates EXIT_CODE when the datastore is unavailable or shows warning-level conditions.
 check_datastore() {
   log INFO "$COLOR_GREEN" "Reviewing datastore status"
   local summary
@@ -234,6 +245,7 @@ SUMMARY
 )
 }
 
+# build_report generates the HTML report summarizing datastore health, backup job results, snapshot verification, and writes it to REPORT_FILE (includes datastore warnings and the final EXIT_CODE).
 build_report() {
   log INFO "$COLOR_GREEN" "Generating HTML report"
   local warning_text="${DATASTORE_WARNINGS[*]:-None}"
@@ -256,6 +268,8 @@ th{background:#1e1e1e;}
 HTML
 }
 
+# send_report sends the generated HTML report to EMAIL_RECIPIENT using mailx unless DRY_RUN is true.
+# If mailx is unavailable the report remains at REPORT_FILE and EXIT_CODE is set to at least 1.
 send_report() {
   if [[ $DRY_RUN == true ]]; then
     log INFO "$COLOR_YELLOW" "Dry run enabled; email suppressed"
@@ -270,6 +284,7 @@ send_report() {
   fi
 }
 
+# main orchestrates the full PBS verification workflow: it ensures a token is present, gathers and processes backup jobs and snapshots, checks datastore health, builds and sends the HTML report, logs completion, and exits with the aggregated status code.
 main() {
   require_token
   log INFO "$COLOR_GREEN" "Starting PBS backup verification"
