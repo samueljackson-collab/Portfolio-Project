@@ -1,0 +1,124 @@
+# Prometheus alert rules for homelab infrastructure monitoring
+# -----------------------------------------------------------
+# This file groups alerting rules by functional category and documents the
+# rationale behind each threshold. Rules follow Prometheus alert rule syntax
+# version 2 and include annotations that link to runbooks.
+
+groups:
+  - name: infrastructure
+    rules:
+      - alert: HostDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: 'Host {{ $labels.instance }} is unreachable'
+          description: 'Prometheus has not scraped {{ $labels.instance }} for over two minutes. Investigate network connectivity or system health.'
+          runbook: 'https://runbooks.homelab.local/{{ $labels.alertname }}'
+
+      - alert: HighCPUUsageWarning
+        expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 15m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'CPU usage high on {{ $labels.instance }}'
+          description: 'Average CPU utilization exceeded 80% for 15 minutes. Current value: {{ printf "%.2f" $value }}%.'
+          runbook: 'https://runbooks.homelab.local/HighCPUUsage'
+
+      - alert: HighCPUUsageCritical
+        expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 95
+        for: 15m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: 'CPU usage critical on {{ $labels.instance }}'
+          description: 'Average CPU utilization exceeded 95% for 15 minutes. Current value: {{ printf "%.2f" $value }}%. Check top processes immediately.'
+          runbook: 'https://runbooks.homelab.local/HighCPUUsage'
+
+      - alert: HighMemoryUsageWarning
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'Memory usage high on {{ $labels.instance }}'
+          description: 'Available memory below 15% for 10 minutes. Current usage: {{ printf "%.2f" $value }}%.'
+          runbook: 'https://runbooks.homelab.local/HighMemoryUsage'
+
+      - alert: HighMemoryUsageCritical
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 10m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: 'Memory usage critical on {{ $labels.instance }}'
+          description: 'Available memory below 5% for 10 minutes. Current usage: {{ printf "%.2f" $value }}%. Consider restarting services or migrating workloads.'
+          runbook: 'https://runbooks.homelab.local/HighMemoryUsage'
+
+      - alert: DiskSpaceLowWarning
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs",fstype!="devtmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs",fstype!="devtmpfs"}) * 100 < 15
+        for: 30m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'Disk space low on {{ $labels.instance }} ({{ $labels.mountpoint }})'
+          description: 'Disk utilization above 85% for 30 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'
+          runbook: 'https://runbooks.homelab.local/DiskSpaceLow'
+
+      - alert: DiskSpaceLowCritical
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs",fstype!="devtmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs",fstype!="devtmpfs"}) * 100 < 5
+        for: 15m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: 'Disk space critical on {{ $labels.instance }} ({{ $labels.mountpoint }})'
+          description: 'Disk utilization above 95% for 15 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'
+          runbook: 'https://runbooks.homelab.local/DiskSpaceLow'
+
+      - alert: BackupJobFailed
+        expr: proxmox_backup_job_last_status != 0
+        for: 1h
+        labels:
+          severity: critical
+          component: backup
+        annotations:
+          summary: 'Proxmox backup job failing ({{ $labels.job_name }})'
+          description: 'Backup job {{ $labels.job_name }} has non-zero status {{ $value }}. Check PBS logs and rerun verification.'
+          runbook: 'https://runbooks.homelab.local/BackupJobFailed'
+
+      - alert: HighNetworkTraffic
+        expr: rate(node_network_receive_bytes_total[5m]) > 100000000
+        for: 30m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: 'High inbound traffic on {{ $labels.instance }} ({{ $labels.device }})'
+          description: 'Inbound traffic sustained above 100 MB/s for 30 minutes. Current bandwidth: {{ humanize1024 $value }}/s.'
+          runbook: 'https://runbooks.homelab.local/HighNetworkTraffic'
+
+      - alert: ServiceUnreachable
+        expr: probe_success == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: 'Service unreachable: {{ $labels.instance }}'
+          description: 'Blackbox probe failed for {{ $labels.instance }} with HTTP status {{ $labels.status_code }}. Check service availability.'
+          runbook: 'https://runbooks.homelab.local/ServiceUnreachable'
+
+  - name: backup
+    rules: []
+
+  - name: application
+    rules: []
