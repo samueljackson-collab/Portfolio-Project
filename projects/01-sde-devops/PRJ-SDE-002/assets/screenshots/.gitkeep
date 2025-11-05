@@ -1,0 +1,8 @@
+# Screenshots Directory
+
+Place your observability stack screenshots here:
+- grafana-infrastructure-dashboard.png
+- grafana-alerts-panel.png
+- prometheus-targets.png
+- backup-verification-output.png
+- loki-log-query-example.png
