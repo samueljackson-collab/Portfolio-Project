@@ -154,3 +154,4 @@ pip install -r requirements.txt
 ## Continuous Integration
 
 These tests are designed to run in CI/CD pipelines and provide rapid feedback on code quality and correctness.
+Tests require pytest>=7.2.0 and pyyaml (already in requirements.txt)

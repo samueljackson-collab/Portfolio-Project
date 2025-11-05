@@ -152,3 +152,23 @@ scrape_configs:
     basic_auth:
       username: truenas_exporter
       password: changeme
+# Prometheus Configuration
+
+# This is a simple configuration for Prometheus monitoring system.
+
+# Global configuration
+global:
+  scrape_interval: 15s  # Set the scrape interval to every 15 seconds.
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Scrape configuration
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
