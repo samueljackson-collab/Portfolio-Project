@@ -14,6 +14,34 @@ locals {
   }
 }
 
+# S3 bucket for app assets
+resource "aws_s3_bucket" "app_assets" {
+  bucket = "${var.project_tag}-assets-${random_id.bucket_suffix.hex}"
+  tags   = merge(local.common_tags, { "Name" = "app-assets" })
+}
+
+resource "aws_s3_bucket_acl" "app_assets" {
+  bucket = aws_s3_bucket.app_assets.id
+  acl    = "private"
+}
+
+resource "aws_s3_bucket_versioning" "app_assets" {
+  bucket = aws_s3_bucket.app_assets.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "app_assets" {
+  bucket = aws_s3_bucket.app_assets.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 # VPC
 resource "aws_vpc" "twisted_monk" {
   cidr_block = var.vpc_cidr
