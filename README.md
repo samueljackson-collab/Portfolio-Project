@@ -24,6 +24,9 @@ System-minded engineer specializing in building, securing, and operating infrast
 **QA-forward** Quality-driven systems engineer turning ambiguous requirements into testable runbooks, acceptance criteria, and regression checklists. Builds monitoring dashboards for golden signals, designs reliable backup/restore procedures, and uses SQL/automation to validate data integrity across high-SKU catalogs and booking systems.
 </details>
 
+### 📘 Enterprise Architecture Guide
+- **[Enterprise Architecture & Implementation Guide](./docs/enterprise-architecture.md)** — Production-ready blueprint covering system design, infrastructure, security, testing, and operations for the portfolio platform.
+
 ---
 ## 🛠️ Core Skills
 - **Systems & Infra:** Linux/Windows, networking, VLANs, VPN, UniFi, NAS, Active Directory
