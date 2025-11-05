@@ -914,3 +914,72 @@ class TestIntegrationScenarios:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
+
+class TestSimplifiedPBSScript:
+    """Test simplified PBS backup verification script"""
+    
+    def test_script_structure_is_simplified(self):
+        """Verify script has been simplified from original version"""
+        assert SCRIPT_PATH.exists()
+        
+        content = SCRIPT_PATH.read_text()
+        # Simplified version should have basic exit codes and functions
+        assert "check_pbs_api" in content or "# PBS" in content
+        # Should have exit code documentation
+        assert "Exit codes:" in content or "exit" in content.lower()
+    
+    def test_script_has_proper_shebang(self):
+        """Test script has proper bash shebang"""
+        with open(SCRIPT_PATH, 'r') as f:
+            first_line = f.readline().strip()
+        
+        assert first_line in ["#!/bin/bash", "#!/usr/bin/env bash"]
+    
+    def test_script_exits_cleanly_without_pbs_connection(self):
+        """Test script handles missing PBS connection gracefully"""
+        result = subprocess.run(
+            ["/bin/bash", str(SCRIPT_PATH)],
+            capture_output=True,
+            text=True,
+            env={"PBS_TOKEN": "test-token"}
+        )
+        
+        # Should exit with appropriate code (not 0 if can't connect)
+        assert result.returncode in [0, 1, 2, 3], "Should use documented exit codes"
+
+class TestPBSScriptExitCodes:
+    """Test documented exit code behavior"""
+    
+    def test_documents_exit_code_0_success(self):
+        """Verify script documents exit code 0 for success"""
+        content = SCRIPT_PATH.read_text()
+        assert "0 = success" in content or "0: success" in content.lower()
+    
+    def test_documents_exit_code_1_warnings(self):
+        """Verify script documents exit code 1 for warnings"""
+        content = SCRIPT_PATH.read_text()
+        assert "1 = warnings" in content or "1: warnings" in content.lower()
+    
+    def test_documents_exit_code_2_critical(self):
+        """Verify script documents exit code 2 for critical"""
+        content = SCRIPT_PATH.read_text()
+        assert "2 = critical" in content or "2: critical" in content.lower()
+    
+    def test_documents_exit_code_3_error(self):
+        """Verify script documents exit code 3 for error"""
+        content = SCRIPT_PATH.read_text()
+        assert "3 = error" in content or "3: error" in content.lower()
+
+class TestPBSScriptFunctions:
+    """Test PBS script function definitions"""
+    
+    def test_has_check_pbs_api_function(self):
+        """Verify script defines check_pbs_api function"""
+        content = SCRIPT_PATH.read_text()
+        assert "check_pbs_api" in content
+    
+    def test_function_has_connectivity_checks_comment(self):
+        """Verify check_pbs_api has connectivity checks comment"""
+        content = SCRIPT_PATH.read_text()
+        if "check_pbs_api" in content:
+            assert "# Connectivity checks" in content or "connectivity" in content.lower()

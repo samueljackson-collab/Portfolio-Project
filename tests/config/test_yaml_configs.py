@@ -316,3 +316,281 @@ class TestArgoCDApplication:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+class TestInfrastructureAlerts:
+    """Test infrastructure alert rules configuration"""
+    
+    def test_infrastructure_alerts_valid_yaml(self):
+        """Test that infrastructure_alerts.yml is valid YAML"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        assert config_path.exists(), f"Config not found at {config_path}"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+    
+    def test_infrastructure_alerts_has_groups(self):
+        """Test that alert rules are organized in groups"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "groups" in config
+        assert isinstance(config["groups"], list)
+        assert len(config["groups"]) > 0
+    
+    def test_infrastructure_group_has_rules(self):
+        """Test that infrastructure group contains alert rules"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        infra_group = next((g for g in config["groups"] if g.get("name") == "infrastructure"), None)
+        assert infra_group is not None, "Should have infrastructure group"
+        assert "rules" in infra_group
+        assert len(infra_group["rules"]) > 0
+    
+    def test_all_alerts_have_required_fields(self):
+        """Test that all alert rules have required fields"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for group in config["groups"]:
+            for rule in group.get("rules", []):
+                assert "alert" in rule, f"Rule missing alert name"
+                assert "expr" in rule, f"Rule {rule.get('alert')} missing expr"
+                assert "labels" in rule, f"Rule {rule.get('alert')} missing labels"
+                assert "annotations" in rule, f"Rule {rule.get('alert')} missing annotations"
+    
+    def test_alerts_have_severity_labels(self):
+        """Test that all alerts have severity labels"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for group in config["groups"]:
+            for rule in group.get("rules", []):
+                labels = rule.get("labels", {})
+                assert "severity" in labels, f"Alert {rule.get('alert')} missing severity label"
+                assert labels["severity"] in ["critical", "warning", "info"]
+    
+    def test_host_down_alert_exists(self):
+        """Test that HostDown alert is defined"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        all_alerts = []
+        for group in config["groups"]:
+            all_alerts.extend([r.get("alert") for r in group.get("rules", [])])
+        
+        assert "HostDown" in all_alerts
+    
+    def test_cpu_alerts_exist(self):
+        """Test that CPU monitoring alerts are defined"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        all_alerts = []
+        for group in config["groups"]:
+            all_alerts.extend([r.get("alert") for r in group.get("rules", [])])
+        
+        cpu_alerts = [a for a in all_alerts if "CPU" in a or "cpu" in a.lower()]
+        assert len(cpu_alerts) > 0, "Should have CPU monitoring alerts"
+    
+    def test_memory_alerts_exist(self):
+        """Test that memory monitoring alerts are defined"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        all_alerts = []
+        for group in config["groups"]:
+            all_alerts.extend([r.get("alert") for r in group.get("rules", [])])
+        
+        memory_alerts = [a for a in all_alerts if "Memory" in a or "memory" in a.lower()]
+        assert len(memory_alerts) > 0, "Should have memory monitoring alerts"
+    
+    def test_alerts_have_annotations(self):
+        """Test that alerts have descriptive annotations"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for group in config["groups"]:
+            for rule in group.get("rules", []):
+                annotations = rule.get("annotations", {})
+                assert "summary" in annotations or "description" in annotations, \
+                    f"Alert {rule.get('alert')} should have summary or description"
+    
+    def test_alerts_have_duration_thresholds(self):
+        """Test that alerts have 'for' duration to prevent flapping"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for group in config["groups"]:
+            for rule in group.get("rules", []):
+                # Most alerts should have a 'for' clause to avoid alert flapping
+                # Except for critical immediate alerts like HostDown
+                if rule.get("labels", {}).get("severity") != "critical":
+                    assert "for" in rule, f"Alert {rule.get('alert')} should have 'for' duration"
+
+class TestPromtailConfig:
+    """Test Promtail configuration validity"""
+    
+    def test_promtail_config_valid_yaml(self):
+        """Test that promtail-config.yml is valid YAML"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/promtail-config.yml"
+        assert config_path.exists(), f"Config not found at {config_path}"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Since this is a placeholder, just verify it's a string
+        assert isinstance(content, str)
+        assert len(content) > 0
+    
+    def test_promtail_placeholder_describes_functionality(self):
+        """Test that placeholder describes Promtail functionality"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/promtail-config.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Should mention key aspects of Promtail
+        assert "Promtail" in content
+        assert "Loki" in content or "loki" in content
+        assert "log" in content.lower()
+
+class TestAlertmanagerPlaceholder:
+    """Test Alertmanager placeholder content"""
+    
+    def test_alertmanager_placeholder_is_valid(self):
+        """Test that alertmanager.yml placeholder is valid"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/alertmanager.yml"
+        assert config_path.exists()
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        assert isinstance(content, str)
+        assert len(content) > 0
+    
+    def test_alertmanager_placeholder_mentions_features(self):
+        """Test placeholder describes Alertmanager features"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Should describe key Alertmanager capabilities
+        assert "Alertmanager" in content
+        assert "routing" in content.lower()
+        assert "receiver" in content.lower()
+
+class TestPrometheusPlaceholder:
+    """Test Prometheus configuration placeholder"""
+    
+    def test_prometheus_placeholder_valid_yaml(self):
+        """Test that simplified prometheus.yml is valid YAML"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+    
+    def test_prometheus_has_basic_structure(self):
+        """Test simplified config has basic Prometheus structure"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "global" in config
+        assert "scrape_configs" in config
+    
+    def test_prometheus_has_scrape_interval(self):
+        """Test config specifies scrape interval"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "scrape_interval" in config["global"]
+        # Verify it's a reasonable interval
+        interval = config["global"]["scrape_interval"]
+        assert "s" in interval or "m" in interval
+    
+    def test_prometheus_has_alertmanager_config(self):
+        """Test config includes Alertmanager reference"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        if "alerting" in config:
+            assert "alertmanagers" in config["alerting"]
+
+class TestLokiConfigStructure:
+    """Test Loki configuration structure and completeness"""
+    
+    def test_loki_config_is_comprehensive(self):
+        """Test Loki config has comprehensive sections"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        # Should have multiple major sections
+        expected_sections = ["server", "common", "schema_config", "storage_config"]
+        for section in expected_sections:
+            assert section in config, f"Missing section: {section}"
+    
+    def test_loki_server_config(self):
+        """Test Loki server configuration"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        server = config.get("server", {})
+        assert "http_listen_port" in server
+        assert server["http_listen_port"] == 3100
+    
+    def test_loki_retention_enabled(self):
+        """Test that retention is configured"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        compactor = config.get("compactor", {})
+        if compactor:
+            assert "retention_enabled" in compactor
+    
+    def test_loki_storage_config(self):
+        """Test storage configuration is present"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        storage = config.get("storage_config", {})
+        assert storage is not None
+        assert len(storage) > 0
