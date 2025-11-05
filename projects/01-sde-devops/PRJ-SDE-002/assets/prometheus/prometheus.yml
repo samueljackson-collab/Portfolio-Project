@@ -3,6 +3,15 @@
 # This file defines global scraping settings, scrape jobs for all monitored
 # components, rule file locations, and alerting endpoints. The extensive
 # comments explain why each option is chosen for the Proxmox-based homelab.
+#
+# PRODUCTION DEPLOYMENT NOTES:
+# - Expected location: /etc/prometheus/prometheus.yml
+# - Validate config: promtool check config prometheus.yml
+# - Reload service: sudo systemctl reload prometheus
+# - Required directories:
+#   * /etc/prometheus/alerts/ (for alert rules)
+#   * /etc/prometheus/rules/ (for recording rules)
+#   * /etc/prometheus/secrets/ (recommended for credentials)
 
 global:
   # Scrape all targets every 15 seconds to capture fine-grained metrics
@@ -11,6 +20,10 @@ global:
   # Evaluate alerting and recording rules at the same cadence as scraping so
   # the latest data is always used for alert calculations.
   evaluation_interval: 15s
+  # Default scrape timeout is 10s (66% of scrape_interval), following industry
+  # best practice. This provides a 5s buffer before the next scrape begins,
+  # preventing overlapping scrapes which could cause metrics gaps.
+  scrape_timeout: 10s
   # Global labels added to every time series. These make it easy to filter all
   # data from this homelab cluster when federating or aggregating metrics.
   external_labels:
@@ -18,6 +31,10 @@ global:
     cluster: main
 
 # Alerting configuration defines how Prometheus sends alerts to Alertmanager.
+# Alert relabeling adds severity labels before routing, integrating with the
+# routing rules defined in /etc/alertmanager/alertmanager.yml which routes
+# critical alerts to multiple channels (email, Slack, PagerDuty) and warnings
+# to Slack only. This strategy reduces alert fatigue by tiering notifications.
 alerting:
   alert_relabel_configs:
     # Derive severity labels dynamically based on alert names to simplify rule
@@ -45,7 +62,10 @@ alerting:
 
 # Rule files containing alerting and recording rules. The glob patterns allow
 # multiple rule files to be dropped into these directories without updating the
-# configuration.
+# configuration. Alert rules are defined in infrastructure_alerts.yml which
+# includes critical alerts for host down, high CPU/memory/disk usage, backup
+# failures, and service unreachability. Recording rules can be added to the
+# rules directory to pre-compute frequently used queries.
 rule_files:
   - /etc/prometheus/alerts/*.yml
   - /etc/prometheus/rules/*.yml
@@ -61,6 +81,7 @@ scrape_configs:
         labels:
           hostname: prom-main
           job: prometheus
+    # Metric relabeling ensures consistent instance labels across dashboards
     metric_relabel_configs:
       - source_labels: [instance]
         target_label: instance
@@ -76,12 +97,24 @@ scrape_configs:
         labels:
           hostname: proxmox-host
           job: node-exporter
-    # Basic auth placeholder for environments exposing exporters with auth.
+    # SECURITY: Basic auth credentials are placeholders. In production, use:
+    #   password_file: /etc/prometheus/secrets/proxmox_exporter.password
+    # Store credentials in external files with restricted permissions (0600)
+    # or inject via environment variables. Never commit real credentials.
     basic_auth:
       username: proxmox_exporter
       password: changeme
+    # Standardized metric relabeling for consistent instance labels
+    metric_relabel_configs:
+      - source_labels: [instance]
+        target_label: instance
+        replacement: proxmox-host:9100
 
   # Node exporters running on each VM to capture guest metrics.
+  # Future enhancement: migrate to file-based service discovery for easier scaling
+  # file_sd_configs:
+  #   - files: ['/etc/prometheus/targets/vm-nodes.json']
+  #     refresh_interval: 5m
   - job_name: vm-nodes
     scrape_interval: 15s
     scrape_timeout: 10s
@@ -94,8 +127,8 @@ scrape_configs:
           - '192.168.1.24:9100'
         labels:
           job: node-exporter
+    # Relabel configs map IP addresses to friendly hostnames for dashboards
     relabel_configs:
-      # Attach friendly hostnames used across dashboards and alerts.
       - source_labels: [__address__]
         regex: '192.168.1.(20):.*'
         replacement: vm-wiki
@@ -116,6 +149,10 @@ scrape_configs:
         regex: '192.168.1.(24):.*'
         replacement: vm-utility
         target_label: hostname
+    # Standardized metric relabeling for consistent instance labels
+    metric_relabel_configs:
+      - source_labels: [instance]
+        target_label: instance
 
   # Alertmanager metrics endpoint for insight into alert processing.
   - job_name: alertmanager
@@ -125,7 +162,12 @@ scrape_configs:
       - targets: ['localhost:9093']
         labels:
           job: alertmanager
-          hostname: alertmanager
+          hostname: alertmanager-main
+    # Standardized metric relabeling for consistent instance labels
+    metric_relabel_configs:
+      - source_labels: [instance]
+        target_label: instance
+        replacement: alertmanager-main:9093
 
   # Proxmox exporter exposes metrics for all virtual machines and containers.
   - job_name: proxmox-exporter
@@ -136,9 +178,17 @@ scrape_configs:
         labels:
           job: proxmox-exporter
           hostname: proxmox-host
+    # SECURITY: Basic auth credentials are placeholders. In production, use:
+    #   password_file: /etc/prometheus/secrets/proxmox_exporter.password
+    # Refer to Prometheus security best practices documentation.
     basic_auth:
       username: proxmox_exporter
       password: changeme
+    # Standardized metric relabeling for consistent instance labels
+    metric_relabel_configs:
+      - source_labels: [instance]
+        target_label: instance
+        replacement: proxmox-host:9221
 
   # TrueNAS exporter for storage metrics, capacity, and SMART data.
   - job_name: truenas-exporter
@@ -149,6 +199,14 @@ scrape_configs:
         labels:
           job: truenas-exporter
           hostname: truenas-core
+    # SECURITY: Basic auth credentials are placeholders. In production, use:
+    #   password_file: /etc/prometheus/secrets/truenas_exporter.password
+    # Ensure credential files have restricted permissions (chmod 600).
     basic_auth:
       username: truenas_exporter
       password: changeme
+    # Standardized metric relabeling for consistent instance labels
+    metric_relabel_configs:
+      - source_labels: [instance]
+        target_label: instance
+        replacement: truenas-core:9273
