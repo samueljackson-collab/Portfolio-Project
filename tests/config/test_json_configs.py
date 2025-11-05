@@ -244,3 +244,161 @@ class TestJSONStructure:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+class TestGrafanaDashboardStructure:
+    """Test Grafana dashboard structure and standards"""
+    
+    def test_infrastructure_dashboard_has_required_fields(self):
+        """Test infrastructure dashboard has all required Grafana fields"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        required_fields = ["title", "panels", "templating", "time"]
+        for field in required_fields:
+            assert field in config, f"Missing required field: {field}"
+    
+    def test_infrastructure_dashboard_has_refresh_setting(self):
+        """Test dashboard has auto-refresh configured"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        assert "refresh" in config
+        # Should have a reasonable refresh interval
+        assert config["refresh"] in ["30s", "1m", "5m", "10s", ""]
+    
+    def test_infrastructure_dashboard_panels_have_datasources(self):
+        """Test all panels reference datasources"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        panels = config.get("panels", [])
+        for panel in panels:
+            if panel.get("type") not in ["row"]:  # Rows don't need datasources
+                assert "datasource" in panel or "targets" in panel
+    
+    def test_infrastructure_dashboard_has_template_variables(self):
+        """Test dashboard uses template variables for flexibility"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        templating = config.get("templating", {})
+        template_list = templating.get("list", [])
+        assert len(template_list) > 0, "Should have template variables"
+    
+    def test_infrastructure_dashboard_has_host_variable(self):
+        """Test dashboard has host selection variable"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        templating = config.get("templating", {})
+        variables = templating.get("list", [])
+        var_names = [v.get("name") for v in variables]
+        assert "host" in var_names, "Should have host variable for filtering"
+    
+    def test_infrastructure_dashboard_panels_organized_in_rows(self):
+        """Test panels are organized into logical rows"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        panels = config.get("panels", [])
+        row_panels = [p for p in panels if p.get("type") == "row"]
+        assert len(row_panels) >= 2, "Should have multiple rows for organization"
+    
+    def test_infrastructure_dashboard_has_stat_panels(self):
+        """Test dashboard includes stat panels for key metrics"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        panels = config.get("panels", [])
+        stat_panels = [p for p in panels if p.get("type") == "stat"]
+        assert len(stat_panels) > 0, "Should have stat panels for quick metrics"
+    
+    def test_infrastructure_dashboard_has_time_series(self):
+        """Test dashboard includes time series panels"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        panels = config.get("panels", [])
+        ts_panels = [p for p in panels if p.get("type") == "timeseries"]
+        assert len(ts_panels) > 0, "Should have time series for trend visualization"
+    
+    def test_infrastructure_dashboard_uid_is_set(self):
+        """Test dashboard has a unique identifier"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(config_path) as f:
+            config = json.load(f)
+        
+        assert "uid" in config
+        assert config["uid"] is not None
+
+class TestApplicationDashboardPlaceholder:
+    """Test application metrics dashboard placeholder"""
+    
+    def test_application_dashboard_is_placeholder(self):
+        """Test application dashboard is simplified placeholder"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/application-metrics.json"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Should be a descriptive placeholder
+        assert len(content) > 0
+        assert "Grafana" in content or "dashboard" in content.lower()
+    
+    def test_application_dashboard_describes_purpose(self):
+        """Test placeholder describes dashboard purpose"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/application-metrics.json"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Should mention applications being monitored
+        keywords = ["Wiki", "Home Assistant", "Immich", "application", "HTTP", "metrics"]
+        assert any(keyword in content for keyword in keywords)
+
+class TestDashboardConsistency:
+    """Test consistency across dashboard configurations"""
+    
+    def test_both_dashboards_exist(self):
+        """Test both dashboard files exist"""
+        app_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/application-metrics.json"
+        infra_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        assert app_path.exists(), "Application dashboard should exist"
+        assert infra_path.exists(), "Infrastructure dashboard should exist"
+    
+    def test_dashboards_use_prometheus_datasource(self):
+        """Test dashboards reference Prometheus as datasource"""
+        infra_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/grafana/dashboards/infrastructure-overview.json"
+        
+        with open(infra_path) as f:
+            config = json.load(f)
+        
+        # Check that panels reference prometheus
+        panels = config.get("panels", [])
+        datasource_types = []
+        for panel in panels:
+            if "datasource" in panel:
+                ds = panel["datasource"]
+                if isinstance(ds, dict):
+                    datasource_types.append(ds.get("type"))
+        
+        if datasource_types:
+            assert "prometheus" in datasource_types, "Should use Prometheus datasource"

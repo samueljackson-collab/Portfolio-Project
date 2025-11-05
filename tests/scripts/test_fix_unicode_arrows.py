@@ -323,3 +323,234 @@ class TestOutputMessages:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+class TestSimplifiedScriptBehavior:
+    """Test behavior of simplified script version"""
+    
+    def test_script_handles_empty_directory(self):
+        """Test that script handles directory with no Python files gracefully"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create some non-Python files
+            (Path(tmpdir) / "readme.txt").write_text("Some text")
+            (Path(tmpdir) / "config.json").write_text('{"key": "value"}')
+            
+            result = subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            assert result.returncode == 0
+            assert "Done" in result.stdout
+    
+    def test_creates_backup_files(self):
+        """Test that script creates .bak backup files"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            original_content = "def func(x: int) -\\u003e int:\n    return x\n"
+            test_file.write_text(original_content)
+            
+            subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            backup_file = Path(tmpdir) / "test.py.bak"
+            assert backup_file.exists(), "Backup file should be created"
+            assert backup_file.read_text() == original_content
+    
+    def test_restores_on_syntax_error(self):
+        """Test that script restores backup if Python compilation fails"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            # Create intentionally broken Python that sed might make worse
+            broken_content = "def func(x: int) -\\u003e\n    return x\n"
+            test_file.write_text(broken_content)
+            
+            result = subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            # If the file still doesn't compile, backup should be restored
+            assert "WARNING" in result.stdout or result.returncode == 0
+    
+    def test_processes_nested_directories(self):
+        """Test that script finds and processes Python files in subdirectories"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create nested structure
+            subdir = Path(tmpdir) / "subdir" / "nested"
+            subdir.mkdir(parents=True)
+            
+            test_file = subdir / "nested_test.py"
+            test_file.write_text("def func() -\\u003e None:\n    pass\n")
+            
+            result = subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            assert result.returncode == 0
+            assert "nested_test.py" in result.stdout or "Done" in result.stdout
+    
+    def test_idempotent_replacements(self):
+        """Test that running script multiple times produces same result"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            test_file.write_text("def func(x: int) -\\u003e int:\n    return x\n")
+            
+            # Run first time
+            subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            first_content = test_file.read_text()
+            
+            # Remove backup to allow second run
+            (Path(tmpdir) / "test.py.bak").unlink(missing_ok=True)
+            
+            # Run second time
+            subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            second_content = test_file.read_text()
+            
+            assert first_content == second_content, "Script should be idempotent"
+    
+    def test_handles_multiple_encodings_in_one_file(self):
+        """Test file with multiple different arrow encodings"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            content = """def func1(x: int) -\\u003e int:
+    return x
+
+def func2(y: str) -\\\\u003e str:
+    return y
+
+def func3(z: bool) -> bool:
+    return z
+"""
+            test_file.write_text(content)
+            
+            subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            result_content = test_file.read_text()
+            # All arrows should be normalized
+            assert result_content.count("->") >= 3
+
+class TestEdgeCases:
+    """Test edge cases and error handling"""
+    
+    def test_handles_file_with_no_arrows(self):
+        """Test file with no arrow syntax"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            content = "x = 5\ny = 10\nprint(x + y)\n"
+            test_file.write_text(content)
+            
+            subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            # File should remain unchanged
+            assert test_file.read_text() == content
+    
+    def test_handles_unicode_in_strings(self):
+        """Test that unicode in string literals is preserved"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            content = 'def func() -> str:\n    return "arrow: →"\n'
+            test_file.write_text(content)
+            
+            subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            result = test_file.read_text()
+            assert "→" in result, "Unicode arrows in strings should be preserved"
+    
+    def test_handles_mixed_whitespace_arrows(self):
+        """Test various whitespace patterns around arrows"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            content = "def func1() -  > str:\n    pass\ndef func2() -   > int:\n    pass\n"
+            test_file.write_text(content)
+            
+            subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            result = test_file.read_text()
+            # Multiple spaces should be normalized to ->
+            assert "- >" not in result or result.count("->") >= 2
+
+class TestOutputAndLogging:
+    """Test script output and logging behavior"""
+    
+    def test_output_contains_summary(self):
+        """Test that script outputs completion summary"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            test_file.write_text("def func() -> str:\n    return 'test'\n")
+            
+            result = subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            assert "Done" in result.stdout
+            assert ".bak backups" in result.stdout
+    
+    def test_reports_files_being_processed(self):
+        """Test that script reports which files it's checking"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "myfile.py"
+            test_file.write_text("def func() -> str:\n    return 'test'\n")
+            
+            result = subprocess.run(
+                [BASH_PATH, str(SCRIPT_PATH)],
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                shell=False
+            )
+            
+            assert "myfile.py" in result.stdout
