@@ -5,15 +5,19 @@
 # Performs job health checks, snapshot validation, datastore review,
 # and mails an HTML report. Designed for cron-based daily execution.
 
-set -euo pipefail
+# Strict mode + error trap
+set -Eeuo pipefail
 
 SCRIPT_NAME=$(basename "$0")
-VERSION="1.0.0"
+VERSION="1.1.0"
 LOG_FILE="/var/log/backup-verification.log"
 REPORT_FILE="/tmp/pbs-verification-report.html"
-PBS_ENDPOINT="https://192.168.1.15:8007"
-PBS_DATASTORE="homelab-backups"
-EMAIL_RECIPIENT="admin@homelab.local"
+
+# Default configuration (override via environment if needed)
+PBS_ENDPOINT="${PBS_ENDPOINT:-https://192.168.1.15:8007}"
+PBS_DATASTORE="${PBS_DATASTORE:-homelab-backups}"
+EMAIL_RECIPIENT="${EMAIL_RECIPIENT:-admin@homelab.local}"
+
 VERBOSE=false
 DRY_RUN=false
 EXIT_CODE=0
@@ -23,7 +27,6 @@ COLOR_YELLOW="\033[1;33m"
 COLOR_RED="\033[1;31m"
 COLOR_RESET="\033[0m"
 
-# usage prints the script name and version, a brief usage synopsis with supported flags (-v, -d, -h), and the required PBS_TOKEN environment variable.
 usage() {
   cat <<USAGE
 ${SCRIPT_NAME} v${VERSION}
@@ -33,33 +36,56 @@ Usage: ${SCRIPT_NAME} [-v] [-d] [-h]
   -h    Show help
 
 Environment:
-  PBS_TOKEN   Proxmox Backup Server API token (required)
+  PBS_TOKEN       Proxmox Backup Server API token (required)
+  PBS_ENDPOINT    PBS API endpoint (default: ${PBS_ENDPOINT})
+  PBS_DATASTORE   PBS datastore name (default: ${PBS_DATASTORE})
+  EMAIL_RECIPIENT Email to receive HTML report (default: ${EMAIL_RECIPIENT})
 USAGE
 }
 
-while getopts "vdh" opt; do
-  case ${opt} in
-    v) VERBOSE=true ;;
-    d) DRY_RUN=true ;;
-    h) usage; exit 0 ;;
-    *) usage >&2; exit 1 ;;
-  esac
-done
-
-# log writes a timestamped message with a level to the log file and, if VERBOSE is true, echoes the same message to stdout with the provided color.
+# Log helpers
 log() {
   local level=$1 color=$2
   shift 2
   local timestamp
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
   local message="${timestamp} [${level}] $*"
+  # Ensure log path is writable; fallback to /tmp if needed
+  if ! { touch "$LOG_FILE" 2>/dev/null || :; }; then
+    LOG_FILE="/tmp/backup-verification.log"
+    touch "$LOG_FILE" 2>/dev/null || :
+  fi
   echo -e "${message}" >> "$LOG_FILE"
   if [[ $VERBOSE == true ]]; then
     echo -e "${color}${message}${COLOR_RESET}"
   fi
 }
 
-# require_token ensures the PBS_TOKEN environment variable is set; logs an error and exits with code 2 if it is missing.
+on_error() {
+  local lineno="${1:-?}"
+  log ERROR "$COLOR_RED" "Aborted due to error at line ${lineno}"
+  EXIT_CODE=2
+  exit $EXIT_CODE
+}
+trap 'on_error $LINENO' ERR
+
+while getopts "vdh" opt; do
+  case ${opt} in
+    v) VERBOSE=true ;; 
+    d) DRY_RUN=true ;; 
+    h) usage; exit 0 ;; 
+    *) usage >&2; exit 1 ;; 
+  esac
+done
+
+# Preconditions
+require_binary() {
+  local bin="$1"
+  if ! command -v "$bin" >/dev/null 2>&1; then
+    log ERROR "$COLOR_RED" "Required dependency not found: ${bin}"
+    exit 2
+  fi
+}
 require_token() {
   if [[ -z "${PBS_TOKEN:-}" ]]; then
     log ERROR "$COLOR_RED" "PBS_TOKEN environment variable is required"
@@ -67,8 +93,7 @@ require_token() {
   fi
 }
 
-# api_call performs an HTTP request against the Proxmox Backup Server API at PBS_ENDPOINT using PBS_TOKEN and echoes curl's response.
-# It accepts an HTTP method, an API path (appended to PBS_ENDPOINT), and optional JSON data to send as the request body.
+# API helper
 api_call() {
   local method=$1 path=$2 data=${3:-}
   local url="${PBS_ENDPOINT}${path}"
@@ -91,14 +116,11 @@ SNAPSHOT_ROWS=()
 DATASTORE_SUMMARY="Not available"
 DATASTORE_WARNINGS=()
 
-# fetch_jobs fetches backup entries for the configured PBS datastore and writes each entry as a compact JSON object on separate lines to stdout.
 fetch_jobs() {
   log INFO "$COLOR_GREEN" "Fetching backup jobs"
   api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/backups" | jq -c '.data[]'
 }
 
-# process_jobs reads newline-delimited JSON job objects from stdin, evaluates each backup's health (last run presence and age, last run status, duration, and size regression), updates EXIT_CODE accordingly, and appends an HTML table row for each job to the JOB_ROWS array.
-# For jobs it records human-readable issue notes and sets a CSS class of pass/warn/fail based on detected problems.
 process_jobs() {
   while IFS= read -r job; do
     [[ -z $job ]] && continue
@@ -154,13 +176,11 @@ process_jobs() {
   done
 }
 
-# fetch_snapshots collects snapshot metadata for the configured PBS datastore and emits each snapshot as a compact JSON object on its own line.
 fetch_snapshots() {
   log INFO "$COLOR_GREEN" "Collecting snapshot metadata"
   api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/snapshots" | jq -c '.data[]'
 }
 
-# process_snapshots processes newline-delimited snapshot JSON, queues verification for the latest snapshot of each backup, updates EXIT_CODE for aging/zero-size/verify failures, and appends an HTML row describing each snapshot to SNAPSHOT_ROWS.
 process_snapshots() {
   declare -A latest_snapshot_seen
   while IFS= read -r snap; do
@@ -210,7 +230,6 @@ process_snapshots() {
   done
 }
 
-# check_datastore retrieves the configured datastore status from the PBS API, populates DATASTORE_SUMMARY with a human-readable capacity/usage/GC summary, appends any warnings to DATASTORE_WARNINGS, and updates EXIT_CODE when the datastore is unavailable or shows warning-level conditions.
 check_datastore() {
   log INFO "$COLOR_GREEN" "Reviewing datastore status"
   local summary
@@ -232,7 +251,8 @@ check_datastore() {
     DATASTORE_WARNINGS+=("Usage ${percent}% > 80%")
     EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
   fi
-  local now_epoch=$(date +%s)
+  local now_epoch
+  now_epoch=$(date +%s)
   if (( gc_time > 0 && now_epoch - gc_time > 604800 )); then
     DATASTORE_WARNINGS+=("Garbage collection older than 7 days")
     EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
@@ -245,7 +265,6 @@ SUMMARY
 )
 }
 
-# build_report generates the HTML report summarizing datastore health, backup job results, snapshot verification, and writes it to REPORT_FILE (includes datastore warnings and the final EXIT_CODE).
 build_report() {
   log INFO "$COLOR_GREEN" "Generating HTML report"
   local warning_text="${DATASTORE_WARNINGS[*]:-None}"
@@ -268,8 +287,6 @@ th{background:#1e1e1e;}
 HTML
 }
 
-# send_report sends the generated HTML report to EMAIL_RECIPIENT using mailx unless DRY_RUN is true.
-# If mailx is unavailable the report remains at REPORT_FILE and EXIT_CODE is set to at least 1.
 send_report() {
   if [[ $DRY_RUN == true ]]; then
     log INFO "$COLOR_YELLOW" "Dry run enabled; email suppressed"
@@ -284,9 +301,12 @@ send_report() {
   fi
 }
 
-# main orchestrates the full PBS verification workflow: it ensures a token is present, gathers and processes backup jobs and snapshots, checks datastore health, builds and sends the HTML report, logs completion, and exits with the aggregated status code.
 main() {
+  require_binary curl
+  require_binary jq
+  require_binary numfmt
   require_token
+
   log INFO "$COLOR_GREEN" "Starting PBS backup verification"
   JOB_ROWS=()
   SNAPSHOT_ROWS=()
