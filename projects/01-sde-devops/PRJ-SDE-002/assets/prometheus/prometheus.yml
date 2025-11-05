@@ -1,0 +1,154 @@
+# Prometheus configuration for the homelab observability stack
+# -----------------------------------------------------------
+# This file defines global scraping settings, scrape jobs for all monitored
+# components, rule file locations, and alerting endpoints. The extensive
+# comments explain why each option is chosen for the Proxmox-based homelab.
+
+global:
+  # Scrape all targets every 15 seconds to capture fine-grained metrics
+  # while balancing resource usage on the small homelab environment.
+  scrape_interval: 15s
+  # Evaluate alerting and recording rules at the same cadence as scraping so
+  # the latest data is always used for alert calculations.
+  evaluation_interval: 15s
+  # Global labels added to every time series. These make it easy to filter all
+  # data from this homelab cluster when federating or aggregating metrics.
+  external_labels:
+    environment: homelab
+    cluster: main
+
+# Alerting configuration defines how Prometheus sends alerts to Alertmanager.
+alerting:
+  alert_relabel_configs:
+    # Derive severity labels dynamically based on alert names to simplify rule
+    # definitions. Customize the mapping as alert coverage grows.
+    - source_labels: [alertname]
+      regex: ".*(Critical|Severe).*"
+      target_label: severity
+      replacement: critical
+    - source_labels: [alertname]
+      regex: ".*(Warn|High|Warning).*"
+      target_label: severity
+      replacement: warning
+    - source_labels: [alertname]
+      regex: ".*(Info|Informational).*"
+      target_label: severity
+      replacement: info
+  alertmanagers:
+    - static_configs:
+        # Alertmanager runs on the same host as Prometheus, reachable via the
+        # loopback interface. TLS can be added later if exposed remotely.
+        - targets: ['localhost:9093']
+      # Timeout for sending alerts to Alertmanager. A short timeout prevents
+      # metric pipeline interruptions if Alertmanager is unavailable.
+      timeout: 10s
+
+# Rule files containing alerting and recording rules. The glob patterns allow
+# multiple rule files to be dropped into these directories without updating the
+# configuration.
+rule_files:
+  - /etc/prometheus/alerts/*.yml
+  - /etc/prometheus/rules/*.yml
+
+# Scrape configuration section enumerates every target monitored in the homelab.
+scrape_configs:
+  # Monitor Prometheus itself to ensure the service is healthy.
+  - job_name: prometheus
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          hostname: prom-main
+          job: prometheus
+    metric_relabel_configs:
+      - source_labels: [instance]
+        target_label: instance
+        replacement: localhost:9090
+
+  # Node exporter running on the Proxmox hypervisor.
+  - job_name: proxmox-node
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    scheme: http
+    static_configs:
+      - targets: ['192.168.1.10:9100']
+        labels:
+          hostname: proxmox-host
+          job: node-exporter
+    # Basic auth placeholder for environments exposing exporters with auth.
+    basic_auth:
+      username: proxmox_exporter
+      password: changeme
+
+  # Node exporters running on each VM to capture guest metrics.
+  - job_name: vm-nodes
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets:
+          - '192.168.1.20:9100'
+          - '192.168.1.21:9100'
+          - '192.168.1.22:9100'
+          - '192.168.1.23:9100'
+          - '192.168.1.24:9100'
+        labels:
+          job: node-exporter
+    relabel_configs:
+      # Attach friendly hostnames used across dashboards and alerts.
+      - source_labels: [__address__]
+        regex: '192.168.1.(20):.*'
+        replacement: vm-wiki
+        target_label: hostname
+      - source_labels: [__address__]
+        regex: '192.168.1.(21):.*'
+        replacement: vm-homeassistant
+        target_label: hostname
+      - source_labels: [__address__]
+        regex: '192.168.1.(22):.*'
+        replacement: vm-immich
+        target_label: hostname
+      - source_labels: [__address__]
+        regex: '192.168.1.(23):.*'
+        replacement: vm-db
+        target_label: hostname
+      - source_labels: [__address__]
+        regex: '192.168.1.(24):.*'
+        replacement: vm-utility
+        target_label: hostname
+
+  # Alertmanager metrics endpoint for insight into alert processing.
+  - job_name: alertmanager
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['localhost:9093']
+        labels:
+          job: alertmanager
+          hostname: alertmanager
+
+  # Proxmox exporter exposes metrics for all virtual machines and containers.
+  - job_name: proxmox-exporter
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['192.168.1.10:9221']
+        labels:
+          job: proxmox-exporter
+          hostname: proxmox-host
+    basic_auth:
+      username: proxmox_exporter
+      password: changeme
+
+  # TrueNAS exporter for storage metrics, capacity, and SMART data.
+  - job_name: truenas-exporter
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['192.168.1.5:9273']
+        labels:
+          job: truenas-exporter
+          hostname: truenas-core
+    basic_auth:
+      username: truenas_exporter
+      password: changeme

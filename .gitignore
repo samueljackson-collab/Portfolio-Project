@@ -28,6 +28,11 @@ node_modules/
 
 # Tests
 coverage/
+__pycache__/
+*.pyc
+*.pyo
+*.bak
+.pytest_cache/
 
 # Secrets and sensitive files
 *.pem
