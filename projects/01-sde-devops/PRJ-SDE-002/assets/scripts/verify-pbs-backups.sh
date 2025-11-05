@@ -5,15 +5,19 @@
 # Performs job health checks, snapshot validation, datastore review,
 # and mails an HTML report. Designed for cron-based daily execution.
 
-set -euo pipefail
+# Strict mode + error trap
+set -Eeuo pipefail
 
 SCRIPT_NAME=$(basename "$0")
-VERSION="1.0.0"
+VERSION="1.1.0"
 LOG_FILE="/var/log/backup-verification.log"
 REPORT_FILE="/tmp/pbs-verification-report.html"
-PBS_ENDPOINT="https://192.168.1.15:8007"
-PBS_DATASTORE="homelab-backups"
-EMAIL_RECIPIENT="admin@homelab.local"
+
+# Default configuration (override via environment if needed)
+PBS_ENDPOINT="${PBS_ENDPOINT:-https://192.168.1.15:8007}"
+PBS_DATASTORE="${PBS_DATASTORE:-homelab-backups}"
+EMAIL_RECIPIENT="${EMAIL_RECIPIENT:-admin@homelab.local}"
+
 VERBOSE=false
 DRY_RUN=false
 EXIT_CODE=0
@@ -32,31 +36,56 @@ Usage: ${SCRIPT_NAME} [-v] [-d] [-h]
   -h    Show help
 
 Environment:
-  PBS_TOKEN   Proxmox Backup Server API token (required)
+  PBS_TOKEN       Proxmox Backup Server API token (required)
+  PBS_ENDPOINT    PBS API endpoint (default: ${PBS_ENDPOINT})
+  PBS_DATASTORE   PBS datastore name (default: ${PBS_DATASTORE})
+  EMAIL_RECIPIENT Email to receive HTML report (default: ${EMAIL_RECIPIENT})
 USAGE
 }
 
-while getopts "vdh" opt; do
-  case ${opt} in
-    v) VERBOSE=true ;;
-    d) DRY_RUN=true ;;
-    h) usage; exit 0 ;;
-    *) usage >&2; exit 1 ;;
-  esac
-done
-
+# Log helpers
 log() {
   local level=$1 color=$2
   shift 2
   local timestamp
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
   local message="${timestamp} [${level}] $*"
+  # Ensure log path is writable; fallback to /tmp if needed
+  if ! { touch "$LOG_FILE" 2>/dev/null || :; }; then
+    LOG_FILE="/tmp/backup-verification.log"
+    touch "$LOG_FILE" 2>/dev/null || :
+  fi
   echo -e "${message}" >> "$LOG_FILE"
   if [[ $VERBOSE == true ]]; then
     echo -e "${color}${message}${COLOR_RESET}"
   fi
 }
 
+on_error() {
+  local lineno="${1:-?}"
+  log ERROR "$COLOR_RED" "Aborted due to error at line ${lineno}"
+  EXIT_CODE=2
+  exit $EXIT_CODE
+}
+trap 'on_error $LINENO' ERR
+
+while getopts "vdh" opt; do
+  case ${opt} in
+    v) VERBOSE=true ;; 
+    d) DRY_RUN=true ;; 
+    h) usage; exit 0 ;; 
+    *) usage >&2; exit 1 ;; 
+  esac
+done
+
+# Preconditions
+require_binary() {
+  local bin="$1"
+  if ! command -v "$bin" >/dev/null 2>&1; then
+    log ERROR "$COLOR_RED" "Required dependency not found: ${bin}"
+    exit 2
+  fi
+}
 require_token() {
   if [[ -z "${PBS_TOKEN:-}" ]]; then
     log ERROR "$COLOR_RED" "PBS_TOKEN environment variable is required"
@@ -64,6 +93,7 @@ require_token() {
   fi
 }
 
+# API helper
 api_call() {
   local method=$1 path=$2 data=${3:-}
   local url="${PBS_ENDPOINT}${path}"
@@ -221,7 +251,8 @@ check_datastore() {
     DATASTORE_WARNINGS+=("Usage ${percent}% > 80%")
     EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
   fi
-  local now_epoch=$(date +%s)
+  local now_epoch
+  now_epoch=$(date +%s)
   if (( gc_time > 0 && now_epoch - gc_time > 604800 )); then
     DATASTORE_WARNINGS+=("Garbage collection older than 7 days")
     EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
@@ -271,7 +302,11 @@ send_report() {
 }
 
 main() {
+  require_binary curl
+  require_binary jq
+  require_binary numfmt
   require_token
+
   log INFO "$COLOR_GREEN" "Starting PBS backup verification"
   JOB_ROWS=()
   SNAPSHOT_ROWS=()
