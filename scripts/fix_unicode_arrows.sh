@@ -4,36 +4,81 @@
 # might have been committed in place of the Python "->" annotation arrow.
 # Also normalizes stray "- >" into "->".
 #
-# Usage: bash scripts/fix_unicode_arrows.sh
+# Usage: ./scripts/fix_unicode_arrows.sh [target ...]
+# If no targets are provided, the current working directory is scanned.
+
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-echo "Repository root: $ROOT_DIR"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Find .py files and perform in-place replacements with a safety backup extension
-find "$ROOT_DIR" -type f -name '*.py' -print0 |
-  while IFS= read -r -d '' file; do
-    echo "Checking $file"
-    # Create a backup (only if not exists) so we can review changes:
-    cp -n "$file" "${file}.bak" || true
+print_header() {
+  local targets=("$@")
+  printf 'Repository root: %s\n' "$SCRIPT_DIR/.."
+  printf 'Scanning targets: %s\n' "${targets[*]:- (current directory)}"
+}
 
-    # Replace common encodings with -> (safe idempotent replacement)
-    # - replace literal sequences that represent HTML-encoded arrow variants
-    sed -i -e 's/-\\u003e/->/g' \
-           -e 's/-\\\\u003e/->/g' \
-           -e 's/\\u002d\\u003e/->/g' \
-           -e 's/&#45;&#62;/->/g' \
-           -e 's/-[[:space:]]\+>/->/g' \
-           "$file"
+create_backup_if_missing() {
+  local file="$1"
+  local backup="${file}.bak"
+  if [[ ! -f "$backup" ]]; then
+    cp "$file" "$backup"
+  fi
+}
 
-    # Quick Python parse check: compile the file to ensure no immediate syntax error
-    if ! python -m py_compile "$file" 2>/dev/null; then
-      echo "WARNING: $file fails Python compile after replacements. Restoring backup."
-      mv "${file}.bak" "$file"
-      continue
-    fi
+restore_from_backup() {
+  local file="$1"
+  local backup="${file}.bak"
+  if [[ -f "$backup" ]]; then
+    cp "$backup" "$file"
+  fi
+}
 
-    echo "Patched and validated: $file"
+patch_file() {
+  local file="$1"
+  echo "Checking $file"
+  create_backup_if_missing "$file"
+
+  sed -i \
+    -e 's/-\\\\u003e/->/g' \
+    -e 's/-\\u003e/->/g' \
+    -e 's/\\u002d\\u003e/->/g' \
+    -e 's/&#45;&#62;/->/g' \
+    -e 's/-[[:space:]]\+>/->/g' \
+    "$file"
+
+  if ! python -m py_compile "$file" >/dev/null 2>&1; then
+    echo "WARNING: $file fails Python compile after replacements. Restoring backup."
+    restore_from_backup "$file"
+    return
+  fi
+
+  echo "Patched and validated: $file"
+}
+
+process_target() {
+  local target="$1"
+  if [[ -d "$target" ]]; then
+    while IFS= read -r -d '' file; do
+      patch_file "$file"
+    done < <(find "$target" -type f -name '*.py' -print0)
+  elif [[ -f "$target" ]]; then
+    patch_file "$target"
+  else
+    echo "Skipping missing target: $target" >&2
+  fi
+}
+
+main() {
+  local targets=("$@")
+  if ((${#targets[@]} == 0)); then
+    targets=("$PWD")
+  fi
+
+  print_header "${targets[@]}"
+  for target in "${targets[@]}"; do
+    process_target "$target"
   done
+  echo "Done. Files that were changed have .bak backups for review."
+}
 
-echo "Done. Files that were changed have .bak backups for review."
+main "$@"

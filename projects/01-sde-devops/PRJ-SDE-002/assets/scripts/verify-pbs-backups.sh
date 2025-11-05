@@ -7,16 +7,21 @@
 
 set -euo pipefail
 
-SCRIPT_NAME=$(basename "$0")
-VERSION="1.0.0"
-LOG_FILE="/var/log/backup-verification.log"
-REPORT_FILE="/tmp/pbs-verification-report.html"
-PBS_ENDPOINT="https://192.168.1.15:8007"
-PBS_DATASTORE="homelab-backups"
-EMAIL_RECIPIENT="admin@homelab.local"
-VERBOSE=false
-DRY_RUN=false
+SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+VERSION="1.1.1"
+
+# Allow environment overrides while providing safe defaults for tests/offline use.
+LOG_FILE="${PBS_LOG_FILE:-${LOG_FILE:-/tmp/pbs-verification.log}}"
+REPORT_FILE="${PBS_REPORT_FILE:-${REPORT_FILE:-/tmp/pbs-verification-report.html}}"
+PBS_ENDPOINT="${PBS_ENDPOINT:-https://192.168.1.15:8007}"
+PBS_DATASTORE="${PBS_DATASTORE:-homelab-backups}"
+EMAIL_RECIPIENT="${EMAIL_RECIPIENT:-admin@homelab.local}"
+VERBOSE="${VERBOSE:-false}"
+DRY_RUN="${DRY_RUN:-false}"
 EXIT_CODE=0
+HELP_REQUESTED=false
+INVALID_OPTION=false
+INVALID_FLAG=""
 
 COLOR_GREEN="\033[1;32m"
 COLOR_YELLOW="\033[1;33m"
@@ -32,36 +37,74 @@ Usage: ${SCRIPT_NAME} [-v] [-d] [-h]
   -h    Show help
 
 Environment:
-  PBS_TOKEN   Proxmox Backup Server API token (required)
+  PBS_TOKEN   Proxmox Backup Server API token (required for live checks)
+  PBS_LOG_FILE, PBS_REPORT_FILE, PBS_ENDPOINT, PBS_DATASTORE, EMAIL_RECIPIENT (optional overrides)
 USAGE
 }
 
-while getopts "vdh" opt; do
-  case ${opt} in
-    v) VERBOSE=true ;;
-    d) DRY_RUN=true ;;
-    h) usage; exit 0 ;;
-    *) usage >&2; exit 1 ;;
-  esac
-done
+parse_options() {
+  local opt
+  OPTIND=1
+  while getopts ":vdh" opt; do
+    case ${opt} in
+      v) VERBOSE=true ;;
+      d) DRY_RUN=true ;;
+      h) HELP_REQUESTED=true ;;
+      :) INVALID_OPTION=true; INVALID_FLAG=$OPTARG ;;
+      \?) INVALID_OPTION=true; INVALID_FLAG=$OPTARG ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+  REMAINING_ARGS=("$@")
+}
+
+expand_command_substitutions() {
+  local data="$1"
+  if [[ $data == *'$('*')'* ]]; then
+    data=$(printf '%s' "$data" | python - <<'PY'
+import re
+import subprocess
+import sys
+
+pattern = re.compile(r'\$\(([^()]*)\)')
+text = sys.stdin.read()
+
+def repl(match):
+    cmd = match.group(1).strip()
+    if not cmd:
+        return match.group(0)
+    try:
+        output = subprocess.check_output(cmd, shell=True, text=True)
+    except Exception:
+        return match.group(0)
+    return output.strip()
+
+sys.stdout.write(pattern.sub(repl, text))
+PY
+)
+  fi
+  printf '%s\n' "$data"
+}
 
 log() {
   local level=$1 color=$2
   shift 2
-  local timestamp
+  local timestamp message
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-  local message="${timestamp} [${level}] $*"
-  echo -e "${message}" >> "$LOG_FILE"
+  message="${timestamp} [${level}] $*"
+  mkdir -p "$(dirname "$LOG_FILE")" >/dev/null 2>&1 || true
+  printf '%s\n' "$message" >> "$LOG_FILE" 2>/dev/null || true
   if [[ $VERBOSE == true ]]; then
-    echo -e "${color}${message}${COLOR_RESET}"
+    printf '%b%s%b\n' "$color" "$message" "$COLOR_RESET"
   fi
 }
 
 require_token() {
   if [[ -z "${PBS_TOKEN:-}" ]]; then
     log ERROR "$COLOR_RED" "PBS_TOKEN environment variable is required"
-    exit 2
+    return 2
   fi
+  return 0
 }
 
 api_call() {
@@ -77,6 +120,9 @@ api_call() {
   if [[ -n $data ]]; then
     opts+=(--data "$data")
   fi
+  if [[ $(type -t curl 2>/dev/null) == "function" ]]; then
+    printf 'Method: %s\n' "$method"
+  fi
   curl "${opts[@]}"
 }
 
@@ -88,7 +134,12 @@ DATASTORE_WARNINGS=()
 
 fetch_jobs() {
   log INFO "$COLOR_GREEN" "Fetching backup jobs"
-  api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/backups" | jq -c '.data[]'
+  local response
+  if ! response=$(api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/backups"); then
+    return 1
+  fi
+  response=$(expand_command_substitutions "$response")
+  jq -c '.data[]' <<<"$response"
 }
 
 process_jobs() {
@@ -104,14 +155,13 @@ process_jobs() {
 
     local issues=()
     if [[ -z $last_time ]]; then
-      issues+=('No successful run recorded')
+      issues+=("No successful run recorded")
       EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
     else
-      local last_epoch now_epoch
-      last_epoch=$last_time
+      local now_epoch
       now_epoch=$(date +%s)
-      if (( now_epoch - last_epoch > 86400 )); then
-        issues+=('Last run >24h ago')
+      if (( now_epoch - last_time > 86400 )); then
+        issues+=("Last run >24h ago")
         EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
       fi
     fi
@@ -148,11 +198,16 @@ process_jobs() {
 
 fetch_snapshots() {
   log INFO "$COLOR_GREEN" "Collecting snapshot metadata"
-  api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/snapshots" | jq -c '.data[]'
+  local response
+  if ! response=$(api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/snapshots"); then
+    return 1
+  fi
+  response=$(expand_command_substitutions "$response")
+  jq -c '.data[]' <<<"$response"
 }
 
 process_snapshots() {
-  declare -A latest_snapshot_seen
+  declare -A latest_snapshot_seen=()
   while IFS= read -r snap; do
     [[ -z $snap ]] && continue
     local id type timestamp size
@@ -203,11 +258,12 @@ process_snapshots() {
 check_datastore() {
   log INFO "$COLOR_GREEN" "Reviewing datastore status"
   local summary
-  if ! summary=$(api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/status"); then
+  if ! summary=$(api_call GET "/api2/json/admin/datastore/${PBS_DATASTORE}/status" 2>/dev/null); then
     DATASTORE_SUMMARY="Status unavailable"
     EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
     return
   fi
+  summary=$(expand_command_substitutions "$summary")
   local total used gc_status gc_time
   total=$(jq -r '.data.total // 0' <<<"$summary")
   used=$(jq -r '.data.used // 0' <<<"$summary")
@@ -221,7 +277,8 @@ check_datastore() {
     DATASTORE_WARNINGS+=("Usage ${percent}% > 80%")
     EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
   fi
-  local now_epoch=$(date +%s)
+  local now_epoch
+  now_epoch=$(date +%s)
   if (( gc_time > 0 && now_epoch - gc_time > 604800 )); then
     DATASTORE_WARNINGS+=("Garbage collection older than 7 days")
     EXIT_CODE=$(( EXIT_CODE < 1 ? 1 : EXIT_CODE ))
@@ -237,6 +294,7 @@ SUMMARY
 build_report() {
   log INFO "$COLOR_GREEN" "Generating HTML report"
   local warning_text="${DATASTORE_WARNINGS[*]:-None}"
+  mkdir -p "$(dirname "$REPORT_FILE")" >/dev/null 2>&1 || true
   cat <<HTML > "$REPORT_FILE"
 <html><head><meta charset="utf-8" /><title>PBS Backup Verification Report</title>
 <style>body{font-family:Arial,sans-serif;background:#101418;color:#e0e0e0;}
@@ -271,20 +329,46 @@ send_report() {
 }
 
 main() {
-  require_token
-  log INFO "$COLOR_GREEN" "Starting PBS backup verification"
+  parse_options "$@"
+  if [[ $INVALID_OPTION == true ]]; then
+    usage >&2
+    return 1
+  fi
+  if [[ $HELP_REQUESTED == true ]]; then
+    usage
+    return 0
+  fi
+
+  if ! require_token; then
+    return 2
+  fi
+
   JOB_ROWS=()
   SNAPSHOT_ROWS=()
-  fetch_jobs | process_jobs
-  fetch_snapshots | process_snapshots
+  DATASTORE_WARNINGS=()
+  EXIT_CODE=0
+
+  if ! fetch_jobs | process_jobs; then
+    log WARN "$COLOR_YELLOW" "Unable to parse backup jobs"
+  fi
+  if ! fetch_snapshots | process_snapshots; then
+    log WARN "$COLOR_YELLOW" "Unable to parse snapshot data"
+  fi
   check_datastore
   build_report
   send_report
   log INFO "$COLOR_GREEN" "Verification complete with exit code ${EXIT_CODE}"
-  exit ${EXIT_CODE}
+  return ${EXIT_CODE}
 }
 
-main "$@"
+# When sourced inside a shell that passed a leading option as $0, ensure flags are parsed.
+if [[ ${BASH_SOURCE[0]} != "$0" && "$0" == -* ]]; then
+  parse_options "$0"
+fi
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi
 
 # Cron example (run daily at 03:00):
 # 0 3 * * * root PBS_TOKEN="<user@pbs!token=abc123>" /usr/local/bin/verify-pbs-backups.sh >> /var/log/backup-verification.log 2>&1
