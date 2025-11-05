@@ -1,109 +1,36 @@
-# Loki configuration for single-instance homelab deployment
-# ---------------------------------------------------------
-# This configuration is optimized for a single-node Loki deployment handling
-# approximately 10GB of logs per day with 30-day retention on local storage.
-# Sections include detailed comments for maintainability.
-
+auth_enabled: false
 server:
   http_listen_port: 3100
-  grpc_listen_port: 9096
-  log_level: info
-  log_format: logfmt
-  # enable_runtime_config allows hot-reloading of select parameters if needed.
-  enable_runtime_config: true
 
-common:
-  path_prefix: /var/lib/loki
-  storage:
-    filesystem:
-      chunks_directory: /var/lib/loki/chunks
-      rules_directory: /var/lib/loki/rules
-  replication_factor: 1
-  ring:
-    kvstore:
-      store: inmemory
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: "memberlist"
 
 schema_config:
   configs:
-    - from: 2020-10-24
-      store: boltdb-shipper
-      object_store: filesystem
-      schema: v11
-      index:
-        prefix: index_
-        period: 24h
+  - from: 1970-01-01
+    store: boltdb-shipper
 
 storage_config:
   boltdb_shipper:
-    shared_store: filesystem
-    active_index_directory: /var/lib/loki/index
-    cache_location: /var/lib/loki/boltdb-cache
-    cache_ttl: 24h
+    active_index_directory: /data/loki/index
+    cache_location: /data/loki/cache
   filesystem:
-    directory: /var/lib/loki/chunks
-
-chunk_store_config:
-  max_look_back_period: 0s
-  # Cache query results for a day to speed up frequently accessed logs.
-  chunk_cache_config:
-    enable_fifocache: true
-    fifocache:
-      max_size_items: 1024
-      ttl: 24h
+    directory: /data/loki/chunks
 
 compactor:
-  working_directory: /var/lib/loki/compactor
-  shared_store: filesystem
-  compaction_interval: 10m
   retention_enabled: true
-  retention_delete_delay: 2h
-  delete_request_cancel_period: 24h
 
 limits_config:
-  reject_old_samples: true
-  reject_old_samples_max_age: 168h
-  ingestion_rate_mb: 8
-  ingestion_burst_size_mb: 16
-  max_streams_per_user: 10000
-  max_global_streams_per_user: 0
-  max_query_length: 721h
-  max_query_lookback: 0s
-  max_cache_freshness_per_query: 10s
-
-runtime_config:
-  file: /etc/loki/runtime-config.yaml
-
-table_manager:
-  retention_deletes_enabled: true
   retention_period: 720h
-  poll_interval: 10m
 
-querier:
-  engine:
-    max_queriers_per_tenant: 2
-  query_timeout: 2m
-  tail_max_duration: 5m
+chunk_store_config:
+  # Add chunk store configuration here
 
-query_range:
-  cache_results: true
-  results_cache:
-    cache:
-      enable_fifocache: true
-      fifocache:
-        max_size_items: 1024
-        ttl: 24h
-
-frontend:
-  log_queries_longer_than: 5s
-  max_outstanding_per_tenant: 64
+# Table manager configuration
 
 ruler:
-  alertmanager_url: http://localhost:9093
-  ring:
-    kvstore:
-      store: inmemory
-  enable_api: true
-  storage:
-    type: local
-    local:
-      directory: /var/lib/loki/rules
+  alertmanager:
+    url: "http://alertmanager:9093"

@@ -1,98 +1,117 @@
-%% Homelab observability stack architecture
-%% Flowchart showing data sources, collectors, storage, alerting, visualization,
-%% and backup integration. Colors represent functional groups.
-flowchart LR
-  subgraph Trusted_Network[Trusted LAN 192.168.1.0/24]
-    direction LR
-    ProxmoxHost["Proxmox Host\n192.168.1.10"]:::source
-    VM1["VM1\nWiki.js\n192.168.1.20"]:::source
-    VM2["VM2\nHome Assistant\n192.168.1.21"]:::source
-    VM3["VM3\nImmich\n192.168.1.22"]:::source
-    VM4["VM4\nDatabase\n192.168.1.23"]:::source
-    VM5["VM5\nUtility\n192.168.1.24"]:::source
-    LXC1["LXC1\n192.168.1.30"]:::source
-    LXC2["LXC2\n192.168.1.31"]:::source
-    LXC3["LXC3\n192.168.1.32"]:::source
-    TrueNAS["TrueNAS\nStorage\n192.168.1.5"]:::source
-  end
+flowchart TD
+    %% Data Sources Layer
+    subgraph DataSources [Data Sources - Homelab Infrastructure]
+        Proxmox[Proxmox Host<br/>192.168.1.10]
+        
+        subgraph VMs [Virtual Machines]
+            VM1[VM 1<br/>192.168.1.20]
+            VM2[VM 2<br/>192.168.1.21]
+            VM3[VM 3<br/>192.168.1.22]
+            VM4[VM 4<br/>192.168.1.23]
+            VM5[VM 5<br/>192.168.1.24]
+        end
+        
+        subgraph Containers [LXC Containers]
+            LXC1[LXC 1<br/>192.168.1.30]
+            LXC2[LXC 2<br/>192.168.1.31]
+            LXC3[LXC 3<br/>192.168.1.32]
+        end
+        
+        TrueNAS[TrueNAS Storage<br/>192.168.1.5]
+    end
 
-  subgraph Collectors[Metrics & Log Collectors]
-    direction TB
-    NodeExporter[Node Exporters]:::collector
-    ProxmoxExporter[Proxmox Exporter\n:9221]:::collector
-    TrueNASExporter[TrueNAS Exporter\n:9273]:::collector
-    BlackboxExporter[Blackbox Exporter]:::collector
-    PromtailAgents[Promtail Agents\n:9080]:::collector
-  end
+    %% Metrics Collection Layer
+    subgraph MetricsCollectors [Metrics Collection Agents]
+        NodeExporterProxmox[Node Exporter<br/>:9100]
+        NodeExporterVM[Node Exporters<br/>:9100]
+        ProxmoxExporter[Proxmox Exporter<br/>:9221]
+        TrueNASExporter[TrueNAS Exporter<br/>:9273]
+        BlackboxExporter[Blackbox Exporter<br/>:9115]
+    end
 
-  subgraph Core[Central Observability]
-    direction TB
-    Prometheus[(Prometheus\n:9090)]:::storage
-    Alertmanager[(Alertmanager\n:9093)]:::alert
-    Loki[(Loki\n:3100/9096)]:::storage
-  end
+    %% Log Collection Layer
+    subgraph LogCollectors [Log Collection Agents]
+        PromtailProxmox[Promtail<br/>:9080]
+        PromtailVM[Promtail Agents<br/>:9080]
+        PromtailContainer[Promtail Agents<br/>:9080]
+    end
 
-  subgraph Visualization
-    Grafana[Grafana\n:3000]:::visual
-  end
+    %% Central Storage
+    subgraph CentralStorage [Central Storage & Processing]
+        Prometheus[Prometheus<br/>:9090]
+        Loki[Loki<br/>:3100]
+    end
 
-  subgraph Backup
-    PBS[Proxmox Backup Server\n192.168.1.15\n:8007]:::backup
-  end
+    %% Alerting Layer
+    subgraph Alerting [Alerting System]
+        Alertmanager[Alertmanager<br/>:9093]
+    end
 
-  ProxmoxHost -->|Metrics\nHTTP 9100| NodeExporter
-  VM1 -->|Metrics\nHTTP 9100| NodeExporter
-  VM2 -->|Metrics\nHTTP 9100| NodeExporter
-  VM3 -->|Metrics\nHTTP 9100| NodeExporter
-  VM4 -->|Metrics\nHTTP 9100| NodeExporter
-  VM5 -->|Metrics\nHTTP 9100| NodeExporter
-  LXC1 -->|Metrics\nHTTP 9100| NodeExporter
-  LXC2 -->|Metrics\nHTTP 9100| NodeExporter
-  LXC3 -->|Metrics\nHTTP 9100| NodeExporter
-  ProxmoxHost -->|VM Metrics\nHTTP 9221| ProxmoxExporter
-  TrueNAS -->|Storage Metrics\nHTTP 9273| TrueNASExporter
-  ProxmoxHost -->|Logs\nHTTP 9080| PromtailAgents
-  VM1 -->|Logs\nHTTP 9080| PromtailAgents
-  VM2 -->|Logs\nHTTP 9080| PromtailAgents
-  VM3 -->|Logs\nHTTP 9080| PromtailAgents
-  VM4 -->|Logs\nHTTP 9080| PromtailAgents
-  VM5 -->|Logs\nHTTP 9080| PromtailAgents
-  LXC1 -->|Logs\nHTTP 9080| PromtailAgents
-  LXC2 -->|Logs\nHTTP 9080| PromtailAgents
-  LXC3 -->|Logs\nHTTP 9080| PromtailAgents
-  BlackboxExporter -.->|HTTP Probes| VM1
-  BlackboxExporter -.->|HTTP Probes| VM2
-  BlackboxExporter -.->|HTTP Probes| VM3
+    %% Visualization Layer
+    subgraph Visualization [Visualization & Dashboards]
+        Grafana[Grafana<br/>:3000]
+    end
 
-  NodeExporter -->|Scrape HTTP 9090| Prometheus
-  ProxmoxExporter -->|Scrape HTTP 9090| Prometheus
-  TrueNASExporter -->|Scrape HTTP 9090| Prometheus
-  BlackboxExporter -->|Scrape HTTP 9090| Prometheus
-  PromtailAgents -->|Push Logs HTTP 3100| Loki
+    %% Backup Infrastructure
+    subgraph Backup [Backup System]
+        PBS[Proxmox Backup Server<br/>192.168.1.15:8007]
+    end
 
-  Prometheus -->|Alerts HTTP 9093| Alertmanager
-  Alertmanager -.->|Email| Email[alerts@homelab.local]:::alert
-  Alertmanager -.->|Slack| Slack[#homelab-alerts]:::alert
-  Alertmanager -.->|PagerDuty| PagerDuty[PagerDuty pg123456]:::alert
+    %% Notification Channels
+    subgraph Notifications [Notification Channels]
+        Email[Email<br/>alerts@homelab.local]
+        Slack[Slack<br/>#homelab-alerts]
+        PagerDuty[PagerDuty<br/>Critical Only]
+    end
 
-  Grafana -->|Query Metrics HTTP 9090| Prometheus
-  Grafana -->|Query Logs HTTP 3100| Loki
-  Grafana -.->|Dashboards| Users((Operators))
+    %% Data Flow Connections
+    Proxmox -.->|Metrics| NodeExporterProxmox
+    VMs -.->|Metrics| NodeExporterVM
+    Proxmox -.->|VM/Container Metrics| ProxmoxExporter
+    TrueNAS -.->|Storage Metrics| TrueNASExporter
+    
+    NodeExporterProxmox -->|HTTP :9100| Prometheus
+    NodeExporterVM -->|HTTP :9100| Prometheus
+    ProxmoxExporter -->|HTTP :9221| Prometheus
+    TrueNASExporter -->|HTTP :9273| Prometheus
+    BlackboxExporter -->|HTTP :9115| Prometheus
+    
+    Proxmox -.->|System Logs| PromtailProxmox
+    VMs -.->|Application Logs| PromtailVM
+    Containers -.->|Container Logs| PromtailContainer
+    
+    PromtailProxmox -.->|HTTP :3100| Loki
+    PromtailVM -.->|HTTP :3100| Loki
+    PromtailContainer -.->|HTTP :3100| Loki
+    
+    Prometheus -.->|Alerts HTTP :9093| Alertmanager
+    Alertmanager -.->|Email SMTP :587| Email
+    Alertmanager -.->|Webhook HTTP| Slack
+    Alertmanager -.->|API HTTPS| PagerDuty
+    
+    Prometheus -->|Query API :9090| Grafana
+    Loki -->|Query API :3100| Grafana
+    
+    Proxmox -->|Backup API :8007| PBS
+    VMs -->|Backup API :8007| PBS
+    Containers -->|Backup API :8007| PBS
+    
+    BlackboxExporter -->|HTTP Probes| VMs
+    BlackboxExporter -->|HTTP Probes| Containers
 
-  ProxmoxHost -.->|Nightly backups| PBS
-  VM1 -.->|Snapshot jobs| PBS
-  VM2 -.->|Snapshot jobs| PBS
-  VM3 -.->|Snapshot jobs| PBS
-  VM4 -.->|Snapshot jobs| PBS
-  VM5 -.->|Snapshot jobs| PBS
-  LXC1 -.->|Snapshot jobs| PBS
-  LXC2 -.->|Snapshot jobs| PBS
-  LXC3 -.->|Snapshot jobs| PBS
-  PBS -.->|Stores to| TrueNAS
-
-  classDef source fill:#1e88e5,color:#fff,stroke:#0d47a1;
-  classDef collector fill:#43a047,color:#fff,stroke:#1b5e20;
-  classDef storage fill:#7e57c2,color:#fff,stroke:#4527a0;
-  classDef alert fill:#e53935,color:#fff,stroke:#b71c1c;
-  classDef visual fill:#fb8c00,color:#fff,stroke:#ef6c00;
-  classDef backup fill:#9e9e9e,color:#fff,stroke:#616161;
+    %% Styling
+    classDef dataSource fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef collector fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px
+    classDef storage fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef alerting fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+    classDef visualization fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef backup fill:#e0f2f1,stroke:#004d40,stroke-width:2px
+    classDef notification fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class Proxmox,VM1,VM2,VM3,VM4,VM5,LXC1,LXC2,LXC3,TrueNAS dataSource
+    class NodeExporterProxmox,NodeExporterVM,ProxmoxExporter,TrueNASExporter,BlackboxExporter,PromtailProxmox,PromtailVM,PromtailContainer collector
+    class Prometheus,Loki storage
+    class Alertmanager alerting
+    class Grafana visualization
+    class PBS backup
+    class Email,Slack,PagerDuty notification
