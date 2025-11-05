@@ -7,27 +7,27 @@
 # 2 = critical
 # 3 = error
 
-# Function to check PBS API connectivity
+# check_pbs_api verifies connectivity to the PBS API and reports the connectivity status for use by subsequent checks.
 check_pbs_api() {
     # Connectivity checks...
 }
 
-# Function to validate backup job status
+# validate_backup_jobs validates the status of PBS backup jobs and identifies failed or warning jobs for downstream reporting.
 validate_backup_jobs() {
     # Job status validation...
 }
 
-# Function to check datastore health
+# check_datastore_health checks datastore responsiveness, available capacity, and replication/integrity status and reports any unhealthy conditions.
 check_datastore_health() {
     # Datastore health checks...
 }
 
-# Function to generate HTML report
+# generate_html_report generates an HTML report summarizing PBS backup verification results and writes the report to the configured output location.
 generate_html_report() {
     # HTML report generation...
 }
 
-# Function to send email notification
+# send_email_notification sends an email summarizing the backup verification results to configured recipients.
 send_email_notification() {
     # Email notifications...
 }
