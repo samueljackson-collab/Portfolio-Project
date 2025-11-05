@@ -18,6 +18,22 @@ groups:
           description: 'Prometheus has not scraped {{ $labels.instance }} for over two minutes. Investigate network connectivity or system health.'
           runbook: 'https://runbooks.homelab.local/{{ $labels.alertname }}'
 
+      # HighCPUUsageWarning monitors sustained high CPU utilization
+      # -----------------------------------------------------------
+      # CPU calculation methodology: Uses node_exporter's node_cpu_seconds_total metric
+      # in "idle" mode, calculating the inverse to determine active CPU usage. The irate()
+      # function computes per-second rate over a 5-minute window, which is then averaged
+      # across all CPU cores for the instance.
+      #
+      # Why 80% warrants investigation: Sustained CPU usage above 80% indicates potential
+      # resource contention. While brief spikes are normal during processing tasks, sustained
+      # high usage can lead to increased latency, degraded application performance, and
+      # difficulty scheduling new workloads.
+      #
+      # 15-minute duration rationale: This duration filters out transient CPU spikes from
+      # batch jobs or periodic tasks while reliably catching sustained issues that require
+      # investigation. Shorter durations would create alert fatigue; longer durations might
+      # delay response to genuine resource constraints.
       - alert: HighCPUUsageWarning
         expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
         for: 15m
@@ -26,9 +42,22 @@ groups:
           component: infrastructure
         annotations:
           summary: 'CPU usage high on {{ $labels.instance }}'
-          description: 'Average CPU utilization exceeded 80% for 15 minutes. Current value: {{ printf "%.2f" $value }}%.'
+          description: 'Average CPU utilization exceeded 80% for 15 minutes. Current value: {{ printf "%.2f" $value }}%.'.
           runbook: 'https://runbooks.homelab.local/HighCPUUsage'
 
+      # HighCPUUsageCritical indicates system is near unresponsive state
+      # ---------------------------------------------------------------
+      # Why 95% is the critical threshold: At this level of sustained CPU usage, the system
+      # becomes unresponsive to interactive commands, SSH sessions may hang, and all services
+      # on the host experience severe degradation. The system has virtually no headroom for
+      # additional processing, including monitoring agent overhead.
+      #
+      # Expected response time: This is a critical alert requiring immediate attention.
+      # Investigate within 15 minutes. Common causes include runaway processes, resource
+      # exhaustion attacks, or undersized VM configurations.
+      #
+      # Escalation procedures: If not resolved within 30 minutes, consider emergency
+      # mitigation (kill non-critical processes, migrate critical workloads, reboot host).
       - alert: HighCPUUsageCritical
         expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 95
         for: 15m
@@ -40,6 +69,22 @@ groups:
           description: 'Average CPU utilization exceeded 95% for 15 minutes. Current value: {{ printf "%.2f" $value }}%. Check top processes immediately.'
           runbook: 'https://runbooks.homelab.local/HighCPUUsage'
 
+      # HighMemoryUsageWarning monitors memory pressure before OOM conditions
+      # --------------------------------------------------------------------
+      # Memory calculation using MemAvailable: Unlike simple free memory, MemAvailable
+      # accounts for reclaimable memory including buffers and cache. This provides a more
+      # accurate picture of memory pressure, as Linux aggressively uses free memory for
+      # disk caching but can reclaim it when applications need it.
+      #
+      # Why 85% triggers a warning: This threshold allows sufficient time for investigation
+      # and remediation before reaching Out Of Memory (OOM) conditions. At 85% usage, the
+      # system still has headroom but is approaching resource constraints.
+      #
+      # Common causes include:
+      # - Memory leaks in long-running applications
+      # - Undersized VMs for workload requirements
+      # - Uncontrolled cache growth (Redis, MySQL query cache)
+      # - Container memory limits not properly configured
       - alert: HighMemoryUsageWarning
         expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
         for: 10m
@@ -48,9 +93,21 @@ groups:
           component: infrastructure
         annotations:
           summary: 'Memory usage high on {{ $labels.instance }}'
-          description: 'Available memory below 15% for 10 minutes. Current usage: {{ printf "%.2f" $value }}%.'
+          description: 'Available memory below 15% for 10 minutes. Current usage: {{ printf "%.2f" $value }}%.'.
           runbook: 'https://runbooks.homelab.local/HighMemoryUsage'
 
+      # HighMemoryUsageCritical indicates imminent OOM killer activation
+      # ----------------------------------------------------------------
+      # Risk of OOM killer activation: At 95% memory usage, the Linux kernel's OOM killer
+      # may activate, terminating processes to free memory. This is unpredictable and can
+      # kill critical services, leading to data loss or service outages.
+      #
+      # Immediate mitigation strategies:
+      # - Identify memory-intensive processes with `top` or `ps aux --sort=-rss`
+      # - Restart non-critical services to reclaim memory
+      # - Migrate workloads to other hosts if using Proxmox HA
+      # - Add swap space as emergency buffer (though this degrades performance)
+      # - Scale up VM memory allocation if host has capacity
       - alert: HighMemoryUsageCritical
         expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
         for: 10m
@@ -62,28 +119,78 @@ groups:
           description: 'Available memory below 5% for 10 minutes. Current usage: {{ printf "%.2f" $value }}%. Consider restarting services or migrating workloads.'
           runbook: 'https://runbooks.homelab.local/HighMemoryUsage'
 
+      # DiskSpaceLowWarning provides early warning for disk space exhaustion
+      # --------------------------------------------------------------------
+      # Why 15% free space threshold: This represents a balance between early warning and
+      # avoiding false positives. At 15% free space, there is sufficient time to identify
+      # large files, clean up logs, or expand storage before service disruption occurs.
+      # For a 100GB disk, this triggers at ~15GB free; for a 1TB disk, at ~150GB free.
+      #
+      # Filesystem exclusions: tmpfs and devtmpfs are ephemeral in-memory filesystems that
+      # don't persist across reboots and don't require monitoring. Including them would
+      # generate spurious alerts without actionable remediation.
+      #
+      # Recommended response actions:
+      # - Identify large files: `du -sh /* | sort -hr | head -20`
+      # - Clean up old logs: Check /var/log and application log directories
+      # - Review Docker/container volumes for unused layers
+      # - Expand storage: Add disk to LVM volume group or resize virtual disk
+      # - Archive old data to cold storage or backup location
       - alert: DiskSpaceLowWarning
         expr: (node_filesystem_avail_bytes{fstype!="tmpfs",fstype!="devtmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs",fstype!="devtmpfs"}) * 100 < 15
-        for: 30m
+        for: 10m
         labels:
           severity: warning
           component: infrastructure
         annotations:
           summary: 'Disk space low on {{ $labels.instance }} ({{ $labels.mountpoint }})'
-          description: 'Disk utilization above 85% for 30 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'
+          description: 'Disk utilization above 85% for 10 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'.
           runbook: 'https://runbooks.homelab.local/DiskSpaceLow'
 
+      # DiskSpaceLowCritical indicates imminent risk of service failure
+      # ---------------------------------------------------------------
+      # Urgency context: At 5% free space, services begin to fail. Databases cannot write
+      # transaction logs, applications cannot create temporary files, and system logs may
+      # stop recording critical events. This can lead to data corruption and extended
+      # recovery times.
+      #
+      # Immediate response steps (execute within 15 minutes):
+      # 1. Stop non-critical services to prevent further disk writes
+      # 2. Emergency cleanup: `journalctl --vacuum-time=1d`, clear package caches
+      # 3. Identify and remove/archive largest files immediately
+      # 4. Provision additional storage capacity (hot-add disk if virtualized)
+      #
+      # Impact assessment guidance: Check which services are affected by running
+      # `df -h` and correlating mount points with application data directories.
+      # Services writing to full filesystems will log errors and may require restart
+      # after space is freed.
       - alert: DiskSpaceLowCritical
         expr: (node_filesystem_avail_bytes{fstype!="tmpfs",fstype!="devtmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs",fstype!="devtmpfs"}) * 100 < 5
-        for: 15m
+        for: 10m
         labels:
           severity: critical
           component: infrastructure
         annotations:
           summary: 'Disk space critical on {{ $labels.instance }} ({{ $labels.mountpoint }})'
-          description: 'Disk utilization above 95% for 15 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'
+          description: 'Disk utilization above 95% for 10 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'.
           runbook: 'https://runbooks.homelab.local/DiskSpaceLow'
 
+      # BackupJobFailed monitors Proxmox Backup Server job status
+      # ----------------------------------------------------------
+      # Proxmox Backup Server status code interpretation:
+      # - 0: Success (backup completed without errors)
+      # - 1: Warning (backup completed with non-critical warnings)
+      # - 2: Error (backup failed or completed with critical errors)
+      #
+      # Why 1 hour duration: This prevents alerting on transient PBS connectivity issues,
+      # network hiccups during backup windows, or brief service restarts. Backup jobs
+      # typically run on scheduled intervals (daily/weekly), so a 1-hour window ensures
+      # the issue is persistent before creating alert fatigue.
+      #
+      # Integration with verification script: This alert complements the manual verification
+      # script located at assets/scripts/verify-pbs-backups.sh. When this alert fires,
+      # operators should run the verification script to get detailed backup status and
+      # identify which specific VM or container backup failed.
       - alert: BackupJobFailed
         expr: proxmox_backup_job_last_status != 0
         for: 1h
@@ -95,6 +202,23 @@ groups:
           description: 'Backup job {{ $labels.job_name }} has non-zero status {{ $value }}. Check PBS logs and rerun verification.'
           runbook: 'https://runbooks.homelab.local/BackupJobFailed'
 
+      # HighNetworkTraffic detects potential bottlenecks or anomalies
+      # -------------------------------------------------------------
+      # 100MB/s threshold context: In a homelab environment with gigabit networking (125MB/s
+      # theoretical maximum), sustained traffic above 100MB/s (800Mbps) indicates the link
+      # is operating at 80% capacity. This leaves minimal headroom and can cause packet loss
+      # or increased latency during traffic bursts.
+      #
+      # Why this is warning not critical: High network traffic is often legitimate (backup
+      # windows, VM migrations, large file transfers) but warrants investigation. Unlike
+      # other resource alerts, high network usage doesn't typically cause immediate service
+      # failure but indicates potential bottlenecks or unexpected traffic patterns.
+      #
+      # Troubleshooting approach:
+      # - Identify top talkers: Use `iftop` or `nethogs` to see which processes are consuming bandwidth
+      # - Check for backup jobs: Correlate with PBS/backup schedules
+      # - Scan for anomalies: Unexpected traffic patterns may indicate compromised systems or misconfigurations
+      # - Consider network segmentation or upgrade to 10GbE for high-throughput hosts
       - alert: HighNetworkTraffic
         expr: rate(node_network_receive_bytes_total[5m]) > 100000000
         for: 30m
@@ -106,6 +230,21 @@ groups:
           description: 'Inbound traffic sustained above 100 MB/s for 30 minutes. Current bandwidth: {{ humanize1024 $value }}/s.'
           runbook: 'https://runbooks.homelab.local/HighNetworkTraffic'
 
+      # ServiceUnreachable monitors external service availability via Blackbox Exporter
+      # -------------------------------------------------------------------------------
+      # Dependency on Blackbox Exporter: This alert relies on the probe_success metric
+      # generated by Prometheus Blackbox Exporter, which performs active health checks
+      # (HTTP, HTTPS, TCP, ICMP) against configured service endpoints. The exporter is
+      # configured in assets/prometheus/prometheus.yml under the blackbox scrape config.
+      #
+      # 5-minute duration balances quick detection with avoiding flapping: Brief service
+      # restarts or transient network issues typically resolve within 1-2 minutes. The
+      # 5-minute window ensures genuine outages are detected promptly while filtering out
+      # momentary unavailability that doesn't require operator intervention.
+      #
+      # Integration with service discovery: Service endpoints are discovered via Prometheus
+      # service discovery mechanisms (file_sd, consul_sd, or static configs). Health check
+      # configurations (probe modules) are defined in the Blackbox Exporter configuration.
       - alert: ServiceUnreachable
         expr: probe_success == 0
         for: 5m
@@ -117,8 +256,27 @@ groups:
           description: 'Blackbox probe failed for {{ $labels.instance }} with HTTP status {{ $labels.status_code }}. Check service availability.'
           runbook: 'https://runbooks.homelab.local/ServiceUnreachable'
 
+  # Backup alert group
+  # ------------------
+  # This group is currently empty as backup-related alerts are consolidated in the
+  # infrastructure group under the BackupJobFailed alert. This group is reserved for
+  # future backup-specific metrics such as:
+  # - Backup duration trends (AlertOnSlowBackup when jobs exceed expected runtime)
+  # - Backup storage capacity (AlertOnBackupStorageLow for PBS datastore space)
+  # - Backup verification failures (AlertOnBackupVerificationFailed for corrupted backups)
+  # - Backup retention policy violations (AlertOnBackupRetentionMissing)
   - name: backup
     rules: []
 
+  # Application alert group
+  # -----------------------
+  # This group is currently empty as application-level alerts like ServiceUnreachable
+  # are currently grouped in the infrastructure section. This group is reserved for
+  # future application-specific metrics as the homelab expands, such as:
+  # - HTTP error rates (AlertOnHighHTTP5xxRate, AlertOnHighHTTP4xxRate)
+  # - API latency (AlertOnSlowAPIResponse for endpoints exceeding SLA)
+  # - Database query performance (AlertOnSlowQueries, AlertOnConnectionPoolExhaustion)
+  # - Application-specific business metrics (AlertOnLowOrderProcessingRate)
+  # - Container/pod health (AlertOnCrashLoopBackOff, AlertOnImagePullFailure)
   - name: application
     rules: []
