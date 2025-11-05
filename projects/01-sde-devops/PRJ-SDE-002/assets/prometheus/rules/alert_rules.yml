@@ -1,0 +1,29 @@
+groups:
+  - name: node_alerts
+    rules:
+      - alert: NodeHighCPU
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}"
+          description: "CPU usage > 90% for 5 minutes on {{ $labels.instance }}"
+
+      - alert: NodeHighMemory
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Memory Pressure on {{ $labels.instance }}"
+          description: "Available memory < 15% on {{ $labels.instance }}"
+
+      - alert: NodeDiskRunningOut
+        expr: (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"}) * 100 < 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk running low on {{ $labels.instance }}"
+          description: "Less than 10% available on {{ $labels.instance }}"

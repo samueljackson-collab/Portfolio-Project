@@ -1,0 +1,10 @@
+graph LR
+  Internet --> FW[Firewall]
+  FW --> Switch[Core Switch]
+  Switch --> Mgmt[VLAN10 - Management]
+  Switch --> Servers[VLAN20 - Servers]
+  Switch --> IoT[VLAN30 - IoT]
+  Switch --> Guests[VLAN40 - Guests]
+
+%% Usage:
+%% Render with mermaid-cli: mmdc -i network-topology.mmd -o network-topology.png
