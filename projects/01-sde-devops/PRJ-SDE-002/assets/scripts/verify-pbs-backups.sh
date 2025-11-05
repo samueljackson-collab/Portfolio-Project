@@ -28,6 +28,7 @@ COLOR_YELLOW="\033[1;33m"
 COLOR_RED="\033[1;31m"
 COLOR_RESET="\033[0m"
 
+# usage prints the script usage synopsis, supported CLI flags (-v, -d, -h), and environment variable overrides (including PBS_TOKEN and optional PBS_*/EMAIL_RECIPIENT).
 usage() {
   cat <<USAGE
 ${SCRIPT_NAME} v${VERSION}
@@ -42,6 +43,7 @@ Environment:
 USAGE
 }
 
+# parse_options parses command-line flags -v, -d, and -h, sets VERBOSE/DRY_RUN/HELP_REQUESTED accordingly, marks invalid options in INVALID_OPTION/INVALID_FLAG, and stores any remaining positional arguments in REMAINING_ARGS.
 parse_options() {
   local opt
   OPTIND=1
@@ -58,6 +60,7 @@ parse_options() {
   REMAINING_ARGS=("$@")
 }
 
+# expand_command_substitutions expands any $(...) command substitutions found in the given string by executing the embedded commands and returning the string with their outputs substituted, leaving the original substitution text unchanged if execution fails.
 expand_command_substitutions() {
   local data="$1"
   if [[ $data == *'$('*')'* ]]; then
@@ -86,6 +89,8 @@ PY
   printf '%s\n' "$data"
 }
 
+# log writes a timestamped message with a given level to the configured log file and, when VERBOSE is true, echoes the colored message to stdout.
+# The first argument is the log level (e.g., INFO, WARN, ERROR), the second is an ANSI color escape sequence, and remaining arguments form the log message.
 log() {
   local level=$1 color=$2
   shift 2
@@ -99,6 +104,7 @@ log() {
   fi
 }
 
+# require_token checks that the PBS_TOKEN environment variable is set and returns 0 on success or 2 if it is missing.
 require_token() {
   if [[ -z "${PBS_TOKEN:-}" ]]; then
     log ERROR "$COLOR_RED" "PBS_TOKEN environment variable is required"
@@ -107,6 +113,13 @@ require_token() {
   return 0
 }
 
+# api_call performs an HTTP request against the configured Proxmox Backup Server API and writes the response to stdout.
+# It uses PBS_ENDPOINT and PBS_TOKEN to build the request URL and Authorization header, sets Content-Type to application/json,
+# fails on HTTP error status, and allows insecure TLS connections.
+# api_call METHOD PATH [DATA]
+# - METHOD: HTTP method to use (e.g., GET, POST).
+# - PATH: API path appended to PBS_ENDPOINT (e.g., /api2/json/...).
+# - DATA: optional JSON payload to send as the request body.
 api_call() {
   local method=$1 path=$2 data=${3:-}
   local url="${PBS_ENDPOINT}${path}"
@@ -132,6 +145,8 @@ SNAPSHOT_ROWS=()
 DATASTORE_SUMMARY="Not available"
 DATASTORE_WARNINGS=()
 
+# fetch_jobs retrieves the backup job list from the configured PBS datastore and writes each job as a compact JSON object line to stdout.
+# It exits non-zero if the API call fails and expands any embedded command substitutions in the API response before emitting jobs.
 fetch_jobs() {
   log INFO "$COLOR_GREEN" "Fetching backup jobs"
   local response
@@ -142,6 +157,7 @@ fetch_jobs() {
   jq -c '.data[]' <<<"$response"
 }
 
+# process_jobs reads newline-delimited JSON job objects from stdin, evaluates each job's health (last run age, status, duration, and size regression), updates the global EXIT_CODE on detected issues, and appends an HTML table row describing the job to the global JOB_ROWS.
 process_jobs() {
   while IFS= read -r job; do
     [[ -z $job ]] && continue
@@ -196,6 +212,7 @@ process_jobs() {
   done
 }
 
+# fetch_snapshots collects snapshot metadata from the configured PBS datastore and echoes each snapshot as a compact JSON object line; returns non-zero if the API request fails.
 fetch_snapshots() {
   log INFO "$COLOR_GREEN" "Collecting snapshot metadata"
   local response
@@ -206,6 +223,8 @@ fetch_snapshots() {
   jq -c '.data[]' <<<"$response"
 }
 
+# process_snapshots reads newline-delimited JSON snapshot objects from stdin, queues verification for each backup's latest snapshot, and appends an HTML result row to SNAPSHOT_ROWS while updating EXIT_CODE on issues.
+# It skips duplicate backup-ids (keeping only the latest), marks snapshots older than 7 days or with non-positive size as warnings, attempts a verify POST for each snapshot, and sets the row CSS class to "pass", "warn", or "fail" based on the resulting note.
 process_snapshots() {
   declare -A latest_snapshot_seen=()
   while IFS= read -r snap; do
@@ -255,6 +274,7 @@ process_snapshots() {
   done
 }
 
+# check_datastore reviews the configured PBS datastore, builds DATASTORE_SUMMARY, appends warnings to DATASTORE_WARNINGS when usage exceeds thresholds or last garbage collection is older than 7 days, and updates EXIT_CODE accordingly.
 check_datastore() {
   log INFO "$COLOR_GREEN" "Reviewing datastore status"
   local summary
@@ -291,21 +311,14 @@ SUMMARY
 )
 }
 
+# build_report generates the HTML report at "$REPORT_FILE" containing datastore health, datastore warnings, tables for backup jobs and snapshot verification, and the current EXIT_CODE.
 build_report() {
   log INFO "$COLOR_GREEN" "Generating HTML report"
   local warning_text="${DATASTORE_WARNINGS[*]:-None}"
   mkdir -p "$(dirname "$REPORT_FILE")" >/dev/null 2>&1 || true
   cat <<HTML > "$REPORT_FILE"
 <html><head><meta charset="utf-8" /><title>PBS Backup Verification Report</title>
-<style>body{font-family:Arial,sans-serif;background:#101418;color:#e0e0e0;}
-h1{color:#ff9800;}
-table{width:100%;border-collapse:collapse;margin-bottom:20px;}
-th,td{border:1px solid #333;padding:8px;text-align:left;}
-th{background:#1e1e1e;}
-.pass{color:#4caf50;}
-.warn{color:#ffeb3b;}
-.fail{color:#f44336;}
-</style></head><body>
+<style>body{font-family:Arial,sans-serif;background:#101418;color:#e0e0e0;}h1{color:#ff9800;}table{width:100%;border-collapse:collapse;margin-bottom:20px;}th,td{border:1px solid #333;padding:8px;text-align:left;}th{background:#1e1e1e;}.pass{color:#4caf50;}.warn{color:#ffeb3b;}.fail{color:#f44336;}</style></head><body>
 <h1>Proxmox Backup Verification Report</h1><p>Generated: $(date)</p>
 <h2>Datastore Health</h2><p>${DATASTORE_SUMMARY}</p><p class="warn">${warning_text}</p>
 <h2>Backup Jobs</h2><table><tr><th>Job</th><th>Status</th><th>Issues</th></tr>${JOB_ROWS[*]}</table>
@@ -314,6 +327,7 @@ th{background:#1e1e1e;}
 HTML
 }
 
+# send_report sends the generated HTML report to EMAIL_RECIPIENT via mailx; if DRY_RUN is true it suppresses sending, and if mailx is unavailable it leaves the report on disk and sets EXIT_CODE to 1.
 send_report() {
   if [[ $DRY_RUN == true ]]; then
     log INFO "$COLOR_YELLOW" "Dry run enabled; email suppressed"
@@ -328,6 +342,7 @@ send_report() {
   fi
 }
 
+# main orchestrates the PBS backup verification workflow: it parses CLI options, ensures the PBS token is present, resets state, runs job and snapshot checks, reviews datastore health, builds the HTML report, attempts delivery, and returns an exit code representing the most severe issue found.
 main() {
   parse_options "$@"
   if [[ $INVALID_OPTION == true ]]; then
