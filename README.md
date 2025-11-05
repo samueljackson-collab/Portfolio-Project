@@ -50,7 +50,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 ### Observability & Backups Stack
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets) *(being prepared)*
+**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
 
 ---
 ## 🔄 Past Projects Requiring Recovery
@@ -66,7 +66,7 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ---
 ## 🟠 In-Progress Projects (Milestones)
-- **Database Infrastructure Module (Terraform RDS)** · [Project README](./projects/01-sde-devops/PRJ-SDE-001/) · ✅ Module complete, expanding to full stack
+- **Database Infrastructure Module (Terraform RDS)** · [Project README](./projects/01-sde-devops/PRJ-SDE-001/) · ✅ Module complete, expanding to full-stack
 - **Resume Set (SDE/Cloud/QA/Net/Cyber)** · [Project README](./professional/resume/) · 📝 Structure created, content in progress
 
 ### 🔵 Planned Infrastructure Projects
