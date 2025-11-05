@@ -21,13 +21,28 @@ from pathlib import Path
 
 @pytest.fixture
 def script_path():
-    """Return the path to the bootstrap script."""
+    """
+    Get the filesystem path to the bootstrap_remote_state.sh script.
+    
+    Returns:
+        Path: A pathlib.Path pointing to "scripts/bootstrap_remote_state.sh".
+    """
     return Path("scripts/bootstrap_remote_state.sh")
 
 
 @pytest.fixture
 def mock_env(monkeypatch):
-    """Provide a clean environment without AWS credentials."""
+    """
+    Strip AWS credential environment variables from the provided pytest monkeypatch fixture.
+    
+    Removes AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN from the environment via monkeypatch.delenv so tests run without inherited AWS credentials.
+    
+    Parameters:
+        monkeypatch: The pytest monkeypatch fixture used to modify environment variables.
+    
+    Returns:
+        The same monkeypatch instance after the AWS credential environment variables have been removed.
+    """
     # Remove AWS credentials if present to test error handling
     for key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]:
         monkeypatch.delenv(key, raising=False)
@@ -46,11 +61,18 @@ class TestScriptExistence:
         assert script_path.is_file(), f"{script_path} is not a file"
 
     def test_script_is_executable(self, script_path):
-        """Verify the script has executable permissions."""
+        """
+        Check that the script file at the given path is executable.
+        
+        Parameters:
+        	script_path (str): Filesystem path to the script to verify.
+        """
         assert os.access(script_path, os.X_OK), f"{script_path} is not executable"
 
     def test_script_has_shebang(self, script_path):
-        """Verify the script has a proper shebang."""
+        """
+        Checks that the script's first line is a shebang and that it specifies bash.
+        """
         with open(script_path, 'r') as f:
             first_line = f.readline().strip()
         assert first_line.startswith("#!"), "Script missing shebang"
@@ -61,7 +83,12 @@ class TestScriptSyntax:
     """Test bash script syntax and structure."""
 
     def test_bash_syntax_valid(self, script_path):
-        """Verify bash syntax is valid using bash -n."""
+        """
+        Check that the Bash script at `script_path` has valid shell syntax.
+        
+        Parameters:
+            script_path (pathlib.Path): Path to the script file to validate.
+        """
         bash_path = shutil.which("bash")
         result = subprocess.run(  # noqa: S603
             [bash_path, "-n", str(script_path)],
@@ -82,7 +109,14 @@ class TestArgumentParsing:
     """Test argument parsing and default values."""
 
     def test_script_accepts_no_arguments(self, script_path):
-        """Test script runs with default values when no args provided."""
+        """
+        Verify the bootstrap script runs and emits expected default output when invoked without arguments.
+        
+        Runs the script with no parameters and checks stdout for evidence that the script attempted to bootstrap remote state (e.g., contains "Bootstrapping remote state" or "Bucket:").
+        
+        Parameters:
+            script_path (pathlib.Path): Path to the bootstrap script under test (pytest fixture).
+        """
         # This will fail without AWS credentials, but we're testing arg parsing
         bash_path = shutil.which("bash")
         result = subprocess.run(  # noqa: S603
@@ -95,7 +129,9 @@ class TestArgumentParsing:
         assert "Bootstrapping remote state" in result.stdout or "Bucket:" in result.stdout
 
     def test_script_accepts_custom_bucket_name(self, script_path):
-        """Test script accepts custom bucket name as first argument."""
+        """
+        Verify the script echoes a provided S3 bucket name when given as the first argument.
+        """
         bash_path = shutil.which("bash")
         result = subprocess.run(  # noqa: S603
             [bash_path, str(script_path), "test-bucket-custom"],
@@ -153,14 +189,23 @@ class TestS3BucketLogic:
         assert "head-bucket" in content, "Missing bucket existence check"
 
     def test_script_handles_us_east_1_region_special_case(self, script_path):
-        """Verify script handles us-east-1 region without LocationConstraint."""
+        """
+        Ensure the bootstrap script accounts for the AWS us-east-1 special case for S3 bucket creation.
+        
+        Asserts the script contains an explicit reference to "us-east-1", indicating it special-cases that region (where S3 bucket creation must omit a LocationConstraint).
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         # Script should check if region is us-east-1 and handle differently
         assert "us-east-1" in content, "Should handle us-east-1 specially"
 
     def test_script_enables_versioning(self, script_path):
-        """Verify script enables S3 bucket versioning."""
+        """
+        Check that the bootstrap script contains commands to enable S3 bucket versioning.
+        
+        Parameters:
+            script_path (str): Filesystem path to the shell script under test.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "put-bucket-versioning" in content, "Should enable bucket versioning"
@@ -178,7 +223,11 @@ class TestDynamoDBLogic:
     """Test DynamoDB table creation logic."""
 
     def test_script_creates_dynamodb_table(self, script_path):
-        """Verify script contains DynamoDB table creation."""
+        """
+        Check that the script contains commands to create and verify a DynamoDB table.
+        
+        This test asserts the presence of an `aws dynamodb create-table` invocation and a `describe-table` check in the script content.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "aws dynamodb create-table" in content, "Missing DynamoDB table creation"
@@ -208,13 +257,19 @@ class TestIdempotency:
     """Test that script can be run multiple times safely."""
 
     def test_script_checks_bucket_exists(self, script_path):
-        """Verify script checks if bucket already exists."""
+        """
+        Verifies that the script checks whether the target S3 bucket already exists.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "head-bucket" in content or "already exists" in content
 
     def test_script_checks_table_exists(self, script_path):
-        """Verify script checks if DynamoDB table already exists."""
+        """
+        Determines whether the script checks for an existing DynamoDB table.
+        
+        Asserts the script contains an AWS CLI `describe-table` invocation or text indicating the table "already exists".
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "describe-table" in content or "already exists" in content
@@ -246,7 +301,11 @@ class TestErrorHandling:
         assert "set -e" in content, "Script should exit on errors"
 
     def test_script_uses_undefined_variable_check(self, script_path):
-        """Verify script fails on undefined variables with set -u."""
+        """
+        Checks that the script enables failing on undefined variables.
+        
+        Asserts the script contains either `set -u` or the combined `set -euo` option.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "set -u" in content or "set -euo" in content
@@ -262,7 +321,7 @@ class TestAWSCLIUsage:
         assert "aws s3api" in content or "aws dynamodb" in content
 
     def test_script_passes_region_to_aws_commands(self, script_path):
-        """Verify script passes region parameter to AWS commands."""
+        """Ensure the script supplies a region argument to AWS CLI commands."""
         with open(script_path, 'r') as f:
             content = f.read()
         assert "--region" in content or "${REGION}" in content
