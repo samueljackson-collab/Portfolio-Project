@@ -323,3 +323,48 @@ class TestOutputMessages:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+class TestRefactoredScript:
+    """Test refactored fix_unicode_arrows.sh"""
+    
+    def test_simplified_structure(self):
+        """Test simplified script structure"""
+        with open(SCRIPT_PATH) as f:
+            content = f.read()
+            assert 'ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"' in content
+            assert 'find "$ROOT_DIR"' in content
+    
+    def test_no_multi_target_support(self):
+        """Test removal of multi-target functionality"""
+        with open(SCRIPT_PATH) as f:
+            content = f.read()
+            assert 'process_target' not in content
+            assert 'main()' not in content
+    
+    def test_backup_with_cp_n(self):
+        """Test cp -n for backup creation"""
+        with open(SCRIPT_PATH) as f:
+            content = f.read()
+            assert 'cp -n "$file" "${file}.bak"' in content
+            assert '|| true' in content
+    
+    def test_sed_patterns(self):
+        """Test sed replacement patterns"""
+        with open(SCRIPT_PATH) as f:
+            content = f.read()
+            assert "s/-\\\\u003e/->/g" in content
+            assert "s/-\\\\\\\\u003e/->/g" in content
+            assert "s/\\\\u002d\\\\u003e/->/g" in content
+            assert "s/&#45;&#62;/->/g" in content
+    
+    def test_python_compile_check(self):
+        """Test Python compilation validation"""
+        with open(SCRIPT_PATH) as f:
+            content = f.read()
+            assert 'python -m py_compile' in content
+            assert 'mv "${file}.bak" "$file"' in content
+    
+    def test_completion_message(self):
+        """Test completion message"""
+        with open(SCRIPT_PATH) as f:
+            assert 'echo "Done' in f.read()
