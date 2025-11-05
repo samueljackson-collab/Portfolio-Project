@@ -149,8 +149,11 @@ scrape_configs:
         regex: '192.168.1.(24):.*'
         replacement: vm-utility
         target_label: hostname
-    # Instance labels preserved as IP:port from targets; hostname set via relabel_configs
-    # No additional metric relabeling needed for this job
+    # Instance labels preserved as IP:port from targets (e.g., 192.168.1.20:9100)
+    # Hostname labels set via relabel_configs above provide friendly names
+    # This differs from other jobs where explicit metric relabeling sets instance labels
+    # to hostname:port format. Here, keeping IP:port in instance is intentional to
+    # maintain unique identification when multiple VMs may share similar hostnames.
 
   # Alertmanager metrics endpoint for insight into alert processing.
   - job_name: alertmanager
