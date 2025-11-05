@@ -8,7 +8,6 @@ Previously built and managed: resort booking site; high-SKU flooring store; tour
 
 ## Links
 
-- [Evidence/Diagrams](./assets)
 - [Parent Documentation](../README.md)
 
 ## Next Steps
