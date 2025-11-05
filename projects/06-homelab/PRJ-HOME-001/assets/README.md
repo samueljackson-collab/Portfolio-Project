@@ -8,7 +8,6 @@ Designed and wired a home network from scratch: rack-mounted gear, VLAN segmenta
 
 ## Links
 
-- [Evidence/Diagrams](./assets)
 - [Parent Documentation](../README.md)
 
 ## Next Steps
