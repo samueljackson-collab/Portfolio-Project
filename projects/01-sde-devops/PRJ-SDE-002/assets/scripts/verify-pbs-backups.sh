@@ -297,7 +297,15 @@ build_report() {
   mkdir -p "$(dirname "$REPORT_FILE")" >/dev/null 2>&1 || true
   cat <<HTML > "$REPORT_FILE"
 <html><head><meta charset="utf-8" /><title>PBS Backup Verification Report</title>
-<style>body{font-family:Arial,sans-serif;background:#101418;color:#e0e0e0;}h1{color:#ff9800;}table{width:100%;border-collapse:collapse;margin-bottom:20px;}th,td{border:1px solid #333;padding:8px;text-align:left;}th{background:#1e1e1e;}.pass{color:#4caf50;}.warn{color:#ffeb3b;}.fail{color:#f44336;}</style></head><body>
+<style>body{font-family:Arial,sans-serif;background:#101418;color:#e0e0e0;}
+h1{color:#ff9800;}
+table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+th,td{border:1px solid #333;padding:8px;text-align:left;}
+th{background:#1e1e1e;}
+.pass{color:#4caf50;}
+.warn{color:#ffeb3b;}
+.fail{color:#f44336;}
+</style></head><body>
 <h1>Proxmox Backup Verification Report</h1><p>Generated: $(date)</p>
 <h2>Datastore Health</h2><p>${DATASTORE_SUMMARY}</p><p class="warn">${warning_text}</p>
 <h2>Backup Jobs</h2><table><tr><th>Job</th><th>Status</th><th>Issues</th></tr>${JOB_ROWS[*]}</table>
