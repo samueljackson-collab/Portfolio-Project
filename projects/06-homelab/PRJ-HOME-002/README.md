@@ -1,95 +1,334 @@
-# PRJ-HOME-002: Virtualization & Core Services
+# PRJ-HOME-002: Virtualization Platform with Proxmox and Core Services
 
-**Status:** 🟢 Completed (Documentation Pending)
-**Category:** Homelab & Virtualization
-**Technologies:** Proxmox, TrueNAS, Docker, Nginx Proxy Manager, Let's Encrypt
+**Status:** ✅ Completed  
+**Category:** Homelab & Virtualization  
+**Technologies:** Proxmox VE, Ceph, TrueNAS, Ansible, Terraform, FreeIPA, Nginx  
+**Complexity:** Advanced  
 
 ---
 
 ## Overview
 
-Built a virtualization platform hosting multiple self-hosted services with reverse proxy, TLS encryption, and automated backups.
+Production-grade virtualization platform featuring a 3-node Proxmox cluster with high availability, distributed Ceph storage, comprehensive core services, and automated infrastructure management. Demonstrates enterprise virtualization skills, infrastructure-as-code practices, and complete operational readiness.
 
-## Core Technologies
+This project showcases advanced systems administration, automation, disaster recovery planning, and production service deployment in a homelab environment.
 
-### Proxmox VE
-- Type-1 hypervisor for virtual machines and containers
-- Web-based management interface
-- High availability clustering support (single-node setup)
-- Snapshot and backup management
+## Architecture Highlights
 
-### TrueNAS
-- Network-attached storage for media, backups, and shared data
-- ZFS filesystem for data integrity
-- Automated snapshot scheduling
-- SMB/NFS shares for cross-platform access
+- **3-Node HA Cluster:** Proxmox VE with Corosync and automatic VM failover
+- **Distributed Storage:** Ceph RBD with 3-way replication for data redundancy
+- **Multi-Tier Storage:** Local LVM, Ceph, NFS, iSCSI, and Proxmox Backup Server
+- **Core Infrastructure Services:** FreeIPA, Pi-hole, Nginx, centralized syslog, NTP
+- **Automation:** Ansible playbooks and Terraform for infrastructure-as-code
+- **Comprehensive DR:** Documented disaster recovery procedures with tested RTO/RPO
 
-## Hosted Services
+## Cluster Architecture
 
-### 1. Wiki.js
-- Knowledge base and documentation platform
-- Markdown-based content
-- Version control integration
-- Full-text search
+```
+3-Node Proxmox Cluster (192.168.40.10-12)
+    ↓
+├─ Local Storage: LVM-thin on each node (fast VM disks)
+├─ Distributed Storage: Ceph RBD (HA VMs, live migration)
+├─ Network Storage: TrueNAS NFS/iSCSI (backups, bulk data)
+└─ Backup Storage: Proxmox Backup Server (deduplicated backups)
 
-### 2. Home Assistant
-- Home automation hub
-- IoT device integration
-- Automation rules and scenes
-- Energy monitoring
+Core Services (VMs on VLAN 40):
+├─ FreeIPA (192.168.40.25) - Authentication & RADIUS
+├─ Pi-hole (192.168.40.35) - DNS & Ad Blocking  
+├─ Nginx (192.168.40.40) - Reverse Proxy & SSL
+└─ Syslog (192.168.40.30) - Centralized Logging
+```
 
-### 3. Immich
-- Self-hosted photo and video backup
-- Mobile app for automatic uploads
-- Facial recognition and smart search
-- Alternative to Google Photos
+## Core Infrastructure Services
 
-### 4. Reverse Proxy (Nginx Proxy Manager)
-- Centralized SSL/TLS termination
-- Let's Encrypt certificate automation
-- Access control and authentication
-- Custom domain routing
+### 1. FreeIPA - Identity Management
+- **Purpose:** Centralized authentication and RADIUS for 802.1X wireless
+- **Features:** LDAP directory, Kerberos, internal CA, 2FA support
+- **Integration:** Provides RADIUS authentication for WPA3 Enterprise wireless
+- **IP:** 192.168.40.25
 
-## Security & Access
+### 2. Pi-hole - DNS & Ad Blocking
+- **Purpose:** Network-wide DNS resolution and advertisement blocking
+- **Features:** Custom DNS records, DNSSEC, conditional forwarding, statistics
+- **Integration:** Primary DNS for all VLANs, local domain (homelab.local)
+- **IP:** 192.168.40.35
 
-- **TLS Encryption** - All services accessible via HTTPS
-- **Internal DNS** - Local domain resolution (homelab.local or similar)
-- **Authentication** - Service-level logins with MFA where supported
-- **Network Isolation** - Services on separate VLAN from IoT and guest networks
-- **Regular Updates** - Automated security patches for host and guests
+### 3. Nginx - Reverse Proxy
+- **Purpose:** SSL termination and reverse proxy for internal services
+- **Features:** Let's Encrypt automation, load balancing, access control
+- **Services Proxied:** Wiki.js, Home Assistant, Proxmox, Grafana, etc.
+- **IP:** 192.168.40.40
 
-## Backup Strategy
+### 4. Rsyslog - Centralized Logging
+- **Purpose:** Aggregate logs from all infrastructure components
+- **Features:** Remote syslog (TCP/UDP 514), log retention, organized storage
+- **Sources:** pfSense, Proxmox nodes, VMs, switches, access points
+- **IP:** 192.168.40.30
 
-### Local Backups
-- Proxmox Backup Server (PBS) for VM/container backups
-- Daily incremental, weekly full backups
-- Retention policy: 7 daily, 4 weekly, 3 monthly
+### 5. NTP - Time Synchronization
+- **Purpose:** Stratum 2 NTP server for accurate time across homelab
+- **Upstream:** pool.ntp.org, time.cloudflare.com
+- **Clients:** All infrastructure and VMs
 
-### Offsite Backups
-- Critical data backed up to cloud storage (encrypted)
-- 3-2-1 backup rule: 3 copies, 2 different media, 1 offsite
+## Storage Configuration
+
+### Tier 1 - Local LVM (Performance)
+- **Location:** Local SSD/NVMe on each Proxmox node
+- **Use Case:** High-performance VM boot disks, non-HA workloads
+- **Features:** Thin provisioning, snapshots, fast I/O
+
+### Tier 2 - Ceph RBD (High Availability)
+- **Configuration:** 3-node cluster, 3-way replication
+- **Use Case:** HA VMs requiring live migration
+- **Features:** Distributed, self-healing, automatic replication
+
+### Tier 3 - TrueNAS Storage (Capacity)
+- **NFS:** Backups, ISO images, templates, shared files
+- **iSCSI:** High-performance block storage for specific workloads
+- **ZFS:** Data integrity, snapshots, compression
+
+### Backup Storage - Proxmox Backup Server
+- **Features:** Deduplication, compression, incremental backups
+- **Retention:** 7 daily, 4 weekly, 12 monthly
+- **Verification:** Automated integrity checking
+
+## High Availability Features
+
+### Cluster Configuration
+- **Nodes:** 3 (proxmox-01, proxmox-02, proxmox-03)
+- **Quorum:** Corosync with automatic quorum
+- **HA Groups:** Resource placement preferences and failover policies
+
+### Automatic Failover
+- **HA Resources:** Critical VMs (FreeIPA, Pi-hole, Nginx, Syslog)
+- **Watchdog:** Hardware watchdog for automatic node recovery
+- **Fencing:** Watchdog-based fencing (IPMI optional)
+- **Migration:** Automatic VM migration on node failure
+
+### Live Migration
+- **Zero Downtime:** Migrate running VMs between nodes
+- **Requirements:** Shared storage (Ceph), network connectivity
+- **Use Cases:** Maintenance, load balancing, hardware upgrades
+
+## Automation & Infrastructure-as-Code
+
+### Ansible Automation
+**Location:** `assets/automation/ansible/playbooks/`
+
+- **provision-infrastructure.yml** - Initialize Proxmox nodes, configure base system
+- **deploy-services.yml** - Deploy and configure core services
+- **maintenance-updates.yml** - System patching and updates
+- **backup-operations.yml** - Automated backup procedures
+- **security-hardening.yml** - Apply security controls
+
+### Terraform Infrastructure
+**Location:** `assets/automation/terraform/`
+
+- **main.tf** - Proxmox provider and VM resource definitions
+- **variables.tf** - Configurable parameters
+- **outputs.tf** - Resource outputs (IPs, etc.)
+- **backend.tf** - State management
+
+### Operational Scripts
+**Location:** `assets/automation/scripts/`
+
+- **backup-verify.sh** - Verify backup completion and integrity
+- **health-check.sh** - Check status of all core services
+- **security-scan.sh** - Vulnerability scanning
+- **disaster-recovery.sh** - DR procedure automation
+
+## Disaster Recovery
+
+### Recovery Objectives
+- **Critical Services (P0):** RTO 1 hour, RPO 24 hours
+- **Core Services (P1):** RTO 4 hours, RPO 24 hours
+- **Standard Apps (P2):** RTO 24 hours, RPO 7 days
+
+### Backup Strategy (3-2-1 Rule)
+1. **Production:** VMs running on Ceph/LVM
+2. **Local Backup:** Proxmox Backup Server (daily)
+3. **Secondary Backup:** TrueNAS NFS (weekly)
+4. **Offsite Backup:** Remote rsync (weekly)
+
+### DR Testing
+- **Frequency:** Quarterly
+- **Last Test:** November 1, 2025
+- **Next Test:** February 1, 2026
+- **Scenarios:** Service restoration, node failure, complete rebuild
+
+## VM Template System
+
+### Cloud-Init Templates
+- **Base Image:** Ubuntu 22.04 LTS
+- **Features:** QEMU guest agent, automatic disk expansion, SSH key injection
+- **Security:** Hardened with fail2ban, UFW, automatic updates
+- **Customization:** Cloud-init for per-VM configuration
+
+### Template Creation
+```bash
+./assets/proxmox/vm-templates/create-ubuntu-template.sh
+```
+
+Creates production-ready VM template (ID 9000) with:
+- UEFI boot, TPM 2.0, virtio drivers
+- Cloud-init integration
+- Security hardening applied
+- QEMU guest agent pre-installed
+
+## Project Artifacts
+
+### Proxmox Configuration
+- [`cluster.conf`](assets/proxmox/cluster.conf) - 3-node cluster with HA
+- [`storage.cfg`](assets/proxmox/storage.cfg) - Multi-tier storage configuration
+- [`network-interfaces`](assets/proxmox/network-interfaces) - VLAN-aware networking with bonding
+- [`backup-config.json`](assets/proxmox/backup-config.json) - Comprehensive backup strategy
+- [`vm-templates/`](assets/proxmox/vm-templates/) - Automated template creation
+
+### Core Services Configuration
+- [`pihole/`](assets/services/pihole/) - DNS server with custom records
+- [`freeipa/`](assets/services/freeipa/) - Identity management and RADIUS
+- [`ntp/`](assets/services/ntp/) - Time synchronization server
+- [`nginx/`](assets/services/nginx/) - Reverse proxy and SSL termination
+- [`rsyslog/`](assets/services/rsyslog/) - Centralized logging
+
+### Automation
+- [`ansible/playbooks/`](assets/automation/ansible/playbooks/) - 5 playbooks for infrastructure management
+- [`terraform/`](assets/automation/terraform/) - IaC for VM provisioning
+- [`scripts/`](assets/automation/scripts/) - Operational automation scripts
+
+### Disaster Recovery
+- [`disaster-recovery-plan.md`](assets/recovery/disaster-recovery-plan.md) - Comprehensive DR plan with RTO/RPO
+- [`recovery-procedures/`](assets/recovery/recovery-procedures/) - Step-by-step recovery guides
 
 ## Skills Demonstrated
 
-- Virtualization platform management
-- Service deployment and orchestration
-- Reverse proxy configuration
-- Certificate management and automation
-- Backup and recovery procedures
-- Storage management (ZFS)
+### Virtualization
+- Proxmox VE cluster deployment and management
+- High availability configuration
+- Live VM migration
+- Resource allocation and optimization
+- Virtual networking (VLANs, bridges, bonding)
 
-## Documentation Status
+### Storage Management
+- Ceph distributed storage configuration
+- ZFS administration
+- Multi-tier storage strategy
+- NFS and iSCSI configuration
+- Storage performance tuning
 
-📝 **Pending:** Architecture diagrams, service configurations, and backup logs are being organized and will be added to the `assets/` directory.
+### Automation & IaC
+- Ansible playbook development
+- Terraform resource provisioning
+- Bash scripting for operations
+- CI/CD principles
+- Configuration management
 
-## Lessons Learned
+### Core Services
+- LDAP/Kerberos (FreeIPA)
+- DNS server administration (Pi-hole)
+- Reverse proxy configuration (Nginx)
+- Centralized logging (Rsyslog)
+- Time synchronization (NTP)
 
-- Start with backups before experimenting
-- Document configurations before making changes
-- Use infrastructure as code where possible
-- Plan storage capacity ahead of time
-- Network segmentation is critical for security
+### Disaster Recovery
+- DR planning and documentation
+- Backup strategy design (3-2-1 rule)
+- RTO/RPO definition
+- Recovery procedure development
+- DR testing and validation
+
+### Security
+- Certificate management
+- Access control
+- Network segmentation
+- Security hardening
+- Vulnerability management
+
+## Deployment Guide
+
+### Prerequisites
+1. 3 physical servers or capable hardware
+2. Network infrastructure configured (PRJ-HOME-001)
+3. Proxmox VE 8.x installed on all nodes
+4. TrueNAS system available for storage
+
+### Initial Cluster Setup
+1. Install Proxmox VE on all three nodes
+2. Configure networking per `network-interfaces`
+3. Create cluster: `pvecm create homelab-cluster`
+4. Join nodes: `pvecm add 192.168.40.10`
+5. Configure storage per `storage.cfg`
+
+### Core Services Deployment
+1. Create VM template: `./vm-templates/create-ubuntu-template.sh`
+2. Deploy VMs with Terraform: `terraform apply`
+3. Configure services with Ansible: `ansible-playbook playbooks/deploy-services.yml`
+4. Verify services: `./scripts/health-check.sh`
+
+### Backup Configuration
+1. Deploy Proxmox Backup Server
+2. Configure backup jobs per `backup-config.json`
+3. Test backup and restore procedures
+4. Set up offsite backup sync
+
+## Operational Procedures
+
+### Daily Operations
+- Monitor cluster health via web interface
+- Review backup completion reports
+- Check service availability
+- Review centralized logs
+
+### Weekly Maintenance
+- Security updates: `ansible-playbook maintenance-updates.yml`
+- Backup verification: `./scripts/backup-verify.sh`
+- Storage capacity check
+- Log review and cleanup
+
+### Monthly Maintenance
+- Full security scan: `./scripts/security-scan.sh`
+- VM snapshot cleanup
+- Documentation updates
+- Capacity planning review
+
+### Quarterly Maintenance
+- DR testing and validation
+- Full cluster maintenance window
+- Major version updates
+- Security audit
+
+## Monitoring Integration
+
+### Metrics Collection
+- Proxmox built-in metrics
+- Custom Prometheus exporters
+- Service health checks
+- Storage utilization
+
+### Alerting
+- Email notifications for failures
+- Prometheus Alertmanager integration
+- Service uptime monitoring
+- Backup failure alerts
+
+## Future Enhancements
+
+- [ ] Expand to 5-node cluster for better fault tolerance
+- [ ] Implement S3-compatible backup target
+- [ ] Deploy Kubernetes cluster on Proxmox
+- [ ] Add GPU passthrough for ML workloads
+- [ ] Implement automated security scanning
+- [ ] Deploy ELK stack for advanced log analysis
+
+## References
+
+- [Proxmox VE Documentation](https://pve.proxmox.com/wiki/)
+- [Ceph Documentation](https://docs.ceph.com/)
+- [Ansible Documentation](https://docs.ansible.com/)
+- [Terraform Proxmox Provider](https://registry.terraform.io/providers/Telmate/proxmox/)
 
 ---
 
-**Last Updated:** October 28, 2025
+**Project Completed:** November 5, 2025  
+**Last Updated:** November 5, 2025  
+**Maintainer:** Samuel Jackson

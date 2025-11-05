@@ -1,0 +1,19 @@
+---
+# Ansible Playbook: Security Hardening
+- name: Apply security hardening
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install fail2ban
+      apt:
+        name: fail2ban
+        state: present
+    - name: Configure UFW firewall
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+    - name: Allow SSH
+      ufw:
+        rule: allow
+        port: '22'

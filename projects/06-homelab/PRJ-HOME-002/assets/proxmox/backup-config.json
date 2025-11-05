@@ -1,0 +1,356 @@
+{
+  "_meta": {
+    "description": "Proxmox Backup Server (PBS) Integration Configuration",
+    "version": "1.0",
+    "last_updated": "2025-11-05",
+    "documentation": "https://pbs.proxmox.com/docs/"
+  },
+
+  "backup_server": {
+    "hostname": "proxmox-backup.homelab.local",
+    "ip_address": "192.168.40.50",
+    "port": 8007,
+    "datastore": "proxmox-backups",
+    "namespace": "homelab",
+    "username": "admin@pbs",
+    "fingerprint": "SHA256:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99",
+    "encryption_key_file": "/etc/pve/priv/backup-encryption.key",
+    "verify_ssl": true,
+    "notes": "Dedicated Proxmox Backup Server for deduplication and efficient storage"
+  },
+
+  "backup_schedules": [
+    {
+      "id": "critical-daily",
+      "name": "Critical VMs - Daily Full Backup",
+      "description": "Daily full backups of critical infrastructure VMs",
+      "schedule": "daily",
+      "cron": "0 2 * * *",
+      "enabled": true,
+      "target": "proxmox-backup:proxmox-backups",
+      "vmid": [100, 101, 102, 103],
+      "vm_names": ["FreeIPA", "Pi-hole", "Nginx Proxy", "Syslog Server"],
+      "mode": "snapshot",
+      "compression": "zstd",
+      "notification_mode": "always",
+      "notification_target": "admin@homelab.local",
+      "bandwidth_limit": 0,
+      "retention": {
+        "keep_last": 7,
+        "keep_hourly": 0,
+        "keep_daily": 7,
+        "keep_weekly": 4,
+        "keep_monthly": 12,
+        "keep_yearly": 2
+      },
+      "notes": {
+        "description": "Critical services requiring high RPO/RTO",
+        "rpo": "24 hours",
+        "rto": "1 hour"
+      }
+    },
+    {
+      "id": "standard-weekly",
+      "name": "Standard VMs - Weekly Full Backup",
+      "description": "Weekly full backups of standard application VMs",
+      "schedule": "weekly",
+      "cron": "0 3 * * 0",
+      "enabled": true,
+      "target": "truenas-nfs:truenas-backups",
+      "vmid": [200, 201, 202, 203, 204],
+      "vm_names": ["Wiki.js", "Home Assistant", "Immich", "Development", "Testing"],
+      "mode": "snapshot",
+      "compression": "zstd",
+      "notification_mode": "failure",
+      "notification_target": "admin@homelab.local",
+      "bandwidth_limit": 50000,
+      "retention": {
+        "keep_last": 4,
+        "keep_hourly": 0,
+        "keep_daily": 0,
+        "keep_weekly": 4,
+        "keep_monthly": 3,
+        "keep_yearly": 0
+      },
+      "notes": {
+        "description": "Standard applications with moderate recovery requirements",
+        "rpo": "7 days",
+        "rto": "4 hours"
+      }
+    },
+    {
+      "id": "dev-weekly",
+      "name": "Development VMs - Weekly Backup",
+      "description": "Weekly backups of development and test environments",
+      "schedule": "weekly",
+      "cron": "0 4 * * 6",
+      "enabled": true,
+      "target": "local:local",
+      "vmid": [300, 301, 302],
+      "vm_names": ["Dev-Ubuntu", "Test-Debian", "Staging"],
+      "mode": "snapshot",
+      "compression": "lzo",
+      "notification_mode": "failure",
+      "notification_target": "admin@homelab.local",
+      "bandwidth_limit": 0,
+      "retention": {
+        "keep_last": 2,
+        "keep_hourly": 0,
+        "keep_daily": 0,
+        "keep_weekly": 2,
+        "keep_monthly": 0,
+        "keep_yearly": 0
+      },
+      "notes": {
+        "description": "Development VMs - can be rebuilt if needed",
+        "rpo": "7 days",
+        "rto": "Best effort"
+      }
+    }
+  ],
+
+  "verification_schedule": {
+    "enabled": true,
+    "schedule": "weekly",
+    "cron": "0 6 * * 1",
+    "verify_last_n_backups": 3,
+    "notification_on_failure": true,
+    "description": "Verify integrity of recent backups"
+  },
+
+  "prune_schedule": {
+    "enabled": true,
+    "schedule": "daily",
+    "cron": "0 5 * * *",
+    "apply_retention_policy": true,
+    "description": "Remove old backups according to retention policy"
+  },
+
+  "backup_performance": {
+    "concurrent_backups": 3,
+    "max_workers": 16,
+    "bwlimit": {
+      "default": 0,
+      "peak_hours": "09:00-17:00",
+      "peak_limit_kbps": 25000,
+      "description": "Bandwidth limit during business hours"
+    },
+    "ionice_class": "best-effort",
+    "ionice_priority": 7,
+    "notes": "Lower priority during business hours to minimize impact"
+  },
+
+  "storage_targets": [
+    {
+      "id": "proxmox-backup",
+      "type": "pbs",
+      "description": "Proxmox Backup Server - Primary",
+      "priority": 1,
+      "server": "192.168.40.50",
+      "datastore": "proxmox-backups",
+      "use_cases": ["critical-vms", "daily-backups", "deduplication"],
+      "features": {
+        "deduplication": true,
+        "compression": true,
+        "encryption": true,
+        "incremental": true,
+        "verification": true
+      },
+      "capacity": "4 TB",
+      "usage": "~40%"
+    },
+    {
+      "id": "truenas-nfs",
+      "type": "nfs",
+      "description": "TrueNAS NFS Share - Secondary",
+      "priority": 2,
+      "server": "192.168.40.20",
+      "path": "/mnt/tank/proxmox/backups",
+      "use_cases": ["standard-vms", "weekly-backups", "bulk-storage"],
+      "features": {
+        "deduplication": false,
+        "compression": true,
+        "encryption": false,
+        "incremental": false,
+        "verification": false
+      },
+      "capacity": "8 TB",
+      "usage": "~25%"
+    },
+    {
+      "id": "local-storage",
+      "type": "local",
+      "description": "Local Node Storage - Tertiary",
+      "priority": 3,
+      "path": "/var/lib/vz/dump",
+      "use_cases": ["dev-vms", "temporary-backups"],
+      "features": {
+        "deduplication": false,
+        "compression": true,
+        "encryption": false,
+        "incremental": false,
+        "verification": false
+      },
+      "capacity": "500 GB per node",
+      "usage": "~15%"
+    }
+  ],
+
+  "offsite_backup": {
+    "enabled": true,
+    "method": "rsync",
+    "schedule": "weekly",
+    "cron": "0 1 * * 0",
+    "source": "proxmox-backup:/mnt/datastore/proxmox-backups",
+    "destination": "offsite-backup.example.com:/backups/homelab",
+    "ssh_key": "/root/.ssh/offsite-backup-key",
+    "bandwidth_limit_kbps": 10000,
+    "retention_days": 90,
+    "encryption": "at-rest",
+    "description": "Weekly sync of critical backups to offsite location"
+  },
+
+  "disaster_recovery": {
+    "dr_plan_location": "assets/recovery/disaster-recovery-plan.md",
+    "recovery_procedures": "assets/recovery/recovery-procedures/",
+    "test_schedule": "quarterly",
+    "last_test_date": "2025-11-01",
+    "next_test_date": "2026-02-01",
+    "rto_targets": {
+      "critical_vms": "1 hour",
+      "standard_vms": "4 hours",
+      "dev_vms": "best effort"
+    },
+    "rpo_targets": {
+      "critical_vms": "24 hours",
+      "standard_vms": "7 days",
+      "dev_vms": "7 days"
+    }
+  },
+
+  "backup_validation": {
+    "automated_testing": {
+      "enabled": true,
+      "schedule": "monthly",
+      "method": "restore-to-test-environment",
+      "test_vms": [100, 101],
+      "test_cluster": "test-proxmox.homelab.local",
+      "description": "Monthly restore test to verify backup integrity"
+    },
+    "checksum_verification": {
+      "enabled": true,
+      "schedule": "weekly",
+      "algorithm": "sha256"
+    },
+    "corruption_detection": {
+      "enabled": true,
+      "pbs_verify": true,
+      "schedule": "weekly"
+    }
+  },
+
+  "monitoring_and_alerting": {
+    "prometheus_exporter": {
+      "enabled": true,
+      "port": 9101,
+      "metrics": [
+        "backup_success_rate",
+        "backup_duration",
+        "backup_size",
+        "storage_usage",
+        "verification_status"
+      ]
+    },
+    "email_notifications": {
+      "enabled": true,
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "smtp_auth": true,
+      "from_address": "proxmox@homelab.local",
+      "to_addresses": ["admin@homelab.local"],
+      "notify_on": ["failure", "success-critical-vms"]
+    },
+    "webhook_notifications": {
+      "enabled": false,
+      "url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+      "notify_on": ["failure"]
+    }
+  },
+
+  "backup_best_practices": {
+    "recommendations": [
+      "Test restore procedures regularly",
+      "Monitor backup success rates",
+      "Keep backup software updated",
+      "Encrypt sensitive backups",
+      "Maintain offsite backup copies",
+      "Document recovery procedures",
+      "Verify backup integrity",
+      "Monitor storage capacity"
+    ],
+    "3-2-1_rule": {
+      "description": "3 copies, 2 different media types, 1 offsite",
+      "implementation": {
+        "copy_1": "Production VM on Ceph/LVM",
+        "copy_2": "Daily backup on PBS (local)",
+        "copy_3": "Weekly backup on TrueNAS",
+        "offsite": "Weekly rsync to remote location"
+      }
+    }
+  },
+
+  "retention_policies_explained": {
+    "keep_last": "Keep the last N backups regardless of age",
+    "keep_hourly": "Keep one backup per hour for N hours",
+    "keep_daily": "Keep one backup per day for N days",
+    "keep_weekly": "Keep one backup per week for N weeks",
+    "keep_monthly": "Keep one backup per month for N months",
+    "keep_yearly": "Keep one backup per year for N years",
+    "notes": "All retention rules are cumulative - a backup can match multiple rules"
+  },
+
+  "backup_modes": {
+    "snapshot": {
+      "description": "Create consistent snapshot of running VM",
+      "downtime": "None",
+      "consistency": "Application-consistent with QEMU guest agent",
+      "recommended": true
+    },
+    "suspend": {
+      "description": "Suspend VM, backup, resume",
+      "downtime": "Minutes",
+      "consistency": "Fully consistent",
+      "recommended": false
+    },
+    "stop": {
+      "description": "Stop VM, backup, start",
+      "downtime": "Longer",
+      "consistency": "Fully consistent",
+      "recommended": false
+    }
+  },
+
+  "compression_algorithms": {
+    "zstd": {
+      "description": "Fast compression with good ratio",
+      "speed": "Very fast",
+      "ratio": "Good",
+      "cpu_usage": "Moderate",
+      "recommended": true
+    },
+    "lzo": {
+      "description": "Very fast compression, lower ratio",
+      "speed": "Fastest",
+      "ratio": "Fair",
+      "cpu_usage": "Low",
+      "recommended": false
+    },
+    "gzip": {
+      "description": "Slower but better compression",
+      "speed": "Slow",
+      "ratio": "Best",
+      "cpu_usage": "High",
+      "recommended": false
+    }
+  }
+}

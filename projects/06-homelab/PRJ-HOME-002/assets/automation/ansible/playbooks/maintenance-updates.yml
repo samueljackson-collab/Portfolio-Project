@@ -1,0 +1,16 @@
+---
+# Ansible Playbook: System Maintenance and Updates
+- name: Update all systems
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Upgrade packages
+      apt:
+        upgrade: dist
+    - name: Clean up
+      apt:
+        autoremove: yes
+        autoclean: yes
