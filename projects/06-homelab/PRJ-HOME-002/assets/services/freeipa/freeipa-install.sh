@@ -13,10 +13,22 @@ DOMAIN="homelab.local"
 REALM="HOMELAB.LOCAL"
 HOSTNAME="freeipa.homelab.local"
 IP_ADDRESS="192.168.40.25"
-DS_PASSWORD="YourDirectoryManagerPassword"
-ADMIN_PASSWORD="YourAdminPassword"
+
+# ⚠️ SECURITY WARNING: Replace placeholder passwords before execution!
+# Generate strong passwords: openssl rand -base64 32
+# DO NOT commit actual passwords to version control
+DS_PASSWORD="${DS_PASSWORD:-CHANGE_ME_DIRECTORY_PASSWORD}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-CHANGE_ME_ADMIN_PASSWORD}"
+
 FORWARDER1="192.168.40.35"  # Pi-hole
 FORWARDER2="192.168.1.1"    # pfSense
+
+# Validate that passwords have been changed
+if [[ "$DS_PASSWORD" == "CHANGE_ME_"* ]] || [[ "$ADMIN_PASSWORD" == "CHANGE_ME_"* ]]; then
+    echo "ERROR: Default passwords detected! Set DS_PASSWORD and ADMIN_PASSWORD environment variables."
+    echo "Example: DS_PASSWORD='your-strong-password' ADMIN_PASSWORD='your-admin-password' $0"
+    exit 1
+fi
 
 # Install FreeIPA server packages
 apt-get update
