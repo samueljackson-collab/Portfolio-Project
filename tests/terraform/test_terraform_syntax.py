@@ -19,13 +19,23 @@ import pytest
 
 @pytest.fixture
 def terraform_dir():
-    """Return path to terraform directory."""
+    """
+    Provide the filesystem path to the repository's Terraform configuration directory.
+    
+    Returns:
+        Path: A Path object pointing to the "terraform" directory.
+    """
     return Path("terraform")
 
 
 @pytest.fixture
 def main_tf(terraform_dir):
-    """Return path to main.tf."""
+    """
+    Return the path to the project's main Terraform configuration file.
+    
+    Returns:
+        Path: Path to 'main.tf' inside the provided terraform directory.
+    """
     return terraform_dir / "main.tf"
 
 
@@ -37,13 +47,29 @@ def variables_tf(terraform_dir):
 
 @pytest.fixture
 def outputs_tf(terraform_dir):
-    """Return path to outputs.tf."""
+    """
+    Get the Path to the Terraform outputs.tf file.
+    
+    Parameters:
+        terraform_dir (Path): Root directory of the Terraform configuration.
+    
+    Returns:
+        Path: Path to the outputs.tf file inside the Terraform directory.
+    """
     return terraform_dir / "outputs.tf"
 
 
 @pytest.fixture
 def backend_tf(terraform_dir):
-    """Return path to backend.tf."""
+    """
+    Get the filesystem path to the backend.tf file inside the given Terraform directory.
+    
+    Parameters:
+        terraform_dir (Path): Path to the Terraform root directory.
+    
+    Returns:
+        Path: Path to the backend.tf file within `terraform_dir`.
+    """
     return terraform_dir / "backend.tf"
 
 
@@ -120,7 +146,9 @@ class TestMainTfContent:
         assert 'resource "aws_db_subnet_group"' in content
 
     def test_main_tf_has_conditional_resources(self, main_tf):
-        """Verify main.tf uses count for conditional resources."""
+        """
+        Check that Terraform config conditions resource creation on `var.create_rds` using the `count` meta-argument.
+        """
         content = main_tf.read_text()
         assert "count = var.create_rds" in content
 
@@ -152,7 +180,7 @@ class TestVariablesTfContent:
         assert "type        = bool" in content
 
     def test_variables_tf_has_db_variables(self, variables_tf):
-        """Verify variables.tf defines database variables."""
+        """Check that variables.tf declares the variables `db_name`, `db_username`, and `db_password`."""
         content = variables_tf.read_text()
         assert 'variable "db_name"' in content
         assert 'variable "db_username"' in content
@@ -179,7 +207,11 @@ class TestVariablesTfContent:
         assert "type        = bool" in content or "type = bool" in content
 
     def test_variables_have_defaults(self, variables_tf):
-        """Verify variables have default values."""
+        """
+        Check that variables.tf contains default value declarations.
+        
+        Asserts that the variables definitions file includes at least one `default =` assignment (with or without extra spaces).
+        """
         content = variables_tf.read_text()
         assert "default     =" in content or "default =" in content
 
@@ -218,13 +250,21 @@ class TestBackendTfContent:
         assert "dynamodb_table" in content
 
     def test_backend_tf_enables_encryption(self, backend_tf):
-        """Verify backend.tf enables encryption."""
+        """
+        Check that the Terraform backend configuration enables encryption for remote state.
+        
+        The test passes if backend.tf contains an `encrypt` setting set to `true`.
+        """
         content = backend_tf.read_text()
         assert "encrypt" in content
         assert "true" in content
 
     def test_backend_tf_uses_variables(self, backend_tf):
-        """Verify backend.tf uses variables for configuration."""
+        """
+        Check that the backend.tf file references Terraform variables for backend configuration.
+        
+        Asserts that the file content contains either a `var.` reference or interpolation syntax (`${`), indicating use of variables rather than hardcoded values.
+        """
         content = backend_tf.read_text()
         # Backend config typically uses var. references
         assert "var." in content or "${" in content
@@ -234,7 +274,12 @@ class TestResourceNaming:
     """Test resource naming conventions."""
 
     def test_resources_use_consistent_naming(self, main_tf):
-        """Verify resources follow naming conventions."""
+        """
+        Ensure Terraform resource names follow the repository's naming conventions.
+        
+        Checks that resource names include the `var.project_tag` interpolation or contain the literal
+        strings "twisted-monk" or "twisted_monk".
+        """
         content = main_tf.read_text()
         # Resources should use project_tag variable in names
         assert "${var.project_tag}" in content or "twisted-monk" in content or "twisted_monk" in content
@@ -265,7 +310,13 @@ class TestSecurityBestPractices:
             assert "private" in content.lower()
 
     def test_security_groups_have_descriptions(self, main_tf):
-        """Verify security groups have descriptions."""
+        """
+        Verify that each aws_security_group resource in main.tf includes a description.
+        
+        Parameters:
+        	main_tf (Path): Path to the Terraform main.tf file to inspect.
+        
+        """
         content = main_tf.read_text()
         if "aws_security_group" in content:
             sg_count = content.count('resource "aws_security_group"')
@@ -273,7 +324,11 @@ class TestSecurityBestPractices:
             assert description_count >= sg_count
 
     def test_vpc_enables_dns(self, main_tf):
-        """Verify VPC enables DNS support and hostnames."""
+        """
+        Assert that any VPC resource in main.tf configures DNS support and DNS hostnames.
+        
+        If an `aws_vpc` resource is present, this test checks for the presence of `enable_dns_support` and `enable_dns_hostnames`.
+        """
         content = main_tf.read_text()
         if "aws_vpc" in content:
             assert "enable_dns_support" in content
@@ -293,7 +348,9 @@ class TestConditionalLogic:
     """Test conditional resource creation."""
 
     def test_rds_creation_is_conditional(self, main_tf):
-        """Verify RDS resources use count for conditional creation."""
+        """
+        Assert that any RDS resources (aws_db_instance or aws_db_subnet_group) include `count = var.create_rds` so their creation is conditional.
+        """
         content = main_tf.read_text()
         # Find RDS resources and check they use count
         lines = content.split('\n')
@@ -312,7 +369,11 @@ class TestConditionalLogic:
         assert found_count, "RDS resources should use conditional count"
 
     def test_eks_creation_is_conditional(self, main_tf):
-        """Verify EKS resources use count for conditional creation."""
+        """
+        Ensure EKS cluster resources are created conditionally.
+        
+        If an `aws_eks_cluster` resource appears in the Terraform configuration, assert it includes `count = var.create_eks` so creation is controlled by the `create_eks` variable.
+        """
         content = main_tf.read_text()
         if "aws_eks_cluster" in content:
             assert "count = var.create_eks" in content

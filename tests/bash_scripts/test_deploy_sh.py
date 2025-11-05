@@ -31,7 +31,12 @@ class TestScriptExistence:
         assert script_path.exists(), f"Script not found at {script_path}"
 
     def test_script_is_executable(self, script_path):
-        """Verify the script has executable permissions."""
+        """
+        Check that the deploy script file is executable.
+        
+        Raises:
+            AssertionError: If the file at `script_path` does not have executable permissions.
+        """
         assert os.access(script_path, os.X_OK), f"{script_path} is not executable"
 
     def test_script_has_bash_shebang(self, script_path):
@@ -46,7 +51,11 @@ class TestScriptSyntax:
     """Test bash script syntax."""
 
     def test_bash_syntax_valid(self, script_path):
-        """Verify bash syntax is valid."""
+        """
+        Check that the deploy script contains no bash syntax errors.
+        
+        Skips the test if no `bash` executable is available on the system.
+        """
         bash_path = shutil.which("bash")
         if not bash_path:
             pytest.skip("bash not found on this system")
@@ -58,7 +67,11 @@ class TestScriptSyntax:
         assert result.returncode == 0, f"Syntax error: {result.stderr}"
 
     def test_script_uses_strict_mode(self, script_path):
-        """Verify script uses set -euo pipefail."""
+        """
+        Ensure the deploy script enables Bash strict mode.
+        
+        This test accepts either the full `set -euo pipefail` form or a minimal `set -e` fallback.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "set -euo pipefail" in content or "set -e" in content
@@ -75,7 +88,9 @@ class TestArgumentParsing:
         assert "${1:-" in content or "$1" in content
 
     def test_script_has_default_workspace(self, script_path):
-        """Test script has a default workspace value."""
+        """
+        Asserts the deploy script defines a default Terraform workspace (for example `${1:-default}` or the literal `default`).
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "${1:-default}" in content or "default" in content
@@ -92,7 +107,11 @@ class TestTerraformCommands:
     """Test Terraform command orchestration."""
 
     def test_script_runs_terraform_fmt(self, script_path):
-        """Verify script runs terraform fmt."""
+        """
+        Check that the deploy script invokes Terraform formatting.
+        
+        Asserts the script contains either the literal "terraform fmt" or a standalone "fmt" invocation indicating formatting is performed.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "terraform fmt" in content or "fmt" in content
@@ -104,7 +123,9 @@ class TestTerraformCommands:
         assert "terraform init" in content
 
     def test_script_runs_terraform_validate(self, script_path):
-        """Verify script runs terraform validate."""
+        """
+        Check that the deploy script invokes `terraform validate`.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "terraform validate" in content
@@ -179,7 +200,11 @@ class TestDirectoryNavigation:
     """Test script navigates to correct directories."""
 
     def test_script_changes_to_terraform_directory(self, script_path):
-        """Verify script changes to terraform directory."""
+        """
+        Check that the deploy script changes into a Terraform directory before invoking Terraform.
+        
+        This verifies the script contains a directory change (`cd`) and references to `terraform`, indicating it navigates to the Terraform working directory prior to running Terraform commands.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "cd" in content
@@ -196,13 +221,21 @@ class TestSafetyChecks:
     """Test safety and best practices."""
 
     def test_script_uses_input_false(self, script_path):
-        """Verify script uses -input=false for non-interactive mode."""
+        """
+        Check that the script enforces non-interactive Terraform runs.
+        
+        Asserts the deploy script contains the '-input=false' flag to prevent Terraform from prompting for input.
+        """
         with open(script_path, 'r') as f:
             content = f.read()
         assert "-input=false" in content
 
     def test_script_formats_before_other_commands(self, script_path):
-        """Verify fmt runs before init/plan/apply."""
+        """
+        Assert that a terraform formatting command appears before terraform initialization.
+        
+        If both a `terraform fmt` (or `fmt -recursive`) line and a `terraform init` line are present in the script, this test fails when the formatting line occurs after the init line.
+        """
         with open(script_path, 'r') as f:
             lines = f.readlines()
 
@@ -218,7 +251,11 @@ class TestSafetyChecks:
             assert fmt_line < init_line, "fmt should run before init"
 
     def test_script_validates_before_plan(self, script_path):
-        """Verify validate runs before plan."""
+        """
+        Ensure the script invokes `terraform validate` before `terraform plan`.
+        
+        Asserts that the first occurrence of "terraform validate" appears earlier in the file than the first occurrence of "terraform plan".
+        """
         with open(script_path, 'r') as f:
             lines = f.readlines()
 

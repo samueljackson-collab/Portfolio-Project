@@ -19,13 +19,23 @@ import pytest
 
 @pytest.fixture
 def workflow_path():
-    """Return path to Terraform workflow."""
+    """
+    Get the filesystem Path for the Terraform GitHub Actions workflow file.
+    
+    Returns:
+        pathlib.Path: Path pointing to ".github/workflows/terraform.yml".
+    """
     return Path(".github/workflows/terraform.yml")
 
 
 @pytest.fixture
 def workflow(workflow_path):
-    """Load and parse workflow YAML."""
+    """
+    Load and parse a GitHub Actions workflow YAML file.
+    
+    Returns:
+        The parsed YAML content (typically a dict mapping the workflow structure), or `None` if the file is empty.
+    """
     with open(workflow_path) as f:
         return yaml.safe_load(f)
 
@@ -34,7 +44,12 @@ class TestWorkflowFile:
     """Test workflow file existence and syntax."""
 
     def test_workflow_file_exists(self, workflow_path):
-        """Verify workflow file exists."""
+        """
+        Verify the Terraform workflow file exists at the provided path.
+        
+        Parameters:
+            workflow_path (Path): Path to the workflow file to check (e.g., .github/workflows/terraform.yml).
+        """
         assert workflow_path.exists()
 
     def test_workflow_valid_yaml(self, workflow_path):
@@ -60,7 +75,12 @@ class TestWorkflowStructure:
         assert workflow["on"] is not None
 
     def test_workflow_triggers_on_push(self, workflow):
-        """Verify workflow triggers on push to main."""
+        """
+        Check that the workflow is triggered by push events and specifies branch filters when push is a mapping.
+        
+        Parameters:
+            workflow (dict): Parsed GitHub Actions workflow YAML as a Python mapping.
+        """
         assert "push" in workflow["on"]
         if isinstance(workflow["on"]["push"], dict):
             assert "branches" in workflow["on"]["push"]
@@ -113,11 +133,20 @@ class TestPermissions:
     """Test workflow permissions."""
 
     def test_workflow_has_permissions(self, workflow):
-        """Verify workflow specifies permissions."""
+        """
+        Verify the workflow defines a top-level `permissions` section.
+        
+        Parameters:
+            workflow (dict): Parsed GitHub Actions workflow YAML as a Python dictionary.
+        """
         assert "permissions" in workflow
 
     def test_workflow_has_id_token_write(self, workflow):
-        """Verify workflow can write id-token for OIDC."""
+        """
+        Ensure the workflow grants the 'id-token' permission with value "write" for OIDC.
+        
+        Asserts that the workflow's top-level `permissions` mapping contains the `id-token` key and that its value is `"write"`.
+        """
         perms = workflow.get("permissions", {})
         assert "id-token" in perms
         assert perms["id-token"] == "write"
@@ -139,7 +168,12 @@ class TestTerraformPlanJob:
     """Test terraform-plan job."""
 
     def test_has_terraform_plan_job(self, workflow):
-        """Verify workflow has terraform-plan job."""
+        """
+        Check that the parsed GitHub Actions workflow defines a job named "terraform-plan".
+        
+        Parameters:
+            workflow (dict): Parsed workflow YAML as a mapping containing a "jobs" section.
+        """
         assert "terraform-plan" in workflow["jobs"]
 
     def test_plan_job_runs_on_ubuntu(self, workflow):
@@ -162,7 +196,11 @@ class TestTerraformPlanJob:
         assert len(checkout_steps) > 0
 
     def test_plan_job_configures_aws_credentials(self, workflow):
-        """Verify plan job configures AWS credentials."""
+        """
+        Ensure the `terraform-plan` job contains a step that configures AWS credentials.
+        
+        This validates presence of at least one step whose name includes "aws", indicating AWS credential configuration.
+        """
         job = workflow["jobs"]["terraform-plan"]
         steps = job.get("steps", [])
         aws_steps = [s for s in steps if "aws" in s.get("name", "").lower()]
@@ -197,7 +235,12 @@ class TestTerraformPlanJob:
         assert len(validate_steps) > 0
 
     def test_plan_job_runs_terraform_plan(self, workflow):
-        """Verify plan job runs terraform plan."""
+        """
+        Ensure the `terraform-plan` job contains at least one step that runs the `terraform plan` command.
+        
+        Parameters:
+            workflow (dict): Parsed GitHub Actions workflow YAML as a mapping; used to locate the `terraform-plan` job and its steps.
+        """
         job = workflow["jobs"]["terraform-plan"]
         steps = job.get("steps", [])
         plan_steps = [s for s in steps if "plan" in s.get("name", "").lower() and "terraform plan" in str(s.get("run", "")).lower()]
@@ -233,7 +276,9 @@ class TestPullRequestComment:
         assert len(comment_steps) > 0
 
     def test_pr_comment_uses_github_script(self, workflow):
-        """Verify PR comment uses github-script action."""
+        """
+        Asserts the terraform-plan job includes a step that uses the `github-script` action to post comments on pull requests.
+        """
         job = workflow["jobs"]["terraform-plan"]
         steps = job.get("steps", [])
         script_steps = [s for s in steps if "github-script" in s.get("uses", "")]
@@ -257,7 +302,9 @@ class TestTerraformApplyJob:
         assert "terraform-apply" in workflow["jobs"]
 
     def test_apply_job_needs_plan(self, workflow):
-        """Verify apply job depends on plan job."""
+        """
+        Ensure the 'terraform-apply' job declares a dependency on 'terraform-plan' via its `needs` field.
+        """
         job = workflow["jobs"]["terraform-apply"]
         assert "needs" in job
         assert "terraform-plan" in job["needs"]
@@ -274,7 +321,11 @@ class TestTerraformApplyJob:
         assert "environment" in job
 
     def test_apply_job_downloads_plan_artifact(self, workflow):
-        """Verify apply job downloads plan artifact."""
+        """
+        Checks that the terraform-apply job includes a step that downloads the plan artifact.
+        
+        Asserts there is at least one step whose name (case-insensitive) contains both "download" and "artifact".
+        """
         job = workflow["jobs"]["terraform-apply"]
         steps = job.get("steps", [])
         download_steps = [s for s in steps if "download" in s.get("name", "").lower() and "artifact" in s.get("name", "").lower()]

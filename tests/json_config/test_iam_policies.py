@@ -17,26 +17,52 @@ import pytest
 
 @pytest.fixture
 def github_actions_policy_path():
-    """Return path to GitHub Actions CI policy."""
+    """
+    Path to the GitHub Actions CI IAM policy file.
+    
+    Returns:
+        Path: Path object pointing to "terraform/iam/github_actions_ci_policy.json".
+    """
     return Path("terraform/iam/github_actions_ci_policy.json")
 
 
 @pytest.fixture
 def github_oidc_trust_policy_path():
-    """Return path to GitHub OIDC trust policy."""
+    """
+    Path to the GitHub OIDC trust policy JSON file in the repository.
+    
+    Returns:
+        pathlib.Path: Path to terraform/iam/github_oidc_trust_policy.json
+    """
     return Path("terraform/iam/github_oidc_trust_policy.json")
 
 
 @pytest.fixture
 def github_actions_policy(github_actions_policy_path):
-    """Load and parse GitHub Actions CI policy."""
+    """
+    Load and parse the GitHub Actions CI IAM policy JSON from the given path.
+    
+    Parameters:
+        github_actions_policy_path (Path | str): Path to the GitHub Actions CI policy JSON file.
+    
+    Returns:
+        dict: Parsed JSON object representing the policy.
+    """
     with open(github_actions_policy_path) as f:
         return json.load(f)
 
 
 @pytest.fixture
 def github_oidc_trust_policy(github_oidc_trust_policy_path):
-    """Load and parse GitHub OIDC trust policy."""
+    """
+    Load the GitHub OIDC trust policy JSON file and return it as a Python dictionary.
+    
+    Parameters:
+        github_oidc_trust_policy_path (str | pathlib.Path): Path to the GitHub OIDC trust policy JSON file.
+    
+    Returns:
+        dict: Parsed JSON content of the trust policy.
+    """
     with open(github_oidc_trust_policy_path) as f:
         return json.load(f)
 
@@ -65,7 +91,12 @@ class TestJSONSyntax:
             pytest.fail(f"Invalid JSON: {e}")
 
     def test_github_oidc_trust_policy_valid_json(self, github_oidc_trust_policy_path):
-        """Verify GitHub OIDC trust policy is valid JSON."""
+        """
+        Check that the GitHub OIDC trust policy file contains valid JSON.
+        
+        Parameters:
+            github_oidc_trust_policy_path (Path): Filesystem path to the GitHub OIDC trust policy JSON file.
+        """
         try:
             with open(github_oidc_trust_policy_path) as f:
                 json.load(f)
@@ -82,7 +113,11 @@ class TestGitHubActionsPolicyStructure:
         assert github_actions_policy["Version"] == "2012-10-17"
 
     def test_has_statement(self, github_actions_policy):
-        """Verify policy has Statement array."""
+        """
+        Check that the policy contains a non-empty "Statement" list.
+        
+        Asserts that the top-level "Statement" key exists, is a list, and has at least one element.
+        """
         assert "Statement" in github_actions_policy
         assert isinstance(github_actions_policy["Statement"], list)
         assert len(github_actions_policy["Statement"]) > 0
@@ -163,18 +198,32 @@ class TestGitHubOIDCTrustPolicyStructure:
         assert "token.actions.githubusercontent.com" in policy_str
 
     def test_has_conditions(self, github_oidc_trust_policy):
-        """Verify trust policy has conditions for security."""
+        """
+        Ensure every statement with Effect "Allow" in the GitHub OIDC trust policy includes a `Condition` block.
+        
+        Parameters:
+            github_oidc_trust_policy (dict): Parsed JSON policy representing the OIDC trust policy.
+        """
         for stmt in github_oidc_trust_policy["Statement"]:
             if stmt.get("Effect") == "Allow":
                 assert "Condition" in stmt, "Trust policy should have conditions"
 
     def test_conditions_check_audience(self, github_oidc_trust_policy):
-        """Verify conditions check aud claim."""
+        """
+        Ensure the trust policy includes an audience condition.
+        
+        Asserts that the serialized policy contains either "aud" or "sts.amazonaws.com", indicating an audience check is present.
+        """
         policy_str = json.dumps(github_oidc_trust_policy)
         assert "aud" in policy_str or "sts.amazonaws.com" in policy_str
 
     def test_conditions_check_subject(self, github_oidc_trust_policy):
-        """Verify conditions check sub claim for repository."""
+        """
+        Checks that the OIDC trust policy's conditions include a subject claim (`sub`) or a repository identifier (`repo:`).
+        
+        Parameters:
+            github_oidc_trust_policy (dict): Parsed JSON object of the GitHub OIDC trust policy.
+        """
         policy_str = json.dumps(github_oidc_trust_policy)
         assert "sub" in policy_str or "repo:" in policy_str
 
@@ -247,7 +296,9 @@ class TestDynamoDBLockPermissions:
         assert any("dynamodb:PutItem" in action for action in dynamodb_actions)
 
     def test_dynamodb_permissions_include_delete_item(self, github_actions_policy):
-        """Verify policy allows DeleteItem on DynamoDB."""
+        """
+        Check that the GitHub Actions IAM policy includes the DynamoDB action `dynamodb:DeleteItem`.
+        """
         dynamodb_actions = []
         for stmt in github_actions_policy["Statement"]:
             if any("dynamodb:" in str(a) for a in stmt.get("Action", [])):
@@ -263,13 +314,21 @@ class TestSecurityBestPractices:
     """Test security best practices in policies."""
 
     def test_statements_use_allow_effect(self, github_actions_policy):
-        """Verify statements primarily use Allow effect (deny by default)."""
+        """
+        Assert each statement's `Effect` field is either "Allow" or "Deny".
+        
+        This verifies that every statement explicitly specifies an effect rather than relying on implicit defaults.
+        """
         for stmt in github_actions_policy["Statement"]:
             # Most statements should be Allow (implicit deny is AWS default)
             assert stmt["Effect"] in ["Allow", "Deny"]
 
     def test_policy_has_resource_restrictions(self, github_actions_policy):
-        """Verify at least some statements have Resource restrictions."""
+        """
+        Check that the policy contains at least one Statement with a Resource field not equal to "*".
+        
+        This test asserts there is at least one statement that restricts resources (i.e., has a "Resource" key whose value is not "*").
+        """
         has_resource_restriction = False
         for stmt in github_actions_policy["Statement"]:
             if "Resource" in stmt and stmt["Resource"] != "*":
