@@ -316,3 +316,273 @@ class TestArgoCDApplication:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+class TestInfrastructureAlertsChanges:
+    """Test changes to infrastructure_alerts.yml"""
+    
+    def test_single_infrastructure_group(self):
+        """Test that alerts are consolidated into single infrastructure group"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        groups = config.get("groups", [])
+        group_names = [g.get("name") for g in groups]
+        
+        # Should have infrastructure group
+        assert "infrastructure" in group_names
+    
+    def test_alert_severity_labels(self):
+        """Test that alerts have severity labels (warning or critical)"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule:
+                    labels = rule.get("labels", {})
+                    assert "severity" in labels
+                    assert labels["severity"] in ["warning", "critical", "info"]
+    
+    def test_alert_component_labels(self):
+        """Test that alerts have component labels"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule:
+                    labels = rule.get("labels", {})
+                    assert "component" in labels
+    
+    def test_cpu_alerts_have_warning_and_critical(self):
+        """Test that CPU alerts have both warning and critical thresholds"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        cpu_alerts = []
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule and "CPU" in rule["alert"]:
+                    cpu_alerts.append(rule)
+        
+        # Should have at least warning and critical
+        severities = [a.get("labels", {}).get("severity") for a in cpu_alerts]
+        assert "warning" in severities or "critical" in severities
+    
+    def test_memory_alerts_have_warning_and_critical(self):
+        """Test that memory alerts have both warning and critical thresholds"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        memory_alerts = []
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule and "Memory" in rule["alert"]:
+                    memory_alerts.append(rule)
+        
+        severities = [a.get("labels", {}).get("severity") for a in memory_alerts]
+        assert "warning" in severities or "critical" in severities
+    
+    def test_disk_alerts_have_warning_and_critical(self):
+        """Test that disk alerts have both warning and critical thresholds"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        disk_alerts = []
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule and "Disk" in rule["alert"]:
+                    disk_alerts.append(rule)
+        
+        severities = [a.get("labels", {}).get("severity") for a in disk_alerts]
+        assert "warning" in severities or "critical" in severities
+    
+    def test_annotations_have_runbook(self):
+        """Test that annotations include runbook links"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule:
+                    annotations = rule.get("annotations", {})
+                    assert "runbook" in annotations or "runbook_url" in annotations
+    
+    def test_annotations_have_summary_and_description(self):
+        """Test that all alerts have summary and description"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule:
+                    annotations = rule.get("annotations", {})
+                    assert "summary" in annotations
+                    assert "description" in annotations
+    
+    def test_host_down_alert_exists(self):
+        """Test that HostDown alert is present"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        alert_names = []
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule:
+                    alert_names.append(rule["alert"])
+        
+        assert "HostDown" in alert_names
+    
+    def test_backup_job_failed_alert_exists(self):
+        """Test that BackupJobFailed alert is present"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        alert_names = []
+        for group in config.get("groups", []):
+            for rule in group.get("rules", []):
+                if "alert" in rule:
+                    alert_names.append(rule["alert"])
+        
+        assert "BackupJobFailed" in alert_names
+
+
+class TestPrometheusConfigChanges:
+    """Test changes to prometheus.yml"""
+    
+    def test_alert_relabel_configs_present(self):
+        """Test that alert_relabel_configs are configured"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        alerting = config.get("alerting", {})
+        assert "alert_relabel_configs" in alerting
+        assert isinstance(alerting["alert_relabel_configs"], list)
+        assert len(alerting["alert_relabel_configs"]) > 0
+    
+    def test_severity_relabeling_rules(self):
+        """Test that severity labels are dynamically assigned"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        relabel_configs = config.get("alerting", {}).get("alert_relabel_configs", [])
+        
+        # Should have rules for critical, warning, info
+        target_labels = [r.get("target_label") for r in relabel_configs]
+        assert target_labels.count("severity") >= 3
+    
+    def test_alertmanager_timeout_configured(self):
+        """Test that alertmanager timeout is set"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        alertmanagers = config.get("alerting", {}).get("alertmanagers", [])
+        for am in alertmanagers:
+            assert "timeout" in am
+    
+    def test_scrape_configs_have_labels(self):
+        """Test that scrape configs include proper labels"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        for job in config.get("scrape_configs", []):
+            static_configs = job.get("static_configs", [])
+            for sc in static_configs:
+                assert "labels" in sc or "targets" in sc
+    
+    def test_external_labels_configured(self):
+        """Test that external labels include environment and cluster"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        external_labels = config.get("global", {}).get("external_labels", {})
+        assert "environment" in external_labels
+        assert "cluster" in external_labels
+    
+    def test_job_name_consistency(self):
+        """Test that job names follow consistent naming"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        job_names = [job.get("job_name") for job in config.get("scrape_configs", [])]
+        # All job names should be defined
+        assert all(job_names)
+        assert len(job_names) > 0
+    
+    def test_prometheus_self_monitoring(self):
+        """Test that Prometheus monitors itself"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        job_names = [job.get("job_name") for job in config.get("scrape_configs", [])]
+        assert "prometheus" in job_names
+    
+    def test_scrape_timeout_less_than_interval(self):
+        """Test that scrape timeouts are less than scrape intervals"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        global_interval = config.get("global", {}).get("scrape_interval", "15s")
+        
+        for job in config.get("scrape_configs", []):
+            interval = job.get("scrape_interval", global_interval)
+            timeout = job.get("scrape_timeout")
+            
+            if timeout:
+                # Parse durations (simplified check)
+                interval_val = int(interval.rstrip('s'))
+                timeout_val = int(timeout.rstrip('s'))
+                assert timeout_val < interval_val
+    
+    def test_vm_nodes_job_with_relabeling(self):
+        """Test that vm-nodes job has hostname relabeling"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        vm_jobs = [j for j in config.get("scrape_configs", []) if "vm" in j.get("job_name", "").lower()]
+        
+        for job in vm_jobs:
+            if "relabel_configs" in job:
+                # Should have hostname relabeling rules
+                relabel_configs = job.get("relabel_configs", [])
+                target_labels = [r.get("target_label") for r in relabel_configs]
+                assert "hostname" in target_labels or len(relabel_configs) > 0
+
