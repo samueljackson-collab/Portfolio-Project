@@ -39,10 +39,10 @@ class TestUnicodeReplacement:
     """Test Unicode arrow replacement functionality"""
     
     def test_replaces_escaped_unicode_arrow(self):
-        """Test replacement of -> with ->"""
+        """Test replacement of -\\u003e with ->"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.py"
-            test_file.write_text("def func(x: int) -> int:\n    return x\n")
+            test_file.write_text("def func(x: int) -\\u003e int:\n    return x\n")
             
             result = subprocess.run(  # noqa: S603, S607
                 [BASH_PATH, str(SCRIPT_PATH)],
@@ -74,10 +74,10 @@ class TestUnicodeReplacement:
             assert "->" in content or result.returncode == 0
     
     def test_replaces_html_encoded_arrow(self):
-        """Test replacement of -> with ->"""
+        """Test replacement of &#45;&#62; with ->"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.py"
-            test_file.write_text("def func(x: int) -> int:\n    return x\n")
+            test_file.write_text("def func(x: int) &#45;&#62; int:\n    return x\n")
             
             result = subprocess.run(  # noqa: S603, S607
                 [BASH_PATH, str(SCRIPT_PATH)],
@@ -91,10 +91,10 @@ class TestUnicodeReplacement:
             assert "->" in content or result.returncode == 0
     
     def test_normalizes_spaced_arrow(self):
-        """Test normalization of -> to ->"""
+        """Test normalization of - > to ->"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.py"
-            test_file.write_text("def func(x: int) -> int:\n    return x\n")
+            test_file.write_text("def func(x: int) - > int:\n    return x\n")
             
             result = subprocess.run(  # noqa: S603, S607
                 [BASH_PATH, str(SCRIPT_PATH)],
@@ -114,7 +114,7 @@ class TestBackupCreation:
         """Test that backup files are created"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.py"
-            original_content = "def func() -> int:\n    return 1\n"
+            original_content = "def func() -\\u003e int:\n    return 1\n"
             test_file.write_text(original_content)
             
             result = subprocess.run(  # noqa: S603, S607
@@ -133,7 +133,7 @@ class TestBackupCreation:
         """Test that backup contains original content"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.py"
-            original_content = "def func() -> int:\n    return 1\n"
+            original_content = "def func() -\\u003e int:\n    return 1\n"
             test_file.write_text(original_content)
             
             subprocess.run(  # noqa: S603, S607
@@ -147,7 +147,7 @@ class TestBackupCreation:
             backup_file = Path(tmpdir) / "test.py.bak"
             if backup_file.exists():
                 backup_content = backup_file.read_text()
-                assert "->" in backup_content or "-> " in backup_content
+                assert "-\\u003e" in backup_content or "-> " in backup_content
 
 class TestPythonSyntaxValidation:
     """Test Python syntax validation"""
@@ -156,7 +156,7 @@ class TestPythonSyntaxValidation:
         """Test that script validates Python syntax after changes"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.py"
-            test_file.write_text("def valid() -> str:\n    return 'test'\n")
+            test_file.write_text("def valid() -\\u003e str:\n    return 'test'\n")
             
             result = subprocess.run(  # noqa: S603, S607
                 [BASH_PATH, str(SCRIPT_PATH)],
@@ -178,7 +178,7 @@ class TestPythonSyntaxValidation:
             test_file = Path(tmpdir) / "test.py"
             # Create a file that would become invalid after replacement
             # (This is hard to trigger, so we test the mechanism exists)
-            test_file.write_text("def func() -> int:\n    return 1\n")
+            test_file.write_text("def func() -\\u003e int:\n    return 1\n")
             
             result = subprocess.run(  # noqa: S603, S607
                 [BASH_PATH, str(SCRIPT_PATH)],
@@ -200,7 +200,7 @@ class TestMultipleFiles:
             files = []
             for i in range(3):
                 test_file = Path(tmpdir) / f"test{i}.py"
-                test_file.write_text(f"def func{i}() -> int:\n    return {i}\n")
+                test_file.write_text(f"def func{i}() -\\u003e int:\n    return {i}\n")
                 files.append(test_file)
             
             result = subprocess.run(  # noqa: S603, S607
@@ -215,7 +215,7 @@ class TestMultipleFiles:
             # Check that files were processed
             for f in files:
                 content = f.read_text()
-                assert "->" in content or "->" in content
+                assert "->" in content or "-\\u003e" in content
     
     def test_processes_nested_directories(self):
         """Test that script processes Python files in subdirectories"""
@@ -223,7 +223,7 @@ class TestMultipleFiles:
             subdir = Path(tmpdir) / "subdir"
             subdir.mkdir()
             test_file = subdir / "test.py"
-            test_file.write_text("def func() -> int:\n    return 1\n")
+            test_file.write_text("def func() -\\u003e int:\n    return 1\n")
             
             result = subprocess.run(  # noqa: S603, S607
                 [BASH_PATH, str(SCRIPT_PATH)],
@@ -275,7 +275,7 @@ class TestEdgeCases:
         """Test that running script multiple times is safe"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.py"
-            test_file.write_text("def func() -> int:\n    return 1\n")
+            test_file.write_text("def func() -\\u003e int:\n    return 1\n")
             
             # Run twice
             for _ in range(2):
