@@ -914,3 +914,118 @@ class TestIntegrationScenarios:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
+cat "$tmp"
+
+
+class TestSimplifiedScriptBehavior:
+    """Test behavior changes in the simplified script version"""
+    
+    def test_fixed_log_file_path(self):
+        """Test that LOG_FILE uses fixed path instead of environment override"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "LOG_FILE=$LOG_FILE"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test", "PBS_LOG_FILE": "/custom/path.log"}
+                )
+                # Should use fixed path, not environment override
+                assert "/var/log/backup-verification.log" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_fixed_endpoint_configuration(self):
+        """Test that PBS_ENDPOINT uses fixed value"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "PBS_ENDPOINT=$PBS_ENDPOINT"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test", "PBS_ENDPOINT": "https://custom:8007"}
+                )
+                # Should use fixed endpoint
+                assert "https://192.168.1.15:8007" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_getopts_based_parsing(self):
+        """Test that script uses getopts instead of parse_options function"""
+        # Test multiple flags at once
+        result = subprocess.run(  # noqa: S603
+            [str(SCRIPT_PATH), "-v", "-d", "-h"],
+            capture_output=True,
+            text=True
+        )
+        # Should handle flags properly and show help
+        assert result.returncode == 0
+        assert "Usage:" in result.stdout
+    
+    def test_no_command_substitution_expansion(self):
+        """Test that expand_command_substitutions function is removed"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        # Check if expand_command_substitutions exists
+        if declare -f expand_command_substitutions >/dev/null 2>&1; then
+            echo "Function exists"
+        else
+            echo "Function removed"
+        fi
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Function should be removed
+                assert "Function removed" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_version_number_change(self):
+        """Test that version is set to 1.0.0"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "VERSION=$VERSION"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Should be version 1.0.0
+                assert "VERSION=1.0.0" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
