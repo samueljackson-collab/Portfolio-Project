@@ -1,0 +1,8 @@
+---
+# Ansible Playbook: Backup Operations
+- name: Execute backup procedures
+  hosts: proxmox_nodes
+  become: yes
+  tasks:
+    - name: Backup VM configurations
+      shell: vzdump --all --mode snapshot --compress zstd --storage truenas-nfs

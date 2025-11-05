@@ -1,0 +1,539 @@
+{
+  "_meta": {
+    "description": "UniFi Network Controller Configuration - Homelab Infrastructure",
+    "version": "7.5.187",
+    "site_name": "homelab",
+    "last_updated": "2025-11-05"
+  },
+  
+  "wireless_networks": [
+    {
+      "name": "Homelab-Secure",
+      "ssid": "Homelab-Secure",
+      "vlan": 10,
+      "vlan_enabled": true,
+      "security": "wpaeap",
+      "wpa_mode": "wpa3",
+      "wpa_enc": "ccmp",
+      "enabled": true,
+      "hide_ssid": false,
+      "is_guest": false,
+      "usergroup_id": "trusted_users",
+      "network_id": "vlan10_trusted",
+      "wlangroup_id": "default",
+      "minrate_ng_enabled": true,
+      "minrate_ng_data_rate_kbps": 6000,
+      "minrate_na_enabled": true,
+      "minrate_na_data_rate_kbps": 6000,
+      "band_steering": true,
+      "pmf_mode": "required",
+      "fast_roaming_enabled": true,
+      "schedule_enabled": false,
+      "radius_profile": {
+        "auth_servers": [
+          {
+            "ip": "192.168.40.25",
+            "port": 1812,
+            "x_secret": "SecureRadiusSecret123"
+          }
+        ],
+        "accounting_enabled": true,
+        "acct_servers": [
+          {
+            "ip": "192.168.40.25",
+            "port": 1813,
+            "x_secret": "SecureRadiusSecret123"
+          }
+        ],
+        "interim_update_enabled": true,
+        "interim_update_interval": 3600
+      },
+      "dtim_mode": "default",
+      "dtim_ng": 1,
+      "dtim_na": 3,
+      "settings": {
+        "uapsd_enabled": true,
+        "multicast_enhance_enabled": true,
+        "schedule_with_duration": []
+      }
+    },
+    {
+      "name": "Homelab-IoT",
+      "ssid": "Homelab-IoT",
+      "vlan": 20,
+      "vlan_enabled": true,
+      "security": "wpapsk",
+      "wpa_mode": "wpa2",
+      "wpa_enc": "ccmp",
+      "x_passphrase": "IoTSecurePassword2024!",
+      "enabled": true,
+      "hide_ssid": false,
+      "is_guest": false,
+      "usergroup_id": "iot_devices",
+      "network_id": "vlan20_iot",
+      "wlangroup_id": "default",
+      "minrate_ng_enabled": true,
+      "minrate_ng_data_rate_kbps": 1000,
+      "minrate_na_enabled": false,
+      "band_steering": false,
+      "pmf_mode": "optional",
+      "fast_roaming_enabled": false,
+      "no2ghz_oui": false,
+      "l2_isolation": true,
+      "client_isolation": true,
+      "schedule_enabled": true,
+      "schedule": {
+        "sunday": {
+          "ranges": [{"start": "06:00", "end": "23:00"}]
+        },
+        "monday": {
+          "ranges": [{"start": "06:00", "end": "23:00"}]
+        },
+        "tuesday": {
+          "ranges": [{"start": "06:00", "end": "23:00"}]
+        },
+        "wednesday": {
+          "ranges": [{"start": "06:00", "end": "23:00"}]
+        },
+        "thursday": {
+          "ranges": [{"start": "06:00", "end": "23:00"}]
+        },
+        "friday": {
+          "ranges": [{"start": "06:00", "end": "23:00"}]
+        },
+        "saturday": {
+          "ranges": [{"start": "06:00", "end": "23:00"}]
+        }
+      },
+      "dtim_mode": "default",
+      "dtim_ng": 1,
+      "dtim_na": 3,
+      "settings": {
+        "uapsd_enabled": false,
+        "multicast_enhance_enabled": false
+      }
+    },
+    {
+      "name": "Homelab-Guest",
+      "ssid": "Homelab-Guest",
+      "vlan": 30,
+      "vlan_enabled": true,
+      "security": "open",
+      "enabled": true,
+      "hide_ssid": false,
+      "is_guest": true,
+      "usergroup_id": "guest_users",
+      "network_id": "vlan30_guest",
+      "wlangroup_id": "default",
+      "minrate_ng_enabled": true,
+      "minrate_ng_data_rate_kbps": 1000,
+      "minrate_na_enabled": true,
+      "minrate_na_data_rate_kbps": 6000,
+      "band_steering": false,
+      "fast_roaming_enabled": false,
+      "schedule_enabled": false,
+      "guest_access": {
+        "portal_enabled": true,
+        "portal_customized": true,
+        "auth": "simple",
+        "portal_hostname": "guest.homelab.local",
+        "redirect_enabled": true,
+        "redirect_url": "https://homelab.local",
+        "x_password": "GuestAccess2024",
+        "voucher_enabled": false
+      },
+      "l2_isolation": true,
+      "client_isolation": true,
+      "bandwidth_limit_enabled": true,
+      "bandwidth_limit_down_kbps": 10000,
+      "bandwidth_limit_up_kbps": 5000,
+      "dtim_mode": "default",
+      "dtim_ng": 1,
+      "dtim_na": 3,
+      "settings": {
+        "uapsd_enabled": false,
+        "multicast_enhance_enabled": false
+      }
+    }
+  ],
+
+  "devices": [
+    {
+      "name": "UniFi Switch 24 POE",
+      "type": "usw",
+      "model": "US24P250",
+      "mac": "fc:ec:da:11:22:33",
+      "ip": "192.168.1.2",
+      "management_vlan": 10,
+      "adopted": true,
+      "port_overrides": [
+        {
+          "port_idx": 1,
+          "portconf_id": "uplink",
+          "name": "Uplink to pfSense",
+          "native_networkconf_id": "vlan10_trusted",
+          "port_security_enabled": false,
+          "poe_mode": "off"
+        },
+        {
+          "port_idx": 2,
+          "portconf_id": "ap_poe",
+          "name": "AP Living Room",
+          "native_networkconf_id": "vlan10_trusted",
+          "poe_mode": "auto",
+          "port_security_mac_address": ["fc:ec:da:aa:bb:01"]
+        },
+        {
+          "port_idx": 3,
+          "portconf_id": "ap_poe",
+          "name": "AP Office",
+          "native_networkconf_id": "vlan10_trusted",
+          "poe_mode": "auto",
+          "port_security_mac_address": ["fc:ec:da:aa:bb:02"]
+        },
+        {
+          "port_idx": 4,
+          "portconf_id": "server",
+          "name": "Proxmox-01",
+          "native_networkconf_id": "vlan40_servers",
+          "port_security_enabled": true,
+          "port_security_mac_address": ["00:11:22:33:55:01"]
+        },
+        {
+          "port_idx": 5,
+          "portconf_id": "server",
+          "name": "Proxmox-02",
+          "native_networkconf_id": "vlan40_servers",
+          "port_security_enabled": true,
+          "port_security_mac_address": ["00:11:22:33:55:02"]
+        },
+        {
+          "port_idx": 6,
+          "portconf_id": "server",
+          "name": "Proxmox-03",
+          "native_networkconf_id": "vlan40_servers",
+          "port_security_enabled": true,
+          "port_security_mac_address": ["00:11:22:33:55:03"]
+        },
+        {
+          "port_idx": 7,
+          "portconf_id": "server",
+          "name": "TrueNAS Storage",
+          "native_networkconf_id": "vlan40_servers",
+          "port_security_enabled": true,
+          "port_security_mac_address": ["00:11:22:33:55:10"]
+        },
+        {
+          "port_idx": 8,
+          "portconf_id": "trusted",
+          "name": "Workstation",
+          "native_networkconf_id": "vlan10_trusted"
+        }
+      ],
+      "jumboframe_enabled": true,
+      "flowctrl_enabled": false,
+      "stp_version": "rstp",
+      "stp_priority": 32768
+    },
+    {
+      "name": "U6 Pro - Living Room",
+      "type": "uap",
+      "model": "U6-Pro",
+      "mac": "fc:ec:da:aa:bb:01",
+      "ip": "192.168.1.3",
+      "management_vlan": 10,
+      "adopted": true,
+      "config_network": {
+        "type": "dhcp",
+        "ip": "192.168.1.3"
+      },
+      "radio_table": [
+        {
+          "name": "ra0",
+          "radio": "ng",
+          "channel": "1",
+          "ht": "20",
+          "tx_power_mode": "auto",
+          "tx_power": "auto",
+          "min_rssi_enabled": true,
+          "min_rssi": -75,
+          "hard_noise_floor_enabled": false,
+          "antenna_gain": 0
+        },
+        {
+          "name": "ra1",
+          "radio": "na",
+          "channel": "36",
+          "ht": "80",
+          "tx_power_mode": "auto",
+          "tx_power": "auto",
+          "min_rssi_enabled": true,
+          "min_rssi": -75,
+          "hard_noise_floor_enabled": false,
+          "antenna_gain": 0
+        }
+      ],
+      "wlan_overrides": [],
+      "bandsteering_mode": "equal",
+      "mesh_sta_vap_enabled": false
+    },
+    {
+      "name": "U6 Pro - Office",
+      "type": "uap",
+      "model": "U6-Pro",
+      "mac": "fc:ec:da:aa:bb:02",
+      "ip": "192.168.1.4",
+      "management_vlan": 10,
+      "adopted": true,
+      "config_network": {
+        "type": "dhcp",
+        "ip": "192.168.1.4"
+      },
+      "radio_table": [
+        {
+          "name": "ra0",
+          "radio": "ng",
+          "channel": "6",
+          "ht": "20",
+          "tx_power_mode": "auto",
+          "tx_power": "auto",
+          "min_rssi_enabled": true,
+          "min_rssi": -75,
+          "hard_noise_floor_enabled": false,
+          "antenna_gain": 0
+        },
+        {
+          "name": "ra1",
+          "radio": "na",
+          "channel": "149",
+          "ht": "80",
+          "tx_power_mode": "auto",
+          "tx_power": "auto",
+          "min_rssi_enabled": true,
+          "min_rssi": -75,
+          "hard_noise_floor_enabled": false,
+          "antenna_gain": 0
+        }
+      ],
+      "wlan_overrides": [],
+      "bandsteering_mode": "equal",
+      "mesh_sta_vap_enabled": false
+    }
+  ],
+
+  "port_profiles": [
+    {
+      "_id": "uplink",
+      "name": "Uplink",
+      "native_networkconf_id": "vlan10_trusted",
+      "tagged_networkconf_ids": ["vlan10_trusted", "vlan20_iot", "vlan30_guest", "vlan40_servers", "vlan50_dmz"],
+      "port_security_enabled": false,
+      "poe_mode": "off",
+      "forward": "all",
+      "isolation": false
+    },
+    {
+      "_id": "ap_poe",
+      "name": "Access Point PoE",
+      "native_networkconf_id": "vlan10_trusted",
+      "tagged_networkconf_ids": ["vlan10_trusted", "vlan20_iot", "vlan30_guest"],
+      "port_security_enabled": true,
+      "poe_mode": "auto",
+      "forward": "customize",
+      "isolation": false
+    },
+    {
+      "_id": "trusted",
+      "name": "Trusted Device",
+      "native_networkconf_id": "vlan10_trusted",
+      "port_security_enabled": false,
+      "poe_mode": "off",
+      "forward": "all",
+      "isolation": false
+    },
+    {
+      "_id": "server",
+      "name": "Server",
+      "native_networkconf_id": "vlan40_servers",
+      "port_security_enabled": true,
+      "poe_mode": "off",
+      "forward": "all",
+      "isolation": false,
+      "lldp_med_enabled": true
+    }
+  ],
+
+  "networks": [
+    {
+      "_id": "vlan10_trusted",
+      "name": "Trusted",
+      "purpose": "corporate",
+      "vlan": 10,
+      "vlan_enabled": true,
+      "dhcp_enabled": false,
+      "dhcpguard_enabled": false,
+      "gateway_type": "default",
+      "domain_name": "homelab.local",
+      "is_nat": false,
+      "networkgroup": "LAN",
+      "igmp_snooping": true,
+      "multicast_dns_enabled": true
+    },
+    {
+      "_id": "vlan20_iot",
+      "name": "IoT",
+      "purpose": "corporate",
+      "vlan": 20,
+      "vlan_enabled": true,
+      "dhcp_enabled": false,
+      "dhcpguard_enabled": true,
+      "gateway_type": "default",
+      "domain_name": "iot.homelab.local",
+      "is_nat": false,
+      "networkgroup": "LAN",
+      "igmp_snooping": true,
+      "multicast_dns_enabled": false
+    },
+    {
+      "_id": "vlan30_guest",
+      "name": "Guest",
+      "purpose": "guest",
+      "vlan": 30,
+      "vlan_enabled": true,
+      "dhcp_enabled": false,
+      "dhcpguard_enabled": true,
+      "gateway_type": "default",
+      "domain_name": "guest.homelab.local",
+      "is_nat": false,
+      "networkgroup": "LAN",
+      "igmp_snooping": false,
+      "multicast_dns_enabled": false
+    },
+    {
+      "_id": "vlan40_servers",
+      "name": "Servers",
+      "purpose": "corporate",
+      "vlan": 40,
+      "vlan_enabled": true,
+      "dhcp_enabled": false,
+      "dhcpguard_enabled": false,
+      "gateway_type": "default",
+      "domain_name": "servers.homelab.local",
+      "is_nat": false,
+      "networkgroup": "LAN",
+      "igmp_snooping": true,
+      "multicast_dns_enabled": true
+    },
+    {
+      "_id": "vlan50_dmz",
+      "name": "DMZ",
+      "purpose": "corporate",
+      "vlan": 50,
+      "vlan_enabled": true,
+      "dhcp_enabled": false,
+      "dhcpguard_enabled": true,
+      "gateway_type": "default",
+      "domain_name": "dmz.homelab.local",
+      "is_nat": false,
+      "networkgroup": "LAN",
+      "igmp_snooping": false,
+      "multicast_dns_enabled": false
+    }
+  ],
+
+  "security_settings": {
+    "ids_ips": {
+      "enabled": true,
+      "mode": "detection",
+      "suricata_enabled": true,
+      "categories": [
+        "connectivity",
+        "ddos",
+        "dos",
+        "exploit",
+        "malware",
+        "scan",
+        "trojan",
+        "vulnerability"
+      ],
+      "suppress_alerts": [],
+      "honeypot_enabled": false
+    },
+    "content_filtering": {
+      "enabled": true,
+      "networks": ["vlan30_guest"],
+      "categories_blocked": [
+        "adult",
+        "gambling",
+        "malware",
+        "phishing",
+        "proxy"
+      ],
+      "safe_search_enabled": true
+    },
+    "dpi": {
+      "enabled": true,
+      "categories": [
+        "BitTorrent",
+        "P2P",
+        "Gaming",
+        "Streaming",
+        "Social",
+        "VoIP"
+      ],
+      "app_categories_enabled": true
+    },
+    "device_fingerprinting": {
+      "enabled": true
+    },
+    "rogue_ap_detection": {
+      "enabled": true,
+      "auto_contain": false
+    }
+  },
+
+  "traffic_management": {
+    "smart_queues": {
+      "enabled": false
+    },
+    "traffic_rules": [
+      {
+        "name": "Guest Bandwidth Limit",
+        "enabled": true,
+        "network_id": "vlan30_guest",
+        "bandwidth_limit_down_kbps": 10000,
+        "bandwidth_limit_up_kbps": 5000
+      }
+    ]
+  },
+
+  "advanced_settings": {
+    "connectivity_monitor": {
+      "enabled": true,
+      "type": "gateway",
+      "interval_seconds": 60
+    },
+    "mdns": {
+      "enabled": true,
+      "reflector_enabled": false
+    },
+    "upnp": {
+      "enabled": false,
+      "wan_interface": "wan",
+      "nat_pmp_enabled": false,
+      "secure_mode": true
+    },
+    "ssh": {
+      "enabled": true,
+      "port": 22,
+      "password_auth_enabled": false,
+      "keys_only": true
+    }
+  },
+
+  "backup_settings": {
+    "auto_backup_enabled": true,
+    "auto_backup_days": 7,
+    "auto_backup_cron_expr": "0 2 * * *"
+  }
+}

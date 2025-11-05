@@ -1,0 +1,801 @@
+<?xml version="1.0"?>
+<pfsense>
+  <version>22.1</version>
+  <lastchange>Homelab Network Infrastructure Configuration</lastchange>
+  
+  <!-- System Configuration -->
+  <system>
+    <hostname>pfsense-fw</hostname>
+    <domain>homelab.local</domain>
+    <timeservers>pool.ntp.org</timeservers>
+    <timezone>America/New_York</timezone>
+    <language>en_US</language>
+    <dnsserver>1.1.1.1</dnsserver>
+    <dnsserver>8.8.8.8</dnsserver>
+    <dnsallowoverride>on</dnsallowoverride>
+    <webgui>
+      <protocol>https</protocol>
+      <ssl-certref>webConfigurator</ssl-certref>
+      <port>443</port>
+      <max_procs>2</max_procs>
+    </webgui>
+  </system>
+
+  <!-- Network Interfaces Configuration -->
+  <interfaces>
+    <!-- WAN Interface - External ISP Connection -->
+    <wan>
+      <descr>WAN</descr>
+      <if>igb0</if>
+      <ipaddr>dhcp</ipaddr>
+      <ipaddrv6>dhcp6</ipaddrv6>
+      <blockpriv>on</blockpriv>
+      <blockbogons>on</blockbogons>
+      <spoofmac></spoofmac>
+      <enable></enable>
+    </wan>
+    
+    <!-- LAN Interface - Trusted VLAN 10 -->
+    <lan>
+      <descr>LAN - Trusted</descr>
+      <if>igb1</if>
+      <ipaddr>192.168.1.1</ipaddr>
+      <subnet>24</subnet>
+      <enable></enable>
+      <tag>10</tag>
+    </lan>
+    
+    <!-- OPT1 Interface - IoT VLAN 20 -->
+    <opt1>
+      <descr>IoT</descr>
+      <if>igb2</if>
+      <ipaddr>192.168.20.1</ipaddr>
+      <subnet>24</subnet>
+      <enable></enable>
+      <tag>20</tag>
+    </opt1>
+    
+    <!-- OPT2 Interface - Guest VLAN 30 -->
+    <opt2>
+      <descr>Guest</descr>
+      <if>igb3</if>
+      <ipaddr>192.168.30.1</ipaddr>
+      <subnet>24</subnet>
+      <enable></enable>
+      <tag>30</tag>
+    </opt2>
+    
+    <!-- OPT3 Interface - Servers VLAN 40 -->
+    <opt3>
+      <descr>Servers</descr>
+      <if>igb4</if>
+      <ipaddr>192.168.40.1</ipaddr>
+      <subnet>24</subnet>
+      <enable></enable>
+      <tag>40</tag>
+    </opt3>
+    
+    <!-- OPT4 Interface - DMZ VLAN 50 -->
+    <opt4>
+      <descr>DMZ</descr>
+      <if>igb5</if>
+      <ipaddr>192.168.50.1</ipaddr>
+      <subnet>24</subnet>
+      <enable></enable>
+      <tag>50</tag>
+    </opt4>
+  </interfaces>
+
+  <!-- DHCP Server Configuration per VLAN -->
+  <dhcpd>
+    <!-- LAN/Trusted VLAN DHCP -->
+    <lan>
+      <enable></enable>
+      <range>
+        <from>192.168.1.100</from>
+        <to>192.168.1.200</to>
+      </range>
+      <defaultleasetime>86400</defaultleasetime>
+      <maxleasetime>172800</maxleasetime>
+      <gateway>192.168.1.1</gateway>
+      <domain>homelab.local</domain>
+      <domainsearchlist>homelab.local</domainsearchlist>
+      <dnsserver>192.168.1.1</dnsserver>
+      <ntpserver>192.168.1.1</ntpserver>
+      <!-- Static DHCP Mappings for Trusted Devices -->
+      <staticmap>
+        <mac>00:11:22:33:44:55</mac>
+        <ipaddr>192.168.1.10</ipaddr>
+        <hostname>workstation-01</hostname>
+        <descr>Primary Workstation</descr>
+      </staticmap>
+      <staticmap>
+        <mac>00:11:22:33:44:66</mac>
+        <ipaddr>192.168.1.11</ipaddr>
+        <hostname>laptop-01</hostname>
+        <descr>Primary Laptop</descr>
+      </staticmap>
+    </lan>
+    
+    <!-- IoT VLAN DHCP -->
+    <opt1>
+      <enable></enable>
+      <range>
+        <from>192.168.20.100</from>
+        <to>192.168.20.200</to>
+      </range>
+      <defaultleasetime>86400</defaultleasetime>
+      <maxleasetime>172800</maxleasetime>
+      <gateway>192.168.20.1</gateway>
+      <domain>iot.homelab.local</domain>
+      <dnsserver>192.168.20.1</dnsserver>
+      <ntpserver>192.168.20.1</ntpserver>
+    </opt1>
+    
+    <!-- Guest VLAN DHCP -->
+    <opt2>
+      <enable></enable>
+      <range>
+        <from>192.168.30.100</from>
+        <to>192.168.30.200</to>
+      </range>
+      <defaultleasetime>3600</defaultleasetime>
+      <maxleasetime>7200</maxleasetime>
+      <gateway>192.168.30.1</gateway>
+      <domain>guest.homelab.local</domain>
+      <dnsserver>192.168.30.1</dnsserver>
+    </opt2>
+    
+    <!-- Servers VLAN DHCP (Mostly Static) -->
+    <opt3>
+      <enable></enable>
+      <range>
+        <from>192.168.40.200</from>
+        <to>192.168.40.250</to>
+      </range>
+      <defaultleasetime>86400</defaultleasetime>
+      <gateway>192.168.40.1</gateway>
+      <domain>servers.homelab.local</domain>
+      <dnsserver>192.168.40.1</dnsserver>
+      <!-- Static Mappings for Servers -->
+      <staticmap>
+        <mac>00:11:22:33:55:01</mac>
+        <ipaddr>192.168.40.10</ipaddr>
+        <hostname>proxmox-01</hostname>
+        <descr>Proxmox Node 1</descr>
+      </staticmap>
+      <staticmap>
+        <mac>00:11:22:33:55:02</mac>
+        <ipaddr>192.168.40.11</ipaddr>
+        <hostname>proxmox-02</hostname>
+        <descr>Proxmox Node 2</descr>
+      </staticmap>
+      <staticmap>
+        <mac>00:11:22:33:55:03</mac>
+        <ipaddr>192.168.40.12</ipaddr>
+        <hostname>proxmox-03</hostname>
+        <descr>Proxmox Node 3</descr>
+      </staticmap>
+      <staticmap>
+        <mac>00:11:22:33:55:10</mac>
+        <ipaddr>192.168.40.20</ipaddr>
+        <hostname>truenas</hostname>
+        <descr>TrueNAS Storage</descr>
+      </staticmap>
+    </opt3>
+    
+    <!-- DMZ VLAN DHCP -->
+    <opt4>
+      <enable></enable>
+      <range>
+        <from>192.168.50.100</from>
+        <to>192.168.50.150</to>
+      </range>
+      <defaultleasetime>86400</defaultleasetime>
+      <gateway>192.168.50.1</gateway>
+      <domain>dmz.homelab.local</domain>
+      <dnsserver>192.168.50.1</dnsserver>
+    </opt4>
+  </dhcpd>
+
+  <!-- DNS Resolver (Unbound) Configuration -->
+  <unbound>
+    <enable>on</enable>
+    <port>53</port>
+    <dnssec>on</dnssec>
+    <forwarding>on</forwarding>
+    <regdhcp>on</regdhcp>
+    <regdhcpstatic>on</regdhcpstatic>
+    <custom_options>
+      server:
+      # Cache settings
+      cache-max-ttl: 86400
+      cache-min-ttl: 0
+      
+      # Privacy settings
+      hide-identity: yes
+      hide-version: yes
+      
+      # Performance tuning
+      num-threads: 4
+      msg-cache-slabs: 4
+      rrset-cache-slabs: 4
+      infra-cache-slabs: 4
+      key-cache-slabs: 4
+      
+      # Prefetch commonly used records
+      prefetch: yes
+      prefetch-key: yes
+    </custom_options>
+    <!-- Local Domain Records -->
+    <hosts>
+      <host>
+        <host>pfsense-fw</host>
+        <domain>homelab.local</domain>
+        <ip>192.168.1.1</ip>
+        <descr>pfSense Firewall</descr>
+      </host>
+      <host>
+        <host>proxmox-cluster</host>
+        <domain>homelab.local</domain>
+        <ip>192.168.40.10</ip>
+        <descr>Proxmox Cluster VIP</descr>
+      </host>
+      <host>
+        <host>truenas</host>
+        <domain>homelab.local</domain>
+        <ip>192.168.40.20</ip>
+        <descr>TrueNAS Storage</descr>
+      </host>
+    </hosts>
+  </unbound>
+
+  <!-- Firewall Rules Configuration -->
+  <filter>
+    <!-- WAN Rules -->
+    <rule>
+      <type>block</type>
+      <interface>wan</interface>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <any></any>
+      </destination>
+      <descr>Block all inbound traffic by default</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>wan</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <address>192.168.50.0/24</address>
+        <port>80</port>
+      </destination>
+      <descr>Allow HTTP to DMZ</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>wan</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <address>192.168.50.0/24</address>
+        <port>443</port>
+      </destination>
+      <descr>Allow HTTPS to DMZ</descr>
+    </rule>
+    
+    <!-- LAN/Trusted VLAN Rules -->
+    <rule>
+      <type>pass</type>
+      <interface>lan</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>lan</network>
+      </source>
+      <destination>
+        <any></any>
+      </destination>
+      <descr>Allow all outbound from Trusted VLAN</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>lan</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>lan</network>
+      </source>
+      <destination>
+        <address>192.168.20.0/24</address>
+      </destination>
+      <descr>Allow Trusted to manage IoT devices</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>lan</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>lan</network>
+      </source>
+      <destination>
+        <address>192.168.40.0/24</address>
+      </destination>
+      <descr>Allow Trusted to access Servers</descr>
+    </rule>
+    
+    <!-- IoT VLAN Rules - Restricted Access -->
+    <rule>
+      <type>pass</type>
+      <interface>opt1</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt1</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>80</port>
+      </destination>
+      <descr>Allow IoT HTTP</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt1</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt1</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>443</port>
+      </destination>
+      <descr>Allow IoT HTTPS</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt1</interface>
+      <protocol>udp</protocol>
+      <source>
+        <network>opt1</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>53</port>
+      </destination>
+      <descr>Allow IoT DNS</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt1</interface>
+      <protocol>udp</protocol>
+      <source>
+        <network>opt1</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>123</port>
+      </destination>
+      <descr>Allow IoT NTP</descr>
+    </rule>
+    <rule>
+      <type>block</type>
+      <interface>opt1</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>opt1</network>
+      </source>
+      <destination>
+        <address>192.168.0.0/16</address>
+      </destination>
+      <descr>Block IoT from accessing internal networks</descr>
+    </rule>
+    <rule>
+      <type>block</type>
+      <interface>opt1</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>opt1</network>
+      </source>
+      <destination>
+        <any></any>
+      </destination>
+      <descr>Block all other IoT traffic</descr>
+    </rule>
+    
+    <!-- Guest VLAN Rules - Internet Only -->
+    <rule>
+      <type>pass</type>
+      <interface>opt2</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt2</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>80</port>
+      </destination>
+      <descr>Allow Guest HTTP</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt2</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt2</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>443</port>
+      </destination>
+      <descr>Allow Guest HTTPS</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt2</interface>
+      <protocol>udp</protocol>
+      <source>
+        <network>opt2</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>53</port>
+      </destination>
+      <descr>Allow Guest DNS</descr>
+    </rule>
+    <rule>
+      <type>block</type>
+      <interface>opt2</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>opt2</network>
+      </source>
+      <destination>
+        <address>192.168.0.0/16</address>
+      </destination>
+      <descr>Block Guest from all internal networks</descr>
+    </rule>
+    <rule>
+      <type>block</type>
+      <interface>opt2</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>opt2</network>
+      </source>
+      <destination>
+        <any></any>
+      </destination>
+      <descr>Block all other Guest traffic</descr>
+    </rule>
+    
+    <!-- Servers VLAN Rules -->
+    <rule>
+      <type>pass</type>
+      <interface>opt3</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>opt3</network>
+      </source>
+      <destination>
+        <network>opt3</network>
+      </destination>
+      <descr>Allow inter-server communication</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt3</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt3</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>80</port>
+      </destination>
+      <descr>Allow Servers HTTP for updates</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt3</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt3</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>443</port>
+      </destination>
+      <descr>Allow Servers HTTPS for updates</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt3</interface>
+      <protocol>udp</protocol>
+      <source>
+        <network>opt3</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>53</port>
+      </destination>
+      <descr>Allow Servers DNS</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt3</interface>
+      <protocol>udp</protocol>
+      <source>
+        <network>opt3</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>123</port>
+      </destination>
+      <descr>Allow Servers NTP</descr>
+    </rule>
+    
+    <!-- DMZ VLAN Rules - Restricted Outbound -->
+    <rule>
+      <type>pass</type>
+      <interface>opt4</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt4</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>80</port>
+      </destination>
+      <descr>Allow DMZ HTTP for updates</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt4</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <network>opt4</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>443</port>
+      </destination>
+      <descr>Allow DMZ HTTPS for updates</descr>
+    </rule>
+    <rule>
+      <type>pass</type>
+      <interface>opt4</interface>
+      <protocol>udp</protocol>
+      <source>
+        <network>opt4</network>
+      </source>
+      <destination>
+        <any></any>
+        <port>53</port>
+      </destination>
+      <descr>Allow DMZ DNS</descr>
+    </rule>
+    <rule>
+      <type>block</type>
+      <interface>opt4</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>opt4</network>
+      </source>
+      <destination>
+        <address>192.168.0.0/16</address>
+      </destination>
+      <descr>Block DMZ from all internal networks</descr>
+    </rule>
+    <rule>
+      <type>block</type>
+      <interface>opt4</interface>
+      <protocol>any</protocol>
+      <source>
+        <network>opt4</network>
+      </source>
+      <destination>
+        <any></any>
+      </destination>
+      <descr>Block all other DMZ traffic</descr>
+    </rule>
+  </filter>
+
+  <!-- NAT Configuration -->
+  <nat>
+    <outbound>
+      <mode>automatic</mode>
+      <rule>
+        <interface>wan</interface>
+        <source>
+          <network>lan</network>
+        </source>
+        <dstport>500</dstport>
+        <target></target>
+        <natport>500</natport>
+        <staticnatport></staticnatport>
+        <descr>LAN to WAN NAT</descr>
+      </rule>
+    </outbound>
+    <!-- Port Forward for DMZ Web Server -->
+    <rule>
+      <interface>wan</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <address>wan</address>
+        <port>80</port>
+      </destination>
+      <target>192.168.50.10</target>
+      <local-port>80</local-port>
+      <descr>HTTP to DMZ Web Server</descr>
+    </rule>
+    <rule>
+      <interface>wan</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <address>wan</address>
+        <port>443</port>
+      </destination>
+      <target>192.168.50.10</target>
+      <local-port>443</local-port>
+      <descr>HTTPS to DMZ Web Server</descr>
+    </rule>
+  </nat>
+
+  <!-- Suricata IPS Configuration -->
+  <suricata>
+    <rule>
+      <enable>on</enable>
+      <interface>wan</interface>
+      <descr>WAN IPS</descr>
+      <uuid>wan-suricata-001</uuid>
+      <performance>ac</performance>
+      <blockoffenders>on</blockoffenders>
+      <ips_mode>ips</ips_mode>
+      <rulesets>
+        <item>emerging-threats</item>
+        <item>emerging-malware</item>
+        <item>emerging-exploit</item>
+        <item>emerging-scan</item>
+      </rulesets>
+    </rule>
+    <rule>
+      <enable>on</enable>
+      <interface>opt4</interface>
+      <descr>DMZ IPS</descr>
+      <uuid>dmz-suricata-001</uuid>
+      <performance>ac</performance>
+      <blockoffenders>on</blockoffenders>
+      <ips_mode>ips</ips_mode>
+      <rulesets>
+        <item>emerging-threats</item>
+        <item>emerging-web</item>
+        <item>emerging-exploit</item>
+      </rulesets>
+    </rule>
+  </suricata>
+
+  <!-- OpenVPN Server Configuration -->
+  <openvpn>
+    <openvpn-server>
+      <vpnid>1</vpnid>
+      <mode>server_tls</mode>
+      <protocol>udp</protocol>
+      <dev_mode>tun</dev_mode>
+      <interface>wan</interface>
+      <local_port>1194</local_port>
+      <description>Homelab VPN</description>
+      <crypto>AES-256-GCM</crypto>
+      <digest>SHA256</digest>
+      <tunnel_network>10.8.0.0/24</tunnel_network>
+      <remote_network>192.168.1.0/24</remote_network>
+      <local_network>192.168.1.0/24,192.168.40.0/24</local_network>
+      <maxclients>10</maxclients>
+      <compression>lz4</compression>
+      <passtos>on</passtos>
+      <client2client>off</client2client>
+      <dynamic_ip>on</dynamic_ip>
+      <topology>subnet</topology>
+      <dns_server1>192.168.1.1</dns_server1>
+      <dns_domain>homelab.local</dns_domain>
+      <create_gw>both</create_gw>
+    </openvpn-server>
+  </openvpn>
+
+  <!-- Traffic Shaping Configuration -->
+  <shaper>
+    <queue>
+      <name>qWANRoot</name>
+      <interface>wan</interface>
+      <scheduler>HFSC</scheduler>
+      <bandwidthtype>%</bandwidthtype>
+      <bandwidth>100</bandwidth>
+      <enabled>on</enabled>
+      <qlimit></qlimit>
+      <description>WAN Root Queue</description>
+    </queue>
+    <queue>
+      <name>qWANVoIP</name>
+      <interface>wan</interface>
+      <scheduler>HFSC</scheduler>
+      <bandwidthtype>%</bandwidthtype>
+      <bandwidth>20</bandwidth>
+      <priority>7</priority>
+      <enabled>on</enabled>
+      <parent>qWANRoot</parent>
+      <description>VoIP and Real-time Traffic</description>
+    </queue>
+    <queue>
+      <name>qWANDefault</name>
+      <interface>wan</interface>
+      <scheduler>HFSC</scheduler>
+      <bandwidthtype>%</bandwidthtype>
+      <bandwidth>60</bandwidth>
+      <priority>3</priority>
+      <enabled>on</enabled>
+      <parent>qWANRoot</parent>
+      <default>on</default>
+      <description>Default Traffic</description>
+    </queue>
+    <queue>
+      <name>qWANBulk</name>
+      <interface>wan</interface>
+      <scheduler>HFSC</scheduler>
+      <bandwidthtype>%</bandwidthtype>
+      <bandwidth>20</bandwidth>
+      <priority>1</priority>
+      <enabled>on</enabled>
+      <parent>qWANRoot</parent>
+      <description>Bulk Downloads and Updates</description>
+    </queue>
+    <!-- Traffic Shaping Rules -->
+    <rule>
+      <interface>wan</interface>
+      <protocol>udp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <any></any>
+        <port>5060</port>
+      </destination>
+      <target>qWANVoIP</target>
+      <descr>SIP VoIP Traffic</descr>
+    </rule>
+    <rule>
+      <interface>wan</interface>
+      <protocol>tcp</protocol>
+      <source>
+        <any></any>
+      </source>
+      <destination>
+        <any></any>
+        <port>80</port>
+      </destination>
+      <target>qWANBulk</target>
+      <descr>HTTP Bulk Traffic</descr>
+    </rule>
+  </shaper>
+
+  <!-- Syslog Configuration -->
+  <syslog>
+    <reverse></reverse>
+    <nentries>50</nentries>
+    <remoteserver>192.168.40.30</remoteserver>
+    <remoteserver2></remoteserver2>
+    <sourceip></sourceip>
+    <ipproto>ipv4</ipproto>
+    <logall></logall>
+    <enable></enable>
+  </syslog>
+
+</pfsense>
