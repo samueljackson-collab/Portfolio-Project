@@ -9,7 +9,8 @@ server:
   grpc_listen_port: 9096
   log_level: info
   log_format: logfmt
-  # enable_runtime_config allows hot-reloading of select parameters if needed.
+  # enable_runtime_config: true allows hot-reloading of limits_config
+  # without service restart
   enable_runtime_config: true
 
 common:
@@ -18,13 +19,58 @@ common:
     filesystem:
       chunks_directory: /var/lib/loki/chunks
       rules_directory: /var/lib/loki/rules
+  # replication_factor: 1 is appropriate for single-node deployments.
+  # For production HA setups, increase to 3 for data redundancy.
   replication_factor: 1
   ring:
     kvstore:
       store: inmemory
 
+# Ingester configuration for chunk lifecycle management
+# ----------------------------------------------------
+# Controls how log data is buffered in memory before being flushed to storage.
+# Optimized for single-node homelab handling ~10GB/day across 7 log sources
+# (1 Proxmox host + 5 VMs + 2 LXCs).
+ingester:
+  # Chunk management parameters - balance memory usage with write efficiency
+  # 15-minute idle period suits homelab traffic patterns where VMs/LXCs
+  # have bursty log generation
+  chunk_idle_period: 15m
+
+  # Keep chunks in memory for 2 hours before flushing, allowing efficient
+  # querying of recent logs without hitting disk storage. Balances query
+  # performance with memory constraints on a single-node deployment.
+  chunk_retain_period: 2h
+
+  # 1MB chunk size optimized for ~10GB/day ingestion rate. Prevents
+  # memory bloat while maintaining reasonable compression ratios.
+  chunk_target_size: 1048576  # 1MB in bytes
+
+  # 256KB block size is a sensible default for 1MB chunks
+  chunk_block_size: 262144    # 256KB in bytes
+
+  # Maximum age before forcing chunk flush - ensures data durability
+  max_chunk_age: 2h
+
+  # Regular checks for chunks ready to flush
+  flush_check_period: 30s
+
+  # Allow sufficient time for flush operations on local filesystem
+  flush_op_timeout: 10m
+
+  # Write-Ahead Log (WAL) configuration for crash recovery and data
+  # durability. Critical for preventing data loss during unexpected
+  # shutdowns in a homelab environment.
+  wal:
+    enabled: true
+    dir: /var/lib/loki/wal
+    # Ensure clean shutdowns don't lose data
+    flush_on_shutdown: true
+
 schema_config:
   configs:
+    # from: 2020-10-24 is Loki's v11 schema release date and should not
+    # be changed for existing deployments to maintain index compatibility.
     - from: 2020-10-24
       store: boltdb-shipper
       object_store: filesystem
@@ -38,6 +84,8 @@ storage_config:
     shared_store: filesystem
     active_index_directory: /var/lib/loki/index
     cache_location: /var/lib/loki/boltdb-cache
+    # cache_ttl: 24h reduces index lookups for frequently accessed time ranges,
+    # improving query performance for recent logs.
     cache_ttl: 24h
   filesystem:
     directory: /var/lib/loki/chunks
@@ -55,14 +103,21 @@ compactor:
   working_directory: /var/lib/loki/compactor
   shared_store: filesystem
   compaction_interval: 10m
+  # retention_enabled: true works in conjunction with
+  # table_manager.retention_period to automatically delete data older
+  # than 30 days (720h).
   retention_enabled: true
   retention_delete_delay: 2h
   delete_request_cancel_period: 24h
 
 limits_config:
   reject_old_samples: true
+  # reject_old_samples_max_age: 168h (7 days) prevents backfilling old logs
+  # that would interfere with retention policies.
   reject_old_samples_max_age: 168h
   ingestion_rate_mb: 8
+  # ingestion_burst_size_mb: 16 (2x the rate) handles temporary spikes
+  # from log-heavy operations like system updates or backup jobs.
   ingestion_burst_size_mb: 16
   max_streams_per_user: 10000
   max_global_streams_per_user: 0
@@ -75,6 +130,8 @@ runtime_config:
 
 table_manager:
   retention_deletes_enabled: true
+  # retention_period: 720h (30 days) aligns with the ticket requirement and
+  # homelab backup retention strategy documented in the project README.
   retention_period: 720h
   poll_interval: 10m
 
@@ -107,3 +164,40 @@ ruler:
     type: local
     local:
       directory: /var/lib/loki/rules
+
+# ============================================================================
+# VALIDATION AND DEPLOYMENT NOTES
+# ============================================================================
+#
+# Configuration Validation:
+#   Validate this configuration before deploying:
+#   $ loki -config.file=/etc/loki/loki-config.yml -verify-config
+#
+# Resource Requirements:
+#   - Memory: Expected ~2-4GB for ingester with 10k streams and
+#     2-hour chunk retention
+#   - Disk: ~300GB required for 30 days at 10GB/day ingestion rate
+#   - CPU: 2-4 cores recommended for compaction and query workloads
+#
+# Related Configuration:
+#   - Promtail configuration: /etc/promtail/promtail-config.yml
+#   - Promtail feeds logs from 7 sources to this Loki instance:
+#     * 1 Proxmox host (192.168.1.x)
+#     * 5 VMs (system logs, application logs)
+#     * 2 LXCs (container logs)
+#
+# Deployment Command:
+#   $ sudo systemctl enable --now loki
+#   $ sudo systemctl status loki
+#
+# Query Examples:
+#   - View all logs: {job=~".+"}
+#   - Recent errors: {job=~".+"} |~ "error|ERROR" [5m]
+#   - Per-host logs: {host="proxmox-host"}
+#
+# Maintenance:
+#   - Monitor /var/lib/loki disk usage regularly
+#   - Compactor runs every 10 minutes automatically
+#   - Check ingester memory usage: node_memory_Active_bytes{job="loki"}
+#
+# ============================================================================
