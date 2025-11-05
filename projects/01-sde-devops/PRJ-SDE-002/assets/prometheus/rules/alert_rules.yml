@@ -20,7 +20,7 @@ groups:
           description: "Available memory < 15% on {{ $labels.instance }}"
 
       - alert: NodeDiskRunningOut
-        expr: (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"}) * 100 < 10
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 10
         for: 10m
         labels:
           severity: warning
