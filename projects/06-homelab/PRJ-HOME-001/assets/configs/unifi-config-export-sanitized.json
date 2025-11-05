@@ -1,0 +1,14 @@
+{
+  "controller": {
+    "version": "REPLACE_VER",
+    "sites": {
+      "default": {
+        "settings": {
+          "ssid": "YOUR_SSID",
+          "wpa_key": "REDACTED"
+        }
+      }
+    }
+  },
+  "notes": "Sanitized export - remove all PII, passwords, and public IPs before sharing"
+}
