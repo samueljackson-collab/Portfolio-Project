@@ -28,6 +28,7 @@ COLOR_YELLOW="\033[1;33m"
 COLOR_RED="\033[1;31m"
 COLOR_RESET="\033[0m"
 
+# usage prints the script's usage help, showing accepted flags and relevant environment variables.
 usage() {
   cat <<USAGE
 ${SCRIPT_NAME} v${VERSION}
@@ -42,6 +43,7 @@ Environment:
 USAGE
 }
 
+# parse_options parses -v, -d, and -h options, sets VERBOSE, DRY_RUN, or HELP_REQUESTED accordingly, records invalid or missing flags in INVALID_OPTION and INVALID_FLAG, and places leftover positional arguments into REMAINING_ARGS.
 parse_options() {
   local opt
   OPTIND=1
@@ -58,6 +60,7 @@ parse_options() {
   REMAINING_ARGS=("$@")
 }
 
+# expand_command_substitutions expands any `$(...)` command substitutions found in the given string argument and echoes the resulting text, leaving any failed or empty substitutions unchanged.
 expand_command_substitutions() {
   local data="$1"
   if [[ $data == *'$('*')'* ]]; then
@@ -86,6 +89,7 @@ PY
   printf '%s\n' "$data"
 }
 
+# log writes a timestamped, level-prefixed message to LOG_FILE and, when VERBOSE is true, echoes the same message to stdout with the given color; it ensures the log directory exists and silently ignores write failures.
 log() {
   local level=$1 color=$2
   shift 2
@@ -99,6 +103,7 @@ log() {
   fi
 }
 
+# require_token verifies the PBS_TOKEN environment variable is present; logs an error and returns 2 if it is missing.
 require_token() {
   if [[ -z "${PBS_TOKEN:-}" ]]; then
     log ERROR "$COLOR_RED" "PBS_TOKEN environment variable is required"
@@ -107,6 +112,8 @@ require_token() {
   return 0
 }
 
+# api_call performs an HTTPS request to the configured PBS API endpoint using the given HTTP method, API path, and optional JSON payload, and writes the response to stdout.
+# Parameters: method — HTTP method (e.g., GET, POST); path — API path appended to PBS_ENDPOINT; data — optional JSON payload to send as the request body.
 api_call() {
   local method=$1 path=$2 data=${3:-}
   local url="${PBS_ENDPOINT}${path}"
@@ -132,6 +139,7 @@ SNAPSHOT_ROWS=()
 DATASTORE_SUMMARY="Not available"
 DATASTORE_WARNINGS=()
 
+# fetch_jobs retrieves backups for the configured PBS_DATASTORE and writes each job as a single-line (compact) JSON object to stdout; returns non-zero if the API call fails.
 fetch_jobs() {
   log INFO "$COLOR_GREEN" "Fetching backup jobs"
   local response
@@ -142,6 +150,7 @@ fetch_jobs() {
   jq -c '.data[]' <<<"$response"
 }
 
+# process_jobs reads newline-delimited JSON job objects from stdin, evaluates backup health (checks last-run presence and age, last-run status, run duration, and size regressions), appends an HTML row for each job to JOB_ROWS, and updates EXIT_CODE to reflect warnings (1) or failures (2).
 process_jobs() {
   while IFS= read -r job; do
     [[ -z $job ]] && continue
@@ -196,6 +205,7 @@ process_jobs() {
   done
 }
 
+# fetch_snapshots retrieves snapshot metadata from the configured PBS datastore and writes each snapshot as a compact JSON object to stdout; returns a non-zero status if the API call fails.
 fetch_snapshots() {
   log INFO "$COLOR_GREEN" "Collecting snapshot metadata"
   local response
@@ -206,6 +216,8 @@ fetch_snapshots() {
   jq -c '.data[]' <<<"$response"
 }
 
+# process_snapshots reads newline-delimited JSON snapshot objects from stdin, queues verification requests for each snapshot, and appends a summary row for each processed snapshot to SNAPSHOT_ROWS.
+# It processes only the latest snapshot per `backup-id`, marks snapshots older than 7 days or with size zero as warnings, queues a verification POST to the datastore verify API, and updates EXIT_CODE (sets 1 for warnings, 2 for verification request failures).
 process_snapshots() {
   declare -A latest_snapshot_seen=()
   while IFS= read -r snap; do
@@ -255,6 +267,8 @@ process_snapshots() {
   done
 }
 
+# check_datastore assesses the configured PBS_DATASTORE's capacity and garbage-collection status and records an HTML summary.
+# It updates DATASTORE_SUMMARY with an HTML-formatted summary, appends messages to DATASTORE_WARNINGS for detected issues (usage > 80% or last GC older than 7 days), and sets EXIT_CODE to 1 when warnings or unavailable status are encountered.
 check_datastore() {
   log INFO "$COLOR_GREEN" "Reviewing datastore status"
   local summary
@@ -291,6 +305,7 @@ SUMMARY
 )
 }
 
+# build_report generates an HTML report summarizing datastore health, backup jobs, snapshot verification entries, and the final exit code, then writes the output to REPORT_FILE.
 build_report() {
   log INFO "$COLOR_GREEN" "Generating HTML report"
   local warning_text="${DATASTORE_WARNINGS[*]:-None}"
@@ -314,6 +329,7 @@ th{background:#1e1e1e;}
 HTML
 }
 
+# send_report sends the generated HTML report to the configured recipient; when DRY_RUN is true it suppresses delivery, and if mailx is not available it logs a warning and sets EXIT_CODE to indicate failure.
 send_report() {
   if [[ $DRY_RUN == true ]]; then
     log INFO "$COLOR_YELLOW" "Dry run enabled; email suppressed"
@@ -328,6 +344,8 @@ send_report() {
   fi
 }
 
+# main orchestrates the verification workflow: it parses options, verifies the PBS token, fetches and processes jobs and snapshots, checks datastore health, builds the HTML report, and optionally sends it by email.
+# Returns with an aggregated exit code: 0 on success; 1 for invalid options; 2 if PBS token is missing; other nonzero values indicate detected warnings or failures.
 main() {
   parse_options "$@"
   if [[ $INVALID_OPTION == true ]]; then
