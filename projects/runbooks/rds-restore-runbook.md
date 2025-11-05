@@ -23,5 +23,32 @@ Risk: High
 ```bash
 aws rds restore-db-instance-from-db-snapshot \
   --db-instance-identifier restored-db-$(date +%s) \
-  --db-snapshot-identifier <SNAPSHOT_ID>
+  --db-snapshot-identifier <SNAPSHOT_ID> \
+  --db-subnet-group-name <SUBNET_GROUP> \
+  --engine postgres \
+  --db-instance-class db.t3.medium \
+  --no-multi-az
 ```
+
+2) Wait for the instance to be available:
+```bash
+aws rds wait db-instance-available --db-instance-identifier <NEW_INSTANCE_ID>
+```
+
+3) Validate:
+- Run basic queries against critical tables
+- Run app smoke tests against restored DB
+- Check for data consistency and row counts
+
+## Rollback
+If the restore is not valid:
+1) Re-point application to previous DB (if available)
+2) Delete restored DB instance:
+```bash
+aws rds delete-db-instance --db-instance-identifier <NEW_INSTANCE_ID> --skip-final-snapshot
+```
+
+## Post-incident
+- Document root cause
+- Update alerts and remediation steps
+- Run disaster recovery drill to verify process
