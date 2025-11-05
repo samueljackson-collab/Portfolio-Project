@@ -1,9 +1,10 @@
 terraform {
   backend "s3" {
-    bucket         = var.tfstate_bucket
+    # Replace the following values with your actual backend configuration.
+    bucket         = "REPLACE_ME_tfstate_bucket"
     key            = "twisted-monk/terraform.tfstate"
-    region         = var.aws_region
-    dynamodb_table = var.tfstate_lock_table
+    region         = "REPLACE_ME_aws_region"
+    dynamodb_table = "REPLACE_ME_tfstate_lock_table"
     encrypt        = true
   }
 }
