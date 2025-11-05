@@ -42,6 +42,9 @@ groups:
           component: infrastructure
         annotations:
           summary: 'CPU usage high on {{ $labels.instance }}'
+          description: 'Average CPU utilization exceeded 80% for 15 minutes. Current value: {{ printf "%.2f" $value }}%.'
+          runbook: 'https://runbooks.homelab.local/HighCPUUsage'
+
           description: 'Average CPU utilization exceeded 80% for 15 minutes. Current value: {{ printf "%.2f" $value }}%.'.
           runbook: 'https://runbooks.homelab.local/HighCPUUsage'
 
@@ -93,6 +96,9 @@ groups:
           component: infrastructure
         annotations:
           summary: 'Memory usage high on {{ $labels.instance }}'
+          description: 'Available memory below 15% for 10 minutes. Current usage: {{ printf "%.2f" $value }}%.'
+          runbook: 'https://runbooks.homelab.local/HighMemoryUsage'
+
           description: 'Available memory below 15% for 10 minutes. Current usage: {{ printf "%.2f" $value }}%.'.
           runbook: 'https://runbooks.homelab.local/HighMemoryUsage'
 
@@ -119,6 +125,9 @@ groups:
           description: 'Available memory below 5% for 10 minutes. Current usage: {{ printf "%.2f" $value }}%. Consider restarting services or migrating workloads.'
           runbook: 'https://runbooks.homelab.local/HighMemoryUsage'
 
+      - alert: DiskSpaceLowWarning
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs",fstype!="devtmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs",fstype!="devtmpfs"}) * 100 < 15
+        for: 30m
       # DiskSpaceLowWarning provides early warning for disk space exhaustion
       # --------------------------------------------------------------------
       # Why 15% free space threshold: This represents a balance between early warning and
@@ -144,6 +153,12 @@ groups:
           component: infrastructure
         annotations:
           summary: 'Disk space low on {{ $labels.instance }} ({{ $labels.mountpoint }})'
+          description: 'Disk utilization above 85% for 30 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'
+          runbook: 'https://runbooks.homelab.local/DiskSpaceLow'
+
+      - alert: DiskSpaceLowCritical
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs",fstype!="devtmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs",fstype!="devtmpfs"}) * 100 < 5
+        for: 15m
           description: 'Disk utilization above 85% for 10 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'.
           runbook: 'https://runbooks.homelab.local/DiskSpaceLow'
 
@@ -172,6 +187,9 @@ groups:
           component: infrastructure
         annotations:
           summary: 'Disk space critical on {{ $labels.instance }} ({{ $labels.mountpoint }})'
+          description: 'Disk utilization above 95% for 15 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'
+          runbook: 'https://runbooks.homelab.local/DiskSpaceLow'
+
           description: 'Disk utilization above 95% for 10 minutes. Remaining free space: {{ printf "%.2f" $value }}%.'.
           runbook: 'https://runbooks.homelab.local/DiskSpaceLow'
 
@@ -255,6 +273,9 @@ groups:
           summary: 'Service unreachable: {{ $labels.instance }}'
           description: 'Blackbox probe failed for {{ $labels.instance }} with HTTP status {{ $labels.status_code }}. Check service availability.'
           runbook: 'https://runbooks.homelab.local/ServiceUnreachable'
+
+  - name: backup
+    rules: []
 
   # Backup alert group
   # ------------------
