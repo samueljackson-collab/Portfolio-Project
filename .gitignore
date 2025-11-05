@@ -57,3 +57,5 @@ temp/
 *.zip
 *.tar.gz
 *.rar
+# Terraform backend configuration (may contain sensitive bucket names)
+terraform/backend.hcl

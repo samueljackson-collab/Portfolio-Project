@@ -10,6 +10,42 @@ global:
   smtp_require_tls: true
   slack_api_url: 'https://hooks.slack.com/services/PLACEHOLDER/WEBHOOK/URL'
 
+# ==============================================================================
+# CONFIGURATION NOTE: Slack Webhook URL
+# ==============================================================================
+# The slack_api_url above is a placeholder. To enable Slack notifications:
+#
+# 1. Create a Slack app and incoming webhook at https://api.slack.com/apps
+# 2. Replace the PLACEHOLDER URL above with your actual webhook URL
+# 3. For production, use environment variable substitution or secrets management
+# 4. Never commit real webhook URLs to version control
+# ==============================================================================
+
+# ==============================================================================
+# CONFIGURATION NOTE: Slack Webhook URL
+# ==============================================================================
+# The slack_api_url above is a placeholder. To enable Slack notifications:
+#
+# 1. Create a Slack app and incoming webhook:
+#    - Go to https://api.slack.com/apps
+#    - Create a new app or select existing
+#    - Enable Incoming Webhooks
+#    - Create a webhook for your desired channel
+#    - Copy the webhook URL (format: https://hooks.slack.com/services/XXX/YYY/ZZZ)
+#
+# 2. Replace the PLACEHOLDER URL above with your actual webhook URL
+#
+# 3. For production, store the webhook URL securely:
+#    - Use environment variable substitution in your deployment
+#    - Or use a secrets management system (Vault, AWS Secrets Manager, etc.)
+#    - Never commit real webhook URLs to version control
+#
+# Example using environment variable:
+#   slack_api_url: '${SLACK_WEBHOOK_URL}'
+#
+# Then set SLACK_WEBHOOK_URL in your environment before starting Alertmanager.
+# ==============================================================================
+
 route:
   receiver: default-email
   group_by: ['cluster', 'alertname']

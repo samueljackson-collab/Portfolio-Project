@@ -1,0 +1,94 @@
+# Infrastructure Deployment (Twisted Monk Suite)
+
+This directory contains Terraform configurations for deploying portfolio infrastructure to AWS.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- [Terraform](https://www.terraform.io/downloads.html) >= 1.5.0
+- [AWS CLI](https://aws.amazon.com/cli/) configured with credentials
+- AWS account with appropriate permissions
+
+### Step 1: Bootstrap Remote State
+
+The first time you use this Terraform configuration, you need to create the S3 bucket and DynamoDB table for remote state:
+
+```bash
+# From repository root
+./scripts/bootstrap_remote_state.sh
+
+# Or with custom values
+./scripts/bootstrap_remote_state.sh my-tfstate-bucket my-lock-table us-west-2
+```
+
+This script will:
+- ✓ Create an S3 bucket with versioning and encryption enabled
+- ✓ Create a DynamoDB table for state locking
+- ✓ Configure public access block on the bucket
+- ✓ Display the commands needed for the next step
+
+### Step 2: Configure Backend
+
+After bootstrapping, configure Terraform to use the remote backend:
+
+**Option A: Using backend config file (recommended)**
+
+Create `terraform/backend.hcl`:
+```hcl
+bucket         = "your-bucket-name"
+region         = "us-east-1"
+dynamodb_table = "your-table-name"
+```
+
+Then initialize:
+```bash
+cd terraform
+terraform init -backend-config=backend.hcl
+```
+
+**Option B: Using CLI flags**
+```bash
+cd terraform
+terraform init \
+  -backend-config="bucket=your-bucket-name" \
+  -backend-config="region=us-east-1" \
+  -backend-config="dynamodb_table=your-table-name"
+```
+
+**Option C: Using environment variables**
+```bash
+export TF_CLI_ARGS_init="-backend-config=bucket=your-bucket -backend-config=region=us-east-1 -backend-config=dynamodb_table=your-table"
+cd terraform
+terraform init
+```
+
+### Step 3: Deploy
+
+**Quick deployment using helper script:**
+```bash
+# Interactive mode (shows plan, waits for confirmation)
+./scripts/deploy.sh dev
+
+# Auto-approve (use with caution!)
+./scripts/deploy.sh dev true
+```
+
+**Manual deployment:**
+```bash
+cd terraform
+
+# Format code
+terraform fmt -recursive
+
+# Create/select workspace
+terraform workspace new dev  # or: terraform workspace select dev
+
+# Plan
+terraform plan -out=plan.tfplan
+
+# Apply
+terraform apply plan.tfplan
+```
+
+## 📁 Repository Structure

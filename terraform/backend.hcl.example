@@ -1,0 +1,14 @@
+# Terraform Backend Configuration Example
+#
+# Copy this file to backend.hcl and fill in your actual values:
+#   cp backend.hcl.example backend.hcl
+#
+# Then initialize Terraform with:
+#   terraform init -backend-config=backend.hcl
+#
+# DO NOT commit backend.hcl - it is excluded by .gitignore
+
+bucket         = "your-terraform-state-bucket"
+region         = "us-east-1"
+dynamodb_table = "your-terraform-lock-table"
+encrypt        = true
