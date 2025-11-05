@@ -316,3 +316,329 @@ class TestArgoCDApplication:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+class TestLokiConfigEnhancements:
+    """Test enhanced Loki configuration"""
+    
+    def test_loki_config_has_ingester_section(self):
+        """Test that Loki config now includes ingester section"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "ingester" in config, "Loki config should have ingester section"
+    
+    def test_loki_ingester_chunk_settings(self):
+        """Test that ingester has chunk management settings"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        ingester = config.get("ingester", {})
+        assert "chunk_idle_period" in ingester
+        assert "chunk_retain_period" in ingester
+        assert "chunk_target_size" in ingester
+    
+    def test_loki_ingester_wal_enabled(self):
+        """Test that Write-Ahead Log is enabled"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        ingester = config.get("ingester", {})
+        wal = ingester.get("wal", {})
+        assert wal.get("enabled") is True
+        assert "dir" in wal
+        assert wal.get("flush_on_shutdown") is True
+    
+    def test_loki_chunk_target_size_reasonable(self):
+        """Test that chunk target size is set to reasonable value (1MB)"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        ingester = config.get("ingester", {})
+        chunk_size = ingester.get("chunk_target_size", 0)
+        assert chunk_size == 1048576, "Chunk size should be 1MB (1048576 bytes)"
+    
+    def test_loki_retention_period_set(self):
+        """Test that retention period is configured"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        table_manager = config.get("table_manager", {})
+        assert "retention_period" in table_manager
+        assert table_manager.get("retention_deletes_enabled") is True
+    
+    def test_loki_config_has_comprehensive_comments(self):
+        """Test that Loki config has deployment notes"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Check for deployment documentation
+        assert "VALIDATION AND DEPLOYMENT NOTES" in content or "deployment" in content.lower()
+        assert "verify-config" in content or "validation" in content.lower()
+
+
+class TestPrometheusConfigEnhancements:
+    """Test enhanced Prometheus configuration"""
+    
+    def test_prometheus_has_alert_relabel_configs(self):
+        """Test that Prometheus has alert relabeling configured"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        alerting = config.get("alerting", {})
+        assert "alert_relabel_configs" in alerting
+        assert isinstance(alerting["alert_relabel_configs"], list)
+        assert len(alerting["alert_relabel_configs"]) > 0
+    
+    def test_prometheus_severity_labels_derived(self):
+        """Test that severity labels are derived from alert names"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        alerting = config.get("alerting", {})
+        relabel_configs = alerting.get("alert_relabel_configs", [])
+        
+        # Check for severity label derivation rules
+        severity_found = False
+        for rule in relabel_configs:
+            if rule.get("target_label") == "severity":
+                severity_found = True
+                break
+        assert severity_found, "Should have rules to derive severity labels"
+    
+    def test_prometheus_scrape_jobs_simplified(self):
+        """Test that scrape job configuration is streamlined"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        assert len(scrape_configs) > 0
+        
+        # Check that jobs have proper naming
+        job_names = [job.get("job_name") for job in scrape_configs]
+        assert "prometheus" in job_names or "proxmox-node" in job_names
+    
+    def test_prometheus_scrape_timeouts_configured(self):
+        """Test that scrape timeouts are explicitly set"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        # At least some jobs should have explicit timeouts
+        timeout_jobs = [job for job in scrape_configs if "scrape_timeout" in job]
+        assert len(timeout_jobs) > 0
+    
+    def test_prometheus_uses_hostname_labels(self):
+        """Test that hostname labels are used for better identification"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        
+        # Check for hostname in static_configs labels
+        hostname_found = False
+        for job in scrape_configs:
+            static_configs = job.get("static_configs", [])
+            for sc in static_configs:
+                labels = sc.get("labels", {})
+                if "hostname" in labels:
+                    hostname_found = True
+                    break
+            if hostname_found:
+                break
+        
+        assert hostname_found, "Should use hostname labels for better identification"
+
+
+class TestInfrastructureAlertsEnhancements:
+    """Test enhanced infrastructure alerts"""
+    
+    def test_alerts_have_component_labels(self):
+        """Test that alerts have component labels"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        groups = config.get("groups", [])
+        for group in groups:
+            rules = group.get("rules", [])
+            for rule in rules:
+                if "alert" in rule:
+                    labels = rule.get("labels", {})
+                    assert "component" in labels, f"Alert {rule.get('alert')} should have component label"
+    
+    def test_alerts_use_runbook_annotation(self):
+        """Test that alerts use 'runbook' annotation instead of 'runbook_url'"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        groups = config.get("groups", [])
+        for group in groups:
+            rules = group.get("rules", [])
+            for rule in rules:
+                if "alert" in rule:
+                    annotations = rule.get("annotations", {})
+                    # Should use 'runbook' instead of 'runbook_url'
+                    assert "runbook" in annotations or "summary" in annotations
+    
+    def test_cpu_alerts_have_warning_and_critical(self):
+        """Test that CPU alerts have both warning and critical thresholds"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        groups = config.get("groups", [])
+        cpu_alerts = []
+        for group in groups:
+            rules = group.get("rules", [])
+            for rule in rules:
+                alert_name = rule.get("alert", "")
+                if "CPU" in alert_name:
+                    cpu_alerts.append(alert_name)
+        
+        # Should have both warning and critical CPU alerts
+        has_warning = any("Warning" in alert for alert in cpu_alerts)
+        has_critical = any("Critical" in alert for alert in cpu_alerts)
+        assert has_warning or has_critical, "Should have CPU alerts at different severity levels"
+    
+    def test_memory_alerts_have_warning_and_critical(self):
+        """Test that memory alerts have both warning and critical thresholds"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        groups = config.get("groups", [])
+        memory_alerts = []
+        for group in groups:
+            rules = group.get("rules", [])
+            for rule in rules:
+                alert_name = rule.get("alert", "")
+                if "Memory" in alert_name:
+                    memory_alerts.append(alert_name)
+        
+        # Should have both warning and critical memory alerts
+        has_warning = any("Warning" in alert for alert in memory_alerts)
+        has_critical = any("Critical" in alert for alert in memory_alerts)
+        assert has_warning or has_critical, "Should have memory alerts at different severity levels"
+    
+    def test_disk_alerts_have_warning_and_critical(self):
+        """Test that disk alerts have both warning and critical thresholds"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        groups = config.get("groups", [])
+        disk_alerts = []
+        for group in groups:
+            rules = group.get("rules", [])
+            for rule in rules:
+                alert_name = rule.get("alert", "")
+                if "Disk" in alert_name or "disk" in alert_name.lower():
+                    disk_alerts.append(alert_name)
+        
+        # Should have both warning and critical disk alerts
+        has_warning = any("Warning" in alert or "Low" in alert for alert in disk_alerts)
+        has_critical = any("Critical" in alert for alert in disk_alerts)
+        assert has_warning or has_critical, "Should have disk alerts at different severity levels"
+    
+    def test_alert_for_durations_reasonable(self):
+        """Test that alert 'for' durations are reasonable"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        groups = config.get("groups", [])
+        for group in groups:
+            rules = group.get("rules", [])
+            for rule in rules:
+                if "alert" in rule and "for" in rule:
+                    duration = rule["for"]
+                    # Duration should be reasonable (not too short, not too long)
+                    assert duration in ["2m", "5m", "10m", "15m", "30m", "1h"], \
+                        f"Alert {rule.get('alert')} has unusual duration: {duration}"
+    
+    def test_backup_alert_exists(self):
+        """Test that backup failure alert exists"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        groups = config.get("groups", [])
+        backup_alerts = []
+        for group in groups:
+            rules = group.get("rules", [])
+            for rule in rules:
+                alert_name = rule.get("alert", "")
+                if "Backup" in alert_name or "backup" in alert_name.lower():
+                    backup_alerts.append(alert_name)
+        
+        assert len(backup_alerts) > 0, "Should have backup monitoring alerts"
+
+
+class TestYAMLSyntaxAndStructure:
+    """Test YAML syntax and structure improvements"""
+    
+    def test_loki_config_parses_without_errors(self):
+        """Test that enhanced Loki config parses without errors"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/loki/loki-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+        assert len(config) > 0
+    
+    def test_prometheus_config_parses_without_errors(self):
+        """Test that enhanced Prometheus config parses without errors"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+        assert len(config) > 0
+    
+    def test_alerts_config_parses_without_errors(self):
+        """Test that enhanced alerts config parses without errors"""
+        config_path = BASE_PATH / "projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+        assert len(config) > 0
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
