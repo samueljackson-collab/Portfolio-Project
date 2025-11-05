@@ -10,7 +10,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "${ROOT_DIR}/terraform"
 
 echo "Formatting Terraform files..."
-terraform fmt -recursive
+tf=terraform fmt -recursive
 
 echo "Initializing Terraform (will use backend config)..."
 terraform init -input=false
