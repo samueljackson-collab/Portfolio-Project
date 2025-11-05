@@ -7,7 +7,7 @@
 
 **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
-> **Portfolio Note:** This repository is actively being built. Projects marked 🟢 are technically complete but documentation/evidence is being prepared (📝). Projects marked 🔵 are planned roadmaps that will be developed over time.
+> **Portfolio Note:** This repository is actively being built. Projects marked 🟢 are technically complete but documentation/evidence is being prepared (📝). Projects marked 🔵 are planned roadmap items, and 🔄 indicates recovery/rebuild efforts are underway.
 
 > **Note:** Some project directories referenced below contain planning documentation and structure but are awaiting evidence/asset uploads. Check individual project READMEs for current status.
 
@@ -45,12 +45,12 @@ System-minded engineer specializing in building, securing, and operating infrast
 ### Virtualization & Core Services
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-002/assets) *(being prepared)*
+**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets) *(being prepared)*
 
 ### Observability & Backups Stack
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Evidence/Diagrams](./projects/01-sde-devops/PRJ-SDE-002/assets) *(being prepared)*
+**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
 
 ---
 ## 🔄 Past Projects Requiring Recovery
@@ -94,7 +94,7 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ### Process Documentation
 - **IT Playbook (E2E Lifecycle)**: Unifying playbook from intake to operations · *Operational excellence*
-- **Engineer’s Handbook (Standards/QA Gates)**: Practical standards and quality bars · *Quality framework*
+- **Engineer's Handbook (Standards/QA Gates)**: Practical standards and quality bars · *Quality framework*
 
 ---
 ## 💼 Experience
@@ -108,5 +108,5 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ---
 ## 🤳 Connect
-[GitHub](https://github.com/samueljackson-collab) · [LinkedIn](https://www.linkedin.com/in/sams-jackson)  
+[GitHub](https://github.com/samueljackson-collab) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
 [![GitHub Profile](https://img.shields.io/badge/GitHub-Portfolio-181717?style=flat&logo=github)](https://github.com/samueljackson-collab)

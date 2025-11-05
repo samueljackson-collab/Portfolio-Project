@@ -28,3 +28,32 @@ node_modules/
 
 # Tests
 coverage/
+__pycache__/
+*.pyc
+*.pyo
+*.bak
+.pytest_cache/
+
+# Secrets and sensitive files
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+*secrets*
+*password*
+*credential*
+
+# Personal notes and drafts (use /tmp or dedicated private repo instead)
+PRIVATE_NOTES.md
+TODO_PRIVATE.md
+scratch/
+temp/
+
+# Large binary files (use Git LFS if needed)
+*.iso
+*.dmg
+*.zip
+*.tar.gz
+*.rar
