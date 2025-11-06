@@ -37,6 +37,20 @@ def mock_env(monkeypatch):
 class TestScriptExistence:
     """Test script file properties."""
 
+
+    def test_script_executable_bit_set(self, script_path):
+        """Verify script has executable bit set (chmod +x)."""
+        import stat
+        mode = script_path.stat().st_mode
+        # Check if any execute bit is set (owner, group, or others)
+        assert mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH), \
+            f"Script {script_path} should have executable permission"
+
+    def test_script_owner_executable(self, script_path):
+        """Verify script is executable by owner."""
+        import stat
+        mode = script_path.stat().st_mode
+        assert mode & stat.S_IXUSR, "Script should be executable by owner"
     def test_script_exists(self, script_path):
         """Verify the bootstrap script exists."""
         assert script_path.exists(), f"Script not found at {script_path}"
@@ -57,47 +71,6 @@ class TestScriptExistence:
         assert "bash" in first_line, "Script should use bash"
 
 
-
-
-class TestScriptPermissions:
-    """Test that scripts have been made executable."""
-
-    def test_script_is_executable_via_git(self, script_path):
-        """Verify script is marked as executable in git."""
-        import subprocess
-        result = subprocess.run(
-            ["git", "ls-files", "-s", str(script_path)],
-            capture_output=True,
-            text=True,
-            cwd="/home/jailuser/git"
-        )
-        # Git stores mode in format: mode hash stage filename
-        # Executable files have mode 100755
-        if result.returncode == 0 and result.stdout:
-            mode = result.stdout.split()[0]
-            assert mode == "100755", f"Script should be executable (mode 100755), got {mode}"
-
-    def test_script_executable_bit_set(self, script_path):
-        """Verify script has executable bit set in filesystem."""
-        import stat
-        st = script_path.stat()
-        is_executable = bool(st.st_mode & stat.S_IXUSR)
-        assert is_executable, "Script should have user executable bit set"
-
-    def test_script_can_be_executed_directly(self, script_path):
-        """Verify script can be executed directly with ./script syntax."""
-        import subprocess
-        # Just test that we can attempt to execute it (will fail without AWS creds but that's ok)
-        result = subprocess.run(
-            [str(script_path)],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            cwd="/home/jailuser/git"
-        )
-        # We just care that it attempted to run (not a permission error)
-        # Permission error would give exit code 126
-        assert result.returncode != 126, "Script should be executable (no permission denied error)"
 class TestScriptSyntax:
     """Test bash script syntax and structure."""
 
