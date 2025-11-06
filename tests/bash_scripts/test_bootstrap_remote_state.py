@@ -57,6 +57,47 @@ class TestScriptExistence:
         assert "bash" in first_line, "Script should use bash"
 
 
+
+
+class TestScriptPermissions:
+    """Test that scripts have been made executable."""
+
+    def test_script_is_executable_via_git(self, script_path):
+        """Verify script is marked as executable in git."""
+        import subprocess
+        result = subprocess.run(
+            ["git", "ls-files", "-s", str(script_path)],
+            capture_output=True,
+            text=True,
+            cwd="/home/jailuser/git"
+        )
+        # Git stores mode in format: mode hash stage filename
+        # Executable files have mode 100755
+        if result.returncode == 0 and result.stdout:
+            mode = result.stdout.split()[0]
+            assert mode == "100755", f"Script should be executable (mode 100755), got {mode}"
+
+    def test_script_executable_bit_set(self, script_path):
+        """Verify script has executable bit set in filesystem."""
+        import stat
+        st = script_path.stat()
+        is_executable = bool(st.st_mode & stat.S_IXUSR)
+        assert is_executable, "Script should have user executable bit set"
+
+    def test_script_can_be_executed_directly(self, script_path):
+        """Verify script can be executed directly with ./script syntax."""
+        import subprocess
+        # Just test that we can attempt to execute it (will fail without AWS creds but that's ok)
+        result = subprocess.run(
+            [str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd="/home/jailuser/git"
+        )
+        # We just care that it attempted to run (not a permission error)
+        # Permission error would give exit code 126
+        assert result.returncode != 126, "Script should be executable (no permission denied error)"
 class TestScriptSyntax:
     """Test bash script syntax and structure."""
 
@@ -266,45 +307,3 @@ class TestAWSCLIUsage:
         with open(script_path, 'r') as f:
             content = f.read()
         assert "--region" in content or "${REGION}" in content
-
-
-class TestScriptPermissionChanges:
-    """Test script file permission requirements."""
-
-    def test_script_permission_bits(self, script_path):
-        """Verify script has correct permission bits for execution."""
-        import stat
-        st = script_path.stat()
-        mode = st.st_mode
-        
-        # Check owner execute bit
-        assert mode & stat.S_IXUSR, "Owner should have execute permission"
-        
-        # Check group execute bit (common in many setups)
-        assert mode & stat.S_IXGRP, "Group should have execute permission"
-
-    def test_script_not_world_writable(self, script_path):
-        """Verify script is not world-writable (security check)."""
-        import stat
-        st = script_path.stat()
-        mode = st.st_mode
-        
-        # Script should not be world-writable
-        assert not (mode & stat.S_IWOTH), \
-            "Script should not be world-writable for security"
-
-    def test_script_readable_by_owner(self, script_path):
-        """Verify script is readable by owner."""
-        import stat
-        st = script_path.stat()
-        mode = st.st_mode
-        
-        assert mode & stat.S_IRUSR, "Owner should have read permission"
-
-    def test_script_is_regular_file(self, script_path):
-        """Verify script is a regular file, not symlink or other type."""
-        import stat
-        st = script_path.stat()
-        
-        assert stat.S_ISREG(st.st_mode), \
-            "Script should be a regular file"

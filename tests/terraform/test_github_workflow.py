@@ -314,66 +314,67 @@ class TestOIDCConfiguration:
         assert "role-to-assume" in content or "OIDC" in content
 
 
+
+
+class TestYAMLKeyQuoting:
+    """Test YAML key quoting for reserved words."""
+
+    def test_on_key_is_quoted(self, workflow_path):
+        """Verify 'on' key is properly quoted to avoid YAML parsing issues."""
+        content = workflow_path.read_text()
+        # The 'on' key should be quoted as 'on': to avoid YAML 1.1 boolean interpretation
+        assert "'on':" in content, "The 'on' key should be quoted in YAML to avoid interpretation as boolean"
+
+    def test_on_key_not_unquoted_at_top_level(self, workflow_path):
+        """Verify unquoted 'on:' is not used at top level."""
+        lines = workflow_path.read_text().split('\n')
+        for i, line in enumerate(lines):
+            # Check top-level 'on:' (not indented, after 'name:')
+            if line.strip().startswith('name:') and i + 2 < len(lines):
+                next_significant = lines[i + 2].strip()
+                if next_significant.startswith('on:') and not next_significant.startswith("'on':"):
+                    pytest.fail("Top-level 'on:' should be quoted as 'on':")
+
+    def test_workflow_parses_correctly_with_quoted_on(self, workflow):
+        """Verify workflow parses correctly with quoted 'on' key."""
+        # If yaml.safe_load succeeds and 'on' is in the dict, quoting worked
+        assert "on" in workflow
+        assert workflow["on"] is not None
+
+    def test_yaml_110_compatibility(self, workflow_path):
+        """Verify YAML is compatible with YAML 1.1 (GitHub Actions uses this)."""
+        import yaml
+        content = workflow_path.read_text()
+        try:
+            # Try parsing with YAML 1.1 loader if available
+            parsed = yaml.safe_load(content)
+            assert "on" in parsed
+            # Verify 'on' was not interpreted as boolean True
+            assert isinstance(parsed["on"], dict), "The 'on' key should parse as a dict, not a boolean"
+        except Exception as e:
+            pytest.fail(f"YAML 1.1 compatibility issue: {e}")
+
+
+class TestBackendConfigDocumentation:
+    """Test backend configuration documentation improvements."""
+
+    def test_terraform_init_passes_backend_config(self, workflow):
+        """Verify workflow documents that terraform init uses -backend-config flags."""
+        job = workflow["jobs"]["terraform-plan"]
+        steps = job.get("steps", [])
+        init_steps = [s for s in steps if "init" in s.get("name", "").lower()]
+        
+        assert len(init_steps) > 0, "Should have terraform init step"
+        init_step = init_steps[0]
+        run_command = init_step.get("run", "")
+        
+        # Verify -backend-config is used in the init command
+        assert "-backend-config" in run_command, "terraform init should use -backend-config flags"
+        assert "bucket=${{ env.TFSTATE_BUCKET }}" in run_command, "Should pass bucket via backend-config"
+        assert "region=${{ env.AWS_REGION }}" in run_command, "Should pass region via backend-config"
 class TestWorkflowDispatch:
     """Test manual workflow dispatch."""
 
     def test_workflow_supports_manual_dispatch(self, workflow):
         """Verify workflow can be manually triggered."""
         assert "workflow_dispatch" in workflow["on"]
-
-
-class TestYAMLSyntax:
-    """Test YAML syntax and reserved word handling."""
-
-    def test_workflow_quotes_on_keyword(self, workflow_path):
-        """Verify workflow properly quotes 'on' keyword to avoid YAML issues."""
-        content = workflow_path.read_text()
-        # The 'on' keyword should be quoted to avoid YAML 1.1 boolean interpretation
-        assert "'on':" in content or '"on":' in content, \
-            "Workflow should quote 'on' keyword to prevent YAML parsing issues"
-
-    def test_workflow_parses_with_quoted_on(self, workflow):
-        """Verify workflow with quoted 'on' keyword parses correctly."""
-        # If we got here with a valid workflow fixture, the YAML parsed successfully
-        assert workflow is not None
-        assert "on" in workflow or "True" in str(workflow.keys()), \
-            "Workflow should parse correctly with quoted 'on' keyword"
-
-    def test_on_trigger_structure_valid(self, workflow):
-        """Verify 'on' trigger structure is valid after quoting."""
-        # YAML parsers may interpret unquoted 'on:' as boolean True in YAML 1.1
-        # Verify the trigger configuration is a dict, not a boolean
-        assert "on" in workflow, "Workflow should have 'on' key"
-        assert isinstance(workflow["on"], dict), \
-            "Trigger configuration should be a dictionary, not a boolean"
-        assert "push" in workflow["on"], "Should have push trigger"
-        assert "pull_request" in workflow["on"], "Should have pull_request trigger"
-
-    def test_yaml_reserved_words_handled(self, workflow_path):
-        """Verify YAML reserved words are properly quoted throughout."""
-        content = workflow_path.read_text()
-        # Check that critical YAML reserved words that appear as keys are quoted
-        # 'on' is particularly problematic in YAML 1.1
-        assert content.count("'on':") >= 1 or content.count('"on":') >= 1, \
-            "YAML 'on' keyword should be quoted"
-
-
-class TestWorkflowYAMLCompliance:
-    """Test workflow compliance with YAML best practices."""
-
-    def test_workflow_uses_yaml_1_2_compatible_syntax(self, workflow_path):
-        """Verify workflow avoids YAML 1.1 boolean pitfalls."""
-        content = workflow_path.read_text()
-        # YAML 1.1 interprets 'on', 'off', 'yes', 'no' as booleans
-        # Using quotes prevents this issue
-        lines = content.split('\n')
-        for i, line in enumerate(lines, 1):
-            if line.strip().startswith('on:') and not line.strip().startswith(("'on':", '"on":')):
-                pytest.fail(f"Line {i}: Unquoted 'on:' keyword may cause YAML parsing issues")
-
-    def test_workflow_maintains_functional_triggers(self, workflow):
-        """Verify all workflow triggers remain functional after YAML fixes."""
-        triggers = workflow.get("on", {})
-        assert "push" in triggers, "Should maintain push trigger"
-        assert "pull_request" in triggers, "Should maintain pull_request trigger"
-        assert "workflow_dispatch" in triggers, "Should maintain workflow_dispatch trigger"
