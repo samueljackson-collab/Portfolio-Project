@@ -484,14 +484,15 @@ exit
 ssh 192.168.40.201
 
 # Edit prometheus config
-vim /etc/prometheus/prometheus.yml
-
 # Add new scrape target:
-#  - job_name: '[SERVICE_NAME]'
-#    static_configs:
-#      - targets: ['192.168.40.[IP]:9100']
-#        labels:
-#          service: '[SERVICE_NAME]'
+cat << EOF >> /etc/prometheus/prometheus.yml
+
+  - job_name: '[SERVICE_NAME]'
+    static_configs:
+      - targets: ['192.168.40.[IP]:9100']
+        labels:
+          service: '[SERVICE_NAME]'
+EOF
 
 # Reload Prometheus
 systemctl reload prometheus
