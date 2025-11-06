@@ -33,14 +33,19 @@ COMMON_SCHEMA = {
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
-    Main Lambda handler for log transformation.
-
-    Args:
-        event: Kinesis Firehose event containing records
-        context: Lambda context object
-
+    Transform Kinesis Firehose records into a normalized schema for OpenSearch ingestion.
+    
+    Processes each record from the incoming Firehose event, decodes and parses the record data, applies source-specific normalization, and returns a list of transformed records. Records that fail processing are returned with result 'ProcessingFailed' and their original data preserved for retry or S3 backup.
+    
+    Parameters:
+        event (dict): Kinesis Firehose event payload containing a 'records' list; each record must include 'recordId' and base64-encoded 'data'.
+        context (Any): AWS Lambda context object (not used by this function).
+    
     Returns:
-        Dictionary with transformed records and processing status
+        dict: A dictionary with a 'records' key mapping to a list of output records. Each output record contains:
+            - 'recordId' (str): the original record identifier.
+            - 'result' (str): 'Ok' for successfully transformed records or 'ProcessingFailed' for errors.
+            - 'data' (str): base64-encoded transformed JSON (with trailing newline) for successful records, or the original input data for failed records.
     """
     logger.info(f"Processing {len(event['records'])} records")
 
@@ -81,13 +86,15 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 def transform_log(log_entry: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Transform log entry based on source type.
-
-    Args:
-        log_entry: Raw log entry from AWS service
-
+    Route a raw AWS log entry to the appropriate source-specific transformer and return a normalized record.
+    
+    If the entry matches GuardDuty, CloudTrail, or VPC Flow Log patterns this delegates to the corresponding transformer; otherwise returns a minimal common-schema record with source set to 'unknown'.
+    
+    Parameters:
+        log_entry (Dict[str, Any]): The original parsed log payload.
+    
     Returns:
-        Normalized log entry with common schema
+        Dict[str, Any]: A normalized log record conforming to the module's common schema. For unknown formats the returned record will include `log_source` set to `'unknown'`.
     """
     # Detect log source
     if 'detail-type' in log_entry and 'GuardDuty Finding' in log_entry.get('detail-type', ''):
@@ -103,13 +110,16 @@ def transform_log(log_entry: Dict[str, Any]) -> Dict[str, Any]:
 
 def transform_guardduty(log_entry: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Transform GuardDuty finding into common schema.
-
-    Args:
-        log_entry: GuardDuty finding
-
+    Normalize a GuardDuty finding into the module's common schema.
+    
+    Parameters:
+        log_entry (dict): Raw GuardDuty event payload (expected to contain a top-level "detail" object).
+    
     Returns:
-        Normalized GuardDuty finding
+        dict: Normalized record containing common schema fields (timestamps, log_source, event_type, account_id, region),
+        GuardDuty-specific fields (finding_id, finding_type, severity, severity_numeric, title, description, message),
+        resource and actor information (resource_type, resource_id, source_ip, source_country), service metadata (service_action, service_count),
+        and the original finding under `raw_finding`.
     """
     detail = log_entry.get('detail', {})
 
@@ -150,13 +160,13 @@ def transform_guardduty(log_entry: Dict[str, Any]) -> Dict[str, Any]:
 
 def transform_cloudtrail(log_entry: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Transform CloudTrail event into common schema.
-
-    Args:
-        log_entry: CloudTrail event
-
+    Normalize a CloudTrail event into the module's common schema.
+    
+    Parameters:
+        log_entry (Dict[str, Any]): Parsed CloudTrail event payload.
+    
     Returns:
-        Normalized CloudTrail event
+        Dict[str, Any]: Dictionary containing CloudTrail fields mapped to the common schema, including metadata (timestamp, account, region), user identity, source/request details, computed severity, resources, and the original event under `raw_event`.
     """
     transformed = {
         '@timestamp': log_entry.get('eventTime', datetime.utcnow().isoformat()),
@@ -202,13 +212,13 @@ def transform_cloudtrail(log_entry: Dict[str, Any]) -> Dict[str, Any]:
 
 def transform_vpc_flow_log(log_entry: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Transform VPC Flow Log into common schema.
-
-    Args:
-        log_entry: VPC Flow Log entry
-
+    Normalize a VPC Flow Log (JSON dict or space-delimited string) into the transformer's common schema.
+    
+    Parameters:
+        log_entry (dict | str): VPC Flow Log as a parsed dictionary or a space-delimited log line string; when a string is provided it will be parsed into a dict.
+    
     Returns:
-        Normalized VPC Flow Log
+        dict: Normalized VPC Flow Log containing canonical fields such as '@timestamp', 'log_source', 'event_type', 'account_id', 'region', network fields ('source_ip', 'destination_ip', 'source_port', 'destination_port', 'protocol', 'protocol_number'), traffic metrics ('bytes', 'packets'), 'action', 'log_status', interface info, 'severity', human-readable 'message', 'start_time', 'end_time', and the original data under 'raw_log'.
     """
     # VPC Flow Logs can be in different formats; handle both JSON and space-delimited
     if isinstance(log_entry, str):
@@ -258,7 +268,22 @@ def transform_vpc_flow_log(log_entry: Dict[str, Any]) -> Dict[str, Any]:
 # Helper functions
 
 def add_common_fields(log_entry: Dict[str, Any], source: str) -> Dict[str, Any]:
-    """Add common fields to unknown log format."""
+    """
+    Create a minimal normalized record for logs with an unknown or unsupported format.
+    
+    Parameters:
+        log_entry (dict): The original parsed log payload to preserve as `raw_log`.
+        source (str): Identifier for the log source to set the `log_source` field.
+    
+    Returns:
+        dict: A normalized record containing:
+            - '@timestamp': ISO UTC timestamp when the record was created.
+            - 'log_source': the provided source identifier.
+            - 'event_type': set to 'unknown'.
+            - 'severity': set to 'info'.
+            - 'message': brief description ('Unknown log format').
+            - 'raw_log': the original `log_entry`.
+    """
     return {
         '@timestamp': datetime.utcnow().isoformat(),
         'log_source': source,
@@ -270,7 +295,12 @@ def add_common_fields(log_entry: Dict[str, Any], source: str) -> Dict[str, Any]:
 
 
 def map_guardduty_severity(severity_numeric: float) -> str:
-    """Map GuardDuty numeric severity to text level."""
+    """
+    Convert a GuardDuty numeric severity score into a textual severity level.
+    
+    Returns:
+        str: `'critical'` if severity_numeric >= 7.0, `'high'` if severity_numeric >= 4.0, `'medium'` if severity_numeric >= 1.0, `'low'` otherwise.
+    """
     if severity_numeric >= 7.0:
         return 'critical'
     elif severity_numeric >= 4.0:
@@ -282,7 +312,15 @@ def map_guardduty_severity(severity_numeric: float) -> str:
 
 
 def extract_resource_id(resource: Dict[str, Any]) -> str:
-    """Extract resource ID from GuardDuty resource object."""
+    """
+    Extract a representative identifier for the resource described in a GuardDuty resource object.
+    
+    Parameters:
+        resource (Dict[str, Any]): GuardDuty resource dictionary (as found in a finding's `resource` field).
+    
+    Returns:
+        str: The extracted identifier — `instanceId` if present under `instanceDetails`, otherwise `accessKeyId` if present under `accessKeyDetails`, otherwise the `resourceType` value, or `'unknown'` if none are available.
+    """
     instance_details = resource.get('instanceDetails', {})
     if instance_details:
         return instance_details.get('instanceId', 'unknown')
@@ -295,7 +333,16 @@ def extract_resource_id(resource: Dict[str, Any]) -> str:
 
 
 def extract_source_ip(detail: Dict[str, Any]) -> str:
-    """Extract source IP from GuardDuty finding."""
+    """
+    Extracts the source IPv4 address from a GuardDuty finding detail.
+    
+    Parameters:
+        detail (dict): GuardDuty finding `detail` object expected to contain `service.action.networkConnectionAction.remoteIpDetails.ipAddressV4`
+            or `service.action.awsApiCallAction.remoteIpDetails.ipAddressV4`.
+    
+    Returns:
+        str: The extracted IPv4 address if present, `"unknown"` otherwise.
+    """
     service = detail.get('service', {})
     action = service.get('action', {})
 
@@ -315,7 +362,15 @@ def extract_source_ip(detail: Dict[str, Any]) -> str:
 
 
 def extract_source_country(detail: Dict[str, Any]) -> str:
-    """Extract source country from GuardDuty finding."""
+    """
+    Determine the source country name from a GuardDuty finding detail.
+    
+    Parameters:
+        detail (dict): The GuardDuty finding `detail` payload to inspect.
+    
+    Returns:
+        country_name (str): The country name from `detail.service.action.*.remoteIpDetails.country.countryName` if present, otherwise `'unknown'`.
+    """
     service = detail.get('service', {})
     action = service.get('action', {})
 
@@ -330,7 +385,15 @@ def extract_source_country(detail: Dict[str, Any]) -> str:
 
 
 def determine_cloudtrail_severity(event: Dict[str, Any]) -> str:
-    """Determine severity level for CloudTrail event."""
+    """
+    Infer severity level for a CloudTrail event.
+    
+    Parameters:
+        event (Dict[str, Any]): CloudTrail event dictionary.
+    
+    Returns:
+        str: 'critical' if the event was performed by the root user; 'high' if the event name indicates deletion/removal/termination; 'medium' for failed authentication/authorization error codes; 'warning' for other error codes; 'info' otherwise.
+    """
     event_name = event.get('eventName', '').lower()
     error_code = event.get('errorCode')
     user_identity = event.get('userIdentity', {})
@@ -355,7 +418,15 @@ def determine_cloudtrail_severity(event: Dict[str, Any]) -> str:
 
 
 def parse_vpc_flow_log_string(log_string: str) -> Dict[str, Any]:
-    """Parse VPC Flow Log from space-delimited string format."""
+    """
+    Parse a space-delimited VPC Flow Log line into a dictionary of standard fields.
+    
+    Parameters:
+        log_string (str): A single VPC Flow Log record as a whitespace-delimited string.
+    
+    Returns:
+        Dict[str, Any]: Mapping of VPC Flow Log field names ('version', 'account-id', 'interface-id', 'srcaddr', 'dstaddr', 'srcport', 'dstport', 'protocol', 'packets', 'bytes', 'start', 'end', 'action', 'log-status') to their corresponding string values. Extra tokens are ignored and missing tokens result in omitted keys due to simple zipping.
+    """
     # Standard VPC Flow Log format
     fields = ['version', 'account-id', 'interface-id', 'srcaddr', 'dstaddr',
               'srcport', 'dstport', 'protocol', 'packets', 'bytes',
@@ -367,7 +438,17 @@ def parse_vpc_flow_log_string(log_string: str) -> Dict[str, Any]:
 
 
 def convert_flow_log_timestamp(unix_timestamp: Any) -> str:
-    """Convert VPC Flow Log Unix timestamp to ISO format."""
+    """
+    Convert a VPC Flow Log UNIX timestamp (seconds) to an ISO 8601 UTC timestamp string.
+    
+    Accepts an integer or numeric string representing seconds since the Unix epoch and returns its UTC ISO 8601 representation. If the input is not a valid integer, returns the current UTC time in ISO 8601 format.
+    
+    Parameters:
+        unix_timestamp (Any): UNIX timestamp in seconds (int or numeric string).
+    
+    Returns:
+        str: ISO 8601 formatted UTC timestamp (e.g., "2025-11-06T12:34:56").
+    """
     try:
         timestamp = int(unix_timestamp)
         return datetime.utcfromtimestamp(timestamp).isoformat()
@@ -376,7 +457,15 @@ def convert_flow_log_timestamp(unix_timestamp: Any) -> str:
 
 
 def map_protocol_number(protocol_num: Any) -> str:
-    """Map IP protocol number to name."""
+    """
+    Convert an IP protocol number into its common protocol name.
+    
+    Parameters:
+        protocol_num (Any): Numeric protocol identifier or a value convertible to int (e.g., 6 or "6").
+    
+    Returns:
+        str: The mapped protocol name (`'ICMP'`, `'TCP'`, `'UDP'`, `'ICMPv6'`) if known; the string form of `protocol_num` if not recognized; `'UNKNOWN'` if `protocol_num` cannot be interpreted as an integer.
+    """
     protocol_map = {
         1: 'ICMP',
         6: 'TCP',
