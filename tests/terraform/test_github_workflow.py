@@ -320,3 +320,61 @@ class TestWorkflowDispatch:
     def test_workflow_supports_manual_dispatch(self, workflow):
         """Verify workflow can be manually triggered."""
         assert "workflow_dispatch" in workflow["on"]
+
+
+class TestYAMLSyntaxCompliance:
+    """Test YAML syntax compliance and formatting."""
+
+    def test_workflow_on_key_is_quoted(self, workflow_path):
+        """Verify 'on' key is quoted to avoid YAML parsing issues."""
+        content = workflow_path.read_text()
+        # The 'on' key should be quoted as 'on': to avoid issues with YAML 1.2
+        assert "'on':" in content, "'on' keyword should be quoted as 'on':"
+
+    def test_workflow_parses_correctly_with_quoted_on(self, workflow):
+        """Verify workflow parses correctly despite quoted 'on' key."""
+        # The fixture already parses the YAML, so if we get here, it worked
+        assert workflow is not None
+        assert "on" in workflow or "'on'" in str(workflow)
+
+
+class TestArtifactActions:
+    """Test artifact upload/download action versions."""
+
+    def test_upload_artifact_uses_v4(self, workflow_path):
+        """Verify upload-artifact action uses v4."""
+        content = workflow_path.read_text()
+        # Check that upload-artifact uses v4
+        assert "actions/upload-artifact@v4" in content, "Should use upload-artifact@v4"
+
+    def test_no_deprecated_artifact_v3(self, workflow_path):
+        """Verify no usage of deprecated upload-artifact@v3."""
+        content = workflow_path.read_text()
+        # Should not have v3 of upload-artifact
+        assert "actions/upload-artifact@v3" not in content, "Should not use deprecated v3"
+
+    def test_download_artifact_version_matches_upload(self, workflow_path):
+        """Verify download-artifact version is compatible with upload version."""
+        content = workflow_path.read_text()
+        # If using upload-artifact@v4, should use download-artifact@v4
+        if "upload-artifact@v4" in content:
+            if "download-artifact@" in content:
+                assert "download-artifact@v4" in content, "download-artifact should match upload version (v4)"
+
+    def test_artifact_upload_specifies_name(self, workflow):
+        """Verify artifact upload specifies a name."""
+        job = workflow["jobs"]["terraform-plan"]
+        steps = job.get("steps", [])
+        upload_steps = [s for s in steps if "upload-artifact" in s.get("uses", "")]
+        for step in upload_steps:
+            assert "with" in step, "Upload artifact should have 'with' block"
+            assert "name" in step["with"], "Upload artifact should specify name"
+
+    def test_artifact_upload_specifies_path(self, workflow):
+        """Verify artifact upload specifies a path."""
+        job = workflow["jobs"]["terraform-plan"]
+        steps = job.get("steps", [])
+        upload_steps = [s for s in steps if "upload-artifact" in s.get("uses", "")]
+        for step in upload_steps:
+            assert "with" in step, "Upload artifact should have 'with' block"
+            assert "path" in step["with"], "Upload artifact should specify path"

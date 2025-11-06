@@ -266,3 +266,48 @@ class TestAWSCLIUsage:
         with open(script_path, 'r') as f:
             content = f.read()
         assert "--region" in content or "${REGION}" in content
+
+class TestScriptPermissions:
+    """Test script file permissions are correct."""
+
+    def test_script_has_execute_permission(self, script_path):
+        """Verify script has execute permission for owner."""
+        import stat
+        mode = os.stat(script_path).st_mode
+        assert mode & stat.S_IXUSR, "Script should have owner execute permission"
+
+    def test_script_has_read_permission(self, script_path):
+        """Verify script has read permission."""
+        import stat
+        mode = os.stat(script_path).st_mode
+        assert mode & stat.S_IRUSR, "Script should have owner read permission"
+
+    def test_script_is_not_world_writable(self, script_path):
+        """Verify script is not world-writable (security check)."""
+        import stat
+        mode = os.stat(script_path).st_mode
+        assert not (mode & stat.S_IWOTH), "Script should not be world-writable"
+
+    def test_script_can_be_executed_directly(self, script_path):
+        """Verify script can be executed directly (not just via bash)."""
+        # This test verifies the shebang and permissions work together
+        result = subprocess.run(
+            [str(script_path), "--help"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        # Script should either show help, run, or show usage - not permission denied
+        assert result.returncode != 126, "Script should be executable (not permission denied)"
+
+    def test_script_permissions_match_standard(self, script_path):
+        """Verify script has standard executable script permissions (755 or 775)."""
+        import stat
+        mode = os.stat(script_path).st_mode
+        # Check for common executable permissions patterns
+        is_executable = (
+            (mode & stat.S_IXUSR) and  # Owner can execute
+            (mode & stat.S_IRUSR) and  # Owner can read
+            (mode & stat.S_IRGRP)       # Group can read
+        )
+        assert is_executable, "Script should have standard executable permissions"

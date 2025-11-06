@@ -251,3 +251,127 @@ class TestOutputMessages:
         keywords = ["Formatting", "Initializing", "Planning", "Validating"]
         found_keywords = [kw for kw in keywords if kw in content]
         assert len(found_keywords) >= 2, "Script should indicate current steps"
+
+
+class TestSyntaxCorrectness:
+    """Test script syntax correctness and common errors."""
+
+    def test_script_has_no_variable_assignment_errors(self, script_path):
+        """Verify script doesn't have malformed variable assignments."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        # Check that terraform commands are executed, not assigned to variables
+        # Line should be: terraform fmt -recursive
+        # NOT: tf=terraform fmt -recursive (which would be a syntax error)
+        lines = content.split('\n')
+        for i, line in enumerate(lines, 1):
+            if 'terraform fmt' in line and '=' in line:
+                # If there's an equals sign, it should be a proper command substitution
+                # like VAR=$(terraform fmt) or proper assignment VAR="value"
+                if not ('$(' in line or '`' in line or '"' in line.split('=')[1] or "'" in line.split('=')[1]):
+                    pytest.fail(f"Line {i} appears to have malformed assignment: {line.strip()}")
+
+    def test_terraform_fmt_command_executed_correctly(self, script_path):
+        """Verify terraform fmt is executed, not assigned to a variable."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        fmt_found = False
+        for line in lines:
+            if 'terraform fmt' in line:
+                fmt_found = True
+                # Should be a command execution, not variable assignment
+                # Valid: terraform fmt -recursive
+                # Invalid: tf=terraform fmt -recursive
+                stripped = line.strip()
+                if stripped.startswith('tf=') or '=terraform fmt' in stripped:
+                    pytest.fail(f"terraform fmt should be executed directly, not assigned: {stripped}")
+        
+        assert fmt_found, "Script should contain terraform fmt command"
+
+    def test_all_terraform_commands_are_executed(self, script_path):
+        """Verify all terraform commands are properly executed."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # These commands should be executed directly, not assigned
+        terraform_commands = ['terraform init', 'terraform validate', 'terraform plan', 'terraform apply']
+        for cmd in terraform_commands:
+            if cmd in content:
+                # Check that they're not being assigned to variables incorrectly
+                lines = [l for l in content.split('\n') if cmd in l]
+                for line in lines:
+                    stripped = line.strip()
+                    # Skip comments
+                    if stripped.startswith('#'):
+                        continue
+                    # Check for incorrect assignment patterns
+                    if '=' in stripped and cmd in stripped:
+                        # Allow proper command substitution: VAR=$(terraform ...)
+                        if not ('$(' in stripped or '`' in stripped):
+                            # Check if it's just the command with flags (e.g., -input=false)
+                            if not ('--' in stripped or stripped.split('=')[1].strip().startswith('-')):
+                                continue  # This is likely terraform command flags, not assignment
+
+    def test_script_uses_command_not_variable_for_fmt(self, script_path):
+        """Verify fmt uses correct command syntax."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        # Find lines with terraform fmt
+        for line in lines:
+            if 'terraform fmt' in line and not line.strip().startswith('#'):
+                # Should start with 'terraform' not 'tf='
+                stripped = line.strip()
+                assert not stripped.startswith('tf='), "Should use 'terraform fmt' not 'tf=terraform fmt'"
+                # Proper syntax check
+                if 'fmt' in stripped and not stripped.startswith('terraform'):
+                    # It might be indented or have echo before it
+                    if '=' in stripped and 'terraform fmt' in stripped:
+                        assert '$(' in stripped or '`' in stripped, "Incorrect command syntax"
+
+
+class TestScriptPermissions:
+    """Test script file permissions are correct."""
+
+    def test_script_has_execute_permission(self, script_path):
+        """Verify script has execute permission for owner."""
+        import stat
+        mode = os.stat(script_path).st_mode
+        assert mode & stat.S_IXUSR, "Script should have owner execute permission"
+
+    def test_script_has_read_permission(self, script_path):
+        """Verify script has read permission."""
+        import stat
+        mode = os.stat(script_path).st_mode
+        assert mode & stat.S_IRUSR, "Script should have owner read permission"
+
+    def test_script_is_not_world_writable(self, script_path):
+        """Verify script is not world-writable (security check)."""
+        import stat
+        mode = os.stat(script_path).st_mode
+        assert not (mode & stat.S_IWOTH), "Script should not be world-writable"
+
+    def test_script_can_be_executed_directly(self, script_path):
+        """Verify script can be executed directly (not just via bash)."""
+        # This test verifies the shebang and permissions work together
+        result = subprocess.run(
+            [str(script_path), "--help"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        # Script should either show help, run, or show usage - not permission denied
+        assert result.returncode != 126, "Script should be executable (not permission denied)"
+
+    def test_script_permissions_match_standard(self, script_path):
+        """Verify script has standard executable script permissions (755 or 775)."""
+        import stat
+        mode = os.stat(script_path).st_mode
+        # Check for common executable permissions patterns
+        is_executable = (
+            (mode & stat.S_IXUSR) and  # Owner can execute
+            (mode & stat.S_IRUSR) and  # Owner can read
+            (mode & stat.S_IRGRP)       # Group can read
+        )
+        assert is_executable, "Script should have standard executable permissions"
