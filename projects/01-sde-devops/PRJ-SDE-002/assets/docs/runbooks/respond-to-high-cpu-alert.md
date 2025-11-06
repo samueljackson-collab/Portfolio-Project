@@ -506,6 +506,7 @@ psql -U user -d database -c "SELECT 1;"
 
 Create entry in operations log:
 ```bash
+mkdir -p /var/log/operations
 cat >> /var/log/operations/cpu-incidents.log << EOF
 ---
 Date: $(date +%Y-%m-%d)
