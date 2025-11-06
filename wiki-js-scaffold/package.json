@@ -1,0 +1,39 @@
+{
+  "name": "wikijs-github-fundamentals",
+  "version": "1.0.0",
+  "description": "GitHub Fundamentals Wiki.js Content and Import Scripts",
+  "main": "scripts/import-to-wikijs.js",
+  "scripts": {
+    "import": "node scripts/import-to-wikijs.js",
+    "export": "node scripts/export-from-wikijs.js",
+    "backup": "node scripts/backup-wiki.js",
+    "validate": "node scripts/validate-content.js",
+    "dev": "docker-compose -f docker/docker-compose.yml up -d",
+    "stop": "docker-compose -f docker/docker-compose.yml down",
+    "logs": "docker-compose -f docker/docker-compose.yml logs -f wiki",
+    "backup-db": "docker-compose -f docker/docker-compose.yml exec db pg_dump -U wikijs wiki > backups/wiki-$(date +%Y%m%d-%H%M%S).sql"
+  },
+  "keywords": [
+    "wikijs",
+    "github",
+    "git",
+    "documentation",
+    "education"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "fs-extra": "^11.1.1",
+    "gray-matter": "^4.0.3",
+    "marked": "^9.1.6"
+  },
+  "devDependencies": {
+    "eslint": "^8.54.0",
+    "prettier": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
