@@ -1,117 +1,196 @@
-graph TB
-    %% Physical Infrastructure Diagram
-    subgraph Rack["🗄️ 22U Network Rack"]
-        subgraph RackTop["Top Section - Network Equipment (1U-8U)"]
-            UPS1[APC UPS 1500VA<br/>Unit 1U<br/>120V 900W<br/>Battery Backup]
+flowchart TD
+    %% =============================================
+    %% Internet/ISP Layer
+    %% =============================================
+    Internet[Internet<br/>ISP Connection]
+    
+    ISP_Modem[ISP Modem<br/>Bridge Mode<br/>Public IP: Dynamic]
 
-            Patch[24-Port Patch Panel<br/>Unit 2U<br/>Cat6 Structured Cabling<br/>Color-Coded by VLAN]
+    %% =============================================
+    %% Edge/Gateway Layer
+    %% =============================================
+    UDMP[UniFi Dream Machine Pro<br/>192.168.1.1<br/>Router/Firewall/VPN/Controller]
 
-            PF[pfSense Firewall<br/>Unit 3U<br/>Intel i5 4-Core<br/>16GB RAM, 256GB SSD<br/>4× 1GbE NICs]
+    %% =============================================
+    %% Core Switching Layer
+    %% =============================================
+    USW24[UniFi Switch 24 PoE<br/>192.168.1.2<br/>95W PoE Budget]
+    
+    USW8[UniFi Switch 8 PoE<br/>192.168.1.3<br/>Secondary Location]
 
-            Switch[UniFi Switch 24 PoE<br/>Unit 4U<br/>24× 1GbE Ports<br/>250W PoE+ Budget<br/>Layer 2 Managed]
+    %% =============================================
+    %% Access Layer - Rack Devices (VLAN 10)
+    %% =============================================
+    subgraph Rack[Network Rack - 12U Wall Mount]
+        Proxmox[Proxmox Server<br/>Port 5<br/>VLAN 10<br/>192.168.10.10]
+        TrueNAS[TrueNAS Server<br/>Port 6<br/>VLAN 10<br/>192.168.10.5]
+        Desktop[Desktop Workstation<br/>Port 7<br/>VLAN 10<br/>192.168.10.20]
+        Printer[Network Printer<br/>Port 8<br/>VLAN 10<br/>192.168.10.30]
+    end
 
-            Spacer1[1U Shelf<br/>Unit 5U<br/>Cable Management]
+    %% =============================================
+    %% Access Layer - Living Room
+    %% =============================================
+    subgraph LivingRoom[Living Room]
+        SmartTV[Smart TV<br/>Port 9<br/>VLAN 50<br/>192.168.50.10]
+        AP1[UniFi AP AC Pro #1<br/>Port 15<br/>PoE ⚡<br/>Living Room]
+    end
+
+    %% =============================================
+    %% Access Layer - Bedroom
+    %% =============================================
+    subgraph Bedroom[Bedroom]
+        AP2[UniFi AP AC Pro #2<br/>Port 16<br/>PoE ⚡<br/>Bedroom]
+    end
+
+    %% =============================================
+    %% Access Layer - Office
+    %% =============================================
+    subgraph Office[Office]
+        AP3[UniFi AP AC Pro #3<br/>Port 17<br/>PoE ⚡<br/>Office]
+    end
+
+    %% =============================================
+    %% Wireless Clients by VLAN
+    %% =============================================
+    subgraph WirelessClients[Wireless Clients]
+        subgraph VLAN10_Clients[VLAN 10 - Trusted]
+            Laptop1[MacBook Pro<br/>VLAN 10]
+            Laptop2[ThinkPad<br/>VLAN 10]
+            Phone1[iPhone 14<br/>VLAN 10]
+            Phone2[Android Phone<br/>VLAN 10]
         end
-
-        subgraph RackMiddle["Middle Section - Compute (9U-16U)"]
-            Proxmox1[Proxmox Host 01<br/>Unit 9U-10U (2U Server)<br/>AMD Ryzen 9 5900X 12-Core<br/>128GB DDR4 ECC RAM<br/>2× 1TB NVMe (ZFS Mirror)<br/>2× 10GbE SFP+]
-
-            Proxmox2[Proxmox Host 02<br/>Unit 11U-12U (2U Server)<br/>AMD Ryzen 9 5950X 16-Core<br/>256GB DDR4 ECC RAM<br/>2× 2TB NVMe (ZFS Mirror)<br/>2× 10GbE SFP+]
-
-            TrueNAS[TrueNAS Storage Server<br/>Unit 13U-14U (2U Server)<br/>Intel Xeon E-2288G 8-Core<br/>64GB DDR4 ECC RAM<br/>8× 4TB HDDs (RAID-Z2)<br/>2× 1GbE NICs]
-
-            Spacer2[2U Shelf<br/>Units 15U-16U<br/>Cable Management]
+        
+        subgraph VLAN50_Clients[VLAN 50 - IoT]
+            SmartSpeaker1[Amazon Echo<br/>VLAN 50]
+            SmartSpeaker2[Google Home<br/>VLAN 50]
+            IoT_Phone[iPhone - IoT Control<br/>VLAN 50]
         end
-
-        subgraph RackBottom["Bottom Section - Wireless & Power (17U-22U)"]
-            CloudKey[UniFi Cloud Key Gen2+<br/>Unit 17U (Mounted on Shelf)<br/>Network Controller<br/>1GbE Uplink]
-
-            Shelf[1U Shelf<br/>Unit 18U<br/>Raspberry Pi 4 (Backup Controller)]
-
-            UPS2[APC UPS 1500VA<br/>Unit 20U<br/>120V 900W<br/>Battery Backup for Storage]
-
-            PDU[Rackmount PDU<br/>Unit 22U<br/>8 Outlets<br/>15A 120V]
+        
+        subgraph VLAN99_Clients[VLAN 99 - Guest]
+            GuestPhone1[Guest Phone<br/>VLAN 99]
+            GuestLaptop1[Guest Laptop<br/>VLAN 99]
+        end
+        
+        subgraph VLAN100_Clients[VLAN 100 - Lab]
+            TestLaptop[Kali Linux Laptop<br/>VLAN 100]
         end
     end
 
-    %% Wireless Infrastructure (Mounted Outside Rack)
-    subgraph Wireless["📶 Wireless Infrastructure - Ceiling Mounted"]
-        AP1[U6 Pro Access Point 01<br/>Living Room Coverage<br/>192.168.1.3<br/>PoE+ 802.3at<br/>2.4GHz Ch1 + 5GHz Ch36<br/>3× SSIDs Broadcast]
+    %% =============================================
+    %% Physical Connections
+    %% =============================================
+    
+    %% Internet to Gateway
+    Internet -->|Coaxial/Fiber| ISP_Modem
+    ISP_Modem -->|WAN Port<br/>Cat6a| UDMP
+    
+    %% Gateway to Core Switching
+    UDMP -->|LAN1 Port 1<br/>Cat6a| USW24
+    USW24 -->|Port 24<br/>Cat6a| USW8
+    
+    %% Core Switch to Rack Devices
+    USW24 -->|Port 5<br/>Cat6a| Proxmox
+    USW24 -->|Port 6<br/>Cat6a| TrueNAS
+    USW24 -->|Port 7<br/>Cat6a| Desktop
+    USW24 -->|Port 8<br/>Cat6a| Printer
+    
+    %% Core Switch to Living Room
+    USW24 -->|Port 9<br/>Cat6a| SmartTV
+    USW24 -->|Port 15<br/>Cat6a + PoE ⚡| AP1
+    
+    %% Core Switch to Bedroom & Office
+    USW24 -->|Port 16<br/>Cat6a + PoE ⚡| AP2
+    USW24 -->|Port 17<br/>Cat6a + PoE ⚡| AP3
+    
+    %% Access Points to Wireless Clients
+    AP1 -->|Wi-Fi 5 GHz| Laptop1
+    AP1 -->|Wi-Fi 2.4 GHz| SmartSpeaker1
+    AP1 -->|Wi-Fi 2.4/5 GHz| GuestPhone1
+    AP1 -->|Wi-Fi 5 GHz| TestLaptop
+    
+    AP2 -->|Wi-Fi 5 GHz| Laptop2
+    AP2 -->|Wi-Fi 2.4 GHz| SmartSpeaker2
+    AP2 -->|Wi-Fi 2.4/5 GHz| GuestLaptop1
+    
+    AP3 -->|Wi-Fi 5 GHz| Phone1
+    AP3 -->|Wi-Fi 5 GHz| Phone2
+    AP3 -->|Wi-Fi 2.4 GHz| IoT_Phone
 
-        AP2[U6 Pro Access Point 02<br/>Office Coverage<br/>192.168.1.4<br/>PoE+ 802.3at<br/>2.4GHz Ch6 + 5GHz Ch149<br/>3× SSIDs Broadcast]
+    %% =============================================
+    %% Styling and Colors
+    %% =============================================
+    classDef internet fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef gateway fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef switching fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef servers fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef iot fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef wireless fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef trustedClients fill:#e8f5e8,stroke:#2e7d32
+    classDef iotClients fill:#fff3e0,stroke:#ef6c00
+    classDef guestClients fill:#f5f5f5,stroke:#9e9e9e
+    classDef labClients fill:#e0f2f1,stroke:#00695c
+    
+    class Internet,ISP_Modem internet
+    class UDMP gateway
+    class USW24,USW8 switching
+    class Proxmox,TrueNAS,Desktop,Printer servers
+    class SmartTV iot
+    class AP1,AP2,AP3 wireless
+    class VLAN10_Clients trustedClients
+    class VLAN50_Clients iotClients
+    class VLAN99_Clients guestClients
+    class VLAN100_Clients labClients
 
-        AP3[U6 Mesh (Optional)<br/>Garage/Workshop<br/>192.168.1.5<br/>Wireless Uplink<br/>Guest VLAN Only]
+    %% =============================================
+    %% Legend and Notes
+    %% =============================================
+    
+    subgraph Legend[Physical Topology Legend]
+        Direction[Flow: Top to Bottom]
+        CableType[Solid Lines: Cat6/Cat6a Ethernet]
+        PoEMarker[PoE ⚡: Power over Ethernet]
+        WirelessDashed[Dashed Lines: Wireless Connections]
+        ColorCode[Colors: Red=Internet, Purple=Gateway, Blue=Switching, Green=Servers, Orange=IoT, Pink=Wireless]
     end
 
-    %% External Connections
-    subgraph External["🌐 External Connections"]
-        ISP[ISP Modem/ONT<br/>Fiber 1Gbps<br/>WAN Connection<br/>Public IP (DHCP)]
-
-        Workstation[Workstation<br/>192.168.1.10<br/>VLAN 10 Trusted<br/>Cat6 to Port 8]
-
-        SmartDevices[IoT Devices<br/>VLAN 20 IoT<br/>WiFi Connected<br/>Client Isolated]
-
-        Guests[Guest Devices<br/>VLAN 30 Guest<br/>WiFi + Captive Portal<br/>Internet Only]
-    end
-
-    %% Physical Cable Connections
-    ISP -.->|Fiber SFP+| PF
-    PF -->|Port 1: LAN Trunk| Switch
-
-    Switch -->|Port 2: PoE+| AP1
-    Switch -->|Port 3: PoE+| AP2
-    Switch -->|Port 4: PoE+| AP3
-    Switch -->|Port 5: VLAN 10| CloudKey
-
-    Switch -->|Port 8: VLAN 10 Access| Workstation
-    Switch -->|Port 10: VLAN 40 Trunk| Proxmox1
-    Switch -->|Port 11: VLAN 40 Trunk| Proxmox2
-    Switch -->|Port 12: VLAN 40 Trunk| TrueNAS
-
-    Patch -.->|Cable Management| Switch
-    Patch -.->|Cable Management| PF
-
-    AP1 -.->|SSID Broadcast| SmartDevices
-    AP1 -.->|SSID Broadcast| Guests
-    AP2 -.->|SSID Broadcast| SmartDevices
-    AP2 -.->|SSID Broadcast| Guests
-
-    %% Power Distribution
-    UPS1 -.->|Power| PF
-    UPS1 -.->|Power| Switch
-    UPS1 -.->|Power| CloudKey
-
-    UPS2 -.->|Power| Proxmox1
-    UPS2 -.->|Power| Proxmox2
-    UPS2 -.->|Power| TrueNAS
-
-    PDU -.->|120V AC| UPS1
-    PDU -.->|120V AC| UPS2
-
-    %% Styling
-    classDef network fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
-    classDef compute fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
-    classDef storage fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
-    classDef wireless fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    classDef power fill:#ffebee,stroke:#c62828,stroke-width:2px
-    classDef external fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    classDef infrastructure fill:#e0f2f1,stroke:#00796b,stroke-width:2px
-
-    class PF,Switch,Patch network
-    class Proxmox1,Proxmox2 compute
-    class TrueNAS storage
-    class AP1,AP2,AP3,CloudKey wireless
-    class UPS1,UPS2,PDU power
-    class ISP,Workstation,SmartDevices,Guests external
-    class Spacer1,Spacer2,Shelf infrastructure
-
-    %% Legend
-    note1[Power Connection: UPS/PDU]
-    note2[Network: Ethernet Cat6]
-    note3[Wireless: WiFi 6]
-    note4[Management: Controller]
-
-    style note1 fill:#ffebee,stroke:#c62828
-    style note2 fill:#e3f2fd,stroke:#1976d2
-    style note3 fill:#fff3e0,stroke:#f57c00
-    style note4 fill:#e0f2f1,stroke:#00796b
+%% =============================================
+%% Physical Topology Description:
+%% 
+%% This diagram shows the complete physical network layout:
+%% 
+%% INTERNET LAYER (Top):
+%% - ISP provides internet via coaxial cable or fiber
+%% - Modem in bridge mode passes public IP to UDMP
+%% 
+%% GATEWAY LAYER:
+%% - UniFi Dream Machine Pro (UDMP) handles routing, firewall, VPN
+%% - Single WAN port connected to modem
+%% - LAN1 port connected to main switch
+%% 
+%% CORE SWITCHING LAYER:
+%% - UniFi Switch 24 PoE provides 24 ports with 95W PoE budget
+%% - Secondary 8-port switch in another room for additional devices
+%% - All connections use Cat6a cables for 10Gbps capability
+%% 
+%% ACCESS LAYER - WIRED:
+%% - Rack contains servers and critical infrastructure (VLAN 10)
+%% - Living Room has Smart TV (VLAN 50) and primary access point
+%% - Bedroom and Office have additional access points
+%% 
+%% ACCESS LAYER - WIRELESS:
+%% - 3x UniFi AP AC Pro covering 2,500 sq ft
+%% - Each AP broadcasts 4 SSIDs mapped to different VLANs
+%% - Wireless clients connect to appropriate VLAN based on SSID
+%% 
+%% CABLE INFRASTRUCTURE:
+%% - All wired connections use Cat6a cables
+%% - Patch panel (not shown) organizes 24 cable runs
+%% - PoE provided to access points (no separate power needed)
+%% - Cable lengths: 1-3ft (rack), 25ft (living room), 50ft (bedroom), 75ft (office)
+%% 
+%% POWER MANAGEMENT:
+%% - All rack equipment on UPS battery backup
+%% - APs powered via PoE from switch (no local power needed)
+%% - Estimated total power draw: 150W (rack) + 36W (APs) = 186W
+%% =============================================
