@@ -397,4 +397,4 @@ I'm Sam Jackson, a System Development Engineer passionate about infrastructure a
 
 ---
 
-*Video Walkthrough Script v1.0 - Last Updated: January 2025*
+*Video Walkthrough Script v1.0 - Last Updated: November 2025*
