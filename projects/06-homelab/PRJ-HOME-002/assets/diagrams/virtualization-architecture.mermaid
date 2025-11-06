@@ -1,0 +1,192 @@
+graph TB
+    subgraph Management["🖥️ Management Layer"]
+        WebUI[Proxmox Web UI<br/>192.168.40.10:8006<br/>Cluster Management]
+        API[Proxmox API<br/>REST + WebSocket<br/>Automation Interface]
+    end
+
+    subgraph ProxmoxCluster["⚙️ Proxmox VE Cluster (HA Enabled)"]
+        subgraph Node1["Proxmox Node 1<br/>192.168.40.10"]
+            PVE1[Proxmox VE 8.x<br/>Corosync Quorum Member]
+            LVM1[Local LVM-Thin<br/>Fast VM Storage]
+            CEPH1[Ceph OSD<br/>Distributed Storage]
+        end
+
+        subgraph Node2["Proxmox Node 2<br/>192.168.40.11"]
+            PVE2[Proxmox VE 8.x<br/>Corosync Quorum Member]
+            LVM2[Local LVM-Thin<br/>Fast VM Storage]
+            CEPH2[Ceph OSD<br/>Distributed Storage]
+        end
+
+        subgraph Node3["Proxmox Node 3<br/>192.168.40.12"]
+            PVE3[Proxmox VE 8.x<br/>Corosync Quorum Member]
+            LVM3[Local LVM-Thin<br/>Fast VM Storage]
+            CEPH3[Ceph OSD<br/>Distributed Storage]
+        end
+    end
+
+    subgraph Storage["💾 Storage Infrastructure"]
+        subgraph CephCluster["Ceph Distributed Storage"]
+            CephMon[Ceph Monitors<br/>Cluster State & Consensus]
+            CephMgr[Ceph Manager<br/>Monitoring & Orchestration]
+            CephRBD[Ceph RBD Pool<br/>3-way Replication<br/>HA VM Disks]
+        end
+
+        TrueNAS[TrueNAS Storage<br/>192.168.40.20<br/>ZFS Pools]
+        NFS[NFS Shares<br/>ISOs, Templates, Backups]
+        iSCSI[iSCSI LUNs<br/>Block Storage]
+
+        PBS[Proxmox Backup Server<br/>192.168.40.15:8007<br/>Deduplication & Compression]
+    end
+
+    subgraph CoreServices["🛠️ Core Infrastructure Services (VMs on VLAN 40)"]
+        subgraph Identity["Identity Management"]
+            FreeIPA[FreeIPA<br/>192.168.40.25<br/>LDAP + Kerberos + CA<br/>RADIUS for 802.1X]
+        end
+
+        subgraph DNS["DNS Services"]
+            PiHole[Pi-hole<br/>192.168.40.35<br/>DNS + Ad Blocking<br/>homelab.local]
+        end
+
+        subgraph Proxy["Reverse Proxy"]
+            Nginx[Nginx<br/>192.168.40.40<br/>SSL Termination<br/>Load Balancing]
+        end
+
+        subgraph Logging["Centralized Logging"]
+            Syslog[Rsyslog Server<br/>192.168.40.30<br/>TCP/UDP 514<br/>Log Aggregation]
+        end
+
+        subgraph TimeSync["Time Synchronization"]
+            NTP[NTP Server<br/>Stratum 2<br/>pool.ntp.org upstream]
+        end
+    end
+
+    subgraph Applications["📦 Application VMs"]
+        WikiJS[Wiki.js<br/>192.168.40.50<br/>Documentation]
+        HomeAssistant[Home Assistant<br/>192.168.40.51<br/>IoT Automation]
+        Immich[Immich<br/>192.168.40.52<br/>Photo Management]
+        Database[PostgreSQL<br/>192.168.40.60<br/>App Database]
+    end
+
+    subgraph Automation["🤖 Infrastructure as Code"]
+        Ansible[Ansible Playbooks<br/>5 playbooks:<br/>provision, deploy,<br/>maintenance, backup,<br/>security-hardening]
+        Terraform[Terraform<br/>VM Provisioning<br/>State Management]
+        Scripts[Operational Scripts<br/>backup-verify.sh<br/>health-check.sh<br/>security-scan.sh]
+    end
+
+    subgraph Network["🌐 Network Integration"]
+        VLAN40[VLAN 40 - Servers<br/>192.168.40.0/24<br/>High Trust]
+        pfSense[pfSense Firewall<br/>192.168.40.1<br/>Gateway & Firewall]
+        UniFi[UniFi Network<br/>Switching & Wireless]
+    end
+
+    %% Management Connections
+    WebUI -.->|Manage| PVE1
+    WebUI -.->|Manage| PVE2
+    WebUI -.->|Manage| PVE3
+    API -.->|Automate| PVE1
+
+    %% Cluster Interconnections
+    PVE1 <-->|Corosync<br/>UDP 5404-5405| PVE2
+    PVE2 <-->|Corosync<br/>UDP 5404-5405| PVE3
+    PVE3 <-->|Corosync<br/>UDP 5404-5405| PVE1
+
+    %% Storage Connections - Local
+    PVE1 --> LVM1
+    PVE2 --> LVM2
+    PVE3 --> LVM3
+
+    %% Storage Connections - Ceph
+    CEPH1 --> CephRBD
+    CEPH2 --> CephRBD
+    CEPH3 --> CephRBD
+    CephRBD --> CephMon
+    CephRBD --> CephMgr
+
+    %% Storage Connections - External
+    PVE1 -->|NFS Mount| TrueNAS
+    PVE2 -->|NFS Mount| TrueNAS
+    PVE3 -->|NFS Mount| TrueNAS
+    TrueNAS --> NFS
+    TrueNAS --> iSCSI
+
+    %% Backup Connections
+    PVE1 -->|Nightly Backups<br/>02:00 UTC| PBS
+    PVE2 -->|Nightly Backups<br/>02:00 UTC| PBS
+    PVE3 -->|Nightly Backups<br/>02:00 UTC| PBS
+    PBS -->|Store on| TrueNAS
+
+    %% VM Hosting (Examples)
+    PVE1 -.->|Hosts| FreeIPA
+    PVE1 -.->|Hosts| WikiJS
+    PVE2 -.->|Hosts| PiHole
+    PVE2 -.->|Hosts| HomeAssistant
+    PVE3 -.->|Hosts| Nginx
+    PVE3 -.->|Hosts| Immich
+
+    %% Service Dependencies
+    FreeIPA -->|RADIUS Auth| UniFi
+    PiHole -->|DNS Resolution| VLAN40
+    Nginx -->|Reverse Proxy| WikiJS
+    Nginx -->|Reverse Proxy| HomeAssistant
+    Nginx -->|Reverse Proxy| Immich
+    Syslog <-.-|Logs| PVE1
+    Syslog <-.-|Logs| PVE2
+    Syslog <-.-|Logs| PVE3
+    Syslog <-.-|Logs| pfSense
+    NTP -->|Time Sync| PVE1
+    NTP -->|Time Sync| PVE2
+    NTP -->|Time Sync| PVE3
+
+    %% Application Connections
+    WikiJS -->|Queries| Database
+    HomeAssistant -->|Queries| Database
+    Immich -->|Queries| Database
+
+    %% Automation Connections
+    Ansible -.->|Configure| PVE1
+    Ansible -.->|Configure| CoreServices
+    Terraform -.->|Provision| PVE1
+    Scripts -.->|Monitor| PBS
+    Scripts -.->|Health Check| CoreServices
+
+    %% Network Connections
+    pfSense -->|Gateway| VLAN40
+    VLAN40 --> ProxmoxCluster
+    VLAN40 --> CoreServices
+    VLAN40 --> Applications
+
+    %% High Availability Flow
+    HAFlow[HA Failover Flow:<br/>1. Watchdog detects failure<br/>2. Corosync votes (quorum)<br/>3. Fencing if needed<br/>4. VM migration to healthy node<br/>5. Service restoration<br/>RTO: <5 minutes]
+
+    PVE1 -.->|HA Manager| HAFlow
+    PVE2 -.->|HA Manager| HAFlow
+    PVE3 -.->|HA Manager| HAFlow
+
+    %% Styling
+    classDef management fill:#87CEEB,stroke:#00008B,stroke-width:3px,color:#000
+    classDef cluster fill:#90EE90,stroke:#006400,stroke-width:3px,color:#000
+    classDef storage fill:#DDA0DD,stroke:#8B008B,stroke-width:2px,color:#000
+    classDef services fill:#FFD700,stroke:#FF8C00,stroke-width:2px,color:#000
+    classDef apps fill:#FFA07A,stroke:#DC143C,stroke-width:2px,color:#000
+    classDef automation fill:#20B2AA,stroke:#008B8B,stroke-width:2px,color:#000
+    classDef network fill:#F0E68C,stroke:#BDB76B,stroke-width:2px,color:#000
+    classDef ha fill:#FFB6C1,stroke:#C71585,stroke-width:3px,color:#000
+
+    class WebUI,API management
+    class PVE1,PVE2,PVE3,LVM1,LVM2,LVM3,CEPH1,CEPH2,CEPH3 cluster
+    class CephMon,CephMgr,CephRBD,TrueNAS,NFS,iSCSI,PBS storage
+    class FreeIPA,PiHole,Nginx,Syslog,NTP services
+    class WikiJS,HomeAssistant,Immich,Database apps
+    class Ansible,Terraform,Scripts automation
+    class VLAN40,pfSense,UniFi network
+    class HAFlow ha
+
+    %% Legend
+    Legend["📋 Architecture Legend:<br/>🟢 Cluster Nodes - HA Enabled<br/>🟣 Storage - Multi-Tier Strategy<br/>🟡 Core Services - Infrastructure<br/>🟠 Applications - User-Facing<br/>🔵 Management - Control Plane<br/>🟦 Automation - IaC & Scripts<br/>🟨 Network - Connectivity<br/>━━ Active Connection<br/>┄┄ Management/Monitoring"]
+
+    style Legend fill:#F0F8FF,stroke:#4169E1,stroke-width:2px,text-align:left
+
+    %% Technical Specifications
+    Specs["⚙️ Technical Specifications:<br/><br/>Cluster:<br/>• 3 nodes, quorum-based HA<br/>• Corosync + Pacemaker<br/>• Automatic VM failover<br/>• Watchdog-based fencing<br/><br/>Storage:<br/>• Tier 1: Local LVM (performance)<br/>• Tier 2: Ceph RBD (HA, 3x replication)<br/>• Tier 3: NFS/iSCSI (capacity)<br/>• Backup: PBS (dedup + compression)<br/><br/>Recovery:<br/>• RTO: 1 hour (P0), 4 hours (P1)<br/>• RPO: 24 hours<br/>• Quarterly DR testing<br/>• 3-2-1 backup strategy"]
+
+    style Specs fill:#F5F5DC,stroke:#8B4513,stroke-width:2px,text-align:left
