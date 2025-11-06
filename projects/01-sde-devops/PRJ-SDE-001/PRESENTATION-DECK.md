@@ -752,4 +752,4 @@ pandoc PRESENTATION-DECK.md -t revealjs -s -o presentation.html
 
 ---
 
-*Presentation Deck v1.0 - Last Updated: January 2025*
+*Presentation Deck v1.0 - Last Updated: November 2025*
