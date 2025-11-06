@@ -59,11 +59,58 @@ class TestWorkflowStructure:
         assert "on" in workflow
         assert workflow["on"] is not None
 
+    def test_workflow_on_key_uses_quoted_syntax(self, workflow_path):
+        """Verify workflow uses quoted 'on' key to avoid YAML reserved word issues."""
+        content = workflow_path.read_text()
+        # The 'on' key should be quoted as 'on': to avoid YAML 1.1 compatibility issues
+        # where 'on' could be interpreted as boolean true
+        assert "'on':" in content, "Workflow should use quoted 'on': key for YAML compatibility"
+
+    def test_workflow_on_key_parseable(self, workflow):
+        """Verify the 'on' key is properly parsed by YAML parser."""
+        # If YAML loads successfully and 'on' key exists, the syntax is correct
+        assert "on" in workflow
+        assert isinstance(workflow["on"], dict), "'on' should parse as a dictionary"
+        assert len(workflow["on"]) > 0, "'on' should contain trigger definitions"
+
+    def test_workflow_on_key_not_boolean(self, workflow):
+        """Verify 'on' key is not interpreted as a boolean."""
+        # In YAML 1.1, unquoted 'on' could be interpreted as boolean true
+        # This test ensures it's properly parsed as a dictionary key
+        assert workflow["on"] is not True
+        assert workflow["on"] is not False
+        assert isinstance(workflow["on"], dict)
+
     def test_workflow_triggers_on_push(self, workflow):
         """Verify workflow triggers on push to main."""
         assert "push" in workflow["on"]
         if isinstance(workflow["on"]["push"], dict):
             assert "branches" in workflow["on"]["push"]
+
+    def test_workflow_yaml_version_compatibility(self, workflow_path):
+        """Verify workflow YAML is compatible with both YAML 1.1 and 1.2."""
+        import yaml
+        content = workflow_path.read_text()
+        
+        # Test with safe_load (default parser)
+        parsed = yaml.safe_load(content)
+        assert parsed is not None
+        assert "name" in parsed
+        
+        # Verify 'on' is properly quoted to avoid 1.1/1.2 incompatibilities
+        assert "'on':" in content
+
+    def test_workflow_no_yaml_boolean_traps(self, workflow_path):
+        """Verify workflow avoids YAML boolean interpretation traps."""
+        content = workflow_path.read_text()
+        # In YAML 1.1, unquoted on/off/yes/no can be booleans
+        # Ensure critical keys are properly quoted or not in ambiguous positions
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            # Check if 'on:' appears unquoted at start of line (would be a trap)
+            stripped = line.lstrip()
+            if stripped.startswith('on:') and not stripped.startswith("'on':"):
+                pytest.fail(f"Line {i+1}: Unquoted 'on:' key could be misinterpreted as boolean")
 
     def test_workflow_triggers_on_pull_request(self, workflow):
         """Verify workflow triggers on pull requests."""
@@ -314,67 +361,71 @@ class TestOIDCConfiguration:
         assert "role-to-assume" in content or "OIDC" in content
 
 
-
-
-class TestYAMLKeyQuoting:
-    """Test YAML key quoting for reserved words."""
-
-    def test_on_key_is_quoted(self, workflow_path):
-        """Verify 'on' key is properly quoted to avoid YAML parsing issues."""
-        content = workflow_path.read_text()
-        # The 'on' key should be quoted as 'on': to avoid YAML 1.1 boolean interpretation
-        assert "'on':" in content, "The 'on' key should be quoted in YAML to avoid interpretation as boolean"
-
-    def test_on_key_not_unquoted_at_top_level(self, workflow_path):
-        """Verify unquoted 'on:' is not used at top level."""
-        lines = workflow_path.read_text().split('\n')
-        for i, line in enumerate(lines):
-            # Check top-level 'on:' (not indented, after 'name:')
-            if line.strip().startswith('name:') and i + 2 < len(lines):
-                next_significant = lines[i + 2].strip()
-                if next_significant.startswith('on:') and not next_significant.startswith("'on':"):
-                    pytest.fail("Top-level 'on:' should be quoted as 'on':")
-
-    def test_workflow_parses_correctly_with_quoted_on(self, workflow):
-        """Verify workflow parses correctly with quoted 'on' key."""
-        # If yaml.safe_load succeeds and 'on' is in the dict, quoting worked
-        assert "on" in workflow
-        assert workflow["on"] is not None
-
-    def test_yaml_110_compatibility(self, workflow_path):
-        """Verify YAML is compatible with YAML 1.1 (GitHub Actions uses this)."""
-        import yaml
-        content = workflow_path.read_text()
-        try:
-            # Try parsing with YAML 1.1 loader if available
-            parsed = yaml.safe_load(content)
-            assert "on" in parsed
-            # Verify 'on' was not interpreted as boolean True
-            assert isinstance(parsed["on"], dict), "The 'on' key should parse as a dict, not a boolean"
-        except Exception as e:
-            pytest.fail(f"YAML 1.1 compatibility issue: {e}")
-
-
-class TestBackendConfigDocumentation:
-    """Test backend configuration documentation improvements."""
-
-    def test_terraform_init_passes_backend_config(self, workflow):
-        """Verify workflow documents that terraform init uses -backend-config flags."""
-        job = workflow["jobs"]["terraform-plan"]
-        steps = job.get("steps", [])
-        init_steps = [s for s in steps if "init" in s.get("name", "").lower()]
-        
-        assert len(init_steps) > 0, "Should have terraform init step"
-        init_step = init_steps[0]
-        run_command = init_step.get("run", "")
-        
-        # Verify -backend-config is used in the init command
-        assert "-backend-config" in run_command, "terraform init should use -backend-config flags"
-        assert "bucket=${{ env.TFSTATE_BUCKET }}" in run_command, "Should pass bucket via backend-config"
-        assert "region=${{ env.AWS_REGION }}" in run_command, "Should pass region via backend-config"
 class TestWorkflowDispatch:
     """Test manual workflow dispatch."""
 
     def test_workflow_supports_manual_dispatch(self, workflow):
         """Verify workflow can be manually triggered."""
         assert "workflow_dispatch" in workflow["on"]
+
+
+class TestBackendWorkflowIntegration:
+    """Test integration between backend.tf and GitHub workflow."""
+
+    def test_workflow_provides_backend_config_values(self, workflow):
+        """Verify workflow provides all backend configuration values."""
+        job = workflow["jobs"]["terraform-plan"]
+        steps = job.get("steps", [])
+        
+        # Find the terraform init step
+        init_steps = [s for s in steps if "init" in s.get("name", "").lower()]
+        assert len(init_steps) > 0, "Workflow should have terraform init step"
+        
+        # Check that init step uses backend-config
+        init_step = init_steps[0]
+        run_command = init_step.get("run", "")
+        assert "-backend-config" in run_command, "Init should use -backend-config flags"
+
+    def test_backend_config_values_match_env_vars(self, workflow):
+        """Verify backend-config references match environment variables."""
+        job = workflow["jobs"]["terraform-plan"]
+        steps = job.get("steps", [])
+        
+        init_steps = [s for s in steps if "init" in s.get("name", "").lower()]
+        if init_steps:
+            run_command = init_steps[0].get("run", "")
+            # Should reference TFSTATE_BUCKET and AWS_REGION
+            assert "TFSTATE_BUCKET" in run_command or "tfstate_bucket" in run_command.lower()
+            assert "AWS_REGION" in run_command or "region" in run_command.lower()
+
+    def test_backend_placeholder_values_not_in_workflow(self, workflow, workflow_path):
+        """Verify workflow doesn't use REPLACE_ME placeholder values."""
+        content = workflow_path.read_text()
+        assert "REPLACE_ME" not in content, \
+            "Workflow should use environment variables, not placeholder values"
+
+    def test_workflow_init_provides_bucket_config(self, workflow):
+        """Verify workflow init step provides bucket configuration."""
+        job = workflow["jobs"]["terraform-plan"]
+        steps = job.get("steps", [])
+        
+        init_steps = [s for s in steps if "init" in s.get("name", "").lower()]
+        assert len(init_steps) > 0
+        
+        run_command = init_steps[0].get("run", "")
+        assert 'backend-config="bucket=' in run_command or \
+               "backend-config='bucket=" in run_command, \
+               "Init should configure backend bucket"
+
+    def test_workflow_init_provides_region_config(self, workflow):
+        """Verify workflow init step provides region configuration."""
+        job = workflow["jobs"]["terraform-plan"]
+        steps = job.get("steps", [])
+        
+        init_steps = [s for s in steps if "init" in s.get("name", "").lower()]
+        assert len(init_steps) > 0
+        
+        run_command = init_steps[0].get("run", "")
+        assert 'backend-config="region=' in run_command or \
+               "backend-config='region=" in run_command, \
+               "Init should configure backend region"

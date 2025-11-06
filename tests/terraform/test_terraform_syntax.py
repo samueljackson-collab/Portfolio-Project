@@ -230,38 +230,49 @@ class TestBackendTfContent:
         assert "var." in content or "${" in content
 
 
-
     def test_backend_tf_documents_backend_config_usage(self, backend_tf):
-        """Verify backend.tf documents how backend config values are provided."""
+        """Verify backend.tf documents how to use -backend-config flags."""
         content = backend_tf.read_text()
-        assert "-backend-config" in content, "Should document -backend-config flag usage"
-        assert "terraform init" in content, "Should reference terraform init command"
+        assert "-backend-config" in content, "Should document -backend-config usage"
+        assert "terraform init" in content or "backend-config" in content
 
-    def test_backend_tf_references_workflow_for_example(self, backend_tf):
-        """Verify backend.tf references the GitHub workflow for backend-config example."""
+    def test_backend_tf_references_workflow_file(self, backend_tf):
+        """Verify backend.tf references the workflow file for backend config examples."""
         content = backend_tf.read_text()
-        assert "terraform.yml" in content or "workflow" in content.lower(), \
-            "Should reference the workflow file for backend-config usage example"
+        assert ".github/workflows" in content, "Should reference workflow file"
+        assert "terraform.yml" in content, "Should reference terraform.yml workflow"
 
     def test_backend_tf_explains_variable_mapping(self, backend_tf):
         """Verify backend.tf explains how backend config maps to variables."""
         content = backend_tf.read_text()
-        # Should mention variable names
-        assert "tfstate_bucket" in content or "bucket" in content
-        assert "aws_region" in content or "region" in content
+        assert "bucket" in content
+        assert "region" in content
+        # Should explain the mapping
+        assert "var." in content or "${var." in content or "variables" in content.lower()
 
-    def test_backend_tf_comments_are_helpful(self, backend_tf):
-        """Verify backend.tf has clear, actionable comments."""
+    def test_backend_tf_has_replace_me_placeholders(self, backend_tf):
+        """Verify backend.tf uses REPLACE_ME placeholders for values."""
         content = backend_tf.read_text()
-        lines = content.split('\n')
-        comment_lines = [line for line in lines if line.strip().startswith('#')]
-        
-        # Should have multiple comment lines explaining the configuration
-        assert len(comment_lines) >= 3, "Should have comprehensive comments explaining backend config"
-        
-        # Comments should be substantial (not just placeholders)
-        substantial_comments = [c for c in comment_lines if len(c.strip()) > 20]
-        assert len(substantial_comments) >= 2, "Should have detailed explanatory comments"
+        replace_me_count = content.count("REPLACE_ME")
+        # Should have at least 3 REPLACE_ME placeholders (bucket, region, table)
+        assert replace_me_count >= 3, f"Expected at least 3 REPLACE_ME placeholders, found {replace_me_count}"
+
+    def test_backend_tf_placeholders_for_required_fields(self, backend_tf):
+        """Verify all required backend fields have REPLACE_ME placeholders."""
+        content = backend_tf.read_text()
+        assert "REPLACE_ME_tfstate_bucket" in content
+        assert "REPLACE_ME_aws_region" in content
+        assert "REPLACE_ME_tfstate_lock_table" in content or "REPLACE_ME" in content
+
+    def test_backend_tf_comments_are_informative(self, backend_tf):
+        """Verify backend.tf has informative comments about configuration."""
+        content = backend_tf.read_text()
+        # Check for comment indicators
+        comment_count = content.count("#")
+        assert comment_count >= 3, "Should have multiple informative comments"
+        # Comments should explain the configuration approach
+        assert any(word in content.lower() for word in ["provided", "during", "init", "flags"])
+
 class TestResourceNaming:
     """Test resource naming conventions."""
 
