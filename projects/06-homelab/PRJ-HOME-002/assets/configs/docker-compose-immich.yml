@@ -1,0 +1,462 @@
+# ==============================================================================
+# Immich Self-Hosted Photo Management Stack - Production Configuration
+# ==============================================================================
+#
+# ARCHITECTURE OVERVIEW:
+# ----------------------
+# Immich provides Google Photos-like functionality with ML-powered features:
+# - immich-server: REST API, web UI, photo/video ingestion
+# - immich-machine-learning: Face detection, object recognition, CLIP embeddings
+# - Redis: Job queue for async tasks (thumbnail generation, ML processing)
+# - Typesense: Fast full-text search engine for photos/albums
+#
+# DESIGN DECISIONS:
+# -----------------
+# 1. Split ML into separate service for resource isolation and scaling
+# 2. External PostgreSQL (managed separately for HA/backup requirements)
+# 3. Persistent volumes for photos, ML models, Redis data
+# 4. Resource limits prevent memory exhaustion on shared homelab hardware
+# 5. Health checks enable automatic recovery and monitoring integration
+#
+# STORAGE ARCHITECTURE:
+# ---------------------
+# - immich-upload-data: Original photos/videos (largest, grows continuously)
+# - immich-library-data: Generated assets (thumbnails, encoded videos)
+# - immich-ml-cache: ML model weights (huggingface transformers, CLIP)
+# - immich-redis-data: Job queue persistence (survives restarts)
+#
+# NETWORK DESIGN:
+# ---------------
+# Custom bridge network with IPAM for predictable IP assignments.
+# Enables static IP references in monitoring/firewall rules.
+#
+# PREREQUISITES:
+# --------------
+# 1. PostgreSQL 14+ with pgvector extension (see separate compose or RDS)
+# 2. .env file with required variables (see .env.example)
+# 3. Sufficient storage: 500GB+ for photo library, 10GB for ML models
+# 4. GPU passthrough (optional, for faster ML processing)
+#
+# OPERATIONAL NOTES:
+# ------------------
+# - Initial startup takes 5-10min to download ML models (~8GB)
+# - First photo upload triggers ML pipeline (embedding generation)
+# - Mobile app config: Server URL = http://<homelab-ip>:2283
+# - Backup strategy: Volume snapshots + PostgreSQL dumps (see runbook)
+#
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # Immich Server - Main API and Web Interface
+  # ----------------------------------------------------------------------------
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich_server
+    hostname: immich-server
+
+    restart: unless-stopped
+
+    # Resource limits prevent OOM on shared hardware
+    # Adjust based on concurrent users and upload volume
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          memory: 2G
+
+    environment:
+      # Database connection (external PostgreSQL)
+      DB_HOSTNAME: ${IMMICH_DB_HOSTNAME}
+      DB_PORT: ${IMMICH_DB_PORT:-5432}
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME:-immich}
+      DB_USERNAME: ${IMMICH_DB_USERNAME}
+      DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+
+      # Redis connection for job queue
+      REDIS_HOSTNAME: immich-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${IMMICH_REDIS_PASSWORD}
+
+      # Typesense search engine
+      TYPESENSE_HOST: immich-typesense
+      TYPESENSE_PORT: 8108
+      TYPESENSE_API_KEY: ${IMMICH_TYPESENSE_API_KEY}
+
+      # ML service URL for face detection, object recognition
+      IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
+
+      # Application configuration
+      LOG_LEVEL: ${IMMICH_LOG_LEVEL:-log}
+      NODE_ENV: production
+
+      # Public URL for mobile app and external access
+      PUBLIC_IMMICH_SERVER_URL: ${IMMICH_PUBLIC_URL:-http://localhost:2283}
+
+      # Timezone for EXIF data and log timestamps
+      TZ: ${TZ:-America/Los_Angeles}
+
+    ports:
+      - "2283:3001"  # Web UI and API
+
+    volumes:
+      # Original photos and videos (largest volume, grows continuously)
+      - immich-upload-data:/usr/src/app/upload
+
+      # Generated assets: thumbnails, encoded videos, sidecar files
+      - immich-library-data:/usr/src/app/library
+
+    networks:
+      immich-net:
+        ipv4_address: 172.28.0.10
+
+    depends_on:
+      immich-redis:
+        condition: service_healthy
+      immich-machine-learning:
+        condition: service_healthy
+      immich-typesense:
+        condition: service_healthy
+
+    # Health check verifies API readiness
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/server-info/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    labels:
+      # Prometheus metrics scraping
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "3001"
+      prometheus.io/path: "/api/server-info/metrics"
+
+      # Service metadata
+      com.immich.service: "server"
+      com.immich.version: "release"
+
+  # ----------------------------------------------------------------------------
+  # Immich Machine Learning - AI Processing Service
+  # ----------------------------------------------------------------------------
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    container_name: immich_ml
+    hostname: immich-ml
+
+    restart: unless-stopped
+
+    # ML service is CPU/memory intensive
+    # GPU passthrough recommended for production (--gpus all)
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          memory: 4G
+
+    environment:
+      # Redis connection for receiving ML jobs
+      REDIS_HOSTNAME: immich-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${IMMICH_REDIS_PASSWORD}
+
+      # Database connection for storing embeddings
+      DB_HOSTNAME: ${IMMICH_DB_HOSTNAME}
+      DB_PORT: ${IMMICH_DB_PORT:-5432}
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME:-immich}
+      DB_USERNAME: ${IMMICH_DB_USERNAME}
+      DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+
+      # ML model configuration
+      MACHINE_LEARNING_CACHE_FOLDER: /cache
+      MACHINE_LEARNING_REQUEST_THREADS: ${IMMICH_ML_THREADS:-4}
+
+      # Logging and timezone
+      LOG_LEVEL: ${IMMICH_LOG_LEVEL:-log}
+      TZ: ${TZ:-America/Los_Angeles}
+
+    volumes:
+      # ML model cache (transformers, CLIP weights)
+      # ~8GB download on first start, persists across restarts
+      - immich-ml-cache:/cache
+
+    networks:
+      immich-net:
+        ipv4_address: 172.28.0.11
+
+    depends_on:
+      immich-redis:
+        condition: service_healthy
+
+    # Health check queries the ML service ping endpoint
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3003/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s  # Model download can take time
+
+    labels:
+      com.immich.service: "machine-learning"
+      com.immich.version: "release"
+
+  # ----------------------------------------------------------------------------
+  # Redis - Job Queue and Caching Layer
+  # ----------------------------------------------------------------------------
+  immich-redis:
+    image: redis:7.2-alpine
+    container_name: immich_redis
+    hostname: immich-redis
+
+    restart: unless-stopped
+
+    # Redis is lightweight, minimal resources needed
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+    # Enable Redis authentication for security
+    command: >
+      redis-server
+      --requirepass ${IMMICH_REDIS_PASSWORD}
+      --appendonly yes
+      --save 60 1000
+      --loglevel warning
+
+    environment:
+      TZ: ${TZ:-America/Los_Angeles}
+      # Pass password to environment for healthcheck access
+      REDIS_PASSWORD: ${IMMICH_REDIS_PASSWORD}
+
+    volumes:
+      # Job queue persistence (survives container restarts)
+      - immich-redis-data:/data
+
+    networks:
+      immich-net:
+        ipv4_address: 172.28.0.12
+
+    # Health check with authentication
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep PONG || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    labels:
+      prometheus.io/scrape: "false"
+      com.immich.service: "redis"
+
+  # ----------------------------------------------------------------------------
+  # Typesense - Search Engine for Photos and Albums
+  # ----------------------------------------------------------------------------
+  immich-typesense:
+    image: typesense/typesense:26.0
+    container_name: immich_typesense
+    hostname: immich-typesense
+
+    restart: unless-stopped
+
+    # Typesense is search-intensive, allocate sufficient memory
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          memory: 1G
+
+    environment:
+      # API key for authentication
+      TYPESENSE_API_KEY: ${IMMICH_TYPESENSE_API_KEY}
+
+      # Data directory
+      TYPESENSE_DATA_DIR: /data
+
+      # Enable CORS for web UI access
+      TYPESENSE_ENABLE_CORS: "true"
+
+      # Logging
+      TYPESENSE_LOG_LEVEL: ${IMMICH_LOG_LEVEL:-info}
+
+      TZ: ${TZ:-America/Los_Angeles}
+
+    volumes:
+      # Search index persistence
+      - immich-typesense-data:/data
+
+    networks:
+      immich-net:
+        ipv4_address: 172.28.0.13
+
+    # Health check verifies Typesense API readiness
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8108/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    labels:
+      com.immich.service: "typesense"
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  immich-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1
+
+# ==============================================================================
+# Volumes
+# ==============================================================================
+volumes:
+  # Original photos and videos (largest volume)
+  # Backup strategy: Incremental snapshots, off-site replication
+  immich-upload-data:
+    driver: local
+
+  # Generated assets (thumbnails, transcoded videos)
+  # Can be regenerated from originals if lost
+  immich-library-data:
+    driver: local
+
+  # ML model cache (transformers, CLIP, face detection models)
+  # ~8GB, can be re-downloaded if lost
+  immich-ml-cache:
+    driver: local
+
+  # Redis job queue persistence
+  # Critical for in-flight upload processing
+  immich-redis-data:
+    driver: local
+
+  # Typesense search index
+  # Can be rebuilt from database, but takes time
+  immich-typesense-data:
+    driver: local
+
+# ==============================================================================
+# DEPLOYMENT GUIDE
+# ==============================================================================
+#
+# 1. PREREQUISITES
+#    --------------
+#    - Docker Engine 20.10+ with Compose V2
+#    - PostgreSQL 14+ with pgvector extension
+#    - 500GB+ available storage for photos
+#    - 16GB+ RAM recommended (can run on 8GB with swap)
+#
+# 2. INITIAL SETUP
+#    -------------
+#    # Create .env file with required variables
+#    cp .env.example .env
+#    nano .env  # Fill in database credentials, passwords
+#
+#    # Initialize PostgreSQL with pgvector extension
+#    docker exec -it <postgres-container> psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS pgvector;"
+#
+#    # Start services
+#    docker compose up -d
+#
+#    # Monitor initial ML model download (5-10 minutes)
+#    docker logs -f immich_ml
+#
+# 3. POST-DEPLOYMENT
+#    ---------------
+#    # Create admin user via web UI
+#    http://<homelab-ip>:2283
+#
+#    # Configure mobile app
+#    Server URL: http://<homelab-ip>:2283
+#
+#    # Verify health
+#    docker compose ps
+#    docker compose logs --tail=50
+#
+# 4. BACKUP STRATEGY
+#    ---------------
+#    # Daily volume snapshots
+#    docker run --rm -v immich-upload-data:/data -v $(pwd):/backup alpine tar czf /backup/immich-photos-$(date +%Y%m%d).tar.gz -C /data .
+#
+#    # PostgreSQL dumps
+#    pg_dump -h <db-host> -U immich immich > immich-db-$(date +%Y%m%d).sql
+#
+#    # Off-site replication (Restic, Duplicity, or cloud sync)
+#    restic backup /var/lib/docker/volumes/immich-upload-data
+#
+# 5. PERFORMANCE TUNING
+#    -------------------
+#    # Enable GPU acceleration for ML
+#    # Add to immich-machine-learning service:
+#    #   deploy:
+#    #     resources:
+#    #       reservations:
+#    #         devices:
+#    #           - driver: nvidia
+#    #             count: 1
+#    #             capabilities: [gpu]
+#
+#    # Increase Redis memory for large libraries (10k+ photos)
+#    # Modify redis command:
+#    #   --maxmemory 1gb
+#    #   --maxmemory-policy allkeys-lru
+#
+# 6. MONITORING
+#    ----------
+#    # Prometheus metrics available at:
+#    # http://<homelab-ip>:2283/api/server-info/metrics
+#
+#    # Key metrics to track:
+#    # - immich_upload_queue_size (backlog indicator)
+#    # - immich_ml_processing_duration (performance)
+#    # - redis_connected_clients (bottleneck detection)
+#
+# 7. TROUBLESHOOTING
+#    ---------------
+#    # Check service health
+#    docker compose ps
+#
+#    # ML service not processing
+#    docker logs immich_ml
+#    docker exec -it immich_ml curl http://localhost:3003/ping
+#
+#    # Upload failures
+#    docker logs immich_server | grep ERROR
+#
+#    # Redis connection issues
+#    docker exec -it immich_redis redis-cli -a <password> PING
+#
+# 8. COST COMPARISON
+#    ---------------
+#    Google Photos (100GB): $1.99/month = $24/year
+#    Google Photos (2TB): $9.99/month = $120/year
+#
+#    Immich Self-Hosted (2TB):
+#    - Hardware: $50 (used disk)
+#    - Power: ~$2/month = $24/year
+#    - Total Year 1: $74 (break-even at ~3 years for 2TB)
+#
+#    Benefits:
+#    - No vendor lock-in
+#    - Unlimited storage (hardware-limited)
+#    - Full control over data
+#    - No per-user fees (family sharing)
+#
+# ==============================================================================

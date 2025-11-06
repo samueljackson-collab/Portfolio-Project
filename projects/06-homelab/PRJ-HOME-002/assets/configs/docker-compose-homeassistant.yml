@@ -1,0 +1,433 @@
+# ==============================================================================
+# Home Assistant + Mosquitto MQTT - Production Configuration
+# ==============================================================================
+#
+# ARCHITECTURE OVERVIEW:
+# ----------------------
+# Home Assistant provides home automation with 2000+ integrations:
+# - Smart home device control (lights, thermostats, sensors)
+# - Automation engine (triggers, conditions, actions)
+# - Dashboard/UI for monitoring and control
+# - Zigbee/Z-Wave integration via USB coordinator
+#
+# Mosquitto MQTT Broker:
+# - Pub/sub messaging for IoT devices (ESP32, Tasmota, Zigbee2MQTT)
+# - Authentication and ACL for security
+# - Retained messages for device state persistence
+#
+# DESIGN DECISIONS:
+# -----------------
+# 1. Privileged mode required for USB device passthrough (Zigbee coordinator)
+# 2. Host networking for mDNS/discovery (HomeKit, Google Cast, DLNA)
+# 3. Separate MQTT broker for decoupling and reliability
+# 4. Persistent volumes for configuration, database, MQTT state
+# 5. Health checks enable monitoring and automatic recovery
+#
+# NETWORK ARCHITECTURE:
+# ---------------------
+# Home Assistant uses host networking for:
+# - mDNS/Avahi discovery (required for HomeKit, Chromecast, SSDP)
+# - Direct access to local network devices without NAT
+# - Simpler firewall rules (no port mapping needed)
+#
+# Mosquitto uses bridge network for isolation and security
+#
+# STORAGE LAYOUT:
+# ---------------
+# - homeassistant-config: Configuration YAML, custom components, themes
+# - homeassistant-db: SQLite database (history, states, events)
+# - mosquitto-data: MQTT persistence (retained messages, subscriptions)
+# - mosquitto-log: MQTT broker logs (useful for debugging)
+#
+# USB DEVICE PASSTHROUGH:
+# -----------------------
+# Zigbee coordinators require direct USB access for radio control.
+# Common coordinators:
+# - Sonoff Zigbee 3.0 USB Dongle Plus (TI CC2652P)
+# - ConBee II (Dresden Elektronik)
+# - Elelabs Zigbee USB Adapter
+#
+# Device detection:
+#   ls -la /dev/serial/by-id/
+#
+# Proxmox USB passthrough:
+#   1. Identify USB vendor:device ID: lsusb
+#   2. Add to VM config: qm set <vmid> -usb0 host=<vendor>:<device>
+#   3. Verify in VM: ls -la /dev/serial/by-id/
+#
+# PREREQUISITES:
+# --------------
+# 1. .env file with MQTT credentials (see .env.example)
+# 2. USB Zigbee coordinator (if using Zigbee devices)
+# 3. Sufficient storage: 10GB+ for historical data
+# 4. Static IP or DHCP reservation for Home Assistant host
+#
+# OPERATIONAL NOTES:
+# ------------------
+# - Initial startup creates default configuration (~2 minutes)
+# - Web UI available at: http://<homelab-ip>:8123
+# - First-run wizard creates admin user and onboards integrations
+# - Backup strategy: Daily snapshots + off-site replication (see runbook)
+# - MQTT credentials must match between HA and Mosquitto config
+#
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # Home Assistant - Home Automation Platform
+  # ----------------------------------------------------------------------------
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    hostname: homeassistant
+
+    restart: unless-stopped
+
+    # Privileged mode required for:
+    # - USB device passthrough (Zigbee/Z-Wave coordinators)
+    # - Bluetooth adapter access
+    # - Hardware video decoding (for camera streams)
+    privileged: true
+
+    # Host networking required for:
+    # - mDNS/Avahi discovery (HomeKit, Chromecast, DLNA)
+    # - SSDP discovery (UPnP devices, Samsung TVs)
+    # - Direct access to network devices without NAT
+    network_mode: host
+
+    environment:
+      # Timezone synchronization critical for automations
+      # Example: "Turn on lights at sunset" requires correct TZ
+      # Externalized to .env for portability across deployments
+      TZ: ${TZ:-America/Los_Angeles}
+
+    volumes:
+      # Home Assistant configuration directory
+      # Contains: configuration.yaml, automations.yaml, secrets.yaml, custom_components/
+      - homeassistant-config:/config
+
+      # SQLite database for historical data
+      # Grows over time (~1GB/year for typical home)
+      - homeassistant-db:/config/home-assistant_v2.db
+
+      # USB device passthrough for Zigbee coordinator
+      # Proxmox maps USB device to VM, container mounts device node
+      # Verify device with: ls -la /dev/serial/by-id/
+      # Uncomment the line below and set ZIGBEE_USB_DEVICE in .env if using Zigbee
+      # - ${ZIGBEE_USB_DEVICE}:/dev/ttyUSB0
+
+      # Optional: Bluetooth adapter passthrough
+      # - ${BLUETOOTH_DEVICE}:/dev/bluetooth
+
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+    # Health check verifies API readiness
+    # Used by reverse proxies and monitoring systems
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8123 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s  # HA startup can take 1-2 minutes
+
+    labels:
+      # Prometheus metrics scraping
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8123"
+      prometheus.io/path: "/api/prometheus"
+
+      # Service metadata
+      com.homeassistant.service: "core"
+      com.homeassistant.version: "stable"
+
+      # Traefik reverse proxy labels (if using Traefik)
+      traefik.enable: "true"
+      traefik.http.routers.homeassistant.rule: "Host(`ha.${DOMAIN_NAME:-homelab.local}`)"
+      traefik.http.services.homeassistant.loadbalancer.server.port: "8123"
+
+  # ----------------------------------------------------------------------------
+  # Mosquitto - MQTT Message Broker
+  # ----------------------------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    hostname: mosquitto
+
+    restart: unless-stopped
+
+    # Resource limits (MQTT is lightweight)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          memory: 128M
+
+    environment:
+      # Timezone for log timestamps
+      TZ: ${TZ:-America/Los_Angeles}
+
+      # Pass MQTT credentials to environment for healthcheck access
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+
+    ports:
+      # MQTT over TCP (unencrypted, use for local network only)
+      - "1883:1883"
+
+      # MQTT over WebSockets (for web clients)
+      - "9001:9001"
+
+      # Optional: MQTT over TLS/SSL
+      # - "8883:8883"
+
+    volumes:
+      # Mosquitto configuration file
+      # Must enable authentication: password_file /mosquitto/config/passwd
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+      # Password file (generated with mosquitto_passwd command)
+      # Creation: docker exec mosquitto mosquitto_passwd -c /mosquitto/config/passwd <username>
+      - ./mosquitto/passwd:/mosquitto/config/passwd:ro
+
+      # Optional: ACL file for fine-grained topic permissions
+      # - ./mosquitto/acl:/mosquitto/config/acl:ro
+
+      # MQTT persistence (retained messages, subscriptions)
+      - mosquitto-data:/mosquitto/data
+
+      # Broker logs (useful for debugging connection issues)
+      - mosquitto-log:/mosquitto/log
+
+    networks:
+      - homeassistant-net
+
+    # Health check verifies MQTT broker is accepting connections
+    # Uses mosquitto_sub to subscribe to system topics
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 mosquitto_sub -t '$$SYS/#' -C 1 -i healthcheck -u $${MQTT_USERNAME} -P $${MQTT_PASSWORD} || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    labels:
+      # Prometheus metrics (requires mosquitto-exporter sidecar)
+      prometheus.io/scrape: "false"  # Enable if using exporter
+
+      # Service metadata
+      com.homeassistant.service: "mqtt"
+      com.homeassistant.version: "2.0"
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  homeassistant-net:
+    driver: bridge
+
+# ==============================================================================
+# Volumes
+# ==============================================================================
+volumes:
+  # Home Assistant configuration and custom components
+  # Backup strategy: Daily snapshots, version control recommended
+  homeassistant-config:
+    driver: local
+
+  # Home Assistant database (history, states, events)
+  # Grows over time, periodic cleanup recommended
+  homeassistant-db:
+    driver: local
+
+  # Mosquitto persistence (retained messages, subscriptions)
+  # Critical for device state persistence across broker restarts
+  mosquitto-data:
+    driver: local
+
+  # Mosquitto logs
+  # Useful for debugging but can grow large, log rotation recommended
+  mosquitto-log:
+    driver: local
+
+# ==============================================================================
+# DEPLOYMENT GUIDE
+# ==============================================================================
+#
+# 1. PREREQUISITES
+#    --------------
+#    - Docker Engine 20.10+ with Compose V2
+#    - Static IP or DHCP reservation for Home Assistant host
+#    - USB Zigbee coordinator (optional, for Zigbee devices)
+#    - 10GB+ available storage for historical data
+#
+# 2. MOSQUITTO CONFIGURATION
+#    -----------------------
+#    # Create Mosquitto config directory
+#    mkdir -p mosquitto
+#
+#    # Create mosquitto.conf
+#    cat > mosquitto/mosquitto.conf << 'EOF'
+#    # Mosquitto Configuration
+#    persistence true
+#    persistence_location /mosquitto/data/
+#    log_dest file /mosquitto/log/mosquitto.log
+#    log_dest stdout
+#
+#    # Authentication
+#    allow_anonymous false
+#    password_file /mosquitto/config/passwd
+#
+#    # MQTT over TCP
+#    listener 1883
+#    protocol mqtt
+#
+#    # MQTT over WebSockets
+#    listener 9001
+#    protocol websockets
+#    EOF
+#
+#    # Create password file
+#    docker run --rm -v $(pwd)/mosquitto:/mosquitto eclipse-mosquitto:2.0 \
+#      mosquitto_passwd -c -b /mosquitto/passwd ${MQTT_USERNAME} ${MQTT_PASSWORD}
+#
+# 3. INITIAL SETUP
+#    -------------
+#    # Create .env file with required variables
+#    cp .env.example .env
+#    nano .env  # Fill in timezone, MQTT credentials, USB device path
+#
+#    # Detect Zigbee USB device
+#    ls -la /dev/serial/by-id/
+#    # Copy device path to .env as ZIGBEE_USB_DEVICE
+#
+#    # Start services
+#    docker compose up -d
+#
+#    # Monitor startup logs
+#    docker logs -f homeassistant
+#
+# 4. POST-DEPLOYMENT
+#    ---------------
+#    # Access web UI
+#    http://<homelab-ip>:8123
+#
+#    # Complete first-run wizard
+#    # - Create admin user
+#    # - Set location (for sun/weather automations)
+#    # - Onboard integrations
+#
+#    # Configure MQTT integration
+#    # Settings > Integrations > Add Integration > MQTT
+#    # Broker: mosquitto (or homelab IP if using host network)
+#    # Port: 1883
+#    # Username: ${MQTT_USERNAME}
+#    # Password: ${MQTT_PASSWORD}
+#
+#    # Add Zigbee integration (if using Zigbee coordinator)
+#    # Settings > Integrations > Add Integration > Zigbee Home Automation (ZHA)
+#    # Serial Device Path: /dev/ttyUSB0
+#    # Radio Type: auto-detect (or select specific coordinator)
+#
+# 5. BACKUP STRATEGY
+#    ---------------
+#    # Built-in snapshot feature (recommended)
+#    # Settings > System > Backups > Create Backup
+#
+#    # Manual volume backup
+#    docker run --rm -v homeassistant-config:/data -v $(pwd):/backup alpine \
+#      tar czf /backup/ha-config-$(date +%Y%m%d).tar.gz -C /data .
+#
+#    # Automated backups with Home Assistant addon
+#    # Install "Google Drive Backup" or "Samba Backup" from addon store
+#
+#    # Off-site replication (Restic, Duplicity, or cloud sync)
+#    restic backup /var/lib/docker/volumes/homeassistant-config
+#
+# 6. SECURITY HARDENING
+#    ------------------
+#    # Enable SSL/TLS for web UI
+#    # - Use Nginx reverse proxy with Let's Encrypt
+#    # - Or configure HA internal SSL (less recommended)
+#
+#    # Configure firewall rules
+#    # - Block external access to port 8123 (use VPN or reverse proxy)
+#    # - Allow port 1883 only from local network
+#
+#    # Enable two-factor authentication
+#    # Profile > Security > Multi-factor Authentication
+#
+#    # Use secrets.yaml for sensitive data
+#    # configuration.yaml:
+#    #   mqtt:
+#    #     broker: mosquitto
+#    #     username: !secret mqtt_username
+#    #     password: !secret mqtt_password
+#
+# 7. MONITORING
+#    ----------
+#    # Prometheus metrics available at:
+#    # http://<homelab-ip>:8123/api/prometheus
+#
+#    # Key metrics to track:
+#    # - homeassistant_entity_available (device connectivity)
+#    # - homeassistant_automation_triggered_total (automation health)
+#    # - homeassistant_database_size_bytes (storage growth)
+#
+#    # Enable Prometheus integration
+#    # configuration.yaml:
+#    #   prometheus:
+#    #     namespace: homeassistant
+#
+# 8. TROUBLESHOOTING
+#    ---------------
+#    # Check service health
+#    docker compose ps
+#
+#    # View Home Assistant logs
+#    docker logs homeassistant | tail -50
+#
+#    # Zigbee coordinator not detected
+#    docker exec -it homeassistant ls -la /dev/ttyUSB0
+#    # If missing, verify USB passthrough in Proxmox/VM
+#
+#    # MQTT connection issues
+#    docker exec -it mosquitto mosquitto_sub -t '#' -u ${MQTT_USERNAME} -P ${MQTT_PASSWORD}
+#
+#    # Restart Home Assistant core (without restarting container)
+#    docker exec -it homeassistant ha core restart
+#
+#    # Check configuration validity
+#    docker exec -it homeassistant ha core check
+#
+# 9. PERFORMANCE TUNING
+#    -------------------
+#    # Reduce database size (configuration.yaml)
+#    recorder:
+#      purge_keep_days: 7  # Default is 10
+#      commit_interval: 10  # Batch writes
+#      exclude:
+#        domains:
+#          - automation
+#          - updater
+#        entity_globs:
+#          - sensor.weather_*
+#
+#    # Enable MariaDB/PostgreSQL for better performance (large deployments)
+#    # Replace SQLite with external database for 100+ devices
+#
+# 10. COMMON INTEGRATIONS
+#     -------------------
+#     # Zigbee devices: Settings > Integrations > ZHA
+#     # Google Cast/Chromecast: Auto-discovered via mDNS
+#     # Philips Hue: Settings > Integrations > Hue
+#     # Ring doorbells: Install HACS > Ring integration
+#     # Nest thermostats: Settings > Integrations > Nest
+#     # Tasmota devices: Configure MQTT in Tasmota firmware
+#
+# ==============================================================================

@@ -37,6 +37,20 @@ def mock_env(monkeypatch):
 class TestScriptExistence:
     """Test script file properties."""
 
+
+    def test_script_executable_bit_set(self, script_path):
+        """Verify script has executable bit set (chmod +x)."""
+        import stat
+        mode = script_path.stat().st_mode
+        # Check if any execute bit is set (owner, group, or others)
+        assert mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH), \
+            f"Script {script_path} should have executable permission"
+
+    def test_script_owner_executable(self, script_path):
+        """Verify script is executable by owner."""
+        import stat
+        mode = script_path.stat().st_mode
+        assert mode & stat.S_IXUSR, "Script should be executable by owner"
     def test_script_exists(self, script_path):
         """Verify the bootstrap script exists."""
         assert script_path.exists(), f"Script not found at {script_path}"
