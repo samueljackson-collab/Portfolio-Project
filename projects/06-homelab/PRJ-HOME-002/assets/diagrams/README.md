@@ -398,3 +398,62 @@ Found an error or want to suggest improvements?
 **Last Updated:** November 6, 2025
 **Created by:** Sam Jackson
 **Project:** PRJ-HOME-002 (Homelab Infrastructure Documentation)
+
+### 5. `monitoring-architecture.mmd`
+**Complete Monitoring Stack Architecture**
+
+- **Purpose:** Shows the entire observability stack with metrics, logs, and alerting
+- **Complexity:** High (50+ nodes, detailed flow from targets to dashboards)
+- **Best for:** SRE/DevOps interviews, monitoring documentation, observability discussions
+- **Key components:**
+  - Metrics exporters (Node, PostgreSQL, Proxmox, SNMP, Blackbox)
+  - Prometheus scraping and time-series database
+  - Grafana dashboards (8 dashboards configured)
+  - Loki + Promtail logging stack
+  - AlertManager with multi-channel notifications (Slack, Email, Pushover)
+  - Complete data flow from VMs → Exporters → Prometheus → Grafana
+
+### 6. `disaster-recovery-flow.mmd`
+**Disaster Recovery Decision Tree**
+
+- **Purpose:** Flowchart showing DR procedures based on failure severity
+- **Complexity:** High (4 severity levels, multiple decision points, recovery paths)
+- **Best for:** Business continuity planning, incident response training, RTO/RPO documentation
+- **Key scenarios:**
+  - Minor: Single service failure (RTO: 5-10 minutes)
+  - Moderate: Single VM failure (RTO: 30 minutes)
+  - Critical: Proxmox host failure (RTO: 2-4 hours)
+  - Catastrophic: Complete infrastructure loss (RTO: 4-8 hours with cloud backups)
+  - Decision points for escalation and recovery verification
+
+---
+
+## 🎨 Converting Diagrams to PNG
+
+**See detailed instructions in:** `CONVERSION-GUIDE.md`
+
+### Quick Start (3 Options)
+
+#### Option 1: Online (No Installation)
+Visit https://mermaid.live/ and paste diagram content → Export as PNG
+
+#### Option 2: Automated Script (Best Quality)
+```bash
+# Install Mermaid CLI first (see CONVERSION-GUIDE.md)
+chmod +x CONVERT-TO-PNG.sh
+./CONVERT-TO-PNG.sh
+```
+
+#### Option 3: Manual CLI
+```bash
+# Convert all diagrams (requires mmdc installed)
+mmdc -i service-architecture.mmd -o service-architecture.png -b transparent -w 3000 -s 2
+mmdc -i data-flow.mmd -o data-flow.png -b white -w 1800 -s 2
+mmdc -i backup-recovery.mmd -o backup-recovery.png -b transparent -w 2400 -s 2
+mmdc -i network-topology.mmd -o network-topology.png -b transparent -w 2800 -s 2
+mmdc -i monitoring-architecture.mmd -o monitoring-architecture.png -b transparent -w 3000 -s 2
+mmdc -i disaster-recovery-flow.mmd -o disaster-recovery-flow.png -b transparent -w 2800 -s 2
+```
+
+**Full installation and troubleshooting:** See `CONVERSION-GUIDE.md`
+
