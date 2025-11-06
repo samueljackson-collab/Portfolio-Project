@@ -151,7 +151,7 @@ deletion_protection = true
 > "I've documented configurations for dev, staging, and production. Notice how I balance cost and availability—dev uses small instances without multi-AZ, while production has high availability and longer backup retention. This flexibility lets teams choose their own trade-offs."
 
 **Quick Cost Callout:**
-> "Multi-AZ roughly doubles cost but provides 99.95% uptime with automatic failover in under 60 seconds. The module makes this configurable via a single boolean."
+> "Multi-AZ roughly doubles cost but provides 99.95% uptime with automatic failover typically completing in 1–2 minutes. The module makes this configurable via a single boolean."
 
 ---
 
