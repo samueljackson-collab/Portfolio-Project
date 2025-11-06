@@ -468,7 +468,7 @@ curl -s 'http://192.168.40.201:9090/api/v1/query?query=100-(avg(irate(node_cpu_s
 # Expected: Value < 70%
 
 # Monitor for 15 minutes
-watch -n 60 'curl -s "http://192.168.40.201:9090/api/v1/query?query=..." | jq ".data.result[0].value[1]"'
+watch -n 60 'curl -s "http://192.168.40.201:9090/api/v1/query?query=100-(avg(irate(node_cpu_seconds_total{mode=\"idle\",instance=\"192.168.40.[IP]:9100\"}[5m]))*100)" | jq ".data.result[0].value[1]"'
 ```
 
 **Check alert status:**
