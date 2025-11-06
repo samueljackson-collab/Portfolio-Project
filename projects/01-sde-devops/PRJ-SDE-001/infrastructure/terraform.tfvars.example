@@ -1,43 +1,113 @@
 # Example Terraform Variables Configuration
-# Copy this file to terraform.tfvars and customize for your environment
-# NEVER commit terraform.tfvars to git (contains sensitive data)
+# Copy this file to terraform.tfvars and customize for your deployment
+# Command: cp terraform.tfvars.example terraform.tfvars
 
+#------------------------------------------------------------------------------
 # General Configuration
-aws_region   = "us-east-1"
-project_name = "myproject"
+#------------------------------------------------------------------------------
+
+project_name = "my-project"
 environment  = "dev" # Options: dev, staging, prod
+aws_region   = "us-east-1"
 
+#------------------------------------------------------------------------------
+# VPC Configuration
+#------------------------------------------------------------------------------
+
+vpc_cidr           = "10.0.0.0/16"
+az_count           = 2 # Number of availability zones (1-3)
+enable_nat_gateway = true
+single_nat_gateway = true  # Set to false for production HA (one NAT per AZ)
+enable_flow_logs   = true
+flow_logs_retention_days = 7
+enable_s3_endpoint = true
+
+#------------------------------------------------------------------------------
 # Database Configuration
-db_username = "dbadmin"
-db_password = "CHANGE_ME_MIN_8_CHARS" # ⚠️ Use a strong password, store in Secrets Manager
+#------------------------------------------------------------------------------
 
-# Instance Sizing
-db_instance_class        = "db.t3.small"  # Dev: db.t3.small, Prod: db.r5.large
-db_allocated_storage     = 20             # Initial storage in GB
-db_max_allocated_storage = 100            # Max autoscaling limit in GB
+db_username           = "dbadmin"
+db_password           = "CHANGE-ME-USE-STRONG-PASSWORD" # IMPORTANT: Change this!
+db_instance_class     = "db.t3.small" # Options: db.t3.micro, db.t3.small, db.t3.medium
+db_allocated_storage  = 20            # Initial storage in GB
+db_max_allocated_storage = 100        # Max storage for auto-scaling in GB
+db_engine_version     = "15.4"        # PostgreSQL version
 
-# Database Engine
-db_engine_version = "15.4" # PostgreSQL version
-
-# High Availability (Production Settings)
+# High Availability
 db_multi_az = false # Set to true for production
 
 # Backup Configuration
-db_backup_retention_days = 7 # 0-35 days, 7+ recommended for production
+db_backup_retention_days = 7 # Days to retain backups (0-35)
 
 # Safety Controls
 db_deletion_protection = false # Set to true for production
-db_skip_final_snapshot = true  # Set to false for production (creates snapshot on destroy)
-db_apply_immediately   = true  # Set to false for production (use maintenance window)
+db_skip_final_snapshot = false # Keep false to protect data
+db_apply_immediately   = false # Set to false for production
 
-# Example Production Configuration:
-# project_name             = "myapp"
-# environment              = "prod"
-# db_instance_class        = "db.r5.large"
-# db_allocated_storage     = 100
-# db_max_allocated_storage = 500
-# db_multi_az              = true
+#------------------------------------------------------------------------------
+# Application Configuration (ECS)
+#------------------------------------------------------------------------------
+
+# Set to true to deploy full-stack application
+deploy_application = false
+
+# Uncomment and configure if deploying application:
+# app_container_name  = "my-app"
+# app_container_image = "nginx:latest" # Replace with your ECR image
+# app_container_port  = 80
+# app_task_cpu        = "256"  # Options: 256, 512, 1024, 2048, 4096
+# app_task_memory     = "512"  # Memory in MB
+# app_desired_count   = 2      # Number of tasks to run
+#
+# # Auto-scaling
+# app_enable_autoscaling = true
+# app_min_capacity       = 1
+# app_max_capacity       = 10
+# app_cpu_target         = 70  # Target CPU %
+# app_memory_target      = 80  # Target memory %
+#
+# # Health checks
+# app_health_check_path = "/" # Health check endpoint
+
+#------------------------------------------------------------------------------
+# Shared Configuration
+#------------------------------------------------------------------------------
+
+enable_deletion_protection = false # Set to true for production
+log_retention_days         = 7     # CloudWatch log retention (1-3653 days)
+
+#------------------------------------------------------------------------------
+# Production Configuration Example
+#------------------------------------------------------------------------------
+
+# For production deployment, use settings like:
+#
+# environment         = "prod"
+# az_count            = 3
+# single_nat_gateway  = false # High availability
+# db_instance_class   = "db.r6g.large"
+# db_multi_az         = true
+# db_deletion_protection = true
 # db_backup_retention_days = 30
-# db_deletion_protection   = true
-# db_skip_final_snapshot   = false
-# db_apply_immediately     = false
+# deploy_application  = true
+# app_desired_count   = 3
+# app_min_capacity    = 2
+# app_max_capacity    = 20
+# enable_deletion_protection = true
+# log_retention_days  = 90
+
+#------------------------------------------------------------------------------
+# Development/Testing Configuration Example
+#------------------------------------------------------------------------------
+
+# For cost-effective dev/test:
+#
+# environment         = "dev"
+# az_count            = 1
+# enable_nat_gateway  = true
+# single_nat_gateway  = true
+# db_instance_class   = "db.t3.micro"
+# db_multi_az         = false
+# db_backup_retention_days = 1
+# deploy_application  = false # Or true for testing
+# log_retention_days  = 3

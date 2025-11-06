@@ -1,0 +1,296 @@
+# ============================================================================
+# Terraform Variables Configuration Example
+# ============================================================================
+# This file demonstrates how to configure the database infrastructure module.
+#
+# USAGE:
+#   1. Copy this file: cp terraform.tfvars.example terraform.tfvars
+#   2. Edit terraform.tfvars with your actual values
+#   3. NEVER commit terraform.tfvars (it's in .gitignore)
+#
+# IMPORTANT:
+#   - terraform.tfvars contains SENSITIVE information (passwords, IDs)
+#   - Keep it secure and never commit to version control
+#   - Use AWS Secrets Manager or environment variables in production
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# PROJECT IDENTIFICATION
+# ----------------------------------------------------------------------------
+
+# Project name - used to prefix all resource names
+# Example: "my-app" creates resources like "my-app-production-db"
+project_name = "my-project"
+
+# Environment name - dev, staging, production, etc.
+# This affects resource sizing and redundancy settings
+# Options: "dev", "staging", "production"
+environment = "production"
+
+# ----------------------------------------------------------------------------
+# DATABASE CREDENTIALS
+# ----------------------------------------------------------------------------
+
+# Master database username
+# Requirements:
+#   - 1-16 characters
+#   - Letters, numbers, underscores only
+#   - Must start with a letter
+db_username = "dbadmin"
+
+# Master database password
+# SECURITY CRITICAL: Use a strong password and store securely
+# Requirements:
+#   - At least 8 characters
+#   - Include uppercase, lowercase, numbers, special chars
+#   - Do NOT use common passwords or dictionary words
+#
+# PRODUCTION: Retrieve from AWS Secrets Manager instead of hardcoding:
+#   db_password = data.aws_secretsmanager_secret_version.db_password.secret_string
+#
+# EXAMPLE (DO NOT USE IN PRODUCTION):
+db_password = "CHANGE_ME_USE_SECRETS_MANAGER"
+
+# ----------------------------------------------------------------------------
+# NETWORK CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# VPC ID where the database will be deployed
+# Get this from your VPC module or existing infrastructure
+# Example: "vpc-0a1b2c3d4e5f6g7h8"
+vpc_id = "vpc-xxxxxxxxxxxxx"
+
+# Subnet IDs for database placement
+# Requirements:
+#   - Must be private subnets (no direct internet access)
+#   - Should span multiple availability zones for high availability
+#   - Must be in the VPC specified above
+#
+# Example: Two subnets in different AZs
+subnet_ids = [
+  "subnet-xxxxxxxxxxxxx",  # us-west-2a (AZ-A)
+  "subnet-yyyyyyyyyyyyy"   # us-west-2b (AZ-B)
+]
+
+# Security group IDs that can access the database
+# These are typically application security groups (ECS tasks, EC2 instances)
+# Leave empty [] if you'll add security group rules separately
+#
+# Example: Allow access from web application and backend API
+allowed_security_group_ids = [
+  "sg-xxxxxxxxxxxxx",  # web-app-sg
+  "sg-yyyyyyyyyyyyy"   # backend-api-sg
+]
+
+# ----------------------------------------------------------------------------
+# DATABASE SIZING
+# ----------------------------------------------------------------------------
+
+# RDS instance class (determines CPU, memory, network performance)
+#
+# DEVELOPMENT/TESTING:
+#   - db.t3.micro  (2 vCPU, 1 GB RAM)   ~$15/month
+#   - db.t3.small  (2 vCPU, 2 GB RAM)   ~$30/month
+#
+# PRODUCTION (LIGHT):
+#   - db.t3.medium (2 vCPU, 4 GB RAM)   ~$60/month
+#   - db.t3.large  (2 vCPU, 8 GB RAM)   ~$120/month
+#
+# PRODUCTION (MODERATE):
+#   - db.r6g.large    (2 vCPU, 16 GB RAM)  ~$140/month
+#   - db.r6g.xlarge   (4 vCPU, 32 GB RAM)  ~$280/month
+#
+# PRODUCTION (HEAVY):
+#   - db.r6g.2xlarge  (8 vCPU, 64 GB RAM)  ~$560/month
+#   - db.r6g.4xlarge  (16 vCPU, 128 GB RAM) ~$1,120/month
+#
+instance_class = "db.t3.small"
+
+# Initial allocated storage in GB
+# This is the starting storage size; it can auto-scale up to max_allocated_storage
+# Minimum: 20 GB for PostgreSQL
+allocated_storage = 20
+
+# Maximum storage for auto-scaling in GB
+# RDS will automatically scale up to this limit as database grows
+# Set this to 0 to disable auto-scaling
+max_allocated_storage = 100
+
+# ----------------------------------------------------------------------------
+# DATABASE ENGINE
+# ----------------------------------------------------------------------------
+
+# PostgreSQL engine version
+# Always use latest minor version for security patches
+# Check available versions: aws rds describe-db-engine-versions --engine postgres
+#
+# Supported major versions (as of 2025):
+#   - "15.4" (Recommended - latest stable)
+#   - "14.9"
+#   - "13.12"
+#   - "12.16"
+engine_version = "15.4"
+
+# ----------------------------------------------------------------------------
+# HIGH AVAILABILITY & BACKUP
+# ----------------------------------------------------------------------------
+
+# Multi-AZ deployment (automatic failover to standby in different AZ)
+#
+# PRODUCTION: true  (adds ~2x cost but provides 99.95% availability)
+# DEV/STAGING: false (cost savings, acceptable downtime)
+#
+# When enabled:
+#   - Standby replica created in different availability zone
+#   - Automatic failover in ~60 seconds if primary fails
+#   - Backups taken from standby (no performance impact)
+multi_az = true
+
+# Backup retention period in days
+# How long to keep automated daily backups
+#
+# PRODUCTION: 30 days (compliance requirement)
+# STAGING: 7 days (sufficient for testing)
+# DEV: 1 day (minimal retention)
+#
+# Range: 0-35 days (0 = backups disabled)
+backup_retention_period = 7
+
+# ----------------------------------------------------------------------------
+# SAFETY CONTROLS
+# ----------------------------------------------------------------------------
+
+# Deletion protection (prevents accidental deletion via console/CLI)
+#
+# PRODUCTION: true  (extra safety layer)
+# DEV/STAGING: false (easy cleanup)
+#
+# When enabled, must explicitly disable before deleting database
+deletion_protection = false
+
+# Skip final snapshot when destroying database
+#
+# PRODUCTION: false (always create final snapshot)
+# DEV/STAGING: true (faster cleanup, no snapshot needed)
+#
+# When false, Terraform creates a final snapshot before deletion
+# Snapshot name: <identifier>-final-snapshot-<timestamp>
+skip_final_snapshot = true
+
+# Apply changes immediately (vs. next maintenance window)
+#
+# PRODUCTION: false (apply during maintenance window)
+# DEV/STAGING: true (immediate changes for faster iteration)
+#
+# When false, changes wait for weekly maintenance window
+apply_immediately = true
+
+# ----------------------------------------------------------------------------
+# RESOURCE TAGS
+# ----------------------------------------------------------------------------
+
+# Additional tags to apply to all resources
+# Tags help with cost allocation, access control, and automation
+#
+# Standard tags are automatically added:
+#   - Project: (from project_name)
+#   - Environment: (from environment)
+#
+# Add custom tags here:
+tags = {
+  Owner       = "platform-team"
+  CostCenter  = "engineering"
+  Terraform   = "true"
+  Component   = "database"
+  Backup      = "required"
+  Compliance  = "sox"
+}
+
+# ============================================================================
+# CONFIGURATION EXAMPLES FOR DIFFERENT SCENARIOS
+# ============================================================================
+
+# ------------------------------------
+# Example 1: Development Environment
+# ------------------------------------
+# project_name                = "myapp"
+# environment                 = "dev"
+# db_username                 = "devadmin"
+# db_password                 = "DevPassword123!"
+# vpc_id                      = "vpc-dev123"
+# subnet_ids                  = ["subnet-dev1", "subnet-dev2"]
+# allowed_security_group_ids  = ["sg-dev-app"]
+# instance_class              = "db.t3.micro"
+# allocated_storage           = 20
+# max_allocated_storage       = 50
+# engine_version              = "15.4"
+# multi_az                    = false
+# backup_retention_period     = 1
+# deletion_protection         = false
+# skip_final_snapshot         = true
+# apply_immediately           = true
+#
+# Estimated monthly cost: ~$15-20
+
+# ------------------------------------
+# Example 2: Staging Environment
+# ------------------------------------
+# project_name                = "myapp"
+# environment                 = "staging"
+# db_username                 = "stagingadmin"
+# db_password                 = "<from-secrets-manager>"
+# vpc_id                      = "vpc-staging123"
+# subnet_ids                  = ["subnet-staging-1a", "subnet-staging-1b"]
+# allowed_security_group_ids  = ["sg-staging-app", "sg-staging-api"]
+# instance_class              = "db.t3.small"
+# allocated_storage           = 20
+# max_allocated_storage       = 100
+# engine_version              = "15.4"
+# multi_az                    = false
+# backup_retention_period     = 7
+# deletion_protection         = false
+# skip_final_snapshot         = false
+# apply_immediately           = true
+#
+# Estimated monthly cost: ~$30-40
+
+# ------------------------------------
+# Example 3: Production Environment
+# ------------------------------------
+# project_name                = "myapp"
+# environment                 = "production"
+# db_username                 = "prodbadmin"
+# db_password                 = "<from-secrets-manager>"
+# vpc_id                      = "vpc-prod123"
+# subnet_ids                  = ["subnet-prod-1a", "subnet-prod-1b", "subnet-prod-1c"]
+# allowed_security_group_ids  = ["sg-prod-app", "sg-prod-api"]
+# instance_class              = "db.r6g.large"
+# allocated_storage           = 100
+# max_allocated_storage       = 500
+# engine_version              = "15.4"
+# multi_az                    = true
+# backup_retention_period     = 30
+# deletion_protection         = true
+# skip_final_snapshot         = false
+# apply_immediately           = false
+#
+# Estimated monthly cost: ~$300-400
+
+# ============================================================================
+# TROUBLESHOOTING
+# ============================================================================
+#
+# Problem: "InvalidParameterValue: Invalid DB Subnet Group"
+# Solution: Ensure subnets are in different availability zones
+#
+# Problem: "DBSecurityGroupNotFound"
+# Solution: Verify security group IDs exist and are in the correct VPC
+#
+# Problem: "InvalidVPCNetworkStateFault"
+# Solution: Check that subnets have correct route tables and NAT gateway
+#
+# Problem: "Cost is higher than expected"
+# Solution: Check multi_az setting (doubles cost), instance_class size,
+#           and backup retention period
+#
+# ============================================================================

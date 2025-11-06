@@ -1,0 +1,149 @@
+graph TB
+    subgraph Internet[" Internet"]
+        CloudFlare["Cloudflare DNS<br/>Proxy + DDoS Protection"]
+        LetsEncrypt["Let's Encrypt<br/>Certificate Authority"]
+    end
+
+    subgraph HomeNetwork["<à Home Network - VLAN 40 Lab (192.168.40.0/24)"]
+        Router["UniFi Dream Machine<br/>192.168.40.1<br/>Gateway + Firewall"]
+
+        subgraph ProxmoxCluster["=¥ Proxmox VE Host - 192.168.40.10<br/>Dell R720 - 2x Xeon E5-2670, 128GB RAM"]
+            PVE_Mgmt["Proxmox Management<br/>https://192.168.40.10:8006"]
+
+            subgraph VirtualMachines["Virtual Machines"]
+                VM_Wiki["VM 100: Wiki.js<br/>192.168.40.20<br/>Ubuntu 22.04 LTS<br/>4 vCPU, 8GB RAM<br/>50GB Disk"]
+
+                VM_HomeAssistant["VM 101: Home Assistant<br/>192.168.40.21<br/>Ubuntu 22.04 LTS<br/>2 vCPU, 4GB RAM<br/>32GB Disk"]
+
+                VM_Immich["VM 102: Immich<br/>192.168.40.22<br/>Ubuntu 22.04 LTS<br/>4 vCPU, 16GB RAM<br/>100GB Disk + NFS Mount"]
+
+                VM_Database["VM 103: PostgreSQL<br/>192.168.40.23<br/>Ubuntu 22.04 LTS<br/>4 vCPU, 16GB RAM<br/>200GB Disk"]
+
+                VM_Nginx["VM 105: Nginx Proxy Manager<br/>192.168.40.25<br/>Ubuntu 22.04 LTS<br/>2 vCPU, 2GB RAM<br/>20GB Disk"]
+            end
+
+            subgraph Containers["LXC Containers"]
+                LXC_Monitor["CT 200: Monitoring<br/>192.168.40.30<br/>Prometheus + Grafana<br/>2 vCPU, 4GB RAM"]
+
+                LXC_Logs["CT 201: Logging<br/>192.168.40.31<br/>Loki + Promtail<br/>2 vCPU, 4GB RAM"]
+
+                LXC_Backup["CT 202: PBS Client<br/>192.168.40.32<br/>Backup Agent<br/>1 vCPU, 2GB RAM"]
+            end
+        end
+
+        subgraph Storage["=¾ TrueNAS Core - 192.168.40.5<br/>Supermicro - Xeon E3-1230v3, 32GB ECC"]
+            TrueNAS_Mgmt["TrueNAS WebUI<br/>https://192.168.40.5"]
+
+            subgraph Pools["ZFS Storage Pools"]
+                Pool_Main["Pool: tank<br/>6x 4TB RAIDZ2<br/>Usable: 16TB<br/>Used: 8.2TB (51%)"]
+
+                Pool_Backup["Pool: backup<br/>4x 2TB RAIDZ1<br/>Usable: 6TB<br/>Used: 3.1TB (52%)"]
+            end
+
+            subgraph Shares["Network Shares"]
+                SMB_Media["SMB: /mnt/tank/media<br/>Photos, Videos, Music"]
+                SMB_Backups["SMB: /mnt/tank/backups<br/>VM Backups, Archives"]
+                NFS_Immich["NFS: /mnt/tank/immich<br/>Photo Storage for Immich"]
+                NFS_PBS["NFS: /mnt/backup/pbs<br/>Proxmox Backup Target"]
+            end
+        end
+
+        subgraph BackupServer["=¿ Proxmox Backup Server - 192.168.40.15<br/>Mini PC - Intel N100, 16GB RAM"]
+            PBS_Mgmt["PBS WebUI<br/>https://192.168.40.15:8007"]
+            PBS_Datastore["Datastore: homelab-backups<br/>4TB External + NFS Mount<br/>Retention: 7d/4w/3m"]
+        end
+    end
+
+    subgraph ExternalUsers["=e Users"]
+        InternalUser["Internal Users<br/>LAN Access<br/>Direct URLs"]
+        ExternalUser["External Users<br/>Internet Access<br/>Custom Domains"]
+        MobileApp["Mobile Apps<br/>Home Assistant<br/>Immich"]
+    end
+
+    %% Internet Connections
+    CloudFlare -->|DNS Resolution<br/>DDoS Protection| Router
+    LetsEncrypt -.->|Certificate Renewal<br/>HTTP-01 Challenge| VM_Nginx
+
+    %% User Access Paths
+    InternalUser -->|https://wiki.homelab.local<br/>Direct Access| VM_Nginx
+    InternalUser -->|https://homeassistant.homelab.local| VM_Nginx
+    InternalUser -->|https://photos.homelab.local| VM_Nginx
+    InternalUser -->|https://grafana.homelab.local| VM_Nginx
+
+    ExternalUser -->|https://wiki.example.com<br/>Port 443| Router
+    ExternalUser -->|https://photos.example.com<br/>Port 443| Router
+    Router -->|Port Forward<br/>80/443| VM_Nginx
+
+    MobileApp -->|Home Assistant App<br/>Cloud Webhook| Router
+    MobileApp -->|Immich Mobile Upload<br/>Direct or Tailscale| Router
+
+    %% Nginx Proxy Manager Routing
+    VM_Nginx -->|Proxy Pass<br/>SSL Termination| VM_Wiki
+    VM_Nginx -->|Proxy Pass<br/>WebSocket Support| VM_HomeAssistant
+    VM_Nginx -->|Proxy Pass<br/>Large File Upload| VM_Immich
+    VM_Nginx -->|Proxy Pass| LXC_Monitor
+
+    %% Service Dependencies
+    VM_Wiki -->|PostgreSQL<br/>Port 5432| VM_Database
+    VM_HomeAssistant -->|PostgreSQL<br/>Port 5432| VM_Database
+    VM_Immich -->|PostgreSQL<br/>Port 5432| VM_Database
+
+    VM_Wiki -.->|NFS Mount<br/>/mnt/uploads| SMB_Media
+    VM_Immich -->|NFS Mount<br/>/mnt/library| NFS_Immich
+
+    VM_HomeAssistant -->|MQTT<br/>Port 1883| VM_HomeAssistant
+    VM_HomeAssistant -.->|Zigbee/Z-Wave<br/>USB Passthrough| ProxmoxCluster
+
+    %% Monitoring & Logging
+    LXC_Monitor -->|Scrape Metrics<br/>:9100| VM_Wiki
+    LXC_Monitor -->|Scrape Metrics<br/>:9100| VM_HomeAssistant
+    LXC_Monitor -->|Scrape Metrics<br/>:9100| VM_Immich
+    LXC_Monitor -->|Scrape Metrics<br/>:9187| VM_Database
+    LXC_Monitor -->|Scrape Metrics<br/>:9100| VM_Nginx
+    LXC_Monitor -->|Scrape Metrics<br/>TrueNAS API| TrueNAS_Mgmt
+    LXC_Monitor -->|Scrape Metrics<br/>:9221| PVE_Mgmt
+
+    LXC_Logs -->|Collect Logs<br/>Promtail| VM_Wiki
+    LXC_Logs -->|Collect Logs<br/>Promtail| VM_HomeAssistant
+    LXC_Logs -->|Collect Logs<br/>Promtail| VM_Database
+    LXC_Logs -->|Collect Logs<br/>Promtail| VM_Nginx
+
+    %% Backup Flows
+    PBS_Mgmt -.->|Daily Backup<br/>02:00 AM| VM_Wiki
+    PBS_Mgmt -.->|Daily Backup<br/>02:15 AM| VM_HomeAssistant
+    PBS_Mgmt -.->|Daily Backup<br/>02:30 AM| VM_Immich
+    PBS_Mgmt -.->|Daily Backup<br/>02:45 AM| VM_Database
+    PBS_Mgmt -.->|Weekly Backup<br/>Sunday 03:00 AM| LXC_Monitor
+    PBS_Mgmt -.->|Weekly Backup| LXC_Logs
+
+    PBS_Datastore -.->|Offsite Copy<br/>Weekly| NFS_PBS
+    TrueNAS_Mgmt -.->|Cloud Sync<br/>Critical Data<br/>Encrypted| Internet
+
+    %% Storage Connections
+    TrueNAS_Mgmt -->|NFS Export<br/>192.168.40.22| NFS_Immich
+    TrueNAS_Mgmt -->|SMB Share<br/>192.168.40.0/24| SMB_Media
+    TrueNAS_Mgmt -->|SMB Share| SMB_Backups
+    TrueNAS_Mgmt -->|NFS Export<br/>192.168.40.15| NFS_PBS
+
+    %% Management Access
+    InternalUser -.->|SSH/WebUI<br/>Management| PVE_Mgmt
+    InternalUser -.->|WebUI<br/>Management| TrueNAS_Mgmt
+    InternalUser -.->|WebUI<br/>Management| PBS_Mgmt
+    InternalUser -.->|WebUI<br/>Management| VM_Nginx
+
+    %% Styling
+    classDef vm fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef container fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef storage fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef network fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef user fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    classDef internet fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000
+    classDef proxy fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+
+    class VM_Wiki,VM_HomeAssistant,VM_Immich,VM_Database vm
+    class VM_Nginx proxy
+    class LXC_Monitor,LXC_Logs,LXC_Backup container
+    class TrueNAS_Mgmt,Pool_Main,Pool_Backup,SMB_Media,SMB_Backups,NFS_Immich,NFS_PBS,PBS_Mgmt,PBS_Datastore storage
+    class Router,ProxmoxCluster,PVE_Mgmt network
+    class InternalUser,ExternalUser,MobileApp user
+    class CloudFlare,LetsEncrypt,Internet internet
