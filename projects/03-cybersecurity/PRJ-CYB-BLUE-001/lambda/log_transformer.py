@@ -50,7 +50,13 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             # Decode the incoming record
             payload = base64.b64decode(record['data']).decode('utf-8')
-            log_entry = json.loads(payload)
+
+            # Try to parse as JSON first
+            try:
+                log_entry = json.loads(payload)
+            except json.JSONDecodeError:
+                # If not JSON, treat as raw string (e.g., VPC Flow Logs)
+                log_entry = payload
 
             # Determine log source and transform accordingly
             transformed_log = transform_log(log_entry)
@@ -79,26 +85,35 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     return {'records': output_records}
 
 
-def transform_log(log_entry: Dict[str, Any]) -> Dict[str, Any]:
+def transform_log(log_entry) -> Dict[str, Any]:
     """
     Transform log entry based on source type.
 
     Args:
-        log_entry: Raw log entry from AWS service
+        log_entry: Raw log entry from AWS service (can be dict or string)
 
     Returns:
         Normalized log entry with common schema
     """
-    # Detect log source
-    if 'detail-type' in log_entry and 'GuardDuty Finding' in log_entry.get('detail-type', ''):
-        return transform_guardduty(log_entry)
-    elif 'eventVersion' in log_entry and 'eventName' in log_entry:
-        return transform_cloudtrail(log_entry)
-    elif 'srcaddr' in log_entry or 'dstaddr' in log_entry:
+    # VPC Flow Logs come as space-delimited strings
+    if isinstance(log_entry, str):
         return transform_vpc_flow_log(log_entry)
-    else:
-        # Unknown format - pass through with minimal transformation
-        return add_common_fields(log_entry, 'unknown')
+
+    # JSON-based log sources (dict)
+    if isinstance(log_entry, dict):
+        if 'detail-type' in log_entry and 'GuardDuty Finding' in log_entry.get('detail-type', ''):
+            return transform_guardduty(log_entry)
+        elif 'eventVersion' in log_entry and 'eventName' in log_entry:
+            return transform_cloudtrail(log_entry)
+        elif 'srcaddr' in log_entry or 'dstaddr' in log_entry:
+            # Some VPC Flow Logs may come as JSON
+            return transform_vpc_flow_log(log_entry)
+        else:
+            # Unknown format - pass through with minimal transformation
+            return add_common_fields(log_entry, 'unknown')
+
+    # Fallback for unexpected types
+    return add_common_fields({'raw_data': str(log_entry)}, 'unknown')
 
 
 def transform_guardduty(log_entry: Dict[str, Any]) -> Dict[str, Any]:

@@ -48,13 +48,9 @@ resource "aws_security_group" "opensearch" {
     cidr_blocks = [var.vpc_cidr]
   }
 
-  egress {
-    description = "Allow all outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # OpenSearch in VPC typically does not need outbound internet access
+  # Egress rules are not required as OpenSearch does not initiate outbound connections
+  # If needed for specific use cases, restrict to specific destinations
 
   tags = merge(
     local.common_tags,
@@ -260,15 +256,20 @@ resource "aws_opensearch_domain_policy" "main" {
       {
         Effect = "Allow"
         Principal = {
-          AWS = "*"
+          # Restrict to current AWS account instead of wildcard for security
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
-        Action = "es:*"
+        Action = [
+          # Restrict to necessary OpenSearch HTTP actions
+          "es:ESHttpGet",
+          "es:ESHttpPut",
+          "es:ESHttpPost",
+          "es:ESHttpHead",
+          "es:ESHttpDelete",
+          "es:Describe*",
+          "es:List*"
+        ]
         Resource = "${aws_opensearch_domain.main.arn}/*"
-        Condition = {
-          IpAddress = {
-            "aws:SourceIp" = var.allowed_cidr_blocks
-          }
-        }
       }
     ]
   })

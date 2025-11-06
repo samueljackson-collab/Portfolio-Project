@@ -43,16 +43,19 @@ cp "$LAMBDA_FUNCTION" "$TEMP_DIR/"
 if [ -f "requirements.txt" ]; then
     echo -e "${BLUE}Step 4: Checking for runtime dependencies...${NC}"
 
-    # Extract only non-test dependencies (boto3/botocore are included in Lambda runtime)
-    RUNTIME_DEPS=$(grep -v "^pytest" requirements.txt | grep -v "^#" | grep -v "^$" | grep -v "^boto" || true)
+    # Create filtered requirements file excluding test and AWS SDK dependencies
+    FILTERED_REQS_FILE="$(mktemp)"
+    grep -v "^pytest" requirements.txt | grep -v "^#" | grep -v "^$" | grep -v "^boto" > "$FILTERED_REQS_FILE" || true
 
-    if [ -n "$RUNTIME_DEPS" ]; then
+    if [ -s "$FILTERED_REQS_FILE" ]; then
         echo -e "${BLUE}Installing runtime dependencies...${NC}"
-        pip install -r requirements.txt -t "$TEMP_DIR" --quiet
+        pip install -r "$FILTERED_REQS_FILE" -t "$TEMP_DIR" --quiet
         echo -e "${GREEN}Dependencies installed${NC}"
     else
         echo -e "${GREEN}No additional runtime dependencies needed (boto3 included in Lambda runtime)${NC}"
     fi
+
+    rm -f "$FILTERED_REQS_FILE"
 else
     echo -e "${GREEN}Step 4: No requirements.txt found (using Lambda runtime packages)${NC}"
 fi

@@ -484,10 +484,20 @@ aws cloudwatch get-metric-statistics \
 # Get the OpenSearch endpoint
 OPENSEARCH_ENDPOINT=$(terraform output -raw opensearch_endpoint)
 
-# Count documents (replace with your password)
-curl -u admin:YourPassword123! \
+# Set password securely (do not hardcode)
+export OPENSEARCH_PASSWORD="your-password-here"
+
+# Count documents using environment variable
+curl -u admin:$OPENSEARCH_PASSWORD \
   https://$OPENSEARCH_ENDPOINT/security-events/_count
+
+# Alternative: Use AWS Secrets Manager (recommended for production)
+# OPENSEARCH_PASSWORD=$(aws secretsmanager get-secret-value \
+#   --secret-id opensearch-master-password \
+#   --query SecretString --output text)
 ```
+
+**Security Note:** Never include actual passwords in commands or scripts. Always use environment variables or AWS Secrets Manager to store and retrieve sensitive credentials.
 
 **4. Verify GuardDuty is Active**
 

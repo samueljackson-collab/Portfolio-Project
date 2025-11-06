@@ -280,13 +280,12 @@ resource "aws_iam_role_policy" "flow_logs" {
       {
         Effect = "Allow"
         Action = [
-          "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
-          "logs:DescribeLogGroups",
           "logs:DescribeLogStreams"
         ]
-        Resource = "*"
+        # Scope to specific log group for security best practices
+        Resource = "${aws_cloudwatch_log_group.flow_logs[0].arn}:*"
       }
     ]
   })

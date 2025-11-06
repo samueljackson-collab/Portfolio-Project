@@ -53,9 +53,33 @@ variable "subnet_ids" {
   default     = []
 }
 
+variable "vpc_cidr" {
+  type        = string
+  description = "VPC CIDR block for security group ingress rules"
+  default     = "10.0.0.0/16"
+}
+
+variable "allowed_cidr_blocks" {
+  type        = list(string)
+  description = "List of CIDR blocks allowed to access OpenSearch domain"
+  default     = []
+}
+
 #------------------------------------------------------------------------------
 # OpenSearch Configuration
 #------------------------------------------------------------------------------
+
+variable "create_service_linked_role" {
+  type        = bool
+  description = "Create IAM service-linked role for OpenSearch (set to false if role already exists)"
+  default     = true
+}
+
+variable "opensearch_kms_key_id" {
+  type        = string
+  description = "KMS key ID for OpenSearch encryption at rest (optional, uses AWS-managed key if not specified)"
+  default     = ""
+}
 
 variable "opensearch_engine_version" {
   type        = string
@@ -83,12 +107,12 @@ variable "opensearch_zone_awareness" {
 
 variable "opensearch_az_count" {
   type        = number
-  description = "Number of availability zones"
+  description = "Number of availability zones (1 for single-AZ, 2-3 for multi-AZ)"
   default     = 3
 
   validation {
-    condition     = contains([2, 3], var.opensearch_az_count)
-    error_message = "AZ count must be 2 or 3"
+    condition     = contains([1, 2, 3], var.opensearch_az_count)
+    error_message = "AZ count must be 1, 2, or 3"
   }
 }
 

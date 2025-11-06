@@ -101,6 +101,9 @@ resource "aws_lambda_function" "log_transformer" {
   timeout       = 60
   memory_size   = 512
 
+  # Publish a version for stable deployments (avoid using $LATEST in production)
+  publish       = true
+
   environment {
     variables = {
       LOG_LEVEL = var.lambda_log_level
@@ -289,7 +292,8 @@ resource "aws_kinesis_firehose_delivery_stream" "siem" {
 
         parameters {
           parameter_name  = "LambdaArn"
-          parameter_value = "${aws_lambda_function.log_transformer.arn}:$LATEST"
+          # Use qualified_arn for published version instead of $LATEST for stability
+          parameter_value = aws_lambda_function.log_transformer.qualified_arn
         }
 
         parameters {

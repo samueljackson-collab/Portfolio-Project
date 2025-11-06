@@ -43,21 +43,20 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 #------------------------------------------------------------------------------
-# VPC Data Source (use existing VPC or create new one)
+# VPC Data Source
+# NOTE: This configuration requires an existing VPC. Set create_vpc = false.
+# For new VPC creation, use the VPC module from infrastructure/terraform/modules/vpc
 #------------------------------------------------------------------------------
 
 data "aws_vpc" "selected" {
-  count   = var.create_vpc ? 0 : 1
-  id      = var.vpc_id
+  id      = var.vpc_id != "" ? var.vpc_id : null
   default = var.use_default_vpc
 }
 
 data "aws_subnets" "private" {
-  count = var.create_vpc ? 0 : 1
-
   filter {
     name   = "vpc-id"
-    values = [local.vpc_id]
+    values = [data.aws_vpc.selected.id]
   }
 
   tags = {
@@ -66,9 +65,12 @@ data "aws_subnets" "private" {
 }
 
 locals {
-  vpc_id     = var.create_vpc ? "" : data.aws_vpc.selected[0].id
-  vpc_cidr   = var.create_vpc ? "" : data.aws_vpc.selected[0].cidr_block
-  subnet_ids = var.create_vpc ? [] : (length(data.aws_subnets.private[0].ids) > 0 ? data.aws_subnets.private[0].ids : var.subnet_ids)
+  vpc_id     = data.aws_vpc.selected.id
+  vpc_cidr   = var.vpc_cidr != "" ? var.vpc_cidr : data.aws_vpc.selected.cidr_block
+  subnet_ids = length(var.subnet_ids) > 0 ? var.subnet_ids : (length(data.aws_subnets.private.ids) > 0 ? data.aws_subnets.private.ids : [])
+
+  # Derive allowed CIDR blocks from VPC CIDR if not explicitly set
+  allowed_cidrs = length(var.allowed_cidr_blocks) > 0 ? var.allowed_cidr_blocks : [local.vpc_cidr]
 }
 
 #------------------------------------------------------------------------------
@@ -343,10 +345,13 @@ module "opensearch" {
   ebs_volume_size = var.opensearch_ebs_size
 
   # Security
-  master_user_name            = var.opensearch_master_user
-  master_user_password        = var.opensearch_master_password
-  advanced_security_enabled   = true
+  master_user_name               = var.opensearch_master_user
+  master_user_password           = var.opensearch_master_password
+  advanced_security_enabled      = true
   internal_user_database_enabled = true
+  kms_key_id                     = var.opensearch_kms_key_id
+  allowed_cidr_blocks            = local.allowed_cidrs
+  create_service_linked_role     = var.create_service_linked_role
 
   # Monitoring
   log_retention_days = var.log_retention_days
