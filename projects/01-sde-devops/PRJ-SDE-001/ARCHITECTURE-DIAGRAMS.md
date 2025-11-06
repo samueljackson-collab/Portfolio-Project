@@ -322,4 +322,4 @@ mmdc -i ARCHITECTURE-DIAGRAMS.md -o diagrams/ -t svg
 
 ---
 
-*Architecture Diagrams v1.0 - Last Updated: January 2025*
+*Architecture Diagrams v1.0 - Last Updated: November 2025*
