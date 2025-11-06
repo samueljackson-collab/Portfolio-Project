@@ -55,12 +55,12 @@ Complete IP addressing plan for all VLANs with static assignments, DHCP pools, a
 
 ## VLAN 50 - IoT Network (192.168.50.0/24)
 
-**Purpose**: Smart home devices (isolated)  
-**DHCP Pool**: 192.168.50.100-200  
-**DNS**: 1.1.1.1 (Cloudflare, bypass Pi-hole)  
+**Purpose**: Smart home devices (isolated)
+**DHCP Pool**: 192.168.50.100-200
+**DNS**: 1.1.1.1 (Cloudflare, bypass Pi-hole)
 **mDNS Reflector**: Enabled
 
-### Static/Reserved IPs
+### DHCP Reservations
 | IP Address | Hostname | Device | Purpose |
 |------------|----------|--------|---------|
 | 192.168.50.1 | - | Gateway | VLAN gateway |

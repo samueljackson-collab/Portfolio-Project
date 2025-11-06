@@ -32,6 +32,13 @@ Rules processed top-to-bottom (first match wins):
 | 14 | Lab → Other Deny | VLAN 100 | VLAN 1,50,99 | ANY | DENY | Prevent contamination | Enabled |
 | 15 | Default Deny All | ANY | ANY | ANY | DENY | Implicit deny | Enabled |
 
+**Security Notes**:
+- **Rule 13 (Lab → Trusted Restricted)**: This rule allows lab network access to specific web services on the trusted network. Since the lab network is used for experimentation and may contain vulnerable or compromised systems, this access should be restricted to the minimum necessary. Consider:
+  - Restricting source to specific lab IPs rather than entire VLAN 100
+  - Restricting destination to specific trusted IPs rather than entire VLAN 10
+  - Regularly reviewing this rule for necessity
+  - Monitoring traffic for unexpected patterns
+
 ## Security Controls
 
 ### Rate Limiting
@@ -46,7 +53,11 @@ Rules processed top-to-bottom (first match wins):
 | Rule | External Port | Internal IP | Internal Port | Protocol | Purpose |
 |------|---------------|-------------|---------------|----------|---------|
 | PF-1 | 51820 | 192.168.1.1 | 51820 | UDP | WireGuard VPN |
-| PF-2 | 2222 | 192.168.10.10 | 22 | TCP | Proxmox SSH |
+
+**Security Note**: SSH access to internal devices (e.g., Proxmox) should only be accessed through the WireGuard VPN (PF-1). Direct SSH port forwarding to the internet is disabled for security. To access internal services:
+1. Connect to VPN via WireGuard
+2. SSH to devices using internal IPs
+3. Implement additional protections: SSH key-only authentication, fail2ban, rate limiting
 
 ## Maintenance
 

@@ -24,7 +24,7 @@ Wireless network configuration for homelab with 4 SSIDs mapped to different VLAN
 
 **Performance**:
 - Band Steering: Enabled (prefer 5 GHz)
-- Fast Roaming: 802.11r/k/v enabled
+- Fast Roaming (802.11r) and Assisted Roaming (802.11k/v) enabled
 - MU-MIMO: Enabled
 - Min Data Rate: 12 Mbps (2.4G), 24 Mbps (5G)
 
@@ -133,7 +133,7 @@ Wireless network configuration for homelab with 4 SSIDs mapped to different VLAN
 speedtest-cli
 
 # Test roaming
-ping -t 192.168.10.1  # Continuous ping while moving
+ping 192.168.10.1  # Continuous ping while moving (Ctrl+C to stop)
 
 # Check wireless clients (SSH to UDMP)
 show wireless clients
@@ -142,7 +142,7 @@ show wireless clients
 ## QR Code for Guest Access
 ```bash
 # Generate QR code for easy guest connection
-echo "WIFI:S:Homelab-Guest;T:WPA;P:guestpassword123;;" | qrencode -o guest-wifi-qr.png
+echo "WIFI:S:Homelab-Guest;T:WPA;P:<GUEST_WIFI_PASSWORD>;;" | qrencode -o guest-wifi-qr.png
 ```
 
 For complete wireless configuration with advanced features and troubleshooting, see the full Wi-Fi documentation.

@@ -248,7 +248,7 @@ iface eth0 inet static
 
 ### Step 8.1: Install Pi-hole
 ```bash
-ssh pi@192.168.10.2
+ssh <user>@192.168.10.2
 curl -sSL https://install.pi-hole.net | bash
 
 # Follow prompts:
@@ -277,17 +277,37 @@ nslookup google.com 192.168.10.2
 ### Step 9.1: Enable WireGuard
 - Settings → VPN → WireGuard → Enable
 - Listen Port: 51820
-- Network: 192.168.10.0/24
+- **VPN Client Subnet**: 10.10.10.0/24 (dedicated subnet for VPN clients)
+- **Allowed Networks**: 192.168.10.0/24, 192.168.50.0/24, 192.168.100.0/24 (networks VPN clients can access)
 
-### Step 9.2: Create VPN User
-1. Add user account
-2. Generate WireGuard config
-3. Download .conf file
+**Important**:
+- The VPN client subnet (10.10.10.0/24) is separate from your LAN subnets
+- VPN clients receive IPs from the 10.10.10.0/24 range
+- They can then route to allowed internal networks (Trusted, IoT, Lab)
+- Do NOT use 192.168.10.0/24 as the VPN client subnet as it conflicts with the Trusted VLAN
 
-### Step 9.3: Test VPN
+### Step 9.2: Configure Port Forwarding
+- Settings → Routing & Firewall → Port Forwarding
+- Create rule:
+  - Name: WireGuard VPN
+  - Port: 51820
+  - Forward IP: 192.168.1.1 (UDMP)
+  - Forward Port: 51820
+  - Protocol: UDP
+
+### Step 9.3: Create VPN User
+1. Settings → VPN → WireGuard → Add User
+2. Username: [Your username]
+3. Generate WireGuard config
+4. Download .conf file
+5. Note the assigned IP (e.g., 10.10.10.2)
+
+### Step 9.4: Test VPN
 ```bash
 # From external network with VPN connected
-ping 192.168.10.1    # Should work
+ping 192.168.10.1    # Should work (access to Trusted VLAN)
+ping 192.168.1.1     # Should work (UDMP management)
+ssh <user>@192.168.10.10  # Should work (SSH to Proxmox via VPN)
 ```
 
 ## 10. Verification and Testing (Day 5)

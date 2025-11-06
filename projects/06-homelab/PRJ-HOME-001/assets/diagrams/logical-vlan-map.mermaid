@@ -142,10 +142,10 @@ flowchart TB
     %% =============================================
     %% Legend
     %% =============================================
-    
+
     subgraph Legend[Firewall Rules Legend]
-        AllowSolid[Solid Green Line: ALLOW Traffic]
-        AllowDashed[Dashed Green Line: ALLOW with Restrictions]
-        DenyDashed[Dashed Red Line: DENY Traffic]
+        SolidLine[Solid Arrow: Internet/NAT Traffic]
+        DashedAllow[Dashed Arrow: ALLOW with Restrictions]
+        DashedDeny[Dashed Arrow with X: DENY Traffic]
         TrustLevels[Trust Levels: Management > Trusted > Lab > IoT = Guest]
     end
