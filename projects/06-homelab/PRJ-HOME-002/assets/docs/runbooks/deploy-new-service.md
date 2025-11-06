@@ -275,7 +275,7 @@ vim config.yml
 #     host: localhost
 #     port: 5432
 #     user: wikijs
-#     pass: SECURE_PASSWORD_HERE
+#     pass: YOUR_STRONG_PASSWORD # Use the same strong password from the DB creation step
 #     db: wikijs
 #   dataPath: /mnt/appdata
 
