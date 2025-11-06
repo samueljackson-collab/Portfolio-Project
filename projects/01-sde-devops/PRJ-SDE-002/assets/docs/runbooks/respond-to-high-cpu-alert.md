@@ -285,9 +285,12 @@ vmstat 1 5
 # High 'si' (swap in) or 'so' (swap out) indicates swapping
 
 # Identify swap consumers
-for pid in $(ls /proc | grep "^[0-9]"); do
-  awk '/Swap/{swap+=$2} END {if(swap>0) print swap}' /proc/$pid/smaps 2>/dev/null | \
-  awk -v pid=$pid '{print pid, $0}'
+for pid_dir in /proc/[0-9]*; do
+    pid=$(basename "$pid_dir")
+    swap_kb=$(awk '/Swap:/{total+=$2} END {print total+0}' "$pid_dir/smaps" 2>/dev/null)
+    if [[ "$swap_kb" -gt 0 ]]; then
+        echo "$pid $swap_kb"
+    fi
 done | sort -k2 -rn | head -n 10
 ```
 
