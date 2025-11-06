@@ -1,0 +1,122 @@
+graph TB
+    %% External Access
+    subgraph Internet["🌐 Internet Access"]
+        User[User Browser<br/>HTTPS]
+        RemoteUser[Remote Users<br/>VPN]
+    end
+
+    %% Edge/Reverse Proxy Layer
+    subgraph EdgeLayer["🔒 Edge Layer - VLAN 40"]
+        NPM[Nginx Proxy Manager<br/>LXC Container<br/>192.168.40.50<br/>:80, :443]
+        Cert[Let's Encrypt<br/>SSL Certificates<br/>Auto-renewal]
+    end
+
+    %% Virtualization Platform
+    subgraph ProxmoxHost["⚙️ Proxmox VE Host - Physical Server"]
+        ProxmoxMgmt[Proxmox Management<br/>192.168.40.10<br/>:8006]
+
+        subgraph VMs["Virtual Machines"]
+            WikiJS[Wiki.js<br/>VM 100<br/>192.168.40.101<br/>Node.js + PostgreSQL<br/>4 vCPU, 8GB RAM]
+
+            HomeAssistant[Home Assistant<br/>VM 101<br/>192.168.40.102<br/>Python + SQLite<br/>2 vCPU, 4GB RAM]
+
+            Immich[Immich Photo Manager<br/>VM 102<br/>192.168.40.103<br/>Docker Compose<br/>4 vCPU, 16GB RAM]
+        end
+
+        subgraph Containers["LXC Containers"]
+            Monitoring[Monitoring Stack<br/>LXC 200<br/>192.168.40.201<br/>Prometheus/Grafana<br/>2 vCPU, 4GB RAM]
+
+            Backup[Backup Tools<br/>LXC 201<br/>192.168.40.202<br/>Scripts + Verify<br/>1 vCPU, 2GB RAM]
+        end
+    end
+
+    %% Storage Layer
+    subgraph StorageLayer["💾 Storage Layer - VLAN 40"]
+        TrueNAS[TrueNAS Core<br/>Physical Server<br/>192.168.40.20<br/>NFS + SMB Shares]
+
+        subgraph Datasets["ZFS Datasets"]
+            VMStorage[VM Storage<br/>/mnt/pool1/vms<br/>ZFS RAID-Z2]
+            AppData[Application Data<br/>/mnt/pool1/appdata<br/>Replicated]
+            Media[Media Library<br/>/mnt/pool1/media<br/>2TB]
+            Backups[Backup Target<br/>/mnt/pool1/backups<br/>4TB]
+        end
+    end
+
+    %% Backup Infrastructure
+    subgraph BackupInfra["💿 Backup Infrastructure"]
+        PBS[Proxmox Backup Server<br/>VM 300<br/>192.168.40.30<br/>Datastore: 8TB]
+
+        OffSite[Offsite Backups<br/>External USB 4TB<br/>Monthly Rotation]
+    end
+
+    %% Network Services
+    subgraph NetworkServices["🌐 Network Services - pfSense"]
+        DNS[DNS Resolver<br/>Unbound<br/>homelab.local]
+        DHCP[DHCP Server<br/>Per-VLAN]
+        Firewall[Firewall Rules<br/>VLAN Segmentation]
+    end
+
+    %% Data Flow Connections
+    User -->|HTTPS :443| NPM
+    RemoteUser -->|OpenVPN| Firewall
+
+    NPM -->|Proxy Pass| WikiJS
+    NPM -->|Proxy Pass| HomeAssistant
+    NPM -->|Proxy Pass| Immich
+    NPM -->|Proxy Pass| ProxmoxMgmt
+
+    Cert -.->|Auto-renew| NPM
+
+    WikiJS -->|NFS Mount| AppData
+    HomeAssistant -->|NFS Mount| AppData
+    Immich -->|NFS Mount| Media
+    Immich -->|NFS Mount| AppData
+
+    ProxmoxMgmt -->|Manage| VMs
+    ProxmoxMgmt -->|Manage| Containers
+
+    VMs -->|Storage| VMStorage
+    Containers -->|Storage| VMStorage
+
+    Monitoring -.->|Scrape Metrics| WikiJS
+    Monitoring -.->|Scrape Metrics| HomeAssistant
+    Monitoring -.->|Scrape Metrics| Immich
+    Monitoring -.->|Scrape Metrics| ProxmoxMgmt
+    Monitoring -.->|Scrape Metrics| TrueNAS
+
+    ProxmoxMgmt -->|Backup Jobs| PBS
+    VMs -->|Backup Stream| PBS
+    Containers -->|Backup Stream| PBS
+
+    PBS -->|Archive| Backups
+    PBS -->|Monthly Copy| OffSite
+
+    Backup -->|Verify Jobs| PBS
+    Backup -->|Health Checks| TrueNAS
+
+    DNS -.->|Name Resolution| VMs
+    DNS -.->|Name Resolution| Containers
+    DHCP -.->|IP Assignment| VMs
+    Firewall -.->|VLAN Isolation| ProxmoxHost
+    Firewall -.->|VLAN Isolation| StorageLayer
+
+    %% Styling
+    classDef external fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef edge fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef compute fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef storage fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef backup fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef network fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef vm fill:#c8e6c9,stroke:#2e7d32,stroke-width:1px
+    classDef container fill:#b2dfdb,stroke:#00695c,stroke-width:1px
+    classDef dataset fill:#e1bee7,stroke:#6a1b9a,stroke-width:1px
+
+    class User,RemoteUser external
+    class NPM,Cert edge
+    class ProxmoxHost,ProxmoxMgmt,VMs,Containers compute
+    class WikiJS,HomeAssistant,Immich vm
+    class Monitoring,Backup container
+    class TrueNAS,StorageLayer,Datasets storage
+    class VMStorage,AppData,Media,Backups dataset
+    class PBS,BackupInfra,OffSite backup
+    class DNS,DHCP,Firewall,NetworkServices network
