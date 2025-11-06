@@ -1,0 +1,293 @@
+# Alertmanager Configuration - Complete Production Setup
+# =======================================================
+# Version: Alertmanager 0.26
+# Purpose: Route and group alerts from Prometheus to notification channels
+# Last Updated: November 6, 2025
+#
+# What is Alertmanager?
+# ---------------------
+# Alertmanager handles alerts sent by Prometheus. It:
+# 1. Deduplicates alerts
+# 2. Groups related alerts
+# 3. Routes alerts to correct receivers (Slack, email, PagerDuty)
+# 4. Silences alerts temporarily
+# 5. Inhibits alerts (suppress cascade failures)
+#
+# Alert Flow:
+# -----------
+# Prometheus → Alertmanager → Grouping → Routing → Receiver
+
+global:
+  resolve_timeout: 5m
+
+  # SMTP configuration
+  smtp_from: 'alertmanager@homelab.local'
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_auth_username: 'your-email@gmail.com'
+  smtp_auth_password: 'your-app-specific-password'
+  smtp_require_tls: true
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+route:
+  receiver: 'slack-general'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    # Critical Alerts → Slack + Email + PagerDuty
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_by: ['alertname']
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # Warning Alerts → Slack Only
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+      group_wait: 1m
+      repeat_interval: 12h
+
+    # Database Alerts → Database Team
+    - match:
+        service: postgresql
+      receiver: 'slack-database'
+      group_by: ['alertname', 'instance']
+
+    # Network Alerts → Network Team
+    - match_re:
+        service: (unifi|router|switch)
+      receiver: 'slack-network'
+
+    # Heartbeat Alerts → Silenced
+    - match:
+        alertname: Watchdog
+      match_re:
+        severity: (info|warning)
+      receiver: 'null'
+      repeat_interval: 24h
+
+    # Backup Alerts → Dedicated Channel
+    - match_re:
+        alertname: (BackupFailed|BackupMissing|BackupSlow)
+      receiver: 'slack-backups'
+      group_wait: 5m
+      repeat_interval: 24h
+
+    # Testing Alerts → Dev Channel
+    - match:
+        environment: dev
+      receiver: 'slack-dev'
+      group_wait: 5m
+      repeat_interval: 24h
+
+inhibit_rules:
+  # Node Down → Suppress Service Alerts
+  - source_match:
+      alertname: 'NodeDown'
+    target_match_re:
+      alertname: '(ServiceDown|HighCPU|HighMemory|DiskFull)'
+    equal: ['instance']
+
+  # Critical → Suppress Warning
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+  # Network Down → Suppress All Alerts
+  - source_match:
+      alertname: 'NetworkDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['site']
+
+  # Maintenance Mode → Suppress Expected Alerts
+  - source_match:
+      alertname: 'MaintenanceMode'
+    target_match_re:
+      severity: '(warning|info)'
+    equal: ['instance']
+
+receivers:
+  # Critical Alerts (Multi-channel)
+  - name: 'critical-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#alerts-critical'
+        username: 'Alertmanager'
+        icon_emoji: ':fire:'
+        title: '{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
+        text: |-
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Instance:* {{ .CommonLabels.instance }}
+          *Environment:* {{ .CommonLabels.environment }}
+
+          {{ range .Alerts }}
+            • {{ .Labels.alertname }} on {{ .Labels.instance }}
+          {{ end }}
+
+          <{{ .ExternalURL }}/#/alerts?receiver=critical-alerts|View in Alertmanager>
+        send_resolved: true
+
+    email_configs:
+      - to: 'oncall@homelab.local'
+        from: 'alertmanager@homelab.local'
+        subject: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        html: |-
+          <h2>{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}</h2>
+          <p><strong>Summary:</strong> {{ .CommonAnnotations.summary }}</p>
+          <p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>
+          <p><strong>Severity:</strong> {{ .CommonLabels.severity }}</p>
+          <p><strong>Instance:</strong> {{ .CommonLabels.instance }}</p>
+
+          <h3>Alerts ({{ .Alerts | len }}):</h3>
+          <ul>
+          {{ range .Alerts }}
+            <li>{{ .Labels.alertname }} on {{ .Labels.instance }}</li>
+          {{ end }}
+          </ul>
+
+          <p><a href="{{ .ExternalURL }}/#/alerts?receiver=critical-alerts">View in Alertmanager</a></p>
+        send_resolved: true
+
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_INTEGRATION_KEY'
+        description: '{{ .CommonAnnotations.summary }}'
+        severity: '{{ .CommonLabels.severity }}'
+        details:
+          alertname: '{{ .CommonLabels.alertname }}'
+          instance: '{{ .CommonLabels.instance }}'
+          environment: '{{ .CommonLabels.environment }}'
+          description: '{{ .CommonAnnotations.description }}'
+
+  # Slack General (Default)
+  - name: 'slack-general'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':bell:'
+        title: '{{ .Status }}: {{ .CommonLabels.alertname }}'
+        text: |-
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Severity:* {{ .CommonLabels.severity }}
+
+          {{ range .Alerts }}
+            • {{ .Labels.instance }}: {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  # Slack Warnings
+  - name: 'slack-warnings'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#alerts-warnings'
+        username: 'Alertmanager'
+        icon_emoji: ':warning:'
+        title: 'Warning: {{ .CommonLabels.alertname }}'
+        text: '{{ .CommonAnnotations.summary }}'
+        send_resolved: true
+
+  # Slack Database Team
+  - name: 'slack-database'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#database-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':database:'
+        title: 'Database Alert: {{ .CommonLabels.alertname }}'
+        text: |-
+          *Database:* {{ .CommonLabels.service }}
+          *Instance:* {{ .CommonLabels.instance }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+        send_resolved: true
+
+  # Slack Network Team
+  - name: 'slack-network'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#network-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':satellite:'
+        title: 'Network Alert: {{ .CommonLabels.alertname }}'
+        text: '{{ .CommonAnnotations.summary }}'
+        send_resolved: true
+
+  # Slack Backups
+  - name: 'slack-backups'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#backup-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':floppy_disk:'
+        title: 'Backup Alert: {{ .CommonLabels.alertname }}'
+        text: |-
+          *Backup Job:* {{ .CommonLabels.job }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+        send_resolved: true
+
+  # Slack Dev
+  - name: 'slack-dev'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#dev-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':wrench:'
+        title: '[DEV] {{ .CommonLabels.alertname }}'
+        text: '{{ .CommonAnnotations.summary }}'
+        send_resolved: true
+
+  # Webhook (Custom Integration)
+  - name: 'custom-webhook'
+    webhook_configs:
+      - url: 'http://192.168.40.30:5000/alerts'
+        send_resolved: true
+
+  # Null (Discard Alerts)
+  - name: 'null'
+
+# ==============================================================================
+# OPERATIONAL NOTES
+# ==============================================================================
+#
+# Testing Alerts:
+# ---------------
+# curl -X POST http://192.168.40.30:9093/api/v1/alerts -d '[{
+#   "labels": {
+#     "alertname": "TestAlert",
+#     "severity": "warning",
+#     "instance": "test-instance"
+#   },
+#   "annotations": {
+#     "summary": "This is a test alert",
+#     "description": "Testing Alertmanager routing"
+#   }
+# }]'
+#
+# Create Silence:
+# ---------------
+# curl -X POST http://192.168.40.30:9093/api/v1/silences -d '{
+#   "matchers": [
+#     {"name": "instance", "value": "192.168.40.20", "isRegex": false}
+#   ],
+#   "startsAt": "2025-11-06T10:00:00Z",
+#   "endsAt": "2025-11-06T12:00:00Z",
+#   "createdBy": "admin",
+#   "comment": "Planned maintenance window"
+# }'
+#
+# Monitoring:
+# -----------
+# curl http://192.168.40.30:9093/-/healthy
+# curl http://192.168.40.30:9093/-/ready
+#
+# ==============================================================================

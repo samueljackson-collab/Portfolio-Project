@@ -1,0 +1,225 @@
+# Grafana Dashboards - Automated Provisioning
+# ============================================
+# Version: Grafana 10.2
+# Purpose: Automatically load dashboards on Grafana startup
+# Last Updated: November 6, 2025
+#
+# What is Dashboard Provisioning?
+# --------------------------------
+# Grafana can automatically load dashboards from JSON files
+# instead of manual UI imports. Benefits:
+# 1. Version control (dashboards as code)
+# 2. Consistent across environments
+# 3. Easy backup and restore
+# 4. Team collaboration (share dashboards via git)
+#
+# File Location:
+# --------------
+# /etc/grafana/provisioning/dashboards/dashboards.yml
+# Or mount to container: -v ./dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+#
+# Dashboard Location:
+# -------------------
+# Store dashboard JSON files in: /var/lib/grafana/dashboards/
+# Or any path configured below in "path" option
+#
+# ============================================
+
+apiVersion: 1
+
+providers:
+  # ==========================================================================
+  # Provider: Default Dashboards
+  # ==========================================================================
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+
+  # ==========================================================================
+  # Provider: Infrastructure Dashboards
+  # ==========================================================================
+  - name: 'infrastructure'
+    orgId: 1
+    folder: 'Infrastructure'
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 60
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards/infrastructure
+
+  # ==========================================================================
+  # Provider: Application Dashboards
+  # ==========================================================================
+  - name: 'application'
+    orgId: 1
+    folder: 'Applications'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/application
+
+  # ==========================================================================
+  # Provider: Business Metrics
+  # ==========================================================================
+  - name: 'business'
+    orgId: 1
+    folder: 'Business Metrics'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 300
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/business
+
+  # ==========================================================================
+  # Provider: Community Dashboards
+  # ==========================================================================
+  - name: 'community'
+    orgId: 1
+    folder: 'Community'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 0
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/community
+
+# ==============================================================================
+# OPERATIONAL NOTES
+# ==============================================================================
+#
+# Dashboard Provisioning Workflow:
+# ---------------------------------
+# 1. Create dashboard in Grafana UI (or use community dashboard)
+# 2. Export dashboard JSON: Share → Export → Save to file
+# 3. Copy JSON file to provisioning directory: /var/lib/grafana/dashboards/
+# 4. Wait for auto-reload (or restart Grafana)
+# 5. Dashboard appears in configured folder
+#
+# Directory Structure Example:
+# -----------------------------
+# /var/lib/grafana/dashboards/
+# ├── infrastructure/
+# │   ├── node-exporter-full.json
+# │   ├── proxmox-overview.json
+# │   └── network-monitoring.json
+# ├── application/
+# │   ├── wikijs-metrics.json
+# │   ├── postgresql-overview.json
+# │   └── nginx-proxy-manager.json
+# ├── business/
+# │   ├── user-analytics.json
+# │   └── backup-compliance.json
+# └── community/
+#     ├── node-exporter-1860.json
+#     └── postgres-exporter-9628.json
+#
+# Exporting Dashboards:
+# ----------------------
+# From Grafana UI:
+# 1. Open dashboard
+# 2. Click "Share" icon (top right)
+# 3. Select "Export" tab
+# 4. Check "Export for sharing externally"
+# 5. Click "Save to file"
+# 6. Copy JSON to provisioning directory
+#
+# From Grafana API:
+# curl -H "Authorization: Bearer YOUR_API_KEY" \
+#   http://grafana:3000/api/dashboards/uid/DASHBOARD_UID | \
+#   jq '.dashboard' > dashboard.json
+#
+# Importing Community Dashboards:
+# --------------------------------
+# 1. Find dashboard on https://grafana.com/grafana/dashboards/
+# 2. Note dashboard ID (e.g., 1860 for Node Exporter Full)
+# 3. Download JSON:
+#    curl https://grafana.com/api/dashboards/1860/revisions/latest/download -o node-exporter-1860.json
+# 4. Edit JSON to match your datasource UIDs
+# 5. Copy to provisioning directory
+#
+# Fixing Datasource References:
+# ------------------------------
+# Community dashboards often reference default datasource names.
+# Update to match your datasources:
+#
+# Original: "datasource": "Prometheus"
+# Updated: "datasource": {"type": "prometheus", "uid": "prometheus-uid"}
+#
+# Use jq to bulk replace:
+# jq '.dashboard.panels[].datasource = {"type":"prometheus","uid":"prometheus-uid"}' \
+#   dashboard.json > dashboard-fixed.json
+#
+# Troubleshooting:
+# ----------------
+# 1. Dashboard not loading:
+#    - Check JSON syntax: jq . dashboard.json
+#    - Verify file path in dashboards.yml
+#    - Check Grafana logs: docker logs grafana
+#    - Ensure provisioning is enabled
+#
+# 2. "Dashboard not found" error:
+#    - Dashboard might be in wrong folder
+#    - Check orgId (must match your org)
+#    - Verify datasource UIDs are correct
+#
+# 3. UI edits not persisting:
+#    - allowUiUpdates must be true
+#    - UI edits save to database, not file
+#    - File version overrides on reload
+#    - To persist: Export from UI and overwrite file
+#
+# 4. Datasource errors in panels:
+#    - Update datasource field in JSON
+#    - Use UID instead of name for portability
+#    - Test datasource in Configuration → Data Sources
+#
+# Best Practices:
+# ---------------
+# 1. Organization:
+#    - Use folders for categorization
+#    - Group related dashboards together
+#    - Use consistent naming conventions
+#
+# 2. Version Control:
+#    - Store dashboard JSON in git
+#    - Document dashboard purpose in comments
+#    - Track changes with git commits
+#    - Review PRs for dashboard modifications
+#
+# 3. Customization:
+#    - Copy community dashboards before editing
+#    - Add dashboard-level variables for flexibility
+#    - Document custom panels and queries
+#    - Include runbook links in panel descriptions
+#
+# 4. Maintenance:
+#    - Regularly update community dashboards
+#    - Remove unused dashboards
+#    - Test dashboards after Grafana upgrades
+#    - Validate datasource references
+#
+# 5. Performance:
+#    - Limit time range on heavy dashboards
+#    - Use recording rules for expensive queries
+#    - Cache query results where possible
+#    - Avoid auto-refresh on large datasets
+#
+# Security:
+# ---------
+# - Restrict file permissions: chmod 644 dashboards.json
+# - Don't include API keys in dashboard JSON
+# - Use Grafana RBAC for dashboard access control
+# - Audit dashboard changes (git history)
+# - Review community dashboards before use
+#
+# ==============================================================================

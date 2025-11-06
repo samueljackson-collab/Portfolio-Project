@@ -1,0 +1,64 @@
+{{ define "slack.default.title" }}
+{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}: {{ .CommonLabels.alertname }}
+{{ end }}
+
+{{ define "slack.default.text" }}
+{{ range .Alerts }}
+{{ if .Labels.severity }}*Severity:* `{{ .Labels.severity }}`{{ end }}
+{{ if .Labels.instance }}*Instance:* `{{ .Labels.instance }}`{{ end }}
+*Summary:* {{ .Annotations.summary }}
+{{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+{{ if .Annotations.runbook_url }}*Runbook:* {{ .Annotations.runbook_url }}{{ end }}
+{{ end }}
+{{ end }}
+
+{{ define "email.default.subject" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+{{ end }}
+
+{{ define "email.default.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: Arial, sans-serif; }
+  h2 { color: {{ if eq .Status "firing" }}#d32f2f{{ else }}#388e3c{{ end }}; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  th { background-color: #f2f2f2; }
+  .critical { background-color: #ffebee; }
+  .warning { background-color: #fff3e0; }
+  .info { background-color: #e3f2fd; }
+</style>
+</head>
+<body>
+  <h2>{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}</h2>
+
+  <p><strong>Number of Alerts:</strong> {{ .Alerts | len }}</p>
+  <p><strong>Started:</strong> {{ .CommonAnnotations.startsAt }}</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Alert</th>
+        <th>Instance</th>
+        <th>Severity</th>
+        <th>Summary</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Alerts }}
+      <tr class="{{ .Labels.severity }}">
+        <td>{{ .Labels.alertname }}</td>
+        <td>{{ .Labels.instance }}</td>
+        <td>{{ .Labels.severity }}</td>
+        <td>{{ .Annotations.summary }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+
+  <p><a href="{{ .ExternalURL }}">View in Alertmanager</a></p>
+</body>
+</html>
+{{ end }}

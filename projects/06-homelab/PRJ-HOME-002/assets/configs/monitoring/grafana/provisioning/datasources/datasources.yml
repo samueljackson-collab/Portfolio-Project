@@ -1,0 +1,133 @@
+# Grafana Datasources - Automated Provisioning
+# =============================================
+# Version: Grafana 10.2
+# Purpose: Automatically configure datasources on Grafana startup
+# Last Updated: November 6, 2025
+#
+# What is Datasource Provisioning?
+# ---------------------------------
+# Grafana can automatically configure datasources from YAML files
+# instead of manual UI configuration. Benefits:
+# 1. Infrastructure as Code (version controlled)
+# 2. Consistent across environments (dev/staging/prod)
+# 3. Automated deployment (no manual setup)
+# 4. Disaster recovery (quick rebuild)
+#
+# File Location:
+# --------------
+# /etc/grafana/provisioning/datasources/datasources.yml
+# Or mount to container: -v ./datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+#
+# =============================================
+
+apiVersion: 1
+
+datasources:
+  # ===========================================================================
+  # Datasource: Prometheus (Metrics)
+  # ===========================================================================
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      timeInterval: 15s
+    version: 1
+    uid: prometheus-uid
+
+  # ===========================================================================
+  # Datasource: Loki (Logs)
+  # ===========================================================================
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    editable: true
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        # Extract trace IDs from logs and link to Jaeger
+        # - datasourceUid: jaeger-datasource-uid
+        #   matcherRegex: 'traceID=(\w+)'
+        #   name: 'TraceID'
+        #   url: 'http://localhost:16686/trace/${__value.raw}'
+    version: 1
+    uid: loki-uid
+
+  # ===========================================================================
+  # Datasource: PostgreSQL - Optional
+  # ===========================================================================
+  # - name: PostgreSQL
+  #   type: postgres
+  #   access: proxy
+  #   url: postgres-server:5432
+  #   database: homeassistant
+  #   user: grafana_readonly
+  #   secureJsonData:
+  #     password: 'readonly-user-password'
+  #   jsonData:
+  #     sslmode: 'disable'
+  #     maxOpenConns: 10
+  #     maxIdleConns: 5
+  #     connMaxLifetime: 14400
+  #     postgresVersion: 1600
+  #     timescaledb: false
+  #   version: 1
+  #   uid: postgresql-uid
+
+# ==============================================================================
+# OPERATIONAL NOTES
+# ==============================================================================
+#
+# Datasource Provisioning Workflow:
+# ----------------------------------
+# 1. Create/modify datasources.yml
+# 2. Restart Grafana (or wait for auto-reload)
+# 3. Grafana reads provisioning directory
+# 4. Datasources are created/updated
+# 5. Verify in Grafana UI: Configuration → Data Sources
+#
+# Testing Datasources:
+# --------------------
+# 1. Grafana UI: Configuration → Data Sources → Select datasource → Test
+# 2. Check "Data source is working" message
+# 3. If error: Check URL, network connectivity, authentication
+#
+# Troubleshooting:
+# ----------------
+# 1. Datasource not appearing:
+#    - Check file path (/etc/grafana/provisioning/datasources/)
+#    - Verify YAML syntax (use yamllint)
+#    - Check Grafana logs: docker logs grafana
+#    - Ensure provisioning is enabled in grafana.ini
+#
+# 2. "Data source is not working":
+#    - Verify URL: curl http://prometheus:9090/-/healthy
+#    - Check network connectivity from Grafana container
+#    - Verify authentication credentials
+#    - Check Prometheus/Loki logs
+#
+# Best Practices:
+# ---------------
+# 1. Use descriptive names
+# 2. Set one datasource as default (isDefault: true)
+# 3. Use proxy mode for security (access: proxy)
+# 4. Store passwords in secureJsonData (encrypted)
+# 5. Use UIDs to reference datasources in dashboards
+# 6. Version control provisioning files
+# 7. Test datasources after provisioning
+#
+# Security:
+# ---------
+# - Never commit passwords in plaintext
+# - Use environment variables: ${PROMETHEUS_PASSWORD}
+# - Enable TLS for datasources (if supported)
+# - Use read-only users
+# - Restrict network access (firewall rules)
+# - Rotate credentials regularly
+#
+# ==============================================================================

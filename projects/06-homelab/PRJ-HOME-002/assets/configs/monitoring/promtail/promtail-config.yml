@@ -1,0 +1,238 @@
+# Promtail Configuration - Complete Production Setup
+# ===================================================
+# Version: Promtail 2.9
+# Purpose: Log collection agent - ships logs from hosts to Loki
+# Deployment: One Promtail instance per host/VM/container
+# Last Updated: November 6, 2025
+#
+# What is Promtail?
+# -----------------
+# Promtail is the agent that ships logs to Loki. It:
+# 1. Tails log files (like tail -f)
+# 2. Adds labels (metadata) to log lines
+# 3. Parses structured logs (JSON, logfmt)
+# 4. Ships logs to Loki over HTTP
+# 5. Handles backpressure and retries
+#
+# Key Concepts:
+# -------------
+# 1. **Positions File**: Tracks which lines have been read
+# 2. **Scrape Configs**: Define which files to tail
+# 3. **Pipeline Stages**: Transform logs before sending
+# 4. **Labels**: Metadata attached to each log line
+
+server:
+  http_listen_port: 9080
+  log_level: info
+  log_format: logfmt
+
+positions:
+  filename: /tmp/positions.yaml
+  sync_period: 10s
+
+clients:
+  - url: http://192.168.40.30:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 1048576
+    timeout: 10s
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+    external_labels:
+      hostname: 'wikijs-vm'
+      environment: 'homelab'
+
+scrape_configs:
+  # System Logs (syslog)
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          __path__: /var/log/syslog
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<hostname>\S+)\s+(?P<process>\S+?)(\[(?P<pid>\d+)\])?:\s+(?P<message>.+)$'
+      - labels:
+          process: process
+      - timestamp:
+          source: timestamp
+          format: Jan _2 15:04:05
+      - drop:
+          expression: '.*DHCP.*lease.*'
+      - output:
+          source: message
+
+  # Docker Container Logs
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/lib/docker/containers/*/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            output: log
+            stream: stream
+            time: time
+      - regex:
+          source: filename
+          expression: '/var/lib/docker/containers/(?P<container_id>[a-f0-9]{64})/.*'
+      - labels:
+          stream: stream
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+      - output:
+          source: output
+      - drop:
+          expression: '.*healthcheck.*'
+          drop_counter_reason: healthcheck_logs
+
+  # Nginx Access Logs
+  - job_name: nginx-access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          log_type: access
+          __path__: /var/log/nginx/access.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<request_method>\S+) (?P<request_path>\S+) (?P<request_protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"$'
+      - labels:
+          method: request_method
+      - template:
+          source: status_class
+          template: '{{ regexReplaceAll "^(\\d)\\d{2}$" .status "${1}xx" }}'
+      - labels:
+          status_class: status_class
+      - timestamp:
+          source: time_local
+          format: 02/Jan/2006:15:04:05 -0700
+      - drop:
+          source: request_path
+          expression: '^/health.*'
+          drop_counter_reason: healthcheck
+
+  # Nginx Error Logs
+  - job_name: nginx-error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          log_type: error
+          __path__: /var/log/nginx/error.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?P<level>\w+)\] (?P<pid>\d+)#(?P<tid>\d+): \*?(?P<connection_id>\d+)? ?(?P<message>.+)$'
+      - labels:
+          level: level
+      - timestamp:
+          source: timestamp
+          format: 2006/01/02 15:04:05
+      - output:
+          source: message
+
+  # PostgreSQL Logs
+  - job_name: postgresql
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postgresql
+          __path__: /var/log/postgresql/postgresql-*.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} \w+) \[(?P<pid>\d+)\] (?P<level>\w+):\s+(?P<message>.+)$'
+      - labels:
+          level: level
+      - timestamp:
+          source: timestamp
+          format: 2006-01-02 15:04:05.000 MST
+      - output:
+          source: message
+      - drop:
+          source: message
+          expression: '.*(connection received|connection authorized|disconnection).*'
+          drop_counter_reason: connection_spam
+
+  # Application Logs (JSON)
+  - job_name: application-json
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: application
+          __path__: /var/log/app/*.json
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            message: message
+            service: service
+      - labels:
+          level: level
+          service: service
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - output:
+          source: message
+
+  # Systemd Journal
+  - job_name: journal
+    journal:
+      max_age: 12h
+      labels:
+        job: systemd-journal
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: 'unit'
+      - source_labels: ['__journal__hostname']
+        target_label: 'hostname'
+      - source_labels: ['__journal_priority']
+        target_label: 'level'
+      - action: labeldrop
+        regex: '__journal.*'
+
+limits_config:
+  readline_rate: 10000
+  readline_burst: 20000
+
+# ==============================================================================
+# OPERATIONAL NOTES
+# ==============================================================================
+#
+# Deployment as Systemd Service:
+# -------------------------------
+# Create: /etc/systemd/system/promtail.service
+#
+# [Unit]
+# Description=Promtail Log Shipper
+# After=network.target
+#
+# [Service]
+# Type=simple
+# User=promtail
+# ExecStart=/usr/local/bin/promtail -config.file=/etc/promtail/config.yml
+# Restart=always
+# RestartSec=10s
+#
+# [Install]
+# WantedBy=multi-user.target
+#
+# Monitoring Promtail:
+# --------------------
+# curl http://localhost:9080/ready
+# curl http://localhost:9080/metrics
+# curl http://localhost:9080/targets
+#
+# ==============================================================================
