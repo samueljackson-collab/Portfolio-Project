@@ -253,7 +253,8 @@ apt install -y nodejs postgresql postgresql-contrib
 # Create Wiki.js database
 sudo -u postgres psql << EOF
 CREATE DATABASE wikijs;
-CREATE USER wikijs WITH ENCRYPTED PASSWORD 'SECURE_PASSWORD_HERE';
+-- Replace 'YOUR_STRONG_PASSWORD' with a securely generated password
+CREATE USER wikijs WITH ENCRYPTED PASSWORD 'YOUR_STRONG_PASSWORD';
 GRANT ALL PRIVILEGES ON DATABASE wikijs TO wikijs;
 \q
 EOF
