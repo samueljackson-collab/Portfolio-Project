@@ -266,3 +266,45 @@ class TestAWSCLIUsage:
         with open(script_path, 'r') as f:
             content = f.read()
         assert "--region" in content or "${REGION}" in content
+
+
+class TestScriptPermissionChanges:
+    """Test script file permission requirements."""
+
+    def test_script_permission_bits(self, script_path):
+        """Verify script has correct permission bits for execution."""
+        import stat
+        st = script_path.stat()
+        mode = st.st_mode
+        
+        # Check owner execute bit
+        assert mode & stat.S_IXUSR, "Owner should have execute permission"
+        
+        # Check group execute bit (common in many setups)
+        assert mode & stat.S_IXGRP, "Group should have execute permission"
+
+    def test_script_not_world_writable(self, script_path):
+        """Verify script is not world-writable (security check)."""
+        import stat
+        st = script_path.stat()
+        mode = st.st_mode
+        
+        # Script should not be world-writable
+        assert not (mode & stat.S_IWOTH), \
+            "Script should not be world-writable for security"
+
+    def test_script_readable_by_owner(self, script_path):
+        """Verify script is readable by owner."""
+        import stat
+        st = script_path.stat()
+        mode = st.st_mode
+        
+        assert mode & stat.S_IRUSR, "Owner should have read permission"
+
+    def test_script_is_regular_file(self, script_path):
+        """Verify script is a regular file, not symlink or other type."""
+        import stat
+        st = script_path.stat()
+        
+        assert stat.S_ISREG(st.st_mode), \
+            "Script should be a regular file"

@@ -320,3 +320,60 @@ class TestWorkflowDispatch:
     def test_workflow_supports_manual_dispatch(self, workflow):
         """Verify workflow can be manually triggered."""
         assert "workflow_dispatch" in workflow["on"]
+
+
+class TestYAMLSyntax:
+    """Test YAML syntax and reserved word handling."""
+
+    def test_workflow_quotes_on_keyword(self, workflow_path):
+        """Verify workflow properly quotes 'on' keyword to avoid YAML issues."""
+        content = workflow_path.read_text()
+        # The 'on' keyword should be quoted to avoid YAML 1.1 boolean interpretation
+        assert "'on':" in content or '"on":' in content, \
+            "Workflow should quote 'on' keyword to prevent YAML parsing issues"
+
+    def test_workflow_parses_with_quoted_on(self, workflow):
+        """Verify workflow with quoted 'on' keyword parses correctly."""
+        # If we got here with a valid workflow fixture, the YAML parsed successfully
+        assert workflow is not None
+        assert "on" in workflow or "True" in str(workflow.keys()), \
+            "Workflow should parse correctly with quoted 'on' keyword"
+
+    def test_on_trigger_structure_valid(self, workflow):
+        """Verify 'on' trigger structure is valid after quoting."""
+        # YAML parsers may interpret unquoted 'on:' as boolean True in YAML 1.1
+        # Verify the trigger configuration is a dict, not a boolean
+        assert "on" in workflow, "Workflow should have 'on' key"
+        assert isinstance(workflow["on"], dict), \
+            "Trigger configuration should be a dictionary, not a boolean"
+        assert "push" in workflow["on"], "Should have push trigger"
+        assert "pull_request" in workflow["on"], "Should have pull_request trigger"
+
+    def test_yaml_reserved_words_handled(self, workflow_path):
+        """Verify YAML reserved words are properly quoted throughout."""
+        content = workflow_path.read_text()
+        # Check that critical YAML reserved words that appear as keys are quoted
+        # 'on' is particularly problematic in YAML 1.1
+        assert content.count("'on':") >= 1 or content.count('"on":') >= 1, \
+            "YAML 'on' keyword should be quoted"
+
+
+class TestWorkflowYAMLCompliance:
+    """Test workflow compliance with YAML best practices."""
+
+    def test_workflow_uses_yaml_1_2_compatible_syntax(self, workflow_path):
+        """Verify workflow avoids YAML 1.1 boolean pitfalls."""
+        content = workflow_path.read_text()
+        # YAML 1.1 interprets 'on', 'off', 'yes', 'no' as booleans
+        # Using quotes prevents this issue
+        lines = content.split('\n')
+        for i, line in enumerate(lines, 1):
+            if line.strip().startswith('on:') and not line.strip().startswith(("'on':", '"on":')):
+                pytest.fail(f"Line {i}: Unquoted 'on:' keyword may cause YAML parsing issues")
+
+    def test_workflow_maintains_functional_triggers(self, workflow):
+        """Verify all workflow triggers remain functional after YAML fixes."""
+        triggers = workflow.get("on", {})
+        assert "push" in triggers, "Should maintain push trigger"
+        assert "pull_request" in triggers, "Should maintain pull_request trigger"
+        assert "workflow_dispatch" in triggers, "Should maintain workflow_dispatch trigger"

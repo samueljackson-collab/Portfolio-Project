@@ -251,3 +251,140 @@ class TestOutputMessages:
         keywords = ["Formatting", "Initializing", "Planning", "Validating"]
         found_keywords = [kw for kw in keywords if kw in content]
         assert len(found_keywords) >= 2, "Script should indicate current steps"
+
+
+class TestTerraformFmtCommand:
+    """Test terraform fmt command correctness."""
+
+    def test_script_terraform_fmt_command_syntax(self, script_path):
+        """Verify terraform fmt command has correct syntax."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        # Line should be 'terraform fmt -recursive', not 'tf=terraform fmt -recursive'
+        assert "terraform fmt -recursive" in content or "terraform fmt" in content, \
+            "Script should contain terraform fmt command"
+        # Check for common typo where variable assignment is used instead
+        assert "tf=terraform fmt" not in content, \
+            "Script should not have variable assignment 'tf=' before terraform fmt command"
+
+    def test_script_executes_fmt_not_assigns(self, script_path):
+        """Verify fmt command is executed, not assigned to variable."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        for i, line in enumerate(lines, 1):
+            if "fmt -recursive" in line:
+                # Should be command execution, not variable assignment
+                assert not line.strip().startswith("tf="), \
+                    f"Line {i}: 'terraform fmt' should be executed, not assigned to 'tf' variable"
+                # Should actually call terraform
+                assert "terraform fmt" in line or line.strip().startswith("terraform"), \
+                    f"Line {i}: Should execute 'terraform fmt' command"
+
+    def test_script_fmt_command_not_noop(self, script_path):
+        """Verify terraform fmt command will actually execute."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Find the fmt line
+        fmt_lines = [line for line in content.split('\n') if 'fmt' in line and 'terraform' in line.lower()]
+        assert len(fmt_lines) > 0, "Should have terraform fmt command"
+        
+        for line in fmt_lines:
+            # Skip comments
+            if line.strip().startswith('#'):
+                continue
+            # Ensure it's a command execution, not just a variable assignment
+            if 'fmt -recursive' in line:
+                assert not line.strip().startswith('tf='), \
+                    "terraform fmt should be executed as command, not assigned to variable"
+
+    def test_script_runs_recursive_fmt(self, script_path):
+        """Verify script uses -recursive flag for terraform fmt."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        assert "-recursive" in content or "recursive" in content, \
+            "Script should use -recursive flag for terraform fmt"
+
+
+class TestScriptCommandExecution:
+    """Test that script commands are executed, not just assigned."""
+
+    def test_no_unused_variable_assignments(self, script_path):
+        """Verify script doesn't have unused variable assignments for commands."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        # Look for suspicious patterns like: cmd=actual_command
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            # Skip comments and empty lines
+            if stripped.startswith('#') or not stripped:
+                continue
+            
+            # Check for patterns like 'tf=terraform' or 'init=terraform init'
+            if '=' in stripped and 'terraform' in stripped.lower():
+                # This might be a variable assignment instead of command execution
+                # Unless it's a proper variable like WORKSPACE="${1:-default}"
+                if not any(var in stripped for var in ['WORKSPACE=', 'AUTO_APPROVE=', 'ROOT_DIR=', 'AWS_']):
+                    # Check if it looks like a command being assigned
+                    if stripped.startswith(('tf=', 'init=', 'plan=', 'apply=', 'validate=', 'fmt=')):
+                        pytest.fail(f"Line {i}: Suspicious variable assignment '{stripped}' - "
+                                  f"command may not execute")
+
+    def test_terraform_commands_properly_invoked(self, script_path):
+        """Verify all terraform commands are properly invoked as commands."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        terraform_command_count = 0
+        for line in lines:
+            # Count actual terraform command invocations
+            if 'terraform ' in line and not line.strip().startswith('#'):
+                terraform_command_count += 1
+        
+        # Script should have multiple terraform commands (fmt, init, workspace, validate, plan, apply)
+        assert terraform_command_count >= 4, \
+            f"Script should execute multiple terraform commands, found {terraform_command_count}"
+
+
+class TestScriptPermissionChanges:
+    """Test script file permission requirements."""
+
+    def test_script_permission_bits(self, script_path):
+        """Verify script has correct permission bits for execution."""
+        import stat
+        st = script_path.stat()
+        mode = st.st_mode
+        
+        # Check owner execute bit
+        assert mode & stat.S_IXUSR, "Owner should have execute permission"
+        
+        # Check group execute bit (common in many setups)
+        assert mode & stat.S_IXGRP, "Group should have execute permission"
+
+    def test_script_not_world_writable(self, script_path):
+        """Verify script is not world-writable (security check)."""
+        import stat
+        st = script_path.stat()
+        mode = st.st_mode
+        
+        # Script should not be world-writable
+        assert not (mode & stat.S_IWOTH), \
+            "Script should not be world-writable for security"
+
+    def test_script_readable_by_owner(self, script_path):
+        """Verify script is readable by owner."""
+        import stat
+        st = script_path.stat()
+        mode = st.st_mode
+        
+        assert mode & stat.S_IRUSR, "Owner should have read permission"
+
+    def test_script_is_regular_file(self, script_path):
+        """Verify script is a regular file, not symlink or other type."""
+        import stat
+        st = script_path.stat()
+        
+        assert stat.S_ISREG(st.st_mode), \
+            "Script should be a regular file"

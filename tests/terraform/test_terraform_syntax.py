@@ -316,3 +316,127 @@ class TestConditionalLogic:
         content = main_tf.read_text()
         if "aws_eks_cluster" in content:
             assert "count = var.create_eks" in content
+
+
+class TestBackendDocumentation:
+    """Test backend.tf documentation and comments."""
+
+    def test_backend_has_configuration_documentation(self, backend_tf):
+        """Verify backend.tf documents how to provide configuration values."""
+        content = backend_tf.read_text()
+        assert "-backend-config" in content or "backend-config" in content, \
+            "Should document how backend configuration is provided"
+
+    def test_backend_documents_init_usage(self, backend_tf):
+        """Verify backend.tf explains terraform init usage."""
+        content = backend_tf.read_text()
+        assert "terraform init" in content, \
+            "Should reference terraform init command in documentation"
+
+    def test_backend_documents_variable_mapping(self, backend_tf):
+        """Verify backend.tf documents variable mapping."""
+        content = backend_tf.read_text()
+        # Should explain what variables are used
+        assert "bucket" in content.lower() or "tfstate_bucket" in content, \
+            "Should document bucket variable"
+        assert "region" in content.lower() or "aws_region" in content, \
+            "Should document region variable"
+
+    def test_backend_references_workflow(self, backend_tf):
+        """Verify backend.tf references the GitHub workflow for examples."""
+        content = backend_tf.read_text()
+        assert ".github/workflows" in content or "terraform.yml" in content, \
+            "Should reference GitHub workflow file for backend-config usage examples"
+
+    def test_backend_comments_above_configuration(self, backend_tf):
+        """Verify backend.tf has explanatory comments above configuration."""
+        lines = backend_tf.read_text().split('\n')
+        
+        # Find the backend "s3" block
+        backend_line = None
+        for i, line in enumerate(lines):
+            if 'backend "s3"' in line:
+                backend_line = i
+                break
+        
+        assert backend_line is not None, "Should have backend s3 configuration"
+        
+        # Check for comments before the backend block
+        has_comment_before = False
+        for i in range(max(0, backend_line - 10), backend_line):
+            if lines[i].strip().startswith('#'):
+                has_comment_before = True
+                break
+        
+        assert has_comment_before, "Should have explanatory comments before backend configuration"
+
+    def test_backend_explains_placeholder_values(self, backend_tf):
+        """Verify backend.tf explains REPLACE_ME placeholder values."""
+        content = backend_tf.read_text()
+        if "REPLACE_ME" in content:
+            # If there are placeholders, should explain they're overridden
+            assert "backend-config" in content or "provided via" in content, \
+                "Should explain how REPLACE_ME values are overridden"
+
+
+class TestBackendConfigurationGuidance:
+    """Test backend.tf provides clear configuration guidance."""
+
+    def test_backend_config_values_documented(self, backend_tf):
+        """Verify all backend config values are documented in comments."""
+        content = backend_tf.read_text()
+        
+        # Check that key backend fields are mentioned in comments
+        config_fields = ['bucket', 'key', 'region', 'dynamodb_table', 'encrypt']
+        
+        for field in config_fields:
+            # Either the field appears in a comment or in the config itself
+            assert field in content, f"Backend configuration should mention '{field}'"
+
+    def test_backend_workflow_integration_documented(self, backend_tf):
+        """Verify backend.tf documents integration with CI/CD workflow."""
+        content = backend_tf.read_text()
+        lines = content.split('\n')
+        
+        # Look for documentation about workflow integration
+        comment_lines = [line for line in lines if line.strip().startswith('#')]
+        comment_text = ' '.join(comment_lines)
+        
+        # Should mention how the workflow provides backend config
+        assert any(keyword in comment_text.lower() for keyword in 
+                  ['workflow', 'github', 'ci', 'action']), \
+            "Should document CI/CD workflow integration"
+
+    def test_backend_comments_reference_flags(self, backend_tf):
+        """Verify backend.tf comments mention -backend-config flags."""
+        content = backend_tf.read_text()
+        # Comments should explain the -backend-config mechanism
+        assert "backend-config" in content and "#" in content, \
+            "Comments should explain -backend-config flags usage"
+
+
+class TestBackendPlaceholders:
+    """Test backend.tf placeholder handling."""
+
+    def test_backend_has_placeholder_values(self, backend_tf):
+        """Verify backend.tf uses REPLACE_ME placeholders where appropriate."""
+        content = backend_tf.read_text()
+        # Should have REPLACE_ME placeholders for user to replace
+        assert "REPLACE_ME" in content or "${var." in content, \
+            "Should use placeholders or variables for user-specific values"
+
+    def test_backend_key_has_project_name(self, backend_tf):
+        """Verify backend key includes project name."""
+        content = backend_tf.read_text()
+        # State file key should include project identifier
+        assert "key" in content
+        assert "twisted-monk" in content or "terraform.tfstate" in content, \
+            "Backend key should include project identifier"
+
+    def test_backend_encryption_always_enabled(self, backend_tf):
+        """Verify backend encryption is always enabled."""
+        content = backend_tf.read_text()
+        # Encryption should be set to true
+        assert "encrypt" in content
+        assert "true" in content.lower(), \
+            "Backend encryption should always be enabled"
