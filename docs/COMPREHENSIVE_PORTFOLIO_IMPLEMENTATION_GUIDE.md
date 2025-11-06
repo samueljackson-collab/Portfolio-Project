@@ -241,7 +241,7 @@ def test_restore():
             ]
         )
         print(f"   Restore initiated: {response['DBInstance']['DBInstanceStatus']}")
-    except Exception as e:
+    except boto3.exceptions.ClientError as e:
         print(f"ERROR: Failed to initiate restore: {e}")
         sys.exit(1)
 
