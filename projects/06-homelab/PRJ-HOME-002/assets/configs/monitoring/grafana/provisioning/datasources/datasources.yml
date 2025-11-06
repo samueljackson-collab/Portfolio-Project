@@ -1,0 +1,395 @@
+# Grafana Datasources Provisioning Configuration
+# =====================================================
+# Version: Grafana 10.2.0
+# Purpose: Auto-configure Grafana datasources on startup
+# Last Updated: November 6, 2025
+#
+# Configuration Philosophy:
+# ------------------------
+# This configuration automatically provisions datasources in Grafana,
+# eliminating manual configuration and ensuring consistency across
+# deployments. Datasources are configured as code and version-controlled.
+#
+# Key Design Decisions:
+# ---------------------
+# 1. Prometheus as Default:
+#    - Primary datasource for metrics
+#    - Most dashboards query Prometheus by default
+#    - 15-second scrape interval matches Prometheus config
+#
+# 2. Loki for Logs:
+#    - Secondary datasource for log aggregation
+#    - Integrated with Prometheus for correlated queries
+#    - Derived fields link logs to traces (future)
+#
+# 3. Proxy Access Mode:
+#    - Grafana acts as proxy to datasources
+#    - Hides datasource details from browser
+#    - Enables authentication and caching
+#
+# 4. Health Checks:
+#    - Automatic health check on startup (editable: false)
+#    - Validates connectivity before dashboards load
+#    - Displays status in datasource list
+#
+# 5. Query Optimizations:
+#    - HTTP POST method for large queries
+#    - Caching enabled where applicable
+#    - Custom query timeout per datasource
+#
+# =====================================================
+
+apiVersion: 1
+
+# =====================================================
+# DELETION CONFIGURATION
+# =====================================================
+# deleteDatasources: Delete datasources not in this config
+# - name: datasource-name-to-delete
+#   orgId: 1
+
+# =====================================================
+# DATASOURCES
+# =====================================================
+datasources:
+
+  # ===================================================
+  # DATASOURCE 1: Prometheus (Metrics)
+  # ===================================================
+  # Primary datasource for all metric-based queries and dashboards
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+
+    # Make this the default datasource
+    isDefault: true
+
+    # Read-only (prevent accidental queries that modify data)
+    editable: false
+
+    # Organization ID (1 = default org)
+    orgId: 1
+
+    # Version (optional, for tracking)
+    version: 1
+
+    # JSON data (Prometheus-specific settings)
+    jsonData:
+      # Query method (POST supports larger queries)
+      httpMethod: POST
+
+      # Time interval (matches Prometheus scrape_interval)
+      timeInterval: 15s
+
+      # Query timeout (prevent hung queries)
+      queryTimeout: 60s
+
+      # Custom query parameters (optional)
+      # customQueryParameters: 'timeout=30s'
+
+      # Exemplars (link to traces, requires Tempo)
+      # exemplarTraceIdDestinations:
+      #   - name: traceID
+      #     datasourceUid: tempo_uid
+
+      # Incremental querying (performance optimization)
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
+
+      # Prometheus type (default, cortex, thanos, mimir)
+      prometheusType: default
+
+      # Cache level (for faster repeated queries)
+      cacheLevel: 'High'
+
+      # Disable metrics lookup (performance, set to true for large Prometheus)
+      disableMetricsLookup: false
+
+      # HTTP headers (optional authentication)
+      # httpHeaderName1: 'Authorization'
+
+    # Secure JSON data (passwords, tokens - stored encrypted)
+    # secureJsonData:
+    #   httpHeaderValue1: 'Bearer your-token-here'
+
+  # ===================================================
+  # DATASOURCE 2: Loki (Logs)
+  # ===================================================
+  # Log aggregation datasource for LogQL queries
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+
+    # Not default (Prometheus is default)
+    isDefault: false
+
+    editable: false
+    orgId: 1
+    version: 1
+
+    jsonData:
+      # Max lines to return (prevent browser from hanging)
+      maxLines: 1000
+
+      # Derived fields (extract fields from logs for linking)
+      derivedFields:
+        # Extract trace_id from logs and link to Tempo (future)
+        - datasourceUid: tempo_uid
+          matcherRegex: "trace_id=(\\w+)"
+          name: TraceID
+          url: "$${__value.raw}"
+
+        # Extract request_id from logs
+        - matcherRegex: "request_id=(\\w+)"
+          name: RequestID
+          url: ""
+
+      # HTTP headers (optional)
+      # httpHeaderName1: 'X-Scope-OrgID'
+
+    # secureJsonData:
+    #   httpHeaderValue1: 'your-org-id'
+
+  # ===================================================
+  # DATASOURCE 3: Alertmanager (Alerts)
+  # ===================================================
+  # Display active alerts and silences in Grafana
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+
+    isDefault: false
+    editable: false
+    orgId: 1
+    version: 1
+
+    jsonData:
+      # Alertmanager implementation (prometheus or cortex)
+      implementation: prometheus
+
+      # Handle Grafana managed alerts
+      handleGrafanaManagedAlerts: false
+
+  # ===================================================
+  # DATASOURCE 4: PostgreSQL (Optional - for metadata)
+  # ===================================================
+  # Direct database queries for application-specific dashboards
+  # CAUTION: Read-only user recommended
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: 192.168.40.23:5432
+
+    isDefault: false
+    editable: false
+    orgId: 1
+    version: 1
+
+    # Database connection details
+    database: grafana_metadata
+    user: grafana_readonly
+
+    jsonData:
+      # SSL mode (disable for internal network, require for external)
+      sslmode: disable
+
+      # PostgreSQL version
+      postgresVersion: 1600  # 16.0
+
+      # Max open connections
+      maxOpenConns: 10
+
+      # Max idle connections
+      maxIdleConns: 2
+
+      # Connection lifetime
+      connMaxLifetime: 14400  # 4 hours
+
+      # Timezone
+      timescaledb: false
+
+    # Secure connection password
+    secureJsonData:
+      password: ${GRAFANA_POSTGRES_PASSWORD}
+
+  # ===================================================
+  # DATASOURCE 5: TestData (for testing dashboards)
+  # ===================================================
+  # Built-in test datasource for development and demos
+  - name: TestData
+    type: testdata
+    access: proxy
+    url: ""
+
+    isDefault: false
+    editable: true
+    orgId: 1
+    version: 1
+
+    jsonData: {}
+
+  # ===================================================
+  # FUTURE DATASOURCES (commented out)
+  # ===================================================
+
+  # Tempo (Distributed Tracing)
+  # Uncomment when Tempo is deployed
+  # - name: Tempo
+  #   type: tempo
+  #   access: proxy
+  #   url: http://tempo:3200
+  #   uid: tempo_uid
+  #   isDefault: false
+  #   editable: false
+  #   orgId: 1
+  #   jsonData:
+  #     httpMethod: GET
+  #     tracesToLogs:
+  #       datasourceUid: loki_uid
+  #       tags: ['job', 'instance', 'pod', 'namespace']
+  #       mappedTags: [{ key: 'service.name', value: 'service' }]
+  #       mapTagNamesEnabled: true
+  #       spanStartTimeShift: '-1h'
+  #       spanEndTimeShift: '1h'
+  #       filterByTraceID: true
+  #       filterBySpanID: false
+  #     serviceMap:
+  #       datasourceUid: 'prometheus_uid'
+  #     nodeGraph:
+  #       enabled: true
+  #     search:
+  #       hide: false
+  #     lokiSearch:
+  #       datasourceUid: 'loki_uid'
+
+  # InfluxDB (Time-Series Database)
+  # Uncomment if using InfluxDB for high-frequency metrics
+  # - name: InfluxDB
+  #   type: influxdb
+  #   access: proxy
+  #   url: http://influxdb:8086
+  #   isDefault: false
+  #   editable: false
+  #   orgId: 1
+  #   jsonData:
+  #     version: Flux
+  #     organization: homelab
+  #     defaultBucket: metrics
+  #     tlsSkipVerify: true
+  #   secureJsonData:
+  #     token: ${INFLUXDB_TOKEN}
+
+  # MySQL (Application Database)
+  # Uncomment for MySQL-specific dashboards
+  # - name: MySQL
+  #   type: mysql
+  #   access: proxy
+  #   url: 192.168.40.23:3306
+  #   database: grafana_metadata
+  #   user: grafana_readonly
+  #   isDefault: false
+  #   editable: false
+  #   orgId: 1
+  #   jsonData:
+  #     maxOpenConns: 10
+  #     maxIdleConns: 2
+  #     connMaxLifetime: 14400
+  #   secureJsonData:
+  #     password: ${GRAFANA_MYSQL_PASSWORD}
+
+  # Elasticsearch (Log Storage Alternative)
+  # Uncomment if using ELK stack instead of Loki
+  # - name: Elasticsearch
+  #   type: elasticsearch
+  #   access: proxy
+  #   url: http://elasticsearch:9200
+  #   database: "[logs-]YYYY.MM.DD"
+  #   isDefault: false
+  #   editable: false
+  #   orgId: 1
+  #   jsonData:
+  #     esVersion: 8.0.0
+  #     timeField: "@timestamp"
+  #     interval: Daily
+  #     logMessageField: message
+  #     logLevelField: level
+
+  # Graphite (Legacy Metrics)
+  # Uncomment if migrating from Graphite
+  # - name: Graphite
+  #   type: graphite
+  #   access: proxy
+  #   url: http://graphite:8080
+  #   isDefault: false
+  #   editable: false
+  #   orgId: 1
+  #   jsonData:
+  #     graphiteVersion: "1.1"
+
+# =====================================================
+# OPERATIONAL NOTES
+# =====================================================
+#
+# Provisioning Behavior:
+# - Datasources are created/updated on Grafana startup
+# - editable: false prevents modification via UI
+# - Changes require Grafana restart or API call
+# - Existing datasources with same name are updated
+#
+# Testing Datasources:
+# 1. Start Grafana: docker-compose up grafana
+# 2. Navigate to Configuration → Datasources
+# 3. Verify all datasources show green checkmark
+# 4. Click "Test" button for manual health check
+#
+# Troubleshooting:
+# - Connection failed: Check datasource URL and network
+# - Auth failed: Verify credentials in secureJsonData
+# - Not appearing: Check file permissions and provisioning path
+# - Duplicate datasources: Ensure unique names
+#
+# Environment Variables:
+# - Use ${VAR_NAME} syntax for secrets
+# - Define in docker-compose.yml or .env file
+# - Never commit plain-text passwords to git
+#
+# Example .env:
+# GRAFANA_POSTGRES_PASSWORD=secure_password_here
+# SMTP_PASSWORD=smtp_password_here
+# INFLUXDB_TOKEN=influxdb_token_here
+#
+# Updating Datasources:
+# Method 1: Edit this file, restart Grafana
+# Method 2: Use Grafana HTTP API
+# curl -X PUT http://admin:admin@localhost:3000/api/datasources/uid/prometheus_uid \
+#   -H "Content-Type: application/json" \
+#   -d @datasource.json
+#
+# Datasource UIDs:
+# - Auto-generated if not specified
+# - Useful for linking datasources (Loki → Tempo)
+# - Stable across Grafana reinstalls
+# - Can be specified manually: uid: my_custom_uid
+#
+# Best Practices:
+# 1. Set editable: false for production datasources
+# 2. Use proxy access mode (not direct)
+# 3. Store passwords in secureJsonData, not jsonData
+# 4. Use environment variables for secrets
+# 5. Document custom jsonData settings
+# 6. Test datasources after provisioning
+# 7. Version control this file
+#
+# Grafana Provisioning Path:
+# Default: /etc/grafana/provisioning/datasources/
+# Docker: Mount this file to the path above
+# Example docker-compose.yml:
+# volumes:
+#   - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+#
+# For more info: https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources
+#
+# =====================================================

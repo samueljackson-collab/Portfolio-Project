@@ -1,0 +1,618 @@
+# Alertmanager Configuration - Complete Production Setup
+# =====================================================
+# Version: Alertmanager 0.26.0
+# Purpose: Alert routing, grouping, and notification management
+# Last Updated: November 6, 2025
+#
+# Configuration Philosophy:
+# ------------------------
+# This Alertmanager configuration implements intelligent alert routing
+# with the following principles:
+# - Group related alerts to reduce notification noise
+# - Route by severity (critical → PagerDuty, warning → Slack)
+# - Inhibit lower-priority alerts when higher ones fire
+# - Deduplicate alerts across time and sources
+# - Support multiple notification channels
+# - Implement escalation for unacknowledged critical alerts
+#
+# Key Design Decisions:
+# ---------------------
+# 1. Routing Strategy:
+#    - Default route: Slack #homelab-alerts
+#    - Critical alerts: PagerDuty + Slack #critical
+#    - Warning alerts: Slack #homelab-alerts
+#    - Info alerts: Slack #homelab-info (low priority)
+#    - Database alerts: Dedicated #database-alerts channel
+#    - Security alerts: Dedicated #security-alerts channel
+#
+# 2. Grouping:
+#    - Group by: alertname, cluster, service
+#    - Group wait: 30 seconds (collect initial batch)
+#    - Group interval: 5 minutes (subsequent batches)
+#    - Repeat interval: 4 hours (re-notify if not resolved)
+#
+# 3. Inhibition Rules:
+#    - Instance down → inhibit all alerts from that instance
+#    - Critical alerts → inhibit warnings for same service
+#    - Cluster alerts → inhibit node-specific alerts
+#
+# 4. Notification Templates:
+#    - Rich formatting for Slack (colors, fields, links)
+#    - Clear subject lines for email
+#    - Runbook links for common issues
+#    - Grafana dashboard links for context
+#
+# =====================================================
+
+# =====================================================
+# GLOBAL CONFIGURATION
+# =====================================================
+global:
+  # Default SMTP settings (for email notifications)
+  smtp_from: 'alertmanager@homelab.local'
+  smtp_smarthost: 'mail.homelab.local:587'
+  smtp_auth_username: 'alertmanager@homelab.local'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+  # Default HTTP settings
+  http_config:
+    follow_redirects: true
+
+  # Time to wait before sending notification when alert is resolved
+  resolve_timeout: 5m
+
+  # External URLs for linking back to Alertmanager
+  # Replace with your actual domain
+  # external_url: 'https://alertmanager.example.com'
+
+  # Slack API URL (webhook or API)
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+  # PagerDuty integration key
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# =====================================================
+# TEMPLATES
+# =====================================================
+# Custom notification templates for better formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# =====================================================
+# ROUTE CONFIGURATION
+# =====================================================
+# Hierarchical routing tree for intelligent alert distribution
+route:
+  # Root route (catch-all)
+  receiver: 'slack-general'
+
+  # Grouping configuration
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s         # Wait 30s for initial batch
+  group_interval: 5m      # Wait 5m for subsequent batches
+  repeat_interval: 4h     # Re-notify every 4 hours if not resolved
+
+  # Child routes (evaluated in order, first match wins)
+  routes:
+
+    # ===================================================
+    # ROUTE 1: Critical Alerts (Severity: critical)
+    # ===================================================
+    # Critical infrastructure failures requiring immediate attention
+    # Notifications: PagerDuty (page on-call) + Slack #critical
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s          # Faster notification for critical
+      repeat_interval: 1h      # Re-notify every hour
+      continue: false          # Don't continue to other routes
+
+    # ===================================================
+    # ROUTE 2: Database Alerts (Service: postgresql, mysql)
+    # ===================================================
+    # Database-specific alerts to dedicated channel
+    # Notifications: Slack #database-alerts + Email to DBA
+    - match_re:
+        service: (postgresql|mysql|redis)
+      receiver: 'database-alerts'
+      group_by: ['alertname', 'service', 'database']
+      continue: false
+
+    # ===================================================
+    # ROUTE 3: Security Alerts (Tier: security)
+    # ===================================================
+    # Security events (failed logins, unusual activity, etc.)
+    # Notifications: Slack #security-alerts + Email to security team
+    - match:
+        tier: security
+      receiver: 'security-alerts'
+      group_by: ['alertname', 'instance']
+      group_wait: 10s          # Fast notification for security
+      repeat_interval: 2h
+      continue: false
+
+    # ===================================================
+    # ROUTE 4: Storage Alerts (Tier: storage)
+    # ===================================================
+    # Storage capacity, disk failures, filesystem issues
+    # Notifications: Slack #storage-alerts
+    - match:
+        tier: storage
+      receiver: 'storage-alerts'
+      group_by: ['alertname', 'instance', 'mountpoint']
+      continue: false
+
+    # ===================================================
+    # ROUTE 5: Network Alerts (Tier: network)
+    # ===================================================
+    # Network connectivity, bandwidth, switch/router issues
+    # Notifications: Slack #network-alerts
+    - match:
+        tier: network
+      receiver: 'network-alerts'
+      group_by: ['alertname', 'instance', 'interface']
+      continue: false
+
+    # ===================================================
+    # ROUTE 6: Application Alerts (Tier: application)
+    # ===================================================
+    # Application-specific issues (Immich, Wiki.js, Home Assistant)
+    # Notifications: Slack #application-alerts
+    - match:
+        tier: application
+      receiver: 'application-alerts'
+      group_by: ['alertname', 'service', 'instance']
+      continue: false
+
+    # ===================================================
+    # ROUTE 7: Monitoring System Alerts (Job: prometheus, alertmanager, grafana)
+    # ===================================================
+    # Alerts about the monitoring system itself
+    # Notifications: Slack #monitoring-alerts (high priority)
+    - match_re:
+        job: (prometheus|alertmanager|grafana|loki)
+      receiver: 'monitoring-alerts'
+      group_by: ['alertname', 'job']
+      repeat_interval: 30m     # More frequent for monitoring issues
+      continue: false
+
+    # ===================================================
+    # ROUTE 8: Warning Alerts (Severity: warning)
+    # ===================================================
+    # Non-critical warnings requiring attention but not urgent
+    # Notifications: Slack #homelab-alerts
+    - match:
+        severity: warning
+      receiver: 'slack-general'
+      repeat_interval: 8h      # Less frequent for warnings
+      continue: false
+
+    # ===================================================
+    # ROUTE 9: Info Alerts (Severity: info)
+    # ===================================================
+    # Informational alerts (planned maintenance, successful backups)
+    # Notifications: Slack #homelab-info (low priority)
+    - match:
+        severity: info
+      receiver: 'slack-info'
+      repeat_interval: 24h     # Daily at most
+      continue: false
+
+    # ===================================================
+    # ROUTE 10: Blackhole (Severity: none or test)
+    # ===================================================
+    # Silently drop test alerts and explicitly silenced alerts
+    - match:
+        severity: none
+      receiver: 'blackhole'
+      continue: false
+
+# =====================================================
+# RECEIVERS (Notification Channels)
+# =====================================================
+receivers:
+
+  # ===================================================
+  # RECEIVER: critical-alerts
+  # ===================================================
+  # For critical infrastructure failures
+  # Channels: PagerDuty (page on-call) + Slack #critical
+  - name: 'critical-alerts'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .GroupLabels.alertname }}: {{ .GroupLabels.service }} on {{ .GroupLabels.instance }}'
+        severity: 'critical'
+        details:
+          summary: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+          description: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+          firing: '{{ .Alerts.Firing | len }}'
+          resolved: '{{ .Alerts.Resolved | len }}'
+        url: '{{ template "pagerduty.default.url" . }}'
+        client: 'Homelab Alertmanager'
+        client_url: 'https://alertmanager.example.com'
+
+    slack_configs:
+      - channel: '#critical'
+        username: 'Alertmanager'
+        icon_emoji: ':fire:'
+        color: 'danger'
+        title: '{{ range .Alerts }}{{ .Labels.alertname }}{{ end }}'
+        title_link: '{{ template "slack.default.titlelink" . }}'
+        text: '{{ template "slack.critical.text" . }}'
+        actions:
+          - type: button
+            text: 'Runbook :book:'
+            url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
+          - type: button
+            text: 'Silence :no_bell:'
+            url: '{{ template "slack.default.silenceURL" . }}'
+          - type: button
+            text: 'Dashboard :chart_with_upwards_trend:'
+            url: '{{ (index .Alerts 0).Annotations.dashboard_url }}'
+        send_resolved: true
+
+    email_configs:
+      - to: 'oncall@homelab.local'
+        from: 'alertmanager@homelab.local'
+        subject: '[CRITICAL] {{ .GroupLabels.alertname }} - {{ .GroupLabels.service }}'
+        html: '{{ template "email.critical.html" . }}'
+        send_resolved: true
+
+  # ===================================================
+  # RECEIVER: database-alerts
+  # ===================================================
+  # For database-specific issues
+  # Channels: Slack #database-alerts + Email to DBA
+  - name: 'database-alerts'
+    slack_configs:
+      - channel: '#database-alerts'
+        username: 'DB Alertmanager'
+        icon_emoji: ':database:'
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '{{ .GroupLabels.alertname }} - {{ .GroupLabels.service }}'
+        text: '{{ template "slack.database.text" . }}'
+        send_resolved: true
+
+    email_configs:
+      - to: 'dba@homelab.local'
+        subject: '[DATABASE] {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  # ===================================================
+  # RECEIVER: security-alerts
+  # ===================================================
+  # For security-related events
+  # Channels: Slack #security-alerts + Email to security team
+  - name: 'security-alerts'
+    slack_configs:
+      - channel: '#security-alerts'
+        username: 'Security Alertmanager'
+        icon_emoji: ':shield:'
+        color: 'danger'
+        title: '[SECURITY] {{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.security.text" . }}'
+        send_resolved: true
+
+    email_configs:
+      - to: 'security@homelab.local'
+        subject: '[SECURITY] {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.security.html" . }}'
+        send_resolved: true
+
+  # ===================================================
+  # RECEIVER: storage-alerts
+  # ===================================================
+  # For storage and filesystem issues
+  # Channels: Slack #storage-alerts
+  - name: 'storage-alerts'
+    slack_configs:
+      - channel: '#storage-alerts'
+        username: 'Storage Alertmanager'
+        icon_emoji: ':floppy_disk:'
+        color: 'warning'
+        title: '{{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.storage.text" . }}'
+        send_resolved: true
+
+  # ===================================================
+  # RECEIVER: network-alerts
+  # ===================================================
+  # For network connectivity issues
+  # Channels: Slack #network-alerts
+  - name: 'network-alerts'
+    slack_configs:
+      - channel: '#network-alerts'
+        username: 'Network Alertmanager'
+        icon_emoji: ':electric_plug:'
+        color: 'warning'
+        title: '{{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.network.text" . }}'
+        send_resolved: true
+
+  # ===================================================
+  # RECEIVER: application-alerts
+  # ===================================================
+  # For application-specific issues
+  # Channels: Slack #application-alerts
+  - name: 'application-alerts'
+    slack_configs:
+      - channel: '#application-alerts'
+        username: 'App Alertmanager'
+        icon_emoji: ':package:'
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '{{ .GroupLabels.alertname }} - {{ .GroupLabels.service }}'
+        text: '{{ template "slack.application.text" . }}'
+        send_resolved: true
+
+  # ===================================================
+  # RECEIVER: monitoring-alerts
+  # ===================================================
+  # For monitoring system issues (meta-monitoring)
+  # Channels: Slack #monitoring-alerts (high priority)
+  - name: 'monitoring-alerts'
+    slack_configs:
+      - channel: '#monitoring-alerts'
+        username: 'Meta Alertmanager'
+        icon_emoji: ':eyes:'
+        color: 'danger'
+        title: '[MONITORING] {{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.monitoring.text" . }}'
+        send_resolved: true
+
+  # ===================================================
+  # RECEIVER: slack-general
+  # ===================================================
+  # Default receiver for general alerts
+  # Channels: Slack #homelab-alerts
+  - name: 'slack-general'
+    slack_configs:
+      - channel: '#homelab-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':bell:'
+        color: '{{ if eq .Status "firing" }}{{ if eq .GroupLabels.severity "warning" }}warning{{ else }}danger{{ end }}{{ else }}good{{ end }}'
+        title: '{{ .GroupLabels.alertname }}'
+        title_link: '{{ template "slack.default.titlelink" . }}'
+        text: '{{ template "slack.default.text" . }}'
+        send_resolved: true
+
+  # ===================================================
+  # RECEIVER: slack-info
+  # ===================================================
+  # For informational, low-priority alerts
+  # Channels: Slack #homelab-info
+  - name: 'slack-info'
+    slack_configs:
+      - channel: '#homelab-info'
+        username: 'Info Bot'
+        icon_emoji: ':information_source:'
+        color: 'good'
+        title: '{{ .GroupLabels.alertname }}'
+        text: '{{ template "slack.info.text" . }}'
+        send_resolved: true
+
+  # ===================================================
+  # RECEIVER: blackhole
+  # ===================================================
+  # Silently drops alerts (for testing or explicit silencing)
+  - name: 'blackhole'
+
+# =====================================================
+# INHIBITION RULES
+# =====================================================
+# Suppress lower-priority alerts when higher-priority ones are firing
+inhibit_rules:
+
+  # ===================================================
+  # INHIBIT 1: Instance Down → Suppress All Instance Alerts
+  # ===================================================
+  # When an instance is down, suppress all other alerts from that instance
+  # Rationale: If host is down, no point alerting about services on it
+  - source_match:
+      alertname: 'InstanceDown'
+    target_match_re:
+      alertname: '.*'
+    equal:
+      - 'instance'
+
+  # ===================================================
+  # INHIBIT 2: Node Down → Suppress Node-Specific Alerts
+  # ===================================================
+  # When a node is down, suppress disk, CPU, memory alerts for that node
+  - source_match:
+      alertname: 'NodeDown'
+    target_match_re:
+      alertname: '(HighCPU|HighMemory|DiskSpacelow|HighLoad).*'
+    equal:
+      - 'instance'
+
+  # ===================================================
+  # INHIBIT 3: Critical → Suppress Warnings (Same Service)
+  # ===================================================
+  # When a critical alert is firing, suppress warnings for same service
+  # Rationale: Critical takes precedence, warnings are noise
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal:
+      - 'service'
+      - 'instance'
+
+  # ===================================================
+  # INHIBIT 4: Database Down → Suppress Query Performance Alerts
+  # ===================================================
+  # When database is down, suppress slow query alerts
+  - source_match:
+      alertname: 'PostgreSQLDown'
+    target_match_re:
+      alertname: '(PostgreSQLSlowQueries|PostgreSQLHighConnections).*'
+    equal:
+      - 'instance'
+
+  # ===================================================
+  # INHIBIT 5: Network Down → Suppress Endpoint Checks
+  # ===================================================
+  # When network interface is down, suppress HTTP probe failures
+  - source_match:
+      alertname: 'NetworkInterfaceDown'
+    target_match_re:
+      alertname: '(HTTPProbeFailed|SSLCertExpiring).*'
+    equal:
+      - 'instance'
+
+  # ===================================================
+  # INHIBIT 6: Cluster Issues → Suppress Individual Nodes
+  # ===================================================
+  # When entire cluster is having issues, suppress per-node alerts
+  - source_match:
+      alertname: 'ProxmoxClusterNotHealthy'
+    target_match_re:
+      alertname: '(ProxmoxNode|ProxmoxVM).*'
+    equal:
+      - 'cluster'
+
+  # ===================================================
+  # INHIBIT 7: Maintenance Mode → Suppress All Alerts
+  # ===================================================
+  # When maintenance label is present, suppress all alerts
+  - source_match:
+      alertname: 'MaintenanceMode'
+    target_match_re:
+      alertname: '.*'
+    equal:
+      - 'instance'
+
+# =====================================================
+# MUTE TIME INTERVALS (Optional)
+# =====================================================
+# Define time windows when certain alerts should be muted
+# Useful for scheduled maintenance, non-business hours, etc.
+mute_time_intervals:
+
+  # ===================================================
+  # INTERVAL 1: Business Hours
+  # ===================================================
+  # Define business hours (Monday-Friday, 9am-5pm)
+  - name: business_hours
+    time_intervals:
+      - times:
+          - start_time: '09:00'
+            end_time: '17:00'
+        weekdays: ['monday:friday']
+
+  # ===================================================
+  # INTERVAL 2: Off Hours
+  # ===================================================
+  # Nights and weekends (inverse of business hours)
+  - name: off_hours
+    time_intervals:
+      - times:
+          - start_time: '00:00'
+            end_time: '09:00'
+        weekdays: ['monday:friday']
+      - times:
+          - start_time: '17:00'
+            end_time: '23:59'
+        weekdays: ['monday:friday']
+      - weekdays: ['saturday', 'sunday']
+
+  # ===================================================
+  # INTERVAL 3: Maintenance Windows
+  # ===================================================
+  # Scheduled maintenance (every Sunday 2am-4am)
+  - name: maintenance_window
+    time_intervals:
+      - times:
+          - start_time: '02:00'
+            end_time: '04:00'
+        weekdays: ['sunday']
+
+# To use mute time intervals, add to route:
+# route:
+#   receiver: 'slack-general'
+#   mute_time_intervals:
+#     - maintenance_window
+
+# =====================================================
+# OPERATIONAL NOTES
+# =====================================================
+#
+# Configuration Reload:
+# curl -X POST http://192.168.40.30:9093/-/reload
+#
+# Configuration Validation:
+# amtool check-config alertmanager.yml
+#
+# View Active Alerts:
+# curl http://192.168.40.30:9093/api/v2/alerts
+#
+# View Silences:
+# curl http://192.168.40.30:9093/api/v2/silences
+#
+# Create Silence (CLI):
+# amtool silence add alertname=HighCPU instance=192.168.40.20 --duration=2h --comment="Planned load test"
+#
+# Test Notification (Send Test Alert):
+# curl -H "Content-Type: application/json" -d '[{
+#   "labels": {
+#     "alertname": "TestAlert",
+#     "severity": "info",
+#     "instance": "test-instance"
+#   },
+#   "annotations": {
+#     "summary": "This is a test alert",
+#     "description": "Testing Alertmanager notification routing"
+#   }
+# }]' http://192.168.40.30:9093/api/v2/alerts
+#
+# Common Operations:
+# - Silence alerts during maintenance
+# - Test notification channels
+# - Adjust group_wait/group_interval for alert batching
+# - Review inhibition rules effectiveness
+# - Monitor Alertmanager metrics
+#
+# Alertmanager Metrics:
+# - alertmanager_alerts: Currently active alerts
+# - alertmanager_notifications_total: Total notifications sent
+# - alertmanager_notifications_failed_total: Failed notifications (investigate!)
+# - alertmanager_silences: Active silences
+#
+# Troubleshooting:
+# - Alerts not routing correctly: Check route matching, test with amtool
+# - Notifications not sending: Verify receiver configs, check SMTP/Slack credentials
+# - Too many notifications: Adjust group_interval, review inhibition rules
+# - Missing notifications: Check spam folders, verify channel/email addresses
+# - Duplicate notifications: Review alert rules in Prometheus, check for duplicate routes
+#
+# Integration URLs:
+# - Slack Webhook: https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+# - PagerDuty: https://events.pagerduty.com/v2/enqueue (service_key required)
+# - Email: Configure SMTP settings in global config
+#
+# Security Considerations:
+# - Store sensitive values in environment variables (SMTP_PASSWORD, SLACK_WEBHOOK_URL)
+# - Use HTTPS for external_url
+# - Restrict Alertmanager port (9093) with firewall rules
+# - Enable authentication if exposing to internet
+# - Regularly rotate API keys and passwords
+#
+# Template Variables:
+# - {{ .GroupLabels }}: Alert grouping labels
+# - {{ .CommonLabels }}: Labels common to all alerts
+# - {{ .Alerts }}: List of all alerts in group
+# - {{ .Alerts.Firing }}: Currently firing alerts
+# - {{ .Alerts.Resolved }}: Recently resolved alerts
+# - {{ .Status }}: firing or resolved
+# - {{ .ExternalURL }}: Alertmanager external URL
+#
+# For full template reference, see: prometheus.io/docs/alerting/latest/notifications/
+#
+# Recommended Alert Runbooks:
+# - Document common alerts and resolution steps
+# - Link to runbooks in alert annotations (runbook_url)
+# - Store runbooks in Wiki.js or Confluence
+# - Include escalation procedures for critical alerts
+#
+# =====================================================

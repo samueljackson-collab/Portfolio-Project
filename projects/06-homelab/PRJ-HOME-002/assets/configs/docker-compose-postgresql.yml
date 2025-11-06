@@ -1,0 +1,635 @@
+# =====================================================
+# PostgreSQL Database - Centralized Database Server
+# =====================================================
+# Version: PostgreSQL 16.0
+# Purpose: Centralized database for Wiki.js, Home Assistant, Immich
+# VM: 192.168.40.23 (postgres-vm)
+# Resources: 16GB RAM, 200GB storage, 4 vCPU
+# Last Updated: November 6, 2025
+#
+# Architecture Overview:
+# ---------------------
+# This configuration provides a centralized PostgreSQL database server
+# for multiple applications, following enterprise database practices:
+#
+# - Single PostgreSQL instance serving multiple databases
+# - Dedicated VM for database workload isolation
+# - Performance-tuned configuration for SSD storage
+# - Automated backups with point-in-time recovery (PITR)
+# - Connection pooling with PgBouncer
+# - Monitoring with postgres_exporter
+# - Regular vacuuming and statistics updates
+#
+# Databases Served:
+# ----------------
+# 1. wikijs - Wiki.js knowledge base (5-10GB expected)
+# 2. homeassistant - Home Assistant state/history (20-50GB expected)
+# 3. immich - Immich photo metadata (10-30GB expected, photos stored separately)
+#
+# Why Centralized Database:
+# ------------------------
+# Pros:
+# + Single point for backups and monitoring
+# + Easier maintenance and updates
+# + Better resource utilization
+# + Consistent security policies
+# + Simplified disaster recovery
+#
+# Cons:
+# - Single point of failure (mitigated with backups and HA plan)
+# - All apps share resources (mitigated with resource limits)
+#
+# For homelab with 3-5 applications, centralized is optimal.
+# For production at scale, consider separate database per service.
+#
+# Performance Tuning:
+# ------------------
+# This configuration is tuned for:
+# - 16GB RAM (4GB shared buffers, 12GB effective cache)
+# - SSD storage (high random I/O)
+# - Mixed workload (OLTP + some analytics)
+# - 10-50 concurrent connections
+#
+# Tuning based on https://pgtune.leopard.in.ua/
+# DB Type: Mixed, OS: Linux, Storage: SSD
+#
+# Security:
+# --------
+# - Passwords stored in environment variables (never commit to git)
+# - Each application has dedicated database and user
+# - Users have minimal required permissions
+# - SSL/TLS connections (optional, enabled for remote access)
+# - Regular security updates applied
+# =====================================================
+
+services:
+
+  # ===================================================
+  # SERVICE: PostgreSQL Database Server
+  # ===================================================
+  postgres:
+    image: postgres:16.0-alpine
+    container_name: postgres
+    hostname: postgres-db
+
+    # Restart policy (always restart unless explicitly stopped)
+    restart: unless-stopped
+
+    # Resource limits
+    # 16GB RAM total: 14GB for container, 2GB for OS overhead
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'      # 4 vCPUs
+          memory: 14G      # 14GB RAM (leave 2GB for OS)
+        reservations:
+          cpus: '2.0'      # Reserve 2 vCPUs minimum
+          memory: 8G       # Reserve 8GB minimum
+
+    # Environment variables
+    # IMPORTANT: Use .env file for sensitive values
+    environment:
+      # Superuser password (change immediately after first start)
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Default database (created on first start, but we'll create app-specific ones)
+      POSTGRES_DB: postgres
+
+      # Timezone
+      TZ: America/New_York
+
+      # Locale
+      LANG: en_US.utf8
+      LC_ALL: en_US.utf8
+
+      # Performance tuning environment variables
+      # These complement postgresql.conf settings
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.utf8 --data-checksums"
+
+    # Command overrides for PostgreSQL
+    # These override default postgresql.conf settings
+    command:
+      - postgres
+      # Shared buffers (25% of RAM = 4GB)
+      - -c
+      - shared_buffers=4GB
+      # Effective cache size (75% of RAM = 12GB)
+      - -c
+      - effective_cache_size=12GB
+      # Maintenance work mem (1GB for VACUUM, INDEX)
+      - -c
+      - maintenance_work_mem=1GB
+      # Work mem per operation (16MB * 50 connections = 800MB max)
+      - -c
+      - work_mem=16MB
+      # WAL buffers (16MB default is good)
+      - -c
+      - wal_buffers=16MB
+      # Checkpoint settings (avoid I/O spikes)
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - max_wal_size=4GB
+      - -c
+      - min_wal_size=1GB
+      # Connection limits
+      - -c
+      - max_connections=100
+      # Logging (detailed for troubleshooting)
+      - -c
+      - log_destination=stderr
+      - -c
+      - log_statement=mod  # Log all data-modifying statements
+      - -c
+      - log_duration=off
+      - -c
+      - log_line_prefix=%t [%p] %u@%d
+      - -c
+      - log_min_duration_statement=1000  # Log queries slower than 1 second
+      # Statistics (for query optimization)
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - track_activity_query_size=2048
+      - -c
+      - pg_stat_statements.track=all
+      # Autovacuum (keep database healthy)
+      - -c
+      - autovacuum=on
+      - -c
+      - autovacuum_max_workers=3
+      - -c
+      - autovacuum_naptime=10s  # Check every 10 seconds
+      # Random page cost (0.1 for SSD, 4.0 for HDD)
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - effective_io_concurrency=200  # SSD can handle many parallel I/O
+      # Parallel query (use multiple CPUs for large queries)
+      - -c
+      - max_parallel_workers_per_gather=2
+      - -c
+      - max_parallel_workers=4
+      - -c
+      - max_worker_processes=4
+
+    # Port mapping (expose to homelab network)
+    ports:
+      - "5432:5432"
+
+    # Volume mounts
+    volumes:
+      # PostgreSQL data directory (persistent storage)
+      - postgres_data:/var/lib/postgresql/data
+
+      # Initialization scripts (run on first start)
+      - ./postgresql/init:/docker-entrypoint-initdb.d:ro
+
+      # Custom postgresql.conf (optional, if not using command args)
+      # - ./postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+
+      # Backup directory (for pg_dump exports)
+      - ./postgresql/backups:/backups
+
+      # WAL archive directory (for point-in-time recovery)
+      - ./postgresql/wal_archive:/var/lib/postgresql/wal_archive
+
+    # Network configuration
+    networks:
+      - homelab
+
+    # Health check (verify PostgreSQL is ready)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    # Labels (for monitoring and organization)
+    labels:
+      - "com.homelab.service=postgresql"
+      - "com.homelab.tier=database"
+      - "com.homelab.criticality=critical"
+      - "com.homelab.backup=daily"
+
+  # ===================================================
+  # SERVICE: PgBouncer (Connection Pooler)
+  # ===================================================
+  # Connection pooling reduces overhead for applications
+  # with many short-lived connections (e.g., web apps)
+  pgbouncer:
+    image: edoburu/pgbouncer:1.21.0
+    container_name: pgbouncer
+    hostname: pgbouncer
+
+    restart: unless-stopped
+
+    # Resource limits (lightweight, needs minimal resources)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+    # Environment variables
+    environment:
+      # Database connection
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
+
+      # Pooling mode
+      # session: Client holds connection for entire session (default)
+      # transaction: Connection returned after each transaction (recommended)
+      # statement: Connection returned after each statement (dangerous)
+      POOL_MODE: transaction
+
+      # Maximum connections
+      MAX_CLIENT_CONN: 200      # Max client connections
+      DEFAULT_POOL_SIZE: 25     # Connections per database
+      MIN_POOL_SIZE: 5          # Minimum idle connections
+      RESERVE_POOL_SIZE: 5      # Emergency reserve
+      MAX_DB_CONNECTIONS: 50    # Total connections to PostgreSQL
+
+      # Timeouts
+      SERVER_IDLE_TIMEOUT: 600  # Close idle server connections after 10 minutes
+      SERVER_LIFETIME: 3600     # Reconnect to server every hour
+
+      # Logging
+      LOG_CONNECTIONS: 1
+      LOG_DISCONNECTIONS: 1
+      LOG_POOLER_ERRORS: 1
+
+    # Port mapping (use 6432 to avoid conflict with direct PostgreSQL)
+    ports:
+      - "6432:5432"
+
+    # Depends on PostgreSQL
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - homelab
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    labels:
+      - "com.homelab.service=pgbouncer"
+      - "com.homelab.tier=database"
+
+  # ===================================================
+  # SERVICE: PostgreSQL Exporter (Prometheus Metrics)
+  # ===================================================
+  # Exposes PostgreSQL metrics for Prometheus monitoring
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: postgres_exporter
+    hostname: postgres-exporter
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+    # Environment variables
+    environment:
+      # Connection string
+      DATA_SOURCE_NAME: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres?sslmode=disable
+
+      # Metrics to collect
+      PG_EXPORTER_EXTEND_QUERY_PATH: /etc/postgres_exporter/queries.yaml
+
+      # Auto-discover databases
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: true
+
+      # Exclude system databases from some metrics
+      PG_EXPORTER_EXCLUDE_DATABASES: template0,template1
+
+    # Port for Prometheus to scrape
+    ports:
+      - "9187:9187"
+
+    # Volume for custom queries
+    volumes:
+      - ./postgresql/exporter_queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - homelab
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9187/metrics || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    labels:
+      - "com.homelab.service=postgres-exporter"
+      - "com.homelab.tier=monitoring"
+
+  # ===================================================
+  # SERVICE: PostgreSQL Backup (pg_dump automation)
+  # ===================================================
+  # Automated backups with rotation
+  postgres_backup:
+    image: prodrigestivill/postgres-backup-local:16
+    container_name: postgres_backup
+    hostname: postgres-backup
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+    # Environment variables
+    environment:
+      # Database connection
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: postgres,wikijs,homeassistant,immich
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Backup schedule (cron format)
+      # Daily at 2 AM
+      SCHEDULE: "0 2 * * *"
+
+      # Backup retention
+      BACKUP_KEEP_DAYS: 7      # Keep daily backups for 7 days
+      BACKUP_KEEP_WEEKS: 4     # Keep weekly backups for 4 weeks
+      BACKUP_KEEP_MONTHS: 6    # Keep monthly backups for 6 months
+
+      # Backup options
+      POSTGRES_EXTRA_OPTS: "--clean --if-exists"
+
+      # Healthcheck configuration
+      HEALTHCHECK_PORT: 8080
+
+    # Volume for backup storage
+    volumes:
+      - ./postgresql/backups:/backups
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - homelab
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+    labels:
+      - "com.homelab.service=postgres-backup"
+      - "com.homelab.tier=database"
+
+# =====================================================
+# NETWORKS
+# =====================================================
+networks:
+  homelab:
+    name: homelab_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# =====================================================
+# VOLUMES
+# =====================================================
+volumes:
+  # PostgreSQL data (200GB allocated)
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/postgres/data
+
+# =====================================================
+# DEPLOYMENT INSTRUCTIONS
+# =====================================================
+#
+# Prerequisites:
+# 1. Create directories:
+#    mkdir -p postgresql/{init,backups,wal_archive}
+#    mkdir -p /mnt/postgres/data
+#    chown -R 999:999 /mnt/postgres/data  # PostgreSQL UID:GID
+#
+# 2. Create .env file with passwords:
+#    POSTGRES_PASSWORD=your_secure_password_here
+#
+# 3. Create initialization script (postgresql/init/01-init-databases.sql):
+#    See example below.
+#
+# Initial Setup:
+# docker-compose -f docker-compose-postgresql.yml up -d
+#
+# Verify Health:
+# docker-compose -f docker-compose-postgresql.yml ps
+# docker logs postgres
+#
+# Connect to PostgreSQL:
+# docker exec -it postgres psql -U postgres
+#
+# =====================================================
+
+# =====================================================
+# DATABASE INITIALIZATION SCRIPT
+# =====================================================
+# File: postgresql/init/01-init-databases.sql
+#
+# -- Create databases for each application
+# CREATE DATABASE wikijs;
+# CREATE DATABASE homeassistant;
+# CREATE DATABASE immich;
+#
+# -- Create users with strong passwords
+# CREATE USER wikijs_user WITH PASSWORD 'wikijs_password_here';
+# CREATE USER homeassistant_user WITH PASSWORD 'ha_password_here';
+# CREATE USER immich_user WITH PASSWORD 'immich_password_here';
+#
+# -- Grant privileges (principle of least privilege)
+# GRANT ALL PRIVILEGES ON DATABASE wikijs TO wikijs_user;
+# GRANT ALL PRIVILEGES ON DATABASE homeassistant TO homeassistant_user;
+# GRANT ALL PRIVILEGES ON DATABASE immich TO immich_user;
+#
+# -- Connect to each database and grant schema permissions
+# \c wikijs
+# GRANT ALL ON SCHEMA public TO wikijs_user;
+#
+# \c homeassistant
+# GRANT ALL ON SCHEMA public TO homeassistant_user;
+#
+# \c immich
+# GRANT ALL ON SCHEMA public TO immich_user;
+#
+# -- Enable extensions
+# \c wikijs
+# CREATE EXTENSION IF NOT EXISTS pg_trgm;  -- Text search
+#
+# \c homeassistant
+# CREATE EXTENSION IF NOT EXISTS timescaledb;  -- Time-series (optional)
+#
+# \c immich
+# CREATE EXTENSION IF NOT EXISTS vectors;  -- Vector similarity for ML (if available)
+# CREATE EXTENSION IF NOT EXISTS pg_trgm;
+#
+# =====================================================
+
+# =====================================================
+# POSTGRES EXPORTER CUSTOM QUERIES
+# =====================================================
+# File: postgresql/exporter_queries.yaml
+#
+# pg_database_size:
+#   query: "SELECT pg_database.datname, pg_database_size(pg_database.datname) as bytes FROM pg_database"
+#   metrics:
+#     - datname:
+#         usage: "LABEL"
+#         description: "Name of the database"
+#     - bytes:
+#         usage: "GAUGE"
+#         description: "Database size in bytes"
+#
+# pg_slow_queries:
+#   query: "SELECT count(*) as count FROM pg_stat_activity WHERE state = 'active' AND (now() - query_start) > interval '1 minute'"
+#   metrics:
+#     - count:
+#         usage: "GAUGE"
+#         description: "Number of queries running longer than 1 minute"
+#
+# =====================================================
+
+# =====================================================
+# MAINTENANCE OPERATIONS
+# =====================================================
+#
+# Manual Backup:
+# docker exec postgres pg_dump -U postgres wikijs > wikijs_backup.sql
+#
+# Restore Backup:
+# cat wikijs_backup.sql | docker exec -i postgres psql -U postgres wikijs
+#
+# Vacuum Database:
+# docker exec postgres psql -U postgres -c "VACUUM ANALYZE;"
+#
+# Check Database Size:
+# docker exec postgres psql -U postgres -c "SELECT pg_size_pretty(pg_database_size('wikijs'));"
+#
+# View Active Connections:
+# docker exec postgres psql -U postgres -c "SELECT datname, count(*) FROM pg_stat_activity GROUP BY datname;"
+#
+# Kill Long-Running Query:
+# docker exec postgres psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid = 12345;"
+#
+# View Slow Queries:
+# docker exec postgres psql -U postgres -c "SELECT pid, now() - query_start as duration, query FROM pg_stat_activity WHERE state = 'active' ORDER BY duration DESC;"
+#
+# =====================================================
+
+# =====================================================
+# TROUBLESHOOTING
+# =====================================================
+#
+# Issue: PostgreSQL won't start
+# Solution: Check logs with `docker logs postgres`
+# Common causes: Permission issues, port already in use, corrupted data
+#
+# Issue: Out of memory
+# Solution: Reduce shared_buffers or effective_cache_size
+# Monitor: docker stats postgres
+#
+# Issue: Slow queries
+# Solution:
+# 1. Enable pg_stat_statements: SELECT * FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;
+# 2. Add indexes on frequently queried columns
+# 3. Vacuum tables: VACUUM ANALYZE table_name;
+#
+# Issue: Too many connections
+# Solution:
+# 1. Increase max_connections (requires restart)
+# 2. Use PgBouncer connection pooling
+# 3. Fix application connection leaks
+#
+# Issue: Disk space full
+# Solution:
+# 1. Check database sizes: SELECT pg_size_pretty(pg_database_size('dbname'));
+# 2. Check WAL size: du -sh /var/lib/postgresql/wal_archive/
+# 3. Clean old WAL files or adjust wal retention
+# 4. Vacuum full (requires downtime): VACUUM FULL;
+#
+# =====================================================
+
+# =====================================================
+# SECURITY BEST PRACTICES
+# =====================================================
+#
+# 1. Never commit .env file with passwords to git
+# 2. Use strong, unique passwords for each user
+# 3. Regularly update PostgreSQL image for security patches
+# 4. Enable SSL/TLS for remote connections
+# 5. Restrict network access with firewall rules
+# 6. Audit logs regularly for suspicious activity
+# 7. Use principle of least privilege for database users
+# 8. Backup encryption for offsite storage
+# 9. Enable data checksums (POSTGRES_INITDB_ARGS)
+# 10. Monitor failed login attempts
+#
+# =====================================================
+
+# =====================================================
+# PERFORMANCE TUNING NOTES
+# =====================================================
+#
+# Current Configuration Targets:
+# - 16GB RAM (4GB buffers, 12GB cache)
+# - SSD storage (random_page_cost=1.1)
+# - 100 max connections
+# - Mixed OLTP + Analytics workload
+#
+# Tuning for Different Scenarios:
+#
+# Scenario 1: More RAM (32GB)
+# - shared_buffers=8GB
+# - effective_cache_size=24GB
+# - maintenance_work_mem=2GB
+#
+# Scenario 2: HDD Storage
+# - random_page_cost=4.0
+# - effective_io_concurrency=2
+#
+# Scenario 3: More Connections (200+)
+# - max_connections=200
+# - work_mem=8MB (reduce to prevent OOM)
+#
+# Scenario 4: Analytics Workload
+# - work_mem=128MB (for sorting/hashing)
+# - max_parallel_workers_per_gather=4
+# - Enable JIT compilation (PostgreSQL 11+)
+#
+# Monitoring Performance:
+# - pg_stat_statements: Identify slow queries
+# - pg_stat_user_tables: Table access patterns
+# - pg_stat_database: Database-wide statistics
+# - Grafana dashboards: Real-time metrics
+#
+# =====================================================

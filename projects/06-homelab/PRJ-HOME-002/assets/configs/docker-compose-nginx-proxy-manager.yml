@@ -1,0 +1,587 @@
+# =====================================================
+# Nginx Proxy Manager - Reverse Proxy & SSL Manager
+# =====================================================
+# Version: Nginx Proxy Manager 2.11.1
+# Purpose: Reverse proxy with automatic SSL/TLS certificate management
+# VM: 192.168.40.25 (nginx-vm)
+# Resources: 2GB RAM, 20GB storage, 2 vCPU
+# Last Updated: November 6, 2025
+#
+# Architecture Overview:
+# ---------------------
+# Nginx Proxy Manager (NPM) provides a web-based UI for managing
+# Nginx reverse proxy configurations. Key features:
+#
+# - Automatic Let's Encrypt SSL certificate generation and renewal
+# - Reverse proxy to internal services (Wiki.js, Immich, Home Assistant)
+# - WebSocket support for real-time applications
+# - Access control lists (ACLs) for security
+# - Custom SSL certificates for local domains
+# - Force SSL redirection (HTTP → HTTPS)
+# - Rate limiting and DDoS protection
+# - Custom Nginx configurations
+#
+# Why Nginx Proxy Manager:
+# -----------------------
+# Pros:
+# + User-friendly web UI (vs manual Nginx config files)
+# + Automatic SSL certificate management
+# + Built-in Let's Encrypt integration
+# + Easy to add/modify proxy hosts
+# + Supports wildcard SSL certificates
+# + Stream (TCP/UDP) proxy support
+# + Access logs and statistics
+#
+# Cons:
+# - Additional layer of abstraction
+# - Less flexible than manual Nginx config
+# - Requires database for configuration storage
+#
+# For homelab with 5-10 services, NPM is ideal.
+# For advanced use cases, consider Traefik or manual Nginx.
+#
+# Proxy Hosts Configuration:
+# --------------------------
+# Internal (homelab.local):
+# - https://wiki.homelab.local → http://192.168.40.20:3000
+# - https://homeassistant.homelab.local → http://192.168.40.21:8123
+# - https://immich.homelab.local → http://192.168.40.22:2283
+# - https://grafana.homelab.local → http://192.168.40.30:3000
+#
+# External (public domains via Cloudflare DNS):
+# - https://wiki.example.com → http://192.168.40.20:3000
+# - https://photos.example.com → http://192.168.40.22:2283
+# - https://home.example.com → http://192.168.40.21:8123
+#
+# Security:
+# --------
+# - SSL/TLS 1.2+ only (disable older protocols)
+# - HSTS headers (force HTTPS)
+# - Rate limiting per IP
+# - Access lists for sensitive services
+# - Custom error pages (hide internal info)
+# - Regular security updates
+# =====================================================
+
+services:
+
+  # ===================================================
+  # SERVICE: Nginx Proxy Manager (App)
+  # ===================================================
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:2.11.1
+    container_name: nginx-proxy-manager
+    hostname: nginx-proxy-manager
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # 2 vCPUs
+          memory: 1536M    # 1.5GB (leave 500MB for OS)
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Environment variables
+    environment:
+      # Database connection (to internal SQLite or external MySQL/PostgreSQL)
+      # Using internal SQLite for simplicity (fine for homelab)
+      # For production, use external database:
+      # DB_SQLITE_FILE: "/data/database.sqlite"
+      # DB_MYSQL_HOST: "192.168.40.23"
+      # DB_MYSQL_PORT: 3306
+      # DB_MYSQL_USER: "npm_user"
+      # DB_MYSQL_PASSWORD: "${NPM_DB_PASSWORD}"
+      # DB_MYSQL_NAME: "npm"
+
+      # Admin user (change password after first login!)
+      # Default: admin@example.com / changeme
+      # After login, go to Users → Edit → Change Password
+      DISABLE_IPV6: 'false'
+
+      # Timezone
+      TZ: America/New_York
+
+      # X-Forwarded-For header (preserve client IP)
+      # Important for rate limiting and access logs
+      X_FRAME_OPTIONS: "SAMEORIGIN"
+
+    # Port mapping
+    ports:
+      # HTTP (redirect to HTTPS)
+      - "80:80"
+
+      # HTTPS (SSL/TLS)
+      - "443:443"
+
+      # Admin UI (access at http://192.168.40.25:81)
+      # IMPORTANT: Restrict access to this port via firewall!
+      - "81:81"
+
+    # Volume mounts
+    volumes:
+      # Data directory (SSL certificates, database, config)
+      - nginx_data:/data
+
+      # Let's Encrypt certificates
+      - letsencrypt_data:/etc/letsencrypt
+
+      # Custom Nginx snippets (optional)
+      - ./nginx/snippets:/data/nginx/custom:ro
+
+      # Logs
+      - ./nginx/logs:/data/logs
+
+    # Network configuration
+    networks:
+      - homelab
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:81/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # Labels
+    labels:
+      - "com.homelab.service=nginx-proxy-manager"
+      - "com.homelab.tier=infrastructure"
+      - "com.homelab.criticality=critical"
+      - "com.homelab.backup=weekly"
+
+  # ===================================================
+  # SERVICE: Cloudflared (Cloudflare Tunnel - Optional)
+  # ===================================================
+  # Cloudflare Tunnel provides secure external access without opening ports
+  # Uncomment if you want to expose services to internet securely
+  #
+  # cloudflared:
+  #   image: cloudflare/cloudflared:2024.10.0
+  #   container_name: cloudflared
+  #   hostname: cloudflared
+  #   restart: unless-stopped
+  #
+  #   command: tunnel --no-autoupdate run
+  #
+  #   environment:
+  #     TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+  #
+  #   networks:
+  #     - homelab
+  #
+  #   labels:
+  #     - "com.homelab.service=cloudflared"
+  #     - "com.homelab.tier=infrastructure"
+
+  # ===================================================
+  # SERVICE: Fail2Ban (Brute Force Protection - Optional)
+  # ===================================================
+  # Monitor Nginx logs and ban IPs with repeated failed attempts
+  # Uncomment for additional security layer
+  #
+  # fail2ban:
+  #   image: crazymax/fail2ban:1.0.2
+  #   container_name: fail2ban
+  #   hostname: fail2ban
+  #   restart: unless-stopped
+  #
+  #   cap_add:
+  #     - NET_ADMIN
+  #     - NET_RAW
+  #
+  #   network_mode: host
+  #
+  #   environment:
+  #     TZ: America/New_York
+  #     F2B_LOG_LEVEL: INFO
+  #     F2B_DB_PURGE_AGE: 30d
+  #
+  #   volumes:
+  #     - ./nginx/logs:/var/log/nginx:ro
+  #     - fail2ban_data:/data
+  #     - ./fail2ban/jail.local:/etc/fail2ban/jail.local:ro
+  #
+  #   labels:
+  #     - "com.homelab.service=fail2ban"
+  #     - "com.homelab.tier=security"
+
+# =====================================================
+# NETWORKS
+# =====================================================
+networks:
+  homelab:
+    name: homelab_network
+    driver: bridge
+
+# =====================================================
+# VOLUMES
+# =====================================================
+volumes:
+  # Nginx Proxy Manager data (certificates, database, config)
+  nginx_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/nginx/data
+
+  # Let's Encrypt certificates
+  letsencrypt_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/nginx/letsencrypt
+
+  # Fail2Ban data (optional)
+  # fail2ban_data:
+  #   driver: local
+
+# =====================================================
+# DEPLOYMENT INSTRUCTIONS
+# =====================================================
+#
+# Prerequisites:
+# 1. Create directories:
+#    mkdir -p /mnt/nginx/{data,letsencrypt}
+#    mkdir -p nginx/{snippets,logs}
+#    chown -R 1000:1000 /mnt/nginx
+#
+# 2. Ensure ports 80, 443, 81 are not in use:
+#    sudo netstat -tulpn | grep -E ':(80|443|81)'
+#
+# 3. Configure DNS:
+#    - Internal: Add A records to Pi-hole for *.homelab.local → 192.168.40.25
+#    - External: Add A records to Cloudflare for your domains → Public IP
+#
+# Initial Setup:
+# docker-compose -f docker-compose-nginx-proxy-manager.yml up -d
+#
+# First Login:
+# 1. Navigate to http://192.168.40.25:81
+# 2. Login with default credentials:
+#    Email: admin@example.com
+#    Password: changeme
+# 3. Change password immediately!
+# 4. Update admin email address
+#
+# Add Proxy Host (Example - Wiki.js):
+# 1. Navigate to Hosts → Proxy Hosts → Add Proxy Host
+# 2. Details tab:
+#    - Domain Names: wiki.homelab.local
+#    - Scheme: http
+#    - Forward Hostname/IP: 192.168.40.20
+#    - Forward Port: 3000
+#    - Block Common Exploits: ON
+#    - Websockets Support: ON (if needed)
+# 3. SSL tab:
+#    - SSL Certificate: Request a new SSL Certificate
+#    - Force SSL: ON
+#    - HTTP/2 Support: ON
+#    - HSTS Enabled: ON
+#    - HSTS Subdomains: ON (if using wildcard)
+# 4. Save
+#
+# Add Access List (Optional):
+# 1. Navigate to Access Lists → Add Access List
+# 2. Name: "Internal Only"
+# 3. Satisfy Any: OFF (require all conditions)
+# 4. Pass Auth: ON
+# 5. Authorization:
+#    - Allow: 192.168.0.0/16 (homelab network)
+#    - Deny: all
+# 6. Apply to sensitive proxy hosts
+#
+# =====================================================
+
+# =====================================================
+# CUSTOM NGINX SNIPPETS
+# =====================================================
+# File: nginx/snippets/security-headers.conf
+#
+# # Security headers
+# add_header X-Frame-Options "SAMEORIGIN" always;
+# add_header X-Content-Type-Options "nosniff" always;
+# add_header X-XSS-Protection "1; mode=block" always;
+# add_header Referrer-Policy "no-referrer-when-downgrade" always;
+# add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+#
+# # HSTS (HTTP Strict Transport Security)
+# add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+#
+# # CSP (Content Security Policy) - adjust per application
+# # add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" always;
+#
+# To use: Add to Advanced tab of proxy host:
+# include /data/nginx/custom/security-headers.conf;
+#
+# =====================================================
+
+# =====================================================
+# CUSTOM NGINX SNIPPETS - RATE LIMITING
+# =====================================================
+# File: nginx/snippets/rate-limit.conf
+#
+# # Define rate limit zone (10MB = ~160,000 IPs)
+# limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+# limit_req_zone $binary_remote_addr zone=login:10m rate=1r/s;
+#
+# # Apply rate limit
+# limit_req zone=general burst=20 nodelay;
+#
+# # Rate limit status
+# limit_req_status 429;
+#
+# To use: Add to Advanced tab of proxy host
+#
+# =====================================================
+
+# =====================================================
+# CUSTOM NGINX SNIPPETS - WEBSOCKET SUPPORT
+# =====================================================
+# File: nginx/snippets/websocket.conf
+#
+# # WebSocket support (required for Home Assistant, etc.)
+# proxy_http_version 1.1;
+# proxy_set_header Upgrade $http_upgrade;
+# proxy_set_header Connection "upgrade";
+# proxy_set_header Host $host;
+# proxy_set_header X-Real-IP $remote_addr;
+# proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+# proxy_set_header X-Forwarded-Proto $scheme;
+# proxy_set_header X-Forwarded-Host $host;
+# proxy_set_header X-Forwarded-Port $server_port;
+#
+# # Timeouts
+# proxy_connect_timeout 60s;
+# proxy_send_timeout 60s;
+# proxy_read_timeout 60s;
+#
+# To use: Enable "Websockets Support" in NPM UI or add manually
+#
+# =====================================================
+
+# =====================================================
+# WILDCARD SSL CERTIFICATE (Let's Encrypt)
+# =====================================================
+#
+# For *.example.com wildcard certificate, you need DNS-01 challenge:
+#
+# 1. Add DNS provider credentials in NPM:
+#    - Settings → Add DNS Provider
+#    - Select provider (e.g., Cloudflare)
+#    - Add API token
+#
+# 2. Request wildcard certificate:
+#    - SSL Certificates → Add SSL Certificate
+#    - Domain Names: *.example.com, example.com
+#    - Use DNS Challenge: ON
+#    - DNS Provider: Select your provider
+#    - Propagation Seconds: 120 (wait for DNS propagation)
+#
+# 3. Apply to proxy hosts:
+#    - Edit proxy host → SSL tab
+#    - Select wildcard certificate from dropdown
+#
+# Note: Wildcard certs are recommended for multiple subdomains
+# Single certs are fine for individual domains
+#
+# =====================================================
+
+# =====================================================
+# CLOUDFLARE INTEGRATION
+# =====================================================
+#
+# Using Cloudflare for external domains:
+#
+# 1. Set DNS records in Cloudflare:
+#    - A record: example.com → Your public IP
+#    - CNAME records: *.example.com → example.com
+#    - Proxy status: ON (orange cloud) for DDoS protection
+#
+# 2. Configure SSL/TLS in Cloudflare:
+#    - SSL/TLS → Overview → Full (strict)
+#    - Edge Certificates → Always Use HTTPS: ON
+#    - Edge Certificates → Automatic HTTPS Rewrites: ON
+#
+# 3. Firewall rules (optional):
+#    - Firewall → Firewall Rules → Create Rule
+#    - If country not in [US, CA, UK] then Block
+#    - Rate limiting: 100 requests per minute per IP
+#
+# 4. Page Rules:
+#    - Cache Level: Standard
+#    - Auto Minify: JS, CSS, HTML
+#
+# Alternative: Cloudflare Tunnel (cloudflared)
+# - No need to open ports 80/443
+# - All traffic through Cloudflare network
+# - Built-in DDoS protection
+# - See cloudflared service above
+#
+# =====================================================
+
+# =====================================================
+# MONITORING & LOGGING
+# =====================================================
+#
+# Access Logs:
+# Located in: ./nginx/logs/
+# - proxy-host-{id}_access.log: Per-host access logs
+# - proxy-host-{id}_error.log: Per-host error logs
+#
+# View logs:
+# tail -f nginx/logs/proxy-host-*_access.log
+#
+# Send logs to Loki (via Promtail):
+# See promtail-config.yml for nginx_access scrape config
+#
+# Metrics:
+# Nginx Proxy Manager doesn't expose Prometheus metrics natively.
+# Use nginx-prometheus-exporter as sidecar:
+#
+# nginx_exporter:
+#   image: nginx/nginx-prometheus-exporter:1.1.0
+#   command:
+#     - -nginx.scrape-uri=http://nginx-proxy-manager:81/api/nginx/proxy-hosts
+#   ports:
+#     - "9113:9113"
+#   networks:
+#     - homelab
+#
+# Dashboards:
+# - Grafana Dashboard ID 12708: Nginx Proxy Manager
+# - Grafana Dashboard ID 11199: Nginx Exporter
+#
+# =====================================================
+
+# =====================================================
+# SECURITY BEST PRACTICES
+# =====================================================
+#
+# 1. Change default admin credentials immediately
+# 2. Restrict admin UI (port 81) to internal network only
+# 3. Use strong passwords for all users
+# 4. Enable 2FA for admin accounts (future feature)
+# 5. Regularly update NPM image for security patches
+# 6. Use Access Lists for sensitive services
+# 7. Enable rate limiting to prevent brute force
+# 8. Monitor access logs for suspicious activity
+# 9. Use Fail2Ban to automatically ban repeat offenders
+# 10. Keep SSL certificates up to date (auto-renewal)
+#
+# Firewall rules (pfSense/iptables):
+# - Allow 80/443 from internet (if exposing services)
+# - Allow 81 from homelab network only (admin UI)
+# - Deny 81 from internet
+#
+# Example iptables:
+# iptables -A INPUT -p tcp --dport 81 -s 192.168.0.0/16 -j ACCEPT
+# iptables -A INPUT -p tcp --dport 81 -j DROP
+#
+# =====================================================
+
+# =====================================================
+# TROUBLESHOOTING
+# =====================================================
+#
+# Issue: Cannot access admin UI (port 81)
+# Solution:
+# - Check container is running: docker ps
+# - Check firewall rules
+# - Check logs: docker logs nginx-proxy-manager
+#
+# Issue: SSL certificate generation fails
+# Solution:
+# - Check DNS records point to correct IP
+# - Check ports 80/443 are accessible from internet
+# - Check Let's Encrypt rate limits (5 certs/week per domain)
+# - Use staging environment for testing
+#
+# Issue: Proxy host returns 502 Bad Gateway
+# Solution:
+# - Verify backend service is running and accessible
+# - Check forward hostname/IP and port
+# - Check firewall between NPM and backend
+# - Check backend service logs
+#
+# Issue: WebSocket connections fail
+# Solution:
+# - Enable "Websockets Support" in proxy host settings
+# - Add websocket snippet to Advanced tab
+# - Check backend service supports WebSockets
+#
+# Issue: High CPU/memory usage
+# Solution:
+# - Check for DDoS or bot traffic in access logs
+# - Enable rate limiting
+# - Use Cloudflare proxy for external traffic
+# - Restart container if memory leak suspected
+#
+# =====================================================
+
+# =====================================================
+# BACKUP & RESTORE
+# =====================================================
+#
+# Backup NPM Configuration:
+# 1. Stop container: docker-compose down
+# 2. Backup data directory: tar -czf npm_backup.tar.gz /mnt/nginx/data
+# 3. Store backup offsite (TrueNAS, cloud)
+#
+# Restore NPM Configuration:
+# 1. Extract backup: tar -xzf npm_backup.tar.gz -C /mnt/nginx/
+# 2. Start container: docker-compose up -d
+# 3. Verify proxy hosts and SSL certificates
+#
+# Export Proxy Hosts (via UI):
+# 1. Login to NPM admin UI
+# 2. Hosts → Proxy Hosts → Select all
+# 3. Bulk Actions → Export (future feature)
+#
+# Backup Schedule:
+# - Weekly automated backup via cron
+# - Monthly offsite backup
+# - Before major updates: manual backup
+#
+# =====================================================
+
+# =====================================================
+# ALTERNATIVES TO NGINX PROXY MANAGER
+# =====================================================
+#
+# If NPM doesn't meet your needs, consider:
+#
+# 1. Traefik:
+#    - Automatic service discovery (Docker labels)
+#    - Built-in Let's Encrypt support
+#    - More complex configuration
+#    - Better for Kubernetes/Docker Swarm
+#
+# 2. Caddy:
+#    - Automatic HTTPS by default
+#    - Simple Caddyfile configuration
+#    - Less feature-rich than Nginx
+#    - Great for simple setups
+#
+# 3. HAProxy:
+#    - High performance load balancing
+#    - More complex configuration
+#    - Better for large-scale deployments
+#
+# 4. Manual Nginx:
+#    - Maximum flexibility
+#    - Steeper learning curve
+#    - No web UI
+#    - Best for advanced users
+#
+# For homelab: NPM is recommended (ease of use + features)
+# For enterprise: Traefik or HAProxy (scalability + automation)
+#
+# =====================================================
