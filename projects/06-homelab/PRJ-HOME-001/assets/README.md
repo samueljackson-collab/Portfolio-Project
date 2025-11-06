@@ -1,77 +1,51 @@
-# Homelab & Secure Network Build
+# PRJ-HOME-001 Network Infrastructure Assets
 
-**Status:** 🟢 Done
+## Overview
+This directory contains comprehensive documentation and configuration artifacts for the homelab network infrastructure build.
 
-## Description
+## Directory Structure
 
-Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
+```
+assets/
+├── diagrams/          # Network topology diagrams (Mermaid format)
+│   ├── physical-topology.mermaid
+│   └── logical-vlan-map.mermaid
+├── configs/           # Network configuration documentation  
+│   ├── firewall-rules.md
+│   ├── wifi-ssid-matrix.md
+│   └── ip-addressing-scheme.md
+└── runbooks/          # Deployment and operational procedures
+    └── network-deployment-runbook.md
+```
 
-## Links
+## Generated Artifacts
 
-- [Parent Documentation](../README.md)
+### Diagrams
+- **physical-topology.mermaid**: Complete physical network layout showing all equipment, cable runs, and connections
+- **logical-vlan-map.mermaid**: Logical network segmentation with VLAN architecture and firewall rules
 
-## Next Steps
+### Configuration Documentation
+- **firewall-rules.md**: Comprehensive firewall rule set with maintenance procedures
+- **wifi-ssid-matrix.md**: Wireless network configuration with SSID mappings and troubleshooting
+- **ip-addressing-scheme.md**: Complete IP addressing plan with static assignments and DHCP pools
 
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
+### Runbooks
+- **network-deployment-runbook.md**: Step-by-step deployment guide with validation procedures
 
-## Contact
+## Usage
 
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
+### Viewing Mermaid Diagrams
+Mermaid diagrams can be viewed using:
+- GitHub (renders automatically in markdown)
+- VS Code with Mermaid extension
+- Online: https://mermaid.live/
 
----
-*Placeholder — Documentation pending*
-# PRJ-HOME-001 Assets
+### Implementation
+Follow the network-deployment-runbook.md for complete deployment procedures.
 
-This directory contains supporting materials for the Homelab & Secure Network Build project.
+## Status
+- ✅ Physical topology diagram
+- ✅ Logical VLAN map
+- 📝 Configuration documentation (in progress)
+- 📝 Deployment runbook (in progress)
 
-## What Goes Here
-
-### 📊 diagrams/
-Network diagrams and topology maps:
-- Physical topology (rack layout, cabling)
-- Logical network diagram (VLANs, routing)
-- Wi-Fi coverage map (optional)
-
-**Format:** PNG, SVG (with editable source files like .drawio)
-
-### ⚙️ configs/
-Configuration files and documentation:
-- UniFi controller exports (sanitized)
-- VLAN configurations
-- Firewall rules documentation
-- DHCP settings (sanitized)
-
-**Format:** JSON, TXT, MD (Markdown tables)
-
-**Important:** Remove all sensitive data (real IPs, passwords, domains)
-
-### 📝 docs/
-Written documentation:
-- Installation/setup guide
-- Configuration runbooks
-- Troubleshooting guides
-- Lessons learned
-
-**Format:** Markdown (.md)
-
-### 📷 photos/
-Physical setup photos (optional):
-- Rack setup (before/after)
-- Cable management
-- Equipment installations
-
-**Format:** JPG, PNG
-
----
-
-## Quick Upload Guide
-
-See [QUICK_START_GUIDE.md](../../../../QUICK_START_GUIDE.md) for instructions on how to upload your files to GitHub.
-
-## Security Reminder
-
-Before uploading:
-- [ ] Replace real IPs with examples (10.x.x.x, 192.168.x.x)
-- [ ] Remove passwords and API keys
-- [ ] Replace real domains with example.com
-- [ ] Remove any personal/identifying information
