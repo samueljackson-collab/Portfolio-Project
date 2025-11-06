@@ -1,0 +1,638 @@
+# Immich - Complete Production Photo Backup System
+# =================================================
+# Version: v1.117.0 (October 2024 release)
+# Platform: Ubuntu 22.04 LTS VM (VM ID: 102)
+# Resources: 4 vCPU, 16GB RAM, 100GB System + 2TB NFS Storage
+# Network: 192.168.40.22/24 (VLAN 40 - Lab Network)
+# External Access: https://photos.homelab.local, https://photos.example.com
+#
+# Immich is a self-hosted Google Photos alternative with:
+# - Automatic photo/video backup from mobile devices (iOS/Android)
+# - Machine learning-powered face detection and object recognition
+# - Duplicate detection and smart search
+# - Shared albums and collaborative features
+# - Video transcoding and thumbnail generation
+# - EXIF metadata preservation and geolocation mapping
+#
+# This deployment includes:
+# - Immich server (main application)
+# - Immich machine learning (TensorFlow models for face/object detection)
+# - PostgreSQL database (separate VM)
+# - Redis (job queue and caching)
+# - Typesense (search engine for photos)
+# - All services orchestrated for high availability
+#
+# Why Immich vs. Commercial Options?
+# -----------------------------------
+# Compared to Google Photos:
+# - No storage limits (limited only by NAS capacity)
+# - No compression (original quality preserved)
+# - Complete privacy (data never leaves homelab)
+# - No recurring costs ($9.99/month for 2TB saved = $120/year)
+#
+# Compared to Synology Photos:
+# - Superior mobile apps (iOS/Android)
+# - Better ML models (face recognition accuracy)
+# - Active development community (monthly releases)
+# - Open source (can audit code, contribute features)
+#
+# Resource Requirements Explained:
+# ---------------------------------
+# 16GB RAM requirement:
+# - Immich server: 2-4GB (image processing, video encoding)
+# - Machine learning: 8-10GB (TensorFlow models loaded in memory)
+# - Redis: 1-2GB (job queue, caching)
+# - Typesense: 1-2GB (search index)
+# - OS overhead: 2GB
+#
+# Why 4 vCPU:
+# - Video transcoding is CPU-intensive (4K -> 1080p, HEVC -> H.264)
+# - ML inference benefits from multi-core (face detection across photo library)
+# - Multiple concurrent mobile uploads (family of 4 uploading simultaneously)
+#
+# Prerequisites:
+# ==============
+# 1. PostgreSQL database on 192.168.40.23:
+#    CREATE DATABASE immich;
+#    CREATE USER immich WITH PASSWORD 'from_env_file';
+#    GRANT ALL PRIVILEGES ON DATABASE immich TO immich;
+#
+# 2. NFS mount from TrueNAS for photo storage:
+#    - TrueNAS: Create dataset /mnt/tank/immich
+#    - TrueNAS: Export NFS share to 192.168.40.22
+#    - Ubuntu VM: apt install nfs-common
+#    - Ubuntu VM: mkdir -p /mnt/immich-library
+#    - Ubuntu VM: Add to /etc/fstab:
+#      192.168.40.5:/mnt/tank/immich /mnt/immich-library nfs defaults,_netdev 0 0
+#    - Mount: mount -a && mount | grep immich
+#
+# 3. Directory structure:
+#    mkdir -p /opt/immich/upload
+#    mkdir -p /opt/immich/library  # Or use NFS mount
+#    mkdir -p /opt/immich/thumbs
+#    mkdir -p /opt/immich/encoded-video
+#    mkdir -p /opt/immich/model-cache
+#    chown -R 1000:1000 /opt/immich/
+#
+# 4. Environment variables in .env file (see section at bottom)
+#
+# Deployment:
+# ===========
+#   docker-compose up -d
+#
+# Initial Setup:
+# ==============
+# 1. Access http://192.168.40.22:2283
+# 2. Create admin account (first signup)
+# 3. Download mobile app: App Store / Google Play
+# 4. Add server: https://photos.homelab.local or https://photos.example.com
+# 5. Enable automatic backup in app settings
+# 6. Wait for ML processing (face detection takes ~1 min per 100 photos)
+#
+# Last Updated: November 6, 2025
+# =================================================
+
+version: '3.9'
+
+services:
+  # =================================================
+  # Immich Server (Main Application)
+  # =================================================
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:v1.117.0
+    container_name: immich_server
+    hostname: immich-server
+
+    # Run as unprivileged user for security
+    user: "1000:1000"
+
+    restart: unless-stopped
+
+    # Resource limits based on observed usage patterns:
+    # - Idle: 0.5 CPU, 1GB RAM
+    # - Photo upload: 2 CPU, 2GB RAM
+    # - Video transcoding: 4 CPU, 4GB RAM (peak)
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 6G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+    environment:
+      # Database connection (PostgreSQL on separate VM)
+      DB_HOSTNAME: 192.168.40.23
+      DB_PORT: 5432
+      DB_USERNAME: immich
+      DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: immich
+
+      # Redis connection (for job queue and session storage)
+      REDIS_HOSTNAME: immich-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${IMMICH_REDIS_PASSWORD}
+
+      # Typesense search engine connection
+      TYPESENSE_HOST: immich-typesense
+      TYPESENSE_PORT: 8108
+      TYPESENSE_API_KEY: ${IMMICH_TYPESENSE_API_KEY}
+
+      # Machine learning service endpoint
+      IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
+
+      # Public URL for mobile apps and external access
+      # Used for OAuth callbacks and email links
+      IMMICH_WEB_URL: https://photos.homelab.local
+      IMMICH_SERVER_URL: https://photos.homelab.local/api
+
+      # Upload and storage paths
+      UPLOAD_LOCATION: /usr/src/app/upload
+
+      # Timezone for EXIF metadata and scheduled jobs
+      TZ: America/Los_Angeles
+
+      # Logging configuration
+      LOG_LEVEL: log
+
+      # Feature flags and optimization
+      IMMICH_METRICS: true  # Enable Prometheus metrics
+      IMMICH_API_METRICS: true
+
+      # Video transcoding configuration
+      # FFMPEG will use CPU encoding (no GPU passthrough yet)
+      # Hardware acceleration would require Intel Quick Sync or NVIDIA GPU
+      DISABLE_MACHINE_LEARNING: false
+      DISABLE_REVERSE_GEOCODING: false
+
+      # Job concurrency (number of parallel background jobs)
+      # Tuned for 4 vCPU allocation
+      IMMICH_WORKERS_INCLUDE: 'api,microservices'
+
+    volumes:
+      # Original uploaded files (before processing)
+      # Stored on VM disk for fast access, moved to NFS after processing
+      - /opt/immich/upload:/usr/src/app/upload
+
+      # Processed library (NFS mount to TrueNAS for capacity)
+      # This is where photos/videos are permanently stored
+      - /mnt/immich-library:/usr/src/app/library
+
+      # Generated thumbnails (frequently accessed, kept on VM SSD)
+      - /opt/immich/thumbs:/usr/src/app/thumbs
+
+      # Transcoded videos (H.264/H.265 web-optimized versions)
+      - /opt/immich/encoded-video:/usr/src/app/encoded-video
+
+      # Timezone synchronization
+      - /etc/localtime:/etc/localtime:ro
+
+    ports:
+      # Main application port
+      # Nginx Proxy Manager forwards HTTPS traffic here
+      - "2283:3001"
+
+    depends_on:
+      immich-redis:
+        condition: service_healthy
+      immich-typesense:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/server-info/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    networks:
+      - immich
+
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=3001"
+      - "prometheus.io/path=/api/metrics"
+      - "com.example.service=immich-server"
+      - "backup.enable=true"
+      - "backup.schedule=daily"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  # =================================================
+  # Immich Machine Learning (Face Detection, Object Recognition)
+  # =================================================
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:v1.117.0
+    container_name: immich_machine_learning
+    hostname: immich-ml
+
+    restart: unless-stopped
+
+    # ML service is memory-intensive due to TensorFlow models
+    # Resource requirements:
+    # - Face detection: 6-8GB RAM
+    # - Object/scene classification: 2-3GB RAM
+    # - Smart search: 1-2GB RAM
+    # Total: 10GB peak, 8GB typical
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 12G
+        reservations:
+          cpus: '2.0'
+          memory: 8G
+
+    environment:
+      TZ: America/Los_Angeles
+
+      # Model cache location (persistent storage)
+      # Models are downloaded once and cached to avoid re-downloading
+      TRANSFORMERS_CACHE: /cache
+
+      # Disable upload (ML service is read-only)
+      IMMICH_WORKERS_EXCLUDE: 'api'
+
+    volumes:
+      # Model cache (TensorFlow/PyTorch models, ~5GB total)
+      # Includes: CLIP, MobileFaceNet, EfficientNet
+      - /opt/immich/model-cache:/cache
+
+      # Access to photo library for ML processing
+      # ML service needs read access to analyze photos
+      - /mnt/immich-library:/usr/src/app/library:ro
+      - /opt/immich/upload:/usr/src/app/upload:ro
+
+    # ML service has no healthcheck endpoint, use basic process check
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "python"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+    networks:
+      - immich
+
+    labels:
+      - "com.example.service=immich-ml"
+      - "backup.enable=false"  # No persistent data to backup
+
+  # =================================================
+  # Redis (Job Queue and Session Storage)
+  # =================================================
+  immich-redis:
+    image: redis:7.2-alpine
+    container_name: immich_redis
+    hostname: immich-redis
+
+    restart: unless-stopped
+
+    # Redis is lightweight, minimal resources needed
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+    # Redis command to enable password authentication
+    # WARNING: Without password, Redis is vulnerable to unauthorized access
+    command: redis-server --requirepass ${IMMICH_REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+    volumes:
+      # Persist Redis data (job queue state)
+      # If Redis crashes, jobs can resume from last checkpoint
+      - immich-redis-data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - immich
+
+    labels:
+      - "com.example.service=immich-redis"
+      - "backup.enable=false"
+
+  # =================================================
+  # Typesense (Search Engine for Photos)
+  # =================================================
+  # Typesense provides fast full-text search across photo metadata:
+  # - EXIF tags, camera models, lens data
+  # - Geolocation (city, country)
+  # - Detected objects and faces
+  # - Date ranges and albums
+  immich-typesense:
+    image: typesense/typesense:26.0
+    container_name: immich_typesense
+    hostname: immich-typesense
+
+    restart: unless-stopped
+
+    # Typesense is memory-intensive for large photo libraries
+    # Search index size grows with number of photos
+    # Estimate: 1GB RAM per 10,000 photos
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    environment:
+      # Typesense configuration
+      TYPESENSE_API_KEY: ${IMMICH_TYPESENSE_API_KEY}
+      TYPESENSE_DATA_DIR: /data
+
+      # Performance tuning
+      GLOG_minloglevel: 1  # Reduce log verbosity
+
+    volumes:
+      # Persistent search index
+      # This contains indexed photo metadata for fast search
+      - immich-typesense-data:/data
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8108/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    networks:
+      - immich
+
+    labels:
+      - "com.example.service=immich-typesense"
+      - "backup.enable=true"
+      - "backup.schedule=weekly"
+
+# =================================================
+# Named Volumes
+# =================================================
+volumes:
+  immich-redis-data:
+    driver: local
+    labels:
+      - "backup.enable=false"
+
+  immich-typesense-data:
+    driver: local
+    labels:
+      - "backup.enable=true"
+      - "backup.retention=30d"
+
+# =================================================
+# Networks
+# =================================================
+networks:
+  immich:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+    labels:
+      - "com.example.description=Immich isolated network"
+
+# =================================================
+# CONFIGURATION & OPERATIONAL NOTES
+# =================================================
+#
+# Storage Architecture:
+# ---------------------
+# Three-tier storage strategy:
+#
+# 1. HOT TIER (VM SSD - /opt/immich/):
+#    - Upload directory (temporary, fast access)
+#    - Thumbnails (frequently accessed)
+#    - Encoded videos (web streaming)
+#    Size: ~50GB for 10,000 photos
+#
+# 2. WARM TIER (NFS - /mnt/immich-library/):
+#    - Original photos and videos
+#    - Stored on TrueNAS ZFS pool (RAIDZ2)
+#    - Hourly snapshots, daily backups
+#    Size: ~500GB for 10,000 photos (assuming 50MB avg)
+#
+# 3. COLD TIER (Cloud backup - optional):
+#    - Encrypted backup to B2/S3
+#    - Cost: $5/TB/month (Backblaze B2)
+#    - Implementation: Restic or Rclone from TrueNAS
+#
+# Why this architecture?
+# - Fast uploads (VM SSD)
+# - Large capacity (TrueNAS)
+# - Disaster recovery (cloud backup)
+#
+# Mobile App Configuration:
+# -------------------------
+# iOS/Android app settings for optimal backup:
+# - Background upload: Enabled
+# - Upload cellular: Disabled (WiFi only to save data)
+# - Upload videos: Enabled
+# - Original quality: Enabled (no compression)
+# - Remove from device: Disabled (keep local copies)
+# - Foreground backup: Use for immediate uploads
+#
+# ML Processing Pipeline:
+# -----------------------
+# When photos are uploaded, this happens automatically:
+# 1. Photo lands in /upload directory
+# 2. Immich extracts EXIF metadata (camera, lens, GPS)
+# 3. Job queued in Redis for ML processing
+# 4. ML service downloads photo
+# 5. Face detection runs (MobileFaceNet model)
+# 6. Object classification runs (CLIP model)
+# 7. Smart search embeddings generated
+# 8. Results stored in PostgreSQL
+# 9. Typesense indexes metadata for search
+# 10. Original moved to /library (NFS)
+#
+# Processing time: ~1-2 seconds per photo on this hardware
+# For 1,000 new photos: ~30 minutes total processing
+#
+# Search Capabilities:
+# --------------------
+# Examples of what you can search:
+# - "beach sunset" (object detection)
+# - "john's face" (face recognition)
+# - "photos from 2024" (date range)
+# - "taken with Canon 5D" (camera model)
+# - "in San Francisco" (geolocation)
+# - "landscape" (scene classification)
+#
+# Backup Strategy:
+# ----------------
+# Three layers of backup:
+#
+# 1. TrueNAS snapshots:
+#    - Hourly snapshots (keep 24)
+#    - Daily snapshots (keep 7)
+#    - Retention: 8 days of point-in-time recovery
+#
+# 2. Proxmox Backup Server:
+#    - Nightly VM backup at 02:30 AM
+#    - Includes: OS, Docker volumes, configurations
+#    - Retention: 7 daily, 4 weekly, 3 monthly
+#
+# 3. Cloud backup (future):
+#    - Rclone to Backblaze B2 (encrypted)
+#    - Weekly sync of new photos only
+#    - Cost: ~$10/month for 2TB
+#
+# Recovery Point Objective (RPO): 1 hour (TrueNAS snapshots)
+# Recovery Time Objective (RTO): 2 hours (VM restore + data sync)
+#
+# Disaster Recovery Procedure:
+# -----------------------------
+# Scenario: Complete VM failure, database intact
+# 1. Deploy new VM from template (10 min)
+# 2. Mount NFS share: mount 192.168.40.5:/mnt/tank/immich /mnt/immich-library
+# 3. Restore Docker volumes from backup (5 min)
+# 4. Deploy containers: docker-compose up -d (2 min)
+# 5. Verify database connection and photo access (3 min)
+# Total: 20 minutes
+#
+# Scenario: Complete data loss (VM + NAS failure)
+# 1. Restore TrueNAS from Proxmox Backup Server (1 hour)
+# 2. Follow procedure above (20 min)
+# 3. If cloud backup exists, pull from B2 (2-4 hours depending on size)
+# Total: 1.5-5 hours
+#
+# Performance Tuning:
+# -------------------
+# If ML processing is too slow:
+# 1. Increase ML container resources:
+#    - CPUs: 4 -> 6
+#    - Memory: 12GB -> 16GB
+# 2. Disable certain ML features:
+#    - Set DISABLE_MACHINE_LEARNING=true in .env
+#    - Or disable specific models in admin panel
+# 3. Schedule ML processing during off-hours:
+#    - Pause ML: docker-compose stop immich-machine-learning
+#    - Resume at night: cron job to start/stop
+#
+# If uploads are slow:
+# 1. Check network throughput: iperf3 test
+# 2. Verify NFS mount options: cat /proc/mounts | grep immich
+# 3. Consider increasing NFS mount options:
+#    - Add to fstab: nfs rsize=1048576,wsize=1048576
+# 4. Monitor disk I/O: iostat -x 1
+#
+# Monitoring Queries:
+# -------------------
+# Prometheus queries for alerting:
+# - Storage usage: immich_storage_used_bytes / immich_storage_total_bytes
+# - Upload rate: rate(immich_uploads_total[5m])
+# - ML processing lag: immich_job_queue_length{queue="machine-learning"}
+# - API response time: histogram_quantile(0.95, immich_http_request_duration_seconds)
+# - Failed uploads: immich_uploads_failed_total
+#
+# Alerts:
+# - Storage >90% full: Warning (add more NAS capacity)
+# - ML queue >1000 jobs: Warning (increase ML resources)
+# - API latency >2s: Warning (check database performance)
+# - Upload failures >10/hour: Critical (check network/disk)
+#
+# Security Hardening:
+# -------------------
+# Current security measures:
+# - [x] Runs as unprivileged user (UID 1000)
+# - [x] Database credentials in .env (not in compose)
+# - [x] Redis password protected
+# - [x] Reverse proxy with HTTPS (Nginx Proxy Manager)
+# - [x] No direct external access (firewall blocks port 2283)
+# - [x] Resource limits (prevent DoS)
+#
+# Future security improvements:
+# - [ ] Enable OAuth2 authentication (Google/GitHub)
+# - [ ] Implement rate limiting (prevent brute force)
+# - [ ] Set up fail2ban (detect suspicious activity)
+# - [ ] Enable audit logging (track admin actions)
+# - [ ] Implement CSP headers (prevent XSS)
+# - [ ] Regular security updates (Watchtower or manual)
+#
+# Troubleshooting:
+# ----------------
+# Issue: Photos not uploading from mobile app
+# Solution:
+#   - Check mobile app logs: Settings -> Support -> View Logs
+#   - Verify server URL: Settings -> Server -> Test Connection
+#   - Check firewall: ping 192.168.40.22, telnet 192.168.40.22 2283
+#   - Review Nginx logs: docker logs nginx-proxy-manager
+#
+# Issue: Face detection not working
+# Solution:
+#   - Check ML logs: docker-compose logs immich-machine-learning
+#   - Verify model cache: ls -lh /opt/immich/model-cache
+#   - Re-download models: docker-compose restart immich-machine-learning
+#   - Check job queue: Admin panel -> Jobs -> Machine Learning
+#
+# Issue: Search not returning results
+# Solution:
+#   - Check Typesense logs: docker-compose logs immich-typesense
+#   - Verify index: curl http://localhost:8108/collections
+#   - Rebuild index: Admin panel -> Jobs -> Search -> Run All
+#
+# Issue: High memory usage
+# Solution:
+#   - Check container stats: docker stats
+#   - Reduce ML concurrent jobs: IMMICH_CONCURRENCY=2 in .env
+#   - Increase system RAM or reduce ML resources
+#
+# Update Procedure:
+# -----------------
+# Immich releases monthly, updates include:
+# - New ML models (improved face detection)
+# - Bug fixes and performance improvements
+# - New features (shared albums, AI search)
+#
+# Update steps:
+# 1. Backup current state: docker-compose down && tar -czf immich-backup.tar.gz /opt/immich
+# 2. Check release notes: https://github.com/immich-app/immich/releases
+# 3. Update docker-compose.yml with new version tag
+# 4. Pull new images: docker-compose pull
+# 5. Recreate containers: docker-compose up -d
+# 6. Monitor logs: docker-compose logs -f
+# 7. Verify functionality: Check mobile app, test upload
+# 8. If issues: Rollback to previous version (change tag, docker-compose up -d)
+#
+# Storage Estimation:
+# -------------------
+# For a family of 4 taking photos regularly:
+# - Photos: 10,000 per year @ 50MB average = 500GB/year
+# - Videos: 500 per year @ 200MB average = 100GB/year
+# - Thumbnails: 10,000 @ 500KB = 5GB/year
+# - ML models: 5GB one-time
+# - Metadata (DB): 500MB/year
+# Total: ~610GB/year
+#
+# 2TB NAS capacity = 3+ years before expansion needed
+#
+# Cost Comparison:
+# ----------------
+# Self-hosted Immich:
+# - Hardware: $0 (using existing homelab)
+# - Storage: $0 (TrueNAS with existing drives)
+# - Electricity: ~$5/month (Dell R720 power consumption)
+# Total: $5/month, $60/year
+#
+# Google Photos (2TB plan):
+# - Subscription: $9.99/month
+# Total: $120/year
+#
+# Savings: $60/year + complete privacy + unlimited storage
+#
+# =================================================
