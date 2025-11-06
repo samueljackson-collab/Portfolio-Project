@@ -1,7 +1,7 @@
 # Interview Prep Sheet - AWS RDS Terraform Module
 **Project:** Production Database Infrastructure as Code
 **Prepared by:** Sam Jackson
-**Last Updated:** January 2025
+**Last Updated:** November 2025
 
 ---
 
