@@ -324,11 +324,11 @@ npm run backup-db
 ### Restore from Backup
 
 ```bash
-# Restore database
-docker-compose exec db psql -U wikijs wiki < backups/wiki-20240101.sql
+# Restore database (replace YYYYMMDD-HHMMSS with your backup timestamp)
+docker-compose exec db psql -U wikijs wiki < backups/wiki-YYYYMMDD-HHMMSS.sql
 
-# Restore content
-cp -r backups/content-20240101/* content/
+# Restore content (replace TIMESTAMP with your backup folder name)
+cp -r backups/wiki-backup-TIMESTAMP/content/* content/
 npm run import
 ```
 
@@ -367,7 +367,7 @@ echo $WIKIJS_TOKEN
 
 # Test API connection
 curl -H "Authorization: Bearer $WIKIJS_TOKEN" \
-  http://localhost:3000/graphql
+  ${WIKIJS_URL:-http://localhost:3000}/graphql
 
 # Check content files
 find content/ -name "*.md"

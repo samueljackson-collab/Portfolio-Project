@@ -11,7 +11,7 @@
     "dev": "docker-compose -f docker/docker-compose.yml up -d",
     "stop": "docker-compose -f docker/docker-compose.yml down",
     "logs": "docker-compose -f docker/docker-compose.yml logs -f wiki",
-    "backup-db": "docker-compose -f docker/docker-compose.yml exec db pg_dump -U wikijs wiki > backups/wiki-$(date +%Y%m%d-%H%M%S).sql"
+    "backup-db": "node scripts/backup-db.js"
   },
   "keywords": [
     "wikijs",

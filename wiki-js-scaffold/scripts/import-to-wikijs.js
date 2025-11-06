@@ -9,6 +9,7 @@
  *   WIKIJS_URL=http://localhost:3000 WIKIJS_TOKEN=your-token node import-to-wikijs.js
  */
 
+require('dotenv').config();
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -44,7 +45,7 @@ class WikiJSImporter {
             editor: "markdown",
             isPrivate: false,
             isPublished: true,
-            locale: "en",
+            locale: ${JSON.stringify(process.env.LOCALE || "en")},
             path: ${JSON.stringify(pageData.path)},
             tags: ${JSON.stringify(pageData.tags)},
             title: ${JSON.stringify(pageData.title)}

@@ -136,9 +136,10 @@ Email Field: mail
 # Enable and configure retention
 
 # Step 7: Setup monitoring
-docker-compose -f docker-compose.monitoring.yml up -d
-open http://localhost:9090  # Prometheus
-open http://localhost:3001  # Grafana
+# NOTE: docker-compose.monitoring.yml needs to be created (see Scenario 7 below for example)
+# docker-compose -f docker-compose.monitoring.yml up -d
+# open http://localhost:9090  # Prometheus
+# open http://localhost:3001  # Grafana
 
 # Done! Enterprise wiki with SSO and monitoring
 ```
@@ -303,7 +304,7 @@ echo "Running vulnerability scan..."
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image ghcr.io/requarks/wiki:2
 
 echo "Checking SSL configuration..."
-docker run --rm -ti nmap/nmap --script ssl-enum-ciphers -p 443 wiki.yourcompany.com
+docker run --rm -ti nmap/nmap --script ssl-enum-ciphers -p 443 $DOMAIN
 
 echo "Scanning for secrets..."
 docker run --rm -v $(pwd):/path trufflesecurity/trufflehog filesystem /path --json
@@ -314,7 +315,9 @@ EOF
 chmod +x scripts/security-scan.sh
 
 # Step 9: Setup intrusion detection
-docker-compose -f docker-compose.security.yml up -d
+# NOTE: docker-compose.security.yml is optional and not included in this scaffold
+# Create your own security monitoring stack (e.g., Fail2ban, OSSEC) if needed
+# docker-compose -f docker-compose.security.yml up -d
 
 # Step 10: Configure automated security updates
 cat > scripts/auto-update.sh <<'EOF'

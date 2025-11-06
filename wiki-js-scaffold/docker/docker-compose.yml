@@ -10,7 +10,7 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: wikijs
-      DB_PASS: ${DB_PASSWORD:-wikijspassword}
+      DB_PASS: ${DB_PASSWORD?Variable DB_PASSWORD is not set. Please set it in your .env file}
       DB_NAME: wiki
 
       # SSL Configuration (optional)
@@ -40,10 +40,9 @@ services:
     environment:
       POSTGRES_DB: wiki
       POSTGRES_USER: wikijs
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-wikijspassword}
+      POSTGRES_PASSWORD: ${DB_PASSWORD?Variable DB_PASSWORD is not set. Please set it in your .env file}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ../database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     restart: unless-stopped
     networks:
       - wiki-network
