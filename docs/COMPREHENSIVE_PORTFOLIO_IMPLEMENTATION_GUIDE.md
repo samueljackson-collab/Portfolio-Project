@@ -195,6 +195,8 @@ import boto3
 import datetime
 import time
 import sys
+import json
+import traceback
 
 def test_restore():
     """Test that we can successfully restore from backup"""
