@@ -1,0 +1,25 @@
+{
+  "name": "API Test Environment",
+  "values": [
+    {
+      "key": "API_BASE_URL",
+      "value": "https://api.example.com",
+      "enabled": true
+    },
+    {
+      "key": "TEST_USER_EMAIL",
+      "value": "test@example.com",
+      "enabled": true
+    },
+    {
+      "key": "TEST_USER_PASSWORD",
+      "value": "password123",
+      "enabled": true
+    },
+    {
+      "key": "API_KEY",
+      "value": "your-api-key-here",
+      "enabled": true
+    }
+  ]
+}

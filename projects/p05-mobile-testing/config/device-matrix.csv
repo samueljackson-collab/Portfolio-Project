@@ -1,0 +1,11 @@
+Device,OS,OS Version,Screen Size,Resolution,Priority,Status,Notes
+iPhone 15 Pro,iOS,17.0,6.1",1179x2556,P0,Tested,Latest flagship
+iPhone 14,iOS,16.5,6.1",1170x2532,P1,Tested,Previous flagship
+iPhone 12,iOS,15.7,6.1",1170x2532,P1,Tested,Still widely used
+iPhone SE (3rd gen),iOS,16.0,4.7",750x1334,P2,Pending,Small screen edge case
+iPad Air,iOS,17.0,10.9",1640x2360,P2,Not Tested,Tablet layout
+Samsung Galaxy S23,Android,14,6.1",1080x2340,P0,Tested,Latest flagship
+Samsung Galaxy S21,Android,13,6.2",1080x2400,P1,Tested,Popular model
+Google Pixel 7,Android,14,6.3",1080x2400,P0,Tested,Stock Android
+OnePlus 11,Android,13,6.7",1440x3216,P2,Pending,High-res screen
+Xiaomi 13,Android,13,6.36",1080x2400,P2,Not Tested,International market

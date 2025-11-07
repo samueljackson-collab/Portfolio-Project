@@ -1,0 +1,120 @@
+# P05 — Mobile App Manual Testing
+
+## Overview
+Comprehensive manual testing approach for mobile applications (iOS/Android) covering functional, usability, compatibility, and regression testing. Demonstrates test planning, charter-based exploratory testing, defect reporting, and device matrix management for quality assurance roles.
+
+## Key Outcomes
+- [x] Test charter template for exploratory testing sessions
+- [x] Device/OS compatibility matrix (iOS 14-17, Android 10-14)
+- [x] Sample defect reports with reproduction steps
+- [x] Regression test checklist (critical user flows)
+- [x] Test case repository (login, signup, checkout, notifications)
+
+## Architecture
+- **Components**: Mobile app (iOS/Android), Test management (Jira/TestRail), Device farm
+- **Test environments**: Dev, Staging, Production-like
+- **Dependencies**: Physical devices, emulators (Android Studio/Xcode), Charles Proxy
+
+```mermaid
+flowchart LR
+    subgraph TestPlan[Test Planning]
+        Charter[Test Charters]
+        Matrix[Device Matrix]
+        Cases[Test Cases]
+    end
+
+    subgraph Execution[Test Execution]
+        Manual[Manual Testing]
+        Explore[Exploratory Testing]
+        Regress[Regression Testing]
+    end
+
+    subgraph Reporting[Defect Management]
+        Defects[Defect Reports]
+        Metrics[Test Metrics]
+        Sign[Sign-off]
+    end
+
+    TestPlan --> Execution
+    Execution --> Reporting
+
+    style Manual fill:#4CAF50
+    style Defects fill:#E53935
+```
+
+## Quickstart
+
+```bash
+# Review test charter template
+cat docs/test-charter-template.md
+
+# Check device matrix
+cat config/device-matrix.csv
+
+# Review sample test cases
+cat test-cases/login-flow.md
+```
+
+## Configuration
+
+| Artifact | Purpose | Location |
+|----------|---------|----------|
+| Test Charters | Exploratory testing sessions | `docs/test-charters/` |
+| Device Matrix | Supported devices/OS versions | `config/device-matrix.csv` |
+| Test Cases | Functional test scenarios | `test-cases/` |
+| Defect Reports | Sample bug reports | `defects/` |
+
+## Testing
+
+### Test Charter Example
+**Mission**: Explore login functionality for security and usability issues.
+**Areas**: Login screen, forgot password, biometric auth, session handling.
+**Time**: 90 minutes.
+**Risks**: SQL injection, weak password validation, session hijacking.
+
+### Device Matrix
+| Device | OS Version | Screen Size | Priority | Status |
+|--------|-----------|-------------|----------|--------|
+| iPhone 15 Pro | iOS 17 | 6.1" | P0 | ✓ Tested |
+| iPhone 12 | iOS 16 | 6.1" | P1 | ✓ Tested |
+| Samsung S23 | Android 14 | 6.1" | P0 | ✓ Tested |
+| Pixel 7 | Android 13 | 6.3" | P1 | Pending |
+
+### Sample Defect Report
+**Title**: [Login] User remains logged in after password reset on another device
+**Severity**: High
+**Steps to Reproduce**:
+1. Log in on Device A with user credentials
+2. On Device B, initiate password reset via email
+3. Complete password reset on Device B
+4. Return to Device A - observe user is still logged in
+**Expected**: Device A should force re-authentication after password reset
+**Actual**: Device A session remains active (security risk)
+
+## Operations
+
+### Test Cycle Management
+1. **Test Planning**: Define scope, create charters, identify devices
+2. **Execution**: Run test cases, perform exploratory testing, log defects
+3. **Regression**: Re-test critical flows before release
+4. **Sign-off**: Review metrics (pass rate, defect density), approve/reject build
+
+### Common Issues & Fixes
+
+**Issue**: App crashes on iOS 14 but works on iOS 17
+**Fix**: Check deprecated API usage, memory leaks on older OS versions.
+
+**Issue**: UI elements overlap on small screens (iPhone SE)
+**Fix**: Verify responsive layout constraints, test edge cases (small/large screens).
+
+## Roadmap
+
+- [ ] Automated screenshot comparison (visual regression)
+- [ ] Integration with CI/CD (trigger smoke tests on build)
+- [ ] Performance testing (app launch time, memory usage)
+
+## References
+
+- [iOS Testing Best Practices](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/testing_with_xcode/)
+- [Android Testing Fundamentals](https://developer.android.com/training/testing/fundamentals)
+- [RUNBOOK](./RUNBOOK.md) | [HANDBOOK](./HANDBOOK.md)
