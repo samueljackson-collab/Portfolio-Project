@@ -1,0 +1,128 @@
+# Alertmanager Configuration - Production Homelab Setup
+# ======================================================
+# Last Updated: November 6, 2025
+# Version: 0.26
+
+global:
+  resolve_timeout: 5m
+  smtp_from: 'alertmanager@homelab.local'
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_auth_username: 'your-email@gmail.com'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+route:
+  receiver: 'slack-general'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  
+  routes:
+    # Critical alerts -> Multiple channels
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      repeat_interval: 1h
+    
+    # Warning alerts -> Slack only
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+      group_wait: 1m
+      repeat_interval: 12h
+    
+    # Database alerts -> Database team
+    - match:
+        service: postgresql
+      receiver: 'slack-database'
+    
+    # Watchdog alerts -> Discard
+    - match:
+        alertname: Watchdog
+      receiver: 'null'
+      repeat_interval: 24h
+
+inhibit_rules:
+  # Node down suppresses service alerts
+  - source_match:
+      alertname: 'NodeDown'
+    target_match_re:
+      alertname: '(ServiceDown|HighCPU|HighMemory)'
+    equal: ['instance']
+  
+  # Critical suppresses warnings
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+receivers:
+  # Critical alerts - Multiple channels
+  - name: 'critical-alerts'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#alerts-critical'
+        username: 'Alertmanager'
+        icon_emoji: ':fire:'
+        title: '{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
+        text: |-
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Instance:* {{ .CommonLabels.instance }}
+        send_resolved: true
+    
+    email_configs:
+      - to: 'oncall@homelab.local'
+        subject: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        html: |-
+          <h2>{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}</h2>
+          <p><strong>Summary:</strong> {{ .CommonAnnotations.summary }}</p>
+          <p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>
+          <p><strong>Instance:</strong> {{ .CommonLabels.instance }}</p>
+        send_resolved: true
+  
+  # General Slack notifications
+  - name: 'slack-general'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':bell:'
+        title: '{{ .Status }}: {{ .CommonLabels.alertname }}'
+        text: '{{ .CommonAnnotations.summary }}'
+        send_resolved: true
+  
+  # Warning alerts
+  - name: 'slack-warnings'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#alerts-warnings'
+        username: 'Alertmanager'
+        icon_emoji: ':warning:'
+        title: 'Warning: {{ .CommonLabels.alertname }}'
+        text: '{{ .CommonAnnotations.summary }}'
+        send_resolved: true
+  
+  # Database team
+  - name: 'slack-database'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#database-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':database:'
+        title: 'Database Alert: {{ .CommonLabels.alertname }}'
+        text: |-
+          *Database:* {{ .CommonLabels.service }}
+          *Instance:* {{ .CommonLabels.instance }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+        send_resolved: true
+  
+  # Null receiver (discard)
+  - name: 'null'

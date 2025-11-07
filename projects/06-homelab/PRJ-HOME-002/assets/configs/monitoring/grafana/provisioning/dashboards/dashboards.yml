@@ -1,0 +1,50 @@
+# Grafana Dashboards - Automated Provisioning
+# ==========================================
+# Last Updated: November 6, 2025
+
+apiVersion: 1
+
+providers:
+  # Default dashboards (root folder)
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+  
+  # Infrastructure dashboards
+  - name: 'infrastructure'
+    orgId: 1
+    folder: 'Infrastructure'
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 60
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards/infrastructure
+  
+  # Application dashboards
+  - name: 'application'
+    orgId: 1
+    folder: 'Applications'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/application
+  
+  # Community dashboards
+  - name: 'community'
+    orgId: 1
+    folder: 'Community'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 0
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/community
