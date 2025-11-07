@@ -7,7 +7,7 @@ global:
   resolve_timeout: 5m
   smtp_from: 'alertmanager@homelab.local'
   smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_auth_username: 'your-email@gmail.com'
+  smtp_auth_username: '${SMTP_USERNAME}'
   smtp_auth_password: '${SMTP_PASSWORD}'
   smtp_require_tls: true
 
@@ -79,7 +79,7 @@ receivers:
         send_resolved: true
     
     email_configs:
-      - to: 'oncall@homelab.local'
+      - to: '${CRITICAL_EMAIL_TO}'
         subject: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
         html: |-
           <h2>{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}</h2>

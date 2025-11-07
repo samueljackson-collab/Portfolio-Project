@@ -119,7 +119,7 @@ Located in parent directory (`../`):
 
 1. **Directory Structure**:
 ```bash
-mkdir -p /opt/monitoring/{prometheus/data,grafana/data,loki/data,promtail,alertmanager/data}
+mkdir -p /opt/monitoring/{prometheus/data,grafana/data,loki/data,alertmanager/data}
 mkdir -p /opt/monitoring/prometheus/rules
 mkdir -p /opt/monitoring/grafana/provisioning/{datasources,dashboards}
 chown -R 1000:1000 /opt/monitoring/grafana
@@ -144,11 +144,16 @@ chmod 644 /opt/monitoring/alertmanager/alertmanager.yml
 GRAFANA_ADMIN_PASSWORD=changeme_secure_password
 
 # SMTP (for email alerts)
+SMTP_USERNAME=your-email@gmail.com
 SMTP_PASSWORD=your_gmail_app_password
+CRITICAL_EMAIL_TO=oncall@homelab.local
 
 # Alerting
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 PAGERDUTY_KEY=your_pagerduty_integration_key
+
+# Host identification (for Promtail)
+HOSTNAME=monitoring-vm
 
 # Optional
 MQTT_USERNAME=homeassistant
@@ -518,12 +523,12 @@ curl http://192.168.40.30:3100/ready
 **Total for monitoring stack**: ~2 vCPU, 4-6GB RAM, 40-60GB disk
 
 ### Comparison to SaaS Alternatives
-- **Datadog**: $15-$31/host/month = $180-$372/year (for 10 hosts)
-- **New Relic**: $25-$100/host/month = $300-$1,200/year
-- **Splunk**: $150-$300/month for log volume
-- **Self-hosted**: $0/month (hardware already owned) + ~$5/month electricity
+- **Datadog**: $15-$31/host/month = $1,800-$3,720/year (for 10 hosts)
+- **New Relic**: $25-$100/host/month = $3,000-$12,000/year (for 10 hosts)
+- **Splunk**: $150-$300/month = $1,800-$3,600/year for log volume
+- **Self-hosted**: $0/month (hardware already owned) + ~$5/month electricity = $60/year
 
-**Annual Savings**: $480-$1,500+ with complete data ownership
+**Annual Savings**: $1,740-$11,940/year with complete data ownership
 
 ## Documentation
 

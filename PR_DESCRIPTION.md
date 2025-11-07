@@ -112,13 +112,16 @@ sudo cp -r projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/* /opt/mon
 # 3. Configure environment variables
 cat > /opt/monitoring/.env << 'ENV'
 GRAFANA_ADMIN_PASSWORD=your_secure_password
+SMTP_USERNAME=your-email@gmail.com
 SMTP_PASSWORD=your_gmail_app_password
+CRITICAL_EMAIL_TO=oncall@homelab.local
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+HOSTNAME=monitoring-vm
 ENV
 
 # 4. Deploy stack
 cd /opt/monitoring
-docker-compose up -d
+docker-compose -f docker-compose-monitoring-stack.yml up -d
 
 # 5. Verify deployment
 curl http://192.168.40.30:9090/api/v1/targets  # Prometheus targets
