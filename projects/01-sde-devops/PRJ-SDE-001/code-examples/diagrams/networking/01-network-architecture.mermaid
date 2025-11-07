@@ -1,0 +1,291 @@
+```mermaid
+graph TB
+    subgraph "Internet"
+        CLIENT[End Users<br/>Browsers/Apps]
+        ATTACKER[Potential Attackers]
+    end
+
+    subgraph "AWS Cloud - Region us-east-1"
+        subgraph "Edge Services"
+            CF[CloudFront CDN<br/>TLS 1.3<br/>AWS WAF]
+            R53[Route 53<br/>DNS Routing<br/>Health Checks]
+        end
+
+        subgraph "VPC - 10.0.0.0/16"
+            IGW[Internet Gateway]
+
+            subgraph "Public Subnets - DMZ"
+                subgraph "AZ-A: 10.0.0.0/24"
+                    ALB_A[Application Load Balancer<br/>SSL/TLS Termination<br/>WAF Rules]
+                    NAT_A[NAT Gateway<br/>Elastic IP]
+                    BASTION_A[Bastion Host<br/>SSH Access<br/>SSM Session Manager]
+                end
+
+                subgraph "AZ-B: 10.0.1.0/24"
+                    ALB_B[Application Load Balancer<br/>SSL/TLS Termination<br/>WAF Rules]
+                    NAT_B[NAT Gateway<br/>Elastic IP]
+                    BASTION_B[Bastion Host<br/>SSH Access<br/>SSM Session Manager]
+                end
+
+                subgraph "AZ-C: 10.0.2.0/24"
+                    NAT_C[NAT Gateway<br/>Elastic IP]
+                end
+            end
+
+            subgraph "Private Subnets - Application Tier"
+                subgraph "AZ-A: 10.0.10.0/24"
+                    POD_A1[EKS Pod 1<br/>App Container<br/>Security Context]
+                    POD_A2[EKS Pod 2<br/>App Container<br/>Security Context]
+                end
+
+                subgraph "AZ-B: 10.0.11.0/24"
+                    POD_B1[EKS Pod 3<br/>App Container<br/>Security Context]
+                    POD_B2[EKS Pod 4<br/>App Container<br/>Security Context]
+                end
+
+                subgraph "AZ-C: 10.0.12.0/24"
+                    POD_C1[EKS Pod 5<br/>App Container<br/>Security Context]
+                    POD_C2[EKS Pod 6<br/>App Container<br/>Security Context]
+                end
+            end
+
+            subgraph "Database Subnets - Data Tier"
+                subgraph "AZ-A: 10.0.20.0/24"
+                    RDS_PRIMARY[RDS PostgreSQL<br/>Primary Instance<br/>Encrypted]
+                end
+
+                subgraph "AZ-B: 10.0.21.0/24"
+                    RDS_STANDBY[RDS PostgreSQL<br/>Standby Instance<br/>Encrypted]
+                end
+
+                subgraph "AZ-C: 10.0.22.0/24"
+                    RDS_REPLICA[RDS PostgreSQL<br/>Read Replica<br/>Encrypted]
+                    REDIS[ElastiCache Redis<br/>Encrypted in Transit]
+                end
+            end
+
+            subgraph "VPC Endpoints"
+                VPC_S3[S3 Gateway Endpoint]
+                VPC_ECR[ECR Interface Endpoint]
+                VPC_LOGS[CloudWatch Logs Endpoint]
+                VPC_SM[Secrets Manager Endpoint]
+            end
+
+            subgraph "Security Groups"
+                SG_ALB[ALB Security Group<br/>Inbound: 80, 443<br/>Outbound: EKS Pods]
+                SG_EKS[EKS Pods Security Group<br/>Inbound: ALB<br/>Outbound: RDS, Redis]
+                SG_RDS[RDS Security Group<br/>Inbound: EKS Pods<br/>Outbound: None]
+                SG_BASTION[Bastion Security Group<br/>Inbound: Corporate VPN<br/>Outbound: Private Subnets]
+            end
+
+            subgraph "Network ACLs"
+                NACL_PUB[Public Subnet NACL<br/>Allow 80, 443<br/>Deny All Other]
+                NACL_PRIV[Private Subnet NACL<br/>Allow Internal<br/>Deny External]
+                NACL_DB[Database Subnet NACL<br/>Allow 5432, 6379<br/>Deny All Other]
+            end
+
+            subgraph "Monitoring & Logging"
+                FL[VPC Flow Logs<br/>All Traffic<br/>S3 & CloudWatch]
+                GD[GuardDuty<br/>Threat Detection]
+            end
+        end
+
+        subgraph "Transit Gateway (Optional)"
+            TGW[Transit Gateway<br/>Multi-VPC Connectivity]
+        end
+    end
+
+    CLIENT --> CF
+    CF --> R53
+    R53 --> ALB_A
+    R53 --> ALB_B
+
+    ATTACKER -.Blocked by WAF.-> CF
+
+    IGW --> ALB_A
+    IGW --> ALB_B
+    IGW --> NAT_A
+    IGW --> NAT_B
+    IGW --> NAT_C
+
+    ALB_A --> POD_A1
+    ALB_A --> POD_A2
+    ALB_A --> POD_B1
+    ALB_B --> POD_B2
+    ALB_B --> POD_C1
+    ALB_B --> POD_C2
+
+    POD_A1 --> NAT_A
+    POD_A2 --> NAT_A
+    POD_B1 --> NAT_B
+    POD_B2 --> NAT_B
+    POD_C1 --> NAT_C
+    POD_C2 --> NAT_C
+
+    POD_A1 --> RDS_PRIMARY
+    POD_A2 --> RDS_PRIMARY
+    POD_B1 --> RDS_PRIMARY
+    POD_B2 --> RDS_PRIMARY
+    POD_C1 --> RDS_PRIMARY
+    POD_C2 --> RDS_PRIMARY
+
+    POD_A1 -.Read.-> RDS_REPLICA
+    POD_B1 -.Read.-> RDS_REPLICA
+    POD_C1 -.Read.-> RDS_REPLICA
+
+    POD_A1 --> REDIS
+    POD_B1 --> REDIS
+    POD_C1 --> REDIS
+
+    RDS_PRIMARY -.Replication.-> RDS_STANDBY
+    RDS_PRIMARY -.Replication.-> RDS_REPLICA
+
+    POD_A1 --> VPC_S3
+    POD_A1 --> VPC_ECR
+    POD_A1 --> VPC_LOGS
+    POD_A1 --> VPC_SM
+
+    BASTION_A --> POD_A1
+    BASTION_B --> POD_B1
+
+    SG_ALB -.Protects.-> ALB_A
+    SG_EKS -.Protects.-> POD_A1
+    SG_RDS -.Protects.-> RDS_PRIMARY
+    SG_BASTION -.Protects.-> BASTION_A
+
+    NACL_PUB -.Controls.-> ALB_A
+    NACL_PRIV -.Controls.-> POD_A1
+    NACL_DB -.Controls.-> RDS_PRIMARY
+
+    IGW --> FL
+    ALB_A --> FL
+    POD_A1 --> FL
+    RDS_PRIMARY --> FL
+
+    FL --> GD
+
+    style CF fill:#ff9999
+    style IGW fill:#99ccff
+    style ALB_A fill:#99ff99
+    style POD_A1 fill:#ffff99
+    style RDS_PRIMARY fill:#ff99ff
+    style SG_ALB fill:#ffcccc
+    style FL fill:#ccccff
+    style GD fill:#ff6666
+```
+
+## Network Architecture - Defense in Depth
+
+### Network Tiers:
+
+#### 1. Edge Layer (Internet-Facing)
+- **CloudFront CDN**: Global content delivery, DDoS protection
+- **Route 53**: DNS with health checks and failover
+- **AWS WAF**: Web Application Firewall on CloudFront + ALB
+
+#### 2. Public Subnet - DMZ (10.0.0-2.0/24)
+- **Application Load Balancer**: SSL/TLS termination, path routing
+- **NAT Gateways**: Outbound internet for private subnets
+- **Bastion Hosts**: Secure SSH access (SSM Session Manager preferred)
+
+#### 3. Private Subnet - Application Tier (10.0.10-12.0/24)
+- **EKS Pods**: Application containers, no direct internet access
+- **Internal Services**: APIs, workers, background jobs
+- **Service Mesh**: Istio for inter-pod communication (optional)
+
+#### 4. Database Subnet - Data Tier (10.0.20-22.0/24)
+- **RDS PostgreSQL**: Multi-AZ, no internet access
+- **ElastiCache Redis**: In-memory caching
+- **Complete Isolation**: No route to internet
+
+### Security Layers:
+
+#### Layer 1: Network ACLs (Stateless)
+- **Public Subnets**: Allow 80/443 inbound, ephemeral outbound
+- **Private Subnets**: Allow internal traffic only
+- **Database Subnets**: Allow 5432/6379 from app tier only
+
+#### Layer 2: Security Groups (Stateful)
+- **ALB**: Inbound 80/443 from internet, outbound to EKS
+- **EKS Pods**: Inbound from ALB, outbound to RDS/Redis
+- **RDS**: Inbound 5432 from EKS only
+- **Bastion**: Inbound 22 from corporate VPN only
+
+#### Layer 3: Kubernetes Network Policies
+- **Pod-to-Pod**: Restrict based on labels
+- **Namespace Isolation**: Separate prod/staging/dev
+- **Egress Control**: Whitelist external APIs
+
+### Traffic Flows:
+
+#### Inbound (User → Application):
+```
+User → CloudFront/WAF → Route 53 → ALB (TLS) → EKS Pods
+```
+
+#### Outbound (Application → Internet):
+```
+EKS Pods → NAT Gateway → Internet Gateway → Internet
+```
+
+#### Internal (Application → Database):
+```
+EKS Pods (Private) → RDS (Database Subnet)
+```
+
+#### Management Access:
+```
+Admin → VPN → Bastion → EKS Pods (via kubectl/SSH)
+```
+
+### VPC Endpoints (PrivateLink):
+
+#### Gateway Endpoints (Free):
+- **S3**: Private access to S3 buckets
+
+#### Interface Endpoints (Paid):
+- **ECR**: Pull container images
+- **CloudWatch Logs**: Send logs privately
+- **Secrets Manager**: Retrieve secrets
+- **SSM**: Session Manager access
+
+### High Availability:
+
+- **Multi-AZ**: Resources across 3 availability zones
+- **Load Balancing**: ALB distributes traffic
+- **Auto-Scaling**: Pods scale based on demand
+- **Health Checks**: Automatic failover
+
+### Monitoring & Logging:
+
+#### VPC Flow Logs:
+- **Capture**: ALL traffic (accepted and rejected)
+- **Destinations**: CloudWatch Logs + S3
+- **Retention**: 30 days in CloudWatch
+- **Analysis**: VPC Flow Logs Insights
+
+#### GuardDuty:
+- **Threat Detection**: Unusual network behavior
+- **Integration**: VPC Flow Logs, CloudTrail, DNS logs
+- **Alerts**: SNS → PagerDuty/Slack
+
+### Cost Optimization:
+
+#### Development Environment:
+- 1 AZ, single NAT Gateway: ~$45/month
+
+#### Staging Environment:
+- 2 AZ, single NAT Gateway: ~$90/month
+
+#### Production Environment:
+- 3 AZ, 3 NAT Gateways: ~$135/month
+
+### Security Best Practices:
+
+✅ **Principle of Least Privilege**: Minimum required access
+✅ **Defense in Depth**: Multiple security layers
+✅ **Encryption**: In transit (TLS) and at rest (KMS)
+✅ **Network Segmentation**: Isolated tiers
+✅ **Egress Control**: Whitelist external services
+✅ **Monitoring**: Comprehensive logging and alerting
+✅ **Incident Response**: GuardDuty + automated remediation

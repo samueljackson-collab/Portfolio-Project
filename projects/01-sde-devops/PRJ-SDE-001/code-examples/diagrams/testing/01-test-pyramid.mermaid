@@ -1,0 +1,298 @@
+```mermaid
+graph TB
+    subgraph "Test Pyramid - Portfolio Application"
+        subgraph "E2E Tests - 10% (Top)"
+            E2E_COUNT[10 Test Suites<br/>~50 Scenarios]
+
+            subgraph "Cypress E2E"
+                E2E_AUTH[User Authentication<br/>- Registration<br/>- Login/Logout<br/>- Password Reset<br/>- Session Management]
+                E2E_PROFILE[User Profile<br/>- View Profile<br/>- Edit Profile<br/>- Upload Avatar<br/>- Delete Account]
+                E2E_ORDER[Order Flow<br/>- Browse Products<br/>- Add to Cart<br/>- Checkout<br/>- Order Confirmation]
+            end
+
+            E2E_TIME[Execution Time: 10-15 min]
+            E2E_ENV[Environment: Staging<br/>Full Stack Running]
+        end
+
+        subgraph "Integration Tests - 20% (Middle)"
+            INT_COUNT[25 Test Suites<br/>~150 Scenarios]
+
+            subgraph "API Integration"
+                INT_AUTH[Auth API<br/>- JWT Generation<br/>- Token Refresh<br/>- Password Hash<br/>- Email Verification]
+                INT_USER[User API<br/>- CRUD Operations<br/>- Validation<br/>- Business Logic<br/>- Error Handling]
+                INT_DB[Database Integration<br/>- Repository Pattern<br/>- Transactions<br/>- Migrations<br/>- Constraints]
+                INT_CACHE[Cache Integration<br/>- Redis Operations<br/>- Cache Invalidation<br/>- Session Storage<br/>- Rate Limiting]
+            end
+
+            INT_TIME[Execution Time: 5-8 min]
+            INT_ENV[Environment: Docker<br/>PostgreSQL + Redis Services]
+        end
+
+        subgraph "Unit Tests - 70% (Base)"
+            UNIT_COUNT[100+ Test Suites<br/>~500 Scenarios]
+
+            subgraph "Service Layer"
+                UNIT_USER_SVC[UserService<br/>- createUser<br/>- authenticateUser<br/>- updateUser<br/>- deleteUser]
+                UNIT_ORDER_SVC[OrderService<br/>- createOrder<br/>- calculateTotal<br/>- applyDiscount<br/>- cancelOrder]
+                UNIT_PRODUCT_SVC[ProductService<br/>- findProducts<br/>- updateInventory<br/>- checkStock<br/>- applyPricing]
+            end
+
+            subgraph "Utility Functions"
+                UNIT_HASH[PasswordHasher<br/>- hash()<br/>- compare()<br/>- strength()]
+                UNIT_VALID[Validators<br/>- emailValidator<br/>- passwordValidator<br/>- phoneValidator]
+                UNIT_FORMAT[Formatters<br/>- dateFormatter<br/>- currencyFormatter<br/>- nameFormatter]
+            end
+
+            subgraph "Business Logic"
+                UNIT_CALC[Calculators<br/>- taxCalculator<br/>- shippingCalculator<br/>- discountCalculator]
+                UNIT_RULE[Business Rules<br/>- pricingRules<br/>- inventoryRules<br/>- shippingRules]
+            end
+
+            UNIT_TIME[Execution Time: 2-3 min]
+            UNIT_ENV[Environment: In-Memory<br/>Mocked Dependencies]
+        end
+
+        subgraph "Performance Tests - Continuous"
+            PERF_K6[K6 Load Tests<br/>- Load Testing<br/>- Stress Testing<br/>- Spike Testing<br/>- Soak Testing]
+
+            PERF_SCENARIOS[Test Scenarios:<br/>1. User Login<br/>2. Browse Products<br/>3. Search<br/>4. Checkout Flow]
+
+            PERF_METRICS[Metrics:<br/>- Response Time: p95 < 500ms<br/>- Error Rate: < 1%<br/>- Throughput: 1000 req/s<br/>- Concurrent Users: 200]
+
+            PERF_TIME[Execution Time: 15-20 min]
+            PERF_ENV[Environment: Staging<br/>Production-like Load]
+        end
+    end
+
+    E2E_COUNT --> E2E_AUTH
+    E2E_COUNT --> E2E_PROFILE
+    E2E_COUNT --> E2E_ORDER
+
+    INT_COUNT --> INT_AUTH
+    INT_COUNT --> INT_USER
+    INT_COUNT --> INT_DB
+    INT_COUNT --> INT_CACHE
+
+    UNIT_COUNT --> UNIT_USER_SVC
+    UNIT_COUNT --> UNIT_ORDER_SVC
+    UNIT_COUNT --> UNIT_PRODUCT_SVC
+    UNIT_COUNT --> UNIT_HASH
+    UNIT_COUNT --> UNIT_VALID
+    UNIT_COUNT --> UNIT_FORMAT
+    UNIT_COUNT --> UNIT_CALC
+    UNIT_COUNT --> UNIT_RULE
+
+    PERF_K6 --> PERF_SCENARIOS
+    PERF_SCENARIOS --> PERF_METRICS
+
+    style E2E_COUNT fill:#ff9999
+    style INT_COUNT fill:#ffcc99
+    style UNIT_COUNT fill:#99ff99
+    style PERF_K6 fill:#9999ff
+```
+
+## Test Pyramid Strategy
+
+### Test Distribution:
+
+```
+         /\
+        /E2E\        10% - End-to-End Tests
+       /______\
+      /        \
+     /Integration\ 20% - Integration Tests
+    /______________\
+   /                \
+  /   Unit Tests     \ 70% - Unit Tests
+ /____________________\
+```
+
+### Unit Tests (70% - Base Layer)
+
+#### Purpose:
+- Test individual functions/methods in isolation
+- Fast execution, immediate feedback
+- High code coverage (>80%)
+
+#### Characteristics:
+- **Speed**: 2-3 minutes for 500+ tests
+- **Isolation**: Mocked dependencies
+- **Scope**: Single function/class
+- **Cost**: Low (run on every commit)
+
+#### Example Coverage:
+```typescript
+// UserService.test.ts
+describe('UserService.createUser', () => {
+  it('should create user with valid data')
+  it('should throw ValidationError for invalid email')
+  it('should throw ValidationError for weak password')
+  it('should throw ConflictError when email exists')
+  it('should hash password before saving')
+  it('should send verification email')
+})
+```
+
+#### Test Tools:
+- **Jest**: JavaScript/TypeScript testing
+- **Coverage**: Istanbul/NYC
+- **Assertions**: expect(), toBe(), toThrow()
+- **Mocking**: jest.mock(), jest.fn()
+
+#### CI/CD Integration:
+- Run on every PR
+- Fail fast if coverage drops
+- Matrix testing (Node 18.x, 20.x)
+
+---
+
+### Integration Tests (20% - Middle Layer)
+
+#### Purpose:
+- Test interaction between components
+- Verify database operations
+- Test API endpoints
+- Validate business logic with real dependencies
+
+#### Characteristics:
+- **Speed**: 5-8 minutes for 150+ tests
+- **Dependencies**: Real PostgreSQL, Redis
+- **Scope**: Multiple components working together
+- **Cost**: Medium (run before merge)
+
+#### Example Coverage:
+```typescript
+// user-api.integration.test.ts
+describe('POST /api/users', () => {
+  it('should create user in database')
+  it('should return 201 with user object')
+  it('should hash password in database')
+  it('should enforce unique email constraint')
+  it('should validate input schema')
+})
+```
+
+#### Test Tools:
+- **Supertest**: HTTP assertions
+- **Docker Compose**: Service containers
+- **Testcontainers**: Isolated environments
+- **Database Fixtures**: Test data setup
+
+#### CI/CD Integration:
+- Docker services (PostgreSQL, Redis)
+- Run migrations before tests
+- Cleanup after test suite
+
+---
+
+### E2E Tests (10% - Top Layer)
+
+#### Purpose:
+- Test complete user journeys
+- Validate UI/UX flows
+- Ensure system works end-to-end
+- Catch integration issues
+
+#### Characteristics:
+- **Speed**: 10-15 minutes for 50+ scenarios
+- **Dependencies**: Full application stack
+- **Scope**: User perspective
+- **Cost**: High (run before deployment)
+
+#### Example Coverage:
+```typescript
+// user-authentication.cy.ts
+describe('User Registration Flow', () => {
+  it('should register new user successfully')
+  it('should display validation errors')
+  it('should redirect to email verification')
+  it('should handle existing email gracefully')
+  it('should maintain session after registration')
+})
+```
+
+#### Test Tools:
+- **Cypress**: E2E testing framework
+- **Playwright**: Cross-browser testing
+- **Visual Regression**: Percy/Chromatic
+- **Accessibility**: axe-core
+
+#### CI/CD Integration:
+- Deploy to staging environment
+- Run smoke tests first
+- Full E2E suite before production
+- Screenshot/video artifacts
+
+---
+
+### Performance Tests (Continuous)
+
+#### Purpose:
+- Validate system under load
+- Identify bottlenecks
+- Ensure SLA compliance
+- Capacity planning
+
+#### Test Types:
+
+**Load Testing:**
+- Gradual ramp-up to expected load
+- Validate normal operation
+- Target: 1000 req/s sustained
+
+**Stress Testing:**
+- Push system beyond limits
+- Find breaking point
+- Observe recovery
+
+**Spike Testing:**
+- Sudden traffic increase
+- Test auto-scaling
+- Validate circuit breakers
+
+**Soak Testing:**
+- Extended duration (2+ hours)
+- Memory leaks detection
+- Resource exhaustion
+
+#### Test Tools:
+- **K6**: Load testing framework
+- **Grafana**: Metrics visualization
+- **Prometheus**: Metrics collection
+
+#### CI/CD Integration:
+- Run after staging deployment
+- Compare with baseline metrics
+- Alert if thresholds exceeded
+
+---
+
+### Test Execution Summary:
+
+| Test Type | Count | Duration | Frequency | Environment |
+|-----------|-------|----------|-----------|-------------|
+| **Unit** | 500+ | 2-3 min | Every commit | In-memory |
+| **Integration** | 150+ | 5-8 min | Before merge | Docker |
+| **E2E** | 50+ | 10-15 min | Before deploy | Staging |
+| **Performance** | 4 scenarios | 15-20 min | After deploy | Staging |
+
+### Total CI/CD Test Time:
+- **PR Pipeline**: 15-20 minutes (Unit + Integration)
+- **Deployment Pipeline**: 30-40 minutes (All tests)
+
+### Coverage Targets:
+
+- **Unit Test Coverage**: >80%
+- **Integration Coverage**: >60%
+- **E2E Critical Paths**: 100%
+- **Performance SLA**: p95 < 500ms, errors < 1%
+
+### Best Practices:
+
+✅ **Test Independence**: Each test runs in isolation
+✅ **Fast Feedback**: Unit tests complete in seconds
+✅ **Realistic Data**: Production-like test data
+✅ **Flaky Test Prevention**: Deterministic, no race conditions
+✅ **Parallel Execution**: Tests run concurrently
+✅ **Clear Assertions**: Descriptive test names and errors
+✅ **Continuous Improvement**: Review and refactor tests regularly
