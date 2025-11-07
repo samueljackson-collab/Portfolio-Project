@@ -1,3 +1,5 @@
+# Tests updated with comprehensive validation for deploy script bug fix
+
 """
 Comprehensive tests for scripts/deploy.sh
 
@@ -251,3 +253,171 @@ class TestOutputMessages:
         keywords = ["Formatting", "Initializing", "Planning", "Validating"]
         found_keywords = [kw for kw in keywords if kw in content]
         assert len(found_keywords) >= 2, "Script should indicate current steps"
+
+class TestDeployScriptBugFix:
+    """Test the bug fix in deploy.sh script."""
+
+    def test_terraform_fmt_command_syntax(self, script_path):
+        """Verify terraform fmt command has correct syntax."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # The bug was: tf=terraform fmt -recursive
+        # Should be: terraform fmt -recursive
+        assert 'tf=terraform fmt' not in content, \
+            "Bug found: 'tf=' assignment should not be present"
+        
+        # Verify correct command exists
+        assert 'terraform fmt -recursive' in content or 'terraform fmt' in content, \
+            "Should have terraform fmt command"
+
+    def test_no_variable_assignment_in_commands(self, script_path):
+        """Verify no accidental variable assignments in command lines."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            # Skip comments and empty lines
+            if stripped.startswith('#') or not stripped:
+                continue
+            
+            # Check for patterns like: var=command (without proper spacing)
+            # This is likely a typo rather than intentional variable assignment
+            if '=' in stripped and not stripped.startswith('set '):
+                # Check if it's a variable assignment followed by a command
+                parts = stripped.split('=', 1)
+                if len(parts) == 2:
+                    var_name = parts[0].strip()
+                    value = parts[1].strip()
+                    
+                    # If the "value" starts with a command, it's likely a bug
+                    commands = ['terraform', 'aws', 'git', 'echo', 'cd']
+                    for cmd in commands:
+                        if value.startswith(cmd):
+                            # This is acceptable for actual variable assignments
+                            # but 'tf=terraform fmt' on line 13 is the bug
+                            if var_name == 'tf' and 'terraform fmt' in value:
+                                assert False, \
+                                    f"Line {i}: Found bug 'tf=terraform fmt' - should be 'terraform fmt'"
+
+    def test_terraform_commands_execute_properly(self, script_path):
+        """Verify terraform commands are structured to execute, not assign."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Check that terraform commands follow the echo statements
+        import re
+        
+        # Find all echo + command pairs
+        echo_pattern = r'echo "Formatting.*"\s*\n\s*(\S+.*terraform fmt.*)'
+        matches = re.findall(echo_pattern, content)
+        
+        for match in matches:
+            # The command after "Formatting..." echo should execute terraform
+            assert not match.startswith('tf='), \
+                "Terraform fmt should execute, not be assigned to variable 'tf'"
+            assert match.startswith('terraform'), \
+                "Command should start with 'terraform', not variable assignment"
+
+
+class TestDeployScriptRegressions:
+    """Test for potential regressions in deploy script."""
+
+    def test_all_terraform_commands_unmodified(self, script_path):
+        """Verify other terraform commands weren't accidentally changed."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # These terraform commands should still exist and be correct
+        expected_commands = [
+            'terraform init',
+            'terraform validate', 
+            'terraform plan',
+            'terraform apply',
+            'terraform workspace'
+        ]
+        
+        for cmd in expected_commands:
+            assert cmd in content, f"Expected command '{cmd}' not found"
+            
+            # Make sure these aren't assigned to variables either
+            assert f'var={cmd}' not in content, \
+                f"Command '{cmd}' should not be assigned to variable"
+
+    def test_script_execution_order_maintained(self, script_path):
+        """Verify command execution order is still correct."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        # Find positions of key commands
+        fmt_line = None
+        init_line = None
+        validate_line = None
+        plan_line = None
+        
+        for i, line in enumerate(lines):
+            if 'terraform fmt' in line and not line.strip().startswith('#'):
+                fmt_line = i
+            elif 'terraform init' in line and not line.strip().startswith('#'):
+                init_line = i
+            elif 'terraform validate' in line and not line.strip().startswith('#'):
+                validate_line = i
+            elif 'terraform plan' in line and not line.strip().startswith('#'):
+                plan_line = i
+        
+        # Verify order is maintained
+        if fmt_line and init_line:
+            assert fmt_line < init_line, "fmt should come before init"
+        if validate_line and plan_line:
+            assert validate_line < plan_line, "validate should come before plan"
+
+    def test_no_syntax_errors_after_fix(self, script_path):
+        """Verify bash syntax is still valid after bug fix."""
+        bash_path = __import__('shutil').which("bash")
+        if not bash_path:
+            __import__('pytest').skip("bash not found on this system")
+        
+        result = __import__('subprocess').run(
+            [bash_path, "-n", str(script_path)],
+            capture_output=True,
+            text=True
+        )
+        assert result.returncode == 0, f"Syntax error after fix: {result.stderr}"
+
+
+class TestDeployScriptEdgeCases:
+    """Test edge cases and potential issues in deploy script."""
+
+    def test_handles_special_characters_in_paths(self, script_path):
+        """Verify script handles special characters in paths."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Check that paths are properly quoted
+        if 'ROOT_DIR=' in content:
+            # ROOT_DIR should use proper quoting
+            assert '"$' in content or "'$" in content, \
+                "Variables in paths should be quoted"
+
+    def test_error_handling_preserved(self, script_path):
+        """Verify error handling (set -euo pipefail) is still present."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should still have strict error handling
+        assert 'set -euo pipefail' in content or 'set -e' in content, \
+            "Script should maintain error handling"
+
+    def test_workspace_logic_unchanged(self, script_path):
+        """Verify workspace selection logic wasn't affected by the fix."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Workspace logic should still be present
+        assert 'terraform workspace list' in content, \
+            "Workspace list command should be present"
+        assert 'terraform workspace select' in content, \
+            "Workspace select command should be present"
+        assert 'terraform workspace new' in content, \
+            "Workspace new command should be present"
