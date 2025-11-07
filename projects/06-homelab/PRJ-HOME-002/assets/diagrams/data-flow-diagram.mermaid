@@ -1,0 +1,86 @@
+sequenceDiagram
+    participant User as 👤 User Browser
+    participant NPM as 🔒 Nginx Proxy Manager
+    participant SSL as 🔐 Let's Encrypt
+    participant Service as 📦 Service (VM/LXC)
+    participant Storage as 💾 TrueNAS Storage
+    participant Backup as 💿 Proxmox Backup Server
+    participant Monitor as 📊 Monitoring Stack
+
+    %% User Access Flow
+    rect rgb(230, 240, 255)
+        Note over User,NPM: 1. User Access Flow
+        User->>+NPM: HTTPS Request (port 443)
+        NPM->>SSL: Validate Certificate
+        SSL-->>NPM: Valid Certificate
+        NPM->>+Service: Proxy to Backend (internal IP)
+        Service->>Storage: Read/Write Data (NFS)
+        Storage-->>Service: Data Response
+        Service-->>-NPM: HTTP Response
+        NPM-->>-User: HTTPS Response (TLS)
+    end
+
+    %% Data Persistence Flow
+    rect rgb(240, 255, 240)
+        Note over Service,Storage: 2. Data Persistence Flow
+        Service->>Storage: Write to NFS Mount (/appdata)
+        Storage->>Storage: Write to ZFS Dataset (RAID-Z2)
+        Storage->>Storage: Create ZFS Snapshot (hourly)
+        Storage-->>Service: Write Confirmed
+    end
+
+    %% Backup Flow
+    rect rgb(255, 240, 240)
+        Note over Service,Backup: 3. Backup Flow (Daily 2 AM)
+        Backup->>+Service: Trigger Backup Job (Proxmox API)
+        Service->>Service: Snapshot VM State
+        Service->>+Backup: Stream Backup Data
+        Backup->>Backup: Compress & Deduplicate
+        Backup->>Storage: Archive to /mnt/pool1/backups
+        Storage-->>Backup: Backup Stored
+        Backup-->>-Service: Backup Complete
+        Backup->>Backup: Verify Backup Integrity
+        Backup->>Monitor: Report Backup Status
+    end
+
+    %% Monitoring Flow
+    rect rgb(255, 255, 230)
+        Note over Monitor,Service: 4. Monitoring Flow (Every 15s)
+        Monitor->>Service: Scrape Metrics (Prometheus)
+        Service-->>Monitor: Metrics Response (node_exporter)
+        Monitor->>Monitor: Store Metrics (TSDB)
+        Monitor->>Monitor: Evaluate Alert Rules
+
+        alt Critical Alert
+            Monitor->>Monitor: Trigger Alert (Alertmanager)
+            Monitor->>User: Send Email/Notification
+        else Normal Operation
+            Monitor->>Monitor: Update Dashboards (Grafana)
+        end
+    end
+
+    %% Certificate Renewal Flow
+    rect rgb(240, 230, 255)
+        Note over NPM,SSL: 5. Certificate Renewal (Every 60 days)
+        NPM->>SSL: Request Certificate Renewal
+        SSL->>SSL: Verify Domain Ownership (HTTP-01)
+        SSL-->>NPM: New Certificate
+        NPM->>NPM: Install Certificate
+        NPM->>NPM: Reload Nginx Config
+        NPM-->>Monitor: Report Certificate Status
+    end
+
+    %% Disaster Recovery Flow
+    rect rgb(255, 240, 230)
+        Note over Backup,Service: 6. Disaster Recovery Flow
+        User->>Backup: Initiate Restore Job
+        Backup->>Backup: Locate Backup Version
+        Backup->>Service: Stream Restore Data
+        Service->>Service: Restore VM State
+        Service->>Storage: Mount NFS Shares
+        Storage-->>Service: Data Available
+        Service->>Monitor: Service Health Check
+        Monitor-->>User: Service Restored
+    end
+
+    Note over User,Monitor: End-to-End Homelab Service Architecture
