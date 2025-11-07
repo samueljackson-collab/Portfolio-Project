@@ -316,3 +316,81 @@ class TestConditionalLogic:
         content = main_tf.read_text()
         if "aws_eks_cluster" in content:
             assert "count = var.create_eks" in content
+
+class TestBackendDocumentation:
+    """Test backend.tf documentation and comments."""
+
+    def test_backend_has_inline_documentation(self, backend_tf):
+        """Verify backend.tf includes helpful inline comments."""
+        content = backend_tf.read_text()
+        # Should have comments explaining configuration
+        assert "#" in content, "backend.tf should have comments"
+
+    def test_backend_documents_backend_config_usage(self, backend_tf):
+        """Verify backend.tf documents -backend-config flag usage."""
+        content = backend_tf.read_text()
+        # Should mention backend-config in comments
+        assert "backend-config" in content, "Should document -backend-config usage"
+
+    def test_backend_references_workflow_file(self, backend_tf):
+        """Verify backend.tf references the GitHub workflow file."""
+        content = backend_tf.read_text()
+        # Should reference the workflow file for backend-config examples
+        assert "terraform.yml" in content or "workflow" in content.lower(), \
+            "Should reference workflow file for backend-config examples"
+
+    def test_backend_explains_variable_mapping(self, backend_tf):
+        """Verify backend.tf explains how backend-config maps to variables."""
+        content = backend_tf.read_text()
+        # Should explain the mapping between backend-config and variables
+        assert "bucket" in content and ("var." in content or "variables" in content.lower()), \
+            "Should explain variable mapping"
+
+    def test_backend_comments_before_placeholder_values(self, backend_tf):
+        """Verify backend.tf has explanatory comments before REPLACE_ME values."""
+        content = backend_tf.read_text()
+        lines = content.split('\n')
+        
+        # Find REPLACE_ME lines and check for comments
+        for i, line in enumerate(lines):
+            if "REPLACE_ME" in line:
+                # Check if there are comments in preceding lines
+                has_comment_context = False
+                # Look at previous 5 lines for context comments
+                for j in range(max(0, i-5), i):
+                    if "#" in lines[j] and len(lines[j].strip()) > 1:
+                        has_comment_context = True
+                        break
+                
+                assert has_comment_context, \
+                    f"REPLACE_ME value should have explanatory comments nearby (line {i+1})"
+
+    def test_backend_documentation_mentions_init_time_config(self, backend_tf):
+        """Verify documentation explains backend config is provided at init time."""
+        content = backend_tf.read_text()
+        # Should mention that config is provided during terraform init
+        assert "init" in content.lower() or "terraform init" in content, \
+            "Should mention backend config is provided during terraform init"
+
+    def test_backend_comments_are_descriptive(self, backend_tf):
+        """Verify backend comments are descriptive and helpful."""
+        content = backend_tf.read_text()
+        lines = content.split('\n')
+        
+        comment_lines = [l.strip() for l in lines if l.strip().startswith('#')]
+        # Should have multiple comment lines
+        assert len(comment_lines) > 1, "Should have multiple explanatory comments"
+        
+        # Comments should be substantive (not just single character)
+        descriptive_comments = [c for c in comment_lines if len(c) > 10]
+        assert len(descriptive_comments) > 0, "Should have descriptive comments (not just #)"
+
+    def test_backend_config_pattern_documented(self, backend_tf):
+        """Verify the backend-config pattern is clearly documented."""
+        content = backend_tf.read_text()
+        # Should show how backend-config flags are used
+        comments = '\n'.join([l for l in content.split('\n') if '#' in l])
+        
+        # Should mention key configuration aspects
+        assert "backend-config" in comments or "backend config" in comments.lower(), \
+            "Comments should mention backend-config"
