@@ -1,0 +1,138 @@
+# Observability Architecture
+
+This diagram is rendered using Mermaid syntax. GitHub will render it automatically when viewing this file.
+
+## Diagram
+
+```mermaid
+flowchart TD
+    %% Data Sources Layer
+    subgraph DataSources [Data Sources - Homelab Infrastructure]
+        Proxmox[Proxmox Host<br/>192.168.1.10]
+        
+        subgraph VMs [Virtual Machines]
+            VM1[VM 1<br/>192.168.1.20]
+            VM2[VM 2<br/>192.168.1.21]
+            VM3[VM 3<br/>192.168.1.22]
+            VM4[VM 4<br/>192.168.1.23]
+            VM5[VM 5<br/>192.168.1.24]
+        end
+        
+        subgraph Containers [LXC Containers]
+            LXC1[LXC 1<br/>192.168.1.30]
+            LXC2[LXC 2<br/>192.168.1.31]
+            LXC3[LXC 3<br/>192.168.1.32]
+        end
+        
+        TrueNAS[TrueNAS Storage<br/>192.168.1.5]
+    end
+
+    %% Metrics Collection Layer
+    subgraph MetricsCollectors [Metrics Collection Agents]
+        NodeExporterProxmox[Node Exporter<br/>:9100]
+        NodeExporterVM[Node Exporters<br/>:9100]
+        ProxmoxExporter[Proxmox Exporter<br/>:9221]
+        TrueNASExporter[TrueNAS Exporter<br/>:9273]
+        BlackboxExporter[Blackbox Exporter<br/>:9115]
+    end
+
+    %% Log Collection Layer
+    subgraph LogCollectors [Log Collection Agents]
+        PromtailProxmox[Promtail<br/>:9080]
+        PromtailVM[Promtail Agents<br/>:9080]
+        PromtailContainer[Promtail Agents<br/>:9080]
+    end
+
+    %% Central Storage
+    subgraph CentralStorage [Central Storage & Processing]
+        Prometheus[Prometheus<br/>:9090]
+        Loki[Loki<br/>:3100]
+    end
+
+    %% Alerting Layer
+    subgraph Alerting [Alerting System]
+        Alertmanager[Alertmanager<br/>:9093]
+    end
+
+    %% Visualization Layer
+    subgraph Visualization [Visualization & Dashboards]
+        Grafana[Grafana<br/>:3000]
+    end
+
+    %% Backup Infrastructure
+    subgraph Backup [Backup System]
+        PBS[Proxmox Backup Server<br/>192.168.1.15:8007]
+    end
+
+    %% Notification Channels
+    subgraph Notifications [Notification Channels]
+        Email[Email<br/>alerts@homelab.local]
+        Slack[Slack<br/>#homelab-alerts]
+        PagerDuty[PagerDuty<br/>Critical Only]
+    end
+
+    %% Data Flow Connections
+    Proxmox -.->|Metrics| NodeExporterProxmox
+    VMs -.->|Metrics| NodeExporterVM
+    Proxmox -.->|VM/Container Metrics| ProxmoxExporter
+    TrueNAS -.->|Storage Metrics| TrueNASExporter
+    
+    NodeExporterProxmox -->|HTTP :9100| Prometheus
+    NodeExporterVM -->|HTTP :9100| Prometheus
+    ProxmoxExporter -->|HTTP :9221| Prometheus
+    TrueNASExporter -->|HTTP :9273| Prometheus
+    BlackboxExporter -->|HTTP :9115| Prometheus
+    
+    Proxmox -.->|System Logs| PromtailProxmox
+    VMs -.->|Application Logs| PromtailVM
+    Containers -.->|Container Logs| PromtailContainer
+    
+    PromtailProxmox -.->|HTTP :3100| Loki
+    PromtailVM -.->|HTTP :3100| Loki
+    PromtailContainer -.->|HTTP :3100| Loki
+    
+    Prometheus -.->|Alerts HTTP :9093| Alertmanager
+    Alertmanager -.->|Email SMTP :587| Email
+    Alertmanager -.->|Webhook HTTP| Slack
+    Alertmanager -.->|API HTTPS| PagerDuty
+    
+    Prometheus -->|Query API :9090| Grafana
+    Loki -->|Query API :3100| Grafana
+    
+    Proxmox -->|Backup API :8007| PBS
+    VMs -->|Backup API :8007| PBS
+    Containers -->|Backup API :8007| PBS
+    
+    BlackboxExporter -->|HTTP Probes| VMs
+    BlackboxExporter -->|HTTP Probes| Containers
+
+    %% Styling
+    classDef dataSource fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef collector fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px
+    classDef storage fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef alerting fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+    classDef visualization fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef backup fill:#e0f2f1,stroke:#004d40,stroke-width:2px
+    classDef notification fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class Proxmox,VM1,VM2,VM3,VM4,VM5,LXC1,LXC2,LXC3,TrueNAS dataSource
+    class NodeExporterProxmox,NodeExporterVM,ProxmoxExporter,TrueNASExporter,BlackboxExporter,PromtailProxmox,PromtailVM,PromtailContainer collector
+    class Prometheus,Loki storage
+    class Alertmanager alerting
+    class Grafana visualization
+    class PBS backup
+    class Email,Slack,PagerDuty notification
+```
+
+## Source File
+
+Original: `observability-architecture.mermaid`
+
+## Viewing Options
+
+1. **GitHub Web Interface**: View this .md file on GitHub - the diagram will render automatically
+2. **VS Code**: Install the "Markdown Preview Mermaid Support" extension
+3. **Export to PNG**: Use <https://mermaid.live> to paste the code and export
+
+---
+*Auto-generated to enable GitHub native rendering*
