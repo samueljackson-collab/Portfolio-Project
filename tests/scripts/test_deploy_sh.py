@@ -1,3 +1,14 @@
+"""
+Comprehensive unit tests for deploy.sh
+
+Tests cover:
+- Workspace selection and creation
+- Terraform workflow orchestration
+- Auto-approve functionality
+- Directory handling
+- Error handling
+"""
+import subprocess
 """Comprehensive unit tests for deploy.sh"""
 import os
 import subprocess
