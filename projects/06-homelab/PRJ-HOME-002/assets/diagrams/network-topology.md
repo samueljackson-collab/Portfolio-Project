@@ -1,0 +1,141 @@
+# Network Topology
+
+This diagram is rendered using Mermaid syntax. GitHub will render it automatically when viewing this file.
+
+## Diagram
+
+```mermaid
+graph TB
+    subgraph Internet[" Internet / ISP"]
+        ISP["Comcast Business<br/>500 Mbps Down<br/>50 Mbps Up<br/>Static IP"]
+    end
+
+    subgraph Gateway["=% Gateway / Firewall"]
+        UDM["UniFi Dream Machine Pro<br/>192.168.1.1 (Management)<br/>Gateway for all VLANs"]
+    end
+
+    subgraph VLAN10["= VLAN 10 - Trusted (192.168.10.0/24)"]
+        VLAN10_Desc["Primary user devices<br/>Full network access<br/>DHCP: .100-.250"]
+        Desktop["Desktop PC<br/>192.168.10.50"]
+        Laptop["MacBook Pro<br/>192.168.10.51"]
+        Phone["iPhone<br/>192.168.10.52"]
+    end
+
+    subgraph VLAN20["= VLAN 20 - IoT (192.168.20.0/24)"]
+        VLAN20_Desc["Smart home devices<br/>Isolated from Trusted<br/>Internet access only"]
+        Hue["Philips Hue Bridge<br/>192.168.20.10"]
+        Sonos["Sonos Speakers<br/>192.168.20.15"]
+        TVs["Smart TVs<br/>192.168.20.20-25"]
+    end
+
+    subgraph VLAN30["=e VLAN 30 - Guest (192.168.30.0/24)"]
+        VLAN30_Desc["Guest WiFi<br/>Internet only<br/>No LAN access"]
+        GuestDevice1["Guest Devices<br/>DHCP Pool<br/>192.168.30.100-.250"]
+    end
+
+    subgraph VLAN40["= VLAN 40 - Lab (192.168.40.0/24)"]
+        VLAN40_Desc["Homelab infrastructure<br/>Servers, VMs, Storage<br/>Static IPs"]
+
+        Proxmox["Proxmox VE Host<br/>192.168.40.10<br/>Dell R720"]
+        TrueNAS["TrueNAS Core<br/>192.168.40.5<br/>Supermicro"]
+        PBS["Proxmox Backup Server<br/>192.168.40.15<br/>Mini PC"]
+
+        subgraph VMs["Virtual Machines"]
+            VM1["Wiki.js<br/>192.168.40.20"]
+            VM2["Home Assistant<br/>192.168.40.21"]
+            VM3["Immich<br/>192.168.40.22"]
+            VM4["PostgreSQL<br/>192.168.40.23"]
+            VM5["Nginx Proxy<br/>192.168.40.25"]
+        end
+
+        subgraph LXCs["LXC Containers"]
+            LXC1["Prometheus/Grafana<br/>192.168.40.30"]
+            LXC2["Loki/Promtail<br/>192.168.40.31"]
+        end
+    end
+
+    subgraph NetworkInfra["< Network Infrastructure"]
+        Switch["UniFi 24-Port PoE Switch<br/>192.168.1.2"]
+        AP1["UniFi AP AC Pro<br/>192.168.1.10<br/>Living Room"]
+        AP2["UniFi AP AC Lite<br/>192.168.1.11<br/>Bedroom"]
+        AP3["UniFi AP AC Lite<br/>192.168.1.12<br/>Office"]
+    end
+
+    %% Internet connection
+    ISP <-->|WAN<br/>Static IP| UDM
+
+    %% Gateway to Switch
+    UDM <-->|Trunk<br/>All VLANs| Switch
+
+    %% Access Points
+    Switch -->|PoE + Trunk<br/>VLANs 10,20,30| AP1
+    Switch -->|PoE + Trunk<br/>VLANs 10,20,30| AP2
+    Switch -->|PoE + Trunk<br/>VLANs 10,20,30| AP3
+
+    %% VLAN 10 connections
+    Switch -->|VLAN 10| Desktop
+    Switch -->|VLAN 10| Laptop
+    AP1 -.->|WiFi SSID: Home<br/>VLAN 10| Phone
+
+    %% VLAN 20 connections
+    Switch -->|VLAN 20| Hue
+    Switch -->|VLAN 20| Sonos
+    Switch -->|VLAN 20| TVs
+
+    %% VLAN 30 connections
+    AP1 -.->|WiFi SSID: Guest<br/>VLAN 30| GuestDevice1
+    AP2 -.->|WiFi SSID: Guest<br/>VLAN 30| GuestDevice1
+    AP3 -.->|WiFi SSID: Guest<br/>VLAN 30| GuestDevice1
+
+    %% VLAN 40 connections
+    Switch -->|VLAN 40| Proxmox
+    Switch -->|VLAN 40| TrueNAS
+    Switch -->|VLAN 40| PBS
+    Proxmox -.->|Virtual Network| VM1
+    Proxmox -.->|Virtual Network| VM2
+    Proxmox -.->|Virtual Network| VM3
+    Proxmox -.->|Virtual Network| VM4
+    Proxmox -.->|Virtual Network| VM5
+    Proxmox -.->|Virtual Network| LXC1
+    Proxmox -.->|Virtual Network| LXC2
+
+    %% Firewall Rules
+    UDM -.->|Allow: Web browsing| VLAN10
+    UDM -.->|Block: IoT  Trusted| VLAN20
+    UDM -.->|Block: Guest  LAN| VLAN30
+    UDM -.->|Allow: Lab  Internet| VLAN40
+    UDM -.->|Allow: Trusted  Lab| VLAN10
+    UDM -.->|Allow: IoT  HA| VLAN20
+
+    %% Port Forwarding
+    ISP -.->|Port 443  Nginx<br/>192.168.40.25| UDM
+    ISP -.->|Port 80  Nginx<br/>192.168.40.25| UDM
+
+    %% Styling
+    classDef vlan10 fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef vlan20 fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef vlan30 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef vlan40 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef infrastructure fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef internet fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+
+    class Desktop,Laptop,Phone,VLAN10_Desc vlan10
+    class Hue,Sonos,TVs,VLAN20_Desc vlan20
+    class GuestDevice1,VLAN30_Desc vlan30
+    class Proxmox,TrueNAS,PBS,VM1,VM2,VM3,VM4,VM5,LXC1,LXC2,VLAN40_Desc vlan40
+    class UDM,Switch,AP1,AP2,AP3 infrastructure
+    class ISP internet
+```
+
+## Source File
+
+Original: `network-topology.mmd`
+
+## Viewing Options
+
+1. **GitHub Web Interface**: View this .md file on GitHub - the diagram will render automatically
+2. **VS Code**: Install the "Markdown Preview Mermaid Support" extension
+3. **Export to PNG**: Use <https://mermaid.live> to paste the code and export
+
+---
+*Auto-generated to enable GitHub native rendering*

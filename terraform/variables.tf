@@ -1,3 +1,25 @@
+variable "aws_region" {
+  description = "AWS region for all resources"
+  type        = string
+  default     = "us-east-1"
+
+  validation {
+    condition     = can(regex("^[a-z]{2}-[a-z]+-[0-9]{1}$", var.aws_region))
+    error_message = "Must be a valid AWS region format (e.g., us-east-1)"
+  }
+}
+
+variable "project_tag" {
+  description = "Project name tag applied to all resources"
+  type        = string
+  default     = "twisted-monk"
+
+  validation {
+    condition     = length(var.project_tag) > 0
+    error_message = "Project tag cannot be empty"
+  }
+}
+
 variable "vpc_cidr" {
   description = "VPC CIDR block"
   type        = string
