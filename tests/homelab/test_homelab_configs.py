@@ -305,6 +305,688 @@ class TestPRJHOME002Configs:
         assert (services_dir / "rsyslog/rsyslog.conf").exists()
 
 
+
+
+class TestPRJHOME002MonitoringConfigs:
+    """Test PRJ-HOME-002 Monitoring Stack configuration files
+    
+    These tests validate the monitoring configurations that were updated
+    to use environment variables and service discovery instead of hardcoded values.
+    """
+    
+    # ============================================================================
+    # Alertmanager Configuration Tests
+    # ============================================================================
+    
+    def test_alertmanager_config_valid_yaml(self):
+        """Test that alertmanager.yml is valid YAML"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        assert config_path.exists(), f"Alertmanager config not found at {config_path}"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+    
+    def test_alertmanager_has_required_sections(self):
+        """Test that alertmanager.yml has all required top-level sections"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        # Required sections
+        assert "global" in config, "Missing 'global' section"
+        assert "route" in config, "Missing 'route' section"
+        assert "receivers" in config, "Missing 'receivers' section"
+    
+    def test_alertmanager_global_config(self):
+        """Test Alertmanager global configuration for SMTP and resolve timeout"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        global_config = config.get("global", {})
+        
+        # Check SMTP configuration exists
+        assert "smtp_from" in global_config
+        assert "smtp_smarthost" in global_config
+        assert "smtp_auth_username" in global_config
+        assert "smtp_auth_password" in global_config
+        assert "smtp_require_tls" in global_config
+        assert "resolve_timeout" in global_config
+        
+        # Validate SMTP settings
+        assert global_config["smtp_smarthost"] == "smtp.gmail.com:587"
+        assert global_config["smtp_require_tls"] is True
+    
+    def test_alertmanager_uses_env_vars(self):
+        """Test that alertmanager.yml uses environment variables instead of hardcoded values"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Should use environment variables
+        assert "${SMTP_USERNAME}" in content, "SMTP_USERNAME env var not used"
+        assert "${SMTP_PASSWORD}" in content, "SMTP_PASSWORD env var not used"
+        assert "${CRITICAL_EMAIL_TO}" in content, "CRITICAL_EMAIL_TO env var not used"
+        assert "${SLACK_WEBHOOK_URL}" in content, "SLACK_WEBHOOK_URL env var not used"
+        
+        # Should NOT have hardcoded sensitive values
+        assert "your-email@gmail.com" not in content, "Found hardcoded email address"
+        assert "oncall@homelab.local" not in content, "Found hardcoded email recipient"
+    
+    def test_alertmanager_route_configuration(self):
+        """Test Alertmanager routing configuration"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        route = config.get("route", {})
+        
+        # Check required route fields
+        assert "receiver" in route
+        assert "group_by" in route
+        assert "group_wait" in route
+        assert "group_interval" in route
+        assert "repeat_interval" in route
+        
+        # Validate group_by includes key labels
+        group_by = route.get("group_by", [])
+        assert "alertname" in group_by
+        
+        # Check for severity-based sub-routes
+        routes = route.get("routes", [])
+        assert len(routes) > 0, "No sub-routes defined"
+        
+        # Find critical and warning routes
+        critical_route = None
+        warning_route = None
+        
+        for r in routes:
+            match = r.get("match", {})
+            if match.get("severity") == "critical":
+                critical_route = r
+            elif match.get("severity") == "warning":
+                warning_route = r
+        
+        assert critical_route is not None, "No critical severity route found"
+        assert warning_route is not None, "No warning severity route found"
+        
+        # Critical alerts should have shorter wait times
+        critical_wait = critical_route.get("group_wait", "30s")
+        assert critical_wait == "10s", f"Critical alerts should have 10s wait, got {critical_wait}"
+    
+    def test_alertmanager_inhibition_rules(self):
+        """Test Alertmanager inhibition rules to prevent alert storms"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        inhibit_rules = config.get("inhibit_rules", [])
+        assert len(inhibit_rules) > 0, "No inhibition rules defined"
+        
+        # Check for node-down inhibition rule
+        has_node_down_inhibition = False
+        has_critical_inhibition = False
+        
+        for rule in inhibit_rules:
+            source_match = rule.get("source_match", {})
+            if "NodeDown" in source_match.get("alertname", ""):
+                has_node_down_inhibition = True
+            if source_match.get("severity") == "critical":
+                has_critical_inhibition = True
+        
+        assert has_node_down_inhibition, "Missing NodeDown inhibition rule"
+        assert has_critical_inhibition, "Missing critical severity inhibition rule"
+    
+    def test_alertmanager_receivers_configuration(self):
+        """Test that all required receivers are properly configured"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        receivers = config.get("receivers", [])
+        assert len(receivers) > 0, "No receivers configured"
+        
+        # Collect receiver names
+        receiver_names = [r.get("name") for r in receivers]
+        
+        # Check for required receivers
+        assert "critical-alerts" in receiver_names, "Missing critical-alerts receiver"
+        assert "slack-general" in receiver_names, "Missing slack-general receiver"
+        assert "slack-warnings" in receiver_names, "Missing slack-warnings receiver"
+        assert "null" in receiver_names, "Missing null receiver for discarded alerts"
+        
+        # Verify critical-alerts has both slack and email
+        critical_receiver = next((r for r in receivers if r["name"] == "critical-alerts"), None)
+        assert critical_receiver is not None
+        assert "slack_configs" in critical_receiver, "Critical receiver missing Slack config"
+        assert "email_configs" in critical_receiver, "Critical receiver missing email config"
+    
+    def test_alertmanager_receiver_names_valid(self):
+        """Test that all receiver names are valid strings without special characters"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        receivers = config.get("receivers", [])
+        
+        for receiver in receivers:
+            name = receiver.get("name")
+            assert name is not None, "Receiver missing name"
+            assert isinstance(name, str), f"Receiver name is not a string: {name}"
+            assert len(name) > 0, "Receiver name is empty"
+    
+    def test_alertmanager_slack_configs_valid(self):
+        """Test that Slack configurations are properly structured"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        receivers = config.get("receivers", [])
+        
+        for receiver in receivers:
+            if "slack_configs" in receiver:
+                slack_configs = receiver["slack_configs"]
+                assert isinstance(slack_configs, list), "slack_configs should be a list"
+                
+                for slack_config in slack_configs:
+                    # Check required fields
+                    assert "channel" in slack_config, f"Slack config in {receiver['name']} missing channel"
+                    assert slack_config["channel"].startswith("#"), f"Channel should start with # in {receiver['name']}"
+                    
+                    # Verify send_resolved is set
+                    if "send_resolved" in slack_config:
+                        assert isinstance(slack_config["send_resolved"], bool)
+    
+    # ============================================================================
+    # Prometheus Configuration Tests
+    # ============================================================================
+    
+    def test_prometheus_config_valid_yaml(self):
+        """Test that prometheus.yml is valid YAML"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        assert config_path.exists(), f"Prometheus config not found at {config_path}"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+    
+    def test_prometheus_has_required_sections(self):
+        """Test that prometheus.yml has all required sections"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "global" in config, "Missing 'global' section"
+        assert "alerting" in config, "Missing 'alerting' section"
+        assert "rule_files" in config, "Missing 'rule_files' section"
+        assert "scrape_configs" in config, "Missing 'scrape_configs' section"
+    
+    def test_prometheus_global_config(self):
+        """Test Prometheus global configuration"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        global_config = config.get("global", {})
+        
+        # Check timing settings
+        assert "scrape_interval" in global_config
+        assert "evaluation_interval" in global_config
+        assert "scrape_timeout" in global_config
+        
+        # Validate intervals are reasonable
+        scrape_interval = global_config.get("scrape_interval")
+        assert scrape_interval == "15s", f"Expected 15s scrape_interval, got {scrape_interval}"
+        
+        # Check external labels
+        assert "external_labels" in global_config
+        external_labels = global_config.get("external_labels", {})
+        assert "environment" in external_labels
+        assert external_labels["environment"] == "homelab"
+    
+    def test_prometheus_uses_service_discovery(self):
+        """Test that Prometheus uses service names instead of hardcoded IPs"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Should use service discovery
+        assert "alertmanager:9093" in content, "Should use 'alertmanager' service name"
+        assert "blackbox-exporter:9115" in content, "Should use 'blackbox-exporter' service name"
+        
+        # Verify old hardcoded IPs are removed
+        assert "192.168.40.30:9093" not in content, "Found hardcoded alertmanager IP"
+        assert "192.168.40.30:9115" not in content, "Found hardcoded blackbox-exporter IP"
+    
+    def test_prometheus_alerting_config(self):
+        """Test Prometheus alerting configuration"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        alerting = config.get("alerting", {})
+        assert "alertmanagers" in alerting
+        
+        alertmanagers = alerting.get("alertmanagers", [])
+        assert len(alertmanagers) > 0, "No alertmanagers configured"
+        
+        # Check first alertmanager config
+        am = alertmanagers[0]
+        assert "static_configs" in am or "dns_sd_configs" in am or "kubernetes_sd_configs" in am
+        
+        if "static_configs" in am:
+            static_configs = am["static_configs"]
+            targets = static_configs[0].get("targets", [])
+            assert len(targets) > 0, "No alertmanager targets defined"
+            assert "alertmanager:9093" in targets, "Alertmanager service name not found"
+    
+    def test_prometheus_scrape_configs_comprehensive(self):
+        """Test that Prometheus has comprehensive scrape configurations"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        assert len(scrape_configs) > 0, "No scrape configs defined"
+        
+        # Collect job names
+        job_names = [sc.get("job_name") for sc in scrape_configs]
+        
+        # Check for essential jobs
+        assert "prometheus" in job_names, "Missing self-monitoring job"
+        assert "node_exporter" in job_names, "Missing node_exporter job"
+        assert "blackbox_http" in job_names, "Missing blackbox HTTP checks"
+    
+    def test_prometheus_scrape_configs_have_labels(self):
+        """Test that scrape configs have proper labels for organization"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        
+        for sc in scrape_configs:
+            job_name = sc.get("job_name")
+            
+            if "static_configs" in sc:
+                for static_config in sc["static_configs"]:
+                    targets = static_config.get("targets", [])
+                    if len(targets) > 0:
+                        labels = static_config.get("labels", {})
+                        
+                        # Critical services should have tier and criticality labels
+                        if "postgres" in job_name.lower():
+                            assert "criticality" in labels, f"Job {job_name} missing criticality label"
+                            assert labels.get("criticality") == "critical", f"Postgres should be critical"
+    
+    def test_prometheus_blackbox_relabel_configs(self):
+        """Test that blackbox exporter has proper relabel configurations"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        
+        # Find blackbox job
+        blackbox_job = next((sc for sc in scrape_configs if "blackbox" in sc.get("job_name", "")), None)
+        assert blackbox_job is not None, "Blackbox job not found"
+        
+        # Check relabel configs
+        relabel_configs = blackbox_job.get("relabel_configs", [])
+        assert len(relabel_configs) > 0, "No relabel configs for blackbox"
+        
+        # Verify target relabeling
+        has_target_relabel = any(
+            rc.get("target_label") == "__param_target" 
+            for rc in relabel_configs
+        )
+        assert has_target_relabel, "Missing __param_target relabel"
+        
+        # Verify address replacement
+        has_address_replacement = any(
+            rc.get("target_label") == "__address__" 
+            for rc in relabel_configs
+        )
+        assert has_address_replacement, "Missing __address__ relabel"
+    
+    def test_prometheus_rule_files_configured(self):
+        """Test that rule files are configured"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        rule_files = config.get("rule_files", [])
+        assert len(rule_files) > 0, "No rule files configured"
+        
+        # Should have alerts and recording rules
+        has_alerts = any("alert" in rf for rf in rule_files)
+        assert has_alerts, "No alert rule files configured"
+    
+    # ============================================================================
+    # Promtail Configuration Tests
+    # ============================================================================
+    
+    def test_promtail_config_valid_yaml(self):
+        """Test that promtail-config.yml is valid YAML"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        assert config_path.exists(), f"Promtail config not found at {config_path}"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+    
+    def test_promtail_has_required_sections(self):
+        """Test that promtail-config.yml has all required sections"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "server" in config, "Missing 'server' section"
+        assert "positions" in config, "Missing 'positions' section"
+        assert "clients" in config, "Missing 'clients' section"
+        assert "scrape_configs" in config, "Missing 'scrape_configs' section"
+    
+    def test_promtail_uses_env_vars_and_service_discovery(self):
+        """Test that Promtail uses environment variables and service names"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Should use environment variables
+        assert "${HOSTNAME}" in content, "HOSTNAME env var not used"
+        
+        # Should use service discovery for Loki
+        assert "loki:3100" in content, "Should use 'loki' service name"
+        
+        # Should NOT have hardcoded values
+        assert "wikijs-vm" not in content, "Found hardcoded hostname"
+        assert "192.168.40.30:3100" not in content, "Found hardcoded Loki IP"
+    
+    def test_promtail_server_config(self):
+        """Test Promtail server configuration"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        server = config.get("server", {})
+        
+        assert "http_listen_port" in server, "Missing http_listen_port"
+        assert isinstance(server["http_listen_port"], int), "Port should be an integer"
+        assert server["http_listen_port"] > 0, "Port should be positive"
+        
+        if "log_level" in server:
+            valid_levels = ["debug", "info", "warn", "error"]
+            assert server["log_level"] in valid_levels, f"Invalid log level: {server['log_level']}"
+    
+    def test_promtail_clients_configuration(self):
+        """Test Promtail clients configuration"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        clients = config.get("clients", [])
+        assert len(clients) > 0, "No Loki clients configured"
+        
+        # Check first client
+        client = clients[0]
+        assert "url" in client, "Client missing URL"
+        
+        url = client["url"]
+        assert "loki" in url.lower(), "Client URL should reference Loki"
+        assert "/loki/api/v1/push" in url, "Client URL should have push endpoint"
+        
+        # Check external labels
+        if "external_labels" in client:
+            labels = client["external_labels"]
+            assert "environment" in labels, "Missing environment label"
+    
+    def test_promtail_scrape_configs_comprehensive(self):
+        """Test that Promtail has comprehensive scrape configurations"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        assert len(scrape_configs) > 0, "No scrape configs defined"
+        
+        # Collect job names
+        job_names = [sc.get("job_name") for sc in scrape_configs]
+        
+        # Check for essential log sources
+        assert "system" in job_names or "syslog" in " ".join(job_names), "Missing system logs"
+        assert "docker" in " ".join(job_names).lower(), "Missing Docker logs"
+    
+    def test_promtail_scrape_configs_have_pipelines(self):
+        """Test that scrape configs have proper pipeline stages"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        
+        for sc in scrape_configs:
+            job_name = sc.get("job_name")
+            
+            # Most jobs should have pipeline stages
+            if job_name in ["system", "docker", "nginx-access", "nginx-error"]:
+                assert "pipeline_stages" in sc, f"Job {job_name} missing pipeline_stages"
+                
+                pipeline_stages = sc["pipeline_stages"]
+                assert len(pipeline_stages) > 0, f"Job {job_name} has empty pipeline_stages"
+    
+    def test_promtail_pipeline_stages_valid(self):
+        """Test that pipeline stages are properly configured"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        scrape_configs = config.get("scrape_configs", [])
+        
+        for sc in scrape_configs:
+            if "pipeline_stages" in sc:
+                pipeline_stages = sc["pipeline_stages"]
+                
+                for stage in pipeline_stages:
+                    # Each stage should have exactly one key
+                    stage_keys = list(stage.keys())
+                    assert len(stage_keys) > 0, "Pipeline stage is empty"
+                    
+                    # Valid stage types
+                    valid_stages = ["regex", "json", "labels", "timestamp", "output", "match", "drop"]
+                    stage_type = stage_keys[0]
+                    assert stage_type in valid_stages, f"Invalid pipeline stage type: {stage_type}"
+    
+    def test_promtail_positions_file_configured(self):
+        """Test that positions file is configured"""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        positions = config.get("positions", {})
+        assert "filename" in positions, "Positions filename not configured"
+        assert positions["filename"], "Positions filename is empty"
+    
+    # ============================================================================
+    # Monitoring README Tests
+    # ============================================================================
+    
+    def test_monitoring_readme_exists_and_comprehensive(self):
+        """Test that monitoring README exists and is comprehensive"""
+        readme_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/README.md"
+        assert readme_path.exists(), "Monitoring README not found"
+        
+        with open(readme_path) as f:
+            content = f.read()
+        
+        # Check for key sections
+        assert "# Homelab Monitoring Stack" in content or "Monitoring Stack" in content
+        assert "Prometheus" in content
+        assert "Grafana" in content
+        assert "Loki" in content
+        assert "Alertmanager" in content
+        
+        # Check for environment variables documentation
+        assert "SMTP_USERNAME" in content, "SMTP_USERNAME not documented"
+        assert "CRITICAL_EMAIL_TO" in content, "CRITICAL_EMAIL_TO not documented"
+        assert "HOSTNAME" in content, "HOSTNAME not documented"
+        
+        # Should be substantial
+        assert len(content) > 3000, "README seems too short"
+    
+    def test_monitoring_readme_deployment_instructions(self):
+        """Test that README has deployment instructions"""
+        readme_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/README.md"
+        
+        with open(readme_path) as f:
+            content = f.read()
+        
+        # Should have deployment/setup instructions
+        assert "deploy" in content.lower() or "setup" in content.lower() or "install" in content.lower()
+        
+        # Should reference docker-compose
+        assert "docker-compose" in content.lower() or "docker compose" in content.lower()
+        
+        # Should mention environment variables
+        assert ".env" in content or "environment" in content.lower()
+    
+    def test_monitoring_readme_architecture_diagram(self):
+        """Test that README includes architecture information"""
+        readme_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/README.md"
+        
+        with open(readme_path) as f:
+            content = f.read()
+        
+        # Should have architecture section
+        assert "architecture" in content.lower() or "diagram" in content.lower()
+        
+        # Should describe components
+        assert "prometheus" in content.lower()
+        assert "grafana" in content.lower()
+    
+    # ============================================================================
+    # Integration Tests
+    # ============================================================================
+    
+    def test_alertmanager_references_prometheus_config(self):
+        """Test that Alertmanager receiver names match Prometheus alerting config"""
+        am_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml"
+        prom_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(am_path) as f:
+            am_config = yaml.safe_load(f)
+        
+        with open(prom_path) as f:
+            prom_config = yaml.safe_load(f)
+        
+        # Get Prometheus alertmanager targets
+        alerting = prom_config.get("alerting", {})
+        alertmanagers = alerting.get("alertmanagers", [])
+        
+        assert len(alertmanagers) > 0, "No alertmanagers in Prometheus config"
+        
+        # Verify the route receiver exists
+        route = am_config.get("route", {})
+        default_receiver = route.get("receiver")
+        
+        receiver_names = [r.get("name") for r in am_config.get("receivers", [])]
+        assert default_receiver in receiver_names, f"Default receiver '{default_receiver}' not found in receivers list"
+    
+    def test_config_consistency_across_files(self):
+        """Test that environment variables are consistently used across all configs"""
+        configs = [
+            "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml",
+            "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml",
+            "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        ]
+        
+        for config_path in configs:
+            full_path = BASE_PATH / config_path
+            assert full_path.exists(), f"Config not found: {config_path}"
+            
+            with open(full_path) as f:
+                content = f.read()
+            
+            # All configs should use environment labels consistently
+            if "environment" in content.lower():
+                # If environment is mentioned, it should be 'homelab'
+                assert "homelab" in content.lower(), f"Environment should be 'homelab' in {config_path}"
+    
+    def test_no_placeholder_values_remain(self):
+        """Test that no placeholder values remain in configurations"""
+        configs = [
+            "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/alertmanager/alertmanager.yml",
+            "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml",
+            "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/promtail/promtail-config.yml"
+        ]
+        
+        placeholder_patterns = [
+            "your-email@",
+            "your_",
+            "YOUR_",
+            "changeme",
+            "CHANGEME",
+            "example.com",
+            "localhost:3100",  # Should use service name
+            "192.168.40.30:3100",  # Should use service name
+            "192.168.40.30:9093",  # Should use service name
+            "wikijs-vm",  # Should use env var
+        ]
+        
+        for config_path in configs:
+            full_path = BASE_PATH / config_path
+            
+            with open(full_path) as f:
+                content = f.read()
+            
+            for pattern in placeholder_patterns:
+                assert pattern not in content, f"Found placeholder '{pattern}' in {config_path}"
+    
+    def test_service_discovery_used_consistently(self):
+        """Test that service discovery is used consistently instead of IPs"""
+        prom_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/prometheus/prometheus.yml"
+        
+        with open(prom_path) as f:
+            content = f.read()
+        
+        # Should use service names for internal services
+        assert "alertmanager:9093" in content, "Should use alertmanager service name"
+        assert "blackbox-exporter:9115" in content, "Should use blackbox-exporter service name"
+        
+        # May still use IPs for external targets (node exporters)
+        # but internal stack services should use service names
+
+
 class TestDocumentationCompleteness:
     """Test that README files are complete and comprehensive"""
     
