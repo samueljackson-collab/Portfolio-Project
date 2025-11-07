@@ -50,7 +50,7 @@ Created a comprehensive master list documenting all portfolio projects across cu
   - 3,800+ lines Terraform
   - 2,300+ lines Python
   - 500+ lines Ansible
-- **Q4 2025 - Q3 2026 Implementation Roadmap**
+- **Q4 2025–Q3 2026 Implementation Roadmap**
 - **Organized by 8 Technical Domains**
 
 ## Document Features
@@ -70,7 +70,7 @@ Created a comprehensive master list documenting all portfolio projects across cu
 - ✅ Links to related portfolio documentation
 
 ### Planning & Roadmap
-- ✅ Q4 2025 - Q3 2026 quarterly implementation plan
+- ✅ Q4 2025–Q3 2026 quarterly implementation plan
 - ✅ Priority order for completing projects
 - ✅ Documentation gaps identified
 - ✅ Resource allocation guidance
@@ -118,10 +118,10 @@ This master list complements existing portfolio documentation:
 ## Next Steps
 
 ### Immediate Actions (Post-Merge)
-1. ✅ Add link to PORTFOLIO_PROJECTS_MASTER_LIST.md in main README
-2. ✅ Update PROJECT_COMPLETION_CHECKLIST.md to reference master list
-3. ✅ Complete documentation for 4 projects marked "docs pending"
-4. ✅ Begin Q4 2025 priority items
+1. [ ] Add link to PORTFOLIO_PROJECTS_MASTER_LIST.md in main README
+2. [ ] Update PROJECT_COMPLETION_CHECKLIST.md to reference master list
+3. [ ] Complete documentation for 4 projects marked "docs pending"
+4. [ ] Begin Q4 2025 priority items
 
 ### Q4 2025 Priorities
 1. Complete documentation for PRJ-HOME-001, PRJ-HOME-002, PRJ-SDE-002
