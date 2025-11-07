@@ -60,7 +60,7 @@ services:
   # ===========================================================================
 
   nginx-proxy-manager:
-    image: jc21/nginx-proxy-manager:latest
+    image: jc21/nginx-proxy-manager:2.10.4
     container_name: nginx-proxy-manager
     restart: unless-stopped
     networks:
@@ -80,15 +80,22 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   # ===========================================================================
   # MONITORING STACK
   # ===========================================================================
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.48.1
     container_name: prometheus
     restart: unless-stopped
+    user: "65534:65534"  # nobody user for security
     networks:
       - monitoring
       - backend
@@ -101,6 +108,7 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/alerts:/etc/prometheus/alerts:ro
@@ -110,11 +118,18 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.2.3
     container_name: grafana
     restart: unless-stopped
+    user: "472:472"  # grafana user
     networks:
       - monitoring
       - frontend
@@ -123,26 +138,37 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
-      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
       - GF_SERVER_ROOT_URL=https://grafana.example.com
       - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
-      - prometheus
-      - loki
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:2.9.3
     container_name: loki
     restart: unless-stopped
+    user: "10001:10001"  # loki user
     networks:
       - monitoring
     ports:
@@ -156,9 +182,15 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
 
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:2.9.3
     container_name: promtail
     restart: unless-stopped
     networks:
@@ -169,12 +201,24 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/config.yml
     depends_on:
-      - loki
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
 
   alertmanager:
-    image: prom/alertmanager:latest
+    image: prom/alertmanager:v0.26.0
     container_name: alertmanager
     restart: unless-stopped
+    user: "65534:65534"  # nobody user
     networks:
       - monitoring
     ports:
@@ -182,6 +226,8 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+      - '--cluster.advertise-address=0.0.0.0:9093'
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/config.yml:ro
     healthcheck:
@@ -189,6 +235,12 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
 
   # ===========================================================================
   # DATABASE
@@ -313,7 +365,7 @@ services:
   # ===========================================================================
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
     container_name: cadvisor
     restart: unless-stopped
     networks:
@@ -325,12 +377,23 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
     privileged: true
     devices:
       - /dev/kmsg
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
 
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v1.7.0
     container_name: node-exporter
     restart: unless-stopped
     networks:
@@ -340,11 +403,24 @@ services:
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.textfile.directory=/textfile_collector'
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+      - /var/lib/node_exporter/textfile_collector:/textfile_collector:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
 
 # ===========================================================================
 # NOTES

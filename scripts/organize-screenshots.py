@@ -30,8 +30,10 @@ import os
 import sys
 import argparse
 import shutil
+import logging
 from pathlib import Path
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple, Set
 import hashlib
 import json
 
@@ -48,7 +50,7 @@ except ImportError:
 PORTFOLIO_ROOT = Path(__file__).parent.parent
 
 # Project mapping
-PROJECTS = {
+PROJECTS: Dict[str, str] = {
     'PRJ-SDE-001': 'projects/01-sde-devops/PRJ-SDE-001',
     'PRJ-SDE-002': 'projects/01-sde-devops/PRJ-SDE-002',
     'PRJ-HOME-001': 'projects/06-homelab/PRJ-HOME-001',
@@ -57,7 +59,7 @@ PROJECTS = {
 }
 
 # Screenshot categories with keywords
-CATEGORIES = {
+CATEGORIES: Dict[str, List[str]] = {
     'dashboards': ['grafana', 'dashboard', 'metrics', 'graph', 'chart'],
     'infrastructure': ['proxmox', 'vcenter', 'esxi', 'cluster', 'node', 'vm'],
     'networking': ['unifi', 'switch', 'router', 'topology', 'network', 'vlan', 'firewall', 'pfsense'],
@@ -70,210 +72,306 @@ CATEGORIES = {
     'misc': []  # Default category
 }
 
-def calculate_file_hash(file_path):
-    """Calculate MD5 hash of file for duplicate detection"""
-    hash_md5 = hashlib.md5()
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
-def get_image_metadata(file_path):
-    """Extract image metadata"""
-    metadata = {
-        'size_bytes': os.path.getsize(file_path),
-        'size_mb': round(os.path.getsize(file_path) / 1024 / 1024, 2),
-        'timestamp': datetime.fromtimestamp(os.path.getmtime(file_path)).strftime('%Y-%m-%d %H:%M:%S')
-    }
 
-    if HAS_PIL:
+class ImageMetadata:
+    """Image metadata container with validation"""
+
+    def __init__(self, file_path: Path):
+        self.file_path = file_path
+        self.size_bytes: int = 0
+        self.size_mb: float = 0.0
+        self.timestamp: str = ""
+        self.width: Optional[int] = None
+        self.height: Optional[int] = None
+        self.format: Optional[str] = None
+        self.mode: Optional[str] = None
+        self._extract_metadata()
+
+    def _extract_metadata(self) -> None:
+        """Extract metadata from image file"""
         try:
-            with Image.open(file_path) as img:
-                metadata['width'] = img.width
-                metadata['height'] = img.height
-                metadata['format'] = img.format
-                metadata['mode'] = img.mode
-        except Exception as e:
-            print(f"  ⚠ Could not extract image metadata: {e}")
+            self.size_bytes = os.path.getsize(self.file_path)
+            self.size_mb = round(self.size_bytes / 1024 / 1024, 2)
+            self.timestamp = datetime.fromtimestamp(
+                os.path.getmtime(self.file_path)
+            ).strftime('%Y-%m-%d %H:%M:%S')
 
-    return metadata
+            if HAS_PIL:
+                try:
+                    with Image.open(self.file_path) as img:
+                        self.width = img.width
+                        self.height = img.height
+                        self.format = img.format
+                        self.mode = img.mode
+                except Exception as e:
+                    logger.warning(f"Could not extract PIL metadata: {e}")
+        except OSError as e:
+            logger.error(f"Failed to read file metadata: {e}")
+            raise
 
-def categorize_screenshot(filename):
-    """Determine category based on filename"""
-    filename_lower = filename.lower()
+    def to_dict(self) -> Dict[str, any]:
+        """Convert metadata to dictionary"""
+        return {
+            'size_bytes': self.size_bytes,
+            'size_mb': self.size_mb,
+            'timestamp': self.timestamp,
+            'width': self.width,
+            'height': self.height,
+            'format': self.format,
+            'mode': self.mode
+        }
 
-    for category, keywords in CATEGORIES.items():
-        if category == 'misc':
-            continue
-        for keyword in keywords:
-            if keyword in filename_lower:
-                return category
 
-    return 'misc'
+class ScreenshotOrganizer:
+    """Main screenshot organization orchestrator"""
 
-def generate_new_filename(original_name, category, project, index):
-    """Generate consistent filename"""
-    # Extract extension
-    ext = Path(original_name).suffix.lower()
-    if ext not in ['.png', '.jpg', '.jpeg', '.gif', '.webp']:
-        ext = '.png'
+    def __init__(self, source_dir: str, target_project: Optional[str] = None, dry_run: bool = False):
+        self.source_path = Path(source_dir)
+        self.target_project = target_project
+        self.dry_run = dry_run
+        self.seen_hashes: Dict[str, str] = {}
+        self.catalog: Dict[str, Dict[str, List[Dict]]] = {}
+        self.stats = {
+            'total': 0,
+            'organized': 0,
+            'skipped': 0,
+            'duplicates': 0,
+            'errors': 0
+        }
 
-    # Generate timestamp
-    timestamp = datetime.now().strftime('%Y%m%d')
-
-    # Create new name: PROJECT_CATEGORY_INDEX_TIMESTAMP.ext
-    new_name = f"{project}_{category}_{index:02d}_{timestamp}{ext}"
-
-    return new_name
-
-def organize_screenshots(source_dir, project=None, dry_run=False):
-    """Main organization logic"""
-    source_path = Path(source_dir)
-
-    if not source_path.exists():
-        print(f"❌ Source directory not found: {source_dir}")
-        return 1
-
-    # Find all image files
-    image_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp']
-    image_files = []
-
-    for ext in image_extensions:
-        image_files.extend(source_path.glob(f'*{ext}'))
-        image_files.extend(source_path.glob(f'*{ext.upper()}'))
-
-    if not image_files:
-        print(f"⚠ No image files found in {source_dir}")
-        return 0
-
-    print(f"Found {len(image_files)} screenshot(s) to organize\n")
-
-    # Track statistics
-    stats = {
-        'total': len(image_files),
-        'organized': 0,
-        'skipped': 0,
-        'duplicates': 0,
-        'errors': 0
-    }
-
-    # Track file hashes for duplicate detection
-    seen_hashes = {}
-
-    # Catalog data
-    catalog = {}
-
-    for img_file in image_files:
-        print(f"Processing: {img_file.name}")
-
+    def calculate_file_hash(self, file_path: Path) -> str:
+        """Calculate MD5 hash of file for duplicate detection"""
         try:
-            # Calculate hash for duplicate detection
-            file_hash = calculate_file_hash(img_file)
+            hash_md5 = hashlib.md5()
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
+        except IOError as e:
+            logger.error(f"Failed to calculate hash for {file_path}: {e}")
+            raise
 
-            if file_hash in seen_hashes:
-                print(f"  ⚠ Duplicate of {seen_hashes[file_hash]}")
-                stats['duplicates'] += 1
+    def categorize_screenshot(self, filename: str) -> str:
+        """Determine category based on filename keywords"""
+        filename_lower = filename.lower()
+
+        for category, keywords in CATEGORIES.items():
+            if category == 'misc':
                 continue
+            for keyword in keywords:
+                if keyword in filename_lower:
+                    return category
 
-            seen_hashes[file_hash] = img_file.name
+        return 'misc'
+
+    def generate_new_filename(self, original_name: str, category: str, project: str, index: int) -> str:
+        """Generate consistent filename with validation"""
+        # Extract extension
+        ext = Path(original_name).suffix.lower()
+        valid_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'}
+
+        if ext not in valid_extensions:
+            logger.warning(f"Unknown extension {ext}, defaulting to .png")
+            ext = '.png'
+
+        # Generate timestamp
+        timestamp = datetime.now().strftime('%Y%m%d')
+
+        # Create new name: PROJECT_CATEGORY_INDEX_TIMESTAMP.ext
+        new_name = f"{project}_{category}_{index:02d}_{timestamp}{ext}"
+
+        return new_name
+
+    def find_image_files(self) -> List[Path]:
+        """Find all image files in source directory"""
+        if not self.source_path.exists():
+            raise FileNotFoundError(f"Source directory not found: {self.source_path}")
+
+        if not self.source_path.is_dir():
+            raise NotADirectoryError(f"Source path is not a directory: {self.source_path}")
+
+        image_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp']
+        image_files: List[Path] = []
+
+        for ext in image_extensions:
+            image_files.extend(self.source_path.glob(f'*{ext}'))
+            image_files.extend(self.source_path.glob(f'*{ext.upper()}'))
+
+        return sorted(set(image_files))
+
+    def determine_project(self, filename: str) -> Optional[str]:
+        """Determine target project from filename or configuration"""
+        if self.target_project:
+            return self.target_project
+
+        # Try to auto-detect from filename
+        for proj_id in PROJECTS.keys():
+            if proj_id.lower() in filename.lower():
+                return proj_id
+
+        return None
+
+    def process_screenshot(self, img_file: Path) -> bool:
+        """Process a single screenshot file"""
+        try:
+            logger.info(f"Processing: {img_file.name}")
+
+            # Calculate hash for duplicate detection
+            file_hash = self.calculate_file_hash(img_file)
+
+            if file_hash in self.seen_hashes:
+                logger.warning(f"Duplicate of {self.seen_hashes[file_hash]}")
+                self.stats['duplicates'] += 1
+                return False
+
+            self.seen_hashes[file_hash] = img_file.name
 
             # Determine project
-            target_project = project
-            if not target_project:
-                # Try to auto-detect from filename
-                for proj_id in PROJECTS.keys():
-                    if proj_id.lower() in img_file.name.lower():
-                        target_project = proj_id
-                        break
+            project = self.determine_project(img_file.name)
+            if not project:
+                logger.warning(f"Could not determine project for {img_file.name}. Use --project flag.")
+                self.stats['skipped'] += 1
+                return False
 
-                if not target_project:
-                    print(f"  ⚠ Could not determine project. Use --project flag.")
-                    stats['skipped'] += 1
-                    continue
+            # Validate project exists
+            if project not in PROJECTS:
+                logger.error(f"Unknown project: {project}")
+                self.stats['skipped'] += 1
+                return False
 
             # Determine category
-            category = categorize_screenshot(img_file.name)
+            category = self.categorize_screenshot(img_file.name)
 
             # Get metadata
-            metadata = get_image_metadata(img_file)
+            try:
+                metadata = ImageMetadata(img_file)
+            except Exception as e:
+                logger.error(f"Failed to extract metadata: {e}")
+                self.stats['errors'] += 1
+                return False
 
             # Determine destination
-            project_path = PORTFOLIO_ROOT / PROJECTS[target_project] / 'assets' / 'screenshots' / category
+            project_path = PORTFOLIO_ROOT / PROJECTS[project] / 'assets' / 'screenshots' / category
 
             # Create directory structure
-            if not dry_run:
-                project_path.mkdir(parents=True, exist_ok=True)
+            if not self.dry_run:
+                try:
+                    project_path.mkdir(parents=True, exist_ok=True)
+                except OSError as e:
+                    logger.error(f"Failed to create directory {project_path}: {e}")
+                    self.stats['errors'] += 1
+                    return False
 
             # Generate new filename
-            existing_files = list(project_path.glob(f'{target_project}_{category}_*')) if project_path.exists() else []
+            existing_files = list(project_path.glob(f'{project}_{category}_*')) if project_path.exists() else []
             index = len(existing_files) + 1
-            new_filename = generate_new_filename(img_file.name, category, target_project, index)
+            new_filename = self.generate_new_filename(img_file.name, category, project, index)
 
             dest_file = project_path / new_filename
 
-            print(f"  → {target_project}/{category}/{new_filename}")
-            print(f"     Size: {metadata['size_mb']} MB")
-            if 'width' in metadata:
-                print(f"     Dimensions: {metadata['width']}x{metadata['height']}")
+            logger.info(f"  → {project}/{category}/{new_filename}")
+            logger.info(f"     Size: {metadata.size_mb} MB")
+            if metadata.width:
+                logger.info(f"     Dimensions: {metadata.width}x{metadata.height}")
 
-            # Copy or move file
-            if not dry_run:
-                shutil.copy2(img_file, dest_file)
+            # Copy file
+            if not self.dry_run:
+                try:
+                    shutil.copy2(img_file, dest_file)
+                except (IOError, OSError) as e:
+                    logger.error(f"Failed to copy file: {e}")
+                    self.stats['errors'] += 1
+                    return False
 
                 # Store catalog entry
-                if target_project not in catalog:
-                    catalog[target_project] = {}
-                if category not in catalog[target_project]:
-                    catalog[target_project][category] = []
+                if project not in self.catalog:
+                    self.catalog[project] = {}
+                if category not in self.catalog[project]:
+                    self.catalog[project][category] = []
 
-                catalog[target_project][category].append({
+                self.catalog[project][category].append({
                     'filename': new_filename,
                     'original': img_file.name,
-                    'metadata': metadata,
+                    'metadata': metadata.to_dict(),
                     'path': str(dest_file.relative_to(PORTFOLIO_ROOT))
                 })
 
-            stats['organized'] += 1
-            print()
+            self.stats['organized'] += 1
+            return True
 
         except Exception as e:
-            print(f"  ❌ Error: {e}")
-            stats['errors'] += 1
-            print()
+            logger.error(f"Unexpected error processing {img_file.name}: {e}", exc_info=True)
+            self.stats['errors'] += 1
+            return False
 
-    # Generate catalog files
-    if not dry_run and catalog:
-        generate_catalogs(catalog)
+    def organize(self) -> int:
+        """Main organization workflow"""
+        try:
+            image_files = self.find_image_files()
+        except (FileNotFoundError, NotADirectoryError) as e:
+            logger.error(str(e))
+            return 1
 
-    # Print summary
-    print("=" * 60)
-    print("ORGANIZATION SUMMARY")
-    print("=" * 60)
-    print(f"Total screenshots: {stats['total']}")
-    print(f"Organized: {stats['organized']}")
-    print(f"Skipped: {stats['skipped']}")
-    print(f"Duplicates: {stats['duplicates']}")
-    print(f"Errors: {stats['errors']}")
-    print("=" * 60)
+        if not image_files:
+            logger.warning(f"No image files found in {self.source_path}")
+            return 0
 
-    if dry_run:
-        print("\n⚠ DRY RUN - No files were actually moved")
-    else:
-        print("\n✓ Screenshot organization complete!")
+        self.stats['total'] = len(image_files)
+        logger.info(f"Found {len(image_files)} screenshot(s) to organize\n")
 
-    return 0
+        # Process each screenshot
+        for img_file in image_files:
+            self.process_screenshot(img_file)
 
-def generate_catalogs(catalog):
-    """Generate markdown catalogs for each project"""
-    print("\nGenerating screenshot catalogs...")
+        # Generate catalog files
+        if not self.dry_run and self.catalog:
+            self.generate_catalogs()
 
-    for project, categories in catalog.items():
-        project_path = PORTFOLIO_ROOT / PROJECTS[project] / 'assets' / 'screenshots'
-        catalog_file = project_path / 'README.md'
+        # Print summary
+        self.print_summary()
 
-        # Generate markdown content
+        return 0 if self.stats['errors'] == 0 else 1
+
+    def generate_catalogs(self) -> None:
+        """Generate markdown catalogs for each project"""
+        logger.info("\nGenerating screenshot catalogs...")
+
+        for project, categories in self.catalog.items():
+            try:
+                project_path = PORTFOLIO_ROOT / PROJECTS[project] / 'assets' / 'screenshots'
+                catalog_file = project_path / 'README.md'
+
+                # Generate markdown content
+                content = self._generate_markdown_catalog(project, categories)
+
+                # Write catalog file
+                with open(catalog_file, 'w', encoding='utf-8') as f:
+                    f.write(content)
+
+                logger.info(f"  ✓ Created catalog: {catalog_file.relative_to(PORTFOLIO_ROOT)}")
+
+                # Also create a JSON index
+                json_file = project_path / 'screenshots-index.json'
+                with open(json_file, 'w', encoding='utf-8') as f:
+                    json.dump(self.catalog[project], f, indent=2)
+
+                logger.info(f"  ✓ Created JSON index: {json_file.relative_to(PORTFOLIO_ROOT)}")
+
+            except (IOError, OSError) as e:
+                logger.error(f"Failed to generate catalog for {project}: {e}")
+
+    def _generate_markdown_catalog(self, project: str, categories: Dict[str, List[Dict]]) -> str:
+        """Generate markdown content for catalog"""
         content = f"""# Screenshot Catalog - {project}
-# {'=' * 50}
+{'=' * 50}
 
 This directory contains organized screenshots for the {project} project.
 
@@ -300,7 +398,7 @@ This directory contains organized screenshots for the {project} project.
                 content += f"- Original filename: `{screenshot['original']}`\n"
                 content += f"- File size: {metadata['size_mb']} MB\n"
 
-                if 'width' in metadata:
+                if metadata.get('width'):
                     content += f"- Dimensions: {metadata['width']} x {metadata['height']} px\n"
                     content += f"- Format: {metadata.get('format', 'Unknown')}\n"
 
@@ -337,21 +435,28 @@ Example: `PRJ-HOME-001_dashboards_01_20241106.png`
 **Organized by:** Screenshot Organization Tool
 **Tool:** `scripts/organize-screenshots.py`
 """
+        return content
 
-        # Write catalog file
-        with open(catalog_file, 'w', encoding='utf-8') as f:
-            f.write(content)
+    def print_summary(self) -> None:
+        """Print organization summary"""
+        print("=" * 60)
+        print("ORGANIZATION SUMMARY")
+        print("=" * 60)
+        print(f"Total screenshots: {self.stats['total']}")
+        print(f"Organized: {self.stats['organized']}")
+        print(f"Skipped: {self.stats['skipped']}")
+        print(f"Duplicates: {self.stats['duplicates']}")
+        print(f"Errors: {self.stats['errors']}")
+        print("=" * 60)
 
-        print(f"  ✓ Created catalog: {catalog_file.relative_to(PORTFOLIO_ROOT)}")
+        if self.dry_run:
+            print("\n⚠ DRY RUN - No files were actually moved")
+        else:
+            print("\n✓ Screenshot organization complete!")
 
-        # Also create a JSON index
-        json_file = project_path / 'screenshots-index.json'
-        with open(json_file, 'w', encoding='utf-8') as f:
-            json.dump(catalog[project], f, indent=2)
 
-        print(f"  ✓ Created JSON index: {json_file.relative_to(PORTFOLIO_ROOT)}")
-
-def main():
+def main() -> int:
+    """Main entry point"""
     parser = argparse.ArgumentParser(
         description='Organize portfolio screenshots with intelligent categorization',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -391,6 +496,9 @@ Categories:
 
     args = parser.parse_args()
 
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
     print("=" * 60)
     print("  Screenshot Organization Tool")
     print("=" * 60)
@@ -399,7 +507,16 @@ Categories:
     if args.dry_run:
         print("⚠ DRY RUN MODE - No files will be moved\n")
 
-    return organize_screenshots(args.source, args.project, args.dry_run)
+    try:
+        organizer = ScreenshotOrganizer(args.source, args.project, args.dry_run)
+        return organizer.organize()
+    except KeyboardInterrupt:
+        logger.warning("\nOperation cancelled by user")
+        return 130
+    except Exception as e:
+        logger.error(f"Fatal error: {e}", exc_info=True)
+        return 1
+
 
 if __name__ == '__main__':
     sys.exit(main())
