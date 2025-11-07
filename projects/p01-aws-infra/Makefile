@@ -39,19 +39,22 @@ lint: ## Lint markdown files
 
 changeset: validate ## Create CloudFormation change set
 	@echo "Creating change set for stack: $(STACK_NAME)..."
-	aws cloudformation create-change-set \
-		--stack-name $(STACK_NAME) \
-		--change-set-name $(STACK_NAME)-$(shell date +%Y%m%d-%H%M%S) \
-		--template-body file://$(TEMPLATE) \
-		--parameters file://$(PARAMS) \
-		--capabilities CAPABILITY_IAM \
-		--region $(AWS_REGION) || \
-	aws cloudformation create-change-set \
-		--stack-name $(STACK_NAME) \
-		--change-set-name $(STACK_NAME)-$(shell date +%Y%m%d-%H%M%S) \
-		--template-body file://$(TEMPLATE) \
-		--capabilities CAPABILITY_IAM \
-		--region $(AWS_REGION)
+	@if [ -f "$(PARAMS)" ]; then \
+		aws cloudformation create-change-set \
+			--stack-name $(STACK_NAME) \
+			--change-set-name $(STACK_NAME)-$(shell date +%Y%m%d-%H%M%S) \
+			--template-body file://$(TEMPLATE) \
+			--parameters file://$(PARAMS) \
+			--capabilities CAPABILITY_IAM \
+			--region $(AWS_REGION); \
+	else \
+		aws cloudformation create-change-set \
+			--stack-name $(STACK_NAME) \
+			--change-set-name $(STACK_NAME)-$(shell date +%Y%m%d-%H%M%S) \
+			--template-body file://$(TEMPLATE) \
+			--capabilities CAPABILITY_IAM \
+			--region $(AWS_REGION); \
+	fi
 
 deploy-dev: ENVIRONMENT=dev
 deploy-dev: validate ## Deploy stack to dev environment

@@ -49,13 +49,11 @@ with DAG(
     transform = PythonOperator(
         task_id='transform',
         python_callable=transform_data,
-        provide_context=True,
     )
 
     load = PythonOperator(
         task_id='load',
         python_callable=load_data,
-        provide_context=True,
     )
 
     extract >> transform >> load

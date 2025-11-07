@@ -4,8 +4,11 @@ FastAPI Cloud-Native POC Application.
 """
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 import logging
+import threading
+import uuid
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(
@@ -29,7 +32,8 @@ class ItemBase(BaseModel):
 
 
 class Item(ItemBase):
-    id: int
+    id: str
+    created_at: datetime = datetime.utcnow()
 
     class Config:
         from_attributes = True
@@ -41,8 +45,8 @@ class HealthResponse(BaseModel):
 
 
 # In-memory database (replace with SQLAlchemy in production)
-items_db: dict[int, Item] = {}
-next_id = 1
+items_db: Dict[str, Item] = {}
+id_lock = threading.Lock()  # Thread-safe ID generation
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -68,40 +72,50 @@ async def list_items():
 @app.post("/api/items", response_model=Item, status_code=201)
 async def create_item(item: ItemBase):
     """Create a new item."""
-    global next_id
-    new_item = Item(id=next_id, **item.dict())
-    items_db[next_id] = new_item
-    logger.info(f"Created item: {next_id}")
-    next_id += 1
+    # Use UUID for thread-safe, globally unique IDs
+    item_id = str(uuid.uuid4())
+    new_item = Item(id=item_id, **item.dict())
+
+    with id_lock:
+        items_db[item_id] = new_item
+
+    logger.info(f"Created item: {item_id}")
     return new_item
 
 
 @app.get("/api/items/{item_id}", response_model=Item)
-async def get_item(item_id: int):
+async def get_item(item_id: str):
     """Get item by ID."""
     if item_id not in items_db:
         logger.warning(f"Item not found: {item_id}")
         raise HTTPException(status_code=404, detail="Item not found")
+    logger.info(f"Retrieved item: {item_id}")
     return items_db[item_id]
 
 
 @app.put("/api/items/{item_id}", response_model=Item)
-async def update_item(item_id: int, item: ItemBase):
+async def update_item(item_id: str, item: ItemBase):
     """Update an item."""
     if item_id not in items_db:
         raise HTTPException(status_code=404, detail="Item not found")
-    updated_item = Item(id=item_id, **item.dict())
-    items_db[item_id] = updated_item
+    updated_item = Item(id=item_id, created_at=items_db[item_id].created_at, **item.dict())
+
+    with id_lock:
+        items_db[item_id] = updated_item
+
     logger.info(f"Updated item: {item_id}")
     return updated_item
 
 
 @app.delete("/api/items/{item_id}", status_code=204)
-async def delete_item(item_id: int):
+async def delete_item(item_id: str):
     """Delete an item."""
     if item_id not in items_db:
         raise HTTPException(status_code=404, detail="Item not found")
-    del items_db[item_id]
+
+    with id_lock:
+        del items_db[item_id]
+
     logger.info(f"Deleted item: {item_id}")
     return None
 

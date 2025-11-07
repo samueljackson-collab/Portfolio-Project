@@ -79,8 +79,8 @@ make test
 # Validate CloudFormation templates
 make validate
 
-# Dry-run deployment
-make plan
+# Dry-run deployment (create change set)
+make changeset
 ```
 
 ## Operations
