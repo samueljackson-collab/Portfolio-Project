@@ -1,3 +1,148 @@
+# =====================================================
+# Nginx Proxy Manager - Reverse Proxy & SSL Manager
+# =====================================================
+# Version: Nginx Proxy Manager 2.11.1
+# Purpose: Reverse proxy with automatic SSL/TLS certificate management
+# VM: 192.168.40.25 (nginx-vm)
+# Resources: 2GB RAM, 20GB storage, 2 vCPU
+# Last Updated: November 6, 2025
+#
+# Architecture Overview:
+# ---------------------
+# Nginx Proxy Manager (NPM) provides a web-based UI for managing
+# Nginx reverse proxy configurations. Key features:
+#
+# - Automatic Let's Encrypt SSL certificate generation and renewal
+# - Reverse proxy to internal services (Wiki.js, Immich, Home Assistant)
+# - WebSocket support for real-time applications
+# - Access control lists (ACLs) for security
+# - Custom SSL certificates for local domains
+# - Force SSL redirection (HTTP â†’ HTTPS)
+# - Rate limiting and DDoS protection
+# - Custom Nginx configurations
+#
+# Why Nginx Proxy Manager:
+# -----------------------
+# Pros:
+# + User-friendly web UI (vs manual Nginx config files)
+# + Automatic SSL certificate management
+# + Built-in Let's Encrypt integration
+# + Easy to add/modify proxy hosts
+# + Supports wildcard SSL certificates
+# + Stream (TCP/UDP) proxy support
+# + Access logs and statistics
+#
+# Cons:
+# - Additional layer of abstraction
+# - Less flexible than manual Nginx config
+# - Requires database for configuration storage
+#
+# For homelab with 5-10 services, NPM is ideal.
+# For advanced use cases, consider Traefik or manual Nginx.
+#
+# Proxy Hosts Configuration:
+# --------------------------
+# Internal (homelab.local):
+# - https://wiki.homelab.local â†’ http://192.168.40.20:3000
+# - https://homeassistant.homelab.local â†’ http://192.168.40.21:8123
+# - https://immich.homelab.local â†’ http://192.168.40.22:2283
+# - https://grafana.homelab.local â†’ http://192.168.40.30:3000
+#
+# External (public domains via Cloudflare DNS):
+# - https://wiki.example.com â†’ http://192.168.40.20:3000
+# - https://photos.example.com â†’ http://192.168.40.22:2283
+# - https://home.example.com â†’ http://192.168.40.21:8123
+#
+# Security:
+# --------
+# - SSL/TLS 1.2+ only (disable older protocols)
+# - HSTS headers (force HTTPS)
+# - Rate limiting per IP
+# - Access lists for sensitive services
+# - Custom error pages (hide internal info)
+# - Regular security updates
+# =====================================================
+
+services:
+
+  # ===================================================
+  # SERVICE: Nginx Proxy Manager (App)
+  # ===================================================
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:2.11.1
+    container_name: nginx-proxy-manager
+    hostname: nginx-proxy-manager
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # 2 vCPUs
+          memory: 1536M    # 1.5GB (leave 500MB for OS)
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Environment variables
+    environment:
+      # Database connection (to internal SQLite or external MySQL/PostgreSQL)
+      # Using internal SQLite for simplicity (fine for homelab)
+      # For production, use external database:
+      # DB_SQLITE_FILE: "/data/database.sqlite"
+      # DB_MYSQL_HOST: "192.168.40.23"
+      # DB_MYSQL_PORT: 3306
+      # DB_MYSQL_USER: "npm_user"
+      # DB_MYSQL_PASSWORD: "${NPM_DB_PASSWORD}"
+      # DB_MYSQL_NAME: "npm"
+
+      # Admin user (change password after first login!)
+      # Default: admin@example.com / changeme
+      # After login, go to Users â†’ Edit â†’ Change Password
+      DISABLE_IPV6: 'false'
+
+      # Timezone
+      TZ: America/New_York
+
+      # X-Forwarded-For header (preserve client IP)
+      # Important for rate limiting and access logs
+      X_FRAME_OPTIONS: "SAMEORIGIN"
+
+    # Port mapping
+    ports:
+      # HTTP (redirect to HTTPS)
+      - "80:80"
+
+      # HTTPS (SSL/TLS)
+      - "443:443"
+
+      # Admin UI (access at http://192.168.40.25:81)
+      # IMPORTANT: Restrict access to this port via firewall!
+      - "81:81"
+
+    # Volume mounts
+    volumes:
+      # Data directory (SSL certificates, database, config)
+      - nginx_data:/data
+
+      # Let's Encrypt certificates
+      - letsencrypt_data:/etc/letsencrypt
+
+      # Custom Nginx snippets (optional)
+      - ./nginx/snippets:/data/nginx/custom:ro
+
+      # Logs
+      - ./nginx/logs:/data/logs
+
+    # Network configuration
+    networks:
+      - homelab
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:81/api || exit 1"]
 # Nginx Proxy Manager - Reverse Proxy with SSL Management
 # =========================================================
 # Version: 2.11.1 (Latest stable)
@@ -34,22 +179,22 @@
 #
 # Proxy Host Configuration (Managed via Web UI):
 # -----------------------------------------------
-# 1. wiki.homelab.local � http://192.168.40.20:3000
-# 2. homeassistant.homelab.local � http://192.168.40.21:8123 (WebSocket ON)
-# 3. photos.homelab.local � http://192.168.40.22:2283
-# 4. grafana.homelab.local � http://192.168.40.30:3000
+# 1. wiki.homelab.local ’ http://192.168.40.20:3000
+# 2. homeassistant.homelab.local ’ http://192.168.40.21:8123 (WebSocket ON)
+# 3. photos.homelab.local ’ http://192.168.40.22:2283
+# 4. grafana.homelab.local ’ http://192.168.40.30:3000
 #
 # External domains (with Cloudflare DNS challenge):
-# 5. wiki.example.com � http://192.168.40.20:3000
-# 6. photos.example.com � http://192.168.40.22:2283
+# 5. wiki.example.com ’ http://192.168.40.20:3000
+# 6. photos.example.com ’ http://192.168.40.22:2283
 #
 # Prerequisites:
 # ==============
 # 1. Ubuntu 22.04 LTS VM deployed in Proxmox
 # 2. Static IP configured: 192.168.40.25/24
 # 3. Port forwarding at router (UDM):
-#    - External 80 � 192.168.40.25:80 (HTTP for Let's Encrypt)
-#    - External 443 � 192.168.40.25:443 (HTTPS)
+#    - External 80 ’ 192.168.40.25:80 (HTTP for Let's Encrypt)
+#    - External 443 ’ 192.168.40.25:443 (HTTPS)
 # 4. Firewall rules:
 #    - Allow 80/tcp from internet (Let's Encrypt validation)
 #    - Allow 443/tcp from internet (HTTPS traffic)
@@ -114,7 +259,7 @@ services:
       - "443:443"
 
       # Admin UI port (port 81)
-      # � SECURITY: Only accessible from internal network
+      #   SECURITY: Only accessible from internal network
       # Firewall must block external access to this port
       - "81:81"
 

@@ -1,3 +1,98 @@
+# =====================================================
+# Wiki.js - Modern Documentation Platform
+# =====================================================
+# Version: Wiki.js 2.5
+# Purpose: Knowledge base and documentation platform
+# VM: 192.168.40.20 (wikijs-vm)
+# Resources: 4GB RAM, 50GB storage, 2 vCPU
+# Last Updated: November 6, 2025
+#
+# Architecture Overview:
+# ---------------------
+# Wiki.js is a modern, lightweight wiki powered by Node.js, offering:
+#
+# - Beautiful, responsive interface
+# - Markdown editor with real-time preview
+# - Full-text search (PostgreSQL FTS or Elasticsearch)
+# - Git-based versioning (optional)
+# - Authentication integrations (LDAP, OAuth, SAML)
+# - Role-based access control (RBAC)
+# - Multi-language support
+# - API access
+# - Extensible with plugins
+#
+# Why Wiki.js:
+# -----------
+# Pros:
+# + Modern, clean interface (vs MediaWiki, Confluence)
+# + Lightweight (Node.js vs Java-heavy Confluence)
+# + Git integration for version control
+# + Excellent Markdown support
+# + Self-hosted (no licensing costs)
+# + Active development and community
+#
+# Cons:
+# - Fewer extensions than MediaWiki
+# - Not as feature-rich as Confluence
+# - Smaller community than established wikis
+#
+# For homelab documentation, Wiki.js is ideal:
+# - Easy to set up and maintain
+# - Fast and responsive
+# - Great for technical documentation
+#
+# Use Cases:
+# ---------
+# - Homelab documentation (network diagrams, runbooks)
+# - Project notes and planning
+# - HOWTOs and procedures
+# - Meeting notes and decisions
+# - Technical knowledge base
+# - Team collaboration
+#
+# Integration with Homelab:
+# -------------------------
+# - Authentication: FreeIPA LDAP (centralized auth)
+# - Database: PostgreSQL on postgres-vm (centralized DB)
+# - Reverse Proxy: Nginx Proxy Manager (SSL/TLS)
+# - Monitoring: Prometheus exporter for metrics
+# - Backups: Automated nightly backups to TrueNAS
+# - Git Sync: Push wiki content to private Git repo
+#
+# External Access:
+# ---------------
+# - Internal: https://wiki.homelab.local
+# - External: https://wiki.example.com (via Cloudflare)
+#
+# Security:
+# --------
+# - HTTPS only (enforced by Nginx Proxy Manager)
+# - LDAP authentication (no local accounts)
+# - Role-based access control
+# - Content approval workflows
+# - Audit logging
+# - Regular security updates
+# =====================================================
+
+services:
+
+  # ===================================================
+  # SERVICE: Wiki.js Application
+  # ===================================================
+  wikijs:
+    image: ghcr.io/requarks/wiki:2.5
+    container_name: wikijs
+    hostname: wikijs
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # 2 vCPUs
+          memory: 3G       # 3GB RAM (leave 1GB for OS)
 # Wiki.js - Complete Production Docker Compose Configuration
 # ===========================================================
 # Version: 2.5.300 (Latest stable release)
@@ -111,6 +206,611 @@ services:
           cpus: '0.5'
           memory: 512M
 
+    # Environment variables
+    environment:
+      # Database connection (PostgreSQL on centralized DB server)
+      DB_TYPE: postgres
+      DB_HOST: 192.168.40.23        # postgres-vm
+      DB_PORT: 5432
+      DB_USER: wikijs_user
+      DB_PASS: ${WIKIJS_DB_PASSWORD}
+      DB_NAME: wikijs
+
+      # SSL for database connection (disable for internal network)
+      DB_SSL: false
+
+      # Alternative: Use connection string
+      # DATABASE_URL: postgres://wikijs_user:${WIKIJS_DB_PASSWORD}@192.168.40.23:5432/wikijs
+
+      # Server configuration
+      # Port Wiki.js listens on internally (proxied by Nginx)
+      # Do not change unless you know what you're doing
+      # PORT: 3000
+
+      # Admin email (for initial setup)
+      ADMIN_EMAIL: admin@homelab.local
+
+      # Logging
+      LOG_LEVEL: info  # Options: error, warn, info, debug
+
+      # HA configuration (for multi-instance deployments)
+      HA_ACTIVE: false
+
+      # Offline mode (disable external asset loading)
+      OFFLINE_MODE: false
+
+      # Timezone
+      TZ: America/New_York
+
+    # Port mapping
+    ports:
+      - "3000:3000"
+
+    # Volume mounts
+    volumes:
+      # Data directory (uploads, cache, temp files)
+      - wikijs_data:/wiki/data
+
+      # Backups directory
+      - ./wikijs/backups:/wiki/backups
+
+      # Custom logo/assets (optional)
+      - ./wikijs/assets:/wiki/assets:ro
+
+      # Git repositories (if using git sync)
+      - ./wikijs/git:/wiki/repo
+
+    # Network
+    networks:
+      - homelab
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Labels
+    labels:
+      - "com.homelab.service=wikijs"
+      - "com.homelab.tier=application"
+      - "com.homelab.criticality=medium"
+      - "com.homelab.backup=daily"
+
+  # ===================================================
+  # SERVICE: Elasticsearch (Full-Text Search - Optional)
+  # ===================================================
+  # Uncomment for advanced search capabilities
+  # PostgreSQL full-text search is sufficient for most homelabs
+  #
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+  #   container_name: wikijs_elasticsearch
+  #   hostname: elasticsearch
+  #   restart: unless-stopped
+  #
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '2.0'
+  #         memory: 2G
+  #
+  #   environment:
+  #     - discovery.type=single-node
+  #     - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+  #     - xpack.security.enabled=false
+  #
+  #   ports:
+  #     - "9200:9200"
+  #
+  #   volumes:
+  #     - elasticsearch_data:/usr/share/elasticsearch/data
+  #
+  #   networks:
+  #     - homelab
+  #
+  #   labels:
+  #     - "com.homelab.service=elasticsearch"
+  #     - "com.homelab.tier=application"
+
+  # ===================================================
+  # SERVICE: Wiki.js Backup (Automated)
+  # ===================================================
+  # Automated backup container that runs nightly backups
+  wikijs_backup:
+    image: postgres:16.0-alpine
+    container_name: wikijs_backup
+    hostname: wikijs-backup
+
+    restart: unless-stopped
+
+    # Resource limits (lightweight)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+    # Environment variables
+    environment:
+      # Database connection (same as wikijs)
+      PGHOST: 192.168.40.23
+      PGPORT: 5432
+      PGUSER: wikijs_user
+      PGPASSWORD: ${WIKIJS_DB_PASSWORD}
+      PGDATABASE: wikijs
+
+      # Backup retention
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+
+      # Backup schedule (cron format)
+      # Daily at 2 AM
+      BACKUP_CRON: "0 2 * * *"
+
+    # Command: Run backup script
+    command: >
+      sh -c '
+      echo "Installing backup tools...";
+      apk add --no-cache dcron;
+
+      echo "Creating backup script...";
+      cat > /backup.sh << "EOF"
+      #!/bin/sh
+      set -e
+      BACKUP_DIR=/backups
+      DATE=$(date +%Y%m%d_%H%M%S)
+      BACKUP_FILE="wikijs_backup_${DATE}.sql.gz"
+
+      echo "[$(date)] Starting Wiki.js database backup..."
+      pg_dump -h ${PGHOST} -U ${PGUSER} -d ${PGDATABASE} | gzip > ${BACKUP_DIR}/${BACKUP_FILE}
+
+      echo "[$(date)] Backup completed: ${BACKUP_FILE}"
+      echo "[$(date)] Backup size: $(du -h ${BACKUP_DIR}/${BACKUP_FILE} | cut -f1)"
+
+      # Clean old backups (keep last 7 daily backups)
+      echo "[$(date)] Cleaning old backups..."
+      find ${BACKUP_DIR} -name "wikijs_backup_*.sql.gz" -mtime +7 -delete
+
+      echo "[$(date)] Backup complete!"
+      EOF
+
+      chmod +x /backup.sh;
+
+      echo "Setting up cron job...";
+      echo "${BACKUP_CRON} /backup.sh >> /var/log/backup.log 2>&1" | crontab -;
+
+      echo "Starting cron daemon...";
+      crond -f -l 2;
+      '
+
+    # Volume mounts
+    volumes:
+      # Backup storage
+      - ./wikijs/backups:/backups
+
+    # Network
+    networks:
+      - homelab
+
+    # Dependencies
+    depends_on:
+      wikijs:
+        condition: service_healthy
+
+    labels:
+      - "com.homelab.service=wikijs-backup"
+      - "com.homelab.tier=application"
+
+# =====================================================
+# NETWORKS
+# =====================================================
+networks:
+  homelab:
+    name: homelab_network
+    driver: bridge
+
+# =====================================================
+# VOLUMES
+# =====================================================
+volumes:
+  # Wiki.js data directory
+  wikijs_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/wikijs/data
+
+  # Elasticsearch data (optional)
+  # elasticsearch_data:
+  #   driver: local
+
+# =====================================================
+# DEPLOYMENT INSTRUCTIONS
+# =====================================================
+#
+# Prerequisites:
+# 1. Create PostgreSQL database and user:
+#    docker exec -it postgres psql -U postgres
+#    CREATE DATABASE wikijs;
+#    CREATE USER wikijs_user WITH PASSWORD 'secure_password';
+#    GRANT ALL PRIVILEGES ON DATABASE wikijs TO wikijs_user;
+#    \c wikijs
+#    GRANT ALL ON SCHEMA public TO wikijs_user;
+#    \q
+#
+# 2. Create directories:
+#    sudo mkdir -p /mnt/wikijs/data
+#    mkdir -p wikijs/{backups,assets,git}
+#    sudo chown -R 1000:1000 /mnt/wikijs
+#
+# 3. Create .env file with database password:
+#    WIKIJS_DB_PASSWORD=secure_password_here
+#
+# 4. Configure DNS (Pi-hole or external DNS):
+#    wiki.homelab.local â 192.168.40.20
+#
+# 5. Configure Nginx Proxy Manager:
+#    Add proxy host: wiki.homelab.local â http://192.168.40.20:3000
+#    Enable SSL, Force HTTPS, WebSockets support
+#
+# Initial Deployment:
+# docker-compose -f docker-compose-wikijs.yml up -d
+#
+# Verify Service:
+# docker-compose -f docker-compose-wikijs.yml ps
+# docker logs wikijs
+#
+# Access Wiki.js:
+# http://192.168.40.20:3000 (internal)
+# https://wiki.homelab.local (via proxy)
+#
+# First-Time Setup:
+# 1. Navigate to https://wiki.homelab.local
+# 2. Follow setup wizard:
+#    - Administrator Email: admin@homelab.local
+#    - Password: Create strong password
+#    - Site URL: https://wiki.homelab.local
+#    - Telemetry: Disable (privacy)
+# 3. Configure authentication (LDAP/OAuth)
+# 4. Create first page
+#
+# =====================================================
+
+# =====================================================
+# POST-INSTALLATION CONFIGURATION
+# =====================================================
+#
+# 1. Authentication (LDAP via FreeIPA):
+# Administration â Authentication â Add Strategy â LDAP
+#
+# LDAP Configuration:
+# - URL: ldap://192.168.40.25:389
+# - Admin Bind DN: uid=wikijs,cn=users,cn=accounts,dc=homelab,dc=local
+# - Admin Bind Credentials: (service account password)
+# - Search Base: cn=users,cn=accounts,dc=homelab,dc=local
+# - Search Filter: (uid={{username}})
+# - Unique ID Field: uid
+# - Email Field: mail
+# - Display Name Field: displayName
+# - Avatar Picture Field: (leave empty)
+# - TLS: Enabled (for security)
+#
+# 2. Storage (Git Sync):
+# Administration â Storage â Add Target â Git
+#
+# Git Configuration:
+# - Authentication: SSH Key
+# - Repository URL: git@github.com:yourusername/homelab-wiki.git
+# - Branch: main
+# - SSH Private Key Path: /wiki/repo/.ssh/id_rsa
+# - Sync Direction: Bi-directional
+# - Sync Interval: Every 5 minutes
+# - Default Author Email: wikijs@homelab.local
+# - Default Author Name: Wiki.js Bot
+#
+# This syncs wiki content to Git for version control and backup
+#
+# 3. Search Engine:
+# Administration â Search Engine â PostgreSQL
+# (Default, no configuration needed)
+#
+# For advanced search, use Elasticsearch:
+# Administration â Search Engine â Elasticsearch
+# - Hosts: http://elasticsearch:9200
+# - Index Name: wikijs
+#
+# 4. Email (Notifications):
+# Administration â Mail â SMTP
+#
+# SMTP Configuration:
+# - Host: mail.homelab.local
+# - Port: 587
+# - Secure: TLS
+# - Username: wikijs@homelab.local
+# - Password: (smtp password)
+# - Sender Name: Wiki.js
+# - Sender Email: wikijs@homelab.local
+#
+# 5. Users & Groups:
+# Administration â Users & Groups
+#
+# Create groups:
+# - Admins: Full access
+# - Editors: Can create/edit pages
+# - Viewers: Read-only access
+#
+# Assign LDAP users to groups based on LDAP group membership
+#
+# 6. Rendering:
+# Administration â Rendering â Markdown
+#
+# Enable:
+# - Markdown-it (default)
+# - Syntax Highlighting
+# - Emoji Support
+# - Task Lists
+# - Footnotes
+# - Math (KaTeX) - for formulas
+# - Mermaid - for diagrams
+#
+# 7. Localization:
+# Administration â Localization
+# - Locale: English (US)
+# - Timezone: America/New_York
+# - Date Format: MM/DD/YYYY
+# - Time Format: 12-hour
+#
+# =====================================================
+
+# =====================================================
+# LDAP SERVICE ACCOUNT SETUP (FreeIPA)
+# =====================================================
+#
+# On FreeIPA server:
+# 1. Create service account for Wiki.js:
+#    ipa user-add wikijs --first=Wiki --last=JS --email=wikijs@homelab.local
+#    ipa passwd wikijs  (set password)
+#
+# 2. Create group for Wiki.js users:
+#    ipa group-add wiki-users --desc="Wiki.js Users"
+#    ipa group-add wiki-admins --desc="Wiki.js Administrators"
+#
+# 3. Add users to groups:
+#    ipa group-add-member wiki-users --users=user1,user2,user3
+#    ipa group-add-member wiki-admins --users=admin1
+#
+# 4. In Wiki.js, map LDAP groups to Wiki.js groups:
+#    Administration â Groups â Sync with LDAP
+#
+# =====================================================
+
+# =====================================================
+# BACKUP AND RESTORE
+# =====================================================
+#
+# Backup Strategy:
+# 1. Database backup (automated via wikijs_backup container)
+# 2. Data directory backup (uploads, cache)
+# 3. Git sync (wiki content versioned in Git)
+#
+# Manual Database Backup:
+# docker exec postgres pg_dump -U wikijs_user wikijs > wikijs_backup.sql
+#
+# Manual Data Backup:
+# sudo tar -czf wikijs_data_backup.tar.gz /mnt/wikijs/data
+#
+# Restore Database:
+# cat wikijs_backup.sql | docker exec -i postgres psql -U wikijs_user wikijs
+#
+# Restore Data:
+# sudo tar -xzf wikijs_data_backup.tar.gz -C /mnt/wikijs/
+#
+# Git Restore:
+# If Git sync is enabled, content is already backed up in Git
+# Clone repository and re-import if needed
+#
+# Disaster Recovery:
+# 1. Restore database from backup
+# 2. Restore data directory from backup
+# 3. Start Wiki.js container
+# 4. Verify content and functionality
+# 5. Re-configure LDAP/OAuth if needed
+#
+# =====================================================
+
+# =====================================================
+# MONITORING & METRICS
+# =====================================================
+#
+# Wiki.js doesn't expose Prometheus metrics natively
+# Use generic Node.js exporter or API monitoring
+#
+# Health Check Endpoint:
+# http://192.168.40.20:3000/healthz
+# Returns 200 OK if service is healthy
+#
+# Prometheus Blackbox Exporter:
+# Add to prometheus.yml:
+# - job_name: 'wikijs_http'
+#   metrics_path: /probe
+#   params:
+#     module: [http_2xx]
+#   static_configs:
+#     - targets:
+#         - https://wiki.homelab.local
+#   relabel_configs:
+#     - source_labels: [__address__]
+#       target_label: __param_target
+#     - target_label: __address__
+#       replacement: blackbox-exporter:9115
+#
+# Grafana Dashboard:
+# - HTTP response time
+# - Uptime percentage
+# - Page load time
+# - Active users (requires custom metric)
+#
+# Logs:
+# Wiki.js logs to stdout
+# Collect with Promtail and view in Loki/Grafana
+#
+# Application logs:
+# docker logs -f wikijs
+#
+# Log to file (optional):
+# docker logs wikijs > /var/log/wikijs/wikijs.log 2>&1
+#
+# =====================================================
+
+# =====================================================
+# MAINTENANCE OPERATIONS
+# =====================================================
+#
+# Update Wiki.js:
+# docker-compose pull wikijs
+# docker-compose up -d wikijs
+#
+# Restart Wiki.js:
+# docker-compose restart wikijs
+#
+# View Logs:
+# docker logs -f wikijs
+#
+# Execute Command in Container:
+# docker exec -it wikijs sh
+#
+# Rebuild Search Index:
+# Administration â Search Engine â Rebuild Index
+#
+# Clear Cache:
+# Administration â Utilities â Clear Cache
+#
+# Database Maintenance:
+# VACUUM, ANALYZE on PostgreSQL (run monthly)
+# docker exec postgres psql -U wikijs_user -d wikijs -c "VACUUM ANALYZE;"
+#
+# Disk Usage:
+# docker exec wikijs du -sh /wiki/data
+#
+# =====================================================
+
+# =====================================================
+# TROUBLESHOOTING
+# =====================================================
+#
+# Issue: Cannot connect to database
+# Solution:
+# - Verify PostgreSQL is running: docker ps | grep postgres
+# - Check database credentials in .env
+# - Test connection: docker exec wikijs pg_isready -h 192.168.40.23 -U wikijs_user
+# - Check PostgreSQL logs: docker logs postgres
+#
+# Issue: 502 Bad Gateway from Nginx
+# Solution:
+# - Verify Wiki.js is running: docker ps | grep wikijs
+# - Check Wiki.js logs: docker logs wikijs
+# - Test internal endpoint: curl http://192.168.40.20:3000/healthz
+# - Verify Nginx proxy host configuration
+#
+# Issue: LDAP authentication fails
+# Solution:
+# - Verify FreeIPA is accessible: ldapsearch -x -H ldap://192.168.40.25
+# - Check LDAP bind credentials
+# - Verify Search Base DN is correct
+# - Check Wiki.js logs for LDAP errors
+# - Test with local admin account first
+#
+# Issue: Git sync fails
+# Solution:
+# - Verify SSH key is correct and has push access
+# - Check repository URL and branch name
+# - Ensure Git repository exists
+# - Check Wiki.js logs for Git errors
+# - Test SSH connection: docker exec wikijs ssh -T git@github.com
+#
+# Issue: High memory usage
+# Solution:
+# - Reduce search index size (if using Elasticsearch)
+# - Clear cache: Administration â Utilities â Clear Cache
+# - Restart container: docker-compose restart wikijs
+# - Increase memory limit in docker-compose.yml
+#
+# Issue: Slow page loading
+# Solution:
+# - Enable caching: Administration â System â Caching
+# - Optimize database: VACUUM ANALYZE
+# - Check for large files/images (compress or resize)
+# - Use CDN for external assets
+# - Monitor database performance with pg_stat_statements
+#
+# =====================================================
+
+# =====================================================
+# SECURITY BEST PRACTICES
+# =====================================================
+#
+# 1. Use HTTPS only (enforce with Nginx Proxy Manager)
+# 2. Disable local authentication (use LDAP/OAuth only)
+# 3. Enable 2FA for admin accounts (via LDAP/OAuth provider)
+# 4. Regularly update Wiki.js Docker image
+# 5. Use strong database passwords (stored in .env)
+# 6. Restrict database access to Wiki.js only (PostgreSQL firewall rules)
+# 7. Enable audit logging (Administration â Logging)
+# 8. Review user permissions regularly
+# 9. Implement content approval workflows for sensitive pages
+# 10. Backup database and data directory regularly
+# 11. Monitor access logs for suspicious activity
+# 12. Use Security Headers (via Nginx Proxy Manager)
+#     - X-Frame-Options: SAMEORIGIN
+#     - X-Content-Type-Options: nosniff
+#     - Strict-Transport-Security: max-age=31536000
+#
+# =====================================================
+
+# =====================================================
+# ADVANCED FEATURES
+# =====================================================
+#
+# 1. API Access:
+# Administration â API â Generate API Key
+# Use for automation, bulk imports, integration
+#
+# Example API call:
+# curl -H "Authorization: Bearer YOUR_API_KEY" \
+#   https://wiki.homelab.local/graphql \
+#   -d '{"query": "{ pages { list { id title path } } }"}'
+#
+# 2. Webhooks:
+# Administration â Webhooks â Add Webhook
+# Trigger actions on page create/update/delete
+# Examples: Slack notifications, CI/CD pipelines
+#
+# 3. Comments:
+# Administration â Rendering â Comments
+# Enable Disqus, Discord, or custom commenting system
+#
+# 4. Analytics:
+# Administration â Analytics â Google Analytics
+# Track page views, popular pages, user behavior
+#
+# 5. Custom CSS/JS:
+# Administration â Theme â Custom CSS
+# Customize appearance and add custom functionality
+#
+# 6. Page Rules:
+# Create automation rules for page creation/updates
+# Examples: Auto-tagging, notifications, access control
+#
+# 7. Multi-Language:
+# Create separate page trees for different languages
+# Use language selector for seamless switching
+#
+# =====================================================
     environment:
       # Database connection (PostgreSQL on separate VM)
       # Separate database VM provides:
@@ -418,10 +1118,10 @@ networks:
 # - Custom dashboard with Nginx metrics (if using Nginx Prometheus exporter)
 #
 # Alerts:
-# - Service down >5 minutes � Critical (Slack/email)
-# - Memory usage >80% � Warning
-# - Disk usage >90% � Critical (expand storage)
-# - Database connection failures � Critical
+# - Service down >5 minutes  Critical (Slack/email)
+# - Memory usage >80%  Warning
+# - Disk usage >90%  Critical (expand storage)
+# - Database connection failures  Critical
 #
 # Troubleshooting:
 # ----------------
