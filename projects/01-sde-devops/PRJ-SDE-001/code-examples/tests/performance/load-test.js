@@ -27,6 +27,12 @@ export const options = {
 
 const BASE_URL = __ENV.API_URL || 'https://staging.example.com/api';
 
+/**
+ * Create test users by registering accounts and return their credentials and identifiers.
+ *
+ * Registers ten test users and collects each user's email, password, authentication token, and userId.
+ * @returns {{users: {email: string, password: string, token: string, userId: string}[]}} An object with a `users` array containing credentials and identifiers for the created test users.
+ */
 export function setup() {
   // Create test users
   const users = [];
@@ -77,6 +83,14 @@ export default function(data) {
   sleep(1);
 }
 
+/**
+ * Performs a login request for the provided user and records request metrics and error rate.
+ *
+ * Sends credentials to the /auth/login endpoint, increments the request counter, records the response duration,
+ * and updates the global error rate based on whether the response status is 200 and a token is returned.
+ *
+ * @param {{email: string, password: string}} user - User credentials used to authenticate; must include `email` and `password`.
+ */
 function loginScenario(user) {
   const response = http.post(`${BASE_URL}/auth/login`, JSON.stringify({
     email: user.email,
@@ -97,6 +111,14 @@ function loginScenario(user) {
   errorRate.add(!success);
 }
 
+/**
+ * Fetches the product catalog using the provided user's token, records request metrics, and updates the error rate based on basic response checks.
+ *
+ * Performs checks that the response status is 200 and that the response body contains a non-empty `data` array; increments the request counter, records the response duration, and marks the request as an error if the checks fail.
+ *
+ * @param {Object} user - Test user credentials.
+ * @param {string} user.token - Bearer token used for the Authorization header.
+ */
 function browseProducts(user) {
   const response = http.get(`${BASE_URL}/products`, {
     headers: {
@@ -116,6 +138,14 @@ function browseProducts(user) {
   errorRate.add(!success);
 }
 
+/**
+ * Executes a search request with the given user's credentials and records metrics and checks.
+ *
+ * Sends a GET /search?q={query} using the user's bearer token, increments the request counter,
+ * records response time, and updates the error rate based on status and result presence.
+ *
+ * @param {{ token: string, [key: string]: any }} user - Test user object; `user.token` is used for the Authorization header.
+ */
 function searchScenario(user) {
   const queries = ['laptop', 'phone', 'tablet', 'headphones'];
   const query = queries[Math.floor(Math.random() * queries.length)];
@@ -138,6 +168,10 @@ function searchScenario(user) {
   errorRate.add(!success);
 }
 
+/**
+ * Fetches the specified user's profile, validates the response, and records request metrics and error rate.
+ * @param {{userId: string, token: string}} user - Object with `userId` and bearer `token` used to authorize the request; the function records a request count, response time, and updates the error rate based on validation of the response.
+ */
 function viewProfile(user) {
   const response = http.get(`${BASE_URL}/users/${user.userId}`, {
     headers: {
@@ -157,6 +191,12 @@ function viewProfile(user) {
   errorRate.add(!success);
 }
 
+/**
+ * Delete the test users created during setup.
+ *
+ * Iterates over data.users and issues DELETE requests to /users/{userId} using each user's token for authorization.
+ * @param {Object} data - The object returned from setup, expected to contain a `users` array of `{ userId, token }` entries.
+ */
 export function teardown(data) {
   // Cleanup test users
   data.users.forEach(user => {
