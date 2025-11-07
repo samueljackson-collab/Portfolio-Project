@@ -31,7 +31,15 @@ def find_mermaid_files(root_dir):
     return sorted(mermaid_files)
 
 def encode_mermaid(mermaid_code):
-    """Encode Mermaid code for mermaid.ink API"""
+    """
+    Prepare Mermaid diagram source for use with the mermaid.ink API by trimming, compressing, and URL-safe Base64-encoding the content.
+    
+    Parameters:
+        mermaid_code (str): Mermaid diagram source text.
+    
+    Returns:
+        encoded (str): URL-safe Base64 string of the compressed Mermaid source suitable for appending to a mermaid.ink API URL.
+    """
     # Remove any leading/trailing whitespace
     mermaid_code = mermaid_code.strip()
 
@@ -47,7 +55,18 @@ def encode_mermaid(mermaid_code):
     return b64
 
 def convert_to_png(mermaid_file, output_file):
-    """Convert a Mermaid file to PNG using mermaid.ink API"""
+    """
+    Convert a Mermaid source file into a PNG image using the mermaid.ink API.
+    
+    Reads the Mermaid text from `mermaid_file`, requests a rendered PNG from mermaid.ink, writes the result to `output_file`, and performs a basic size check to detect error responses.
+    
+    Parameters:
+        mermaid_file (str): Path to the Mermaid source file (.mmd, .mermaid).
+        output_file (str): Destination path for the generated PNG.
+    
+    Returns:
+        tuple: `(success, message)` where `success` is `True` on successful conversion and `message` is the file size in KB (e.g., "12.3 KB"); on failure `success` is `False` and `message` contains an error description.
+    """
     try:
         # Read Mermaid file
         with open(mermaid_file, 'r', encoding='utf-8') as f:
@@ -78,6 +97,14 @@ def convert_to_png(mermaid_file, output_file):
 
 def main():
     # Determine root directory
+    """
+    Run the conversion process: locate Mermaid files, convert each to a PNG, and print per-file progress and a summary.
+    
+    The root directory is taken from the first command-line argument if provided; otherwise it defaults to the parent of the script directory. The function prints status messages to standard output while it searches for Mermaid files (*.mmd, *.mermaid), converts each file to a .png alongside the source, and reports counts of successful and failed conversions.
+    
+    Returns:
+        int: 0 if all files were converted successfully or no Mermaid files were found, 1 if any conversion failed.
+    """
     if len(sys.argv) > 1:
         root_dir = sys.argv[1]
     else:

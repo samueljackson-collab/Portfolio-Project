@@ -85,6 +85,15 @@ class ImageMetadata:
     """Image metadata container with validation"""
 
     def __init__(self, file_path: Path):
+        """
+        Create an ImageMetadata instance for the given image file and populate its metadata fields.
+        
+        Parameters:
+            file_path (Path): Path to the image file whose metadata will be collected.
+        
+        Remarks:
+            Initializes attributes such as `size_bytes`, `size_mb`, `timestamp`, `width`, `height`, `format`, and `mode`, and immediately extracts their values from the provided file.
+        """
         self.file_path = file_path
         self.size_bytes: int = 0
         self.size_mb: float = 0.0
@@ -96,7 +105,18 @@ class ImageMetadata:
         self._extract_metadata()
 
     def _extract_metadata(self) -> None:
-        """Extract metadata from image file"""
+        """
+        Populate instance fields with file size, modification timestamp, and image properties when available.
+        
+        Extracts and sets:
+        - `size_bytes`: file size in bytes
+        - `size_mb`: file size in megabytes rounded to two decimals
+        - `timestamp`: last-modified time formatted as "YYYY-MM-DD HH:MM:SS"
+        If Pillow is available, also sets `width`, `height`, `format`, and `mode`; if Pillow extraction fails those fields remain unset.
+        
+        Raises:
+            OSError: If the file cannot be accessed to read size or modification time.
+        """
         try:
             self.size_bytes = os.path.getsize(self.file_path)
             self.size_mb = round(self.size_bytes / 1024 / 1024, 2)
@@ -118,7 +138,19 @@ class ImageMetadata:
             raise
 
     def to_dict(self) -> Dict[str, any]:
-        """Convert metadata to dictionary"""
+        """
+        Return a dictionary containing extracted image metadata.
+        
+        Returns:
+            dict: Mapping with keys:
+                - `size_bytes`: file size in bytes
+                - `size_mb`: file size in megabytes (float)
+                - `timestamp`: last-modified timestamp (POSIX float)
+                - `width`: image width in pixels or `None` if unavailable
+                - `height`: image height in pixels or `None` if unavailable
+                - `format`: image format string (e.g., "PNG") or `None` if unavailable
+                - `mode`: image mode (e.g., "RGB") or `None` if unavailable
+        """
         return {
             'size_bytes': self.size_bytes,
             'size_mb': self.size_mb,
@@ -134,6 +166,24 @@ class ScreenshotOrganizer:
     """Main screenshot organization orchestrator"""
 
     def __init__(self, source_dir: str, target_project: Optional[str] = None, dry_run: bool = False):
+        """
+        Initialize the organizer with a source directory, optional fixed project target, and dry-run flag.
+        
+        Sets up internal state used during organization: resolved source path, optional target project override, dry-run mode, a map of seen file hashes for duplicate detection, an in-memory catalog keyed by project and category, and counters for operation statistics.
+        
+        Parameters:
+            source_dir (str): Path to the directory containing screenshots to process.
+            target_project (Optional[str]): If provided, force all screenshots to be organized under this project; if None, project will be inferred per file.
+            dry_run (bool): When True, simulate actions without creating directories or copying files.
+        
+        Attributes initialized:
+            source_path (Path): Resolved Path object for source_dir.
+            target_project (Optional[str])
+            dry_run (bool)
+            seen_hashes (Dict[str, str]): MD5 hashes of processed files to detect duplicates.
+            catalog (Dict[str, Dict[str, List[Dict]]]): In-memory catalog structured by project then category.
+            stats (dict): Counters with keys 'total', 'organized', 'skipped', 'duplicates', and 'errors'.
+        """
         self.source_path = Path(source_dir)
         self.target_project = target_project
         self.dry_run = dry_run
@@ -148,7 +198,18 @@ class ScreenshotOrganizer:
         }
 
     def calculate_file_hash(self, file_path: Path) -> str:
-        """Calculate MD5 hash of file for duplicate detection"""
+        """
+        Compute the MD5 hexadecimal digest of the given file's contents.
+        
+        Parameters:
+            file_path (Path): Path to the file to hash.
+        
+        Returns:
+            str: Hexadecimal MD5 digest of the file contents.
+        
+        Raises:
+            IOError: If the file cannot be opened or read.
+        """
         try:
             hash_md5 = hashlib.md5()
             with open(file_path, "rb") as f:
@@ -160,7 +221,15 @@ class ScreenshotOrganizer:
             raise
 
     def categorize_screenshot(self, filename: str) -> str:
-        """Determine category based on filename keywords"""
+        """
+        Assigns a category name by matching the given filename against configured keyword lists.
+        
+        Parameters:
+            filename (str): The filename or path string to inspect for category keywords.
+        
+        Returns:
+            category (str): The matching category name from CATEGORIES, or 'misc' if no keywords match.
+        """
         filename_lower = filename.lower()
 
         for category, keywords in CATEGORIES.items():
@@ -173,7 +242,20 @@ class ScreenshotOrganizer:
         return 'misc'
 
     def generate_new_filename(self, original_name: str, category: str, project: str, index: int) -> str:
-        """Generate consistent filename with validation"""
+        """
+        Builds a standardized filename for a screenshot using project, category, index, and the current date.
+        
+        If the original filename's extension is not a recognized image extension, `.png` is used and a warning is logged.
+        
+        Parameters:
+            original_name (str): Original filename or path from which the extension will be derived.
+            category (str): Category name to include in the filename.
+            project (str): Project identifier to include in the filename.
+            index (int): Numeric index for the file within the category; formatted with two digits.
+        
+        Returns:
+            str: Generated filename in the form `PROJECT_CATEGORY_XX_YYYYMMDD.ext` (e.g., `myproj_ui_01_20251107.png`).
+        """
         # Extract extension
         ext = Path(original_name).suffix.lower()
         valid_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'}
@@ -191,7 +273,18 @@ class ScreenshotOrganizer:
         return new_name
 
     def find_image_files(self) -> List[Path]:
-        """Find all image files in source directory"""
+        """
+        Collect all image files in the source directory using common image file extensions.
+        
+        Searches the source directory for files with extensions .png, .jpg, .jpeg, .gif, .webp, and .bmp (case-insensitive) and returns a sorted, de-duplicated list of matching Path objects.
+        
+        Returns:
+        	List[Path]: Sorted list of unique image file paths found in the source directory.
+        
+        Raises:
+        	FileNotFoundError: If the configured source directory does not exist.
+        	NotADirectoryError: If the configured source path exists but is not a directory.
+        """
         if not self.source_path.exists():
             raise FileNotFoundError(f"Source directory not found: {self.source_path}")
 
@@ -208,7 +301,15 @@ class ScreenshotOrganizer:
         return sorted(set(image_files))
 
     def determine_project(self, filename: str) -> Optional[str]:
-        """Determine target project from filename or configuration"""
+        """
+        Resolve the target project for a given filename.
+        
+        Parameters:
+            filename (str): File name or path used to detect the project; matching is case-insensitive and succeeds if any known project ID appears anywhere in the string.
+        
+        Returns:
+            project_id (Optional[str]): A known project key that matches the filename, or `None` if no project could be determined.
+        """
         if self.target_project:
             return self.target_project
 
@@ -220,7 +321,22 @@ class ScreenshotOrganizer:
         return None
 
     def process_screenshot(self, img_file: Path) -> bool:
-        """Process a single screenshot file"""
+        """
+        Process a single screenshot file: validate, categorize, extract metadata, and (unless in dry-run) copy it into the project assets and record it in the in-memory catalog.
+        
+        Parameters:
+            img_file (Path): Path to the screenshot file to process.
+        
+        Returns:
+            bool: `True` if the screenshot was successfully organized and recorded, `False` otherwise.
+        
+        Notes:
+            - Detects and skips duplicates based on file hash.
+            - Determines target project (explicit or inferred) and category from the filename.
+            - Updates internal statistics (`organized`, `skipped`, `duplicates`, `errors`) and the `catalog`.
+            - Creates destination directories and copies the file when not in dry-run mode.
+            - Returns `False` for any validation, metadata extraction, I/O, or unexpected errors.
+        """
         try:
             logger.info(f"Processing: {img_file.name}")
 
@@ -313,7 +429,14 @@ class ScreenshotOrganizer:
             return False
 
     def organize(self) -> int:
-        """Main organization workflow"""
+        """
+        Coordinate scanning of the source directory, per-file processing, and catalog generation for screenshots.
+        
+        This method finds image files, processes each through the organizer pipeline (duplicate detection, project/category determination, metadata extraction, and file copying unless in dry-run), generates project catalogs when not in dry-run, and prints a summary of operations.
+        
+        Returns:
+            int: `0` when processing completed with no errors; `1` if the source path was invalid or any processing errors occurred.
+        """
         try:
             image_files = self.find_image_files()
         except (FileNotFoundError, NotADirectoryError) as e:
@@ -369,7 +492,21 @@ class ScreenshotOrganizer:
                 logger.error(f"Failed to generate catalog for {project}: {e}")
 
     def _generate_markdown_catalog(self, project: str, categories: Dict[str, List[Dict]]) -> str:
-        """Generate markdown content for catalog"""
+        """
+        Builds a Markdown catalog describing screenshots organized for a project.
+        
+        Produces a Markdown document that includes a title, last-updated timestamp, total screenshot count, and one section per category. Each category lists screenshots (sorted by filename) with an embedded image reference and details: original filename, file size (MB), dimensions and format when available, and creation timestamp. The document also contains usage examples and the file-naming convention.
+        
+        Parameters:
+            project (str): Project identifier used in the catalog title and explanatory text.
+            categories (Dict[str, List[Dict]]): Mapping from category name to a list of screenshot records. Each screenshot record is expected to contain:
+                - 'filename' (str): Organized filename stored in the category.
+                - 'original' (str): Original source filename.
+                - 'metadata' (dict): Metadata including at least 'size_mb' and 'timestamp'; may include 'width', 'height', and 'format'.
+        
+        Returns:
+            str: The complete Markdown content for the project's screenshot catalog.
+        """
         content = f"""# Screenshot Catalog - {project}
 {'=' * 50}
 
@@ -438,7 +575,12 @@ Example: `PRJ-HOME-001_dashboards_01_20241106.png`
         return content
 
     def print_summary(self) -> None:
-        """Print organization summary"""
+        """
+        Display a formatted summary of the organizer's statistics to standard output.
+        
+        Shows counts for total screenshots processed, organized, skipped, duplicates, and errors,
+        and emits a final line indicating whether the run was a dry run (no files moved) or completed.
+        """
         print("=" * 60)
         print("ORGANIZATION SUMMARY")
         print("=" * 60)
@@ -456,7 +598,16 @@ Example: `PRJ-HOME-001_dashboards_01_20241106.png`
 
 
 def main() -> int:
-    """Main entry point"""
+    """
+    Run the CLI to organize screenshots and return a process exit code.
+    
+    Parses command-line arguments (source directory, optional project, --dry-run, --verbose),
+    instantiates and invokes ScreenshotOrganizer, and reports a concise exit status. Handles
+    user cancellation and unexpected fatal errors by returning distinct exit codes.
+    
+    Returns:
+        int: `0` on successful completion with no errors; `1` on fatal error; `130` if cancelled by the user (KeyboardInterrupt).
+    """
     parser = argparse.ArgumentParser(
         description='Organize portfolio screenshots with intelligent categorization',
         formatter_class=argparse.RawDescriptionHelpFormatter,
