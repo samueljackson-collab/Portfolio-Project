@@ -5,6 +5,16 @@
 
 This directory contains production-ready code examples demonstrating enterprise-level software engineering practices across multiple disciplines: System Development Engineering, DevOps Engineering, QA Engineering, and Solutions Architecture.
 
+## 🎨 Visual Documentation
+
+**NEW**: Complete visual assets including architecture diagrams, CI/CD flows, and AI generation prompts!
+
+📊 **[View All Diagrams & Visual Assets](diagrams/VISUAL-ASSETS-README.md)**
+
+- 7 Mermaid diagrams (GitHub-native rendering)
+- 8 AI generation prompts for advanced visualizations
+- Comprehensive usage guide and best practices
+
 ---
 
 ## 📋 Table of Contents
