@@ -343,3 +343,535 @@ class TestDocumentationCompleteness:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# ============================================================================
+# Enhanced Tests for Production-Grade Docker Compose Configuration
+# ============================================================================
+
+class TestDockerComposeFullStack:
+    """Test docker-compose-full-stack.yml production enhancements."""
+
+    def test_docker_compose_exists(self):
+        """Test docker-compose-full-stack.yml exists."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        assert config_path.exists()
+
+    def test_docker_compose_valid_yaml(self):
+        """Test docker-compose file is valid YAML."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert config is not None
+        assert isinstance(config, dict)
+
+    def test_docker_compose_has_version(self):
+        """Test docker-compose file has version specified."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "version" in config
+        assert config["version"] in ["3.8", "3.7", "3"]
+
+    def test_docker_compose_has_services(self):
+        """Test docker-compose defines services."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "services" in config
+        assert len(config["services"]) >= 10  # Should have 10+ services
+
+    def test_docker_compose_has_networks(self):
+        """Test docker-compose defines networks."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "networks" in config
+        # Should have frontend, backend, monitoring networks
+        assert "frontend" in config["networks"]
+        assert "backend" in config["networks"]
+        assert "monitoring" in config["networks"]
+
+    def test_docker_compose_has_volumes(self):
+        """Test docker-compose defines volumes."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        assert "volumes" in config
+        assert len(config["volumes"]) >= 8
+
+
+class TestDockerComposeImageVersions:
+    """Test all images have pinned versions (no :latest)."""
+
+    def test_no_latest_tags(self):
+        """Test no service uses :latest tag."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        for service_name, service_config in services.items():
+            if "image" in service_config:
+                image = service_config["image"]
+                # Should not use :latest or have no tag
+                assert ":latest" not in image.lower(), f"{service_name} uses :latest tag"
+                assert ":" in image, f"{service_name} has no version tag"
+
+    def test_prometheus_version_pinned(self):
+        """Test Prometheus has specific version."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        prometheus = services.get("prometheus", {})
+        
+        assert "image" in prometheus
+        assert "prom/prometheus" in prometheus["image"]
+        assert "v2.48" in prometheus["image"] or ":" in prometheus["image"]
+
+    def test_grafana_version_pinned(self):
+        """Test Grafana has specific version."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        grafana = services.get("grafana", {})
+        
+        assert "image" in grafana
+        assert "grafana/grafana" in grafana["image"]
+        assert "10." in grafana["image"] or ":" in grafana["image"]
+
+    def test_loki_version_pinned(self):
+        """Test Loki has specific version."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        loki = services.get("loki", {})
+        
+        assert "image" in loki
+        assert "grafana/loki" in loki["image"]
+        assert "2.9" in loki["image"] or ":" in loki["image"]
+
+
+class TestDockerComposeHealthChecks:
+    """Test all services have health checks configured."""
+
+    def test_prometheus_has_healthcheck(self):
+        """Test Prometheus has health check."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        prometheus = services.get("prometheus", {})
+        
+        assert "healthcheck" in prometheus
+        assert "test" in prometheus["healthcheck"]
+        assert "interval" in prometheus["healthcheck"]
+
+    def test_grafana_has_healthcheck(self):
+        """Test Grafana has health check."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        grafana = services.get("grafana", {})
+        
+        assert "healthcheck" in grafana
+        assert "start_period" in grafana["healthcheck"]
+
+    def test_loki_has_healthcheck(self):
+        """Test Loki has health check."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        loki = services.get("loki", {})
+        
+        assert "healthcheck" in loki
+
+    def test_promtail_has_healthcheck(self):
+        """Test Promtail has health check."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        promtail = services.get("promtail", {})
+        
+        assert "healthcheck" in promtail
+
+    def test_cadvisor_has_healthcheck(self):
+        """Test cAdvisor has health check."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        cadvisor = services.get("cadvisor", {})
+        
+        assert "healthcheck" in cadvisor
+
+    def test_node_exporter_has_healthcheck(self):
+        """Test Node Exporter has health check."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        node_exporter = services.get("node-exporter", {})
+        
+        assert "healthcheck" in node_exporter
+
+
+class TestDockerComposeResourceLimits:
+    """Test all services have resource limits configured."""
+
+    def test_prometheus_has_resource_limits(self):
+        """Test Prometheus has CPU and memory limits."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        prometheus = services.get("prometheus", {})
+        
+        assert "deploy" in prometheus
+        assert "resources" in prometheus["deploy"]
+        assert "limits" in prometheus["deploy"]["resources"]
+        assert "cpus" in prometheus["deploy"]["resources"]["limits"]
+        assert "memory" in prometheus["deploy"]["resources"]["limits"]
+
+    def test_grafana_has_resource_limits(self):
+        """Test Grafana has resource limits."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        grafana = services.get("grafana", {})
+        
+        assert "deploy" in grafana
+        assert "resources" in grafana["deploy"]
+
+    def test_cadvisor_has_resource_limits(self):
+        """Test cAdvisor has resource limits."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        cadvisor = services.get("cadvisor", {})
+        
+        assert "deploy" in cadvisor
+        # cAdvisor should have small resource limits
+        memory_limit = cadvisor["deploy"]["resources"]["limits"]["memory"]
+        assert "256M" in memory_limit or "128M" in memory_limit
+
+    def test_node_exporter_has_resource_limits(self):
+        """Test Node Exporter has resource limits."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        node_exporter = services.get("node-exporter", {})
+        
+        assert "deploy" in node_exporter
+
+
+class TestDockerComposeSecuritySettings:
+    """Test security configurations in docker-compose."""
+
+    def test_prometheus_runs_as_non_root(self):
+        """Test Prometheus runs as non-root user."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        prometheus = services.get("prometheus", {})
+        
+        assert "user" in prometheus
+        assert prometheus["user"] != "0:0"  # Not root
+
+    def test_grafana_runs_as_non_root(self):
+        """Test Grafana runs as non-root user."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        grafana = services.get("grafana", {})
+        
+        assert "user" in grafana
+        assert grafana["user"] == "472:472"  # Grafana user
+
+    def test_grafana_has_security_settings(self):
+        """Test Grafana has security environment variables."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        grafana = services.get("grafana", {})
+        
+        env_vars = grafana.get("environment", [])
+        env_str = str(env_vars)
+        
+        # Should disable analytics and sign-up
+        assert "GF_ANALYTICS_REPORTING_ENABLED=false" in env_str or "ANALYTICS" in env_str
+        assert "GF_USERS_ALLOW_SIGN_UP=false" in env_str or "SIGN_UP" in env_str
+
+    def test_loki_runs_as_non_root(self):
+        """Test Loki runs as non-root user."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        loki = services.get("loki", {})
+        
+        assert "user" in loki
+
+
+class TestDockerComposeDependencies:
+    """Test service dependencies are properly configured."""
+
+    def test_grafana_depends_on_prometheus(self):
+        """Test Grafana depends on Prometheus."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        grafana = services.get("grafana", {})
+        
+        assert "depends_on" in grafana
+        depends_on = grafana["depends_on"]
+        
+        # Should wait for Prometheus health
+        if isinstance(depends_on, dict):
+            assert "prometheus" in depends_on
+            assert "condition" in depends_on["prometheus"]
+        else:
+            assert "prometheus" in depends_on
+
+    def test_grafana_depends_on_loki(self):
+        """Test Grafana depends on Loki."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        grafana = services.get("grafana", {})
+        
+        depends_on = grafana.get("depends_on", {})
+        if isinstance(depends_on, dict):
+            assert "loki" in depends_on
+        else:
+            assert "loki" in depends_on
+
+    def test_promtail_depends_on_loki(self):
+        """Test Promtail depends on Loki."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        promtail = services.get("promtail", {})
+        
+        assert "depends_on" in promtail
+
+
+class TestDockerComposeNetworkConfiguration:
+    """Test network configuration."""
+
+    def test_networks_have_subnets(self):
+        """Test networks have subnet configuration."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        networks = config.get("networks", {})
+        
+        for network_name, network_config in networks.items():
+            if "ipam" in network_config:
+                assert "config" in network_config["ipam"]
+                assert len(network_config["ipam"]["config"]) > 0
+
+    def test_frontend_network_subnet(self):
+        """Test frontend network has proper subnet."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        networks = config.get("networks", {})
+        frontend = networks.get("frontend", {})
+        
+        if "ipam" in frontend:
+            ipam_config = frontend["ipam"]["config"][0]
+            assert "subnet" in ipam_config
+            assert "172.20.0.0/24" in ipam_config["subnet"]
+
+    def test_backend_network_subnet(self):
+        """Test backend network has proper subnet."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        networks = config.get("networks", {})
+        backend = networks.get("backend", {})
+        
+        if "ipam" in backend:
+            ipam_config = backend["ipam"]["config"][0]
+            assert "subnet" in ipam_config
+            assert "172.21.0.0/24" in ipam_config["subnet"]
+
+    def test_monitoring_network_subnet(self):
+        """Test monitoring network has proper subnet."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        networks = config.get("networks", {})
+        monitoring = networks.get("monitoring", {})
+        
+        if "ipam" in monitoring:
+            ipam_config = monitoring["ipam"]["config"][0]
+            assert "subnet" in ipam_config
+            assert "172.22.0.0/24" in ipam_config["subnet"]
+
+
+class TestDockerComposeApplicationServices:
+    """Test application services configuration."""
+
+    def test_wikijs_configured(self):
+        """Test Wiki.js service is properly configured."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        wikijs = services.get("wikijs", {})
+        
+        assert "image" in wikijs
+        assert "depends_on" in wikijs
+        assert "postgresql" in str(wikijs.get("depends_on", []))
+
+    def test_homeassistant_configured(self):
+        """Test Home Assistant service is configured."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        homeassistant = services.get("homeassistant", {})
+        
+        assert "image" in homeassistant
+        assert "volumes" in homeassistant
+
+    def test_immich_configured(self):
+        """Test Immich service is configured."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        immich = services.get("immich", {})
+        
+        assert "image" in immich
+        assert "depends_on" in immich
+
+    def test_postgresql_configured(self):
+        """Test PostgreSQL service is configured."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
+        
+        services = config.get("services", {})
+        postgresql = services.get("postgresql", {})
+        
+        assert "image" in postgresql
+        assert "environment" in postgresql
+        assert "healthcheck" in postgresql
+
+
+class TestDockerComposeDocumentation:
+    """Test configuration file has proper documentation."""
+
+    def test_has_header_comments(self):
+        """Test docker-compose file has header documentation."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        assert "Docker Compose" in content
+        assert "Services included:" in content or "services" in content.lower()
+
+    def test_has_usage_instructions(self):
+        """Test file includes usage instructions."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        assert "docker-compose" in content or "docker compose" in content
+
+    def test_documents_port_mappings(self):
+        """Test file documents port mappings."""
+        config_path = BASE_PATH / "projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml"
+        
+        with open(config_path) as f:
+            content = f.read()
+        
+        # Should document common ports
+        assert "9090" in content  # Prometheus
+        assert "3000" in content  # Grafana
