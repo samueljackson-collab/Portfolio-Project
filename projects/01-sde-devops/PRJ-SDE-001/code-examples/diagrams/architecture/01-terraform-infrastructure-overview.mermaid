@@ -1,0 +1,130 @@
+```mermaid
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "VPC Module"
+            VPC[VPC<br/>10.0.0.0/16]
+            IGW[Internet Gateway]
+
+            subgraph "Availability Zone A"
+                PubA[Public Subnet A<br/>10.0.0.0/24]
+                PrivA[Private Subnet A<br/>10.0.10.0/24]
+                DBA[Database Subnet A<br/>10.0.20.0/24]
+                NATA[NAT Gateway A]
+            end
+
+            subgraph "Availability Zone B"
+                PubB[Public Subnet B<br/>10.0.1.0/24]
+                PrivB[Private Subnet B<br/>10.0.11.0/24]
+                DBB[Database Subnet B<br/>10.0.21.0/24]
+                NATB[NAT Gateway B]
+            end
+
+            subgraph "Availability Zone C"
+                PubC[Public Subnet C<br/>10.0.2.0/24]
+                PrivC[Private Subnet C<br/>10.0.12.0/24]
+                DBC[Database Subnet C<br/>10.0.22.0/24]
+                NATC[NAT Gateway C]
+            end
+
+            FL[VPC Flow Logs]
+        end
+
+        subgraph "EKS Module"
+            EKS[EKS Control Plane<br/>Kubernetes 1.28]
+            NG1[Node Group 1<br/>t3.medium]
+            NG2[Node Group 2<br/>t3.medium]
+            NG3[Node Group 3<br/>t3.medium]
+            OIDC[OIDC Provider<br/>IRSA]
+            KMS_EKS[KMS Key<br/>Secrets Encryption]
+        end
+
+        subgraph "RDS Module"
+            RDS_PRIMARY[RDS PostgreSQL 15.4<br/>Primary Instance<br/>db.r6g.large]
+            RDS_STANDBY[RDS PostgreSQL 15.4<br/>Standby Instance<br/>db.r6g.large]
+            RDS_REPLICA[Read Replica<br/>db.r6g.large]
+            KMS_RDS[KMS Key<br/>Storage Encryption]
+            SM[Secrets Manager<br/>DB Credentials]
+        end
+
+        subgraph "Monitoring"
+            CW[CloudWatch Logs]
+            CWA[CloudWatch Alarms]
+            PI[Performance Insights]
+        end
+    end
+
+    Internet[Internet] --> IGW
+    IGW --> PubA
+    IGW --> PubB
+    IGW --> PubC
+
+    PubA --> NATA
+    PubB --> NATB
+    PubC --> NATC
+
+    NATA --> PrivA
+    NATB --> PrivB
+    NATC --> PrivC
+
+    PrivA --> DBA
+    PrivB --> DBB
+    PrivC --> DBC
+
+    EKS --> NG1
+    EKS --> NG2
+    EKS --> NG3
+
+    NG1 --> PrivA
+    NG2 --> PrivB
+    NG3 --> PrivC
+
+    EKS --> OIDC
+    EKS --> KMS_EKS
+
+    DBA --> RDS_PRIMARY
+    DBB --> RDS_STANDBY
+    DBC --> RDS_REPLICA
+
+    RDS_PRIMARY --> RDS_STANDBY
+    RDS_PRIMARY --> RDS_REPLICA
+
+    RDS_PRIMARY --> KMS_RDS
+    RDS_PRIMARY --> SM
+
+    VPC --> FL
+    FL --> CW
+    EKS --> CW
+    RDS_PRIMARY --> CW
+
+    RDS_PRIMARY --> CWA
+    RDS_PRIMARY --> PI
+
+    style VPC fill:#e1f5ff
+    style EKS fill:#fff4e1
+    style RDS_PRIMARY fill:#ffe1e1
+    style KMS_EKS fill:#e1ffe1
+    style KMS_RDS fill:#e1ffe1
+    style CW fill:#f0e1ff
+```
+
+## Terraform Infrastructure Overview
+
+This diagram shows the complete infrastructure created by the Terraform modules:
+
+### Components:
+- **VPC Module**: Multi-AZ networking with 3-tier subnet architecture
+- **EKS Module**: Kubernetes cluster with auto-scaling node groups
+- **RDS Module**: PostgreSQL with Multi-AZ deployment and read replicas
+- **Security**: KMS encryption for EKS secrets and RDS storage
+- **Monitoring**: CloudWatch Logs, Alarms, and Performance Insights
+
+### Resource Counts:
+- VPC: 15+ resources
+- EKS: 20+ resources
+- RDS: 10+ resources
+- **Total: 50+ AWS resources**
+
+### Estimated Monthly Cost:
+- Development: $100-200
+- Staging: $300-500
+- Production: $800-1,500
