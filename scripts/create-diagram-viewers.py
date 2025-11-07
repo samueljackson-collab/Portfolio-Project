@@ -12,7 +12,15 @@ import os
 from pathlib import Path
 
 def create_markdown_viewer(mermaid_file):
-    """Create a markdown file that GitHub can render"""
+    """
+    Builds a GitHub-renderable Markdown file that wraps a Mermaid source file.
+    
+    Parameters:
+        mermaid_file (pathlib.Path | str): Path to the Mermaid source file (e.g., `.mmd` or `.mermaid`). The file's stem is used to generate the diagram title and the output file has the same path with a `.md` suffix.
+    
+    Returns:
+        bool: `True` if the Markdown file was created successfully, `False` if reading the source or writing the output failed.
+    """
     # Read the mermaid content
     try:
         with open(mermaid_file, 'r', encoding='utf-8', errors='ignore') as f:
@@ -59,6 +67,14 @@ Original: `{mermaid_file.name}`
         return False
 
 def main():
+    """
+    Discover Mermaid source files in the repository and create corresponding GitHub-renderable Markdown viewers.
+    
+    Scans the repository rooted two levels above this script for files matching *.mmd and *.mermaid, invokes create_markdown_viewer for each file, prints per-file progress and a final summary banner.
+    
+    Returns:
+        int: 0 if all viewers were created successfully, 1 if any file failed or no Mermaid files were found.
+    """
     root_dir = Path(__file__).parent.parent
     print("=" * 60)
     print("  Creating GitHub-Viewable Diagram Files")
