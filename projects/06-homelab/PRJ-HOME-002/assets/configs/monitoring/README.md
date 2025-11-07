@@ -9,7 +9,7 @@ This directory contains **production-ready, zero-placeholder** configuration fil
 
 ### 1. Docker Compose Configurations
 Located in parent directory (`../`):
-- `docker-compose-monitoring-stack.yml` - Complete monitoring stack deployment
+- `docker-compose-full-stack.yml` - Complete homelab stack (monitoring + applications)
 - `docker-compose-wikijs.yml` - Wiki.js documentation platform
 - `docker-compose-homeassistant.yml` - Home automation platform
 - `docker-compose-immich.yml` - Photo backup system
@@ -140,24 +140,25 @@ chmod 644 /opt/monitoring/alertmanager/alertmanager.yml
 
 3. **Environment Variables** (create `.env` file):
 ```bash
-# Grafana
+# Grafana authentication
+GRAFANA_ADMIN_USER=admin
 GRAFANA_ADMIN_PASSWORD=changeme_secure_password
 
-# SMTP (for email alerts)
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your_gmail_app_password
-CRITICAL_EMAIL_TO=oncall@homelab.local
-
-# Alerting
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
-PAGERDUTY_KEY=your_pagerduty_integration_key
+# Database credentials
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=changeme_secure_database_password
+POSTGRES_DB=homelab
 
 # Host identification (for Promtail)
 HOSTNAME=monitoring-vm
+```
 
-# Optional
-MQTT_USERNAME=homeassistant
-MQTT_PASSWORD=secure_mqtt_password
+4. **Update Alertmanager Configuration**:
+Alertmanager does not support environment variable expansion. Edit `alertmanager/alertmanager.yml` directly and replace:
+- `smtp_auth_username`: Your Gmail address
+- `smtp_auth_password`: Your Gmail app password
+- `to`: Critical alerts email recipient
+- `api_url`: Your Slack webhook URL (appears 4 times in the file)
 ```
 
 ### Deploy Monitoring Stack
@@ -165,7 +166,7 @@ MQTT_PASSWORD=secure_mqtt_password
 ```bash
 # Deploy complete monitoring stack
 cd /opt/monitoring
-docker-compose -f docker-compose-monitoring-stack.yml up -d
+docker-compose -f docker-compose-full-stack.yml up -d
 
 # Verify services are running
 docker-compose ps
