@@ -29,7 +29,7 @@ resource "aws_db_parameter_group" "main" {
 
   parameter {
     name  = "log_statement"
-    value = "all"
+    value = "ddl"
   }
 
   parameter {
@@ -160,12 +160,7 @@ resource "aws_security_group" "database" {
     description     = "PostgreSQL access from application"
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # No egress rules - RDS in private subnet should not initiate outbound connections
 
   tags = {
     Name = "${var.environment}-rds-sg"
@@ -199,8 +194,8 @@ resource "aws_cloudwatch_metric_alarm" "storage" {
   namespace           = "AWS/RDS"
   period              = "300"
   statistic           = "Average"
-  threshold           = "10737418240" # 10 GB in bytes
-  alarm_description   = "This metric monitors RDS free storage space"
+  threshold           = var.allocated_storage * 1024 * 1024 * 1024 * 0.1 # 10% of total storage in bytes
+  alarm_description   = "This metric monitors RDS free storage space (alerts when below 10% of allocated storage)"
 
   dimensions = {
     DBInstanceIdentifier = aws_db_instance.main.id

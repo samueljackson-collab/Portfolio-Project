@@ -42,7 +42,7 @@ resource "aws_eks_cluster" "main" {
 # CloudWatch Log Group for EKS
 resource "aws_cloudwatch_log_group" "eks" {
   name              = "/aws/eks/${var.environment}/cluster"
-  retention_in_days = 7
+  retention_in_days = var.log_retention_days
 }
 
 # EKS Cluster IAM Role

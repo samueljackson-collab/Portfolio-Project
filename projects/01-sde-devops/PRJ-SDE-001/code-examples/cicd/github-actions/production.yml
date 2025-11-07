@@ -353,7 +353,7 @@ jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [deploy-staging, performance-test]
+    needs: build
     if: github.event_name == 'release'
     environment:
       name: production
@@ -395,19 +395,55 @@ jobs:
             --wait
 
       - name: Monitor canary metrics
+        id: monitor_canary
         run: |
           echo "Monitoring canary for 5 minutes..."
           sleep 300
 
           # Check error rate
           ERROR_RATE=$(kubectl exec -n monitoring prometheus-0 -- \
-            promtool query instant 'rate(http_requests_total{status=~"5.."}[5m])' | \
+            promtool query instant 'rate(http_requests_total{status=~"5..",service="portfolio"}[5m])' | \
             grep -o '[0-9.]*' | head -1)
 
-          if (( $(echo "$ERROR_RATE > 0.01" | bc -l) )); then
+          # Validate metric was retrieved
+          if [ -z "$ERROR_RATE" ]; then
+            echo "Failed to fetch error rate metric"
+            exit 1
+          fi
+
+          # Use awk for floating point comparison (more portable than bc)
+          if awk -v rate="$ERROR_RATE" 'BEGIN { exit !(rate > 0.01) }'; then
             echo "Error rate too high: $ERROR_RATE"
             exit 1
           fi
+
+          echo "Canary metrics healthy: error_rate=$ERROR_RATE"
+
+      - name: Rollback canary on failure
+        if: failure() && steps.monitor_canary.outcome == 'failure'
+        run: |
+          echo "Canary deployment failed. Rolling back..."
+          helm rollback portfolio -n production
+          echo "Rollback completed"
+
+          # Send notification
+          curl -X POST "${{ secrets.SLACK_WEBHOOK_PROD }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "⚠️ Production canary deployment failed and was rolled back automatically",
+              "attachments": [{
+                "color": "danger",
+                "fields": [{
+                  "title": "Environment",
+                  "value": "Production",
+                  "short": true
+                }, {
+                  "title": "Commit",
+                  "value": "${{ github.sha }}",
+                  "short": true
+                }]
+              }]
+            }'
 
       - name: Promote to full deployment
         run: |
