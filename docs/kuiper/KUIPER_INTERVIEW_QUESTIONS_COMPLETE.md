@@ -1755,7 +1755,842 @@ TOTAL:                                          $76.80/month
 
 ---
 
-**Continue reading:** Questions 6-60 coming next...
+### Q6: How would you design a multi-region failover architecture using Route 53 for Kuiper ground gateways?
+
+**Difficulty:** ⭐⭐⭐⭐ (Expert)
+**Category:** AWS Architecture & High Availability
+**Risk Level:** Critical (poor design = extended outages)
+**Timebox:** 12-15 minutes
+**Owner:** Solutions Architect or Principal Engineer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Imagine you have two pizza shops - one in New York and one in Los Angeles. If the New York shop burns down, you want customers' GPS apps to automatically redirect them to the LA shop. Route 53 is like that smart GPS system for internet traffic.
+
+For Kuiper, if our Virginia ground gateway goes down (fire, network outage, etc.), we want satellite traffic to automatically flow through our Oregon gateway instead. Route 53 continuously checks if each gateway is healthy and routes traffic to the working one.
+
+**Technical Explanation:**
+
+**Multi-Region Failover Architecture:**
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│        KUIPER MULTI-REGION FAILOVER WITH ROUTE 53                  │
+└────────────────────────────────────────────────────────────────────┘
+
+                        ┌─────────────────┐
+                        │   Route 53      │
+                        │  Hosted Zone    │
+                        │                 │
+                        │ gateway.kuiper  │
+                        │    .internal    │
+                        └────────┬────────┘
+                                 │
+                   DNS Query: gateway.kuiper.internal
+                                 │
+                ┌────────────────┴────────────────┐
+                │                                 │
+         Latency-based                     Failover
+          Routing                           Routing
+                │                                 │
+    ┌───────────┴───────────┐       ┌────────────┴──────────┐
+    │                       │       │                       │
+    ↓                       ↓       ↓                       ↓
+PRIMARY                 SECONDARY   TERTIARY           LAST RESORT
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  us-east-1      │  │  us-west-2      │  │  eu-central-1   │
+│  (Virginia)     │  │  (Oregon)       │  │  (Frankfurt)    │
+│                 │  │                 │  │                 │
+│  Gateway-VA     │  │  Gateway-OR     │  │  Gateway-EU     │
+│  10.1.0.0/16    │  │  10.2.0.0/16    │  │  10.3.0.0/16    │
+│                 │  │                 │  │                 │
+│  Health Check:  │  │  Health Check:  │  │  Health Check:  │
+│  ✓ Passing      │  │  ✓ Passing      │  │  ✗ Failing      │
+│  Latency: 20ms  │  │  Latency: 80ms  │  │  (Maintenance)  │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+        │                     │                     │
+        │                     │                     │
+        ↓                     ↓                     ↓
+    TGW + VPN             TGW + VPN           TGW + VPN
+    ALB: Primary          ALB: Secondary      ALB: Disabled
+    IP: 10.1.100.10       IP: 10.2.100.10     IP: 10.3.100.10
+
+┌────────────────────────────────────────────────────────────────────┐
+│                      ROUTING DECISION                              │
+└────────────────────────────────────────────────────────────────────┘
+
+Request from Client (Satellite Control Plane):
+  ├─ DNS Query: gateway.kuiper.internal
+  ├─ Route 53 evaluates:
+  │   ├─ Health Check Status (all regions)
+  │   ├─ Latency from client to each region
+  │   └─ Routing policy (latency-based with failover)
+  └─ Returns: 10.1.100.10 (Virginia - lowest latency, healthy)
+
+If Virginia fails:
+  ├─ Health check detects failure (30 seconds)
+  ├─ Route 53 marks Virginia unhealthy
+  ├─ Next DNS query returns: 10.2.100.10 (Oregon)
+  └─ TTL (60s) means all clients switch within 90 seconds max
+
+Recovery:
+  ├─ Virginia health check passes (2 consecutive checks)
+  ├─ Route 53 marks Virginia healthy
+  ├─ Gradually returns Virginia to clients (based on TTL)
+  └─ No immediate switchback (prevents flapping)
+```
+
+**Route 53 Configuration (Terraform):**
+
+```hcl
+# terraform/kuiper-route53-failover/main.tf
+
+# 1. Route 53 Private Hosted Zone
+resource "aws_route53_zone" "kuiper_internal" {
+  name = "kuiper.internal"
+
+  vpc {
+    vpc_id     = aws_vpc.kuiper_control_plane_us_east_1.id
+    vpc_region = "us-east-1"
+  }
+
+  vpc {
+    vpc_id     = aws_vpc.kuiper_control_plane_us_west_2.id
+    vpc_region = "us-west-2"
+  }
+
+  vpc {
+    vpc_id     = aws_vpc.kuiper_control_plane_eu_central_1.id
+    vpc_region = "eu-central-1"
+  }
+
+  tags = {
+    Name = "kuiper-internal-zone"
+  }
+}
+
+# 2. Health Checks (one per region)
+resource "aws_route53_health_check" "gateway_va" {
+  ip_address        = aws_lb.gateway_alb_va.private_ip
+  port              = 443
+  type              = "HTTPS"
+  resource_path     = "/health"
+  failure_threshold = 3
+  request_interval  = 30
+
+  tags = {
+    Name = "gateway-va-health"
+  }
+}
+
+resource "aws_route53_health_check" "gateway_or" {
+  ip_address        = aws_lb.gateway_alb_or.private_ip
+  port              = 443
+  type              = "HTTPS"
+  resource_path     = "/health"
+  failure_threshold = 3
+  request_interval  = 30
+
+  tags = {
+    Name = "gateway-or-health"
+  }
+}
+
+resource "aws_route53_health_check" "gateway_eu" {
+  ip_address        = aws_lb.gateway_alb_eu.private_ip
+  port              = 443
+  type              = "HTTPS"
+  resource_path     = "/health"
+  failure_threshold = 3
+  request_interval  = 30
+
+  tags = {
+    Name = "gateway-eu-health"
+  }
+}
+
+# 3. Latency-Based Records with Health Checks
+resource "aws_route53_record" "gateway_va" {
+  zone_id = aws_route53_zone.kuiper_internal.zone_id
+  name    = "gateway.kuiper.internal"
+  type    = "A"
+  ttl     = 60
+
+  latency_routing_policy {
+    region = "us-east-1"
+  }
+
+  set_identifier  = "gateway-virginia"
+  health_check_id = aws_route53_health_check.gateway_va.id
+  records         = [aws_lb.gateway_alb_va.private_ip]
+}
+
+resource "aws_route53_record" "gateway_or" {
+  zone_id = aws_route53_zone.kuiper_internal.zone_id
+  name    = "gateway.kuiper.internal"
+  type    = "A"
+  ttl     = 60
+
+  latency_routing_policy {
+    region = "us-west-2"
+  }
+
+  set_identifier  = "gateway-oregon"
+  health_check_id = aws_route53_health_check.gateway_or.id
+  records         = [aws_lb.gateway_alb_or.private_ip]
+}
+
+resource "aws_route53_record" "gateway_eu" {
+  zone_id = aws_route53_zone.kuiper_internal.zone_id
+  name    = "gateway.kuiper.internal"
+  type    = "A"
+  ttl     = 60
+
+  latency_routing_policy {
+    region = "eu-central-1"
+  }
+
+  set_identifier  = "gateway-frankfurt"
+  health_check_id = aws_route53_health_check.gateway_eu.id
+  records         = [aws_lb.gateway_alb_eu.private_ip]
+}
+
+# 4. Failover Record (last resort)
+resource "aws_route53_record" "gateway_failover_primary" {
+  zone_id = aws_route53_zone.kuiper_internal.zone_id
+  name    = "gateway-failover.kuiper.internal"
+  type    = "A"
+  ttl     = 60
+
+  failover_routing_policy {
+    type = "PRIMARY"
+  }
+
+  set_identifier  = "gateway-primary"
+  health_check_id = aws_route53_health_check.gateway_va.id
+  records         = [aws_lb.gateway_alb_va.private_ip]
+}
+
+resource "aws_route53_record" "gateway_failover_secondary" {
+  zone_id = aws_route53_zone.kuiper_internal.zone_id
+  name    = "gateway-failover.kuiper.internal"
+  type    = "A"
+  ttl     = 60
+
+  failover_routing_policy {
+    type = "SECONDARY"
+  }
+
+  set_identifier  = "gateway-secondary"
+  health_check_id = aws_route53_health_check.gateway_or.id
+  records         = [aws_lb.gateway_alb_or.private_ip]
+}
+```
+
+**Health Check Endpoint (Python/Flask):**
+
+```python
+# app.py - Gateway Health Check Endpoint
+
+from flask import Flask, jsonify
+import subprocess
+import requests
+
+app = Flask(__name__)
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """
+    Comprehensive health check for Kuiper gateway.
+    Returns 200 if healthy, 503 if unhealthy.
+    """
+    checks = {
+        "vpn_tunnels": check_vpn_tunnels(),
+        "bgp_sessions": check_bgp_sessions(),
+        "satellite_link": check_satellite_link(),
+        "tgw_connectivity": check_tgw_connectivity(),
+        "control_plane_api": check_control_plane_api()
+    }
+
+    # All checks must pass
+    all_healthy = all(checks.values())
+
+    return jsonify({
+        "status": "healthy" if all_healthy else "unhealthy",
+        "checks": checks,
+        "timestamp": datetime.utcnow().isoformat()
+    }), 200 if all_healthy else 503
+
+
+def check_vpn_tunnels():
+    """Check if at least one VPN tunnel is up."""
+    try:
+        # Query CloudWatch for VPN tunnel state
+        result = subprocess.run([
+            'aws', 'cloudwatch', 'get-metric-statistics',
+            '--namespace', 'AWS/VPN',
+            '--metric-name', 'TunnelState',
+            '--dimensions', f'Name=VpnId,Value={VPN_ID}',
+            '--start-time', '5 minutes ago',
+            '--end-time', 'now',
+            '--period', '300',
+            '--statistics', 'Average'
+        ], capture_output=True, text=True, timeout=5)
+
+        # Parse result (simplified)
+        return "1.0" in result.stdout  # At least one tunnel up
+    except Exception as e:
+        return False
+
+
+def check_bgp_sessions():
+    """Check BGP session state with AWS."""
+    try:
+        # SSH to gateway router and check BGP
+        result = subprocess.run([
+            'ssh', 'admin@gateway-router',
+            'show ip bgp summary | grep Established'
+        ], capture_output=True, text=True, timeout=5)
+
+        return "Established" in result.stdout
+    except Exception as e:
+        return False
+
+
+def check_satellite_link():
+    """Check if we can receive satellite traffic."""
+    try:
+        # Check if satellite interface has recent traffic
+        result = subprocess.run([
+            'ssh', 'admin@gateway-router',
+            'show interface GigabitEthernet0/0/0 | grep "input rate"'
+        ], capture_output=True, text=True, timeout=5)
+
+        # Parse to see if > 0 bps
+        return "bits/sec" in result.stdout and not "0 bits/sec" in result.stdout
+    except Exception as e:
+        return False
+
+
+def check_tgw_connectivity():
+    """Check if we can reach Transit Gateway."""
+    try:
+        # Ping TGW attachment
+        result = subprocess.run([
+            'ping', '-c', '3', '-W', '2', TGW_ATTACHMENT_IP
+        ], capture_output=True, timeout=10)
+
+        return result.returncode == 0
+    except Exception as e:
+        return False
+
+
+def check_control_plane_api():
+    """Check if control plane API is reachable."""
+    try:
+        response = requests.get(
+            f'{CONTROL_PLANE_API}/status',
+            timeout=5,
+            verify=True
+        )
+        return response.status_code == 200
+    except Exception as e:
+        return False
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
+```
+
+**Failover Testing Script:**
+
+```bash
+#!/bin/bash
+# test-failover.sh - Simulate and test Route 53 failover
+
+set -e
+
+GATEWAY_DNS="gateway.kuiper.internal"
+PRIMARY_IP="10.1.100.10"
+SECONDARY_IP="10.2.100.10"
+
+echo "=== Kuiper Route 53 Failover Test ==="
+echo ""
+
+# Test 1: Verify current active endpoint
+echo "Test 1: Current active endpoint"
+CURRENT_IP=$(dig +short $GATEWAY_DNS | head -1)
+echo "  Current IP: $CURRENT_IP"
+echo "  Expected: $PRIMARY_IP (primary)"
+if [ "$CURRENT_IP" == "$PRIMARY_IP" ]; then
+    echo "  ✓ Pass: Primary is active"
+else
+    echo "  ⚠ Warning: Not using primary ($CURRENT_IP)"
+fi
+echo ""
+
+# Test 2: Check health check status
+echo "Test 2: Health check status"
+HEALTH_CHECK_IDS=$(aws route53 list-health-checks \
+    --query "HealthChecks[?contains(Tags[?Key=='Name'].Value, 'gateway')].Id" \
+    --output text)
+
+for HC_ID in $HEALTH_CHECK_IDS; do
+    STATUS=$(aws route53 get-health-check-status \
+        --health-check-id $HC_ID \
+        --query 'HealthCheckObservations[0].StatusReport.Status' \
+        --output text)
+    echo "  Health Check $HC_ID: $STATUS"
+done
+echo ""
+
+# Test 3: Simulate primary failure
+echo "Test 3: Simulating primary failure"
+echo "  Disabling primary gateway health check endpoint..."
+
+# SSH to primary and stop health check endpoint
+ssh admin@gateway-va.kuiper.internal "sudo systemctl stop health-check"
+
+echo "  Waiting for health check to fail (90 seconds)..."
+sleep 90
+
+# Check DNS resolution
+NEW_IP=$(dig +short $GATEWAY_DNS | head -1)
+echo "  New IP: $NEW_IP"
+if [ "$NEW_IP" == "$SECONDARY_IP" ]; then
+    echo "  ✓ Pass: Failed over to secondary"
+else
+    echo "  ✗ Fail: Did not fail over (still $NEW_IP)"
+    exit 1
+fi
+echo ""
+
+# Test 4: Connection test to secondary
+echo "Test 4: Testing connectivity to secondary"
+if curl -k -s https://$NEW_IP/health | grep -q "healthy"; then
+    echo "  ✓ Pass: Secondary is healthy and responding"
+else
+    echo "  ✗ Fail: Secondary not responding"
+    exit 1
+fi
+echo ""
+
+# Test 5: Restore primary and verify recovery
+echo "Test 5: Restore primary"
+ssh admin@gateway-va.kuiper.internal "sudo systemctl start health-check"
+
+echo "  Waiting for health check to pass (60 seconds)..."
+sleep 60
+
+# Check DNS resolution
+RECOVERED_IP=$(dig +short $GATEWAY_DNS | head -1)
+echo "  Current IP: $RECOVERED_IP"
+
+# Note: May still be secondary due to TTL caching
+echo "  (May take up to 60s more due to DNS TTL caching)"
+echo ""
+
+echo "=== Failover Test Complete ==="
+```
+
+**Monitoring & Alerting:**
+
+```yaml
+# prometheus/rules/route53-failover.yml
+
+groups:
+  - name: route53_failover
+    interval: 30s
+    rules:
+      # Alert if health check is failing
+      - alert: Route53HealthCheckFailing
+        expr: aws_route53_healthcheck_status{region="us-east-1"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: route53
+        annotations:
+          summary: "Route 53 health check failing for {{ $labels.health_check_id }}"
+          description: "Health check has been failing for 2 minutes. Failover imminent."
+
+      # Alert when failover occurs
+      - alert: Route53Failover
+        expr: |
+          rate(aws_route53_query_count{record="gateway.kuiper.internal",
+                                        answer_ip!="10.1.100.10"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: route53
+        annotations:
+          summary: "Route 53 failed over from primary"
+          description: "Traffic is being routed to secondary gateway ({{ $labels.answer_ip }})"
+
+      # Alert if all health checks are failing
+      - alert: Route53AllGatewaysDown
+        expr: |
+          sum(aws_route53_healthcheck_status{region=~"us-east-1|us-west-2|eu-central-1"}) == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: route53
+        annotations:
+          summary: "ALL GATEWAYS DOWN - Route 53 has no healthy endpoints"
+          description: "All health checks failing. Complete service outage."
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Route 53 Terraform Module** | `infra/aws/terraform/r53-latency/` | Complete multi-region failover setup |
+| **Health Check Endpoint** | `services/gateway-health/app.py` | Flask app with comprehensive checks |
+| **Failover Test Script** | `tests/failover/test-route53.sh` | Automated failover testing |
+| **Multi-Region Diagram** | `docs/diagrams/kuiper/multi-region.mmd` | Visual architecture |
+| **Failover Runbook** | `docs/runbooks/route53-failover.md` | Operational procedures |
+| **Prometheus Alerts** | `observability/prometheus/rules/route53.yml` | Health check & failover alerts |
+
+**Learn More:**
+
+1. **Route 53 Deep Dive:**
+   - [Route 53 Routing Policies](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html)
+   - [Health Checks and DNS Failover](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover.html)
+   - [Latency-Based Routing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-latency.html)
+
+2. **Multi-Region Architectures:**
+   - [AWS Multi-Region Best Practices](https://aws.amazon.com/blogs/architecture/)
+   - [Disaster Recovery on AWS](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-workloads-on-aws.html)
+
+**Risk Assessment:**
+
+| Risk Category | Level | Mitigation |
+|---------------|-------|------------|
+| **DNS TTL Caching** | HIGH | Use 60s TTL (balance: fast failover vs query load) |
+| **Health Check False Positives** | MEDIUM | 3 consecutive failures required, multi-path checks |
+| **Split-Brain (both regions active)** | LOW | Route 53 prevents this with health checks |
+| **All Regions Down** | CRITICAL | 3+ geographically diverse regions, runbook for manual failover |
+
+---
+
+### Q7: Explain BGP routing for Kuiper ground gateways. How do you prevent route leaks and ensure proper failover?
+
+**Difficulty:** ⭐⭐⭐⭐ (Expert)
+**Category:** Network Engineering & BGP
+**Risk Level:** Critical (BGP misconfiguration = routing black holes)
+**Timebox:** 15-20 minutes
+**Owner:** Senior Network Engineer or Principal Engineer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+BGP is like a GPS system for the internet - it tells routers how to get from point A to point B. But unlike your car's GPS, BGP routers share directions with each other.
+
+For Kuiper, our ground gateways need to tell AWS "Hey, I know how to reach the satellite network (10.250.0.0/16)" and AWS needs to tell our gateways "Hey, I know how to reach the control plane (10.0.0.0/8)".
+
+A "route leak" is like accidentally telling everyone on the internet "You can reach Google through me!" when you can't actually handle that traffic. We prevent this by being very careful about what routes we advertise and to whom.
+
+**Technical Explanation:**
+
+**BGP Architecture for Kuiper:**
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│              BGP ROUTING FOR KUIPER GATEWAYS                       │
+└────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ GATEWAY ROUTER (ASN 65001 - Customer ASN)                      │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │  BGP Configuration                                          │ │
+│ │  ┌────────────────────────────────────────────────────────┐ │ │
+│ │  │ router bgp 65001                                       │ │ │
+│ │  │   bgp router-id 203.0.113.10                          │ │ │
+│ │  │   bgp log-neighbor-changes                             │ │ │
+│ │  │                                                         │ │ │
+│ │  │   # Neighbor: AWS VPN Tunnel 1                        │ │ │
+│ │  │   neighbor 169.254.10.2 remote-as 64512               │ │ │
+│ │  │   neighbor 169.254.10.2 timers 20 60                  │ │ │
+│ │  │   neighbor 169.254.10.2 password <preshared-key>      │ │ │
+│ │  │                                                         │ │ │
+│ │  │   # Neighbor: AWS VPN Tunnel 2                        │ │ │
+│ │  │   neighbor 169.254.10.6 remote-as 64512               │ │ │
+│ │  │   neighbor 169.254.10.6 timers 20 60                  │ │ │
+│ │  │   neighbor 169.254.10.6 password <preshared-key>      │ │ │
+│ │  │                                                         │ │ │
+│ │  │   # Address family IPv4                                │ │ │
+│ │  │   address-family ipv4                                  │ │ │
+│ │  │     # Advertise satellite network to AWS              │ │ │
+│ │  │     network 10.250.0.0 mask 255.255.0.0               │ │ │
+│ │  │     # Receive AWS routes                               │ │ │
+│ │  │     neighbor 169.254.10.2 activate                    │ │ │
+│ │  │     neighbor 169.254.10.2 route-map TO-AWS out       │ │ │
+│ │  │     neighbor 169.254.10.2 route-map FROM-AWS in      │ │ │
+│ │  │     neighbor 169.254.10.6 activate                    │ │ │
+│ │  │     neighbor 169.254.10.6 route-map TO-AWS out       │ │ │
+│ │  │     neighbor 169.254.10.6 route-map FROM-AWS in      │ │ │
+│ │  │   exit-address-family                                  │ │ │
+│ │  └────────────────────────────────────────────────────────┘ │ │
+│ │                                                             │ │
+│ │  Advertised Routes (TO AWS):                               │ │
+│ │  ├─ 10.250.0.0/16  (Satellite customer network)           │ │
+│ │  └─ 192.168.100.0/24  (Gateway management network)        │ │
+│ │                                                             │ │
+│ │  Received Routes (FROM AWS):                               │ │
+│ │  ├─ 10.0.0.0/8  (AWS VPC CIDR summary)                    │ │
+│ │  ├─ 10.1.0.0/16  (VPC us-east-1)                          │ │
+│ │  ├─ 10.2.0.0/16  (VPC us-west-2)                          │ │
+│ │  └─ 0.0.0.0/0  (Default route - internet via AWS)        │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+└────────────┬────────────────────────────────────────────────────┘
+             │ VPN Tunnel (IPsec + BGP)
+             ↓
+┌────────────────────────────────────────────────────────────────────┐
+│ AWS TRANSIT GATEWAY (ASN 64512 - AWS ASN)                         │
+│ ┌────────────────────────────────────────────────────────────────┐ │
+│ │  BGP Peering:                                                  │ │
+│ │  ├─ Neighbor: 169.254.10.1 (Tunnel 1, AS 65001)              │ │
+│ │  ├─ Neighbor: 169.254.10.5 (Tunnel 2, AS 65001)              │ │
+│ │  └─ Route Propagation: Enabled                                │ │
+│ │                                                                │ │
+│ │  Learned Routes (FROM Gateway):                               │ │
+│ │  ├─ 10.250.0.0/16 via 169.254.10.1 (Tunnel 1)                │ │
+│ │  ├─ 10.250.0.0/16 via 169.254.10.5 (Tunnel 2)  ← ECMP       │ │
+│ │  └─ 192.168.100.0/24 via 169.254.10.1                        │ │
+│ │                                                                │ │
+│ │  Advertised Routes (TO Gateway):                              │ │
+│ │  ├─ 10.1.0.0/16  (from VPC attachment)                        │ │
+│ │  ├─ 10.2.0.0/16  (from VPC attachment)                        │ │
+│ │  └─ Aggregate: 10.0.0.0/8 (summarized)                        │ │
+│ └────────────────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────┐
+│                    BGP ROUTE FILTERING                             │
+└────────────────────────────────────────────────────────────────────┘
+
+Gateway Router Route Maps:
+
+1. TO-AWS (Outbound Filter):
+   ┌──────────────────────────────────────────────────────┐
+   │ route-map TO-AWS permit 10                           │
+   │   match ip address prefix-list SATELLITE-NETWORKS    │
+   │   set community 65001:100                            │
+   │                                                       │
+   │ route-map TO-AWS deny 999  ← Deny everything else   │
+   │                                                       │
+   │ ip prefix-list SATELLITE-NETWORKS permit 10.250.0.0/16│
+   │ ip prefix-list SATELLITE-NETWORKS permit 192.168.100.0/24│
+   └──────────────────────────────────────────────────────┘
+
+2. FROM-AWS (Inbound Filter):
+   ┌──────────────────────────────────────────────────────┐
+   │ route-map FROM-AWS permit 10                         │
+   │   match ip address prefix-list AWS-VPCS              │
+   │   set local-preference 150  ← Prefer this path      │
+   │                                                       │
+   │ route-map FROM-AWS permit 20                         │
+   │   match ip address prefix-list DEFAULT-ROUTE         │
+   │   set local-preference 100                           │
+   │                                                       │
+   │ route-map FROM-AWS deny 999  ← Deny everything else │
+   │                                                       │
+   │ ip prefix-list AWS-VPCS permit 10.0.0.0/8 le 24     │
+   │ ip prefix-list DEFAULT-ROUTE permit 0.0.0.0/0       │
+   └──────────────────────────────────────────────────────┘
+
+Result: Only explicitly allowed routes are exchanged
+```
+
+**BGP Failover Scenarios:**
+
+```
+Scenario 1: Single Tunnel Failure
+─────────────────────────────────────────────────────────────
+Before:
+  Tunnel 1: ✓ UP (10.250.0.0/16 advertised)
+  Tunnel 2: ✓ UP (10.250.0.0/16 advertised)
+  TGW sees: ECMP across both tunnels
+
+Tunnel 1 goes down (ISP issues):
+  T=0s:    Tunnel 1 IPsec SA expires, no response
+  T=20s:   BGP keepalive timeout (timers 20 60)
+  T=60s:   BGP hold timer expires
+  T=60s:   TGW withdraws routes learned from Tunnel 1
+  T=60s:   All traffic shifts to Tunnel 2
+
+Result: 60-second outage (can reduce with BFD to <3 seconds)
+
+Scenario 2: Gateway Router Failure
+─────────────────────────────────────────────────────────────
+Before:
+  Gateway-VA: ✓ UP (both tunnels)
+  Gateway-OR: ✓ UP (both tunnels, standby)
+
+Gateway-VA power failure:
+  T=0s:    Both tunnels go down
+  T=60s:   TGW withdraws all routes from Gateway-VA
+  T=60s:   Route 53 health check fails (3 consecutive checks)
+  T=90s:   Route 53 DNS updated to Gateway-OR
+  T=150s:  All clients using Gateway-OR (60s TTL + 90s detection)
+
+Result: 60-150 second outage depending on DNS caching
+
+Scenario 3: Route Leak Prevention
+─────────────────────────────────────────────────────────────
+Attack: Gateway accidentally advertises AWS's IP space to ISP
+
+Without filtering:
+  Gateway → ISP: "I can reach 10.0.0.0/8"
+  ISP → Internet: "Route to AWS through this gateway"
+  Result: Internet traffic for AWS routed to gateway (DDoS, outage)
+
+With filtering (proper configuration):
+  Gateway tries to advertise 10.0.0.0/8 to ISP
+  Route-map TO-ISP: deny 10.0.0.0/8
+  Result: Route NOT advertised, attack prevented
+```
+
+**BGP Security Configuration:**
+
+```cisco
+! Cisco IOS Configuration for Kuiper Gateway
+
+! Enable TCP MD5 authentication for BGP
+router bgp 65001
+  neighbor 169.254.10.2 password kuiper-bgp-secret-2024
+  neighbor 169.254.10.6 password kuiper-bgp-secret-2024
+
+! Maximum prefixes (prevent route table overflow)
+router bgp 65001
+  address-family ipv4
+    neighbor 169.254.10.2 maximum-prefix 100 80 restart 5
+    neighbor 169.254.10.6 maximum-prefix 100 80 restart 5
+  exit-address-family
+
+! TTL Security (GTSM - Generalized TTL Security Mechanism)
+router bgp 65001
+  neighbor 169.254.10.2 ttl-security hops 1
+  neighbor 169.254.10.6 ttl-security hops 1
+
+! BGP Community for route tagging
+route-map TO-AWS permit 10
+  set community 65001:100 additive
+  set origin igp
+
+! AS-PATH prepending for traffic engineering (make path less preferred)
+route-map TO-AWS-SECONDARY permit 10
+  set as-path prepend 65001 65001 65001
+  ! Adds our ASN 3 times, making path longer/less preferred
+
+! Prefix filtering with explicit deny
+ip prefix-list DENY-DEFAULT deny 0.0.0.0/0
+ip prefix-list DENY-RFC1918 deny 10.0.0.0/8 le 32
+ip prefix-list DENY-RFC1918 deny 172.16.0.0/12 le 32
+ip prefix-list DENY-RFC1918 deny 192.168.0.0/16 le 32
+
+! Apply to ISP peer (prevent leaking AWS routes to internet)
+router bgp 65001
+  neighbor <ISP-PEER> route-map TO-ISP out
+
+route-map TO-ISP deny 10
+  match ip address prefix-list DENY-RFC1918
+route-map TO-ISP permit 20
+  match ip address prefix-list ALLOWED-PUBLIC-PREFIXES
+```
+
+**BFD (Bidirectional Forwarding Detection) for Fast Failover:**
+
+```cisco
+! Enable BFD for sub-second failover (vs 60s with BGP alone)
+
+interface Tunnel0  ! VPN Tunnel 1
+  bfd interval 300 min_rx 300 multiplier 3
+  ! 300ms interval, 900ms failure detection (3 * 300ms)
+
+interface Tunnel1  ! VPN Tunnel 2
+  bfd interval 300 min_rx 300 multiplier 3
+
+router bgp 65001
+  neighbor 169.254.10.2 fall-over bfd
+  neighbor 169.254.10.6 fall-over bfd
+
+! Result: BGP session torn down in <1 second if tunnel fails
+! (vs 60 seconds with keepalive/hold timers)
+```
+
+**Monitoring & Verification:**
+
+```bash
+#!/bin/bash
+# bgp-monitor.sh - Monitor BGP sessions and routes
+
+# Check BGP session state
+echo "=== BGP Session Status ==="
+ssh admin@gateway-router "show ip bgp summary" | grep -A 10 "Neighbor"
+
+# Check advertised routes
+echo ""
+echo "=== Routes Advertised to AWS ==="
+ssh admin@gateway-router "show ip bgp neighbors 169.254.10.2 advertised-routes"
+
+# Check received routes
+echo ""
+echo "=== Routes Received from AWS ==="
+ssh admin@gateway-router "show ip bgp neighbors 169.254.10.2 routes"
+
+# Check for route leaks (should be empty)
+echo ""
+echo "=== Checking for Route Leaks ==="
+ssh admin@gateway-router "show ip bgp regexp _65001_65001_" | grep -c "Network"
+# If > 0, we're receiving our own routes back (loop detection)
+
+# Validate route filtering
+echo ""
+echo "=== Validate Route Filtering ==="
+ssh admin@gateway-router "show route-map TO-AWS"
+ssh admin@gateway-router "show route-map FROM-AWS"
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **BGP Configuration Templates** | `configs/cisco/bgp-kuiper.cfg` | Complete BGP config for gateway routers |
+| **Route Leak Prevention ADR** | `docs/adr/ADR-0006-bgp-security.md` | Why/how we prevent route leaks |
+| **BGP Monitoring Script** | `scripts/bgp/monitor.sh` | Automated BGP health checks |
+| **BFD Configuration** | `configs/cisco/bfd.cfg` | Fast failover configuration |
+| **BGP Runbook** | `docs/runbooks/bgp-troubleshooting.md` | Troubleshooting procedures |
+| **Prometheus BGP Exporter** | `observability/exporters/bgp-exporter/` | Metrics from gateway routers |
+
+**Learn More:**
+
+1. **BGP Fundamentals:**
+   - [BGP for Large-Scale Networks (Cisco Press)](https://www.ciscopress.com/store/bgp-for-large-scale-networks-9781587144677)
+   - [BGP Best Practices (RIPE)](https://www.ripe.net/publications/docs/ripe-399)
+   - [BGP on AWS (VPN)](https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNRoutingTypes.html)
+
+2. **Route Security:**
+   - [Route Leak Prevention (MANRS)](https://www.manrs.org/)
+   - [BGP Security Best Practices (NIST)](https://csrc.nist.gov/publications/detail/sp/800-54/final)
+
+3. **Fast Failover:**
+   - [BFD RFC 5880](https://datatracker.ietf.org/doc/html/rfc5880)
+   - [BGP Fast Convergence](https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/26634-bgp-toc.html)
+
+**Risk Assessment:**
+
+| Risk Category | Level | Mitigation |
+|---------------|-------|------------|
+| **Route Leak to Internet** | CRITICAL | Strict prefix filtering on all peers, route-map deny-all default |
+| **BGP Hijacking** | HIGH | TCP MD5 auth, prefix limits, RPKI/ROA (future) |
+| **Slow Failover (60s)** | MEDIUM | BFD for <1s failover, tune BGP timers |
+| **Route Flapping** | MEDIUM | Route dampening, stable tunnels, conservative timers |
+| **AS-PATH Manipulation** | LOW | AS-PATH filtering, max-as-path length limits |
+
+---
+
+**Continue reading:** Questions 8-60 coming next...
 
 ## Glossary of All Terms (A-Z)
 
