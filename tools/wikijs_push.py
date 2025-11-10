@@ -181,9 +181,9 @@ class WikiJSPublisher:
         # Extract title from filename
         title = md_path.stem.replace("-", " ").replace("_", " ").title()
 
-        # Generate Wiki.js path
-        relative_path = md_path.relative_to(md_path.parents[len(md_path.parents) - 1])
-        wiki_path = f"{base_path}/{md_path.stem}"
+        # Generate Wiki.js path, preserving directory structure
+        # Convert to string and remove extension to get the path structure
+        wiki_path = str(Path(base_path) / md_path.with_suffix('')).replace("\\", "/")
 
         # Read content
         try:

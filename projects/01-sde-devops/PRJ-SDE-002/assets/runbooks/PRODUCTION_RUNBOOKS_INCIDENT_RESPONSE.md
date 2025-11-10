@@ -226,8 +226,15 @@ kubectl autoscale deployment/app -n production \
 # 4. If recent deployment, rollback
 kubectl rollout undo deployment/app -n production
 
-# 5. Restart high-CPU pods
-kubectl delete pod -n production -l app=myapp --force --grace-period=0
+# 5. Restart high-CPU pods (graceful deletion)
+kubectl delete pod -n production <pod-name>
+
+# Wait for new pod to start
+kubectl wait --for=condition=ready pod -l app=myapp -n production --timeout=120s
+
+# Force deletion only as LAST RESORT (if pod is unresponsive)
+# WARNING: Force deletion can cause data corruption!
+# kubectl delete pod -n production <pod-name> --force --grace-period=0
 ```
 
 ### Resolution
@@ -1184,8 +1191,15 @@ aws rds wait db-instance-available \
 echo "Step 3: Updating application configuration..."
 kubectl config use-context dr-cluster
 
+# Retrieve database credentials from AWS Secrets Manager
+DB_URL=$(aws secretsmanager get-secret-value \
+  --secret-id dr-database-url \
+  --region us-west-2 \
+  --query SecretString \
+  --output text | jq -r .DATABASE_URL)
+
 kubectl set env deployment/app -n production \
-  DATABASE_URL="postgres://user:pass@dr-db.us-west-2.rds.amazonaws.com:5432/portfolio"
+  DATABASE_URL="$DB_URL"
 
 # 4. Scale up DR environment
 echo "Step 4: Scaling up DR environment..."

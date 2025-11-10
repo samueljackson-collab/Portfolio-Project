@@ -15,6 +15,38 @@ NC='\033[0m' # No Color
 PASSED=0
 FAILED=0
 
+# Load credentials from environment or use defaults
+GF_ADMIN_USER="${GF_ADMIN_USER:-admin}"
+GF_ADMIN_PASSWORD="${GF_ADMIN_PASSWORD:-admin}"
+
+# Check prerequisites
+check_prerequisites() {
+    local missing=0
+
+    if ! command -v curl &> /dev/null; then
+        echo "Error: curl is not installed"
+        ((missing++))
+    fi
+
+    if ! command -v jq &> /dev/null; then
+        echo "Error: jq is not installed"
+        ((missing++))
+    fi
+
+    if ! command -v docker &> /dev/null; then
+        echo "Error: docker is not installed"
+        ((missing++))
+    fi
+
+    if [ $missing -gt 0 ]; then
+        echo ""
+        echo "Please install missing dependencies:"
+        echo "  Ubuntu/Debian: sudo apt-get install curl jq docker.io"
+        echo "  MacOS: brew install curl jq docker"
+        exit 1
+    fi
+}
+
 # Helper functions
 log_test() {
     echo -e "${BLUE}[TEST]${NC} $1"
@@ -74,6 +106,9 @@ main() {
     echo "============================================"
     echo ""
 
+    # Check prerequisites
+    check_prerequisites
+
     # Check if Docker Compose stack is running
     log_test "Checking if Docker Compose stack is running..."
     if ! docker compose -f compose.demo.yml ps > /dev/null 2>&1; then
@@ -128,7 +163,7 @@ main() {
     echo ""
 
     log_test "Checking Grafana datasources..."
-    DATASOURCES=$(curl -s -u admin:admin http://localhost:3001/api/datasources | jq '. | length')
+    DATASOURCES=$(curl -s -u "$GF_ADMIN_USER:$GF_ADMIN_PASSWORD" http://localhost:3001/api/datasources | jq '. | length')
     if [ "$DATASOURCES" -gt 0 ]; then
         log_pass "Grafana has $DATASOURCES datasource(s) configured"
     else

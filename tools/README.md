@@ -180,7 +180,7 @@ WIKI_BASE_PATH=/projects
 
 # Monitoring
 PROMETHEUS_RETENTION=30d
-GRAFANA_ADMIN_PASSWORD=admin
+GRAFANA_ADMIN_PASSWORD=your-secure-password
 
 # Alerting
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL

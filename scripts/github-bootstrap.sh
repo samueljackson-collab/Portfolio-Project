@@ -6,7 +6,7 @@ set -euo pipefail
 # CI/CD pipelines, and documentation structure.
 
 # Configuration
-GH_USER="${GITHUB_USERNAME:-YOUR_GITHUB_USERNAME}"
+GH_USER="${GITHUB_USERNAME:-}"
 REPO_NAME="${REPO_NAME:-enterprise-portfolio}"
 TAG="v0.3.0"
 BRANCH="main"
@@ -42,6 +42,12 @@ check_prerequisites() {
     if ! command -v gh &> /dev/null; then
         log_error "GitHub CLI (gh) is not installed"
         log_info "Install from: https://cli.github.com/"
+        exit 1
+    fi
+
+    if [ -z "$GH_USER" ]; then
+        log_error "GITHUB_USERNAME environment variable is not set"
+        log_info "Set it with: export GITHUB_USERNAME=your-username"
         exit 1
     fi
 
@@ -304,7 +310,8 @@ push_to_github() {
         log_info "Successfully pushed to GitHub"
     else
         log_error "Failed to push to GitHub"
-        log_info "You may need to run: git push -u origin $BRANCH --force"
+        log_info "If the push failed due to remote changes, try: git pull --rebase origin $BRANCH"
+        log_warn "Never use --force unless you're absolutely sure you want to overwrite remote history"
         exit 1
     fi
 }

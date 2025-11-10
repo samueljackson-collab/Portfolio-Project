@@ -71,7 +71,7 @@ jobs:
           fi
 
       - name: Upload documentation artifact
-        if: success()
+        if: success() && hashFiles('mkdocs.yml') != ''
         uses: actions/upload-artifact@v4
         with:
           name: documentation
@@ -186,7 +186,7 @@ jobs:
       - name: Create release archive
         run: |
           if [ -f "scripts/release-build.sh" ]; then
-            bash scripts/release-build.sh
+            VERSION=${{ steps.version.outputs.version }} bash scripts/release-build.sh
           else
             tar -czf enterprise-portfolio.tar.gz \
               --exclude='.git' \
@@ -204,8 +204,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            enterprise-portfolio.tar.gz
-            enterprise-portfolio.zip
-            enterprise-portfolio_manifest.json
+            dist/enterprise-portfolio-${{ steps.version.outputs.version }}.tar.gz
+            dist/enterprise-portfolio-${{ steps.version.outputs.version }}.zip
+            dist/enterprise-portfolio-${{ steps.version.outputs.version }}_manifest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
