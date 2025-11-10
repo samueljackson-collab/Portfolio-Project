@@ -13,7 +13,15 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_health_check(client: AsyncClient):
-    """Test basic health check endpoint."""
+    """
+    Verify the health endpoint returns a 200 status and expected service metadata.
+    
+    Asserts that the response status code is 200 and the JSON body contains:
+    - "status" equal to "healthy"
+    - a "timestamp" field
+    - a "version" field
+    - "service" equal to "Portfolio API"
+    """
     response = await client.get("/health")
 
     assert response.status_code == 200

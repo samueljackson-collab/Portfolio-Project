@@ -49,16 +49,16 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verify a plain text password against a hashed password.
-
-    This is a constant-time comparison to prevent timing attacks.
-
-    Args:
-        plain_password: Password entered by user during login
-        hashed_password: Hashed password from database
-
+    Verify that a plain-text password matches a stored hashed password.
+    
+    Performs a constant-time comparison to prevent timing attacks.
+    
+    Parameters:
+        plain_password (str): Password provided by the user.
+        hashed_password (str): Stored hashed password to verify against.
+    
     Returns:
-        bool: True if password matches, False otherwise
+        bool: True if the password matches the hashed password, False otherwise.
     """
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -112,21 +112,18 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def decode_access_token(token: str) -> dict:
     """
-    Decode and validate a JWT token.
-
-    This function:
-    1. Verifies the signature matches
-    2. Checks the token hasn't expired
-    3. Returns the payload if valid
-
-    Args:
-        token: JWT token string from Authorization header
-
+    Decode and validate a JWT access token.
+    
+    Verifies the token signature and expiration, and ensures the payload contains a non-null "sub" (subject) claim.
+    
+    Parameters:
+        token (str): JWT token string (typically from the Authorization header).
+    
     Returns:
-        dict: Decoded token payload
-
+        dict: Decoded token payload.
+    
     Raises:
-        HTTPException: If token is invalid or expired
+        HTTPException: HTTP 401 when the token is invalid, expired, or missing the "sub" claim.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

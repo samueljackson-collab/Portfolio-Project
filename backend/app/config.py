@@ -58,7 +58,18 @@ class Settings(BaseSettings):
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, v: str) -> str:
-        """Ensure database URL uses asyncpg driver."""
+        """
+        Validate that a database URL uses the asyncpg PostgreSQL driver.
+        
+        Parameters:
+            v (str): Database URL to validate.
+        
+        Returns:
+            str: The same database URL if it starts with "postgresql+asyncpg://".
+        
+        Raises:
+            ValueError: If the URL does not start with "postgresql+asyncpg://".
+        """
         if not v.startswith("postgresql+asyncpg://"):
             raise ValueError(
                 "DATABASE_URL must use asyncpg driver: "
@@ -69,7 +80,18 @@ class Settings(BaseSettings):
     @field_validator("secret_key")
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
-        """Ensure secret key is strong enough."""
+        """
+        Validate that the provided secret key meets the minimum length requirement.
+        
+        Parameters:
+            v (str): Secret key value to validate.
+        
+        Returns:
+            str: The validated secret key.
+        
+        Raises:
+            ValueError: If `v` is shorter than 32 characters.
+        """
         if len(v) < 32:
             raise ValueError("SECRET_KEY must be at least 32 characters long")
         return v

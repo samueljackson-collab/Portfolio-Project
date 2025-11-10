@@ -47,18 +47,16 @@ async def list_content(
     search: Optional[str] = Query(None, description="Search in title and body")
 ) -> ContentListResponse:
     """
-    List content items with pagination and filtering.
-
-    Args:
-        db: Database session
-        current_user: Current user (optional, from auth token)
-        page: Page number (1-indexed)
-        page_size: Number of items per page
-        published_only: Filter to published content only
-        search: Search term for title/body
-
+    Produce a paginated list of content items with optional visibility filtering and text search.
+    
+    Parameters:
+        page (int): 1-indexed page number.
+        page_size (int): Number of items per page (maximum enforced by the endpoint).
+        published_only (bool): If true, restrict results to published content for unauthenticated requests.
+        search (Optional[str]): Substring to match against title or body (case-insensitive).
+    
     Returns:
-        ContentListResponse: Paginated content list with metadata
+        ContentListResponse: Contains the list of content items, total item count, page, page_size, and total pages.
     """
     # Build base query
     query = select(Content)
@@ -127,18 +125,13 @@ async def get_content(
     current_user: Optional[User] = Depends(get_current_user)
 ) -> Content:
     """
-    Get a single content item by ID.
-
-    Args:
-        content_id: UUID of content item
-        db: Database session
-        current_user: Current user (optional)
-
+    Retrieve a content item by its UUID if accessible to the requester.
+    
     Returns:
-        ContentResponse: Content item data
-
+        Content: The requested content instance.
+    
     Raises:
-        HTTPException 404: Content not found or not authorized
+        HTTPException 404: If no content exists with the given ID or if the content is unpublished and not owned by the current user.
     """
     result = await db.execute(
         select(Content).where(Content.id == content_id)
@@ -175,15 +168,15 @@ async def create_content(
     db: AsyncSession = Depends(get_db)
 ) -> Content:
     """
-    Create a new content item.
-
-    Args:
-        content_data: Content creation data
-        current_user: Authenticated user
-        db: Database session
-
+    Create a new content record owned by the authenticated user.
+    
+    Parameters:
+        content_data (ContentCreate): Data used to populate the new content.
+        current_user (User): Authenticated user used to set the content's owner.
+        db (AsyncSession): Database session used to persist the content.
+    
     Returns:
-        ContentResponse: Created content item
+        Content: The newly created Content instance with persisted fields (including `owner_id` and any database-generated fields).
     """
     new_content = Content(
         **content_data.model_dump(),
@@ -210,20 +203,20 @@ async def update_content(
     db: AsyncSession = Depends(get_db)
 ) -> Content:
     """
-    Update an existing content item.
-
-    Args:
-        content_id: UUID of content to update
-        content_data: Updated content data
-        current_user: Authenticated user
-        db: Database session
-
+    Update a content item owned by the current user.
+    
+    Parameters:
+        content_id (UUID): Identifier of the content to update.
+        content_data (ContentUpdate): Fields to update; only provided fields are applied.
+        current_user (User): Authenticated user performing the update; must be the content owner.
+        db (AsyncSession): Database session.
+    
     Returns:
-        ContentResponse: Updated content item
-
+        Content: The updated content instance.
+    
     Raises:
-        HTTPException 404: Content not found
-        HTTPException 403: Not authorized (not the owner)
+        HTTPException: 404 if the content is not found.
+        HTTPException: 403 if the authenticated user is not the owner.
     """
     result = await db.execute(
         select(Content).where(Content.id == content_id)
@@ -266,16 +259,14 @@ async def delete_content(
     db: AsyncSession = Depends(get_db)
 ) -> None:
     """
-    Delete a content item.
-
-    Args:
-        content_id: UUID of content to delete
-        current_user: Authenticated user
-        db: Database session
-
+    Delete the content item identified by content_id.
+    
+    Parameters:
+        content_id (UUID): ID of the content to delete.
+    
     Raises:
-        HTTPException 404: Content not found
-        HTTPException 403: Not authorized (not the owner)
+        HTTPException 404: Content not found.
+        HTTPException 403: Not authorized to delete this content.
     """
     result = await db.execute(
         select(Content).where(Content.id == content_id)

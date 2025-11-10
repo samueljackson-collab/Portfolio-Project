@@ -94,6 +94,12 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
+        """
+        Return a concise developer-facing string representation of the User including its id and email.
+        
+        Returns:
+            str: A string formatted as "<User(id=<id>, email=<email>)>".
+        """
         return f"<User(id={self.id}, email={self.email})>"
 
 
@@ -180,4 +186,10 @@ class Content(Base):
     )
 
     def __repr__(self) -> str:
+        """
+        Provide a concise developer-oriented string representation of the Content instance.
+        
+        Returns:
+            str: String containing the class name and the instance's `id` and `title`, e.g. "<Content(id=..., title=...)>".
+        """
         return f"<Content(id={self.id}, title={self.title})>"

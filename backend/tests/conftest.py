@@ -50,7 +50,12 @@ TestSessionLocal = async_sessionmaker(
 
 @pytest.fixture(scope="session")
 def event_loop() -> Generator:
-    """Create an event loop for the entire test session."""
+    """
+    Provide a dedicated asyncio event loop for the entire test session.
+    
+    Yields:
+        asyncio.AbstractEventLoop: The event loop created for tests; it is closed after the session completes.
+    """
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
@@ -59,13 +64,12 @@ def event_loop() -> Generator:
 @pytest_asyncio.fixture(scope="function")
 async def test_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    Create a fresh database for each test.
-
-    This fixture:
-    1. Creates all tables
-    2. Yields a database session
-    3. Rolls back all changes after the test
-    4. Drops all tables
+    Provide a fresh database session backed by a newly created test database for each test.
+    
+    Creates all tables before yielding a session, rolls back any changes after the test, and drops all tables once the test completes.
+    
+    Returns:
+        An AsyncSession bound to the test database; tables are created before yielding, changes are rolled back after use, and tables are dropped after the test.
     """
     # Create tables
     async with test_engine.begin() as conn:
@@ -84,15 +88,21 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture(scope="function")
 async def client(test_db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """
-    Create a test client with database dependency override.
-
-    Args:
-        test_db: Test database session
-
+    Provide an AsyncClient for tests while overriding the app's database dependency to use the given test session.
+    
+    Parameters:
+        test_db (AsyncSession): Async database session to be injected into the application's `get_db` dependency.
+    
     Yields:
-        AsyncClient: Test HTTP client
+        AsyncClient: HTTP client bound to the FastAPI app that uses `test_db` for database operations.
     """
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
+        """
+        Provide the test database session for FastAPI dependency injection during tests.
+        
+        Returns:
+            AsyncSession: The active AsyncSession bound to the test database.
+        """
         yield test_db
 
     app.dependency_overrides[get_db] = override_get_db
@@ -106,10 +116,10 @@ async def client(test_db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 @pytest_asyncio.fixture
 async def test_user(test_db: AsyncSession) -> User:
     """
-    Create a test user in the database.
-
+    Create and persist a test user with predefined credentials.
+    
     Returns:
-        User: Created test user
+        User: The persisted User instance (refreshed with DB-generated fields).
     """
     user = User(
         email="testuser@example.com",
@@ -125,14 +135,14 @@ async def test_user(test_db: AsyncSession) -> User:
 @pytest_asyncio.fixture
 async def test_user_token(client: AsyncClient, test_user: User) -> str:
     """
-    Get authentication token for test user.
-
-    Args:
-        client: Test HTTP client
-        test_user: Test user instance
-
+    Retrieve a JWT access token for the provided test user.
+    
+    Parameters:
+        client (AsyncClient): Test HTTP client used to make the login request.
+        test_user (User): The test user whose credentials will be used to authenticate.
+    
     Returns:
-        str: JWT access token
+        str: JWT access token.
     """
     response = await client.post(
         "/auth/login",
@@ -151,14 +161,10 @@ async def authenticated_client(
     test_user_token: str
 ) -> AsyncClient:
     """
-    Create an authenticated test client.
-
-    Args:
-        client: Test HTTP client
-        test_user_token: Authentication token
-
+    Attach a Bearer Authorization header with the provided token to the given client and return it.
+    
     Returns:
-        AsyncClient: Authenticated test client
+        AsyncClient: The same client instance with the `Authorization: Bearer <token>` header set.
     """
     client.headers.update({"Authorization": f"Bearer {test_user_token}"})
     return client
@@ -170,14 +176,14 @@ async def test_content(
     test_user: User
 ) -> Content:
     """
-    Create test content item.
-
-    Args:
-        test_db: Test database session
-        test_user: Test user instance
-
+    Create and persist a Content record owned by the provided test user.
+    
+    Parameters:
+        test_db (AsyncSession): Async database session used to persist the content.
+        test_user (User): Owner of the created content.
+    
     Returns:
-        Content: Created test content
+        Content: The persisted Content instance with refreshed state (including id).
     """
     content = Content(
         title="Test Content",
@@ -193,7 +199,12 @@ async def test_content(
 
 @pytest.fixture
 def sample_user_data() -> dict:
-    """Sample user registration data."""
+    """
+    Return a sample user registration payload for tests.
+    
+    Returns:
+        dict: Dictionary containing `email` (str) and `password` (str) for creating a new user.
+    """
     return {
         "email": "newuser@example.com",
         "password": "securepassword123"
@@ -202,7 +213,12 @@ def sample_user_data() -> dict:
 
 @pytest.fixture
 def sample_content_data() -> dict:
-    """Sample content creation data."""
+    """
+    Return a sample payload for creating new content.
+    
+    Returns:
+        dict: Example content data with keys 'title' (string), 'body' (string), and 'is_published' (bool).
+    """
     return {
         "title": "New Content Item",
         "body": "This is the body of the new content",

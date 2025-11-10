@@ -44,21 +44,12 @@ Base = declarative_base()
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    Dependency that provides database session to route handlers.
-
-    Usage in routes:
-        @router.get("/items")
-        async def get_items(db: AsyncSession = Depends(get_db)):
-            result = await db.execute(select(Item))
-            return result.scalars().all()
-
-    Yields:
-        AsyncSession: Database session
-
-    Note:
-        Session is automatically closed after request completes.
-        Transactions are committed automatically on success.
-        Transactions are rolled back automatically on exception.
+    Provide a per-request database session for FastAPI dependency injection.
+    
+    Yields a session that will be committed if the caller completes successfully, rolled back if an exception is raised, and always closed after use.
+    
+    Returns:
+        AsyncSession: A session bound to the configured engine; committed on normal completion, rolled back on exception, and closed when the dependency context exits.
     """
     async with AsyncSessionLocal() as session:
         try:
@@ -83,5 +74,9 @@ async def init_db() -> None:
 
 
 async def close_db() -> None:
-    """Dispose of database engine and close all connections."""
+    """
+    Close and dispose the module-level database engine, releasing all pooled connections.
+    
+    This ensures the engine is disposed and its connection pool is closed; call during application shutdown to free database resources.
+    """
     await engine.dispose()

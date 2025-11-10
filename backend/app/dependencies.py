@@ -31,23 +31,16 @@ async def get_current_user(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:
     """
-    Dependency to get the currently authenticated user.
-
-    This dependency:
-    1. Extracts the token from Authorization header
-    2. Validates and decodes the JWT token
-    3. Looks up the user in the database
-    4. Returns the User object or raises 401
-
-    Args:
-        credentials: HTTP Bearer token from Authorization header
-        db: Database session (injected by FastAPI)
-
+    Retrieve the currently authenticated User from a Bearer JWT.
+    
+    Validates the provided Authorization Bearer token, decodes it to extract the subject email, loads the corresponding User from the database, and ensures the account is active.
+    
     Returns:
-        User: The authenticated user object
-
+        The User corresponding to the token's subject email.
+    
     Raises:
-        HTTPException: 401 if token invalid or user not found
+        HTTPException: 401 if the token is missing, invalid, or no matching user is found.
+        HTTPException: 403 if the user account exists but is inactive.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -92,16 +85,13 @@ async def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)]
 ) -> User:
     """
-    Dependency that requires an active user.
-
-    Args:
-        current_user: User object from get_current_user dependency
-
+    Ensure the current user account is active.
+    
     Returns:
-        User: The active user object
-
+        The provided User object when active.
+    
     Raises:
-        HTTPException: 400 if user account is inactive
+        HTTPException: 400 if the user's account is not active.
     """
     if not current_user.is_active:
         raise HTTPException(

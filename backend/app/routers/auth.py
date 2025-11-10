@@ -40,16 +40,15 @@ async def register(
 ) -> User:
     """
     Register a new user account.
-
-    Args:
-        user_data: User registration data (email, password)
-        db: Database session
-
+    
+    Parameters:
+        user_data (UserCreate): Registration payload containing email and password.
+    
     Returns:
-        UserResponse: Created user data
-
+        User: Created user record.
+    
     Raises:
-        HTTPException 400: If email already registered
+        HTTPException: 400 if the provided email is already registered.
     """
     # Check if user already exists
     result = await db.execute(
@@ -92,17 +91,17 @@ async def login(
     db: AsyncSession = Depends(get_db)
 ) -> Token:
     """
-    Authenticate user and generate JWT token.
-
-    Args:
-        credentials: Login credentials (email, password)
-        db: Database session
-
+    Authenticate a user and issue a JWT access token.
+    
+    Parameters:
+        credentials (UserLogin): User login data containing `email` and `password`.
+    
     Returns:
-        Token: JWT access token with expiration
-
+        Token: Object containing `access_token` (JWT string), `token_type` ("bearer"), and `expires_in` (expiration time in seconds).
+    
     Raises:
-        HTTPException 401: If credentials are invalid
+        HTTPException: 401 if the email or password is incorrect.
+        HTTPException: 403 if the user account is inactive.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -153,12 +152,9 @@ async def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ) -> User:
     """
-    Get information about the currently authenticated user.
-
-    Args:
-        current_user: Authenticated user (injected by dependency)
-
+    Get information for the currently authenticated user.
+    
     Returns:
-        UserResponse: Current user's data
+        current_user (User): The authenticated user's data.
     """
     return current_user

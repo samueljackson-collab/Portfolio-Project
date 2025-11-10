@@ -12,7 +12,16 @@ from pathlib import Path
 
 
 def check_file_exists(file_path: str, description: str) -> bool:
-    """Check if a file exists."""
+    """
+    Determine whether a file exists at the given path and print a status line.
+    
+    Parameters:
+        file_path (str): Path to the file to check.
+        description (str): Human-readable label included in the printed status message.
+    
+    Returns:
+        exists (bool): True if the file exists, False otherwise.
+    """
     if Path(file_path).exists():
         print(f"✓ {description}: {file_path}")
         return True
@@ -22,7 +31,16 @@ def check_file_exists(file_path: str, description: str) -> bool:
 
 
 def check_directory_exists(dir_path: str, description: str) -> bool:
-    """Check if a directory exists."""
+    """
+    Determine whether a filesystem path exists and is a directory, printing a success or failure line.
+    
+    Parameters:
+        dir_path (str): Path to check.
+        description (str): Human-readable label used in the printed message.
+    
+    Returns:
+        bool: `True` if `dir_path` exists and is a directory, `False` otherwise.
+    """
     if Path(dir_path).is_dir():
         print(f"✓ {description}: {dir_path}")
         return True
@@ -32,7 +50,14 @@ def check_directory_exists(dir_path: str, description: str) -> bool:
 
 
 def verify_backend_setup() -> bool:
-    """Verify complete backend setup."""
+    """
+    Verify that the repository contains the expected backend files, directories, and migration/test artifacts.
+    
+    Performs structured checks for configuration files, Docker files, application modules, API routers, Alembic migrations, test suite files, and documentation, printing a summary of results.
+    
+    Returns:
+        True if all checks passed, False otherwise.
+    """
     print("=" * 60)
     print("Backend Setup Verification")
     print("=" * 60)
@@ -113,7 +138,13 @@ def verify_backend_setup() -> bool:
 
 
 def verify_python_syntax() -> bool:
-    """Verify Python syntax for all files."""
+    """
+    Check syntax of a set of critical Python source files used by the project.
+    
+    Attempts to compile each file in the script's predefined list and prints per-file status to stdout.
+    Returns:
+        bool: `True` if all files compiled without syntax errors and were present, `False` otherwise.
+    """
     print("\n🔍 Verifying Python syntax...")
 
     python_files = [
