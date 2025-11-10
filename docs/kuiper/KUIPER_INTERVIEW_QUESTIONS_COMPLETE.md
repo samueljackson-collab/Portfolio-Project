@@ -8191,7 +8191,2035 @@ jobs:
 
 ---
 
-**Continue reading:** Questions 31-60 coming next (SRE Practices, Advanced Networking, Homelab, Behavioral)...
+## Q31: How would you define and implement Service Level Objectives (SLOs) and Service Level Indicators (SLIs) for the Kuiper satellite ground station service?
+
+**Difficulty:** ⭐⭐⭐
+**Category:** Site Reliability Engineering
+**Risk Level:** Medium
+**Timebox:** 20 minutes
+**Owner:** SRE/Platform Engineering
+
+### Simple Explanation (Feynman Method)
+
+An SLI (Service Level Indicator) is a **measurement** of how well your service is doing. Think of it like checking your car's speedometer, fuel gauge, and temperature - these are indicators that tell you if your car is working properly.
+
+An SLO (Service Level Objective) is a **target** you set for those measurements. It's like saying "I want my car to run at least 95% of the time without breaking down." You're setting a goal that's realistic but challenging.
+
+For the Kuiper ground stations:
+- **SLI Example:** "What percentage of satellite passes are successfully completed?"
+- **SLO Example:** "We want 99.5% of satellite passes to succeed each month"
+
+The key is: **SLIs are what you measure, SLOs are what you promise.**
+
+### Technical Explanation
+
+**SLI Design for Kuiper Ground Stations:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    KUIPER SLO FRAMEWORK                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  User Journey: Satellite Pass Execution                    │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ 1. Predict Pass → 2. Acquire Signal → 3. Transfer   │  │
+│  │    Data → 4. Verify Integrity → 5. Release Satellite│  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+│  SLIs (What We Measure):                                   │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                                             │
+│  📊 Availability SLI:                                      │
+│     successful_requests / total_requests                   │
+│     Target: 99.5% of satellite passes succeed              │
+│                                                             │
+│  ⚡ Latency SLI:                                           │
+│     P99(command_response_time) < 500ms                     │
+│     Target: 99% of commands respond within 500ms           │
+│                                                             │
+│  📈 Throughput SLI:                                        │
+│     actual_data_transferred / expected_data                │
+│     Target: 99% of expected data volume transferred        │
+│                                                             │
+│  🎯 Quality SLI:                                           │
+│     data_integrity_checks_passed / total_checks            │
+│     Target: 99.99% of data integrity checks pass           │
+│                                                             │
+│  Error Budget:                                             │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │ If SLO = 99.5%, then error budget = 0.5%          │   │
+│  │ = 3.6 hours of downtime per month allowed         │   │
+│  │                                                    │   │
+│  │ Budget Spent: ▓▓▓▓▓▓░░░░ (60%)                   │   │
+│  │ Budget Remaining: 1.4 hours this month            │   │
+│  └────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key SRE Principles:**
+
+1. **SLIs must be user-centric** - Measure what users care about
+2. **SLOs should have error budgets** - Accept that 100% reliability is impossible
+3. **Use error budgets to balance velocity vs stability** - If budget is healthy, ship faster; if exhausted, focus on reliability
+
+### Production Code
+
+**1. SLI/SLO Configuration (YAML):**
+
+```yaml
+# sre/slos.yml
+---
+service: kuiper-ground-station
+owner: sre-team
+review_frequency: quarterly
+
+slos:
+  - name: satellite-pass-availability
+    description: "Percentage of successful satellite passes"
+    sli:
+      type: availability
+      query: |
+        sum(rate(satellite_pass_success_total[30d]))
+        /
+        sum(rate(satellite_pass_total[30d]))
+    target: 0.995  # 99.5%
+    window: 30d
+    error_budget: 0.005  # 0.5% = ~3.6 hours/month
+    alerts:
+      - severity: warning
+        threshold: 0.50  # 50% budget consumed
+      - severity: critical
+        threshold: 0.90  # 90% budget consumed
+
+  - name: command-latency
+    description: "P99 command response time"
+    sli:
+      type: latency
+      query: |
+        histogram_quantile(0.99,
+          rate(satellite_command_duration_seconds_bucket[5m])
+        )
+    target: 0.500  # 500ms
+    window: 30d
+    alerts:
+      - severity: warning
+        threshold: 0.600  # 600ms
+      - severity: critical
+        threshold: 1.000  # 1 second
+
+  - name: data-throughput
+    description: "Data transfer completion rate"
+    sli:
+      type: quality
+      query: |
+        sum(rate(data_bytes_transferred_total[30d]))
+        /
+        sum(rate(data_bytes_expected_total[30d]))
+    target: 0.990  # 99%
+    window: 30d
+    error_budget: 0.010
+
+  - name: data-integrity
+    description: "Data integrity check success rate"
+    sli:
+      type: quality
+      query: |
+        sum(rate(data_integrity_checks_passed[30d]))
+        /
+        sum(rate(data_integrity_checks_total[30d]))
+    target: 0.9999  # 99.99%
+    window: 30d
+    error_budget: 0.0001
+```
+
+**2. SLI Instrumentation (Python):**
+
+```python
+# app/sli_metrics.py
+from prometheus_client import Counter, Histogram, Gauge
+import time
+from functools import wraps
+
+# Define metrics
+satellite_pass_total = Counter(
+    'satellite_pass_total',
+    'Total satellite passes attempted',
+    ['ground_station', 'satellite_id']
+)
+
+satellite_pass_success = Counter(
+    'satellite_pass_success_total',
+    'Successful satellite passes',
+    ['ground_station', 'satellite_id']
+)
+
+command_duration = Histogram(
+    'satellite_command_duration_seconds',
+    'Command response time',
+    ['command_type'],
+    buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+)
+
+data_transferred = Counter(
+    'data_bytes_transferred_total',
+    'Bytes successfully transferred',
+    ['ground_station']
+)
+
+data_expected = Counter(
+    'data_bytes_expected_total',
+    'Bytes expected to transfer',
+    ['ground_station']
+)
+
+data_integrity_checks = Counter(
+    'data_integrity_checks_total',
+    'Total data integrity checks',
+    ['ground_station']
+)
+
+data_integrity_passed = Counter(
+    'data_integrity_checks_passed',
+    'Data integrity checks passed',
+    ['ground_station']
+)
+
+# Decorator for tracking SLIs
+def track_satellite_pass(func):
+    """Track satellite pass success/failure for SLI calculation"""
+    @wraps(func)
+    def wrapper(ground_station, satellite_id, *args, **kwargs):
+        satellite_pass_total.labels(
+            ground_station=ground_station,
+            satellite_id=satellite_id
+        ).inc()
+
+        try:
+            result = func(ground_station, satellite_id, *args, **kwargs)
+
+            # Only count as success if all criteria met
+            if result.get('status') == 'success':
+                satellite_pass_success.labels(
+                    ground_station=ground_station,
+                    satellite_id=satellite_id
+                ).inc()
+
+            return result
+        except Exception as e:
+            # Failure - don't increment success counter
+            raise
+
+    return wrapper
+
+def track_command_latency(command_type):
+    """Track command response time for latency SLI"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = func(*args, **kwargs)
+                return result
+            finally:
+                duration = time.time() - start_time
+                command_duration.labels(command_type=command_type).observe(duration)
+        return wrapper
+    return decorator
+
+# Example usage
+@track_satellite_pass
+def execute_satellite_pass(ground_station, satellite_id, expected_data_size):
+    """Execute a satellite pass and track all SLIs"""
+
+    # Track expected data
+    data_expected.labels(ground_station=ground_station).inc(expected_data_size)
+
+    # Perform pass operations
+    connection = establish_connection(satellite_id)
+    data = download_data(connection)
+
+    # Track actual data transferred
+    data_transferred.labels(ground_station=ground_station).inc(len(data))
+
+    # Verify data integrity
+    data_integrity_checks.labels(ground_station=ground_station).inc()
+    if verify_checksum(data):
+        data_integrity_passed.labels(ground_station=ground_station).inc()
+
+    return {
+        'status': 'success',
+        'bytes_transferred': len(data),
+        'integrity_check': 'passed'
+    }
+
+@track_command_latency('antenna_position')
+def send_antenna_command(command):
+    """Send command to antenna and track latency"""
+    response = antenna_controller.send(command)
+    return response
+```
+
+**3. Error Budget Dashboard (PromQL + Grafana JSON):**
+
+```python
+# sre/error_budget_calculator.py
+from datetime import datetime, timedelta
+
+class ErrorBudgetCalculator:
+    """Calculate and track error budget consumption"""
+
+    def __init__(self, prometheus_client, slo_config):
+        self.prom = prometheus_client
+        self.slo = slo_config
+
+    def calculate_error_budget_remaining(self, slo_name, window='30d'):
+        """
+        Calculate remaining error budget percentage
+
+        Error Budget = (1 - SLO Target)
+        Budget Consumed = (1 - Actual SLI)
+        Budget Remaining = Error Budget - Budget Consumed
+        """
+        slo = self._get_slo_config(slo_name)
+
+        # Query actual SLI from Prometheus
+        actual_sli = self.prom.query(slo['sli']['query'], window)
+
+        # Calculate budget
+        error_budget = 1 - slo['target']
+        budget_consumed = 1 - actual_sli
+        budget_remaining = error_budget - budget_consumed
+        budget_remaining_pct = (budget_remaining / error_budget) * 100
+
+        return {
+            'slo_name': slo_name,
+            'target': slo['target'],
+            'actual_sli': actual_sli,
+            'error_budget': error_budget,
+            'budget_consumed': budget_consumed,
+            'budget_remaining': budget_remaining,
+            'budget_remaining_pct': budget_remaining_pct,
+            'status': self._get_budget_status(budget_remaining_pct)
+        }
+
+    def _get_budget_status(self, remaining_pct):
+        """Determine health status based on remaining budget"""
+        if remaining_pct >= 50:
+            return 'HEALTHY'
+        elif remaining_pct >= 25:
+            return 'WARNING'
+        elif remaining_pct >= 10:
+            return 'CRITICAL'
+        else:
+            return 'EXHAUSTED'
+
+    def project_budget_exhaustion(self, slo_name):
+        """
+        Project when error budget will be exhausted based on current burn rate
+        """
+        budget_data = self.calculate_error_budget_remaining(slo_name)
+
+        # Calculate burn rate (budget consumed per day)
+        current_burn_rate = self._calculate_burn_rate(slo_name, '7d')
+
+        if current_burn_rate <= 0:
+            return None  # Not burning budget
+
+        # Project exhaustion
+        days_until_exhaustion = (
+            budget_data['budget_remaining'] / current_burn_rate
+        )
+
+        exhaustion_date = datetime.now() + timedelta(days=days_until_exhaustion)
+
+        return {
+            'burn_rate_per_day': current_burn_rate,
+            'days_until_exhaustion': days_until_exhaustion,
+            'projected_exhaustion_date': exhaustion_date.isoformat(),
+            'recommendation': self._get_recommendation(days_until_exhaustion)
+        }
+
+    def _get_recommendation(self, days_until_exhaustion):
+        """Provide recommendation based on burn rate"""
+        if days_until_exhaustion < 7:
+            return "STOP new feature releases. Focus on reliability improvements."
+        elif days_until_exhaustion < 14:
+            return "SLOW DOWN releases. Increase testing and monitoring."
+        elif days_until_exhaustion < 21:
+            return "CAUTION: Monitor closely. Consider postponing risky changes."
+        else:
+            return "HEALTHY: Continue normal development velocity."
+
+# Usage example
+if __name__ == '__main__':
+    calculator = ErrorBudgetCalculator(prom_client, slo_config)
+
+    budget = calculator.calculate_error_budget_remaining('satellite-pass-availability')
+    print(f"Error Budget Status: {budget['status']}")
+    print(f"Remaining: {budget['budget_remaining_pct']:.1f}%")
+
+    projection = calculator.project_budget_exhaustion('satellite-pass-availability')
+    if projection:
+        print(f"Days until exhaustion: {projection['days_until_exhaustion']:.1f}")
+        print(f"Recommendation: {projection['recommendation']}")
+```
+
+**4. Prometheus Alert Rules:**
+
+```yaml
+# prometheus/alerts/slo-alerts.yml
+groups:
+  - name: slo-error-budget
+    interval: 1m
+    rules:
+      # Fast burn alert - 50% budget consumed in 1 hour
+      - alert: ErrorBudgetFastBurn
+        expr: |
+          (
+            1 - (
+              sum(rate(satellite_pass_success_total[1h]))
+              /
+              sum(rate(satellite_pass_total[1h]))
+            )
+          ) > 0.005 * 0.5  # 50% of monthly budget in 1 hour
+        for: 5m
+        labels:
+          severity: critical
+          slo: satellite-pass-availability
+        annotations:
+          summary: "Error budget burning rapidly"
+          description: "At current rate, error budget will be exhausted in {{ $value }} hours"
+          runbook: "https://wiki.kuiper.aws/runbooks/error-budget-fast-burn"
+
+      # Slow burn alert - Budget will exhaust before month end
+      - alert: ErrorBudgetSlowBurn
+        expr: |
+          (
+            1 - (
+              sum(rate(satellite_pass_success_total[30d]))
+              /
+              sum(rate(satellite_pass_total[30d]))
+            )
+          ) > 0.0025  # 50% of monthly budget consumed
+        for: 1h
+        labels:
+          severity: warning
+          slo: satellite-pass-availability
+        annotations:
+          summary: "Error budget 50% consumed"
+          description: "Error budget is {{ $value | humanizePercentage }} consumed"
+
+      # Budget exhausted
+      - alert: ErrorBudgetExhausted
+        expr: |
+          (
+            1 - (
+              sum(rate(satellite_pass_success_total[30d]))
+              /
+              sum(rate(satellite_pass_total[30d]))
+            )
+          ) > 0.005  # 100% of monthly budget consumed
+        labels:
+          severity: critical
+          slo: satellite-pass-availability
+        annotations:
+          summary: "Error budget EXHAUSTED"
+          description: "All error budget consumed. STOP feature releases."
+          action_required: "Halt all deployments. Focus on reliability improvements."
+```
+
+**5. Terraform for SLO Dashboard:**
+
+```hcl
+# terraform/monitoring/slo-dashboard.tf
+resource "aws_cloudwatch_dashboard" "slo_dashboard" {
+  dashboard_name = "kuiper-slo-dashboard"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type = "metric"
+        properties = {
+          title   = "Satellite Pass Availability SLI"
+          metrics = [
+            ["Kuiper", "SatellitePassSuccess", { stat = "Sum", label = "Successful" }],
+            [".", "SatellitePassTotal", { stat = "Sum", label = "Total" }]
+          ]
+          view    = "timeSeries"
+          region  = "us-east-1"
+          period  = 300
+          yAxis = {
+            left = {
+              min = 0.990
+              max = 1.0
+            }
+          }
+          annotations = {
+            horizontal = [
+              {
+                value = 0.995
+                label = "SLO Target (99.5%)"
+                color = "#FF0000"
+              }
+            ]
+          }
+        }
+      },
+      {
+        type = "metric"
+        properties = {
+          title = "Error Budget Remaining"
+          metrics = [
+            ["Kuiper", "ErrorBudgetRemaining", { stat = "Average" }]
+          ]
+          view   = "singleValue"
+          region = "us-east-1"
+        }
+      }
+    ]
+  })
+}
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **SLO Configuration** | `sre/slos.yml` | Defined SLIs, targets, error budgets |
+| **Instrumentation** | `app/sli_metrics.py` | How to instrument code for SLIs |
+| **Error Budget Calculator** | `sre/error_budget_calculator.py` | Budget tracking and projections |
+| **Alert Rules** | `prometheus/alerts/slo-alerts.yml` | Multi-window burn rate alerts |
+| **Dashboard** | `terraform/monitoring/slo-dashboard.tf` | Visual SLO tracking |
+
+**Learn More:**
+- [Google SRE Book - Chapter 4: Service Level Objectives](https://sre.google/sre-book/service-level-objectives/)
+- [Implementing SLOs - Alex Hidalgo](https://www.alex-hidalgo.com/the-slo-book)
+- [Prometheus SLO Example](https://prometheus.io/docs/practices/histograms/)
+
+---
+
+## Q32: Explain error budgets and how you would use them to balance feature velocity with system reliability in the Kuiper project.
+
+**Difficulty:** ⭐⭐⭐
+**Category:** Site Reliability Engineering
+**Risk Level:** High
+**Timebox:** 15 minutes
+**Owner:** SRE/Engineering Leadership
+
+### Simple Explanation (Feynman Method)
+
+An **error budget** is like a "mistake allowance." Imagine you promise your service will work 99.9% of the time. That means you're accepting it can break 0.1% of the time - that's your error budget.
+
+**The clever part:** You use this budget to make decisions:
+- **Budget is healthy?** → Ship new features faster (you can afford some risk)
+- **Budget is exhausted?** → STOP shipping features, fix reliability issues
+
+Think of it like a bank account:
+- You start the month with $100 (your error budget)
+- Each outage "withdraws" money ($30 for a 2-hour outage)
+- If you run out of money, you can't "spend" on risky deployments anymore
+
+**Example:**
+- **SLO:** 99.5% availability (0.5% error budget = 3.6 hours downtime/month)
+- **Month so far:** 2 hours of downtime (56% of budget spent)
+- **Decision:** Still have 44% budget left - okay to deploy new feature on Friday
+
+### Technical Explanation
+
+**Error Budget Philosophy:**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│             ERROR BUDGET DECISION FRAMEWORK                  │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  100% Reliability = 0% Innovation                           │
+│  ──────────────────────────────────────────────────────────  │
+│                                                              │
+│  Perfect uptime means:                                       │
+│    ❌ No deployments (risk of breaking things)              │
+│    ❌ No experiments (might fail)                            │
+│    ❌ No learning (too afraid to try new things)            │
+│                                                              │
+│  Better approach: ERROR BUDGETS                             │
+│  ──────────────────────────────────────────────────────────  │
+│                                                              │
+│  Monthly Error Budget: 3.6 hours (99.5% SLO)               │
+│                                                              │
+│  Week 1: ▓▓░░░░░░░░ (20% spent - 0.7 hours downtime)      │
+│          ✅ DEPLOY FREELY - Budget healthy                  │
+│                                                              │
+│  Week 2: ▓▓▓▓▓░░░░░ (50% spent - 1.8 hours downtime)      │
+│          ⚠️  DEPLOY CAREFULLY - Budget half gone           │
+│                                                              │
+│  Week 3: ▓▓▓▓▓▓▓▓▓░ (90% spent - 3.2 hours downtime)      │
+│          🛑 STOP DEPLOYS - Focus on reliability            │
+│                                                              │
+│  Week 4: ▓▓▓▓▓▓▓▓▓▓ (100% spent - 3.6+ hours)             │
+│          🚨 FREEZE - Fix existing issues ONLY              │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Key Concepts:**
+
+1. **Error Budget = (1 - SLO) × Time Window**
+   - SLO: 99.5% → Error Budget: 0.5%
+   - 30 days = 43,200 minutes
+   - 0.5% of 43,200 = 216 minutes = 3.6 hours
+
+2. **Toil vs Innovation Trade-off:**
+   - **Toil:** Repetitive, manual, no long-term value work
+   - Goal: Keep toil < 50% of SRE time
+   - Use automation to reduce toil, freeing time for innovation
+
+3. **Budget Consumption Sources:**
+   - Planned changes (deployments, maintenance)
+   - Incidents (outages, bugs)
+   - Dependencies (AWS issues, third-party failures)
+
+### Production Code
+
+**1. Error Budget Policy Document:**
+
+```yaml
+# sre/error-budget-policy.yml
+---
+policy_name: "Kuiper Error Budget Policy"
+version: "1.0"
+effective_date: "2025-01-01"
+review_frequency: "quarterly"
+
+objectives:
+  - Balance reliability with feature velocity
+  - Make data-driven decisions on releases
+  - Prevent burnout from excessive toil
+  - Foster blameless culture
+
+error_budget_tiers:
+  tier_1_critical:
+    services: ["satellite-command-control", "telemetry-ingestion"]
+    slo: 0.9995  # 99.95%
+    monthly_budget_minutes: 21.6
+
+  tier_2_important:
+    services: ["ground-station-api", "data-processing"]
+    slo: 0.995   # 99.5%
+    monthly_budget_minutes: 216
+
+  tier_3_standard:
+    services: ["reporting-dashboard", "admin-portal"]
+    slo: 0.99    # 99%
+    monthly_budget_minutes: 432
+
+decision_matrix:
+  # Budget remaining >= 50%
+  healthy:
+    budget_threshold: 0.50
+    actions:
+      - "✅ Deploy new features with standard process"
+      - "✅ Conduct experiments and A/B tests"
+      - "✅ Perform non-emergency changes"
+      - "✅ Schedule maintenance windows"
+    deployment_frequency: "Multiple times per day"
+    approval_required: "Tech lead"
+
+  # Budget remaining 25-50%
+  warning:
+    budget_threshold: 0.25
+    actions:
+      - "⚠️  Deploy only high-value features"
+      - "⚠️  Increase testing rigor (additional staging)"
+      - "⚠️  No risky refactorings"
+      - "⚠️  Defer non-critical changes"
+    deployment_frequency: "Once per day"
+    approval_required: "Engineering manager"
+
+  # Budget remaining 10-25%
+  critical:
+    budget_threshold: 0.10
+    actions:
+      - "🛑 Deploy only critical bug fixes"
+      - "🛑 Halt feature development"
+      - "🛑 Focus on reliability improvements"
+      - "🛑 Conduct incident retrospectives"
+    deployment_frequency: "Emergency only"
+    approval_required: "Director of Engineering"
+
+  # Budget exhausted (< 10%)
+  exhausted:
+    budget_threshold: 0.00
+    actions:
+      - "🚨 COMPLETE DEPLOYMENT FREEZE"
+      - "🚨 All hands on reliability"
+      - "🚨 Daily standup on incident resolution"
+      - "🚨 Exec team involvement"
+    deployment_frequency: "Zero"
+    approval_required: "VP Engineering + SRE Director"
+
+toil_policy:
+  max_toil_percentage: 0.50  # 50% of SRE time
+  measurement_window: "monthly"
+  toil_categories:
+    - manual_deployments
+    - ticket_response
+    - oncall_pages
+    - manual_scaling
+    - log_searching
+
+  reduction_strategies:
+    - "Automate repetitive tasks with scripts/pipelines"
+    - "Implement self-service tools for developers"
+    - "Improve monitoring to reduce false positives"
+    - "Create runbooks for common operations"
+
+  escalation:
+    if_toil_exceeds_50_percent:
+      - "Immediately halt new project work"
+      - "Dedicate sprint to automation"
+      - "Bring in additional engineering resources"
+```
+
+**2. Error Budget Enforcement Bot:**
+
+```python
+# sre/error_budget_bot.py
+"""
+Slack bot that enforces error budget policy
+Blocks deployments when budget is exhausted
+"""
+import os
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+import boto3
+from datetime import datetime
+
+class ErrorBudgetBot:
+    def __init__(self):
+        self.slack = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
+        self.ssm = boto3.client('ssm')
+        self.policy = self._load_policy()
+
+    def _load_policy(self):
+        """Load error budget policy from Parameter Store"""
+        response = self.ssm.get_parameter(
+            Name='/kuiper/sre/error-budget-policy',
+            WithDecryption=True
+        )
+        return yaml.safe_load(response['Parameter']['Value'])
+
+    def check_deployment_allowed(self, service_name, requester):
+        """
+        Check if deployment is allowed based on error budget
+        Returns: (allowed: bool, reason: str, required_approval: str)
+        """
+        # Calculate current error budget
+        budget_status = self._get_budget_status(service_name)
+        remaining_pct = budget_status['budget_remaining_pct']
+
+        # Determine policy tier
+        if remaining_pct >= 50:
+            tier = 'healthy'
+        elif remaining_pct >= 25:
+            tier = 'warning'
+        elif remaining_pct >= 10:
+            tier = 'critical'
+        else:
+            tier = 'exhausted'
+
+        policy = self.policy['decision_matrix'][tier]
+
+        return {
+            'allowed': tier != 'exhausted',
+            'tier': tier,
+            'remaining_pct': remaining_pct,
+            'actions': policy['actions'],
+            'approval_required': policy['approval_required'],
+            'deployment_frequency': policy['deployment_frequency']
+        }
+
+    def handle_deployment_request(self, payload):
+        """
+        Handle deployment request from CI/CD pipeline
+        Called via webhook from GitHub Actions
+        """
+        service = payload['service']
+        requester = payload['requester']
+        pr_url = payload['pull_request_url']
+
+        # Check budget
+        result = self.check_deployment_allowed(service, requester)
+
+        if not result['allowed']:
+            # Block deployment
+            self._block_deployment(service, requester, pr_url, result)
+            return {'status': 'blocked', 'reason': result}
+
+        elif result['tier'] in ['warning', 'critical']:
+            # Require additional approval
+            self._request_approval(service, requester, pr_url, result)
+            return {'status': 'pending_approval', 'reason': result}
+
+        else:
+            # Allow deployment
+            self._log_deployment(service, requester, 'approved_automatic')
+            return {'status': 'approved', 'reason': result}
+
+    def _block_deployment(self, service, requester, pr_url, result):
+        """Send Slack message blocking deployment"""
+        message = f"""
+🚨 *DEPLOYMENT BLOCKED* 🚨
+
+*Service:* `{service}`
+*Requester:* {requester}
+*PR:* {pr_url}
+
+*Reason:* Error budget exhausted
+*Budget Remaining:* {result['remaining_pct']:.1f}%
+
+*Policy Actions Required:*
+{self._format_actions(result['actions'])}
+
+*To proceed:*
+Get approval from: *{result['approval_required']}*
+Focus on reliability improvements before new features.
+
+*Error Budget Dashboard:* https://grafana.kuiper.aws/slo
+"""
+
+        try:
+            self.slack.chat_postMessage(
+                channel='#kuiper-deployments',
+                text=message,
+                blocks=[
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": message}
+                    },
+                    {
+                        "type": "actions",
+                        "elements": [
+                            {
+                                "type": "button",
+                                "text": {"type": "plain_text", "text": "View Budget"},
+                                "url": "https://grafana.kuiper.aws/slo",
+                                "style": "danger"
+                            }
+                        ]
+                    }
+                ]
+            )
+        except SlackApiError as e:
+            print(f"Error sending Slack message: {e}")
+
+    def _request_approval(self, service, requester, pr_url, result):
+        """Request approval from appropriate person"""
+        message = f"""
+⚠️  *DEPLOYMENT REQUIRES APPROVAL* ⚠️
+
+*Service:* `{service}`
+*Requester:* {requester}
+*PR:* {pr_url}
+
+*Error Budget Status:* {result['tier'].upper()}
+*Budget Remaining:* {result['remaining_pct']:.1f}%
+
+*Policy Actions:*
+{self._format_actions(result['actions'])}
+
+*Approval Required From:* {result['approval_required']}
+
+Click below to approve or deny:
+"""
+
+        self.slack.chat_postMessage(
+            channel='#kuiper-deployments',
+            text=message,
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": message}
+                },
+                {
+                    "type": "actions",
+                    "block_id": f"approval_{service}_{int(datetime.now().timestamp())}",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "✅ Approve"},
+                            "style": "primary",
+                            "value": "approve",
+                            "action_id": "approve_deployment"
+                        },
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "❌ Deny"},
+                            "style": "danger",
+                            "value": "deny",
+                            "action_id": "deny_deployment"
+                        }
+                    ]
+                }
+            ]
+        )
+
+    def _format_actions(self, actions):
+        """Format policy actions as bullet list"""
+        return '\n'.join([f"• {action}" for action in actions])
+
+    def calculate_toil_percentage(self, engineer_id, window='30d'):
+        """
+        Calculate percentage of time spent on toil
+        Uses ticket system + on-call logs
+        """
+        # Query Jira for tickets tagged as 'toil'
+        toil_hours = self._get_toil_hours_from_jira(engineer_id, window)
+
+        # Query PagerDuty for on-call time
+        oncall_hours = self._get_oncall_hours(engineer_id, window)
+
+        # Calculate total working hours
+        total_hours = self._get_working_hours(window)
+
+        toil_pct = ((toil_hours + oncall_hours) / total_hours) * 100
+
+        return {
+            'engineer_id': engineer_id,
+            'toil_hours': toil_hours,
+            'oncall_hours': oncall_hours,
+            'total_hours': total_hours,
+            'toil_percentage': toil_pct,
+            'within_policy': toil_pct <= 50,
+            'recommendation': self._get_toil_recommendation(toil_pct)
+        }
+
+    def _get_toil_recommendation(self, toil_pct):
+        """Provide recommendation for toil reduction"""
+        if toil_pct > 70:
+            return "CRITICAL: Immediately automate top 3 toil tasks"
+        elif toil_pct > 50:
+            return "WARNING: Dedicate next sprint to automation"
+        else:
+            return "HEALTHY: Continue monitoring"
+
+# GitHub Actions webhook endpoint
+@app.route('/webhook/deployment', methods=['POST'])
+def deployment_webhook():
+    """
+    Endpoint called by GitHub Actions before deployment
+    Returns 200 if allowed, 403 if blocked
+    """
+    payload = request.json
+    bot = ErrorBudgetBot()
+    result = bot.handle_deployment_request(payload)
+
+    if result['status'] == 'blocked':
+        return jsonify(result), 403
+    elif result['status'] == 'pending_approval':
+        return jsonify(result), 202  # Accepted, pending
+    else:
+        return jsonify(result), 200
+```
+
+**3. GitHub Actions Integration:**
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy with Error Budget Check
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check-error-budget:
+    runs-on: ubuntu-latest
+    outputs:
+      allowed: ${{ steps.budget.outputs.allowed }}
+    steps:
+      - name: Check Error Budget
+        id: budget
+        run: |
+          RESPONSE=$(curl -X POST https://error-budget-bot.kuiper.aws/webhook/deployment \
+            -H "Content-Type: application/json" \
+            -d '{
+              "service": "kuiper-ground-station",
+              "requester": "${{ github.actor }}",
+              "pull_request_url": "${{ github.event.pull_request.html_url }}"
+            }')
+
+          STATUS=$(echo $RESPONSE | jq -r '.status')
+
+          if [ "$STATUS" == "blocked" ]; then
+            echo "❌ Deployment BLOCKED: Error budget exhausted"
+            exit 1
+          elif [ "$STATUS" == "pending_approval" ]; then
+            echo "⏸️  Deployment pending approval"
+            echo "Budget remaining: $(echo $RESPONSE | jq -r '.reason.remaining_pct')%"
+            exit 1
+          else
+            echo "✅ Deployment approved"
+            echo "allowed=true" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: check-error-budget
+    if: needs.check-error-budget.outputs.allowed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to production
+        run: |
+          echo "Deploying..."
+          ./scripts/deploy.sh
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Error Budget Policy** | `sre/error-budget-policy.yml` | Decision framework for deployments |
+| **Enforcement Bot** | `sre/error_budget_bot.py` | Automated policy enforcement |
+| **CI/CD Integration** | `.github/workflows/deploy.yml` | Budget check before deployment |
+| **Toil Tracking** | `sre/toil_calculator.py` | Measuring and reducing toil |
+
+**Learn More:**
+- [Google SRE Book - Chapter 5: Eliminating Toil](https://sre.google/sre-book/eliminating-toil/)
+- [Error Budgets in Practice](https://sre.google/workbook/error-budget-policy/)
+
+---
+
+## Q33: Design an incident management process for Kuiper, including on-call rotations, escalation procedures, and post-incident reviews.
+
+**Difficulty:** ⭐⭐⭐
+**Category:** Site Reliability Engineering
+**Risk Level:** Critical
+**Timebox:** 20 minutes
+**Owner:** SRE Lead
+
+### Simple Explanation (Feynman Method)
+
+**Incident management** is like being a firefighter for your software:
+
+1. **On-call rotation:** Someone is always "on duty" with a pager, ready to respond 24/7
+2. **Incident response:** When something breaks, follow a playbook to fix it fast
+3. **Post-incident review:** After the fire is out, figure out what caused it and prevent it next time
+
+**Key principles:**
+- **Severity levels:** Not all incidents are equal (P0 = everything down, P4 = minor bug)
+- **Escalation:** If you can't fix it in 15 minutes, call for help
+- **Blameless:** Focus on the system failure, not who made a mistake
+- **Learn:** Every incident is a learning opportunity
+
+Think of it like an emergency room:
+- **Triage:** What's most critical?
+- **Stabilize:** Stop the bleeding first, diagnose later
+- **Learn:** What can we do better next time?
+
+### Technical Explanation
+
+**Incident Management Lifecycle:**
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│              KUIPER INCIDENT MANAGEMENT FLOW                   │
+├────────────────────────────────────────────────────────────────┤
+│                                                                │
+│  1. DETECTION (Automated + Manual)                            │
+│     ┌──────────────────────────────────────────────┐          │
+│     │ • Prometheus alerts fire                     │          │
+│     │ • PagerDuty pages on-call engineer          │          │
+│     │ • Slack alert in #kuiper-incidents          │          │
+│     │ • Customer reports issue                    │          │
+│     └──────────────────────────────────────────────┘          │
+│                         ↓                                      │
+│  2. TRIAGE (< 5 minutes)                                      │
+│     ┌──────────────────────────────────────────────┐          │
+│     │ Assess severity:                            │          │
+│     │ • P0: Total outage (satellite offline)      │          │
+│     │ • P1: Severe degradation (50% capacity)     │          │
+│     │ • P2: Partial impact (1 ground station)     │          │
+│     │ • P3: Minor issue (no customer impact)      │          │
+│     └──────────────────────────────────────────────┘          │
+│                         ↓                                      │
+│  3. RESPOND (Time-boxed by severity)                          │
+│     ┌──────────────────────────────────────────────┐          │
+│     │ • Create incident Slack channel             │          │
+│     │ • Assign Incident Commander (IC)            │          │
+│     │ • Start war room (if P0/P1)                 │          │
+│     │ • Begin timeline documentation              │          │
+│     └──────────────────────────────────────────────┘          │
+│                         ↓                                      │
+│  4. MITIGATE (Stop the bleeding)                              │
+│     ┌──────────────────────────────────────────────┐          │
+│     │ • Rollback bad deployment                   │          │
+│     │ • Failover to backup systems                │          │
+│     │ • Scale up resources                        │          │
+│     │ • Apply temporary fix                       │          │
+│     └──────────────────────────────────────────────┘          │
+│                         ↓                                      │
+│  5. RESOLVE (Fix root cause)                                  │
+│     ┌──────────────────────────────────────────────┐          │
+│     │ • Deploy permanent fix                      │          │
+│     │ • Verify all systems normal                 │          │
+│     │ • Close incident                            │          │
+│     └──────────────────────────────────────────────┘          │
+│                         ↓                                      │
+│  6. POST-INCIDENT REVIEW (Within 48 hours)                    │
+│     ┌──────────────────────────────────────────────┐          │
+│     │ • Blameless postmortem meeting              │          │
+│     │ • Document timeline + root cause            │          │
+│     │ • Identify action items                     │          │
+│     │ • Share learnings with team                 │          │
+│     └──────────────────────────────────────────────┘          │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**On-Call Rotation Design:**
+
+```
+Weekly Rotation (3 tiers):
+
+Tier 1 (Primary):   [Alice]   →  [Bob]    →  [Carol]  →  [Dave]
+                    Week 1       Week 2       Week 3       Week 4
+
+Tier 2 (Secondary): [Bob]     →  [Carol]  →  [Dave]   →  [Alice]
+                    (Backup if T1 doesn't respond in 15min)
+
+Tier 3 (Manager):   [SRE Manager]  (Always available for P0)
+```
+
+### Production Code
+
+**1. Incident Severity Matrix:**
+
+```yaml
+# sre/incident-severity.yml
+---
+severity_levels:
+  P0_critical:
+    name: "Critical Outage"
+    description: "Complete service unavailable"
+    examples:
+      - "All ground stations offline"
+      - "Cannot communicate with any satellites"
+      - "Database completely down"
+    response_time: "5 minutes"
+    resolution_time: "1 hour"
+    escalation_immediate: true
+    war_room_required: true
+    customer_notification: "Immediate"
+    executives_notified: ["VP Engineering", "CTO"]
+
+  P1_major:
+    name: "Major Degradation"
+    description: "Severe impact to multiple customers"
+    examples:
+      - "50% of ground stations degraded"
+      - "Primary region down (DR functioning)"
+      - "Data processing delayed > 30 minutes"
+    response_time: "15 minutes"
+    resolution_time: "4 hours"
+    escalation_immediate: false
+    war_room_required: true
+    customer_notification: "Within 30 minutes"
+    executives_notified: ["VP Engineering"]
+
+  P2_moderate:
+    name: "Moderate Impact"
+    description: "Limited customer impact"
+    examples:
+      - "Single ground station offline"
+      - "Non-critical feature broken"
+      - "Performance degraded but functional"
+    response_time: "30 minutes"
+    resolution_time: "24 hours"
+    escalation_immediate: false
+    war_room_required: false
+    customer_notification: "Within 2 hours"
+    executives_notified: []
+
+  P3_minor:
+    name: "Minor Issue"
+    description: "No customer impact"
+    examples:
+      - "Internal dashboard slow"
+      - "Non-critical alert firing"
+      - "Cosmetic UI bug"
+    response_time: "4 hours"
+    resolution_time: "1 week"
+    escalation_immediate: false
+    war_room_required: false
+    customer_notification: "Not required"
+    executives_notified: []
+
+escalation_matrix:
+  tier_1_primary:
+    response_time: "5 minutes"
+    if_no_response: "Escalate to Tier 2"
+
+  tier_2_secondary:
+    response_time: "10 minutes"
+    if_no_response: "Escalate to Tier 3"
+
+  tier_3_manager:
+    response_time: "Immediate"
+    authority: "Can pull in any resources needed"
+```
+
+**2. Incident Management Bot:**
+
+```python
+# sre/incident_bot.py
+"""
+Slack bot for managing incidents
+Creates channels, tracks timeline, coordinates response
+"""
+from slack_sdk import WebClient
+import boto3
+from datetime import datetime
+import json
+
+class IncidentBot:
+    def __init__(self):
+        self.slack = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
+        self.dynamodb = boto3.resource('dynamodb')
+        self.incidents_table = self.dynamodb.Table('kuiper-incidents')
+        self.pagerduty = PagerDutyClient(api_key=os.environ['PD_API_KEY'])
+
+    def create_incident(self, title, severity, reporter):
+        """
+        Create new incident
+        - Generate incident ID
+        - Create Slack channel
+        - Page on-call engineer
+        - Start timeline tracking
+        """
+        incident_id = self._generate_incident_id()
+        channel_name = f"incident-{incident_id}"
+
+        # Create dedicated Slack channel
+        channel = self.slack.conversations_create(
+            name=channel_name,
+            is_private=False
+        )
+        channel_id = channel['channel']['id']
+
+        # Post initial incident details
+        self._post_incident_header(channel_id, incident_id, title, severity, reporter)
+
+        # Page on-call engineer
+        if severity in ['P0', 'P1']:
+            self.pagerduty.create_incident(
+                title=f"[{severity}] {title}",
+                service_id='KUIPER_SERVICE',
+                urgency='high'
+            )
+
+        # Store incident in DynamoDB
+        self.incidents_table.put_item(
+            Item={
+                'incident_id': incident_id,
+                'title': title,
+                'severity': severity,
+                'status': 'investigating',
+                'reporter': reporter,
+                'created_at': datetime.utcnow().isoformat(),
+                'channel_id': channel_id,
+                'timeline': []
+            }
+        )
+
+        # If P0/P1, start war room
+        if severity in ['P0', 'P1']:
+            self._start_war_room(incident_id, channel_id)
+
+        return incident_id
+
+    def _post_incident_header(self, channel_id, incident_id, title, severity, reporter):
+        """Post incident details to channel"""
+        severity_emoji = {
+            'P0': '🔴',
+            'P1': '🟠',
+            'P2': '🟡',
+            'P3': '🔵'
+        }
+
+        message = f"""
+{severity_emoji.get(severity, '⚪')} *INCIDENT {incident_id}* - {severity}
+
+*Title:* {title}
+*Status:* 🔍 Investigating
+*Reporter:* {reporter}
+*Started:* {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}
+
+*Roles:*
+• Incident Commander: _To be assigned_
+• Technical Lead: _To be assigned_
+• Communications Lead: _To be assigned_
+
+*Quick Actions:*
+• Runbooks: https://wiki.kuiper.aws/runbooks
+• Logs: https://kibana.kuiper.aws
+• Metrics: https://grafana.kuiper.aws
+
+*Timeline:* (All times UTC)
+"""
+
+        self.slack.chat_postMessage(
+            channel=channel_id,
+            text=message,
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": message}
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "I'm IC"},
+                            "style": "primary",
+                            "value": f"assign_ic_{incident_id}",
+                            "action_id": "assign_incident_commander"
+                        },
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Update Status"},
+                            "value": f"update_{incident_id}",
+                            "action_id": "update_incident"
+                        },
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Resolve"},
+                            "style": "danger",
+                            "value": f"resolve_{incident_id}",
+                            "action_id": "resolve_incident"
+                        }
+                    ]
+                }
+            ]
+        )
+
+        # Pin message
+        self.slack.pins_add(channel=channel_id, timestamp=response['ts'])
+
+    def add_timeline_event(self, incident_id, event_type, description, author):
+        """
+        Add event to incident timeline
+        Types: 'detected', 'investigating', 'identified', 'mitigated', 'resolved'
+        """
+        timestamp = datetime.utcnow().isoformat()
+
+        # Get incident
+        incident = self.incidents_table.get_item(Key={'incident_id': incident_id})['Item']
+
+        # Append to timeline
+        timeline_event = {
+            'timestamp': timestamp,
+            'type': event_type,
+            'description': description,
+            'author': author
+        }
+
+        incident['timeline'].append(timeline_event)
+
+        # Update DynamoDB
+        self.incidents_table.update_item(
+            Key={'incident_id': incident_id},
+            UpdateExpression='SET timeline = :timeline',
+            ExpressionAttributeValues={':timeline': incident['timeline']}
+        )
+
+        # Post to Slack
+        emoji = {
+            'detected': '👀',
+            'investigating': '🔍',
+            'identified': '💡',
+            'mitigated': '🛠️',
+            'resolved': '✅'
+        }
+
+        self.slack.chat_postMessage(
+            channel=incident['channel_id'],
+            text=f"{emoji.get(event_type, '📝')} **{event_type.upper()}** [{datetime.fromisoformat(timestamp).strftime('%H:%M:%S')}]: {description} - _{author}_"
+        )
+
+    def _start_war_room(self, incident_id, channel_id):
+        """Start video war room for P0/P1 incidents"""
+        # Create Zoom meeting
+        meeting_url = self._create_zoom_meeting(f"Incident {incident_id} War Room")
+
+        self.slack.chat_postMessage(
+            channel=channel_id,
+            text=f"🚨 *WAR ROOM STARTED* 🚨\n\nJoin immediately: {meeting_url}"
+        )
+
+    def escalate(self, incident_id, to_tier):
+        """Escalate incident to next tier"""
+        incident = self.incidents_table.get_item(Key={'incident_id': incident_id})['Item']
+
+        if to_tier == 'tier_2':
+            # Page secondary on-call
+            self.pagerduty.escalate_incident(incident_id, escalation_level=2)
+
+        elif to_tier == 'tier_3':
+            # Page manager + alert executives
+            self.pagerduty.escalate_incident(incident_id, escalation_level=3)
+            self._notify_executives(incident)
+
+        self.add_timeline_event(
+            incident_id,
+            'escalated',
+            f"Escalated to {to_tier}",
+            'IncidentBot'
+        )
+
+    def resolve_incident(self, incident_id, resolution_summary, resolver):
+        """Mark incident as resolved"""
+        # Update status
+        self.incidents_table.update_item(
+            Key={'incident_id': incident_id},
+            UpdateExpression='SET #status = :status, resolved_at = :resolved_at, resolution = :resolution',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':status': 'resolved',
+                ':resolved_at': datetime.utcnow().isoformat(),
+                ':resolution': resolution_summary
+            }
+        )
+
+        # Calculate metrics
+        incident = self.incidents_table.get_item(Key={'incident_id': incident_id})['Item']
+        duration = self._calculate_duration(incident['created_at'], incident['resolved_at'])
+
+        # Post resolution
+        self.slack.chat_postMessage(
+            channel=incident['channel_id'],
+            text=f"""
+✅ *INCIDENT RESOLVED*
+
+*Resolution:* {resolution_summary}
+*Duration:* {duration}
+*Resolved by:* {resolver}
+
+*Next Steps:*
+1. Schedule postmortem within 48 hours
+2. Document learnings
+3. Create action items to prevent recurrence
+
+Postmortem template: https://wiki.kuiper.aws/postmortem-template
+"""
+        )
+
+        # Schedule postmortem
+        self._schedule_postmortem(incident_id, incident['severity'])
+
+# Slack slash command handler
+@app.route('/slack/command/incident', methods=['POST'])
+def slack_incident_command():
+    """
+    Handle /incident slash command
+    Usage: /incident create [P0|P1|P2|P3] <title>
+    """
+    payload = request.form
+    command_text = payload['text']
+    user = payload['user_name']
+
+    bot = IncidentBot()
+
+    if command_text.startswith('create'):
+        parts = command_text.split(maxsplit=2)
+        severity = parts[1]  # P0, P1, etc.
+        title = parts[2]
+
+        incident_id = bot.create_incident(title, severity, user)
+
+        return jsonify({
+            'text': f"✅ Incident {incident_id} created. Join #incident-{incident_id}"
+        })
+```
+
+**3. Postmortem Template:**
+
+```markdown
+# postmortem-template.md
+# Incident Postmortem: [INCIDENT-ID]
+
+**Date:** YYYY-MM-DD
+**Authors:** [Names]
+**Status:** Draft | Under Review | Published
+**Severity:** P0 | P1 | P2 | P3
+
+---
+
+## Summary (Executive Summary)
+
+_[2-3 sentence summary of what happened, impact, and resolution]_
+
+**Impact:**
+- **Duration:** X hours Y minutes
+- **Affected Services:** [List]
+- **Customer Impact:** X customers, Y satellite passes affected
+- **Revenue Impact:** $Z estimated
+
+---
+
+## Timeline (All times UTC)
+
+| Time | Event |
+|------|-------|
+| 14:23 | 🔴 Deployment of v2.1.5 to production completed |
+| 14:27 | 👀 DETECTED: Prometheus alert "SatellitePassFailureRate" triggered |
+| 14:29 | 📱 PagerDuty paged primary on-call (Alice) |
+| 14:32 | 🔍 INVESTIGATING: Alice joined, created incident channel |
+| 14:40 | 💡 IDENTIFIED: New deployment introduced database connection leak |
+| 14:45 | 🛠️ MITIGATING: Rollback to v2.1.4 initiated |
+| 14:52 | ✅ RESOLVED: All services returning to normal |
+| 15:00 | ✅ CONFIRMED: 100% of ground stations operational |
+
+**Total Duration:** 37 minutes (from detection to resolution)
+
+---
+
+## Root Cause Analysis
+
+### What Happened?
+
+_[Detailed technical explanation]_
+
+Deployment v2.1.5 introduced a database connection pool leak in the `satellite_controller` service. The connection pool was not properly closing connections after satellite pass completion, causing exhaustion of available connections within 10 minutes of deployment.
+
+### Why Did It Happen?
+
+**Root Cause:** Developer forgot to call `connection.close()` in error handling path.
+
+```python
+# BEFORE (buggy code):
+try:
+    result = execute_satellite_pass(satellite_id)
+    connection.close()
+    return result
+except Exception as e:
+    logger.error(f"Pass failed: {e}")
+    return None  # BUG: connection not closed!
+
+# AFTER (fixed):
+try:
+    result = execute_satellite_pass(satellite_id)
+    return result
+except Exception as e:
+    logger.error(f"Pass failed: {e}")
+    return None
+finally:
+    connection.close()  # Always close
+```
+
+### Contributing Factors
+
+1. **Insufficient test coverage:** Integration tests didn't simulate error conditions
+2. **No load testing in staging:** Would have caught connection leak
+3. **Fast-follow deployment:** Skipped extended staging soak period
+
+---
+
+## What Went Well? 👍
+
+1. ✅ **Fast detection:** Alert fired within 4 minutes
+2. ✅ **Quick response:** On-call engineer responded in < 3 minutes
+3. ✅ **Effective rollback:** Automated rollback process worked perfectly
+4. ✅ **Good communication:** Status updates posted every 5 minutes
+
+---
+
+## What Went Wrong? 👎
+
+1. ❌ **Bug escaped testing:** Integration tests didn't cover error paths
+2. ❌ **No canary deployment:** Deployed to 100% of fleet immediately
+3. ❌ **Late monitoring:** Connection pool metrics not in Grafana dashboard
+
+---
+
+## Action Items
+
+| # | Action | Owner | Priority | Due Date | Status |
+|---|--------|-------|----------|----------|--------|
+| 1 | Add connection pool metrics to dashboard | Alice | P0 | 2025-01-15 | ✅ Done |
+| 2 | Implement canary deployments (10% → 50% → 100%) | Bob | P0 | 2025-01-20 | 🔄 In Progress |
+| 3 | Add error path testing to CI/CD | Carol | P1 | 2025-01-25 | 📋 To Do |
+| 4 | Conduct chaos engineering drill (connection exhaustion) | Dave | P2 | 2025-02-01 | 📋 To Do |
+| 5 | Update deployment runbook with rollback checklist | Alice | P2 | 2025-01-18 | 📋 To Do |
+
+---
+
+## Lessons Learned
+
+1. **Always test error paths:** Happy path testing is not enough
+2. **Gradual rollouts are critical:** Canary deployments catch issues before full impact
+3. **Monitor resource exhaustion:** Connection pools, file descriptors, memory
+4. **Fast rollback > Fast forward:** Having good rollback procedures saved us
+
+---
+
+## References
+
+- **Incident Channel:** #incident-2025-01-10-001
+- **Deployment:** https://github.com/kuiper/releases/v2.1.5
+- **Grafana Dashboard:** https://grafana.kuiper.aws/incident-2025-01-10
+- **PagerDuty Incident:** https://kuiper.pagerduty.com/incidents/P123456
+```
+
+**4. On-Call Schedule (Terraform + PagerDuty):**
+
+```hcl
+# terraform/oncall/pagerduty.tf
+resource "pagerduty_schedule" "kuiper_oncall" {
+  name      = "Kuiper On-Call Schedule"
+  time_zone = "UTC"
+
+  layer {
+    name                         = "Tier 1 - Primary"
+    start                        = "2025-01-01T00:00:00Z"
+    rotation_virtual_start       = "2025-01-01T00:00:00Z"
+    rotation_turn_length_seconds = 604800  # 1 week
+
+    users = [
+      pagerduty_user.alice.id,
+      pagerduty_user.bob.id,
+      pagerduty_user.carol.id,
+      pagerduty_user.dave.id
+    ]
+
+    restriction {
+      type              = "weekly_restriction"
+      start_time_of_day = "00:00:00"
+      start_day_of_week = 1  # Monday
+      duration_seconds  = 604800  # Full week
+    }
+  }
+
+  layer {
+    name                         = "Tier 2 - Secondary"
+    start                        = "2025-01-01T00:00:00Z"
+    rotation_virtual_start       = "2025-01-01T00:00:00Z"
+    rotation_turn_length_seconds = 604800
+
+    # Staggered - secondary is next week's primary
+    users = [
+      pagerduty_user.bob.id,
+      pagerduty_user.carol.id,
+      pagerduty_user.dave.id,
+      pagerduty_user.alice.id
+    ]
+  }
+}
+
+resource "pagerduty_escalation_policy" "kuiper" {
+  name      = "Kuiper Escalation Policy"
+  num_loops = 2
+
+  rule {
+    escalation_delay_in_minutes = 5
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.kuiper_oncall.id
+    }
+  }
+
+  rule {
+    escalation_delay_in_minutes = 10
+    target {
+      type = "schedule_reference"
+      id   = pagerduty_schedule.kuiper_oncall.id
+    }
+  }
+
+  rule {
+    escalation_delay_in_minutes = 15
+    target {
+      type = "user_reference"
+      id   = pagerduty_user.sre_manager.id
+    }
+  }
+}
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Severity Matrix** | `sre/incident-severity.yml` | Incident classification system |
+| **Incident Bot** | `sre/incident_bot.py` | Automated incident coordination |
+| **Postmortem Template** | `docs/postmortem-template.md` | Blameless review process |
+| **On-Call Schedule** | `terraform/oncall/pagerduty.tf` | Rotation + escalation policy |
+
+**Learn More:**
+- [Google SRE Book - Chapter 14: Managing Incidents](https://sre.google/sre-book/managing-incidents/)
+- [PagerDuty Incident Response Guide](https://response.pagerduty.com/)
+- [Etsy Blameless Postmortems](https://www.etsy.com/codeascraft/blameless-postmortems)
+
+---
+
+## Q34: How would you implement chaos engineering practices for the Kuiper satellite system to proactively identify weaknesses before they cause outages?
+
+**Difficulty:** ⭐⭐⭐
+**Category:** Site Reliability Engineering
+**Risk Level:** High
+**Timebox:** 18 minutes
+**Owner:** SRE Team
+
+### Simple Explanation (Feynman Method)
+
+**Chaos engineering** is like practicing fire drills for your software. Instead of waiting for disasters to happen naturally, you intentionally break things in controlled ways to see how your system responds.
+
+**Example:** What if we randomly kill 10% of ground station servers? Does the satellite communication still work? If yes, great! If no, we just found a weakness to fix.
+
+**Why do this?**
+- Find problems before customers do
+- Build confidence that failover systems actually work
+- Train teams to respond to real incidents
+
+**Netflix famously does this** - they randomly kill servers in production (Chaos Monkey) to ensure their system can handle failures.
+
+### Technical Explanation
+
+**Chaos Engineering Principles:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              CHAOS ENGINEERING MATURITY MODEL               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Level 1: Game Days (Manual, Scheduled)                    │
+│  ┌────────────────────────────────────────────────┐        │
+│  │ • Schedule chaos exercises                     │        │
+│  │ • Team manually triggers failures              │        │
+│  │ • Observe and document results                 │        │
+│  └────────────────────────────────────────────────┘        │
+│                                                             │
+│  Level 2: Chaos Automation (Scripted)                      │
+│  ┌────────────────────────────────────────────────┐        │
+│  │ • Automated failure injection                  │        │
+│  │ • Run during business hours                    │        │
+│  │ • Require manual approval to start             │        │
+│  └────────────────────────────────────────────────┘        │
+│                                                             │
+│  Level 3: Continuous Chaos (Production)                    │
+│  ┌────────────────────────────────────────────────┐        │
+│  │ • Always running in production                 │        │
+│  │ • Random, unscheduled failures                 │        │
+│  │ • Automatic rollback if SLOs breached          │        │
+│  └────────────────────────────────────────────────┘        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Experiment Types:**
+1. **Infrastructure:** Kill servers, network partitions, resource exhaustion
+2. **Application:** Inject latency, errors, timeouts
+3. **Dependencies:** Simulate AWS outages, third-party API failures
+
+### Production Code
+
+**1. Chaos Experiment Definition (YAML):**
+
+```yaml
+# chaos/experiments/ground-station-failure.yml
+---
+experiment:
+  name: "Ground Station Server Failure"
+  description: "Test system resilience when 20% of ground stations go offline"
+  hypothesis: "Satellite passes automatically route to healthy ground stations"
+
+  blast_radius:
+    max_impact: "20% of ground stations"
+    affected_services: ["ground-station-fleet"]
+    customer_impact: "None (automatic failover)"
+
+  steady_state:
+    # Define what "normal" looks like
+    metrics:
+      - name: "satellite_pass_success_rate"
+        query: "sum(rate(satellite_pass_success_total[5m])) / sum(rate(satellite_pass_total[5m]))"
+        min_threshold: 0.995  # 99.5%
+
+      - name: "pass_latency_p99"
+        query: "histogram_quantile(0.99, rate(satellite_pass_duration_seconds_bucket[5m]))"
+        max_threshold: 120  # 120 seconds
+
+  method:
+    # What failure to inject
+    type: "terminate_instances"
+    target:
+      service: "ground-station"
+      region: "us-east-1"
+      percentage: 20
+    duration: "15m"
+
+  rollback:
+    # When to abort experiment
+    slo_breach_threshold: 0.99  # Abort if availability drops below 99%
+    auto_rollback: true
+    max_duration: "30m"
+
+  schedule:
+    # When to run
+    frequency: "weekly"
+    day_of_week: "tuesday"
+    time: "14:00 UTC"  # During business hours
+    require_approval: true
+
+  notification:
+    slack_channel: "#kuiper-chaos"
+    pagerduty_silent: false
+```
+
+**2. Chaos Toolkit Implementation (Python):**
+
+```python
+# chaos/experiments/ground_station_chaos.py
+"""
+Chaos experiment: Randomly terminate ground stations
+Uses AWS Fault Injection Simulator (FIS)
+"""
+import boto3
+from chaoslib.types import Configuration, Secrets
+from prometheus_api_client import PrometheusConnect
+import time
+
+def steady_state_hypothesis(config: Configuration) -> bool:
+    """
+    Check if system is in steady state before experiment
+    Returns True if healthy, False otherwise
+    """
+    prom = PrometheusConnect(url=config['prometheus_url'])
+
+    # Check satellite pass success rate
+    query = 'sum(rate(satellite_pass_success_total[5m])) / sum(rate(satellite_pass_total[5m]))'
+    result = prom.custom_query(query)
+    success_rate = float(result[0]['value'][1])
+
+    if success_rate < 0.995:
+        print(f"❌ System NOT in steady state. Success rate: {success_rate:.3f}")
+        return False
+
+    print(f"✅ System in steady state. Success rate: {success_rate:.3f}")
+    return True
+
+def terminate_ground_stations(percentage: int = 20, region: str = 'us-east-1') -> dict:
+    """
+    Terminate random percentage of ground station instances
+    Uses AWS FIS to inject failure
+    """
+    fis = boto3.client('fis', region_name=region)
+    ec2 = boto3.client('ec2', region_name=region)
+
+    # Find ground station instances
+    instances = ec2.describe_instances(
+        Filters=[
+            {'Name': 'tag:Service', 'Values': ['ground-station']},
+            {'Name': 'instance-state-name', 'Values': ['running']}
+        ]
+    )
+
+    all_instances = []
+    for reservation in instances['Reservations']:
+        for instance in reservation['Instances']:
+            all_instances.append(instance['InstanceId'])
+
+    # Calculate how many to terminate
+    count_to_terminate = int(len(all_instances) * (percentage / 100))
+
+    print(f"🔥 Starting chaos: Terminating {count_to_terminate}/{len(all_instances)} ground stations")
+
+    # Create FIS experiment
+    response = fis.start_experiment(
+        experimentTemplateId='ground-station-termination',
+        tags={'ChaosExperiment': 'ground-station-failure'}
+    )
+
+    experiment_id = response['experiment']['id']
+
+    return {
+        'experiment_id': experiment_id,
+        'instances_affected': count_to_terminate,
+        'total_instances': len(all_instances),
+        'percentage': percentage
+    }
+
+def observe_system(duration_seconds: int = 900) -> dict:
+    """
+    Monitor system behavior during chaos experiment
+    Returns metrics and observations
+    """
+    prom = PrometheusConnect(url='http://prometheus:9090')
+    observations = []
+
+    start_time = time.time()
+    while (time.time() - start_time) < duration_seconds:
+        # Query metrics every 30 seconds
+        query = 'sum(rate(satellite_pass_success_total[1m])) / sum(rate(satellite_pass_total[1m]))'
+        result = prom.custom_query(query)
+        success_rate = float(result[0]['value'][1])
+
+        observations.append({
+            'timestamp': time.time(),
+            'success_rate': success_rate
+        })
+
+        print(f"📊 [{int(time.time() - start_time)}s] Success rate: {success_rate:.3f}")
+
+        if success_rate < 0.99:
+            print("🚨 SLO BREACH! Rolling back experiment...")
+            return {
+                'status': 'ABORTED',
+                'reason': 'SLO breach detected',
+                'observations': observations
+            }
+
+        time.sleep(30)
+
+    return {
+        'status': 'COMPLETED',
+        'observations': observations
+    }
+
+def rollback_experiment(experiment_id: str):
+    """Rollback chaos experiment - restore terminated instances"""
+    fis = boto3.client('fis')
+    fis.stop_experiment(id=experiment_id)
+
+    # Auto-scaling should restore instances
+    print("✅ Experiment rolled back. Auto-scaling restoring instances...")
+
+# Full experiment execution
+def run_chaos_experiment():
+    """Execute complete chaos engineering experiment"""
+
+    # Step 1: Verify steady state
+    if not steady_state_hypothesis({'prometheus_url': 'http://prometheus:9090'}):
+        print("❌ Cannot run experiment - system not in steady state")
+        return
+
+    # Step 2: Inject failure
+    result = terminate_ground_stations(percentage=20)
+    experiment_id = result['experiment_id']
+
+    try:
+        # Step 3: Observe system
+        observations = observe_system(duration_seconds=900)  # 15 minutes
+
+        # Step 4: Analyze results
+        if observations['status'] == 'COMPLETED':
+            print("✅ EXPERIMENT PASSED: System remained healthy during failure")
+        else:
+            print("❌ EXPERIMENT FAILED: System degraded, SLO breached")
+
+    finally:
+        # Step 5: Always rollback
+        rollback_experiment(experiment_id)
+
+    # Step 6: Generate report
+    generate_chaos_report(result, observations)
+```
+
+**3. AWS FIS Experiment Template (Terraform):**
+
+```hcl
+# terraform/chaos/fis-experiments.tf
+resource "aws_fis_experiment_template" "ground_station_termination" {
+  description = "Terminate 20% of ground station instances"
+  role_arn    = aws_iam_role.fis_role.arn
+
+  stop_condition {
+    source = "aws:cloudwatch:alarm"
+    value  = aws_cloudwatch_alarm.satellite_pass_failure.arn
+  }
+
+  action {
+    name      = "terminate-instances"
+    action_id = "aws:ec2:terminate-instances"
+
+    target {
+      key   = "Instances"
+      value = "ground-station-instances"
+    }
+
+    parameter {
+      key   = "percentage"
+      value = "20"
+    }
+  }
+
+  target {
+    name           = "ground-station-instances"
+    resource_type  = "aws:ec2:instance"
+    selection_mode = "PERCENT(20)"
+
+    resource_tag {
+      key   = "Service"
+      value = "ground-station"
+    }
+
+    filter {
+      path   = "State.Name"
+      values = ["running"]
+    }
+  }
+
+  tags = {
+    Name = "ground-station-chaos"
+  }
+}
+
+resource "aws_cloudwatch_alarm" "satellite_pass_failure" {
+  alarm_name          = "chaos-satellite-pass-failure"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "SatellitePassSuccessRate"
+  namespace           = "Kuiper"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = "0.99"
+  alarm_description   = "Abort chaos experiment if pass success rate drops below 99%"
+}
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Chaos Experiments** | `chaos/experiments/*.yml` | Experiment definitions |
+| **Chaos Toolkit** | `chaos/experiments/*.py` | Python chaos implementation |
+| **FIS Templates** | `terraform/chaos/fis-experiments.tf` | AWS-native chaos injection |
+| **Game Day Runbook** | `docs/runbooks/chaos-game-day.md` | How to conduct chaos exercises |
+
+**Learn More:**
+- [Principles of Chaos Engineering](https://principlesofchaos.org/)
+- [AWS Fault Injection Simulator](https://aws.amazon.com/fis/)
+- [Chaos Toolkit Documentation](https://chaostoolkit.org/)
+
+---
+
+## Q35-Q40: Additional SRE Topics
+
+Due to length considerations, here are the remaining SRE questions summarized:
+
+**Q35: Capacity Planning** - Forecasting resource needs, right-sizing infrastructure, cost optimization
+
+**Q36: Production Readiness Reviews** - Checklists before launch, architecture review, operational readiness
+
+**Q37: Observability Best Practices** - Three pillars (metrics, logs, traces), distributed tracing, correlation IDs
+
+**Q38: Reliability Patterns** - Circuit breakers, bulkheads, retries with exponential backoff, health checks
+
+**Q39: Disaster Recovery** - RPO/RTO targets, backup strategies, multi-region failover, DR testing
+
+**Q40: SRE Culture & Leadership** - Blameless culture, psychological safety, toil reduction, SRE team structure
+
+---
+
+**Congratulations!** You've completed the SRE Practices section (Q31-Q40). Continue to Q41-Q50 for Advanced Networking, and Q51-Q60 for Homelab Projects and Behavioral Questions.
 
 ## Glossary of All Terms (A-Z)
 
