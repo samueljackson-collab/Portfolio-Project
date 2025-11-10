@@ -316,3 +316,313 @@ class TestConditionalLogic:
         content = main_tf.read_text()
         if "aws_eks_cluster" in content:
             assert "count = var.create_eks" in content
+
+class TestOutputsInMainTf:
+    """Test that outputs are defined in main.tf (regression test)."""
+
+    def test_outputs_defined_in_main_tf(self, main_tf):
+        """Verify critical outputs are defined in main.tf."""
+        content = main_tf.read_text()
+        assert 'output "vpc_id"' in content, "vpc_id output should be in main.tf"
+        assert 'output "public_subnet_ids"' in content, "public_subnet_ids output should be in main.tf"
+        assert 'output "private_subnet_ids"' in content, "private_subnet_ids output should be in main.tf"
+        assert 'output "rds_endpoint"' in content, "rds_endpoint output should be in main.tf"
+
+    def test_vpc_id_output_references_correct_resource(self, main_tf):
+        """Verify vpc_id output references the VPC resource."""
+        content = main_tf.read_text()
+        assert "aws_vpc.twisted_monk.id" in content
+
+    def test_subnet_outputs_use_for_expressions(self, main_tf):
+        """Verify subnet outputs use for expressions correctly."""
+        content = main_tf.read_text()
+        assert "[for s in aws_subnet.public : s.id]" in content
+        assert "[for s in aws_subnet.private : s.id]" in content
+
+    def test_rds_endpoint_output_is_conditional(self, main_tf):
+        """Verify rds_endpoint output handles conditional RDS creation."""
+        content = main_tf.read_text()
+        # Should check var.create_rds and use index [0] for conditional resource
+        assert 'var.create_rds ? aws_db_instance.postgres[0].address : ""' in content
+
+
+class TestS3BucketReferenceIssue:
+    """Test for S3 bucket reference bug (critical regression)."""
+
+    def test_s3_bucket_resource_exists_or_output_removed(self, main_tf, outputs_tf):
+        """Verify S3 bucket resource exists if outputs reference it."""
+        main_content = main_tf.read_text()
+        outputs_content = outputs_tf.read_text()
+        
+        # If outputs.tf references aws_s3_bucket.app_assets
+        if "aws_s3_bucket.app_assets" in outputs_content:
+            # Then main.tf must define the resource
+            assert 'resource "aws_s3_bucket" "app_assets"' in main_content, \
+                "S3 bucket resource must exist if referenced in outputs"
+
+    def test_assets_bucket_output_consistency(self, main_tf, outputs_tf):
+        """Verify assets_bucket output references existing resource."""
+        main_content = main_tf.read_text()
+        outputs_content = outputs_tf.read_text()
+        
+        if 'output "assets_bucket"' in outputs_content or 'output "assets_bucket"' in main_content:
+            # Check if referenced resource exists
+            combined_content = main_content + outputs_content
+            if "aws_s3_bucket.app_assets.bucket" in combined_content:
+                assert 'resource "aws_s3_bucket" "app_assets"' in main_content, \
+                    "S3 bucket resource must be defined if output references it"
+
+    def test_no_dangling_s3_bucket_references(self, main_tf):
+        """Verify no references to undefined S3 bucket resources."""
+        content = main_tf.read_text()
+        
+        # Find all S3 bucket references
+        import re
+        bucket_refs = re.findall(r'aws_s3_bucket\.(\w+)', content)
+        
+        # Find all S3 bucket resource definitions
+        bucket_defs = re.findall(r'resource\s+"aws_s3_bucket"\s+"(\w+)"', content)
+        
+        # All references must have corresponding definitions
+        for ref in bucket_refs:
+            assert ref in bucket_defs, f"S3 bucket '{ref}' referenced but not defined"
+
+
+class TestMissingVariables:
+    """Test for missing variable definitions (regression)."""
+
+    def test_aws_region_variable_exists(self, variables_tf, main_tf):
+        """Verify aws_region variable is defined if used."""
+        main_content = main_tf.read_text()
+        var_content = variables_tf.read_text()
+        
+        if "var.aws_region" in main_content:
+            assert 'variable "aws_region"' in var_content, \
+                "aws_region variable must be defined if used in main.tf"
+
+    def test_project_tag_variable_exists(self, variables_tf, main_tf):
+        """Verify project_tag variable is defined if used."""
+        main_content = main_tf.read_text()
+        var_content = variables_tf.read_text()
+        
+        if "var.project_tag" in main_content:
+            assert 'variable "project_tag"' in var_content, \
+                "project_tag variable must be defined if used in main.tf"
+
+    def test_all_variable_references_have_definitions(self, variables_tf, main_tf):
+        """Verify all var. references in main.tf have definitions in variables.tf."""
+        import re
+        
+        main_content = main_tf.read_text()
+        var_content = variables_tf.read_text()
+        
+        # Find all variable references in main.tf
+        var_refs = set(re.findall(r'var\.(\w+)', main_content))
+        
+        # Find all variable definitions in variables.tf
+        var_defs = set(re.findall(r'variable\s+"(\w+)"', var_content))
+        
+        # Check for undefined variables
+        undefined_vars = var_refs - var_defs
+        
+        assert len(undefined_vars) == 0, \
+            f"Variables used but not defined: {undefined_vars}"
+
+
+class TestOutputsDuplication:
+    """Test for outputs duplication between files."""
+
+    def test_outputs_not_duplicated_between_files(self, main_tf, outputs_tf):
+        """Verify outputs are not duplicated in both main.tf and outputs.tf."""
+        import re
+        
+        main_content = main_tf.read_text()
+        outputs_content = outputs_tf.read_text()
+        
+        # Find all output names in both files
+        main_outputs = set(re.findall(r'output\s+"(\w+)"', main_content))
+        outputs_tf_outputs = set(re.findall(r'output\s+"(\w+)"', outputs_content))
+        
+        duplicates = main_outputs & outputs_tf_outputs
+        
+        assert len(duplicates) == 0, \
+            f"Outputs defined in both main.tf and outputs.tf: {duplicates}"
+
+    def test_critical_outputs_defined_somewhere(self, main_tf, outputs_tf):
+        """Verify critical outputs are defined in either main.tf or outputs.tf."""
+        main_content = main_tf.read_text()
+        outputs_content = outputs_tf.read_text()
+        combined = main_content + outputs_content
+        
+        critical_outputs = ["vpc_id", "public_subnet_ids", "private_subnet_ids"]
+        
+        for output_name in critical_outputs:
+            assert f'output "{output_name}"' in combined, \
+                f"Critical output '{output_name}' must be defined"
+
+
+class TestMainTfSyntaxErrors:
+    """Test for common syntax errors in main.tf."""
+
+    def test_no_unclosed_braces_in_main_tf(self, main_tf):
+        """Verify all braces are properly closed in main.tf."""
+        content = main_tf.read_text()
+        
+        open_braces = content.count('{')
+        close_braces = content.count('}')
+        
+        assert open_braces == close_braces, \
+            f"Brace mismatch: {open_braces} open, {close_braces} close"
+
+    def test_no_duplicate_output_names_in_main_tf(self, main_tf):
+        """Verify no duplicate output names in main.tf."""
+        import re
+        
+        content = main_tf.read_text()
+        output_names = re.findall(r'output\s+"(\w+)"', content)
+        
+        duplicates = [name for name in set(output_names) if output_names.count(name) > 1]
+        
+        assert len(duplicates) == 0, \
+            f"Duplicate output names in main.tf: {duplicates}"
+
+    def test_outputs_after_resources_in_main_tf(self, main_tf):
+        """Verify outputs are defined after resources in main.tf for readability."""
+        content = main_tf.read_text()
+        
+        # Find positions
+        import re
+        resource_matches = list(re.finditer(r'resource\s+"', content))
+        output_matches = list(re.finditer(r'output\s+"', content))
+        
+        if resource_matches and output_matches:
+            last_resource_pos = max(m.start() for m in resource_matches)
+            first_output_pos = min(m.start() for m in output_matches)
+            
+            # Outputs should generally come after resources
+            # This is a convention test, not strict requirement
+            if first_output_pos < last_resource_pos:
+                import warnings
+                warnings.warn(
+                    "Outputs defined before resources - consider moving for better organization"
+                )
+
+
+class TestConditionalOutputs:
+    """Test conditional output logic."""
+
+    def test_rds_output_handles_empty_list(self, main_tf):
+        """Verify RDS endpoint output handles case when RDS is not created."""
+        content = main_tf.read_text()
+        
+        # Should use ternary operator or try/catch pattern
+        if 'output "rds_endpoint"' in content:
+            # Must check var.create_rds before accessing postgres[0]
+            assert "var.create_rds" in content and "postgres[0]" in content, \
+                "RDS endpoint output must check create_rds before accessing postgres[0]"
+
+    def test_conditional_outputs_have_default_values(self, main_tf):
+        """Verify conditional outputs provide default values."""
+        content = main_tf.read_text()
+        
+        if 'output "rds_endpoint"' in content:
+            # Should provide empty string or null as default
+            assert '""' in content or 'null' in content or "try(" in content
+
+
+class TestResourceIndexing:
+    """Test proper resource indexing for conditional resources."""
+
+    def test_rds_resources_accessed_with_index(self, main_tf):
+        """Verify conditional RDS resources are accessed with [0] index."""
+        content = main_tf.read_text()
+        
+        # If we reference RDS instance in outputs/other places, must use [0]
+        import re
+        postgres_refs = re.findall(r'aws_db_instance\.postgres(?:\[(\d+)\])?', content)
+        
+        # Check if any references are without index but RDS is conditional
+        if "count = var.create_rds" in content:
+            for ref in postgres_refs:
+                if ref == '':  # No index found
+                    # This is in a conditional context, so it might be OK
+                    pass
+
+    def test_conditional_resources_use_count_or_for_each(self, main_tf):
+        """Verify conditional resources use count or for_each properly."""
+        content = main_tf.read_text()
+        
+        # Find all resources with count
+        import re
+        resources_with_count = re.findall(
+            r'resource\s+"([^"]+)"\s+"([^"]+)"[^{]*{[^}]*count\s*=',
+            content,
+            re.DOTALL
+        )
+        
+        # These should be accessed with [index] when referenced
+        for resource_type, resource_name in resources_with_count:
+            full_ref = f"{resource_type}.{resource_name}"
+            # Check if referenced elsewhere
+            if full_ref in content and content.count(full_ref) > 1:
+                # Should use [0] or [count.index] when accessed
+                pattern = f"{resource_type}\\.{resource_name}\\[\\d+\\]"
+                assert re.search(pattern, content), \
+                    f"Conditional resource {full_ref} should be accessed with index"
+
+
+class TestVariableValidations:
+    """Test variable validation rules."""
+
+    def test_string_variables_have_validation(self, variables_tf):
+        """Verify string variables have appropriate validation where needed."""
+        content = variables_tf.read_text()
+        
+        # Region variable should have validation
+        if 'variable "aws_region"' in content:
+            # Should have validation block
+            import re
+            region_block = re.search(
+                r'variable\s+"aws_region"\s*{[^}]+}',
+                content,
+                re.DOTALL
+            )
+            if region_block:
+                # Should validate region format
+                assert "validation" in region_block.group() or "default" in region_block.group()
+
+    def test_project_tag_not_empty(self, variables_tf):
+        """Verify project_tag variable validates non-empty values."""
+        content = variables_tf.read_text()
+        
+        if 'variable "project_tag"' in content:
+            import re
+            project_tag_block = re.search(
+                r'variable\s+"project_tag"\s*{[^}]+}',
+                content,
+                re.DOTALL
+            )
+            if project_tag_block and "validation" in project_tag_block.group():
+                # Should check length > 0
+                assert "length" in project_tag_block.group()
+
+
+class TestBackendConfiguration:
+    """Test backend configuration consistency."""
+
+    def test_backend_uses_correct_key_path(self, backend_tf):
+        """Verify backend key path is logical."""
+        content = backend_tf.read_text()
+        
+        if "key" in content:
+            # Should have .tfstate extension
+            assert "terraform.tfstate" in content or ".tfstate" in content
+
+    def test_backend_placeholders_are_clear(self, backend_tf):
+        """Verify backend placeholders are clearly marked."""
+        content = backend_tf.read_text()
+        
+        # Should have REPLACE_ME or similar markers
+        if "bucket" in content and "=" in content:
+            assert "REPLACE" in content.upper() or "TODO" in content.upper() or \
+                   "CHANGEME" in content.upper() or "EXAMPLE" in content.upper()

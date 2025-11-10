@@ -299,3 +299,281 @@ class TestPolicyPlaceholders:
         content = github_oidc_trust_policy_path.read_text()
         # Should have placeholders for account ID
         assert "REPLACE_" in content or "${{" in content
+
+class TestGitHubActionsPolicyPlaceholders:
+    """Test GitHub Actions policy placeholder values (regression)."""
+
+    def test_s3_bucket_placeholder_format(self, github_actions_policy):
+        """Verify S3 bucket ARN uses consistent placeholder format."""
+        for stmt in github_actions_policy["Statement"]:
+            if "Resource" in stmt:
+                resources = stmt["Resource"]
+                if isinstance(resources, str):
+                    resources = [resources]
+                
+                for resource in resources:
+                    if "arn:aws:s3:::" in resource:
+                        # Should use REPLACE_ prefix for clarity
+                        assert "REPLACE_TFSTATE_BUCKET" in resource or \
+                               "REPLACE" in resource.upper(), \
+                            f"S3 bucket ARN should use clear placeholder: {resource}"
+
+    def test_dynamodb_table_placeholder_format(self, github_actions_policy):
+        """Verify DynamoDB table ARN uses consistent placeholder format."""
+        for stmt in github_actions_policy["Statement"]:
+            if "Resource" in stmt:
+                resources = stmt["Resource"]
+                if isinstance(resources, str):
+                    resources = [resources]
+                
+                for resource in resources:
+                    if "arn:aws:dynamodb:" in resource:
+                        # Should use clear placeholders
+                        assert "REPLACE" in resource.upper(), \
+                            f"DynamoDB ARN should use clear placeholder: {resource}"
+
+    def test_account_id_placeholder_in_arns(self, github_actions_policy):
+        """Verify ARNs use account ID placeholder."""
+        for stmt in github_actions_policy["Statement"]:
+            if "Resource" in stmt:
+                resources = stmt["Resource"]
+                if isinstance(resources, str):
+                    resources = [resources]
+                
+                for resource in resources:
+                    if "arn:aws:" in resource and "::" not in resource:
+                        # Should have account ID placeholder
+                        assert "REPLACE_ACCOUNT_ID" in resource or \
+                               "REPLACE" in resource.upper() or \
+                               "${" in resource or \
+                               "*" in resource, \
+                            f"ARN should use account ID placeholder: {resource}"
+
+
+class TestIAMPolicyResourceScoping:
+    """Test IAM policy resource scoping."""
+
+    def test_s3_resources_include_bucket_and_objects(self, github_actions_policy):
+        """Verify S3 permissions include both bucket and object ARNs."""
+        s3_resources = []
+        for stmt in github_actions_policy["Statement"]:
+            if "Resource" in stmt:
+                actions = stmt.get("Action", [])
+                if isinstance(actions, str):
+                    actions = [actions]
+                
+                if any("s3:" in action for action in actions):
+                    resources = stmt["Resource"]
+                    if isinstance(resources, str):
+                        resources = [resources]
+                    s3_resources.extend(resources)
+        
+        if s3_resources:
+            # Should have both bucket (without /*) and objects (with /*)
+            has_bucket = any(not r.endswith("/*") and "s3:::" in r for r in s3_resources)
+            has_objects = any(r.endswith("/*") for r in s3_resources)
+            
+            assert has_bucket and has_objects, \
+                "S3 permissions should include both bucket and object ARNs"
+
+    def test_wildcard_resources_justified(self, github_actions_policy):
+        """Verify wildcard resources are used only where necessary."""
+        wildcard_statements = []
+        for stmt in github_actions_policy["Statement"]:
+            if "Resource" in stmt:
+                resources = stmt["Resource"]
+                if isinstance(resources, str):
+                    resources = [resources]
+                
+                if "*" in resources:
+                    wildcard_statements.append(stmt)
+        
+        # Wildcard should be limited and have good reason (EC2, EKS, etc.)
+        for stmt in wildcard_statements:
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            
+            # These services often need wildcard due to dynamic resource names
+            justified_services = ["ec2:", "eks:", "elasticloadbalancing:", "autoscaling:", "logs:", "kms:"]
+            has_justified_action = any(
+                any(service in action for service in justified_services)
+                for action in actions
+            )
+            
+            assert has_justified_action, \
+                f"Wildcard resource should be justified: {stmt.get('Sid', 'Unknown')}"
+
+
+class TestIAMPolicyPermissionsScope:
+    """Test IAM policy permissions are appropriately scoped."""
+
+    def test_kms_permissions_scoped(self, github_actions_policy):
+        """Verify KMS permissions are present but appropriately scoped."""
+        kms_actions = []
+        for stmt in github_actions_policy["Statement"]:
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            
+            kms_actions.extend([a for a in actions if "kms:" in a])
+        
+        if kms_actions:
+            # Should have decrypt, encrypt, generate for state encryption
+            essential_kms = ["kms:Decrypt", "kms:Encrypt", "kms:GenerateDataKey"]
+            has_essential = any(action in kms_actions for action in essential_kms)
+            
+            assert has_essential, "KMS permissions should include essential actions"
+            
+            # Should NOT have dangerous actions like DeleteKey
+            dangerous_kms = ["kms:DeleteKey", "kms:ScheduleKeyDeletion"]
+            has_dangerous = any(action in kms_actions for action in dangerous_kms)
+            
+            assert not has_dangerous, "KMS permissions should not include dangerous actions"
+
+    def test_iam_passtole_is_scoped(self, github_actions_policy):
+        """Verify iam:PassRole is appropriately scoped."""
+        for stmt in github_actions_policy["Statement"]:
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            
+            if "iam:PassRole" in actions:
+                # Should ideally have resource restriction or condition
+                # At minimum, document the need for this permission
+                assert stmt.get("Sid") is not None, \
+                    "iam:PassRole statement should have Sid for documentation"
+
+    def test_no_admin_wildcard_permissions(self, github_actions_policy):
+        """Verify policy doesn't grant admin-level wildcard permissions."""
+        for stmt in github_actions_policy["Statement"]:
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            
+            resources = stmt.get("Resource", [])
+            if isinstance(resources, str):
+                resources = [resources]
+            
+            # Should NOT have ["*"] actions with ["*"] resources
+            has_wildcard_actions = "*" in actions
+            has_wildcard_resources = "*" in resources
+            
+            assert not (has_wildcard_actions and has_wildcard_resources), \
+                f"Statement {stmt.get('Sid')} grants excessive permissions"
+
+
+class TestIAMPolicyStatementStructure:
+    """Test IAM policy statement structure and organization."""
+
+    def test_all_statements_have_unique_sids(self, github_actions_policy):
+        """Verify all statements have unique Sid values."""
+        sids = [stmt.get("Sid") for stmt in github_actions_policy["Statement"] if "Sid" in stmt]
+        
+        assert len(sids) == len(set(sids)), \
+            f"Duplicate Sid values found: {[s for s in sids if sids.count(s) > 1]}"
+
+    def test_statement_sids_descriptive(self, github_actions_policy):
+        """Verify Sid values are descriptive."""
+        for stmt in github_actions_policy["Statement"]:
+            if "Sid" in stmt:
+                sid = stmt["Sid"]
+                # Sid should not be generic like "Statement1"
+                assert not sid.startswith("Statement"), \
+                    f"Sid should be descriptive, not generic: {sid}"
+                
+                # Sid should relate to the actions
+                actions = stmt.get("Action", [])
+                if isinstance(actions, str):
+                    actions = [actions]
+                
+                # At least one action should relate to Sid (loose check)
+                if actions and actions != ["*"]:
+                    # Extract service from first action
+                    service = actions[0].split(":")[0] if ":" in actions[0] else ""
+                    # Sid should mention service or be clearly descriptive
+                    assert len(sid) > 3, f"Sid too short: {sid}"
+
+    def test_statements_grouped_logically(self, github_actions_policy):
+        """Verify statements are grouped by service/function."""
+        sids = [stmt.get("Sid", "") for stmt in github_actions_policy["Statement"]]
+        
+        # Should have logical groupings like TerraformState, EC2, RDS, etc.
+        expected_groups = ["State", "DynamoDB", "KMS", "EC2", "RDS", "EKS", "CloudWatch"]
+        
+        found_groups = sum(1 for group in expected_groups if any(group in sid for sid in sids))
+        
+        assert found_groups >= 3, \
+            "Policy should have logical statement groupings"
+
+
+class TestIAMPolicyCompliance:
+    """Test IAM policy compliance with best practices."""
+
+    def test_no_notaction_or_notresource(self, github_actions_policy):
+        """Verify policy doesn't use NotAction or NotResource (anti-pattern)."""
+        for stmt in github_actions_policy["Statement"]:
+            assert "NotAction" not in stmt, "Avoid NotAction - use explicit Allow"
+            assert "NotResource" not in stmt, "Avoid NotResource - use explicit Resource"
+
+    def test_all_allow_statements_have_resources(self, github_actions_policy):
+        """Verify Allow statements specify resources."""
+        for stmt in github_actions_policy["Statement"]:
+            if stmt.get("Effect") == "Allow":
+                # Should have Resource field (even if it's ["*"])
+                assert "Resource" in stmt, \
+                    f"Allow statement {stmt.get('Sid')} missing Resource field"
+
+    def test_no_principal_in_identity_policy(self, github_actions_policy):
+        """Verify identity policy doesn't include Principal."""
+        for stmt in github_actions_policy["Statement"]:
+            # Identity policies (for users/roles) shouldn't have Principal
+            assert "Principal" not in stmt, \
+                "Identity policy should not have Principal field"
+
+
+class TestTerraformSpecificPermissions:
+    """Test Terraform-specific permission requirements."""
+
+    def test_has_state_locking_permissions(self, github_actions_policy):
+        """Verify policy grants DynamoDB permissions for state locking."""
+        dynamodb_actions = []
+        for stmt in github_actions_policy["Statement"]:
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            dynamodb_actions.extend([a for a in actions if "dynamodb:" in a])
+        
+        required_lock_actions = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"]
+        for action in required_lock_actions:
+            assert action in dynamodb_actions, \
+                f"Missing required DynamoDB lock action: {action}"
+
+    def test_has_state_read_write_permissions(self, github_actions_policy):
+        """Verify policy grants S3 permissions for state read/write."""
+        s3_actions = []
+        for stmt in github_actions_policy["Statement"]:
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            s3_actions.extend([a for a in actions if "s3:" in a])
+        
+        required_state_actions = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+        for action in required_state_actions:
+            assert action in s3_actions, \
+                f"Missing required S3 state action: {action}"
+
+    def test_has_infrastructure_management_permissions(self, github_actions_policy):
+        """Verify policy grants permissions to manage infrastructure."""
+        all_actions = []
+        for stmt in github_actions_policy["Statement"]:
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            all_actions.extend(actions)
+        
+        # Should have EC2, RDS, EKS permissions for infrastructure
+        required_services = ["ec2:", "rds:", "eks:"]
+        for service in required_services:
+            has_service = any(service in action for action in all_actions)
+            assert has_service, f"Missing permissions for {service}"

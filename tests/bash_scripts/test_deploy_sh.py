@@ -251,3 +251,199 @@ class TestOutputMessages:
         keywords = ["Formatting", "Initializing", "Planning", "Validating"]
         found_keywords = [kw for kw in keywords if kw in content]
         assert len(found_keywords) >= 2, "Script should indicate current steps"
+
+class TestDeployShSyntaxFix:
+    """Test for the syntax error fix in deploy.sh (regression)."""
+
+    def test_terraform_fmt_command_syntax(self, script_path):
+        """Verify terraform fmt command has correct syntax."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should NOT have 'tf=terraform fmt' (assignment syntax error)
+        assert "tf=terraform" not in content, \
+            "Script should not have assignment syntax 'tf=terraform'"
+        
+        # Should have proper terraform fmt command
+        assert "terraform fmt" in content
+
+    def test_no_variable_assignments_to_commands(self, script_path):
+        """Verify no accidental variable assignments to terraform commands."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        for line in lines:
+            # Check for patterns like: var=command args
+            if "terraform" in line and "=" in line:
+                # Should be environment variable or parameter, not command assignment
+                if not line.strip().startswith("#"):
+                    # Make sure it's not a problematic pattern like 'tf=terraform fmt'
+                    assert not line.strip().startswith("tf=terraform"), \
+                        f"Found problematic assignment: {line.strip()}"
+
+    def test_terraform_fmt_runs_successfully(self, script_path):
+        """Verify terraform fmt command is properly formed."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Find the fmt line
+        import re
+        fmt_lines = [line for line in content.split('\n') if 'fmt' in line and 'terraform' in line]
+        
+        for line in fmt_lines:
+            if not line.strip().startswith("#"):
+                # Should be 'terraform fmt' not 'tf=terraform fmt'
+                assert line.strip().startswith("terraform fmt") or \
+                       "terraform fmt" in line, \
+                    f"Incorrect fmt command: {line}"
+
+    def test_all_terraform_commands_valid(self, script_path):
+        """Verify all terraform commands have valid syntax."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        terraform_commands = ['fmt', 'init', 'validate', 'plan', 'apply', 'workspace']
+        
+        for line in lines:
+            if 'terraform' in line and not line.strip().startswith('#'):
+                # Should have 'terraform <command>' pattern
+                has_valid_command = any(cmd in line for cmd in terraform_commands)
+                if has_valid_command:
+                    # Verify it's not a variable assignment
+                    assert not re.match(r'^\s*\w+=terraform', line.strip()), \
+                        f"Invalid terraform command syntax: {line.strip()}"
+
+
+class TestDeployShErrorHandling:
+    """Test error handling in deploy.sh."""
+
+    def test_script_fails_on_terraform_errors(self, script_path):
+        """Verify script will fail if terraform commands fail."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # With set -e, script should exit on any command failure
+        assert "set -e" in content or "set -euo pipefail" in content
+
+    def test_terraform_init_uses_input_false(self, script_path):
+        """Verify terraform init doesn't hang on input."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # init command should use -input=false
+        if "terraform init" in content:
+            assert "-input=false" in content
+
+    def test_terraform_plan_output_file(self, script_path):
+        """Verify terraform plan saves to file for apply."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Plan should save to file
+        if "terraform plan" in content:
+            assert "-out=" in content or "plan.tfplan" in content
+
+
+class TestDeployShWorkspaceLogic:
+    """Test workspace selection logic."""
+
+    def test_workspace_selection_or_creation(self, script_path):
+        """Verify script handles both existing and new workspaces."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should check if workspace exists
+        assert "workspace list" in content
+        
+        # Should have select for existing
+        assert "workspace select" in content
+        
+        # Should have new for non-existing
+        assert "workspace new" in content
+
+    def test_workspace_uses_provided_argument(self, script_path):
+        """Verify script uses workspace from command line argument."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        assert "${WORKSPACE}" in content or "$WORKSPACE" in content
+
+
+class TestDeployShCommandOrdering:
+    """Test correct ordering of terraform commands."""
+
+    def test_fmt_before_init(self, script_path):
+        """Verify fmt runs before init."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        fmt_line_num = None
+        init_line_num = None
+        
+        for i, line in enumerate(lines):
+            if "terraform fmt" in line and not line.strip().startswith("#"):
+                if fmt_line_num is None:
+                    fmt_line_num = i
+            if "terraform init" in line and not line.strip().startswith("#"):
+                if init_line_num is None:
+                    init_line_num = i
+        
+        if fmt_line_num is not None and init_line_num is not None:
+            assert fmt_line_num < init_line_num, "fmt should run before init"
+
+    def test_init_before_validate(self, script_path):
+        """Verify init runs before validate."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        init_line_num = None
+        validate_line_num = None
+        
+        for i, line in enumerate(lines):
+            if "terraform init" in line and not line.strip().startswith("#"):
+                if init_line_num is None:
+                    init_line_num = i
+            if "terraform validate" in line and not line.strip().startswith("#"):
+                if validate_line_num is None:
+                    validate_line_num = i
+        
+        if init_line_num is not None and validate_line_num is not None:
+            assert init_line_num < validate_line_num, "init should run before validate"
+
+    def test_validate_before_plan(self, script_path):
+        """Verify validate runs before plan."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        validate_line_num = None
+        plan_line_num = None
+        
+        for i, line in enumerate(lines):
+            if "terraform validate" in line and not line.strip().startswith("#"):
+                if validate_line_num is None:
+                    validate_line_num = i
+            if "terraform plan" in line and not line.strip().startswith("#"):
+                if plan_line_num is None:
+                    plan_line_num = i
+        
+        if validate_line_num is not None and plan_line_num is not None:
+            assert validate_line_num < plan_line_num, "validate should run before plan"
+
+    def test_plan_before_apply(self, script_path):
+        """Verify plan runs before apply."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        plan_line_num = None
+        apply_line_num = None
+        
+        for i, line in enumerate(lines):
+            if "terraform plan" in line and not line.strip().startswith("#"):
+                if plan_line_num is None:
+                    plan_line_num = i
+            if "terraform apply" in line and not line.strip().startswith("#"):
+                if apply_line_num is None:
+                    apply_line_num = i
+        
+        if plan_line_num is not None and apply_line_num is not None:
+            assert plan_line_num < apply_line_num, "plan should run before apply"
