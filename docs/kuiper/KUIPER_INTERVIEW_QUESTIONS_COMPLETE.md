@@ -2737,7 +2737,1211 @@ For AWS, it's the same idea: Delete what you don't need, use cheaper alternative
 
 ---
 
-**Continue reading:** Questions 11-60 coming next...
+### Q11: Design a least-privilege IAM policy for a Kuiper Network Administrator. What permissions are required?
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** AWS Security & IAM
+**Risk Level:** Critical (overly permissive = security breach risk)
+**Timebox:** 8-10 minutes
+**Owner:** Security Engineer or Solutions Architect
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Imagine you're managing keys to different rooms in a building. You don't give the janitor the master key - you give them only keys to the rooms they need to clean. Similarly, we don't give Network Admins full AWS access - only what they need to manage VPNs, Transit Gateways, and monitoring.
+
+"Least privilege" means: Give the minimum permissions needed to do the job, nothing more.
+
+**Technical Explanation:**
+
+**Required Permissions for Kuiper NetAdmin:**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "VPNManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeVpnConnections",
+        "ec2:DescribeVpnGateways",
+        "ec2:DescribeCustomerGateways",
+        "ec2:CreateVpnConnection",
+        "ec2:DeleteVpnConnection",
+        "ec2:ModifyVpnConnection",
+        "ec2:CreateCustomerGateway",
+        "ec2:DeleteCustomerGateway",
+        "ec2:CreateTags"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": ["us-east-1", "us-west-2", "eu-central-1"]
+        }
+      }
+    },
+    {
+      "Sid": "TransitGatewayManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeTransitGateways",
+        "ec2:DescribeTransitGatewayAttachments",
+        "ec2:DescribeTransitGatewayRouteTables",
+        "ec2:CreateTransitGatewayRoute",
+        "ec2:DeleteTransitGatewayRoute",
+        "ec2:ModifyTransitGatewayVpcAttachment"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ReadOnlyVPCAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeVpcs",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeRouteTables",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeNetworkAcls",
+        "ec2:DescribeNetworkInterfaces"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchFullAccess",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:*",
+        "logs:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Route53Management",
+      "Effect": "Allow",
+      "Action": [
+        "route53:GetHostedZone",
+        "route53:ListHostedZones",
+        "route53:ListResourceRecordSets",
+        "route53:ChangeResourceRecordSets",
+        "route53:GetHealthCheck",
+        "route53:ListHealthChecks",
+        "route53:CreateHealthCheck",
+        "route53:DeleteHealthCheck",
+        "route53:UpdateHealthCheck"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyDangerousActions",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:DeleteVpc",
+        "ec2:DeleteSubnet",
+        "ec2:DeleteTransitGateway",
+        "iam:*",
+        "organizations:*",
+        "account:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**Key Principles:**
+1. **Read access** to VPCs, subnets (can view, can't modify)
+2. **Write access** to VPN/TGW (can create/modify/delete)
+3. **Full access** to CloudWatch (monitoring is critical)
+4. **Explicit deny** for dangerous actions (delete VPC, IAM changes)
+5. **Region restriction** (only allowed regions)
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **IAM Policy** | `infra/aws/iam/kuiper-netadmin-policy.json` | Complete least-privilege policy |
+| **IAM Role** | `infra/aws/terraform/iam/netadmin-role.tf` | Terraform for role creation |
+| **Permission Boundaries** | `infra/aws/iam/permission-boundaries.json` | Additional constraints |
+
+**Learn More:**
+- [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
+- [Least Privilege Principle](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege)
+
+---
+
+### Q12: Implement mTLS (mutual TLS) for the Kuiper control plane API. Walk through certificate generation, distribution, and rotation.
+
+**Difficulty:** ⭐⭐⭐⭐ (Expert)
+**Category:** Security & PKI
+**Risk Level:** Critical (misconfiguration = unauthorized access or outage)
+**Timebox:** 12-15 minutes
+**Owner:** Security Engineer or Senior SRE
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Normally when you visit a website (HTTPS), the website shows you its ID card (certificate) to prove it's legitimate. But the website doesn't ask for YOUR ID card.
+
+mTLS is like a high-security building where BOTH you AND the guard show ID cards to each other. The control plane API shows its certificate to the gateway, AND the gateway shows its certificate to the API. This prevents unauthorized access.
+
+**Technical Explanation:**
+
+**mTLS Architecture:**
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                    mTLS CERTIFICATE HIERARCHY                      │
+└────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│  ROOT CA (Offline, Hardware HSM)                        │
+│  CN: Kuiper Root CA                                     │
+│  Validity: 20 years                                     │
+│  Key: RSA 4096-bit                                      │
+│  Storage: Air-gapped HSM                                │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ↓ (signs)
+┌─────────────────────────────────────────────────────────┐
+│  INTERMEDIATE CA (Online, AWS Private CA)               │
+│  CN: Kuiper Intermediate CA - Control Plane             │
+│  Validity: 5 years                                      │
+│  Key: RSA 2048-bit                                      │
+│  Storage: AWS Private CA (managed)                      │
+└────────────────────────┬────────────────────────────────┘
+                         │
+        ┌────────────────┴────────────────┐
+        ↓                                 ↓
+┌──────────────────────┐      ┌──────────────────────┐
+│  SERVER CERTIFICATE  │      │  CLIENT CERTIFICATE  │
+│  (Control Plane API) │      │  (Gateway Router)    │
+│                      │      │                      │
+│  CN: api.kuiper      │      │  CN: gateway-va      │
+│      .internal       │      │      .kuiper.internal│
+│  SAN:                │      │  SAN:                │
+│  - api.kuiper.*      │      │  - gateway-va.*      │
+│  - 10.1.100.10       │      │  - 203.0.113.10      │
+│  Validity: 90 days   │      │  Validity: 90 days   │
+│  Key: RSA 2048       │      │  Key: RSA 2048       │
+└──────────────────────┘      └──────────────────────┘
+```
+
+**Certificate Generation (Step-by-Step):**
+
+```bash
+#!/bin/bash
+# generate-mtls-certs.sh - Generate mTLS certificates for Kuiper
+
+set -e
+
+# 1. Create Root CA (DO ONCE, STORE SECURELY)
+echo "=== Step 1: Generate Root CA (OFFLINE OPERATION) ==="
+openssl genrsa -aes256 -out root-ca-key.pem 4096
+openssl req -new -x509 -days 7300 -key root-ca-key.pem -sha256 -out root-ca.pem \
+  -subj "/C=US/ST=VA/L=Herndon/O=Kuiper/OU=Security/CN=Kuiper Root CA"
+
+# 2. Create Intermediate CA
+echo "=== Step 2: Generate Intermediate CA ==="
+openssl genrsa -out intermediate-ca-key.pem 2048
+openssl req -new -key intermediate-ca-key.pem -out intermediate-ca.csr \
+  -subj "/C=US/ST=VA/L=Herndon/O=Kuiper/OU=Control Plane/CN=Kuiper Intermediate CA"
+
+# Sign with Root CA
+openssl x509 -req -in intermediate-ca.csr -CA root-ca.pem -CAkey root-ca-key.pem \
+  -CAcreateserial -out intermediate-ca.pem -days 1825 -sha256 \
+  -extfile <(echo "basicConstraints=CA:TRUE")
+
+# Create CA bundle
+cat intermediate-ca.pem root-ca.pem > ca-bundle.pem
+
+# 3. Generate Server Certificate (Control Plane API)
+echo "=== Step 3: Generate Server Certificate ==="
+openssl genrsa -out server-key.pem 2048
+openssl req -new -key server-key.pem -out server.csr \
+  -subj "/C=US/ST=VA/L=Herndon/O=Kuiper/OU=Control Plane/CN=api.kuiper.internal"
+
+# Create SAN config
+cat > server-san.cnf <<EOF
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+
+[req_distinguished_name]
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = api.kuiper.internal
+DNS.2 = *.api.kuiper.internal
+DNS.3 = api.kuiper.local
+IP.1 = 10.1.100.10
+IP.2 = 10.2.100.10
+IP.3 = 10.3.100.10
+EOF
+
+# Sign server certificate
+openssl x509 -req -in server.csr -CA intermediate-ca.pem -CAkey intermediate-ca-key.pem \
+  -CAcreateserial -out server-cert.pem -days 90 -sha256 \
+  -extfile server-san.cnf -extensions v3_req
+
+# 4. Generate Client Certificate (Gateway)
+echo "=== Step 4: Generate Client Certificate (Gateway-VA) ==="
+openssl genrsa -out client-gateway-va-key.pem 2048
+openssl req -new -key client-gateway-va-key.pem -out client-gateway-va.csr \
+  -subj "/C=US/ST=VA/L=Herndon/O=Kuiper/OU=Gateways/CN=gateway-va.kuiper.internal"
+
+# Create client SAN config
+cat > client-san.cnf <<EOF
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+
+[req_distinguished_name]
+
+[v3_req]
+subjectAltName = @alt_names
+extendedKeyUsage = clientAuth
+
+[alt_names]
+DNS.1 = gateway-va.kuiper.internal
+DNS.2 = gateway-va.kuiper.local
+IP.1 = 203.0.113.10
+EOF
+
+# Sign client certificate
+openssl x509 -req -in client-gateway-va.csr -CA intermediate-ca.pem \
+  -CAkey intermediate-ca-key.pem -CAcreateserial -out client-gateway-va-cert.pem \
+  -days 90 -sha256 -extfile client-san.cnf -extensions v3_req
+
+# 5. Verify certificates
+echo "=== Step 5: Verify Certificates ==="
+openssl verify -CAfile ca-bundle.pem server-cert.pem
+openssl verify -CAfile ca-bundle.pem client-gateway-va-cert.pem
+
+echo "=== Certificates generated successfully ==="
+echo "Server cert: server-cert.pem (CN=api.kuiper.internal)"
+echo "Client cert: client-gateway-va-cert.pem (CN=gateway-va.kuiper.internal)"
+echo "CA bundle: ca-bundle.pem"
+```
+
+**Automated Certificate Rotation:**
+
+```python
+#!/usr/bin/env python3
+# cert-rotation.py - Automated certificate rotation for Kuiper
+
+import boto3
+import subprocess
+import datetime
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+
+def check_cert_expiry(cert_path, days_threshold=30):
+    """Check if certificate expires within threshold days."""
+    with open(cert_path, 'rb') as f:
+        cert = x509.load_pem_x509_certificate(f.read(), default_backend())
+
+    days_remaining = (cert.not_valid_after - datetime.datetime.utcnow()).days
+    return days_remaining, days_remaining <= days_threshold
+
+def rotate_certificate(cert_name, cn, san_list):
+    """Generate new certificate and deploy."""
+    print(f"Rotating certificate: {cert_name}")
+
+    # 1. Generate new key and CSR
+    subprocess.run([
+        'openssl', 'genrsa', '-out', f'{cert_name}-key-new.pem', '2048'
+    ], check=True)
+
+    subprocess.run([
+        'openssl', 'req', '-new',
+        '-key', f'{cert_name}-key-new.pem',
+        '-out', f'{cert_name}-new.csr',
+        '-subj', f'/CN={cn}'
+    ], check=True)
+
+    # 2. Sign with CA (AWS Private CA)
+    acm_pca = boto3.client('acm-pca')
+
+    with open(f'{cert_name}-new.csr', 'rb') as f:
+        csr = f.read()
+
+    response = acm_pca.issue_certificate(
+        CertificateAuthorityArn='arn:aws:acm-pca:us-east-1:123456789012:certificate-authority/xxx',
+        Csr=csr,
+        SigningAlgorithm='SHA256WITHRSA',
+        Validity={
+            'Value': 90,
+            'Type': 'DAYS'
+        }
+    )
+
+    cert_arn = response['CertificateArn']
+
+    # Wait for certificate issuance
+    import time
+    time.sleep(5)
+
+    cert_response = acm_pca.get_certificate(
+        CertificateAuthorityArn='arn:aws:acm-pca:us-east-1:123456789012:certificate-authority/xxx',
+        CertificateArn=cert_arn
+    )
+
+    # 3. Save new certificate
+    with open(f'{cert_name}-cert-new.pem', 'w') as f:
+        f.write(cert_response['Certificate'])
+
+    # 4. Store in Secrets Manager
+    secrets = boto3.client('secretsmanager')
+    secrets.update_secret(
+        SecretId=f'kuiper/certs/{cert_name}',
+        SecretString=json.dumps({
+            'certificate': cert_response['Certificate'],
+            'private_key': open(f'{cert_name}-key-new.pem').read(),
+            'ca_bundle': open('ca-bundle.pem').read()
+        })
+    )
+
+    # 5. Trigger deployment (via SNS)
+    sns = boto3.client('sns')
+    sns.publish(
+        TopicArn='arn:aws:sns:us-east-1:123456789012:kuiper-cert-rotation',
+        Subject=f'Certificate Rotation: {cert_name}',
+        Message=f'New certificate ready for {cert_name}. Deploy now.'
+    )
+
+    print(f"✓ Certificate rotated: {cert_name}")
+    print(f"  New cert: {cert_name}-cert-new.pem")
+    print(f"  Stored in: kuiper/certs/{cert_name}")
+    print(f"  Deployment notification sent")
+
+# Main rotation loop
+if __name__ == '__main__':
+    certs_to_check = [
+        ('server', 'api.kuiper.internal', ['*.api.kuiper.internal']),
+        ('client-gateway-va', 'gateway-va.kuiper.internal', []),
+        ('client-gateway-or', 'gateway-or.kuiper.internal', [])
+    ]
+
+    for cert_name, cn, san_list in certs_to_check:
+        days_remaining, needs_rotation = check_cert_expiry(
+            f'{cert_name}-cert.pem',
+            days_threshold=30
+        )
+
+        print(f"Certificate: {cert_name}")
+        print(f"  Days remaining: {days_remaining}")
+
+        if needs_rotation:
+            rotate_certificate(cert_name, cn, san_list)
+        else:
+            print(f"  ✓ Still valid, no rotation needed")
+        print()
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **PKI Documentation** | `docs/pki/architecture.md` | Complete CA hierarchy design |
+| **Certificate Generation Script** | `scripts/pki/generate-mtls-certs.sh` | Automated cert generation |
+| **Rotation Script** | `scripts/pki/cert-rotation.py` | Automated 90-day rotation |
+| **Rotation Runbook** | `docs/runbooks/certificate-rotation.md` | Manual rotation procedures |
+
+**Learn More:**
+- [mTLS Explained (Cloudflare)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)
+- [AWS Private CA](https://docs.aws.amazon.com/acm-pca/latest/userguide/PcaWelcome.html)
+- [X.509 Certificates](https://en.wikipedia.org/wiki/X.509)
+
+---
+
+### Q13: Configure CloudTrail for comprehensive audit logging. What events are most critical for security investigations?
+
+**Difficulty:** ⭐⭐ (Intermediate)
+**Category:** Security & Compliance
+**Risk Level:** Medium (poor logging = can't investigate incidents)
+**Timebox:** 6-8 minutes
+**Owner:** Security Engineer or Compliance Officer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+CloudTrail is like a security camera system for AWS. It records WHO did WHAT, WHEN, and WHERE. If someone deletes a VPN connection at 2am, CloudTrail tells you who did it, from what IP address, using which credentials.
+
+For security investigations, we especially care about: logins, permission changes, resource deletions, and config changes.
+
+**Technical Explanation:**
+
+**CloudTrail Configuration (Terraform):**
+
+```hcl
+# terraform/cloudtrail.tf
+
+resource "aws_cloudtrail" "kuiper_audit" {
+  name                          = "kuiper-audit-trail"
+  s3_bucket_name                = aws_s3_bucket.cloudtrail_logs.id
+  include_global_service_events = true
+  is_multi_region_trail         = true
+  enable_log_file_validation    = true  # Tamper detection
+
+  # Send to CloudWatch Logs for real-time analysis
+  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
+  cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch.arn
+
+  # Enable insights for anomaly detection
+  insight_selector {
+    insight_type = "ApiCallRateInsight"
+  }
+
+  event_selector {
+    read_write_type           = "All"
+    include_management_events = true
+
+    # Log data events for S3 buckets
+    data_resource {
+      type   = "AWS::S3::Object"
+      values = ["arn:aws:s3:::kuiper-*/*"]
+    }
+  }
+
+  tags = {
+    Name        = "kuiper-audit-trail"
+    Environment = "production"
+    Compliance  = "required"
+  }
+}
+
+# S3 bucket for CloudTrail logs
+resource "aws_s3_bucket" "cloudtrail_logs" {
+  bucket = "kuiper-cloudtrail-logs-${data.aws_caller_identity.current.account_id}"
+
+  # Prevent accidental deletion
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Enable versioning (immutable logs)
+resource "aws_s3_bucket_versioning" "cloudtrail_logs" {
+  bucket = aws_s3_bucket.cloudtrail_logs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Lifecycle policy (move to Glacier after 90 days)
+resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail_logs" {
+  bucket = aws_s3_bucket.cloudtrail_logs.id
+
+  rule {
+    id     = "archive-old-logs"
+    status = "Enabled"
+
+    transition {
+      days          = 90
+      storage_class = "GLACIER"
+    }
+
+    expiration {
+      days = 2555  # 7 years (compliance requirement)
+    }
+  }
+}
+```
+
+**Critical Events to Monitor:**
+
+```yaml
+# cloudwatch-insights-queries/security-critical-events.yaml
+
+queries:
+  # Query 1: IAM permission changes
+  - name: "IAM Permission Changes"
+    query: |
+      fields @timestamp, userIdentity.principalId, eventName, requestParameters
+      | filter eventSource = "iam.amazonaws.com"
+      | filter eventName in [
+          "PutUserPolicy",
+          "PutRolePolicy",
+          "AttachUserPolicy",
+          "AttachRolePolicy",
+          "CreateAccessKey",
+          "DeleteAccessKey"
+        ]
+      | sort @timestamp desc
+    description: "Track all IAM permission changes"
+    alert_threshold: "any_occurrence"
+
+  # Query 2: Resource deletions
+  - name: "Critical Resource Deletions"
+    query: |
+      fields @timestamp, userIdentity.principalId, eventName, requestParameters
+      | filter eventName in [
+          "DeleteVpc",
+          "DeleteSubnet",
+          "DeleteVpnConnection",
+          "DeleteTransitGateway",
+          "DeleteDBInstance",
+          "DeleteBucket"
+        ]
+      | sort @timestamp desc
+    description: "Alert on any critical resource deletion"
+    alert_threshold: "any_occurrence"
+
+  # Query 3: Console logins from unexpected IPs
+  - name: "Console Logins"
+    query: |
+      fields @timestamp, userIdentity.principalId, sourceIPAddress, userAgent
+      | filter eventName = "ConsoleLogin"
+      | filter sourceIPAddress not like "203.0.113"  # Expected office IPs
+      | sort @timestamp desc
+    description: "Login from non-office IP"
+    alert_threshold: "any_occurrence"
+
+  # Query 4: Failed authentication attempts
+  - name: "Failed Auth Attempts"
+    query: |
+      fields @timestamp, userIdentity.principalId, sourceIPAddress, errorCode
+      | filter errorCode in ["AccessDenied", "UnauthorizedOperation"]
+      | stats count() by sourceIPAddress
+      | filter count() > 10
+    description: "Multiple failed auth attempts (potential brute force)"
+    alert_threshold: "> 10 in 5 minutes"
+
+  # Query 5: Root account usage
+  - name: "Root Account Usage"
+    query: |
+      fields @timestamp, eventName, requestParameters, sourceIPAddress
+      | filter userIdentity.type = "Root"
+      | filter eventName != "ConsoleLogin"  # Allow console login
+      | sort @timestamp desc
+    description: "Root account used for API calls (should never happen)"
+    alert_threshold: "any_occurrence"
+```
+
+**Automated Security Alerts:**
+
+```python
+#!/usr/bin/env python3
+# cloudtrail-security-monitor.py - Real-time CloudTrail monitoring
+
+import boto3
+import json
+
+def lambda_handler(event, context):
+    """Lambda function triggered by CloudWatch Logs subscription."""
+
+    # Decode CloudWatch Logs event
+    log_events = event['logEvents']
+
+    for log_event in log_events:
+        message = json.loads(log_event['message'])
+
+        # Check for critical events
+        if is_critical_event(message):
+            send_security_alert(message)
+
+    return {'statusCode': 200}
+
+def is_critical_event(event):
+    """Determine if event requires immediate alert."""
+
+    critical_events = [
+        'DeleteVpc',
+        'DeleteSubnet',
+        'DeleteVpnConnection',
+        'DeleteTransitGateway',
+        'PutUserPolicy',
+        'AttachUserPolicy',
+        'CreateAccessKey'
+    ]
+
+    # Root account usage (except console login)
+    if event.get('userIdentity', {}).get('type') == 'Root':
+        if event['eventName'] != 'ConsoleLogin':
+            return True
+
+    # Critical event types
+    if event['eventName'] in critical_events:
+        return True
+
+    # Multiple failures from same IP
+    if event.get('errorCode') in ['AccessDenied', 'UnauthorizedOperation']:
+        return True
+
+    return False
+
+def send_security_alert(event):
+    """Send alert to security team."""
+
+    sns = boto3.client('sns')
+
+    message = f"""
+    🚨 SECURITY ALERT - CloudTrail Critical Event
+
+    Event: {event['eventName']}
+    Principal: {event['userIdentity']['principalId']}
+    Source IP: {event['sourceIPAddress']}
+    Time: {event['eventTime']}
+    Region: {event['awsRegion']}
+
+    Request Parameters:
+    {json.dumps(event.get('requestParameters', {}), indent=2)}
+
+    Action Required: Review immediately
+    """
+
+    sns.publish(
+        TopicArn='arn:aws:sns:us-east-1:123456789012:security-alerts',
+        Subject=f'🚨 CRITICAL: {event["eventName"]} by {event["userIdentity"]["principalId"]}',
+        Message=message
+    )
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **CloudTrail Terraform** | `infra/aws/terraform/cloudtrail.tf` | Multi-region trail with validation |
+| **Security Queries** | `observability/cloudwatch-insights/security-queries.yaml` | 20+ investigation queries |
+| **Alert Lambda** | `lambda/cloudtrail-monitor/handler.py` | Real-time security monitoring |
+| **Investigation Runbook** | `docs/runbooks/security-investigation.md` | How to investigate incidents |
+
+**Learn More:**
+- [AWS CloudTrail User Guide](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html)
+- [CloudTrail Log File Examples](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-examples.html)
+
+---
+
+### Q14: Write a comprehensive runbook for "VPN Tunnel Down" incidents. What are the key troubleshooting steps?
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** SRE & Operations
+**Risk Level:** High (incomplete runbook = prolonged outages)
+**Timebox:** 10-12 minutes
+**Owner:** SRE or Senior Network Engineer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+A runbook is like a recipe book for fixing problems. When something breaks, you don't want to figure it out from scratch - you want a step-by-step guide that tells you EXACTLY what to check and what to do.
+
+For "VPN Tunnel Down", the runbook says: Check if it's really down, check the other tunnel, check BGP, check the router, check AWS, etc. - all in order of most likely problems first.
+
+**Technical Explanation:**
+
+**Runbook: VPN Tunnel Down**
+
+```markdown
+# RUNBOOK: VPN Tunnel Down
+
+**Severity:** P1 (Critical if both tunnels down, P2 if one tunnel down)
+**MTTR Target:** 15 minutes (single tunnel), 5 minutes (both tunnels)
+**On-Call Required:** Yes
+**Escalation:** Network Engineering Manager
+
+## Overview
+
+VPN tunnels provide connectivity between Kuiper ground gateways and AWS Transit Gateway.
+Each VPN connection has 2 tunnels for redundancy (ECMP load balancing).
+
+**Impact:**
+- Single tunnel down: Degraded (50% capacity, no redundancy)
+- Both tunnels down: OUTAGE (no connectivity to AWS)
+
+## Prerequisites
+
+- SSH access to gateway router
+- AWS Console access (VPN section)
+- Grafana dashboard: "Kuiper VPN Health"
+- PagerDuty escalation policy loaded
+
+## Diagnostic Steps
+
+### Step 1: Verify Alert (30 seconds)
+
+**Objective:** Confirm tunnel is actually down
+
+```bash
+# Check Grafana dashboard
+open https://grafana.kuiper.internal/d/vpn-health
+
+# Check CloudWatch metric
+aws cloudwatch get-metric-data \
+  --metric-data-queries file://vpn-tunnel-query.json \
+  --start-time "5 minutes ago" \
+  --end-time "now"
+```
+
+**Expected:** TunnelState = 0 (down) for affected tunnel
+
+**Decision Point:**
+- If both tunnels down → **P0 CRITICAL** → Page manager, jump to Step 5
+- If one tunnel down → **P1** → Continue to Step 2
+
+### Step 2: Check BGP Session (1 minute)
+
+**Objective:** Is BGP the issue or is it the IPsec tunnel?
+
+```bash
+# SSH to gateway router
+ssh admin@gateway-va.kuiper.internal
+
+# Check BGP summary
+show ip bgp summary | include 169.254
+
+# Expected output:
+# 169.254.10.2  4  64512  12  12   0    0  00:15:23  5  ← Established (good)
+# 169.254.10.6  4  64512  12  12   0    0  never     Idle ← DOWN (problem)
+
+# Check BGP neighbor details
+show ip bgp neighbors 169.254.10.6
+```
+
+**Possible States:**
+- **Idle** = BGP never connected (IPsec tunnel down)
+- **Active** = BGP trying to connect (BGP config issue)
+- **Established** = BGP working (problem is elsewhere)
+
+### Step 3: Check IPsec Tunnel (2 minutes)
+
+**Objective:** Is the IPsec tunnel established?
+
+```bash
+# Check IPsec security associations
+show crypto ipsec sa | include spi
+
+# Expected output (GOOD):
+# spi: 0x12345678  local crypto endpt.: 203.0.113.10
+# spi: 0x87654321  remote crypto endpt.: 52.1.2.3
+
+# No output = tunnel down
+
+# Check IKE SA (phase 1)
+show crypto ikev2 sa
+
+# Expected output (GOOD):
+# Tunnel-id Local                 Remote                fvrf/ivrf            Status
+# 1         203.0.113.10/500      52.1.2.3/500          none/none            READY
+
+# No READY = IKE failed to establish
+
+# Check tunnel interface status
+show interface Tunnel1
+```
+
+**Decision Point:**
+- IKE SA not established → Check pre-shared key, check AWS status (Step 4)
+- IKE SA established but no IPsec SA → Check phase 2 proposals mismatch
+- Both established → Check routing (Step 5)
+
+### Step 4: Check AWS VPN Status (2 minutes)
+
+**Objective:** Is the problem on AWS side?
+
+```bash
+# Check VPN connection status (AWS Console or CLI)
+aws ec2 describe-vpn-connections \
+  --vpn-connection-ids vpn-0123456789abcdef0 \
+  --query 'VpnConnections[0].VgwTelemetry'
+
+# Expected output:
+# [
+#   {
+#     "AcceptedRouteCount": 5,
+#     "LastStatusChange": "2025-11-10T10:15:23Z",
+#     "OutsideIpAddress": "52.1.2.3",
+#     "Status": "UP",          ← Tunnel 1 (good)
+#     "StatusMessage": ""
+#   },
+#   {
+#     "AcceptedRouteCount": 0,
+#     "LastStatusChange": "2025-11-10T10:30:45Z",
+#     "OutsideIpAddress": "52.1.2.4",
+#     "Status": "DOWN",        ← Tunnel 2 (problem)
+#     "StatusMessage": "No incoming traffic detected"
+#   }
+# ]
+
+# Check AWS Service Health Dashboard
+open https://status.aws.amazon.com/
+# Look for: "VPN" service in your region
+```
+
+**Common AWS Issues:**
+- "No incoming traffic detected" = Router not sending traffic
+- "IKE version mismatch" = Config issue
+- "AWS service issue" = Wait for AWS to resolve
+
+### Step 5: Common Fixes
+
+**Fix 1: Restart IPsec Tunnel**
+
+```bash
+# On gateway router
+clear crypto session remote 52.1.2.4
+
+# Wait 30 seconds, check status
+show crypto session brief
+
+# If still down, restart interface
+interface Tunnel1
+  shutdown
+  no shutdown
+```
+
+**Fix 2: Check Pre-Shared Key**
+
+```bash
+# Verify PSK matches AWS configuration
+show run | include ikev2 keyring
+
+# If mismatch, update:
+crypto ikev2 keyring kuiper-keyring
+  peer aws-tunnel-2
+    pre-shared-key NEW_KEY_FROM_AWS
+```
+
+**Fix 3: Check Routing**
+
+```bash
+# Ensure tunnel interface has IP
+show ip interface brief | include Tunnel
+
+# Check if default route exists
+show ip route 0.0.0.0
+
+# Check if traffic is being sent to tunnel
+show interface Tunnel1 | include packets
+# input packets should be > 0
+```
+
+### Step 6: Escalation (if not resolved in 10 minutes)
+
+```bash
+# Page network engineering manager
+/page @network-manager "VPN Tunnel 2 down for 10+ min, need assistance"
+
+# Prepare info for escalation:
+# - show tech-support (full diagnostic output)
+# - show log | include Tunnel1 (last 100 lines)
+# - CloudWatch VPN metrics screenshot
+```
+
+### Step 7: Temporary Mitigation (if needed)
+
+```bash
+# If both tunnels down, consider:
+# 1. Fail over to Gateway-OR (via Route 53)
+# 2. Establish emergency VPN from laptop to AWS
+# 3. Contact AWS Support (Enterprise: 15-min response)
+```
+
+## Post-Resolution
+
+### Verification Checklist
+
+- [ ] Both tunnels showing "UP" in Grafana
+- [ ] BGP sessions "Established" for both peers
+- [ ] Route count matches expected (show ip bgp summary)
+- [ ] Packet loss < 0.1% (show interface Tunnel1 | include errors)
+- [ ] Run synthetic test (curl https://api.kuiper.internal/health)
+
+### Communication
+
+```markdown
+# Post to #incidents Slack channel:
+✅ RESOLVED: VPN Tunnel 2 restored
+Duration: 12 minutes
+Root cause: [Fill in]
+Impact: None (failover to Tunnel 1 successful)
+Action items: [TBD in postmortem]
+```
+
+### Postmortem
+
+Write blameless postmortem within 24 hours:
+- Timeline of events
+- Root cause analysis (5 whys)
+- What went well / what went wrong
+- Action items to prevent recurrence
+
+## Common Root Causes
+
+| Root Cause | Frequency | Fix |
+|------------|-----------|-----|
+| AWS service issue | 40% | Wait for AWS resolution |
+| Gateway router reboot | 25% | Tunnels auto-recover in 2-3 min |
+| Config change | 20% | Rollback change, review change control |
+| ISP routing issue | 10% | Contact ISP, fail over to other gateway |
+| Pre-shared key mismatch | 5% | Update PSK on router |
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **VPN Tunnel Runbook** | `docs/runbooks/vpn-tunnel-down.md` | Complete step-by-step guide |
+| **Diagnostic Scripts** | `scripts/diagnostics/vpn-health-check.sh` | Automated diagnostics |
+| **Escalation Matrix** | `docs/oncall/escalation-matrix.md` | Who to page when |
+| **Postmortem Template** | `docs/postmortems/template.md` | Blameless postmortem format |
+
+**Learn More:**
+- [Writing Effective Runbooks](https://www.pagerduty.com/resources/learn/call-center-automation-run-books/)
+- [Google SRE Book - Being On-Call](https://sre.google/sre-book/being-on-call/)
+
+---
+
+### Q15: Implement security group rules following the principle of least privilege. What's your approach for a multi-tier application?
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** AWS Security & Networking
+**Risk Level:** High (overly permissive = attack surface)
+**Timebox:** 8-10 minutes
+**Owner:** Security Engineer or Network Architect
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Security groups are like bouncers at a club. They decide who gets in and who doesn't. "Least privilege" means only letting in people who NEED to be there, not everyone.
+
+For a multi-tier app:
+- Web tier: Only accepts HTTPS from internet
+- App tier: Only accepts requests from web tier
+- DB tier: Only accepts database connections from app tier
+
+Each tier can ONLY talk to what it needs to - nothing more.
+
+**Technical Explanation:**
+
+**Security Group Strategy:**
+
+```hcl
+# terraform/security-groups.tf
+
+# 1. ALB Security Group (Internet-facing)
+resource "aws_security_group" "alb" {
+  name        = "kuiper-alb-sg"
+  description = "Security group for Application Load Balancer"
+  vpc_id      = aws_vpc.kuiper_control_plane.id
+
+  # Inbound: HTTPS from internet
+  ingress {
+    description = "HTTPS from internet"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Inbound: HTTP (redirect to HTTPS)
+  ingress {
+    description = "HTTP redirect"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Outbound: To web tier only
+  egress {
+    description     = "To web tier"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web.id]
+  }
+
+  tags = {
+    Name = "kuiper-alb-sg"
+    Tier = "load-balancer"
+  }
+}
+
+# 2. Web Tier Security Group
+resource "aws_security_group" "web" {
+  name        = "kuiper-web-sg"
+  description = "Security group for web tier"
+  vpc_id      = aws_vpc.kuiper_control_plane.id
+
+  # Inbound: From ALB only
+  ingress {
+    description     = "From ALB"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  # Inbound: SSH from bastion only
+  ingress {
+    description     = "SSH from bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+  }
+
+  # Outbound: To app tier only
+  egress {
+    description     = "To app tier"
+    from_port       = 8081
+    to_port         = 8081
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id]
+  }
+
+  # Outbound: HTTPS for package updates
+  egress {
+    description = "HTTPS for updates"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "kuiper-web-sg"
+    Tier = "web"
+  }
+}
+
+# 3. App Tier Security Group
+resource "aws_security_group" "app" {
+  name        = "kuiper-app-sg"
+  description = "Security group for app tier"
+  vpc_id      = aws_vpc.kuiper_control_plane.id
+
+  # Inbound: From web tier only
+  ingress {
+    description     = "From web tier"
+    from_port       = 8081
+    to_port         = 8081
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web.id]
+  }
+
+  # Inbound: SSH from bastion only
+  ingress {
+    description     = "SSH from bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+  }
+
+  # Outbound: To DB tier only
+  egress {
+    description     = "To database"
+    from_port       = 5432  # PostgreSQL
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.database.id]
+  }
+
+  # Outbound: To Redis
+  egress {
+    description     = "To Redis"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.redis.id]
+  }
+
+  # Outbound: HTTPS for AWS APIs
+  egress {
+    description = "To AWS APIs"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "kuiper-app-sg"
+    Tier = "application"
+  }
+}
+
+# 4. Database Security Group
+resource "aws_security_group" "database" {
+  name        = "kuiper-db-sg"
+  description = "Security group for database tier"
+  vpc_id      = aws_vpc.kuiper_control_plane.id
+
+  # Inbound: From app tier only (PostgreSQL)
+  ingress {
+    description     = "PostgreSQL from app tier"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app.id]
+  }
+
+  # NO outbound rules (database shouldn't initiate connections)
+  # RDS will add necessary outbound rules automatically
+
+  tags = {
+    Name = "kuiper-db-sg"
+    Tier = "database"
+  }
+}
+
+# 5. Bastion Security Group
+resource "aws_security_group" "bastion" {
+  name        = "kuiper-bastion-sg"
+  description = "Security group for bastion host"
+  vpc_id      = aws_vpc.kuiper_control_plane.id
+
+  # Inbound: SSH from office IPs only
+  ingress {
+    description = "SSH from office"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["203.0.113.0/24"]  # Office IP range
+  }
+
+  # Outbound: SSH to any instance (but only bastion can reach them)
+  egress {
+    description = "SSH to instances"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]  # VPC CIDR
+  }
+
+  tags = {
+    Name = "kuiper-bastion-sg"
+    Tier = "management"
+  }
+}
+```
+
+**Key Principles:**
+1. **Deny by default** - No rule = no access
+2. **Reference security groups** - Not CIDR blocks (more flexible)
+3. **Minimal outbound** - Only what's needed
+4. **Bastion for SSH** - Never expose SSH directly
+5. **No 0.0.0.0/0 inbound** - Except for ALB (internet-facing)
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Security Group Terraform** | `infra/aws/terraform/security-groups.tf` | Complete SG config |
+| **Security Review Checklist** | `docs/security/sg-review-checklist.md` | What to check before deploying |
+| **Architecture Diagram** | `docs/diagrams/security-groups.mmd` | Visual SG relationships |
+
+**Learn More:**
+- [AWS Security Groups](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html)
+- [Security Group Best Practices](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html)
+
+---
+
+**Continue reading:** Questions 16-60 coming next...
 
 ## Glossary of All Terms (A-Z)
 
