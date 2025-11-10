@@ -5462,7 +5462,1333 @@ echo "Availability: $uptime_pct%"  # Must be > 99.99%
 
 ---
 
-**Continue reading:** Questions 21-60 coming next...
+## Q21: Structure Terraform Code for Multi-Environment AWS Infrastructure ⭐⭐⭐
+
+**Category:** Infrastructure as Code | **Risk:** MEDIUM | **Timebox:** 30 min | **Owner:** DevOps Engineer
+
+### Simple Explanation (Feynman Method)
+Terraform lets you define infrastructure as code (like VPCs, EC2, RDS) instead of clicking in the AWS console. But for **multiple environments** (dev, staging, prod), you need a good structure to avoid repeating code. Think of it like organizing a closet - you want reusable "modules" (like drawers) that work for all your clothes.
+
+For Kuiper, we have:
+- **Dev environment** (cheap, small instances for testing)
+- **Staging** (production-like, for integration testing)
+- **Production** (full scale, high availability)
+
+### Technical Explanation
+
+**Recommended Directory Structure:**
+
+```
+terraform/
+├── modules/                    # Reusable components
+│   ├── vpc/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── ec2-instance/
+│   ├── rds/
+│   └── transit-gateway/
+│
+├── environments/               # Environment-specific configs
+│   ├── dev/
+│   │   ├── main.tf
+│   │   ├── terraform.tfvars    # Dev variables
+│   │   └── backend.tf
+│   ├── staging/
+│   │   ├── main.tf
+│   │   ├── terraform.tfvars
+│   │   └── backend.tf
+│   └── prod/
+│       ├── main.tf
+│       ├── terraform.tfvars
+│       └── backend.tf
+│
+└── global/                     # Shared resources (IAM, Route53)
+    ├── iam/
+    └── route53/
+```
+
+**Example Module (VPC):**
+
+```hcl
+# modules/vpc/main.tf
+
+resource "aws_vpc" "main" {
+  cidr_block           = var.cidr_block
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-${var.project}-vpc"
+    }
+  )
+}
+
+resource "aws_subnet" "public" {
+  count = length(var.public_subnet_cidrs)
+
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidrs[count.index]
+  availability_zone       = var.availability_zones[count.index]
+  map_public_ip_on_launch = true
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-public-${var.availability_zones[count.index]}"
+      Tier = "public"
+    }
+  )
+}
+
+resource "aws_subnet" "private" {
+  count = length(var.private_subnet_cidrs)
+
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = var.availability_zones[count.index]
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-private-${var.availability_zones[count.index]}"
+      Tier = "private"
+    }
+  )
+}
+
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-igw"
+    }
+  )
+}
+
+resource "aws_nat_gateway" "main" {
+  count = var.enable_nat_gateway ? length(var.public_subnet_cidrs) : 0
+
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-nat-${var.availability_zones[count.index]}"
+    }
+  )
+
+  depends_on = [aws_internet_gateway.main]
+}
+
+resource "aws_eip" "nat" {
+  count = var.enable_nat_gateway ? length(var.public_subnet_cidrs) : 0
+
+  domain = "vpc"
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.environment}-nat-eip-${count.index}"
+    }
+  )
+}
+```
+
+```hcl
+# modules/vpc/variables.tf
+
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+}
+
+variable "project" {
+  description = "Project name"
+  type        = string
+  default     = "kuiper"
+}
+
+variable "cidr_block" {
+  description = "VPC CIDR block"
+  type        = string
+}
+
+variable "public_subnet_cidrs" {
+  description = "List of public subnet CIDRs"
+  type        = list(string)
+}
+
+variable "private_subnet_cidrs" {
+  description = "List of private subnet CIDRs"
+  type        = list(string)
+}
+
+variable "availability_zones" {
+  description = "List of availability zones"
+  type        = list(string)
+}
+
+variable "enable_nat_gateway" {
+  description = "Enable NAT Gateway for private subnets"
+  type        = bool
+  default     = true
+}
+
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default     = {}
+}
+```
+
+```hcl
+# modules/vpc/outputs.tf
+
+output "vpc_id" {
+  description = "VPC ID"
+  value       = aws_vpc.main.id
+}
+
+output "public_subnet_ids" {
+  description = "List of public subnet IDs"
+  value       = aws_subnet.public[*].id
+}
+
+output "private_subnet_ids" {
+  description = "List of private subnet IDs"
+  value       = aws_subnet.private[*].id
+}
+
+output "nat_gateway_ips" {
+  description = "NAT Gateway public IPs"
+  value       = aws_eip.nat[*].public_ip
+}
+```
+
+**Production Environment:**
+
+```hcl
+# environments/prod/main.tf
+
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+
+  default_tags {
+    tags = {
+      Environment = "production"
+      Project     = "kuiper"
+      ManagedBy   = "terraform"
+      CostCenter  = "kuiper-ops"
+    }
+  }
+}
+
+# Use VPC module
+module "vpc" {
+  source = "../../modules/vpc"
+
+  environment         = "prod"
+  cidr_block          = "10.0.0.0/16"
+  public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+  availability_zones   = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  enable_nat_gateway   = true
+
+  tags = {
+    Tier = "networking"
+  }
+}
+
+# Use EC2 module for control plane
+module "control_plane" {
+  source = "../../modules/ec2-instance"
+
+  environment       = "prod"
+  instance_type     = var.control_plane_instance_type  # c5.2xlarge
+  instance_count    = 10
+  subnet_ids        = module.vpc.private_subnet_ids
+  vpc_id            = module.vpc.vpc_id
+  ami_id            = var.control_plane_ami
+
+  user_data = file("${path.module}/user-data/control-plane.sh")
+
+  tags = {
+    Component = "control-plane"
+  }
+}
+
+# RDS for metadata
+module "metadata_db" {
+  source = "../../modules/rds"
+
+  environment          = "prod"
+  engine               = "postgres"
+  engine_version       = "15.4"
+  instance_class       = "db.r5.xlarge"
+  allocated_storage    = 100
+  multi_az             = true
+  subnet_ids           = module.vpc.private_subnet_ids
+  vpc_id               = module.vpc.vpc_id
+  backup_retention     = 30  # 30 days for prod
+
+  tags = {
+    Component = "database"
+  }
+}
+```
+
+```hcl
+# environments/prod/terraform.tfvars
+
+aws_region = "us-east-1"
+
+control_plane_instance_type = "c5.2xlarge"
+control_plane_ami           = "ami-0c55b159cbfafe1f0"
+
+# Production gets 30-day backups, multi-AZ
+database_backup_retention = 30
+database_multi_az         = true
+```
+
+```hcl
+# environments/prod/backend.tf
+
+terraform {
+  backend "s3" {
+    bucket         = "kuiper-terraform-state-prod"
+    key            = "prod/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "kuiper-terraform-locks"
+
+    # Prevent accidental destruction
+    skip_region_validation = false
+  }
+}
+```
+
+**Development Environment (Cheaper):**
+
+```hcl
+# environments/dev/terraform.tfvars
+
+aws_region = "us-east-1"
+
+control_plane_instance_type = "t3.medium"  # Cheaper!
+control_plane_ami           = "ami-0c55b159cbfafe1f0"
+
+# Dev only needs 7-day backups, no multi-AZ
+database_backup_retention = 7
+database_multi_az         = false
+```
+
+**Terraform Workspace Alternative:**
+
+```bash
+#!/bin/bash
+# scripts/terraform-env-switch.sh
+
+ENV=$1  # dev, staging, prod
+
+if [[ -z "$ENV" ]]; then
+  echo "Usage: $0 <dev|staging|prod>"
+  exit 1
+fi
+
+cd "environments/$ENV"
+
+# Select workspace
+terraform workspace select "$ENV" || terraform workspace new "$ENV"
+
+# Show current state
+terraform workspace show
+
+echo "✅ Switched to $ENV environment"
+echo "Run: terraform plan"
+```
+
+**Best Practices Checklist:**
+
+```python
+#!/usr/bin/env python3
+# scripts/terraform-lint.py - Check Terraform best practices
+
+import os
+import re
+import sys
+
+def check_terraform_files(directory):
+    """Lint Terraform files for common issues."""
+
+    issues = []
+
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if not file.endswith('.tf'):
+                continue
+
+            filepath = os.path.join(root, file)
+
+            with open(filepath, 'r') as f:
+                content = f.read()
+
+            # Check 1: All resources have tags
+            resources = re.findall(r'resource "([^"]+)" "([^"]+)"', content)
+            for resource_type, resource_name in resources:
+                if 'tags' not in content:
+                    issues.append(f"{filepath}: Missing tags on {resource_type}.{resource_name}")
+
+            # Check 2: No hardcoded IPs/ARNs
+            if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', content):
+                if 'cidr' not in content.lower():
+                    issues.append(f"{filepath}: Hardcoded IP address found")
+
+            # Check 3: Variables have descriptions
+            var_blocks = re.findall(r'variable "([^"]+)" \{([^}]+)\}', content)
+            for var_name, var_body in var_blocks:
+                if 'description' not in var_body:
+                    issues.append(f"{filepath}: Variable {var_name} missing description")
+
+            # Check 4: Outputs have descriptions
+            output_blocks = re.findall(r'output "([^"]+)" \{([^}]+)\}', content)
+            for output_name, output_body in output_blocks:
+                if 'description' not in output_body:
+                    issues.append(f"{filepath}: Output {output_name} missing description")
+
+    if issues:
+        print("❌ Terraform Lint Issues Found:\n")
+        for issue in issues:
+            print(f"  - {issue}")
+        return False
+    else:
+        print("✅ All Terraform files passed lint checks")
+        return True
+
+# Usage
+if __name__ == '__main__':
+    passed = check_terraform_files('terraform/')
+    sys.exit(0 if passed else 1)
+```
+
+**Testing Terraform Changes:**
+
+```bash
+#!/bin/bash
+# scripts/terraform-test.sh
+
+set -e
+
+ENV=${1:-dev}
+cd "environments/$ENV"
+
+echo "🧪 Testing Terraform for $ENV environment"
+
+# 1. Format check
+echo -e "\n1️⃣ Checking format..."
+terraform fmt -check -recursive
+
+# 2. Validate syntax
+echo -e "\n2️⃣ Validating syntax..."
+terraform init -backend=false
+terraform validate
+
+# 3. Security scan (tfsec)
+echo -e "\n3️⃣ Running security scan..."
+tfsec .
+
+# 4. Cost estimation (infracost)
+echo -e "\n4️⃣ Estimating costs..."
+terraform plan -out=tfplan.binary
+terraform show -json tfplan.binary > tfplan.json
+infracost breakdown --path tfplan.json
+
+# 5. Plan (dry run)
+echo -e "\n5️⃣ Running plan..."
+terraform plan -detailed-exitcode
+
+echo "✅ All tests passed for $ENV"
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **VPC Module** | `terraform/modules/vpc/` | Reusable VPC module |
+| **Prod Environment** | `terraform/environments/prod/` | Production config |
+| **Dev Environment** | `terraform/environments/dev/` | Dev config (cheaper) |
+| **Terraform Lint** | `scripts/terraform-lint.py` | Best practices checks |
+| **Test Script** | `scripts/terraform-test.sh` | Automated testing |
+
+**Learn More:**
+- [Terraform Module Best Practices](https://developer.hashicorp.com/terraform/language/modules/develop)
+- [AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [Terraform Testing with Terratest](https://terratest.gruntwork.io/)
+
+---
+
+## Q22: Implement GitOps with ArgoCD for Kubernetes Deployments ⭐⭐⭐⭐
+
+**Category:** GitOps & CI/CD | **Risk:** MEDIUM | **Timebox:** 35 min | **Owner:** Platform Engineer
+
+### Simple Explanation (Feynman Method)
+**GitOps** means your Git repository is the "source of truth" for your infrastructure. Instead of manually running `kubectl apply`, **ArgoCD** watches your Git repo and automatically applies changes to Kubernetes when you commit. It's like having a robot that ensures your cluster always matches what's in Git.
+
+For Kuiper satellite control plane running on EKS, this means:
+- Commit a change to `deployment.yaml` → ArgoCD automatically deploys it
+- No manual `kubectl` commands → Everything is audited in Git
+- Self-healing → If someone manually changes the cluster, ArgoCD reverts it
+
+### Technical Explanation
+
+**GitOps Architecture:**
+
+```
+Developer Workflow:
+1. Edit manifests in Git
+2. Create PR → Review → Merge
+3. ArgoCD detects change
+4. ArgoCD syncs to EKS cluster
+
+┌──────────────┐
+│  Git Repo    │  ← Source of truth
+│  (GitHub)    │
+└──────┬───────┘
+       │ Polls every 3 min
+       ▼
+┌──────────────┐
+│   ArgoCD     │  ← Reconciliation engine
+│  (EKS pod)   │
+└──────┬───────┘
+       │ kubectl apply
+       ▼
+┌──────────────┐
+│ EKS Cluster  │  ← Running workloads
+│ (Kuiper)     │
+└──────────────┘
+```
+
+**1. Install ArgoCD on EKS:**
+
+```bash
+#!/bin/bash
+# scripts/install-argocd.sh
+
+# Create argocd namespace
+kubectl create namespace argocd
+
+# Install ArgoCD
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# Wait for pods to be ready
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
+
+# Get initial admin password
+ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+echo "ArgoCD admin password: $ARGOCD_PASSWORD"
+
+# Port-forward to access UI
+kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+
+echo "✅ ArgoCD installed"
+echo "Access UI: https://localhost:8080"
+echo "Username: admin"
+echo "Password: $ARGOCD_PASSWORD"
+```
+
+**2. Repository Structure (GitOps):**
+
+```
+kuiper-k8s-manifests/           # Git repo for manifests
+├── base/                       # Base configurations
+│   ├── kustomization.yaml
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── configmap.yaml
+│
+├── overlays/                   # Environment-specific overlays
+│   ├── dev/
+│   │   ├── kustomization.yaml
+│   │   └── replicas-patch.yaml  # 2 replicas for dev
+│   ├── staging/
+│   │   └── kustomization.yaml   # 5 replicas
+│   └── prod/
+│       ├── kustomization.yaml   # 10 replicas
+│       └── resources-patch.yaml # Higher CPU/memory
+│
+└── argocd/                     # ArgoCD Application definitions
+    ├── control-plane-dev.yaml
+    ├── control-plane-staging.yaml
+    └── control-plane-prod.yaml
+```
+
+**Base Deployment:**
+
+```yaml
+# base/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuiper-control-plane
+  labels:
+    app: kuiper-control-plane
+spec:
+  replicas: 3  # Override in overlays
+  selector:
+    matchLabels:
+      app: kuiper-control-plane
+  template:
+    metadata:
+      labels:
+        app: kuiper-control-plane
+        version: v1.2.3
+    spec:
+      containers:
+      - name: control-plane
+        image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/kuiper-control-plane:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: kuiper-config
+              key: environment
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+```
+
+```yaml
+# base/kustomization.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+
+commonLabels:
+  app.kubernetes.io/name: kuiper-control-plane
+  app.kubernetes.io/managed-by: argocd
+```
+
+**Production Overlay:**
+
+```yaml
+# overlays/prod/kustomization.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kuiper-prod
+
+bases:
+  - ../../base
+
+patchesStrategicMerge:
+  - replicas-patch.yaml
+  - resources-patch.yaml
+
+images:
+  - name: 123456789012.dkr.ecr.us-east-1.amazonaws.com/kuiper-control-plane
+    newTag: v1.2.3  # Specific version for prod
+
+commonLabels:
+  environment: production
+```
+
+```yaml
+# overlays/prod/replicas-patch.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuiper-control-plane
+spec:
+  replicas: 10  # Production scale
+```
+
+```yaml
+# overlays/prod/resources-patch.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuiper-control-plane
+spec:
+  template:
+    spec:
+      containers:
+      - name: control-plane
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "2000m"
+          limits:
+            memory: "4Gi"
+            cpu: "4000m"
+```
+
+**3. ArgoCD Application Definitions:**
+
+```yaml
+# argocd/control-plane-prod.yaml
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kuiper-control-plane-prod
+  namespace: argocd
+spec:
+  project: default
+
+  # Source repository
+  source:
+    repoURL: https://github.com/kuiper/k8s-manifests.git
+    targetRevision: main
+    path: overlays/prod
+
+  # Destination cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kuiper-prod
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true      # Delete resources not in Git
+      selfHeal: true   # Revert manual changes
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health checks
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Ignore HPA-managed replicas
+```
+
+**4. Deploy ArgoCD Application:**
+
+```bash
+#!/bin/bash
+# scripts/deploy-argocd-app.sh
+
+ENV=${1:-prod}
+
+# Apply ArgoCD application definition
+kubectl apply -f argocd/control-plane-${ENV}.yaml
+
+# Wait for sync
+argocd app wait kuiper-control-plane-${ENV} --sync
+
+# Check app status
+argocd app get kuiper-control-plane-${ENV}
+
+echo "✅ Application deployed via ArgoCD"
+```
+
+**5. CI/CD Pipeline (GitHub Actions):**
+
+```yaml
+# .github/workflows/deploy.yml
+
+name: Deploy to EKS via ArgoCD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'overlays/**'
+      - 'base/**'
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update image tag
+        run: |
+          # Update kustomization.yaml with new image tag
+          cd overlays/prod
+          kustomize edit set image \
+            123456789012.dkr.ecr.us-east-1.amazonaws.com/kuiper-control-plane:${{ github.sha }}
+
+      - name: Commit changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add overlays/prod/kustomization.yaml
+          git commit -m "Update image to ${{ github.sha }}"
+          git push
+
+      - name: Trigger ArgoCD sync
+        env:
+          ARGOCD_SERVER: argocd.kuiper.com
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
+        run: |
+          argocd app sync kuiper-control-plane-prod --prune
+          argocd app wait kuiper-control-plane-prod --timeout 600
+```
+
+**6. Rollback Strategy:**
+
+```bash
+#!/bin/bash
+# scripts/rollback-argocd.sh
+
+APP_NAME="kuiper-control-plane-prod"
+REVISION=${1:-HEAD~1}  # Default: previous commit
+
+echo "🔄 Rolling back $APP_NAME to $REVISION"
+
+# Get current Git commit
+CURRENT_COMMIT=$(argocd app get $APP_NAME -o json | jq -r '.status.sync.revision')
+echo "Current: $CURRENT_COMMIT"
+
+# Sync to previous commit
+argocd app sync $APP_NAME --revision $REVISION
+
+# Wait for sync
+argocd app wait $APP_NAME --timeout 300
+
+echo "✅ Rollback complete"
+echo "To roll forward: argocd app sync $APP_NAME --revision $CURRENT_COMMIT"
+```
+
+**7. Monitoring ArgoCD:**
+
+```yaml
+# prometheus/argocd-servicemonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-metrics
+  namespace: argocd
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-server
+  endpoints:
+    - port: metrics
+      interval: 30s
+```
+
+**Grafana Queries:**
+
+```promql
+# Sync failures
+rate(argocd_app_sync_total{phase="Failed"}[5m])
+
+# Out-of-sync apps
+argocd_app_info{sync_status="OutOfSync"}
+
+# Sync duration
+histogram_quantile(0.99, rate(argocd_app_sync_bucket[5m]))
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **K8s Manifests Repo** | `kuiper-k8s-manifests/` | GitOps source of truth |
+| **ArgoCD Apps** | `argocd/*.yaml` | Application definitions |
+| **Deploy Pipeline** | `.github/workflows/deploy.yml` | Automated deployments |
+| **Rollback Script** | `scripts/rollback-argocd.sh` | Quick rollback |
+| **Monitoring** | `prometheus/argocd-servicemonitor.yaml` | ArgoCD metrics |
+
+**Learn More:**
+- [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
+- [Kustomize Guide](https://kustomize.io/)
+- [GitOps Principles](https://opengitops.dev/)
+
+---
+
+## Q23: Build CI/CD Pipeline with GitHub Actions for AWS Deployments ⭐⭐⭐
+
+**Category:** CI/CD | **Risk:** MEDIUM | **Timebox:** 30 min | **Owner:** DevOps Engineer
+
+### Simple Explanation (Feynman Method)
+**CI/CD** (Continuous Integration/Continuous Deployment) automates the journey from code commit to production. For Kuiper:
+1. **CI (Continuous Integration):** Every commit triggers tests, linting, security scans
+2. **CD (Continuous Deployment):** If tests pass, automatically deploy to dev → staging → prod
+
+Think of it like a factory assembly line - each station (test, build, deploy) runs automatically.
+
+### Technical Explanation
+
+**Pipeline Stages:**
+
+```
+Commit → GitHub Actions Triggered
+   ↓
+[1] Lint & Format Check
+   ↓
+[2] Unit Tests (pytest)
+   ↓
+[3] Build Docker Image
+   ↓
+[4] Security Scan (Trivy)
+   ↓
+[5] Push to ECR
+   ↓
+[6] Deploy to Dev (auto)
+   ↓
+[7] Integration Tests
+   ↓
+[8] Deploy to Staging (auto)
+   ↓
+[9] Deploy to Prod (manual approval)
+```
+
+**1. Complete CI/CD Workflow:**
+
+```yaml
+# .github/workflows/cicd.yml
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: kuiper-control-plane
+  EKS_CLUSTER: kuiper-prod
+
+jobs:
+  # ========================================
+  # Stage 1: Lint and Format
+  # ========================================
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install flake8 black isort mypy
+
+      - name: Check formatting (black)
+        run: black --check .
+
+      - name: Check imports (isort)
+        run: isort --check-only .
+
+      - name: Lint (flake8)
+        run: flake8 . --max-line-length=100
+
+      - name: Type check (mypy)
+        run: mypy src/
+
+  # ========================================
+  # Stage 2: Unit Tests
+  # ========================================
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run unit tests
+        run: |
+          pytest tests/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term \
+            --junitxml=test-results.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+
+  # ========================================
+  # Stage 3: Build Docker Image
+  # ========================================
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/GithubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ========================================
+  # Stage 4: Security Scan
+  # ========================================
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build.outputs.image-tag }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Fail on HIGH/CRITICAL vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build.outputs.image-tag }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+  # ========================================
+  # Stage 5: Deploy to Dev
+  # ========================================
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: development
+      url: https://dev.kuiper.com
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/GithubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name kuiper-dev \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Deploy to Dev
+        run: |
+          kubectl set image deployment/kuiper-control-plane \
+            control-plane=${{ needs.build.outputs.image-tag }} \
+            -n kuiper-dev
+
+          kubectl rollout status deployment/kuiper-control-plane \
+            -n kuiper-dev \
+            --timeout=300s
+
+      - name: Run smoke tests
+        run: |
+          chmod +x ./tests/smoke-test.sh
+          ./tests/smoke-test.sh https://dev.kuiper.com
+
+  # ========================================
+  # Stage 6: Deploy to Staging
+  # ========================================
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging.kuiper.com
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/GithubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name kuiper-staging \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Deploy to Staging
+        run: |
+          kubectl set image deployment/kuiper-control-plane \
+            control-plane=${{ needs.build.outputs.image-tag }} \
+            -n kuiper-staging
+
+          kubectl rollout status deployment/kuiper-control-plane \
+            -n kuiper-staging \
+            --timeout=600s
+
+      - name: Run integration tests
+        run: |
+          chmod +x ./tests/integration-test.sh
+          ./tests/integration-test.sh https://staging.kuiper.com
+
+  # ========================================
+  # Stage 7: Deploy to Production
+  # ========================================
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://kuiper.com
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/GithubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ env.EKS_CLUSTER }} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Deploy to Production (Blue-Green)
+        run: |
+          # Deploy to "green" deployment
+          kubectl set image deployment/kuiper-control-plane-green \
+            control-plane=${{ needs.build.outputs.image-tag }} \
+            -n kuiper-prod
+
+          # Wait for green to be ready
+          kubectl rollout status deployment/kuiper-control-plane-green \
+            -n kuiper-prod \
+            --timeout=600s
+
+          # Run health checks on green
+          chmod +x ./scripts/health-check.sh
+          ./scripts/health-check.sh green
+
+          # Switch traffic to green
+          kubectl patch service kuiper-control-plane \
+            -n kuiper-prod \
+            -p '{"spec":{"selector":{"version":"green"}}}'
+
+          echo "✅ Production deployment complete"
+
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 Deployed to production: ${{ needs.build.outputs.image-tag }}",
+              "channel": "#kuiper-deployments"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+```
+
+**2. Smoke Test Script:**
+
+```bash
+#!/bin/bash
+# tests/smoke-test.sh
+
+BASE_URL=$1
+
+if [[ -z "$BASE_URL" ]]; then
+  echo "Usage: $0 <base-url>"
+  exit 1
+fi
+
+echo "🧪 Running smoke tests against $BASE_URL"
+
+# Test 1: Health endpoint
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/health")
+if [[ "$HTTP_CODE" != "200" ]]; then
+  echo "❌ Health check failed: HTTP $HTTP_CODE"
+  exit 1
+fi
+echo "✅ Health check passed"
+
+# Test 2: Ready endpoint
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/ready")
+if [[ "$HTTP_CODE" != "200" ]]; then
+  echo "❌ Readiness check failed: HTTP $HTTP_CODE"
+  exit 1
+fi
+echo "✅ Readiness check passed"
+
+# Test 3: API endpoint
+RESPONSE=$(curl -s "$BASE_URL/api/v1/satellites")
+if [[ $(echo "$RESPONSE" | jq -r '.status') != "ok" ]]; then
+  echo "❌ API test failed"
+  exit 1
+fi
+echo "✅ API test passed"
+
+echo "✅ All smoke tests passed"
+```
+
+**3. GitHub Actions IAM Role (Terraform):**
+
+```hcl
+# terraform/github-actions-role.tf
+
+data "tls_certificate" "github" {
+  url = "https://token.actions.githubusercontent.com"
+}
+
+resource "aws_iam_openid_connect_provider" "github" {
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
+}
+
+resource "aws_iam_role" "github_actions" {
+  name = "GithubActionsRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.github.arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          }
+          StringLike = {
+            "token.actions.githubusercontent.com:sub" = "repo:kuiper/control-plane:*"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_ecr" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_eks" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **CI/CD Workflow** | `.github/workflows/cicd.yml` | Complete pipeline |
+| **Smoke Tests** | `tests/smoke-test.sh` | Automated testing |
+| **IAM Role** | `terraform/github-actions-role.tf` | OIDC authentication |
+| **Dockerfile** | `Dockerfile` | Multi-stage build |
+
+**Learn More:**
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [AWS OIDC with GitHub Actions](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
+
+---
+
+**Continue reading:** Questions 24-60 coming next...
 
 ## Glossary of All Terms (A-Z)
 
