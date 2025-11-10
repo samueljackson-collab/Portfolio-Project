@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  base: '/Portfolio-Project/',
   title: 'Sam Jackson - Enterprise Portfolio',
   description: 'Technical portfolio showcasing 25 enterprise-grade projects across Infrastructure, AI/ML, Security, and Emerging Technologies',
 

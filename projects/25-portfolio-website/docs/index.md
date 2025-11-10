@@ -5,9 +5,6 @@ hero:
   name: Sam Jackson
   text: Enterprise Technical Portfolio
   tagline: System Development Engineer specializing in Cloud Infrastructure, DevOps, and Full-Stack Solutions
-  image:
-    src: /hero-image.svg
-    alt: Portfolio Hero
   actions:
     - theme: brand
       text: View Projects
