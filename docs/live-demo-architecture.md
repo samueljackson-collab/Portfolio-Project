@@ -522,6 +522,48 @@ if __name__ == '__main__':
 
 ---
 
+## 🎨 Wiki.js UI Preview
+
+For recruiter presentations and portfolio demonstrations, a visual mockup of the deployed Wiki.js interface is available.
+
+**Preview:** [Wiki.js UI Mockup](./examples/wikijs-ui-mockup.html)
+
+**What it shows:**
+- Professional Wiki.js interface with production-ready styling
+- Complete documentation page layout (header, navigation, content, TOC)
+- Real infrastructure documentation example
+- Three-column responsive design
+- Tag system, breadcrumbs, and page metadata
+
+**Example Content:**
+The mockup demonstrates an "Infrastructure Overview" page documenting:
+- Hardware specifications (Dell R720, TrueNAS)
+- Network architecture with VLAN segmentation
+- Virtual machine inventory
+- Service architecture patterns
+- Backup and monitoring strategies
+
+**Viewing Instructions:**
+```bash
+# Open directly in browser
+open docs/examples/wikijs-ui-mockup.html
+
+# Or serve with Python
+cd docs/examples
+python3 -m http.server 8080
+# Navigate to http://localhost:8080/wikijs-ui-mockup.html
+```
+
+**Why This Matters:**
+- ✅ Shows end-to-end documentation system (not just markdown files)
+- ✅ Demonstrates UI/UX awareness and attention to detail
+- ✅ Proves operational maturity with professional knowledge management
+- ✅ Visual proof of enterprise-grade documentation practices
+
+See [examples/README.md](./examples/README.md) for more details on using the mockup.
+
+---
+
 ## 📚 Additional Resources
 
 ### Related Documentation
