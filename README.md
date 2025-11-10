@@ -422,6 +422,42 @@ React-based interactive learning path tracker for portfolio skills development a
 
 ---
 
+### [🚀 Live Demo Architecture](./docs/live-demo-architecture.md)
+Docker Compose-based demonstration stack showcasing working observability and automation ecosystem for recruiter presentations.
+
+**Stack Components:**
+- **P01** - Flask Observability Lite API (REST API with health endpoints)
+- **P09** - FastAPI CI/CD application (Modern async Python API)
+- **Prometheus** - Metrics collection and alerting (9090)
+- **Grafana** - Real-time dashboards and visualization (3001)
+
+**Quick Start:**
+```bash
+# Launch full demo stack
+docker compose -f compose.demo.yml up -d
+
+# Test APIs
+curl http://localhost:5000/healthz  # Flask
+curl http://localhost:8000/         # FastAPI
+
+# Access UIs
+open http://localhost:9090          # Prometheus
+open http://localhost:3001          # Grafana (admin/admin)
+```
+
+**Key Demonstrations:**
+- End-to-end observability pipeline (metrics collection → visualization)
+- Docker Compose orchestration for multi-service environments
+- Production-like monitoring stack with industry-standard tools
+- Automated health checks and service discovery
+- Real-time metrics dashboards with Prometheus queries
+
+**Technologies:** Docker, Docker Compose, Flask, FastAPI, Prometheus, Grafana, Python
+
+[View Architecture Documentation →](./docs/live-demo-architecture.md)
+
+---
+
 ## 💼 Experience
 **Desktop Support Technician — 3DM (Redmond, WA) · Feb 2025–Present**  
 **Freelance IT & Web Manager — Self-employed · 2015–2022**  

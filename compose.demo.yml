@@ -1,0 +1,134 @@
+version: '3.9'
+
+# Live Demo Architecture - Portfolio Presentation
+# Demonstrates observability and automation ecosystem
+# Components: Flask API (P01), FastAPI (P09), Prometheus, Grafana
+
+services:
+  # P01 - Observability Lite (Flask API)
+  p01:
+    build:
+      context: ./projects/P01-observability-lite
+      dockerfile: Dockerfile
+    container_name: demo-flask-p01
+    ports:
+      - "5000:5000"
+    networks:
+      - demo-network
+    environment:
+      - FLASK_ENV=development
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    labels:
+      - "com.portfolio.component=api"
+      - "com.portfolio.project=P01"
+
+  # P09 - CI/CD FastAPI
+  p09:
+    build:
+      context: ./projects/P09-cicd-fastapi
+      dockerfile: Dockerfile
+    container_name: demo-fastapi-p09
+    ports:
+      - "8000:8000"
+    networks:
+      - demo-network
+    environment:
+      - ENVIRONMENT=demo
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    labels:
+      - "com.portfolio.component=api"
+      - "com.portfolio.project=P09"
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    container_name: demo-prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - demo-network
+    volumes:
+      - ./projects/P11-monitoring-prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./projects/P11-monitoring-prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    labels:
+      - "com.portfolio.component=monitoring"
+      - "com.portfolio.project=P11"
+
+  # Grafana - Dashboard Visualization
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: demo-grafana
+    ports:
+      - "3001:3000"
+    networks:
+      - demo-network
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./projects/P13-grafana-dashboards/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./projects/P13-grafana-dashboards/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    labels:
+      - "com.portfolio.component=visualization"
+      - "com.portfolio.project=P13"
+
+networks:
+  demo-network:
+    driver: bridge
+    name: portfolio-demo-network
+    labels:
+      - "com.portfolio.network=demo"
+
+volumes:
+  prometheus-data:
+    name: portfolio-demo-prometheus-data
+    labels:
+      - "com.portfolio.volume=prometheus"
+  grafana-data:
+    name: portfolio-demo-grafana-data
+    labels:
+      - "com.portfolio.volume=grafana"
