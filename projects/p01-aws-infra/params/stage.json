@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "stage"
+  },
+  {
+    "ParameterKey": "VpcCidr",
+    "ParameterValue": "10.1.0.0/16"
+  },
+  {
+    "ParameterKey": "DBInstanceClass",
+    "ParameterValue": "db.t3.small"
+  },
+  {
+    "ParameterKey": "DBName",
+    "ParameterValue": "myappdb_stage"
+  },
+  {
+    "ParameterKey": "DBMasterUsername",
+    "ParameterValue": "admin"
+  },
+  {
+    "ParameterKey": "DBMasterPassword",
+    "ParameterValue": "CHANGE_ME_USE_SECRETS_MANAGER"
+  }
+]

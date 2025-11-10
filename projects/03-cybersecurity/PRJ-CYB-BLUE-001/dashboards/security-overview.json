@@ -1,0 +1,341 @@
+{
+  "dashboard": {
+    "title": "Security Overview Dashboard",
+    "description": "High-level security monitoring dashboard for AWS SIEM Pipeline",
+    "version": 1,
+    "timeFrom": "now-24h",
+    "timeTo": "now",
+    "refreshInterval": {
+      "pause": false,
+      "value": 300000
+    },
+    "panels": [
+      {
+        "id": "panel-1",
+        "type": "visualization",
+        "title": "Security Events Over Time",
+        "visualization": {
+          "type": "line",
+          "query": {
+            "query": "*",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "time_series": {
+              "date_histogram": {
+                "field": "@timestamp",
+                "interval": "1h"
+              },
+              "aggs": {
+                "by_severity": {
+                  "terms": {
+                    "field": "severity.keyword",
+                    "size": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 0,
+          "y": 0,
+          "w": 24,
+          "h": 8
+        }
+      },
+      {
+        "id": "panel-2",
+        "type": "visualization",
+        "title": "Top 10 Source IPs",
+        "visualization": {
+          "type": "table",
+          "query": {
+            "query": "*",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "top_ips": {
+              "terms": {
+                "field": "source_ip.keyword",
+                "size": 10,
+                "order": {
+                  "_count": "desc"
+                }
+              },
+              "aggs": {
+                "critical_events": {
+                  "filter": {
+                    "term": {
+                      "severity.keyword": "CRITICAL"
+                    }
+                  }
+                },
+                "high_events": {
+                  "filter": {
+                    "term": {
+                      "severity.keyword": "HIGH"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 0,
+          "y": 8,
+          "w": 12,
+          "h": 8
+        }
+      },
+      {
+        "id": "panel-3",
+        "type": "visualization",
+        "title": "Events by Severity",
+        "visualization": {
+          "type": "pie",
+          "query": {
+            "query": "*",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "severity_breakdown": {
+              "terms": {
+                "field": "severity.keyword",
+                "size": 10
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 12,
+          "y": 8,
+          "w": 12,
+          "h": 8
+        }
+      },
+      {
+        "id": "panel-4",
+        "type": "visualization",
+        "title": "GuardDuty Findings",
+        "visualization": {
+          "type": "table",
+          "query": {
+            "query": "log_type:guardduty",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "findings": {
+              "terms": {
+                "field": "finding_type.keyword",
+                "size": 20
+              },
+              "aggs": {
+                "severity_stats": {
+                  "terms": {
+                    "field": "severity.keyword"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 0,
+          "y": 16,
+          "w": 12,
+          "h": 8
+        }
+      },
+      {
+        "id": "panel-5",
+        "type": "visualization",
+        "title": "VPC Flow Logs - Top Rejected Connections",
+        "visualization": {
+          "type": "table",
+          "query": {
+            "query": "log_type:vpc_flow AND action:REJECT",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "top_rejected": {
+              "terms": {
+                "field": "destination_ip.keyword",
+                "size": 10
+              },
+              "aggs": {
+                "unique_sources": {
+                  "cardinality": {
+                    "field": "source_ip.keyword"
+                  }
+                },
+                "total_bytes": {
+                  "sum": {
+                    "field": "bytes"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 12,
+          "y": 16,
+          "w": 12,
+          "h": 8
+        }
+      },
+      {
+        "id": "panel-6",
+        "type": "visualization",
+        "title": "CloudTrail - IAM Activity",
+        "visualization": {
+          "type": "table",
+          "query": {
+            "query": "log_type:cloudtrail AND event_name:(CreateUser OR DeleteUser OR AttachUserPolicy OR PutUserPolicy)",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "iam_events": {
+              "terms": {
+                "field": "event_name.keyword",
+                "size": 20
+              },
+              "aggs": {
+                "by_user": {
+                  "terms": {
+                    "field": "user_identity.keyword",
+                    "size": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 0,
+          "y": 24,
+          "w": 12,
+          "h": 8
+        }
+      },
+      {
+        "id": "panel-7",
+        "type": "metric",
+        "title": "Critical Events (Last 24h)",
+        "visualization": {
+          "type": "metric",
+          "query": {
+            "query": "severity:CRITICAL",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "critical_count": {
+              "value_count": {
+                "field": "_id"
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 12,
+          "y": 24,
+          "w": 6,
+          "h": 4
+        }
+      },
+      {
+        "id": "panel-8",
+        "type": "metric",
+        "title": "High Severity Events (Last 24h)",
+        "visualization": {
+          "type": "metric",
+          "query": {
+            "query": "severity:HIGH",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "high_count": {
+              "value_count": {
+                "field": "_id"
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 18,
+          "y": 24,
+          "w": 6,
+          "h": 4
+        }
+      },
+      {
+        "id": "panel-9",
+        "type": "visualization",
+        "title": "Failed Authentication Attempts",
+        "visualization": {
+          "type": "line",
+          "query": {
+            "query": "event_name:ConsoleLogin AND error_code:*",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "failed_logins": {
+              "date_histogram": {
+                "field": "@timestamp",
+                "interval": "1h"
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 12,
+          "y": 28,
+          "w": 12,
+          "h": 8
+        }
+      },
+      {
+        "id": "panel-10",
+        "type": "visualization",
+        "title": "Network Traffic by Protocol",
+        "visualization": {
+          "type": "pie",
+          "query": {
+            "query": "log_type:vpc_flow",
+            "language": "lucene"
+          },
+          "aggregations": {
+            "by_protocol": {
+              "terms": {
+                "field": "protocol.keyword",
+                "size": 10
+              },
+              "aggs": {
+                "total_bytes": {
+                  "sum": {
+                    "field": "bytes"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gridData": {
+          "x": 0,
+          "y": 28,
+          "w": 12,
+          "h": 8
+        }
+      }
+    ]
+  },
+  "references": [
+    {
+      "type": "index-pattern",
+      "id": "security-logs-*",
+      "name": "Security Logs Index Pattern"
+    }
+  ]
+}
