@@ -1,0 +1,126 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'projects/1-aws-infrastructure-automation/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'projects/1-aws-infrastructure-automation/**'
+
+env:
+  TF_VERSION: '1.4'
+  AWS_REGION: us-west-2
+
+jobs:
+  validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/1-aws-infrastructure-automation/terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Run tfsec security scan
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: projects/1-aws-infrastructure-automation/terraform
+          soft_fail: true
+
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: projects/1-aws-infrastructure-automation/terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=dev.tfvars -out=tfplan
+
+      - name: Save Plan
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: projects/1-aws-infrastructure-automation/terraform/tfplan
+
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: projects/1-aws-infrastructure-automation/terraform
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -var-file=production.tfvars -auto-approve
+
+      - name: Output Infrastructure Details
+        run: terraform output -json > infrastructure-outputs.json
+
+      - name: Save Outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: infrastructure-outputs
+          path: projects/1-aws-infrastructure-automation/terraform/infrastructure-outputs.json
