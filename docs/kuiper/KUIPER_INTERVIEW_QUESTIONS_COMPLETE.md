@@ -10221,6 +10221,376 @@ Due to length considerations, here are the remaining SRE questions summarized:
 
 **Congratulations!** You've completed the SRE Practices section (Q31-Q40). Continue to Q41-Q50 for Advanced Networking, and Q51-Q60 for Homelab Projects and Behavioral Questions.
 
+---
+
+# Advanced Networking Topics (Q41-Q50)
+
+## Q41: Explain BGP communities and how you would use them for traffic engineering in the Kuiper satellite network.
+
+**Difficulty:** ⭐⭐⭐
+**Category:** Advanced Networking
+**Risk Level:** Medium
+**Timebox:** 18 minutes
+**Owner:** Network Engineering
+
+### Simple Explanation (Feynman Method)
+
+**BGP communities** are like "tags" or "labels" you attach to routes. Imagine you're a mail carrier (BGP router) and each package (route) has colored stickers:
+- 🟢 Green sticker = "Preferred route, use this first"
+- 🟡 Yellow sticker = "Backup route, only use if green fails"
+- 🔴 Red sticker = "Don't advertise this to customers"
+
+**Why use them?**
+- **Traffic engineering:** Control which path traffic takes
+- **Route filtering:** Share routes with some neighbors but not others
+- **Route preference:** Mark certain routes as preferred
+
+**Example for Kuiper:**
+- Tag routes from Seattle ground station with community `65000:100` (primary)
+- Tag routes from backup ground station with community `65000:200` (secondary)
+- Other routers see these tags and prefer primary routes
+
+### Technical Explanation
+
+**BGP Community Types:**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  BGP COMMUNITY TYPES                         │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. Standard Communities (32-bit: AS:Value)                 │
+│     Format: 65000:100                                       │
+│     Example: 65001:100 = "Primary path from Seattle"       │
+│                                                              │
+│  2. Extended Communities (64-bit)                           │
+│     Format: Type:Administrator:Local                        │
+│     Example: RT:65000:100 (Route Target)                   │
+│                                                              │
+│  3. Large Communities (96-bit: GA:LD1:LD2)                 │
+│     Format: Global Admin:Local Data 1:Local Data 2         │
+│     Example: 65000:1:100                                    │
+│                                                              │
+│  4. Well-Known Communities (Special)                        │
+│     NO_EXPORT (0xFFFFFF01) - Don't advertise to eBGP peers │
+│     NO_ADVERTISE (0xFFFFFF02) - Don't advertise to anyone  │
+│     BLACKHOLE (65535:666) - Drop traffic (DDoS mitigation) │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Kuiper Traffic Engineering Use Case:**
+
+```
+Ground Stations → Transit Providers → Internet
+
+Seattle GS (Primary):   Tagged 65000:100  → Prefer this
+Denver GS (Secondary):  Tagged 65000:200  → Use as backup
+Atlanta GS (Backup):    Tagged 65000:300  → Last resort
+```
+
+### Production Code
+
+**1. Cisco BGP Community Configuration:**
+
+```cisco
+! Define community lists
+ip community-list standard PRIMARY permit 65000:100
+ip community-list standard SECONDARY permit 65000:200
+ip community-list standard BACKUP permit 65000:300
+
+! Route map to tag outbound routes
+route-map TAG_ROUTES permit 10
+  match ip address prefix-list SEATTLE_ROUTES
+  set community 65000:100
+  set local-preference 200
+
+route-map TAG_ROUTES permit 20
+  match ip address prefix-list DENVER_ROUTES
+  set community 65000:200
+  set local-preference 150
+
+route-map TAG_ROUTES permit 30
+  match ip address prefix-list ATLANTA_ROUTES
+  set community 65000:300
+  set local-preference 100
+
+! Apply to BGP neighbor
+router bgp 65000
+  neighbor 203.0.113.1 remote-as 65001
+  neighbor 203.0.113.1 send-community both
+  neighbor 203.0.113.1 route-map TAG_ROUTES out
+
+! Route map for inbound traffic engineering
+route-map INBOUND_TE permit 10
+  match community PRIMARY
+  set local-preference 200
+
+route-map INBOUND_TE permit 20
+  match community SECONDARY
+  set local-preference 150
+
+route-map INBOUND_TE permit 30
+  match community BACKUP
+  set local-preference 100
+
+router bgp 65000
+  neighbor 203.0.113.2 remote-as 65002
+  neighbor 203.0.113.2 route-map INBOUND_TE in
+```
+
+**2. Python Network Automation (ExaBGP):**
+
+```python
+# network/bgp_community_manager.py
+"""
+Automate BGP community manipulation for traffic engineering
+"""
+from exabgp.configuration.configuration import Configuration
+from netmiko import ConnectHandler
+import json
+
+class BGPCommunityManager:
+    """Manage BGP communities for Kuiper ground stations"""
+
+    # Community definitions
+    COMMUNITIES = {
+        'PRIMARY': '65000:100',
+        'SECONDARY': '65000:200',
+        'BACKUP': '65000:300',
+        'NO_EXPORT': 'no-export',
+        'BLACKHOLE': '65535:666'
+    }
+
+    def __init__(self, router_ip, credentials):
+        self.router = {
+            'device_type': 'cisco_ios',
+            'host': router_ip,
+            'username': credentials['username'],
+            'password': credentials['password']
+        }
+
+    def tag_route_with_community(self, prefix, community_name, local_pref=None):
+        """
+        Tag a route with BGP community for traffic engineering
+
+        Args:
+            prefix: IP prefix (e.g., '10.0.1.0/24')
+            community_name: Community name from COMMUNITIES dict
+            local_pref: Optional local preference value
+        """
+        community = self.COMMUNITIES.get(community_name)
+
+        if not community:
+            raise ValueError(f"Unknown community: {community_name}")
+
+        commands = [
+            'configure terminal',
+            f'ip prefix-list {community_name}_ROUTES permit {prefix}',
+            f'route-map TAG_ROUTES permit 10',
+            f'match ip address prefix-list {community_name}_ROUTES',
+            f'set community {community}'
+        ]
+
+        if local_pref:
+            commands.append(f'set local-preference {local_pref}')
+
+        commands.extend(['exit', 'exit', 'write memory'])
+
+        with ConnectHandler(**self.router) as conn:
+            output = conn.send_config_set(commands)
+
+        return output
+
+    def failover_to_secondary(self, primary_prefix):
+        """
+        Perform BGP failover by changing community tags
+        Changes PRIMARY to BACKUP, promotes SECONDARY to PRIMARY
+        """
+        commands = [
+            'configure terminal',
+            # Demote current primary to backup
+            f'route-map TAG_ROUTES permit 10',
+            f'match ip address prefix-list SEATTLE_ROUTES',
+            f'set community 65000:300',
+            f'set local-preference 100',
+            # Promote secondary to primary
+            f'route-map TAG_ROUTES permit 20',
+            f'match ip address prefix-list DENVER_ROUTES',
+            f'set community 65000:100',
+            f'set local-preference 200',
+            'exit', 'exit'
+        ]
+
+        with ConnectHandler(**self.router) as conn:
+            output = conn.send_config_set(commands)
+            # Clear BGP session to apply changes
+            conn.send_command('clear ip bgp * soft out')
+
+        print("✅ Failover completed: Denver promoted to PRIMARY")
+        return output
+
+    def get_routes_by_community(self, community_name):
+        """Query routes with specific community"""
+        community = self.COMMUNITIES.get(community_name)
+
+        with ConnectHandler(**self.router) as conn:
+            output = conn.send_command(
+                f'show ip bgp community {community}',
+                use_textfsm=True
+            )
+
+        return output
+
+    def set_blackhole_route(self, prefix):
+        """
+        Set blackhole community for DDoS mitigation
+        Causes upstream providers to drop traffic to this prefix
+        """
+        commands = [
+            'configure terminal',
+            f'ip prefix-list BLACKHOLE_ROUTES permit {prefix}',
+            f'route-map BLACKHOLE permit 10',
+            f'match ip address prefix-list BLACKHOLE_ROUTES',
+            f'set community 65535:666',
+            'exit', 'exit',
+            'router bgp 65000',
+            f'neighbor 203.0.113.1 route-map BLACKHOLE out',
+            'exit',
+            'write memory'
+        ]
+
+        with ConnectHandler(**self.router) as conn:
+            output = conn.send_config_set(commands)
+            conn.send_command('clear ip bgp * soft out')
+
+        print(f"🚨 BLACKHOLE activated for {prefix}")
+        return output
+
+# Usage example
+if __name__ == '__main__':
+    manager = BGPCommunityManager(
+        router_ip='10.0.1.1',
+        credentials={'username': 'admin', 'password': 'secret'}
+    )
+
+    # Tag Seattle ground station routes as PRIMARY
+    manager.tag_route_with_community(
+        prefix='10.1.0.0/16',
+        community_name='PRIMARY',
+        local_pref=200
+    )
+
+    # Query all primary routes
+    primary_routes = manager.get_routes_by_community('PRIMARY')
+    print(json.dumps(primary_routes, indent=2))
+
+    # Emergency: Failover to secondary site
+    # manager.failover_to_secondary('10.1.0.0/16')
+
+    # DDoS mitigation: Blackhole attack traffic
+    # manager.set_blackhole_route('203.0.113.0/24')
+```
+
+**3. Terraform BGP Configuration (AWS Transit Gateway):**
+
+```hcl
+# terraform/networking/bgp-communities.tf
+resource "aws_ec2_transit_gateway_route_table" "kuiper_routing" {
+  transit_gateway_id = aws_ec2_transit_gateway.kuiper.id
+
+  tags = {
+    Name = "kuiper-bgp-routing"
+  }
+}
+
+# Define community tags for traffic engineering
+locals {
+  bgp_communities = {
+    primary   = "65000:100"
+    secondary = "65000:200"
+    backup    = "65000:300"
+  }
+}
+
+resource "aws_ec2_transit_gateway_route" "primary_path" {
+  destination_cidr_block         = "10.1.0.0/16"
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_attachment.seattle.id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.kuiper_routing.id
+
+  # Community tag for primary path
+  # Note: AWS TGW doesn't natively support BGP communities
+  # Use Customer Gateway + BGP for full community support
+}
+
+# For full BGP community support, use Customer Gateway Device
+resource "aws_customer_gateway" "ground_station_seattle" {
+  bgp_asn    = 65000
+  ip_address = "203.0.113.10"
+  type       = "ipsec.1"
+
+  tags = {
+    Name           = "seattle-ground-station"
+    BGPCommunity   = local.bgp_communities.primary
+    LocalPref      = "200"
+  }
+}
+
+resource "aws_vpn_connection" "seattle_vpn" {
+  customer_gateway_id = aws_customer_gateway.ground_station_seattle.id
+  transit_gateway_id  = aws_ec2_transit_gateway.kuiper.id
+  type                = aws_customer_gateway.ground_station_seattle.type
+
+  # BGP configuration embedded in VPN
+  tunnel1_inside_cidr = "169.254.21.0/30"
+  tunnel2_inside_cidr = "169.254.22.0/30"
+
+  tags = {
+    Name = "seattle-vpn-primary"
+  }
+}
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **BGP Community Config** | `network/configs/bgp-communities.conf` | Cisco community definitions |
+| **Automation Script** | `network/bgp_community_manager.py` | Python BGP management |
+| **Traffic Engineering** | `docs/network/traffic-engineering.md` | Community strategy |
+| **Terraform TGW** | `terraform/networking/bgp-communities.tf` | AWS BGP setup |
+
+**Learn More:**
+- [RFC 1997: BGP Communities](https://datatracker.ietf.org/doc/html/rfc1997)
+- [BGP Traffic Engineering with Communities](https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/26634-bgp-toc.html)
+
+---
+
+## Q42-Q50: Additional Advanced Networking
+
+Due to comprehensive coverage in previous questions, here are the remaining advanced networking topics:
+
+**Q42: MPLS and Label Switching** - MPLS basics, label distribution, Traffic Engineering tunnels, VPN services (L2VPN, L3VPN)
+
+**Q43: Anycast Implementation** - Anycast routing, BGP anycast, use cases (DNS, CDN), failure detection and mitigation
+
+**Q44: IPv6 Migration Strategy** - Dual-stack deployment, IPv6 addressing, DHCPv6, migration challenges for satellite networks
+
+**Q45: Network Automation at Scale** - Ansible/SaltStack for network config, NETCONF/RESTCONF, intent-based networking
+
+**Q46: Advanced Security (DDoS Mitigation)** - BGP blackhole, FlowSpec, rate limiting, scrubbing centers
+
+**Q47: SD-WAN for Ground Stations** - Overlay networks, application-aware routing, zero-touch provisioning
+
+**Q48: Network Observability** - NetFlow/sFlow, SNMP vs modern telemetry, streaming telemetry, network TAPs
+
+**Q49: Carrier-Grade NAT (CGNAT)** - IPv4 exhaustion solutions, NAT444, DS-Lite, address planning
+
+**Q50: Multi-Cloud Networking** - AWS Transit Gateway, Azure Virtual WAN, GCP Network Connectivity Center, cross-cloud VPN
+
+---
+
+**Progress Check:** You've now completed 50/60 questions (83%)! Final stretch: Q51-Q60 covers Homelab Projects and Behavioral Questions.
+
 ## Glossary of All Terms (A-Z)
 
 ### A
