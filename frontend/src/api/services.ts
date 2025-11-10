@@ -60,6 +60,16 @@ export const contentService = {
    * Get all content items with optional pagination
    */
   async getAll(skip = 0, limit = 100): Promise<Content[]> {
+
+  /**
+   * Get current user's content items with optional pagination
+   */
+  async getMyContent(skip = 0, limit = 100): Promise<Content[]> {
+    const response = await apiClient.get<Content[]>('/content/me', {
+      params: { skip, limit },
+    })
+    return response.data
+  },
     const response = await apiClient.get<Content[]>('/content', {
       params: { skip, limit },
     })

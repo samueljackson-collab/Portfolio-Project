@@ -25,9 +25,8 @@ export const Dashboard: React.FC = () => {
   const fetchContents = async () => {
     try {
       setIsLoading(true)
-      const data = await contentService.getAll()
-      // Filter to show only current user's content
-      setContents(data.filter(item => item.owner_id === user?.id))
+      const data = await contentService.getMyContent()
+      setContents(data)
     } catch (err) {
       setError('Failed to load content')
       console.error(err)

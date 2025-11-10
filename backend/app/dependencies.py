@@ -114,3 +114,64 @@ async def get_current_active_user(
 # Type alias for cleaner endpoint signatures
 CurrentUser = Annotated[User, Depends(get_current_user)]
 DatabaseSession = Annotated[AsyncSession, Depends(get_db)]
+
+
+# Optional security scheme (doesn't raise on missing token)
+optional_security = HTTPBearer(
+    scheme_name="Bearer Token (Optional)",
+    description="JWT access token from login endpoint (optional)",
+    auto_error=False
+)
+
+
+async def get_optional_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(optional_security)],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> User | None:
+    """
+    Dependency to optionally get the currently authenticated user.
+    
+    Unlike get_current_user, this dependency returns None if no token
+    is provided instead of raising a 401 error. This is useful for
+    endpoints that behave differently for authenticated vs anonymous users.
+    
+    Args:
+        credentials: HTTP Bearer token from Authorization header (optional)
+        db: Database session (injected by FastAPI)
+    
+    Returns:
+        User | None: The authenticated user object or None if not authenticated
+    """
+    if credentials is None:
+        return None
+    
+    try:
+        # Extract token from credentials
+        token = credentials.credentials
+        
+        # Decode and validate token
+        payload = decode_access_token(token)
+        email: str = payload.get("sub")
+        
+        if email is None:
+            return None
+        
+        # Look up user in database
+        result = await db.execute(
+            select(User).where(User.email == email)
+        )
+        user = result.scalar_one_or_none()
+        
+        # Only return active users
+        if user and user.is_active:
+            return user
+        
+        return None
+        
+    except Exception:
+        # If anything goes wrong, just return None (not authenticated)
+        return None
+
+
+# Type alias for optional user
+OptionalUser = Annotated[User | None, Depends(get_optional_user)]

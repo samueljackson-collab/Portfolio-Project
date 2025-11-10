@@ -23,7 +23,7 @@ from app.schemas import (
     ContentResponse,
     ContentListResponse
 )
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_optional_user
 
 
 router = APIRouter(
@@ -40,7 +40,7 @@ router = APIRouter(
 )
 async def list_content(
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
     published_only: bool = Query(True, description="Show only published content"),
@@ -124,7 +124,7 @@ async def list_content(
 async def get_content(
     content_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_user)
 ) -> Content:
     """
     Get a single content item by ID.
@@ -297,3 +297,73 @@ async def delete_content(
 
     await db.delete(content)
     await db.commit()
+
+
+@router.get(
+    "/me",
+    response_model=ContentListResponse,
+    summary="Get My Content",
+    description="Get paginated list of current user's content items"
+)
+async def get_my_content(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    search: Optional[str] = Query(None, description="Search in title and body")
+) -> ContentListResponse:
+    """
+    List current user's content items with pagination.
+    
+    This endpoint only returns content owned by the authenticated user,
+    making it more efficient than fetching all content and filtering client-side.
+    
+    Args:
+        db: Database session
+        current_user: Current authenticated user
+        page: Page number (1-indexed)
+        page_size: Number of items per page
+        search: Search term for title/body
+    
+    Returns:
+        ContentListResponse: Paginated content list with metadata
+    """
+    # Build query for current user's content only
+    query = select(Content).where(Content.owner_id == current_user.id)
+    
+    # Apply search filter if provided
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            or_(
+                Content.title.ilike(search_pattern),
+                Content.body.ilike(search_pattern)
+            )
+        )
+    
+    # Count total items (before pagination)
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await db.execute(count_query)
+    total = total_result.scalar()
+    
+    # Apply pagination
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+    
+    # Order by creation date (newest first)
+    query = query.order_by(Content.created_at.desc())
+    
+    # Execute query
+    result = await db.execute(query)
+    items = result.scalars().all()
+    
+    # Calculate total pages
+    pages = (total + page_size - 1) // page_size
+    
+    return ContentListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        pages=pages
+    )
