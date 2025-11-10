@@ -289,23 +289,66 @@ flutterfire configure
 
 ### 1. Create Host Executable
 
+**IMPORTANT**: Native messaging requires a 4-byte little-endian message length prefix before each JSON message.
+
 #### Option A: Dart
 ```dart
 // native_host.dart
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 
-void main() {
-  stdin
-      .transform(utf8.decoder)
-      .transform(json.decoder)
-      .listen(handleMessage);
+void main() async {
+  // Read messages from stdin with length prefix
+  while (true) {
+    try {
+      final message = await readMessage();
+      if (message == null) break;
+
+      final response = handleMessage(message);
+      writeMessage(response);
+    } catch (e) {
+      stderr.writeln('Error: $e');
+      break;
+    }
+  }
 }
 
-void handleMessage(dynamic message) {
+// Read message with 4-byte length prefix
+Future<Map<String, dynamic>?> readMessage() async {
+  final lengthBytes = await stdin.take(4).toList();
+  if (lengthBytes.length != 4) return null;
+
+  final length = ByteData.view(Uint8List.fromList(lengthBytes).buffer)
+      .getUint32(0, Endian.little);
+
+  final messageBytes = await stdin.take(length).toList();
+  final messageJson = utf8.decode(messageBytes);
+  return json.decode(messageJson);
+}
+
+// Write message with 4-byte length prefix
+void writeMessage(Map<String, dynamic> message) {
+  final messageJson = json.encode(message);
+  final messageBytes = utf8.encode(messageJson);
+  final length = messageBytes.length;
+
+  // Write length as 4-byte little-endian integer
+  final lengthBytes = Uint8List(4);
+  ByteData.view(lengthBytes.buffer).setUint32(0, length, Endian.little);
+
+  stdout.add(lengthBytes);
+  stdout.add(messageBytes);
+  stdout.flush();
+}
+
+Map<String, dynamic> handleMessage(Map<String, dynamic> message) {
   // Handle message from extension
-  // Send response
-  stdout.writeln(json.encode(response));
+  return {
+    'type': 'RESPONSE',
+    'success': true,
+    'timestamp': DateTime.now().toIso8601String(),
+  };
 }
 ```
 
@@ -317,23 +360,66 @@ dart compile exe native_host.dart -o native_host
 #### Option B: Node.js
 ```javascript
 // native_host.js
-const readline = require('readline');
+const fs = require('fs');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  terminal: false
-});
+// Read message with 4-byte length prefix
+function readMessage() {
+  return new Promise((resolve, reject) => {
+    const lengthBuffer = Buffer.alloc(4);
 
-rl.on('line', (line) => {
-  const message = JSON.parse(line);
-  handleMessage(message);
-});
+    fs.read(process.stdin.fd, lengthBuffer, 0, 4, null, (err) => {
+      if (err || lengthBuffer.length !== 4) {
+        return reject(err || new Error('Failed to read length'));
+      }
+
+      const length = lengthBuffer.readUInt32LE(0);
+      const messageBuffer = Buffer.alloc(length);
+
+      fs.read(process.stdin.fd, messageBuffer, 0, length, null, (err) => {
+        if (err) return reject(err);
+
+        const message = JSON.parse(messageBuffer.toString('utf8'));
+        resolve(message);
+      });
+    });
+  });
+}
+
+// Write message with 4-byte length prefix
+function writeMessage(message) {
+  const messageJson = JSON.stringify(message);
+  const messageBuffer = Buffer.from(messageJson, 'utf8');
+  const lengthBuffer = Buffer.alloc(4);
+  lengthBuffer.writeUInt32LE(messageBuffer.length, 0);
+
+  process.stdout.write(lengthBuffer);
+  process.stdout.write(messageBuffer);
+}
 
 function handleMessage(message) {
-  // Handle message
-  console.log(JSON.stringify(response));
+  // Handle message from extension
+  return {
+    type: 'RESPONSE',
+    success: true,
+    timestamp: new Date().toISOString()
+  };
 }
+
+// Main loop
+async function main() {
+  while (true) {
+    try {
+      const message = await readMessage();
+      const response = handleMessage(message);
+      writeMessage(response);
+    } catch (error) {
+      console.error('Error:', error);
+      break;
+    }
+  }
+}
+
+main();
 ```
 
 ### 2. Install Native Host

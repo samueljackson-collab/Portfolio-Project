@@ -56,38 +56,50 @@ class AIService {
   }
 
   /// Extract features from tab for ML model
+  /// Must match the 15 features expected by the trained model
   List<double> _extractFeatures(TabModel tab) {
-    // Feature extraction logic
-    // This is a simplified version - real implementation would be more complex
     final features = <double>[];
 
     // URL features
     final url = tab.url.toLowerCase();
     final domain = tab.domain ?? '';
+    final title = tab.title.toLowerCase();
 
-    // Domain-based features (one-hot encoding for common domains)
-    for (final category in AppConstants.categoryPatterns.entries) {
-      final match = category.value.any((pattern) =>
+    // Domain-based features (one-hot encoding) - 6 features
+    // Must match order in Python training: work, research, shopping, social, entertainment, news
+    final categories = ['work', 'research', 'shopping', 'social', 'entertainment', 'news'];
+    for (final category in categories) {
+      final patterns = AppConstants.categoryPatterns[category] ?? [];
+      final match = patterns.any((pattern) =>
         domain.contains(pattern) || url.contains(pattern)
       );
       features.add(match ? 1.0 : 0.0);
     }
 
-    // Title features
-    final title = tab.title.toLowerCase();
-    final workKeywords = ['github', 'code', 'dev', 'api', 'docs', 'documentation'];
-    final socialKeywords = ['facebook', 'twitter', 'instagram', 'social'];
-    final shoppingKeywords = ['buy', 'shop', 'cart', 'price', 'order'];
+    // Keyword-based features (normalized counts) - 6 features
+    // Must match order in Python training: work, research, shopping, social, entertainment, news
+    final keywordSets = {
+      'work': ['github', 'code', 'dev', 'api', 'docs', 'documentation', 'programming'],
+      'research': ['research', 'study', 'paper', 'journal', 'academic', 'scholar'],
+      'shopping': ['buy', 'shop', 'cart', 'price', 'order', 'product'],
+      'social': ['facebook', 'twitter', 'instagram', 'social', 'friend', 'post'],
+      'entertainment': ['video', 'watch', 'movie', 'music', 'play', 'stream'],
+      'news': ['news', 'article', 'breaking', 'latest', 'report'],
+    };
 
-    features.add(_countKeywords(title, workKeywords) / workKeywords.length);
-    features.add(_countKeywords(title, socialKeywords) / socialKeywords.length);
-    features.add(_countKeywords(title, shoppingKeywords) / shoppingKeywords.length);
+    for (final category in categories) {
+      final keywords = keywordSets[category] ?? [];
+      final score = _countKeywords(title, keywords) / keywords.length;
+      features.add(score);
+    }
 
-    // URL structure features
-    features.add(url.split('/').length.toDouble() / 10); // Path depth
+    // URL structure features - 3 features
+    features.add(url.split('/').length.toDouble() / 10); // Path depth (normalized)
     features.add(url.contains('?') ? 1.0 : 0.0); // Has query params
     features.add(url.contains('#') ? 1.0 : 0.0); // Has fragment
 
+    // Total: 6 + 6 + 3 = 15 features (matches Python training script)
+    assert(features.length == 15, 'Feature count must be 15, got ${features.length}');
     return features;
   }
 

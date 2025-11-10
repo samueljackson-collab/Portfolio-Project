@@ -4,11 +4,13 @@ Tab Classification Model Training Script
 Trains a TensorFlow Lite model for categorizing browser tabs
 """
 
+import os
+import json
 import tensorflow as tf
 import numpy as np
-import json
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
@@ -82,37 +84,6 @@ def extract_features_synthetic(category):
     features.append(np.random.uniform(0.0, 1.0))  # Path depth (normalized)
     features.append(np.random.choice([0.0, 1.0]))  # Has query params
     features.append(np.random.choice([0.0, 1.0]))  # Has fragment
-
-    return features
-
-
-def extract_features_real(url, title, content):
-    """
-    Extract features from real tab data
-    """
-    features = []
-
-    url_lower = url.lower()
-    title_lower = title.lower()
-    content_lower = content.lower()
-
-    # Domain-based features
-    for category, domains in DOMAIN_PATTERNS.items():
-        match = any(domain in url_lower for domain in domains)
-        features.append(1.0 if match else 0.0)
-
-    # Keyword-based features
-    for category, keywords in KEYWORD_PATTERNS.items():
-        title_matches = sum(1 for kw in keywords if kw in title_lower)
-        content_matches = sum(1 for kw in keywords if kw in content_lower)
-        score = (title_matches * 2 + content_matches) / (len(keywords) * 3)
-        features.append(min(score, 1.0))
-
-    # URL structure features
-    path_depth = len(url.split('/')) - 3  # Subtract protocol and domain
-    features.append(min(path_depth / 10.0, 1.0))
-    features.append(1.0 if '?' in url else 0.0)
-    features.append(1.0 if '#' in url else 0.0)
 
     return features
 
@@ -202,7 +173,6 @@ def convert_to_tflite(model, output_path='tab_classifier.tflite'):
     print(f"Model saved to {output_path}")
 
     # Get model size
-    import os
     size_kb = os.path.getsize(output_path) / 1024
     print(f"Model size: {size_kb:.2f} KB")
 
@@ -223,8 +193,6 @@ def evaluate_model(model, X_test, y_test, label_encoder):
     predicted_classes = np.argmax(predictions, axis=1)
 
     # Confusion matrix
-    from sklearn.metrics import classification_report, confusion_matrix
-
     print("\nClassification Report:")
     print(classification_report(
         y_test_encoded,

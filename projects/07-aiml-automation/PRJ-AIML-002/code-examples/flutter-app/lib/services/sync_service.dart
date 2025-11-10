@@ -3,14 +3,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/tab_model.dart';
 import '../utils/constants.dart';
+import 'tab_service.dart';
 
 /// Service for cloud synchronization using Firebase
 class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TabService? _tabService;
 
   bool _isSyncing = false;
   Timer? _syncTimer;
+
+  /// Constructor with optional TabService dependency
+  SyncService({TabService? tabService}) : _tabService = tabService;
 
   /// Initialize sync service
   Future<void> initialize() async {
@@ -72,9 +77,15 @@ class SyncService {
     final user = _auth.currentUser;
     if (user == null) return;
 
+    // Check if TabService is available
+    if (_tabService == null) {
+      print('TabService not available, skipping tab sync');
+      return;
+    }
+
     try {
-      // Get local tabs (would come from TabService in real implementation)
-      final localTabs = <TabModel>[]; // Placeholder
+      // Get local tabs from TabService
+      final localTabs = _tabService!.getAllTabs();
 
       // Upload each tab
       for (final tab in localTabs) {
@@ -101,9 +112,15 @@ class SyncService {
     final user = _auth.currentUser;
     if (user == null) return;
 
+    // Check if TabService is available
+    if (_tabService == null) {
+      print('TabService not available, skipping group sync');
+      return;
+    }
+
     try {
-      // Get local groups (would come from TabService in real implementation)
-      final localGroups = <TabGroup>[]; // Placeholder
+      // Get local groups from TabService
+      final localGroups = _tabService!.getAllGroups();
 
       // Upload each group
       for (final group in localGroups) {

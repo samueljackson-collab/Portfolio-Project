@@ -12,7 +12,6 @@ dependencies:
 
   # State Management
   provider: ^6.1.1
-  riverpod: ^2.4.9
 
   # Local Storage
   hive: ^2.2.3
@@ -26,14 +25,12 @@ dependencies:
 
   # AI/ML
   tflite_flutter: ^0.10.4
-  tflite_flutter_helper: ^0.3.1
 
   # HTTP & Networking
   http: ^1.1.2
   dio: ^5.4.0
 
   # Platform Integration
-  desktop_window: ^0.4.0
   window_manager: ^0.3.7
 
   # Native Messaging
@@ -51,9 +48,6 @@ dependencies:
   crypto: ^3.0.3
   shared_preferences: ^2.2.2
   url_launcher: ^6.2.2
-
-  # Search & Filtering
-  fuzzywuzzy: ^1.1.6
 
   # JSON
   json_annotation: ^4.8.1
@@ -86,8 +80,7 @@ flutter:
       fonts:
         - asset: assets/fonts/TabOrganizer.ttf
 
-# Platform Configuration
-flutter:
+  # Platform Configuration
   platforms:
     android:
       minSdkVersion: 21

@@ -20,6 +20,11 @@ void main() async {
   // Initialize Hive for local storage
   await Hive.initFlutter();
 
+  // Register Hive adapters
+  // TODO: After running 'dart run build_runner build', uncomment these lines:
+  // Hive.registerAdapter(TabModelAdapter());
+  // Hive.registerAdapter(TabGroupAdapter());
+
   // Initialize Firebase for cloud sync
   try {
     await Firebase.initializeApp();

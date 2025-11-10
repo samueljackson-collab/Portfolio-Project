@@ -10,6 +10,11 @@ class TabService {
   bool _isInitialized = false;
 
   /// Initialize the tab service
+  /// NOTE: Hive adapters for TabModel and TabGroup must be registered
+  /// in main.dart before calling this method. Run build_runner to generate
+  /// adapters, then register them:
+  ///   Hive.registerAdapter(TabModelAdapter());
+  ///   Hive.registerAdapter(TabGroupAdapter());
   Future<void> initialize() async {
     try {
       _tabsBox = await Hive.openBox<TabModel>('tabs');
@@ -18,6 +23,8 @@ class TabService {
       print('Tab Service initialized successfully');
     } catch (e) {
       print('Error initializing Tab Service: $e');
+      print('Note: Ensure Hive adapters are registered before opening boxes');
+      rethrow;
     }
   }
 

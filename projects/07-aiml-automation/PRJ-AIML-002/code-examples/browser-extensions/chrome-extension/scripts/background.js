@@ -1,10 +1,40 @@
 /**
  * Background service worker for Tab Organizer Chrome Extension
+ *
+ * IMPORTANT: For Manifest V3, all event listeners must be registered at the
+ * top level (synchronously) so Chrome can wake the service worker when events occur.
  */
 
 const NATIVE_HOST_NAME = 'com.taborganizer.native';
 
-// Initialize extension
+// Register all event listeners at top level (required for Manifest V3)
+// These listeners persist across service worker restarts
+
+// Tab created
+chrome.tabs.onCreated.addListener(handleTabCreated);
+
+// Tab updated
+chrome.tabs.onUpdated.addListener(handleTabUpdated);
+
+// Tab removed
+chrome.tabs.onRemoved.addListener(handleTabRemoved);
+
+// Tab activated
+chrome.tabs.onActivated.addListener(handleTabActivated);
+
+// Window focus changed
+chrome.windows.onFocusChanged.addListener(handleWindowFocusChanged);
+
+// Handle alarms
+chrome.alarms.onAlarm.addListener(handleAlarm);
+
+// Handle messages
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  handleMessage(request, sender).then(sendResponse);
+  return true; // Keep channel open for async response
+});
+
+// Initialize extension on install
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Tab Organizer installed');
   initializeExtension();
@@ -25,29 +55,8 @@ async function initializeExtension() {
     });
   }
 
-  // Start listening to tab events
-  startTabListeners();
-
   // Start periodic sync
   chrome.alarms.create('syncTabs', { periodInMinutes: 5 });
-}
-
-// Listen to tab events
-function startTabListeners() {
-  // Tab created
-  chrome.tabs.onCreated.addListener(handleTabCreated);
-
-  // Tab updated
-  chrome.tabs.onUpdated.addListener(handleTabUpdated);
-
-  // Tab removed
-  chrome.tabs.onRemoved.addListener(handleTabRemoved);
-
-  // Tab activated
-  chrome.tabs.onActivated.addListener(handleTabActivated);
-
-  // Window focus changed
-  chrome.windows.onFocusChanged.addListener(handleWindowFocusChanged);
 }
 
 // Handle tab created
@@ -243,13 +252,7 @@ async function sendToNativeApp(message) {
   }
 }
 
-// Handle messages from popup or content scripts
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  handleMessage(request, sender).then(sendResponse);
-  return true; // Keep channel open for async response
-});
-
-// Handle messages
+// Handle messages (implementation for listener registered at top)
 async function handleMessage(request, sender) {
   console.log('Received message:', request.type);
 
@@ -292,8 +295,8 @@ async function handleMessage(request, sender) {
   }
 }
 
-// Handle alarms
-chrome.alarms.onAlarm.addListener(async (alarm) => {
+// Handle alarms (implementation for listener registered at top)
+async function handleAlarm(alarm) {
   if (alarm.name === 'syncTabs') {
     console.log('Syncing tabs...');
     const tabs = await getAllTabs();
@@ -303,7 +306,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       timestamp: new Date().toISOString()
     });
   }
-});
+}
 
 // Get settings
 async function getSettings() {
