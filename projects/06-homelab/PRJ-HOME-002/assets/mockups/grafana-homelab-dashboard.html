@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafana - Homelab Infrastructure Overview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0c0e;
+            color: #d8d9da;
+            overflow-x: hidden;
+        }
+
+        .grafana-header {
+            background: #1f1f20;
+            border-bottom: 1px solid #2c2c2c;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .grafana-logo {
+            color: #f05a28;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .dashboard-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #d8d9da;
+            margin-left: 8px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .time-picker, .refresh-picker {
+            background: #2c2c2c;
+            border: 1px solid #3d3d3d;
+            padding: 6px 12px;
+            border-radius: 4px;
+            color: #d8d9da;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .time-display {
+            color: #999;
+            font-size: 12px;
+            margin-left: 12px;
+        }
+
+        .dashboard-container {
+            padding: 16px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .panel-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .panel-row-2col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .panel-row-3col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .panel {
+            background: #1f1f20;
+            border: 1px solid #2c2c2c;
+            border-radius: 4px;
+            padding: 12px;
+            min-height: 120px;
+        }
+
+        .panel-large {
+            min-height: 300px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #d8d9da;
+        }
+
+        .panel-menu {
+            color: #999;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-value.green { color: #73BF69; }
+        .stat-value.yellow { color: #FADE2A; }
+        .stat-value.orange { color: #FF9830; }
+        .stat-value.red { color: #F2495C; }
+
+        .stat-subtitle {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .sparkline {
+            margin-top: 8px;
+            height: 30px;
+            position: relative;
+        }
+
+        .sparkline svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 8px;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 11px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .status-table th {
+            text-align: left;
+            padding: 8px 4px;
+            color: #999;
+            font-weight: 500;
+            border-bottom: 1px solid #2c2c2c;
+        }
+
+        .status-table td {
+            padding: 8px 4px;
+            border-bottom: 1px solid #2c2c2c;
+        }
+
+        .status-icon {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #73BF69;
+            margin-right: 6px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .updating {
+            animation: pulse 2s infinite;
+        }
+
+        .metric-bar {
+            width: 100%;
+            height: 8px;
+            background: #2c2c2c;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .metric-bar-fill.green { background: #73BF69; }
+        .metric-bar-fill.yellow { background: #FADE2A; }
+        .metric-bar-fill.orange { background: #FF9830; }
+    </style>
+</head>
+<body>
+    <div class="grafana-header">
+        <div class="header-left">
+            <div class="grafana-logo">◆</div>
+            <span class="dashboard-title">Homelab Infrastructure Overview</span>
+        </div>
+        <div class="header-right">
+            <select class="time-picker">
+                <option>Last 24 hours</option>
+            </select>
+            <select class="refresh-picker">
+                <option>30s</option>
+            </select>
+            <span class="time-display" id="current-time"></span>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Top Row - Key Metrics -->
+        <div class="panel-row">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Total VMs Running</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <div class="stat-value green" id="vm-count">6</div>
+                <div class="stat-subtitle">2 containers</div>
+                <div class="sparkline">
+                    <svg viewBox="0 0 200 30">
+                        <polyline points="0,15 40,14 80,13 120,14 160,13 200,15"
+                                  fill="none" stroke="#73BF69" stroke-width="2"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">CPU Usage</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <div class="stat-value yellow" id="cpu-usage">34%</div>
+                <div class="stat-subtitle">of 32 cores</div>
+                <div class="sparkline">
+                    <svg viewBox="0 0 200 30">
+                        <polyline points="0,20 40,18 80,22 120,19 160,21 200,23"
+                                  fill="none" stroke="#FADE2A" stroke-width="2"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Memory Usage</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <div class="stat-value orange" id="memory-usage">58%</div>
+                <div class="stat-subtitle">73.6GB / 128GB</div>
+                <div class="metric-bar">
+                    <div class="metric-bar-fill orange" style="width: 58%"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Storage Used</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <div class="stat-value green" id="storage-usage">51%</div>
+                <div class="stat-subtitle">8.2TB / 16TB</div>
+                <div class="metric-bar">
+                    <div class="metric-bar-fill green" style="width: 51%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Row - CPU Chart -->
+        <div class="panel-row-2col">
+            <div class="panel panel-large">
+                <div class="panel-header">
+                    <div class="panel-title">CPU Usage by VM</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cpu-chart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #1f77b4"></div>
+                        <span>Wiki.js (4%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #73BF69"></div>
+                        <span>Home Assistant (8%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #F2495C"></div>
+                        <span>Immich (12%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #FADE2A"></div>
+                        <span>PostgreSQL (6%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9467bd"></div>
+                        <span>Nginx (2%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #FF9830"></div>
+                        <span>Utility (2%)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-large">
+                <div class="panel-header">
+                    <div class="panel-title">Memory Usage by VM</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="memory-chart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #F2495C"></div>
+                        <span>Immich (16GB)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #FADE2A"></div>
+                        <span>PostgreSQL (16GB)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #1f77b4"></div>
+                        <span>Wiki.js (8GB)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #73BF69"></div>
+                        <span>Home Assistant (4GB)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9467bd"></div>
+                        <span>Others (4GB)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row - Service Status -->
+        <div class="panel-row-3col">
+            <div class="panel panel-large">
+                <div class="panel-header">
+                    <div class="panel-title">Network Traffic</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="network-chart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #1f77b4"></div>
+                        <span>Inbound</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #F2495C"></div>
+                        <span>Outbound</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-large">
+                <div class="panel-header">
+                    <div class="panel-title">Disk I/O</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="disk-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel panel-large">
+                <div class="panel-header">
+                    <div class="panel-title">Service Status</div>
+                    <div class="panel-menu">⋮</div>
+                </div>
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Status</th>
+                            <th>Uptime</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="status-icon"></span>Wiki.js</td>
+                            <td>Online</td>
+                            <td>45d 12h</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-icon"></span>Home Assistant</td>
+                            <td>Online</td>
+                            <td>45d 12h</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-icon"></span>Immich</td>
+                            <td>Online</td>
+                            <td>38d 6h</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-icon"></span>PostgreSQL</td>
+                            <td>Online</td>
+                            <td>45d 12h</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-icon"></span>Nginx Proxy</td>
+                            <td>Online</td>
+                            <td>45d 12h</td>
+                        </tr>
+                        <tr>
+                            <td><span class="status-icon"></span>Grafana</td>
+                            <td>Online</td>
+                            <td>45d 12h</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Chart configuration
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    grid: { color: '#2c2c2c' },
+                    ticks: { color: '#999' }
+                },
+                y: {
+                    display: true,
+                    grid: { color: '#2c2c2c' },
+                    ticks: { color: '#999' }
+                }
+            }
+        };
+
+        // Generate time labels for last 24 hours
+        const timeLabels = [];
+        for (let i = 23; i >= 0; i--) {
+            const hour = new Date(Date.now() - i * 3600000);
+            timeLabels.push(hour.getHours() + ':00');
+        }
+
+        // CPU Usage Chart
+        const cpuCtx = document.getElementById('cpu-chart').getContext('2d');
+        new Chart(cpuCtx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'Wiki.js',
+                        data: Array.from({length: 24}, () => 3 + Math.random() * 2),
+                        borderColor: '#1f77b4',
+                        backgroundColor: 'rgba(31, 119, 180, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Home Assistant',
+                        data: Array.from({length: 24}, () => 7 + Math.random() * 2),
+                        borderColor: '#73BF69',
+                        backgroundColor: 'rgba(115, 191, 105, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Immich',
+                        data: Array.from({length: 24}, () => 10 + Math.random() * 4),
+                        borderColor: '#F2495C',
+                        backgroundColor: 'rgba(242, 73, 92, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'PostgreSQL',
+                        data: Array.from({length: 24}, () => 5 + Math.random() * 2),
+                        borderColor: '#FADE2A',
+                        backgroundColor: 'rgba(250, 222, 42, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    ...chartDefaults.scales,
+                    y: {
+                        ...chartDefaults.scales.y,
+                        max: 20,
+                        ticks: {
+                            ...chartDefaults.scales.y.ticks,
+                            callback: value => value + '%'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Memory Usage Chart (Stacked Area)
+        const memoryCtx = document.getElementById('memory-chart').getContext('2d');
+        new Chart(memoryCtx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'Immich',
+                        data: Array.from({length: 24}, () => 15 + Math.random()),
+                        borderColor: '#F2495C',
+                        backgroundColor: 'rgba(242, 73, 92, 0.6)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'PostgreSQL',
+                        data: Array.from({length: 24}, () => 14 + Math.random()),
+                        borderColor: '#FADE2A',
+                        backgroundColor: 'rgba(250, 222, 42, 0.6)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Wiki.js',
+                        data: Array.from({length: 24}, () => 7 + Math.random()),
+                        borderColor: '#1f77b4',
+                        backgroundColor: 'rgba(31, 119, 180, 0.6)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    ...chartDefaults.scales,
+                    y: {
+                        ...chartDefaults.scales.y,
+                        stacked: true,
+                        max: 50,
+                        ticks: {
+                            ...chartDefaults.scales.y.ticks,
+                            callback: value => value + 'GB'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Network Traffic Chart
+        const networkCtx = document.getElementById('network-chart').getContext('2d');
+        new Chart(networkCtx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'Inbound',
+                        data: Array.from({length: 24}, (_, i) => {
+                            const baseTraffic = i >= 6 && i <= 22 ? 40 : 10;
+                            return baseTraffic + Math.random() * 20;
+                        }),
+                        borderColor: '#1f77b4',
+                        backgroundColor: 'rgba(31, 119, 180, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Outbound',
+                        data: Array.from({length: 24}, (_, i) => {
+                            const baseTraffic = i >= 6 && i <= 22 ? 25 : 5;
+                            return baseTraffic + Math.random() * 15;
+                        }),
+                        borderColor: '#F2495C',
+                        backgroundColor: 'rgba(242, 73, 92, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    ...chartDefaults.scales,
+                    y: {
+                        ...chartDefaults.scales.y,
+                        max: 80,
+                        ticks: {
+                            ...chartDefaults.scales.y.ticks,
+                            callback: value => value + ' MB/s'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Disk I/O Chart
+        const diskCtx = document.getElementById('disk-chart').getContext('2d');
+        new Chart(diskCtx, {
+            type: 'bar',
+            data: {
+                labels: ['PostgreSQL', 'Immich', 'Wiki.js', 'Home Asst', 'Nginx', 'Utility'],
+                datasets: [
+                    {
+                        label: 'Read',
+                        data: [320, 180, 45, 38, 15, 12],
+                        backgroundColor: '#73BF69'
+                    },
+                    {
+                        label: 'Write',
+                        data: [280, 150, 38, 25, 12, 8],
+                        backgroundColor: '#FF9830'
+                    }
+                ]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    ...chartDefaults.scales,
+                    y: {
+                        ...chartDefaults.scales.y,
+                        max: 400,
+                        ticks: {
+                            ...chartDefaults.scales.y.ticks,
+                            callback: value => value + ' IOPS'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Animate metrics periodically
+        setInterval(() => {
+            const cpuUsage = document.getElementById('cpu-usage');
+            const newCpu = 30 + Math.floor(Math.random() * 10);
+            cpuUsage.textContent = newCpu + '%';
+            cpuUsage.classList.add('updating');
+            setTimeout(() => cpuUsage.classList.remove('updating'), 500);
+        }, 5000);
+    </script>
+</body>
+</html>
