@@ -310,7 +310,9 @@ async def test_delete_content_not_owner(
 
 @pytest.mark.asyncio
 async def test_delete_content_not_found(authenticated_client: AsyncClient):
-    """Test deleting non-existent content."""
+    """
+    Verify that attempting to delete a content item that does not exist returns 404 Not Found.
+    """
     fake_uuid = "00000000-0000-0000-0000-000000000000"
     response = await authenticated_client.delete(f"/content/{fake_uuid}")
 

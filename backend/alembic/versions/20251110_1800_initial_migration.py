@@ -19,7 +19,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Create users and content tables."""
+    """
+    Create the initial database schema for users and content.
+    
+    Creates a `users` table (UUID primary key, unique email, hashed password, active flag, timestamps) and a `content` table (UUID primary key, title, body, owner_id foreign key referencing `users.id` with ON DELETE CASCADE, published flag, timestamps) and adds the related unique and non-unique indexes.
+    """
     # Create users table
     op.create_table(
         'users',
@@ -53,7 +57,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Drop content and users tables."""
+    """
+    Revert the migration by removing the users and content schema objects.
+    
+    Drops the indexes associated with the content and users tables, then drops the content table followed by the users table.
+    """
     op.drop_index('ix_content_owner_created', table_name='content')
     op.drop_index(op.f('ix_content_created_at'), table_name='content')
     op.drop_index(op.f('ix_content_owner_id'), table_name='content')

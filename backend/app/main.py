@@ -75,7 +75,15 @@ app.add_middleware(
 # Request logging middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    """Log all requests with timing information."""
+    """
+    Log incoming HTTP requests and their responses, and attach processing time to the response.
+    
+    Parameters:
+        call_next (Callable): ASGI call-next handler that receives the request and returns a Response.
+    
+    Returns:
+        Response: The response returned by the downstream handler with an `X-Process-Time` header set to the request processing time in seconds.
+    """
     start_time = time.time()
     logger.info(f"Request: {request.method} {request.url.path}")
 
@@ -99,7 +107,15 @@ async def validation_exception_handler(
     request: Request,
     exc: RequestValidationError
 ):
-    """Handle Pydantic validation errors."""
+    """
+    Format Pydantic validation errors into an HTTP 422 JSON response.
+    
+    Parameters:
+        exc (RequestValidationError): The validation error raised by request parsing; its `errors()` result is included in the response.
+    
+    Returns:
+        JSONResponse: Response with status code 422 and content `{"detail": <list of validation error dicts>}`.
+    """
     logger.warning(f"Validation error: {exc.errors()}")
 
     return JSONResponse(
@@ -115,7 +131,14 @@ async def sqlalchemy_exception_handler(
     request: Request,
     exc: SQLAlchemyError
 ):
-    """Handle database errors."""
+    """
+    Log the database error and return a generic HTTP 500 JSON response.
+    
+    Logs the provided SQLAlchemyError with stack information and responds with a JSON body containing a generic internal error message suitable for clients.
+    
+    Returns:
+        A JSONResponse with HTTP status 500 and a `detail` message indicating an internal error.
+    """
     logger.error(f"Database error: {str(exc)}", exc_info=True)
 
     return JSONResponse(
@@ -131,7 +154,16 @@ async def general_exception_handler(
     request: Request,
     exc: Exception
 ):
-    """Catch-all handler for unexpected errors."""
+    """
+    Handle unexpected exceptions raised during request processing.
+    
+    Parameters:
+    	request (Request): The incoming HTTP request that triggered the exception.
+    	exc (Exception): The unhandled exception instance.
+    
+    Returns:
+    	JSONResponse: Response with HTTP 500 and a JSON body containing a generic `"detail"` error message.
+    """
     logger.error(f"Unexpected error: {str(exc)}", exc_info=True)
 
     return JSONResponse(
@@ -156,7 +188,17 @@ app.include_router(content.router)
     description="Get API information and available endpoints"
 )
 async def root() -> dict:
-    """API root endpoint."""
+    """
+    Provide basic API metadata and quick links for the root endpoint.
+    
+    Returns:
+        dict: A mapping with keys:
+            - "message": welcome message string.
+            - "version": API version string from settings.
+            - "docs": URL to interactive docs or a message when disabled.
+            - "health": health check endpoint path.
+            - "endpoints": a dict mapping service names ("auth", "content", "health") to their paths and brief descriptions.
+    """
     return {
         "message": "Welcome to the Portfolio API",
         "version": settings.version,

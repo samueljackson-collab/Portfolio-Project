@@ -45,7 +45,15 @@ class UserBase(BaseModel):
     @field_validator("email")
     @classmethod
     def email_must_be_lowercase(cls, v: str) -> str:
-        """Ensure email is lowercase for consistency."""
+        """
+        Ensure an email value is normalized to lowercase and trimmed of surrounding whitespace.
+        
+        Parameters:
+            v (str): The raw email value to normalize.
+        
+        Returns:
+            str: The normalized email (lowercase, with surrounding whitespace removed).
+        """
         return v.lower().strip()
 
 
@@ -62,7 +70,18 @@ class UserCreate(UserBase):
     @field_validator("password")
     @classmethod
     def password_must_be_strong(cls, v: str) -> str:
-        """Validate password strength."""
+        """
+        Ensure a password meets minimum strength requirements.
+        
+        Parameters:
+            v (str): Password to validate.
+        
+        Returns:
+            str: The validated password.
+        
+        Raises:
+            ValueError: If the password is shorter than 8 characters, does not contain at least one uppercase letter, does not contain at least one lowercase letter, or does not contain at least one digit.
+        """
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters")
 
@@ -104,7 +123,15 @@ class UserUpdate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password_if_provided(cls, v: Optional[str]) -> Optional[str]:
-        """Apply password strength validation if password is provided."""
+        """
+        Validate a password string if one is provided.
+        
+        Parameters:
+            v (Optional[str]): Password to validate; if `None`, validation is skipped.
+        
+        Returns:
+            Optional[str]: The original password when provided (and valid), or `None` if not provided.
+        """
         if v is not None:
             return UserCreate.password_must_be_strong(v)
         return v

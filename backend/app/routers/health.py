@@ -34,9 +34,15 @@ async def health_check(
     db: AsyncSession = Depends(get_db)
 ) -> HealthResponse:
     """
-    Perform health check of the API and its dependencies.
-
-    Returns 200 if healthy, 503 if any dependency is down.
+    Check API dependencies and produce a health summary.
+    
+    Performs a database connectivity check and returns a HealthResponse containing the overall health status, the application version, and the database connection state.
+    
+    Returns:
+        HealthResponse: An object with:
+            - status: "healthy" or "unhealthy"
+            - version: application version string
+            - database: "connected" or "disconnected"
     """
     # Check database connectivity
     try:
@@ -62,9 +68,10 @@ async def health_check(
 )
 async def liveness() -> dict:
     """
-    Kubernetes liveness probe.
-
-    Only checks if the application process is running.
+    Expose a Kubernetes liveness probe indicating the application process is running.
+    
+    Returns:
+        dict: A dictionary containing {"status": "alive"}.
     """
     return {"status": "alive"}
 
@@ -79,9 +86,10 @@ async def readiness(
     db: AsyncSession = Depends(get_db)
 ) -> dict:
     """
-    Kubernetes readiness probe.
-
-    Checks if the service is ready to handle requests.
+    Check readiness by verifying database connectivity.
+    
+    Returns:
+        A dict `{"status": "ready"}` when the database query succeeds; otherwise returns a FastAPI `Response` with status code 503 and body `'{"status": "not ready"}'`.
     """
     try:
         await db.execute(text("SELECT 1"))
