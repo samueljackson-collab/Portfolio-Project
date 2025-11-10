@@ -26,11 +26,11 @@ spec:
         managed-by: argocd
 
       commonAnnotations:
-        deployment-timestamp: '{{ now }}'
+        argocd.argoproj.io/sync-wave: "0"
 
       images:
         - newName: ghcr.io/org/portfolio
-          newTag: v1.2.3
+          newTag: __IMAGE_TAG__  # This should be dynamically updated by the CI pipeline
 
       patches:
         - target:
@@ -102,8 +102,12 @@ spec:
       server: https://kubernetes.default.svc
 
   clusterResourceWhitelist:
-    - group: '*'
-      kind: '*'
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
 
   namespaceResourceBlacklist:
     - group: ''

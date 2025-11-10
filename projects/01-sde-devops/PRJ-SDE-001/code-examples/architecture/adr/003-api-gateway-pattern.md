@@ -35,10 +35,17 @@ services:
         strip_path: false
     plugins:
       - name: jwt
+        config:
+          claims_to_verify:
+            - exp
+          key_claim_name: iss
+          secret_is_base64: false
       - name: rate-limiting
         config:
           minute: 100
-          policy: local
+          policy: redis
+          redis_host: redis
+          redis_port: 6379
       - name: cors
         config:
           origins:

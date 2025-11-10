@@ -118,6 +118,12 @@ describe('User Authentication Flow', () => {
     });
 
     it('should reset password with valid token', () => {
+      // Mock the reset password API response
+      cy.intercept('POST', '/api/auth/reset-password*', {
+        statusCode: 200,
+        body: { message: 'Password reset successfully' }
+      }).as('resetPassword');
+
       const resetToken = 'valid-reset-token';
       cy.visit(`/reset-password?token=${resetToken}`);
 
@@ -126,6 +132,7 @@ describe('User Authentication Flow', () => {
       cy.get('[data-testid="confirm-password-input"]').type(newPassword);
       cy.get('[data-testid="submit-button"]').click();
 
+      cy.wait('@resetPassword');
       cy.url().should('include', '/login');
       cy.contains('Password reset successfully').should('be.visible');
     });

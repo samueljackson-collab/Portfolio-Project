@@ -35,11 +35,18 @@ spec:
       initContainers:
         - name: init-db
           image: postgres:15-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
           command:
             - sh
             - -c
             - |
-              until pg_isready -h $(DB_HOST) -p 5432 -U $(DB_USER); do
+              until pg_isready -h ${DB_HOST} -p 5432 -U ${DB_USER}; do
                 echo "Waiting for database..."
                 sleep 2
               done
@@ -57,7 +64,7 @@ spec:
 
       containers:
         - name: app
-          image: portfolio:latest
+          image: portfolio:__IMAGE_TAG__
           imagePullPolicy: Always
 
           ports:
@@ -311,8 +318,11 @@ spec:
           port: 53
         - protocol: UDP
           port: 53
+    # External HTTPS API access - restrict to specific external services if needed
     - to:
-        - namespaceSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              name: external-services
       ports:
         - protocol: TCP
           port: 443

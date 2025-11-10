@@ -51,9 +51,16 @@ export function setup() {
         token: data.token,
         userId: data.user.id
       });
+    } else {
+      console.error(`Failed to register user ${i}: ${response.status} ${response.body}`);
     }
   }
 
+  if (users.length === 0) {
+    throw new Error('Failed to create any test users in setup');
+  }
+
+  console.log(`Successfully created ${users.length} test users`);
   return { users };
 }
 

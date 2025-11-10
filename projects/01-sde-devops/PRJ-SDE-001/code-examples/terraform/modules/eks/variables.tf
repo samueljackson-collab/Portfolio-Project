@@ -60,3 +60,9 @@ variable "max_size" {
   type        = number
   default     = 5
 }
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention period in days"
+  type        = number
+  default     = 30
+}
