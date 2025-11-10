@@ -628,16 +628,1134 @@ Result: MULTIPLE LAYERS (defense in depth)
 
 ---
 
-**Continue reading:** Due to length limits, this guide continues with Questions 3-60 in sections below. Each question follows the same detailed format with:
-- Feynman explanation
-- Technical deep dive
-- Diagram
-- Acronym glossary
-- Portfolio artifacts
-- Learn more resources
-- Risk/timebox/owner
+### Q3: How do satellite link constraints (latency, jitter, packet loss) impact ground gateway operations? How would you design to mitigate?
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** Satellite Operations & Network Engineering
+**Risk Level:** High (poor design = degraded user experience)
+**Timebox:** 8-12 minutes
+**Owner:** Senior Network Engineer or SRE Lead
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Imagine you're having a phone conversation with someone on a ship in the middle of the ocean. Sometimes the signal is clear, sometimes there's a delay, sometimes words get cut out. Satellite links have similar challenges:
+- **Latency** = how long it takes for your message to reach them
+- **Jitter** = sometimes it takes 100ms, sometimes 150ms (inconsistent)
+- **Packet loss** = sometimes words just disappear
+
+Our job is to design the ground gateway to handle these "bad phone line" conditions so the customer's internet still works well.
+
+**Technical Explanation:**
+
+**Satellite Link Constraints for LEO (Kuiper):**
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│            LEO SATELLITE LINK CHARACTERISTICS                      │
+│                  (vs Terrestrial Fiber)                            │
+└────────────────────────────────────────────────────────────────────┘
+
+Metric                  Terrestrial Fiber    LEO (Kuiper)      Impact
+─────────────────────────────────────────────────────────────────────
+Latency (RTT)           1-20 ms              20-40 ms          Moderate
+Jitter                  < 1 ms               2-10 ms           Moderate
+Packet Loss (normal)    < 0.01%              0.1-1%            High
+Packet Loss (rain fade) N/A                  1-5%              Critical
+Link Availability       99.99%+              99.5-99.9%        Moderate
+Bandwidth               10 Gbps+             100-500 Mbps      Moderate
+Handoff Frequency       Never                Every 4-7 min     Critical
+Path Asymmetry          Symmetric            Often asymmetric  Moderate
+Doppler Shift           None                 ±10 kHz           Low (RF layer)
+
+┌────────────────────────────────────────────────────────────────────┐
+│                    IMPACT ON PROTOCOLS                             │
+└────────────────────────────────────────────────────────────────────┘
+
+Protocol    Sensitivity        Impact         Mitigation Needed
+───────────────────────────────────────────────────────────────────
+TCP         High (latency)     Slow start     TCP optimization, larger windows
+VoIP        High (jitter)      Poor quality   Jitter buffers, FEC
+Video       Medium (loss)      Buffering      Adaptive bitrate, buffering
+DNS         Low                Slight delay   Caching, prefetching
+BGP         Medium (loss)      Flapping       Timers tuning, hold-time increase
+SSH         Medium (latency)   Typing lag     Mosh (mobile shell)
+HTTP/HTTPS  Medium (latency)   Slow pages     HTTP/2, CDN, compression
+Gaming      High (latency)     Unplayable     Edge compute, prediction
+```
+
+**Constraint #1: Latency (20-40 ms RTT)**
+
+**Why it happens:**
+- Speed of light: ~1,800 km to satellite and back = ~12 ms minimum
+- Processing delays: terminal (2 ms) + satellite (5 ms) + gateway (2 ms) + routing = ~10 ms
+- Total: 22-40 ms typical
+
+**Impact:**
+- TCP slow start takes longer (congestion window ramps up slowly)
+- Interactive applications feel sluggish (SSH, remote desktop)
+- BGP convergence slower (hold-time = 180s means 180s to detect failure)
+
+**Mitigation Strategies:**
+
+1. **TCP Optimization (Performance Enhancing Proxy - PEP)**
+   ```
+   Customer Terminal → Satellite → Gateway PEP → Internet
+                       ↑                ↑
+                    Optimized       Standard
+                    TCP over         TCP
+                    satellite
+
+   Gateway PEP Actions:
+   - Splits TCP connection (local ACKs to customer)
+   - Increases TCP window size (BDP = bandwidth × delay)
+   - Enables selective ACK (SACK)
+   - Uses BBR congestion control (vs CUBIC)
+   ```
+
+2. **BGP Timer Tuning**
+   ```bash
+   # Conservative (default)
+   router bgp 65000
+     neighbor 10.0.0.1 timers 60 180
+     # Keepalive=60s, Hold-time=180s
+
+   # Aggressive (for fast failover, but risk false positives)
+   router bgp 65000
+     neighbor 10.0.0.1 timers 10 30
+     # Keepalive=10s, Hold-time=30s
+
+   # Kuiper Recommended (balance)
+   router bgp 65000
+     neighbor 10.0.0.1 timers 20 60
+     # Keepalive=20s, Hold-time=60s
+     neighbor 10.0.0.1 transport connection-mode passive
+     # Let AWS initiate (more reliable)
+   ```
+
+3. **DNS Caching & Prefetching**
+   ```yaml
+   # Unbound DNS config at gateway
+   server:
+     cache-min-ttl: 3600       # Cache for at least 1 hour
+     cache-max-ttl: 86400      # Up to 1 day
+     prefetch: yes             # Refresh before expiry
+     serve-expired: yes        # Serve stale if upstream slow
+   ```
+
+**Constraint #2: Jitter (2-10 ms variance)**
+
+**Why it happens:**
+- Satellite handoffs (every 4-7 minutes as satellite moves)
+- RF interference (weather, adjacent satellites)
+- Variable processing load on satellite
+- Terrestrial backhaul variability
+
+**Impact:**
+- VoIP/video quality degradation
+- TCP performance variability
+- BGP session instability (if extreme)
+
+**Mitigation Strategies:**
+
+1. **QoS & Traffic Shaping**
+   ```
+   ┌─────────────────────────────────────────────────────────────┐
+   │               GATEWAY QoS POLICY                            │
+   └─────────────────────────────────────────────────────────────┘
+
+   Priority Queue (Strict Priority):
+   ├─ P1: Network Control (BGP, OSPF, BFD)          - DSCP CS6
+   ├─ P2: VoIP (SIP, RTP)                           - DSCP EF
+   ├─ P3: Video Conferencing (Zoom, Teams)          - DSCP AF41
+   ├─ P4: Interactive (SSH, RDP)                    - DSCP AF31
+   ├─ P5: Transactional (HTTPS, DNS)                - DSCP AF21
+   ├─ P6: Bulk (HTTP, FTP)                          - DSCP AF11
+   └─ P7: Scavenger (BitTorrent, etc)               - DSCP CS1
+
+   Jitter Buffers:
+   - VoIP: 50-100 ms adaptive buffer
+   - Video: 2-5 second buffer (streaming)
+   - Gaming: Minimize (use QUIC/UDP)
+   ```
+
+2. **Forward Error Correction (FEC)**
+   ```
+   Customer sends 100 packets + 10 FEC packets
+   → If ≤10 lost, can reconstruct without retransmit
+   → Trades bandwidth for latency reduction
+
+   Use case: Real-time apps (VoIP, video) where retransmit unacceptable
+   ```
+
+**Constraint #3: Packet Loss (0.1-5%)**
+
+**Why it happens:**
+- Rain fade (Ka-band absorbed by heavy rain) - **most critical**
+- Satellite handoffs (brief interruption)
+- RF interference
+- Link budget constraints (edge of coverage)
+
+**Impact:**
+- TCP throughput collapse (fast retransmit triggers)
+- VoIP/video degradation
+- BGP session flaps
+
+**Mitigation Strategies:**
+
+1. **Link Diversity (Gateway-Side)**
+   ```
+   ┌────────────────────────────────────────────────────────────┐
+   │         DUAL-GATEWAY ARCHITECTURE                          │
+   └────────────────────────────────────────────────────────────┘
+
+   Customer Terminal
+         │
+         │ (Chooses best satellite based on signal strength)
+         ↓
+   ┌──────────┐         ┌──────────┐
+   │Satellite │         │Satellite │
+   │  A       │         │  B       │
+   └────┬─────┘         └─────┬────┘
+        │                     │
+        ↓                     ↓
+   Gateway-East          Gateway-West
+   (Virginia)            (Oregon)
+        │                     │
+        ├─ VPN Tunnel 1 ──────┤
+        └─ VPN Tunnel 2 ──────┘
+                │
+                ↓
+          AWS Transit Gateway
+          (ECMP load balance)
+
+   Result: Rain fade at Gateway-East? Traffic automatically fails to Gateway-West
+   ```
+
+2. **Adaptive Rate Control**
+   ```python
+   # Pseudocode for gateway rate limiter
+   if packet_loss_rate > 2%:
+       reduce_bandwidth_allocation(customer_id, factor=0.8)
+       prioritize_critical_traffic()
+       notify_monitoring("High loss detected")
+
+   if signal_to_noise_ratio < threshold:
+       request_modulation_change(from="64QAM", to="16QAM")
+       # Lower throughput but more robust
+   ```
+
+3. **Satellite Handoff Optimization**
+   ```
+   ┌────────────────────────────────────────────────────────────┐
+   │            MAKE-BEFORE-BREAK HANDOFF                       │
+   └────────────────────────────────────────────────────────────┘
+
+   Timeline:
+   T=0s     Customer connected to Satellite A
+   T=3min   Gateway predicts handoff needed in 1 min (ephemeris data)
+   T=3.5min Gateway establishes secondary link to Satellite B
+            (Brief period of dual connectivity)
+   T=4min   Primary traffic moved to Satellite B
+            Satellite A link dropped
+
+   Result: Hitless handoff (0 packet loss during transition)
+
+   Implementation:
+   - Requires coordination between terminal, satellites, gateway
+   - Ephemeris data shared via control plane
+   - Gateway buffers packets during handoff
+   ```
+
+**Constraint #4: Rain Fade (Ka-band Specific)**
+
+**Why it happens:**
+- Ka-band (26.5-40 GHz) highly susceptible to atmospheric absorption
+- Heavy rain = 10-20 dB signal attenuation
+- Can cause complete link outage in severe weather
+
+**Mitigation Strategies:**
+
+1. **Site Diversity (Geographic Separation)**
+   ```
+   Customer in Seattle (heavy rain) → Satellite → Gateway Portland
+                                                 (if Portland also rain)
+                                                 ↓ reroute
+                                    Satellite → Gateway Los Angeles
+                                                 (likely clear)
+
+   Rule: Gateways separated by >200 km (uncorrelated weather)
+   ```
+
+2. **Link Budget Margin & Adaptive Modulation**
+   ```
+   Normal conditions:   64-QAM modulation (high throughput)
+   Light rain (-3 dB):  32-QAM modulation (medium throughput)
+   Heavy rain (-10 dB): 8-QAM modulation (low but reliable)
+   Severe (-20 dB):     BPSK modulation (minimal throughput)
+
+   Result: Graceful degradation instead of hard failure
+   ```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Link Simulation (tc netem)** | `evidence/experiments/netem/` | Simulating satellite latency/jitter/loss in homelab |
+| **Before/After Graphs** | `evidence/experiments/netem/results/` | HTTP, SSH, VoIP performance under constraints |
+| **BGP Timer Tuning ADR** | `docs/adr/ADR-0005-bgp-timer-tuning.md` | Decision: conservative vs aggressive timers |
+| **QoS Policy Config** | `configs/cisco/qos-satellite.cfg` | DSCP marking, priority queues |
+| **Gateway Diversity Design** | `docs/diagrams/kuiper/gateway-diversity.mmd` | Multi-gateway architecture for resilience |
+| **Alerting Rules** | `observability/prometheus/rules/satellite-link.yml` | Alerts for high latency, jitter, loss |
+
+**Learn More:**
+
+1. **Satellite Link Constraints:**
+   - [Satellite Communications Fundamentals](https://www.youtube.com/results?search_query=satellite+communications+fundamentals)
+   - [Ka-band vs Ku-band Comparison](https://www.viasat.com/about/newsroom/blog/ka-band-vs-ku-band/)
+   - [Rain Fade Analysis (PDF)](https://www.google.com/search?q=ka+band+rain+fade+attenuation+pdf)
+
+2. **TCP over Satellite:**
+   - [RFC 2488: TCP over Satellite](https://datatracker.ietf.org/doc/html/rfc2488)
+   - [BBR Congestion Control (Google)](https://queue.acm.org/detail.cfm?id=3022184)
+   - [PEP Explained](https://en.wikipedia.org/wiki/Performance-enhancing_proxy)
+
+3. **QoS & Traffic Management:**
+   - [DSCP Marking Guide](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/qos_classn/configuration/xe-16/qos-classn-xe-16-book/qos-classn-mrkg-ntwrk-traffc.html)
+   - [QoS for VoIP](https://www.youtube.com/results?search_query=qos+for+voip)
+
+4. **Hands-On Lab:**
+   - [tc netem Tutorial](https://man7.org/linux/man-pages/man8/tc-netem.8.html)
+   - Simulate satellite link: `tc qdisc add dev eth0 root netem delay 30ms 5ms loss 1%`
+
+**Risk Assessment:**
+
+| Risk Category | Level | Mitigation |
+|---------------|-------|------------|
+| **Rain Fade Outage** | CRITICAL | Multi-gateway diversity (>200 km apart), adaptive modulation |
+| **Handoff Packet Loss** | HIGH | Make-before-break handoff, buffering at gateway |
+| **BGP Flapping** | HIGH | Conservative timers (20s/60s), BFD for fast detection |
+| **TCP Throughput Collapse** | MEDIUM | PEP (Performance Enhancing Proxy), BBR congestion control |
+| **VoIP Quality Issues** | MEDIUM | QoS prioritization, jitter buffers, FEC |
+| **DNS Resolution Delays** | LOW | Aggressive caching, prefetching |
+
+**Timebox for This Topic:**
+- **Initial Learning:** 4-6 hours (RF basics, link budgets, protocols)
+- **Deep Dive:** 40-60 hours (QoS, TCP tuning, BGP, hands-on labs)
+- **Hands-On Practice:** 10-20 hours (tc netem simulations, protocol testing)
+- **Interview Prep:** 3-4 hours (practice explaining, whiteboard design)
+
+**Owner (Who Should Know This):**
+- **Must Know:** Network Engineers, SREs, Satellite Operations
+- **Should Know:** System Administrators, DevOps Engineers
+- **Nice to Know:** RF Engineers, Software Engineers (for app optimization)
 
 ---
+
+### Q4: How would you simulate satellite-like network conditions in a lab environment for testing applications?
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** Testing & Validation
+**Risk Level:** Medium (poor testing = production surprises)
+**Timebox:** 6-9 minutes
+**Owner:** SRE or DevOps Engineer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Imagine you're testing a new car. You wouldn't just drive it on perfect roads - you'd drive it on bumpy roads, in rain, in snow, to see how it handles bad conditions. Similarly, we need to test our applications under satellite conditions (delays, packet loss, jitter) before deploying them.
+
+We use a tool called `tc netem` (network emulator) in Linux that artificially adds delay, drops packets, and creates jitter. It's like putting your car on a test track that simulates real-world conditions.
+
+**Technical Explanation:**
+
+**Simulation Architecture:**
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│              SATELLITE LINK SIMULATION TESTBED                     │
+└────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│  Test Client    │         │  Linux Bridge   │         │  Test Server    │
+│                 │         │  (tc netem)     │         │                 │
+│  192.168.1.10   │◄────────│                 │────────►│  192.168.1.20   │
+│                 │  eth0   │  br0            │  eth1   │                 │
+│  - HTTP client  │         │  - Add latency  │         │  - HTTP server  │
+│  - SSH client   │         │  - Drop packets │         │  - SSH server   │
+│  - VoIP client  │         │  - Add jitter   │         │  - VoIP server  │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
+
+OR (Single Host Simulation):
+
+┌──────────────────────────────────────────────────────────────────────┐
+│                    LOOPBACK SIMULATION                               │
+│                                                                      │
+│  ┌──────────────┐                           ┌──────────────┐        │
+│  │   Client     │  127.0.0.1:8080          │   Server     │        │
+│  │   Process    │◄─────────────────────────│   Process    │        │
+│  └──────────────┘          ↑                └──────────────┘        │
+│                            │                                        │
+│                     tc netem on lo                                  │
+│                     (applies to loopback)                           │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**Tool #1: tc netem (Network Emulator)**
+
+**Installation:**
+```bash
+# Ubuntu/Debian
+sudo apt-get install iproute2
+
+# RHEL/CentOS
+sudo yum install iproute-tc
+```
+
+**Basic Kuiper Satellite Profile:**
+```bash
+#!/bin/bash
+# kuiper-profile-normal.sh
+
+IFACE="eth0"  # Change to your interface
+
+# Clear existing rules
+sudo tc qdisc del dev $IFACE root 2>/dev/null
+
+# Add Kuiper satellite characteristics
+sudo tc qdisc add dev $IFACE root netem \
+  delay 30ms 5ms distribution normal \
+  loss 0.5% 25% \
+  reorder 0.1% 50% \
+  rate 100mbit
+
+# Explanation:
+# - delay 30ms: Base latency (one-way)
+# - 5ms: Jitter (standard deviation)
+# - distribution normal: Bell curve jitter distribution
+# - loss 0.5%: Base packet loss
+# - 25%: Correlation (if packet lost, next packet 25% likely to be lost too)
+# - reorder 0.1% 50%: Small chance of out-of-order packets
+# - rate 100mbit: Bandwidth limit
+```
+
+**Kuiper Rain Fade Profile:**
+```bash
+#!/bin/bash
+# kuiper-profile-rain-fade.sh
+
+IFACE="eth0"
+
+sudo tc qdisc del dev $IFACE root 2>/dev/null
+
+# Simulate heavy rain (increased loss, higher jitter)
+sudo tc qdisc add dev $IFACE root netem \
+  delay 35ms 15ms distribution pareto \
+  loss 3% 50% \
+  duplicate 0.1% \
+  corrupt 0.01% \
+  rate 50mbit
+
+# Explanation:
+# - delay 35ms 15ms: Higher latency and jitter
+# - distribution pareto: Long tail (occasional spikes)
+# - loss 3% 50%: Higher loss with high correlation (bursty)
+# - duplicate 0.1%: Occasional duplicate packets (RF echo)
+# - corrupt 0.01%: Bit errors (RF noise)
+# - rate 50mbit: Degraded throughput
+```
+
+**Kuiper Handoff Profile (Brief Outage):**
+```bash
+#!/bin/bash
+# kuiper-profile-handoff.sh
+
+IFACE="eth0"
+
+# Simulate satellite handoff every 5 minutes
+while true; do
+  # Normal operation (4 minutes 55 seconds)
+  echo "Normal operation..."
+  sudo tc qdisc replace dev $IFACE root netem delay 30ms 5ms loss 0.5%
+  sleep 295
+
+  # Handoff (5 seconds of high loss)
+  echo "Handoff in progress..."
+  sudo tc qdisc replace dev $IFACE root netem delay 50ms 20ms loss 10%
+  sleep 5
+done
+```
+
+**Tool #2: Docker Compose Test Environment**
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # Client (test runner)
+  client:
+    image: alpine:latest
+    container_name: satellite-client
+    networks:
+      - satellite_net
+    command: >
+      sh -c "apk add --no-cache curl iperf3 openssh-client &&
+             tail -f /dev/null"
+    cap_add:
+      - NET_ADMIN  # Needed for tc netem
+
+  # Server (test target)
+  server:
+    image: nginx:alpine
+    container_name: satellite-server
+    networks:
+      - satellite_net
+    ports:
+      - "8080:80"
+
+  # Network emulator (sidecar)
+  netem:
+    image: alpine:latest
+    container_name: satellite-netem
+    networks:
+      - satellite_net
+    cap_add:
+      - NET_ADMIN
+    command: >
+      sh -c "apk add --no-cache iproute2 &&
+             tc qdisc add dev eth0 root netem delay 30ms 5ms loss 0.5% &&
+             tail -f /dev/null"
+
+networks:
+  satellite_net:
+    driver: bridge
+```
+
+**Tool #3: Automated Test Suite**
+
+```bash
+#!/bin/bash
+# test-suite.sh
+# Tests HTTP, SSH, DNS under satellite conditions
+
+# Setup
+SERVER="192.168.1.20"
+RESULTS_DIR="results/$(date +%Y%m%d_%H%M%S)"
+mkdir -p $RESULTS_DIR
+
+# Test profiles
+PROFILES=(
+  "normal:30ms 5ms:0.5%:100mbit"
+  "rain:35ms 15ms:3%:50mbit"
+  "handoff:50ms 20ms:10%:20mbit"
+)
+
+for profile in "${PROFILES[@]}"; do
+  IFS=':' read -r name delay loss rate <<< "$profile"
+
+  echo "Testing profile: $name"
+
+  # Apply profile
+  sudo tc qdisc replace dev eth0 root netem \
+    delay $delay loss $loss rate $rate
+
+  # Test 1: HTTP throughput
+  echo "  - HTTP throughput"
+  curl -w "@curl-format.txt" -o /dev/null -s http://$SERVER/ \
+    > "$RESULTS_DIR/${name}_http.txt"
+
+  # Test 2: SSH latency
+  echo "  - SSH latency"
+  for i in {1..100}; do
+    time ssh user@$SERVER "echo test" 2>&1 | grep real
+  done > "$RESULTS_DIR/${name}_ssh.txt"
+
+  # Test 3: iperf3 (bandwidth)
+  echo "  - iperf3 bandwidth"
+  iperf3 -c $SERVER -t 30 -J > "$RESULTS_DIR/${name}_iperf3.json"
+
+  # Test 4: ping (latency/jitter/loss)
+  echo "  - ping stats"
+  ping -c 100 $SERVER > "$RESULTS_DIR/${name}_ping.txt"
+
+  sleep 5
+done
+
+# Reset
+sudo tc qdisc del dev eth0 root
+
+# Generate report
+python3 generate-report.py $RESULTS_DIR
+```
+
+**curl-format.txt:**
+```
+time_namelookup:    %{time_namelookup}s\n
+time_connect:       %{time_connect}s\n
+time_appconnect:    %{time_appconnect}s\n
+time_pretransfer:   %{time_pretransfer}s\n
+time_redirect:      %{time_redirect}s\n
+time_starttransfer: %{time_starttransfer}s\n
+time_total:         %{time_total}s\n
+size_download:      %{size_download} bytes\n
+speed_download:     %{speed_download} bytes/sec\n
+```
+
+**Report Generator (Python):**
+
+```python
+#!/usr/bin/env python3
+# generate-report.py
+
+import json
+import sys
+import statistics
+from pathlib import Path
+
+def analyze_results(results_dir):
+    results_path = Path(results_dir)
+
+    report = {
+        "profiles": {}
+    }
+
+    for profile in ["normal", "rain", "handoff"]:
+        # Parse ping stats
+        ping_file = results_path / f"{profile}_ping.txt"
+        if ping_file.exists():
+            with open(ping_file) as f:
+                content = f.read()
+                # Parse: rtt min/avg/max/mdev = 30.123/32.456/35.789/2.345 ms
+                if "rtt min/avg/max/mdev" in content:
+                    line = [l for l in content.split('\n') if 'rtt min/avg/max' in l][0]
+                    stats = line.split('=')[1].strip().split('/')[:-1]  # Ignore mdev
+                    report["profiles"][profile] = {
+                        "ping_min_ms": float(stats[0]),
+                        "ping_avg_ms": float(stats[1]),
+                        "ping_max_ms": float(stats[2])
+                    }
+
+        # Parse iperf3 JSON
+        iperf_file = results_path / f"{profile}_iperf3.json"
+        if iperf_file.exists():
+            with open(iperf_file) as f:
+                data = json.load(f)
+                report["profiles"][profile]["bandwidth_mbps"] = \
+                    data["end"]["sum_received"]["bits_per_second"] / 1e6
+                report["profiles"][profile]["retransmits"] = \
+                    data["end"]["sum_sent"]["retransmits"]
+
+    # Print markdown table
+    print("| Profile | Ping Avg (ms) | Bandwidth (Mbps) | Retransmits |")
+    print("|---------|---------------|------------------|-------------|")
+    for profile, stats in report["profiles"].items():
+        print(f"| {profile:7} | {stats.get('ping_avg_ms', 0):13.2f} | "
+              f"{stats.get('bandwidth_mbps', 0):16.2f} | "
+              f"{stats.get('retransmits', 0):11} |")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: generate-report.py <results_dir>")
+        sys.exit(1)
+
+    analyze_results(sys.argv[1])
+```
+
+**Expected Output:**
+
+```
+| Profile | Ping Avg (ms) | Bandwidth (Mbps) | Retransmits |
+|---------|---------------|------------------|-------------|
+| normal  |         32.45 |            95.23 |           2 |
+| rain    |         38.92 |            47.84 |          18 |
+| handoff |         54.12 |            18.45 |          45 |
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **tc netem Scripts** | `evidence/experiments/netem/profiles/` | All satellite profile scripts |
+| **Test Suite** | `evidence/experiments/netem/test-suite.sh` | Automated testing framework |
+| **Results** | `evidence/experiments/netem/results/` | Before/after graphs, tables |
+| **Grafana Dashboard** | `dashboards/grafana/netem-results.json` | Visualizations of test results |
+| **Documentation** | `evidence/experiments/netem/README.md` | How to reproduce experiments |
+
+**Learn More:**
+
+1. **tc netem:**
+   - [Linux netem Man Page](https://man7.org/linux/man-pages/man8/tc-netem.8.html)
+   - [netem Tutorial (PDF)](http://www.linuxfoundation.org/collaborate/workgroups/networking/netem)
+   - [Simulating Networks with netem](https://www.youtube.com/results?search_query=tc+netem+tutorial)
+
+2. **Network Testing Tools:**
+   - [iperf3 Documentation](https://iperf.fr/)
+   - [mtr (My Traceroute)](https://www.linode.com/docs/guides/diagnosing-network-issues-with-mtr/)
+   - [Wireshark for Analysis](https://www.wireshark.org/)
+
+3. **Protocol Optimization:**
+   - [TCP BBR in Practice](https://blog.cloudflare.com/tcp-bbr-exploring-tcp-congestion-control/)
+   - [QUIC Protocol (Google)](https://www.chromium.org/quic/)
+
+---
+
+### Q5: Which AWS services are most critical for Kuiper ground gateway connectivity? Walk me through a minimal viable architecture.
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** AWS Architecture & Design
+**Risk Level:** High (missing critical components = outages)
+**Timebox:** 10-15 minutes
+**Owner:** Solutions Architect or Senior Network Engineer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Imagine you're building a highway system to connect remote towns (ground gateways) to a big city (AWS). You need:
+1. **On-ramps** (how to connect) = VPN or Direct Connect
+2. **Highway interchange** (central hub) = Transit Gateway
+3. **Traffic signs** (DNS) = Route 53
+4. **Traffic monitors** (observability) = CloudWatch
+5. **Security checkpoints** (IAM, Security Groups)
+
+The "minimal viable architecture" is the smallest set of these components that would actually work in production.
+
+**Technical Explanation:**
+
+**Minimal Viable Architecture (MVA):**
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│          KUIPER GROUND GATEWAY - MINIMAL AWS ARCHITECTURE          │
+│                (5 Critical Services + 3 Optional)                  │
+└────────────────────────────────────────────────────────────────────┘
+
+[PHYSICAL WORLD]
+┌─────────────────────────────────────┐
+│  Ground Gateway POP (Virginia)      │
+│  ├─ Gateway Router (Cisco/Juniper)  │
+│  ├─ Public IP: 203.0.113.10         │
+│  └─ BGP ASN: 65001                  │
+└───────────────┬─────────────────────┘
+                │ Internet
+                ↓
+[AWS CLOUD - us-east-1]
+
+┌────────────────────────────────────────────────────────────────────┐
+│ SERVICE #1: VPN (Site-to-Site VPN) - CRITICAL                     │
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│ ┃  Customer Gateway (CGW)                                      ┃   │
+│ ┃  ├─ IP: 203.0.113.10                                        ┃   │
+│ ┃  ├─ BGP ASN: 65001                                          ┃   │
+│ ┃  └─ Represents physical gateway router                      ┃   │
+│ ┃                                                               ┃   │
+│ ┃  VPN Connection                                              ┃   │
+│ ┃  ├─ Tunnel 1: 169.254.10.1/30 (BGP peer: 169.254.10.2)     ┃   │
+│ ┃  ├─ Tunnel 2: 169.254.10.5/30 (BGP peer: 169.254.10.6)     ┃   │
+│ ┃  ├─ Pre-shared keys (one per tunnel)                        ┃   │
+│ ┃  ├─ IKEv2 + IPsec (AES-256-GCM)                            ┃   │
+│ ┃  └─ BGP (eBGP, ASN 64512 AWS side)                         ┃   │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                                    │
+│ Why Critical: Only way to get traffic from gateway into AWS      │
+│ Cost: ~$0.05/hour per VPN connection (~$36/month)                │
+│ Alternative: Direct Connect (more expensive, longer setup)       │
+└────────────────────────────────────────────────────────────────────┘
+                │
+                ↓
+┌────────────────────────────────────────────────────────────────────┐
+│ SERVICE #2: Transit Gateway (TGW) - CRITICAL                      │
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│ ┃  Transit Gateway (tgw-kuiper-hub)                            ┃   │
+│ ┃  ├─ Amazon ASN: 64512                                       ┃   │
+│ ┃  ├─ ECMP: Enabled (load balance across tunnels)            ┃   │
+│ ┃  └─ Auto-accept attachments: Disabled (security)            ┃   │
+│ ┃                                                               ┃   │
+│ ┃  Attachments:                                                ┃   │
+│ ┃  ├─ VPN Attachment (from gateway VPN)                       ┃   │
+│ ┃  └─ VPC Attachment (to application VPC)                     ┃   │
+│ ┃                                                               ┃   │
+│ ┃  Route Tables:                                               ┃   │
+│ ┃  ├─ Gateway Route Table                                     ┃   │
+│ ┃  │  └─ 10.0.0.0/8 → VPC Attachment (to apps)               ┃   │
+│ ┃  └─ VPC Route Table                                         ┃   │
+│ ┃     └─ 0.0.0.0/0 → VPN Attachment (to internet via GW)     ┃   │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                                    │
+│ Why Critical: Central hub for routing, enables multi-VPC        │
+│ Cost: ~$0.05/hour (~$36/month) + $0.02/GB processed             │
+│ Alternative: VPC Peering (doesn't scale, no transitive routing) │
+└────────────────────────────────────────────────────────────────────┘
+                │
+                ↓
+┌────────────────────────────────────────────────────────────────────┐
+│ SERVICE #3: VPC - CRITICAL                                         │
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│ ┃  VPC (kuiper-control-plane)                                  ┃   │
+│ ┃  ├─ CIDR: 10.0.0.0/16                                       ┃   │
+│ ┃  ├─ AZs: us-east-1a, us-east-1b                             ┃   │
+│ ┃  └─ DNS Hostnames: Enabled                                  ┃   │
+│ ┃                                                               ┃   │
+│ ┃  Subnets:                                                    ┃   │
+│ ┃  ├─ Private Subnet 1 (10.0.1.0/24, AZ-a) [Apps]           ┃   │
+│ ┃  └─ Private Subnet 2 (10.0.2.0/24, AZ-b) [Apps]           ┃   │
+│ ┃                                                               ┃   │
+│ ┃  Route Tables:                                               ┃   │
+│ ┃  └─ Private RT                                              ┃   │
+│ ┃     ├─ 10.0.0.0/16 → local                                 ┃   │
+│ ┃     └─ 0.0.0.0/0 → TGW Attachment                         ┃   │
+│ ┃                                                               ┃   │
+│ ┃  Security Groups:                                            ┃   │
+│ ┃  └─ sg-kuiper-apps                                          ┃   │
+│ ┃     ├─ Inbound: 443 from gateway CIDR (203.0.113.0/24)    ┃   │
+│ ┃     └─ Outbound: All                                        ┃   │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                                    │
+│ Why Critical: Isolation boundary for applications               │
+│ Cost: $0 (VPC is free, only resources inside cost money)        │
+└────────────────────────────────────────────────────────────────────┘
+                │
+                ↓
+┌────────────────────────────────────────────────────────────────────┐
+│ SERVICE #4: CloudWatch - CRITICAL                                  │
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│ ┃  Metrics (Automatic):                                        ┃   │
+│ ┃  ├─ VPN Tunnel State (TunnelState: 0=down, 1=up)           ┃   │
+│ ┃  ├─ VPN Tunnel Data In/Out (TunnelDataIn, TunnelDataOut)   ┃   │
+│ ┃  ├─ TGW Bytes In/Out (BytesIn, BytesOut)                   ┃   │
+│ ┃  └─ TGW Packet Drop (PacketDropCountBlackhole)             ┃   │
+│ ┃                                                               ┃   │
+│ ┃  Alarms (Must Configure):                                   ┃   │
+│ ┃  ├─ VPN Tunnel Down (TunnelState < 1 for 5 min)            ┃   │
+│ ┃  ├─ Both Tunnels Down (CRITICAL)                           ┃   │
+│ ┃  └─ TGW Packet Drops (> 1000/min)                          ┃   │
+│ ┃                                                               ┃   │
+│ ┃  Logs:                                                       ┃   │
+│ ┃  ├─ VPC Flow Logs → CloudWatch Logs                        ┃   │
+│ ┃  └─ CloudTrail → CloudWatch Logs (API audit)               ┃   │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                                    │
+│ Why Critical: Only way to know if things are broken             │
+│ Cost: ~$10-50/month (depends on log volume)                     │
+└────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────┐
+│ SERVICE #5: IAM - CRITICAL                                         │
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   │
+│ ┃  Roles:                                                      ┃   │
+│ ┃  └─ KuiperNetworkAdmin                                      ┃   │
+│ ┃     ├─ ec2:*VPN* (manage VPN connections)                  ┃   │
+│ ┃     ├─ ec2:*TransitGateway* (manage TGW)                   ┃   │
+│ ┃     ├─ cloudwatch:* (full observability access)            ┃   │
+│ ┃     └─ logs:* (read logs)                                   ┃   │
+│ ┃                                                               ┃   │
+│ ┃  Users:                                                      ┃   │
+│ ┃  └─ netadmin@kuiper                                         ┃   │
+│ ┃     ├─ MFA: Required                                        ┃   │
+│ ┃     └─ Assume Role: KuiperNetworkAdmin                     ┃   │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+│                                                                    │
+│ Why Critical: Security, compliance, audit                       │
+│ Cost: $0 (IAM is free)                                           │
+└────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────┐
+│ OPTIONAL (but Highly Recommended):                                │
+│                                                                    │
+│ Route 53:                                                          │
+│ - Health checks for failover                                      │
+│ - Latency-based routing (multi-region)                            │
+│ Cost: $0.50/health check/month                                    │
+│                                                                    │
+│ SNS:                                                               │
+│ - Alert delivery (email, SMS, PagerDuty)                          │
+│ Cost: $0.50/million requests                                      │
+│                                                                    │
+│ Systems Manager:                                                   │
+│ - Session Manager (SSH without bastion)                           │
+│ - Parameter Store (secrets)                                       │
+│ Cost: Free tier covers most use cases                             │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Terraform Minimal Viable Architecture:**
+
+```hcl
+# terraform/kuiper-mva/main.tf
+
+# Provider
+provider "aws" {
+  region = "us-east-1"
+}
+
+# 1. Customer Gateway (represents physical gateway router)
+resource "aws_customer_gateway" "kuiper_gateway_va" {
+  bgp_asn    = 65001
+  ip_address = "203.0.113.10"  # Gateway public IP
+  type       = "ipsec.1"
+
+  tags = {
+    Name = "kuiper-gateway-virginia"
+  }
+}
+
+# 2. Transit Gateway
+resource "aws_ec2_transit_gateway" "kuiper_hub" {
+  description                     = "Kuiper Ground Gateway Hub"
+  amazon_side_asn                 = 64512
+  default_route_table_association = "enable"
+  default_route_table_propagation = "enable"
+
+  tags = {
+    Name = "tgw-kuiper-hub"
+  }
+}
+
+# 3. VPN Connection (dual tunnel with BGP)
+resource "aws_vpn_connection" "kuiper_vpn" {
+  customer_gateway_id = aws_customer_gateway.kuiper_gateway_va.id
+  transit_gateway_id  = aws_ec2_transit_gateway.kuiper_hub.id
+  type                = "ipsec.1"
+
+  tunnel1_inside_cidr   = "169.254.10.0/30"
+  tunnel2_inside_cidr   = "169.254.10.4/30"
+  tunnel1_preshared_key = var.tunnel1_psk  # Store in Terraform Cloud/Vault
+  tunnel2_preshared_key = var.tunnel2_psk
+
+  tags = {
+    Name = "vpn-kuiper-gateway-va"
+  }
+}
+
+# 4. VPC
+resource "aws_vpc" "kuiper_control_plane" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name = "vpc-kuiper-control-plane"
+  }
+}
+
+# 5. Subnets
+resource "aws_subnet" "private_1a" {
+  vpc_id            = aws_vpc.kuiper_control_plane.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "us-east-1a"
+
+  tags = {
+    Name = "subnet-kuiper-private-1a"
+  }
+}
+
+resource "aws_subnet" "private_1b" {
+  vpc_id            = aws_vpc.kuiper_control_plane.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "us-east-1b"
+
+  tags = {
+    Name = "subnet-kuiper-private-1b"
+  }
+}
+
+# 6. TGW Attachment to VPC
+resource "aws_ec2_transit_gateway_vpc_attachment" "kuiper_vpc" {
+  subnet_ids         = [aws_subnet.private_1a.id, aws_subnet.private_1b.id]
+  transit_gateway_id = aws_ec2_transit_gateway.kuiper_hub.id
+  vpc_id             = aws_vpc.kuiper_control_plane.id
+
+  tags = {
+    Name = "tgw-attach-kuiper-vpc"
+  }
+}
+
+# 7. Route Table (VPC → TGW for internet access via gateway)
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.kuiper_control_plane.id
+
+  route {
+    cidr_block         = "0.0.0.0/0"
+    transit_gateway_id = aws_ec2_transit_gateway.kuiper_hub.id
+  }
+
+  tags = {
+    Name = "rt-kuiper-private"
+  }
+}
+
+resource "aws_route_table_association" "private_1a" {
+  subnet_id      = aws_subnet.private_1a.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_1b" {
+  subnet_id      = aws_subnet.private_1b.id
+  route_table_id = aws_route_table.private.id
+}
+
+# 8. Security Group
+resource "aws_security_group" "kuiper_apps" {
+  name        = "sg-kuiper-apps"
+  description = "Allow traffic from gateway"
+  vpc_id      = aws_vpc.kuiper_control_plane.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["203.0.113.0/24"]  # Gateway CIDR
+    description = "HTTPS from gateway"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "sg-kuiper-apps"
+  }
+}
+
+# 9. CloudWatch Alarms
+resource "aws_cloudwatch_metric_alarm" "vpn_tunnel_down" {
+  alarm_name          = "kuiper-vpn-tunnel-down"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "TunnelState"
+  namespace           = "AWS/VPN"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "1"
+  alarm_description   = "VPN tunnel is down"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+
+  dimensions = {
+    VpnId = aws_vpn_connection.kuiper_vpn.id
+  }
+}
+
+# 10. SNS Topic for Alerts
+resource "aws_sns_topic" "alerts" {
+  name = "kuiper-gateway-alerts"
+}
+
+resource "aws_sns_topic_subscription" "alerts_email" {
+  topic_arn = aws_sns_topic.alerts.arn
+  protocol  = "email"
+  endpoint  = "netadmin@kuiper.example.com"
+}
+
+# 11. VPC Flow Logs
+resource "aws_flow_log" "kuiper_vpc" {
+  iam_role_arn    = aws_iam_role.flow_logs.arn
+  log_destination = aws_cloudwatch_log_group.flow_logs.arn
+  traffic_type    = "ALL"
+  vpc_id          = aws_vpc.kuiper_control_plane.id
+}
+
+resource "aws_cloudwatch_log_group" "flow_logs" {
+  name              = "/aws/vpc/kuiper-control-plane"
+  retention_in_days = 7
+}
+
+resource "aws_iam_role" "flow_logs" {
+  name = "kuiper-vpc-flow-logs"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "vpc-flow-logs.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "flow_logs" {
+  name = "kuiper-flow-logs-policy"
+  role = aws_iam_role.flow_logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams"
+      ]
+      Effect   = "Allow"
+      Resource = "*"
+    }]
+  })
+}
+
+# Outputs
+output "vpn_tunnel_1_address" {
+  value = aws_vpn_connection.kuiper_vpn.tunnel1_address
+}
+
+output "vpn_tunnel_2_address" {
+  value = aws_vpn_connection.kuiper_vpn.tunnel2_address
+}
+
+output "transit_gateway_id" {
+  value = aws_ec2_transit_gateway.kuiper_hub.id
+}
+
+output "vpc_id" {
+  value = aws_vpc.kuiper_control_plane.id
+}
+```
+
+**Monthly Cost Estimate:**
+
+```
+Service              Units       Rate           Monthly Cost
+─────────────────────────────────────────────────────────────
+VPN Connection       1 conn      $0.05/hour     $36.00
+Transit Gateway      1 TGW       $0.05/hour     $36.00
+TGW Data Transfer    100 GB      $0.02/GB       $2.00
+CloudWatch Alarms    3 alarms    $0.10/alarm    $0.30
+CloudWatch Logs      5 GB        $0.50/GB       $2.50
+SNS                  1000 emails $0.50/million  $0.00
+VPC/Subnets/SG       N/A         Free           $0.00
+IAM                  N/A         Free           $0.00
+─────────────────────────────────────────────────────────────
+TOTAL:                                          $76.80/month
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **MVA Terraform Module** | `infra/aws/terraform/kuiper-mva/` | Complete minimal architecture as code |
+| **Architecture Diagram** | `docs/diagrams/kuiper/mva.mmd` | Visual representation |
+| **Cost Analysis** | `docs/cost/kuiper-mva-cost.md` | Detailed cost breakdown with alternatives |
+| **ADR: VPN vs DX** | `docs/adr/ADR-0003-vpn-vs-dx.md` | Why we start with VPN (cost, speed to deploy) |
+| **Deployment Guide** | `docs/runbooks/deploy-mva.md` | Step-by-step deployment instructions |
+
+**Learn More:**
+
+1. **AWS Networking:**
+   - [AWS Site-to-Site VPN Documentation](https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html)
+   - [Transit Gateway Guide](https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html)
+   - [VPN BGP Configuration](https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNRoutingTypes.html)
+
+2. **Architecture Patterns:**
+   - [AWS Multi-Region Architecture](https://aws.amazon.com/blogs/architecture/disaster-recovery-dr-architecture-on-aws-part-i-strategies-for-recovery-in-the-cloud/)
+   - [Hybrid Cloud Connectivity](https://d1.awsstatic.com/whitepapers/hybrid-cloud-with-aws.pdf)
+
+---
+
+**Continue reading:** Questions 6-60 coming next...
 
 ## Glossary of All Terms (A-Z)
 
