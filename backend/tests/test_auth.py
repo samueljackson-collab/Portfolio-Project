@@ -166,3 +166,72 @@ async def test_login_form_data(client: AsyncClient, test_user: User):
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
+
+
+@pytest.mark.asyncio
+async def test_register_weak_password(client: AsyncClient):
+    """Test registration with password that doesn't meet strength requirements."""
+    weak_passwords = [
+        "short1A",  # Too short
+        "nouppercase1",  # No uppercase
+        "NOLOWERCASE1",  # No lowercase
+        "NoDigitsHere",  # No digits
+    ]
+    
+    for password in weak_passwords:
+        response = await client.post(
+            "/auth/register",
+            json={
+                "email": f"test{password}@example.com",
+                "password": password
+            }
+        )
+        assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_login_case_insensitive_email(client: AsyncClient, test_user):
+    """Test that login is case-insensitive for email."""
+    response = await client.post(
+        "/auth/login",
+        data={
+            "username": test_user.email.upper(),
+            "password": "testpassword123"
+        }
+    )
+    
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_register_email_normalization(client: AsyncClient):
+    """Test that email is normalized (lowercase, trimmed)."""
+    response = await client.post(
+        "/auth/register",
+        json={
+            "email": "  TEST@EXAMPLE.COM  ",
+            "password": "SecurePass123"
+        }
+    )
+    
+    assert response.status_code == 201
+    data = response.json()
+    assert data["email"] == "test@example.com"
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_with_expired_token(client: AsyncClient, test_user):
+    """Test accessing current user with expired token."""
+    from datetime import timedelta
+    from app.auth import create_access_token
+    
+    # Create expired token
+    expired_token = create_access_token(
+        {"sub": test_user.email},
+        expires_delta=timedelta(seconds=-1)
+    )
+    
+    client.headers.update({"Authorization": f"Bearer {expired_token}"})
+    response = await client.get("/auth/me")
+    
+    assert response.status_code == 401

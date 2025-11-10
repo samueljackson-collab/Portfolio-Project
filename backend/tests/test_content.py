@@ -315,3 +315,104 @@ async def test_delete_content_not_found(authenticated_client: AsyncClient):
     response = await authenticated_client.delete(f"/content/{fake_uuid}")
 
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_content_with_very_long_title(
+    authenticated_client: AsyncClient
+):
+    """Test creating content with maximum title length."""
+    response = await authenticated_client.post(
+        "/content",
+        json={
+            "title": "a" * 255,  # Maximum length
+            "body": "Test body",
+            "is_published": False
+        }
+    )
+    
+    assert response.status_code == 201
+    data = response.json()
+    assert len(data["title"]) == 255
+
+
+@pytest.mark.asyncio
+async def test_create_content_title_too_long(
+    authenticated_client: AsyncClient
+):
+    """Test creating content with title exceeding maximum length."""
+    response = await authenticated_client.post(
+        "/content",
+        json={
+            "title": "a" * 256,  # Exceeds maximum
+            "body": "Test body",
+            "is_published": False
+        }
+    )
+    
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_content_partial_fields(
+    authenticated_client: AsyncClient,
+    test_content
+):
+    """Test updating content with only some fields."""
+    response = await authenticated_client.put(
+        f"/content/{test_content.id}",
+        json={"is_published": True}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["is_published"] is True
+    assert data["title"] == test_content.title  # Unchanged
+
+
+@pytest.mark.asyncio
+async def test_list_content_pagination_beyond_available(
+    authenticated_client: AsyncClient
+):
+    """Test listing content with skip beyond available items."""
+    response = await authenticated_client.get(
+        "/content?skip=1000&limit=10"
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 0
+
+
+@pytest.mark.asyncio
+async def test_delete_content_twice(
+    authenticated_client: AsyncClient,
+    test_content
+):
+    """Test deleting the same content twice."""
+    # First delete
+    response = await authenticated_client.delete(f"/content/{test_content.id}")
+    assert response.status_code == 204
+    
+    # Second delete
+    response = await authenticated_client.delete(f"/content/{test_content.id}")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_content_without_body(
+    authenticated_client: AsyncClient
+):
+    """Test creating content with null body."""
+    response = await authenticated_client.post(
+        "/content",
+        json={
+            "title": "Title Only",
+            "body": None,
+            "is_published": False
+        }
+    )
+    
+    assert response.status_code == 201
+    data = response.json()
+    assert data["body"] is None
