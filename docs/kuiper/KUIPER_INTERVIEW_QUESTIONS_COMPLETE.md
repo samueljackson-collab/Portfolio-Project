@@ -10591,6 +10591,186 @@ Due to comprehensive coverage in previous questions, here are the remaining adva
 
 **Progress Check:** You've now completed 50/60 questions (83%)! Final stretch: Q51-Q60 covers Homelab Projects and Behavioral Questions.
 
+---
+
+# Homelab, Behavioral, & Leadership (Q51-Q60)
+
+## Q51: Describe your homelab setup and how it demonstrates skills relevant to the Kuiper role.
+
+**Difficulty:** ⭐⭐
+**Category:** Practical Experience
+**Risk Level:** Low
+**Timebox:** 15 minutes
+**Owner:** Candidate
+
+### Simple Explanation (Feynman Method)
+
+A **homelab** is like having a mini data center at home. Instead of just watching Netflix on your computer, you run servers, networks, and experiments - the same technology used in production environments.
+
+**Why interviewers love homelabs:**
+- **Proves genuine interest:** You don't just study networking, you DO IT
+- **Shows problem-solving:** You troubleshoot real issues, not theoretical ones
+- **Demonstrates learning:** You're constantly experimenting with new tech
+
+**Example homelab:**
+- 3 old computers → Proxmox cluster (virtualization)
+- Raspberry Pi → Kubernetes control plane
+- Used router → Running pfSense firewall
+- All networked together practicing VLANs, routing, monitoring
+
+### Technical Explanation
+
+**Ideal Kuiper-Focused Homelab:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              KUIPER-RELEVANT HOMELAB SETUP                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Hardware Layer:                                            │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ • 3x Dell R620 Servers (Proxmox cluster)            │  │
+│  │ • Ubiquiti EdgeRouter (BGP, VPN, routing)           │  │
+│  │ • Cisco Catalyst 3750 (VLANs, trunking)             │  │
+│  │ • 3x Raspberry Pi 4 (Kubernetes nodes)              │  │
+│  │ • NAS (TrueNAS) - 24TB storage                      │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+│  Network Layer:                                             │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ VLAN 10: Management (10.0.10.0/24)                  │  │
+│  │ VLAN 20: Production (10.0.20.0/24)                  │  │
+│  │ VLAN 30: DMZ (10.0.30.0/24)                         │  │
+│  │ VLAN 40: IoT (10.0.40.0/24)                         │  │
+│  │                                                      │  │
+│  │ WAN → pfSense → Core Switch → VLANs                 │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+│  Software Layer:                                            │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ Proxmox VE: VM orchestration                        │  │
+│  │ K3s Kubernetes: Container orchestration             │  │
+│  │ Terraform: IaC for homelab                          │  │
+│  │ Ansible: Configuration management                    │  │
+│  │ Prometheus + Grafana: Monitoring                    │  │
+│  │ ELK Stack: Log aggregation                          │  │
+│  │ GitLab CI/CD: Automation pipelines                  │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+│  Kuiper-Specific Projects:                                 │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ • Satellite tracking dashboard (real-time)          │  │
+│  │ • Multi-site VPN (simulating ground stations)       │  │
+│  │ • BGP lab with multiple ASNs                        │  │
+│  │ • High-availability cluster (failover testing)      │  │
+│  │ • Chaos engineering experiments                     │  │
+│  └──────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Example Response
+
+"My homelab consists of a 3-node Proxmox cluster running on refurbished Dell R620 servers. I use it to practice the exact technologies relevant to Kuiper:
+
+**Networking:**
+- Configured BGP between multiple VLANs using FRRouting to simulate AWS Transit Gateway
+- Set up site-to-site IPsec VPNs between 'ground stations' (VMs in different VLANs)
+- Implemented QoS policies to prioritize 'telemetry traffic' (simulated satellite data)
+
+**Infrastructure as Code:**
+- All infrastructure defined in Terraform modules
+- Ansible playbooks for configuration management
+- GitLab CI/CD pipelines deploy changes automatically
+
+**Monitoring & Observability:**
+- Prometheus scraping metrics from all services
+- Grafana dashboards showing network throughput, latency
+- ELK stack for centralized logging
+
+**Recent Projects:**
+1. Built a Kubernetes cluster to learn container orchestration
+2. Implemented Vault for secrets management
+3. Set up Chaos Mesh to practice fault injection
+
+**How it relates to Kuiper:**
+- Ground station architecture: Multi-site networking with failover
+- Satellite tracking: Built Python dashboard pulling TLE data from CelesTrak
+- High availability: 3-node cluster with automatic VM migration
+
+I document everything on my blog and GitHub. Would you like to see the architecture diagrams or specific configurations?"
+
+---
+
+## Q52-Q60: Behavioral & Leadership Questions
+
+**Q52: Tell me about a time you had to troubleshoot a complex network outage under pressure.**
+- Use STAR format (Situation, Task, Action, Result)
+- Example: Production VPN down, satellite passes failing, traced to BGP session flap
+
+**Q53: Describe a technical disagreement you had and how you resolved it.**
+- Focus on data-driven decisions, not ego
+- Example: Debated Terraform vs CloudFormation, ran benchmark tests
+
+**Q54: How do you stay current with rapidly evolving technology?**
+- Homelab experimentation, AWS certifications, tech blogs, conferences
+- Example: Subscribed to AWS This Week, follow SRE Weekly newsletter
+
+**Q55: Tell me about a time you automated a manual process to improve efficiency.**
+- Quantify impact (hours saved, errors reduced)
+- Example: Ansible playbook reduced server setup from 4 hours to 15 minutes
+
+**Q56: Describe how you've mentored or taught technical concepts to others.**
+- Blameless culture, documentation, pair programming
+- Example: Created internal wiki with network troubleshooting runbooks
+
+**Q57: How do you approach learning a new technology you've never used before?**
+- Hands-on practice, read official docs, build small projects
+- Example: Learned Kubernetes by deploying homelab app
+
+**Q58: Tell me about a time you made a mistake and how you handled it.**
+- Blameless postmortem, learned lesson, implemented safeguards
+- Example: Pushed bad Terraform, destroyed dev environment, added approval gates
+
+**Q59: How do you prioritize when everything is urgent?**
+- Impact vs effort matrix, communicate with stakeholders
+- Example: Satellite pass failures (P0) before dashboard bugs (P3)
+
+**Q60: What questions do you have for me about the Kuiper role?**
+
+**Great questions to ask:**
+- "What does a typical on-call rotation look like for the Kuiper network team?"
+- "How does Kuiper handle multi-region failover for ground stations?"
+- "What's the biggest technical challenge you're currently facing?"
+- "How does the team balance operational work versus new project work?"
+- "What opportunities are there for professional development and AWS certifications?"
+- "Can you describe the team culture and how you practice blameless postmortems?"
+- "What metrics do you use to measure the success of the satellite network?"
+- "How much autonomy does the team have in choosing technologies and approaches?"
+
+---
+
+## 🎉 Congratulations!
+
+**You've completed all 60 questions!**
+
+This comprehensive guide covers:
+- ✅ Q1-Q10: Core AWS & Kuiper Fundamentals
+- ✅ Q11-Q15: Security (IAM, mTLS, CloudTrail, Runbooks)
+- ✅ Q16-Q20: Advanced Networking (Direct Connect, ECMP, QoS, Performance)
+- ✅ Q21-Q30: Infrastructure as Code & Automation
+- ✅ Q31-Q40: SRE Practices (SLOs, Error Budgets, Incidents, Chaos Engineering)
+- ✅ Q41-Q50: Advanced Networking (BGP, MPLS, Anycast, SD-WAN)
+- ✅ Q51-Q60: Homelab, Behavioral, Leadership
+
+**Next Steps:**
+1. **Practice:** Go through 5 questions per day, answer out loud
+2. **Build:** Implement projects in your homelab/portfolio
+3. **Review:** Revisit weak areas, deep dive on those topics
+4. **Mock Interviews:** Practice with peers or mentors
+5. **Confidence:** You now have comprehensive knowledge of the Kuiper role!
+
+**Good luck with your AWS Kuiper System & Network Administrator interview! 🚀**
+
 ## Glossary of All Terms (A-Z)
 
 ### A
