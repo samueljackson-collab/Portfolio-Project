@@ -953,9 +953,24 @@ aws eks describe-nodegroup --cluster-name production-eks-cluster --nodegroup-nam
 # Force refresh: kubectl drain <node> && kubectl delete node <node>
 
 # Emergency infrastructure redeployment
+# ⚠️ DANGER: This will destroy ALL production infrastructure!
+# ⚠️ Only use as absolute last resort with approval from VP Engineering
+# ⚠️ Ensure backups are recent before proceeding
 cd /home/user/Portfolio-Project/projects/1-aws-infrastructure-automation/terraform
+
+# Safer approach: Targeted resource recreation
+# terraform taint aws_eks_cluster.this
+# terraform apply -var-file=environments/prod.tfvars
+
+# Complete redeployment (requires multiple confirmations):
+# Step 1: Verify you have recent backups
+# Step 2: Get written approval from leadership
+# Step 3: Export current state for recovery
+terraform show > state-backup-$(date +%Y%m%d-%H%M%S).txt
+# Step 4: Destroy (will prompt for confirmation - do NOT use -auto-approve)
 terraform destroy -var-file=environments/prod.tfvars
-terraform apply -var-file=environments/prod.tfvars -auto-approve
+# Step 5: Redeploy (will prompt for confirmation - do NOT use -auto-approve)
+terraform apply -var-file=environments/prod.tfvars
 ```
 
 ---

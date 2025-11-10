@@ -216,8 +216,9 @@ terraform apply tfplan
 DB_ENDPOINT=$(terraform output -raw database_endpoint)
 DB_USER=$(terraform output -raw database_username)
 
-# Connect with psql
-psql "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_ENDPOINT}:5432/postgres"
+# Connect with psql (will prompt for password)
+# For security, do not pass password in connection string
+psql -U ${DB_USER} -h ${DB_ENDPOINT} -p 5432 -d postgres
 
 # Create application database
 CREATE DATABASE myapp;
@@ -267,12 +268,13 @@ aws rds describe-db-snapshots \
   --output table
 
 # Export snapshot to S3 (for long-term retention)
+# Replace placeholders: <AWS_REGION>, <AWS_ACCOUNT_ID>, <SNAPSHOT_NAME>, <KMS_KEY_ID>
 aws rds start-export-task \
   --export-task-identifier "${DB_INSTANCE}-export-$(date +%Y%m%d)" \
-  --source-arn "arn:aws:rds:region:account-id:snapshot:snapshot-name" \
-  --s3-bucket-name my-db-exports \
-  --iam-role-arn "arn:aws:iam::account-id:role/rds-s3-export-role" \
-  --kms-key-id "arn:aws:kms:region:account-id:key/key-id"
+  --source-arn "arn:aws:rds:<AWS_REGION>:<AWS_ACCOUNT_ID>:snapshot:<SNAPSHOT_NAME>" \
+  --s3-bucket-name <YOUR_S3_BUCKET_FOR_EXPORTS> \
+  --iam-role-arn "arn:aws:iam::<AWS_ACCOUNT_ID>:role/rds-s3-export-role" \
+  --kms-key-id "arn:aws:kms:<AWS_REGION>:<AWS_ACCOUNT_ID>:key/<KMS_KEY_ID>"
 ```
 
 ### Application Operations

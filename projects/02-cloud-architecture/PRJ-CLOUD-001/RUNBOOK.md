@@ -203,9 +203,9 @@ aws organizations list-parents --child-id $ACCOUNT_ID
 ACCOUNT_ID="123456789012"
 aws organizations remove-account-from-organization --account-id $ACCOUNT_ID
 
-# Step 2: If you have access to the account, close it permanently
-# (Must be done from the account itself, not management account)
-aws account close-account --account-id $ACCOUNT_ID
+# Step 2: Close the account permanently
+# (Must be done from the MANAGEMENT account, not the member account)
+aws organizations close-account --account-id $ACCOUNT_ID
 
 # Note: Account enters 90-day suspension period before permanent deletion
 ```
@@ -982,15 +982,18 @@ echo "Backup completed: $BACKUP_DIR"
 POLICY_NAME="DenyS3PublicAccess"
 BACKUP_FILE="backups/$(date -d '1 day ago' +%Y%m%d)/${POLICY_NAME}.json"
 
-# Extract policy content
-POLICY_CONTENT=$(jq '.Policy.Content' $BACKUP_FILE)
+# Extract policy content and save to temp file to avoid shell expansion issues
+jq -r '.Policy.Content' $BACKUP_FILE > /tmp/policy-content.json
 
 # Recreate policy
 aws organizations create-policy \
   --name $POLICY_NAME \
   --description "Restored from backup $(date)" \
   --type SERVICE_CONTROL_POLICY \
-  --content "$POLICY_CONTENT"
+  --content file:///tmp/policy-content.json
+
+# Cleanup temp file
+rm /tmp/policy-content.json
 
 # Reattach to original targets (requires manual identification or backup metadata)
 ```
