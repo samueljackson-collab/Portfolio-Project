@@ -6,7 +6,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initializePopup();
 });
 
-// Initialize popup
+/**
+ * Initialize the popup UI by loading tab data, rendering categories, and attaching UI event handlers.
+ *
+ * Shows a loading indicator while it loads statistics and categories, sets up event listeners for user controls,
+ * and hides the loading indicator when finished. On error, logs the failure and displays an error status to the user.
+ */
 async function initializePopup() {
   showLoading(true);
 
@@ -28,7 +33,11 @@ async function initializePopup() {
   }
 }
 
-// Load statistics
+/**
+ * Fetches all tabs and tab groups and updates the popup UI with total tabs, total groups, and count of ungrouped tabs.
+ *
+ * Updates elements with IDs "totalTabs", "totalGroups", and "ungroupedTabs" to display the computed counts.
+ */
 async function loadStatistics() {
   try {
     const response = await chrome.runtime.sendMessage({ type: 'GET_ALL_TABS' });
@@ -49,7 +58,11 @@ async function loadStatistics() {
   }
 }
 
-// Load categories
+/**
+ * Loads tab data, tallies counts per predefined category, and updates the categories list in the popup UI.
+ *
+ * Populates counts for Work, Research, Shopping, Social, Entertainment, and News by categorizing each tab URL and replaces the contents of the element with id "categoriesList" with generated category elements.
+ */
 async function loadCategories() {
   try {
     const response = await chrome.runtime.sendMessage({ type: 'GET_ALL_TABS' });
@@ -83,7 +96,12 @@ async function loadCategories() {
   }
 }
 
-// Create category element
+/**
+ * Create a DOM element representing a category with its icon and item count.
+ * @param {string} category - Category label displayed and used to select an icon.
+ * @param {number} count - Number of items for the category.
+ * @returns {HTMLDivElement} A `div` element with class `"category"` containing the category name/icon and a count element.
+ */
 function createCategoryElement(category, count) {
   const div = document.createElement('div');
   div.className = 'category';
@@ -105,7 +123,11 @@ function createCategoryElement(category, count) {
   return div;
 }
 
-// Get category icon
+/**
+ * Get an emoji icon for a given category.
+ * @param {string} category - Category name to map to an icon.
+ * @returns {string} The emoji representing the category, or a default folder icon (`📁`) if the category is unrecognized.
+ */
 function getCategoryIcon(category) {
   const icons = {
     'Work': '💼',
@@ -119,7 +141,11 @@ function getCategoryIcon(category) {
   return icons[category] || '📁';
 }
 
-// Get category from URL
+/**
+ * Determine the category label for a given URL based on predefined domain patterns.
+ * @param {string} url - The full URL or hostname to classify.
+ * @returns {string|null} The matching category name ('Work', 'Research', 'Shopping', 'Social', 'Entertainment', 'News') if a domain pattern matches, `null` otherwise.
+ */
 async function getCategoryFromUrl(url) {
   const patterns = {
     'Work': [
@@ -158,7 +184,11 @@ async function getCategoryFromUrl(url) {
   return null;
 }
 
-// Setup event listeners
+/**
+ * Attach click handlers to popup buttons to trigger auto-grouping, syncing, and opening the desktop app.
+ *
+ * The auto-group handler displays a syncing status, initiates grouping of tabs, refreshes statistics and categories, and shows a success or error status. The sync handler requests a background sync and shows a success or error status. The open-app handler requests the background to open the desktop application and shows a brief status message.
+ */
 function setupEventListeners() {
   // Auto-group button
   document.getElementById('autoGroupBtn').addEventListener('click', async () => {
@@ -197,7 +227,13 @@ function setupEventListeners() {
   });
 }
 
-// Auto-group all tabs
+/**
+ * Group open tabs by detected category and request creation of corresponding tab groups.
+ *
+ * Fetches all tabs, determines a category for each tab URL, aggregates tab IDs by category,
+ * and sends a background message to create a group for each category containing one or more tabs.
+ * Uncategorized tabs are ignored.
+ */
 async function autoGroupAllTabs() {
   const response = await chrome.runtime.sendMessage({ type: 'GET_ALL_TABS' });
   const tabs = response.tabs || [];
@@ -228,7 +264,12 @@ async function autoGroupAllTabs() {
   }
 }
 
-// Get category color
+/**
+ * Map a category name to its display color.
+ *
+ * @param {string} category - The category name (e.g., "Work", "Research").
+ * @returns {string} The color associated with the category, or 'grey' if unknown.
+ */
 function getCategoryColor(category) {
   const colors = {
     'Work': 'blue',
@@ -242,13 +283,20 @@ function getCategoryColor(category) {
   return colors[category] || 'grey';
 }
 
-// Show/hide loading
+/**
+ * Toggle visibility between the loading indicator and the main content.
+ * @param {boolean} show - `true` to display the loading indicator and hide the content, `false` to hide the loading indicator and show the content.
+ */
 function showLoading(show) {
   document.getElementById('loading').style.display = show ? 'block' : 'none';
   document.getElementById('content').style.display = show ? 'none' : 'block';
 }
 
-// Show status message
+/**
+ * Display a status message in the popup and apply an optional status style.
+ * @param {string} message - Text to show in the status element.
+ * @param {string} [type] - Optional CSS modifier applied to the status element (e.g., "syncing", "success", "error").
+ */
 function showStatus(message, type = '') {
   const statusElement = document.getElementById('status');
   statusElement.textContent = message;
