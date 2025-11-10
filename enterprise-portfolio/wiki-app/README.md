@@ -105,15 +105,13 @@ The application will open at `http://localhost:3000`
 
 ```
 wiki-app/
-├── public/
-│   └── index.html          # HTML template
+├── index.html              # Vite HTML entry
 ├── src/
 │   ├── components/
 │   │   └── EnterpriseWiki.jsx  # Main wiki component
 │   ├── App.jsx             # Root application component
 │   ├── main.jsx            # Application entry point
 │   └── index.css           # Global styles & Tailwind imports
-├── index.html              # Vite HTML entry
 ├── package.json            # Dependencies and scripts
 ├── vite.config.js          # Vite configuration
 ├── tailwind.config.js      # Tailwind CSS configuration

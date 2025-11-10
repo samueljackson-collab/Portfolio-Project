@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Book, Server, GitBranch, TestTube, Network, ChevronRight, ChevronDown, FileText, Code, Database, Shield, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Book, Server, GitBranch, TestTube, Network, ChevronRight, FileText, Code, Shield, Activity, CheckCircle } from 'lucide-react';
 
 const EnterpriseWiki = () => {
   const [selectedRole, setSelectedRole] = useState('sde');
-  const [expandedSections, setExpandedSections] = useState({});
   const [selectedWeek, setSelectedWeek] = useState(1);
 
   const roles = {
@@ -37,11 +36,28 @@ const EnterpriseWiki = () => {
     }
   };
 
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+  // Color class mapping for Tailwind CSS
+  const colorClasses = {
+    blue: {
+      bg: 'bg-blue-600',
+      hover: 'hover:bg-blue-700',
+      bgAlt: 'bg-blue-600'
+    },
+    green: {
+      bg: 'bg-green-600',
+      hover: 'hover:bg-green-700',
+      bgAlt: 'bg-green-600'
+    },
+    purple: {
+      bg: 'bg-purple-600',
+      hover: 'hover:bg-purple-700',
+      bgAlt: 'bg-purple-600'
+    },
+    orange: {
+      bg: 'bg-orange-600',
+      hover: 'hover:bg-orange-700',
+      bgAlt: 'bg-orange-600'
+    }
   };
 
   const roleContent = {
@@ -578,6 +594,8 @@ const EnterpriseWiki = () => {
   const currentRole = roles[selectedRole];
   const currentContent = roleContent[selectedRole];
   const RoleIcon = currentRole.icon;
+  const selectedWeekData = currentContent.weeks.find(w => w.number === selectedWeek);
+  const currentColors = colorClasses[currentRole.color];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -599,6 +617,7 @@ const EnterpriseWiki = () => {
               <div className="space-y-3">
                 {Object.entries(roles).map(([key, role]) => {
                   const Icon = role.icon;
+                  const roleColors = colorClasses[role.color];
                   return (
                     <button
                       key={key}
@@ -608,7 +627,7 @@ const EnterpriseWiki = () => {
                       }}
                       className={`w-full p-4 rounded-lg transition-all ${
                         selectedRole === key
-                          ? `bg-${role.color}-600 text-white shadow-lg scale-105`
+                          ? `${roleColors.bg} text-white shadow-lg scale-105`
                           : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                     >
@@ -634,7 +653,7 @@ const EnterpriseWiki = () => {
                   </div>
                   <div className="w-full bg-slate-700 rounded-full h-2">
                     <div
-                      className={`bg-${currentRole.color}-600 h-2 rounded-full transition-all`}
+                      className={`${currentColors.bg} h-2 rounded-full transition-all`}
                       style={{ width: `${(selectedWeek / currentRole.weeks) * 100}%` }}
                     />
                   </div>
@@ -648,7 +667,7 @@ const EnterpriseWiki = () => {
             {/* Role Overview */}
             <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
               <div className="flex items-center gap-4 mb-4">
-                <div className={`p-3 bg-${currentRole.color}-600 rounded-lg`}>
+                <div className={`p-3 ${currentColors.bg} rounded-lg`}>
                   <RoleIcon className="w-8 h-8 text-white" />
                 </div>
                 <div>
@@ -664,8 +683,8 @@ const EnterpriseWiki = () => {
                     Key Responsibilities
                   </h3>
                   <ul className="space-y-2">
-                    {currentContent.overview.responsibilities.map((resp, idx) => (
-                      <li key={idx} className="text-slate-300 text-sm flex items-start gap-2">
+                    {currentContent.overview.responsibilities.map((resp) => (
+                      <li key={resp} className="text-slate-300 text-sm flex items-start gap-2">
                         <ChevronRight className="w-4 h-4 text-blue-500 mt-1 flex-shrink-0" />
                         {resp}
                       </li>
@@ -678,8 +697,8 @@ const EnterpriseWiki = () => {
                     Core Skills
                   </h3>
                   <ul className="space-y-2">
-                    {currentContent.overview.skills.map((skill, idx) => (
-                      <li key={idx} className="text-slate-300 text-sm flex items-start gap-2">
+                    {currentContent.overview.skills.map((skill) => (
+                      <li key={skill} className="text-slate-300 text-sm flex items-start gap-2">
                         <ChevronRight className="w-4 h-4 text-purple-500 mt-1 flex-shrink-0" />
                         {skill}
                       </li>
@@ -699,7 +718,7 @@ const EnterpriseWiki = () => {
                     onClick={() => setSelectedWeek(week.number)}
                     className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
                       selectedWeek === week.number
-                        ? `bg-${currentRole.color}-600 text-white shadow-lg`
+                        ? `${currentColors.bg} text-white shadow-lg`
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                     }`}
                   >
@@ -710,14 +729,14 @@ const EnterpriseWiki = () => {
             </div>
 
             {/* Week Content */}
-            {currentContent.weeks.filter(w => w.number === selectedWeek).map((week) => (
-              <div key={week.number} className="bg-slate-800 rounded-xl p-6 shadow-xl">
+            {selectedWeekData && (
+              <div className="bg-slate-800 rounded-xl p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-2xl font-bold text-white">Week {week.number}: {week.title}</h3>
+                    <h3 className="text-2xl font-bold text-white">Week {selectedWeekData.number}: {selectedWeekData.title}</h3>
                     <p className="text-slate-400 mt-1">Duration: 5-7 days</p>
                   </div>
-                  <div className={`px-4 py-2 bg-${currentRole.color}-600 rounded-lg`}>
+                  <div className={`px-4 py-2 ${currentColors.bg} rounded-lg`}>
                     <span className="text-white font-semibold">In Progress</span>
                   </div>
                 </div>
@@ -729,9 +748,9 @@ const EnterpriseWiki = () => {
                       Topics Covered
                     </h4>
                     <ul className="space-y-2">
-                      {week.topics.map((topic, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <div className={`w-6 h-6 rounded-full bg-${currentRole.color}-600 flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                      {selectedWeekData.topics.map((topic, idx) => (
+                        <li key={topic} className="flex items-start gap-2">
+                          <div className={`w-6 h-6 rounded-full ${currentColors.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                             <span className="text-white text-xs font-bold">{idx + 1}</span>
                           </div>
                           <span className="text-slate-300">{topic}</span>
@@ -745,8 +764,8 @@ const EnterpriseWiki = () => {
                       Deliverables
                     </h4>
                     <ul className="space-y-2">
-                      {week.deliverables.map((deliverable, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
+                      {selectedWeekData.deliverables.map((deliverable) => (
+                        <li key={deliverable} className="flex items-start gap-2">
                           <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                           <span className="text-slate-300">{deliverable}</span>
                         </li>
@@ -757,33 +776,53 @@ const EnterpriseWiki = () => {
 
                 {/* Action Buttons */}
                 <div className="mt-6 pt-6 border-t border-slate-700 flex gap-4">
-                  <button className={`flex-1 py-3 px-6 bg-${currentRole.color}-600 text-white rounded-lg font-semibold hover:bg-${currentRole.color}-700 transition-colors`}>
+                  <button
+                    className={`flex-1 py-3 px-6 ${currentColors.bg} ${currentColors.hover} text-white rounded-lg font-semibold transition-colors`}
+                    disabled
+                    title="Coming soon"
+                  >
                     View Detailed Guide
                   </button>
-                  <button className="py-3 px-6 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 transition-colors">
+                  <button
+                    className="py-3 px-6 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 transition-colors"
+                    disabled
+                    title="Coming soon"
+                  >
                     Access Resources
                   </button>
                 </div>
               </div>
-            ))}
+            )}
 
             {/* Quick Links */}
             <div className="grid md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
+              <button
+                className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors text-left"
+                disabled
+                title="Coming soon"
+              >
                 <Code className="w-8 h-8 text-blue-500 mb-2" />
                 <h4 className="font-semibold text-white">Code Examples</h4>
                 <p className="text-sm text-slate-400">Full implementation samples</p>
-              </div>
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
+              </button>
+              <button
+                className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors text-left"
+                disabled
+                title="Coming soon"
+              >
                 <Activity className="w-8 h-8 text-green-500 mb-2" />
                 <h4 className="font-semibold text-white">Live Demos</h4>
                 <p className="text-sm text-slate-400">Interactive tutorials</p>
-              </div>
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
+              </button>
+              <button
+                className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors text-left"
+                disabled
+                title="Coming soon"
+              >
                 <Shield className="w-8 h-8 text-purple-500 mb-2" />
                 <h4 className="font-semibold text-white">Best Practices</h4>
                 <p className="text-sm text-slate-400">Industry standards</p>
-              </div>
+              </button>
             </div>
           </div>
         </div>

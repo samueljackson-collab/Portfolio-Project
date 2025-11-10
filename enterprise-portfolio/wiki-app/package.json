@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Enterprise Portfolio Wiki - Interactive learning paths for technical roles",
   "type": "module",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
