@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>Grafana - Homelab Infrastructure Overview</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0c0e;
+            color: #d8d9da;
+            overflow-x: hidden;
+        }
+
+        .grafana-header {
+            background: linear-gradient(90deg, #0b0c0e 0%, #161719 100%);
+            border-bottom: 1px solid #2a2c2e;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #f05a28 0%, #e02f1e 100%);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+        }
+
+        .dashboard-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #d8d9da;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .time-range, .refresh {
+            background: #202226;
+            border: 1px solid #2a2c2e;
+            padding: 6px 12px;
+            border-radius: 3px;
+            color: #9fa7b3;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-range:hover, .refresh:hover {
+            background: #2a2c2e;
+            color: #d8d9da;
+        }
+
+        .refresh-icon {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .dashboard-content {
+            padding: 20px;
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+
+        .panel-row {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .row-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .row-2 {
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        }
+
+        .row-3 {
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        }
+
+        .panel {
+            background: #17181b;
+            border: 1px solid #2a2c2e;
+            border-radius: 3px;
+            padding: 16px;
+            min-height: 150px;
+            transition: all 0.3s;
+        }
+
+        .panel:hover {
+            border-color: #3a3d42;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #d8d9da;
+        }
+
+        .panel-menu {
+            color: #6e7681;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 500;
+            margin: 10px 0;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .stat-subtitle {
+            font-size: 13px;
+            color: #6e7681;
+        }
+
+        .sparkline {
+            height: 40px;
+            margin-top: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin-top: 10px;
+        }
+
+        .chart-large {
+            height: 250px;
+        }
+
+        .status-table {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .status-table tr {
+            border-bottom: 1px solid #2a2c2e;
+        }
+
+        .status-table td {
+            padding: 10px 0;
+            font-size: 13px;
+        }
+
+        .status-icon {
+            color: #73bf69;
+            margin-right: 8px;
+        }
+
+        .uptime {
+            color: #6e7681;
+            text-align: right;
+        }
+
+        .color-green { color: #73bf69; }
+        .color-yellow { color: #fa8c16; }
+        .color-orange { color: #ff7043; }
+        .color-blue { color: #33b5e5; }
+        .color-cyan { color: #00bcd4; }
+
+        .timestamp {
+            text-align: right;
+            color: #6e7681;
+            font-size: 12px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="grafana-header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <span class="dashboard-title">Homelab Infrastructure Overview</span>
+        </div>
+        <div class="header-controls">
+            <div class="time-range">Last 24 hours ▾</div>
+            <div class="refresh"><span class="refresh-icon">↻</span> 30s ▾</div>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <!-- Top Row - Key Metrics -->
+        <div class="panel-row row-4">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Total VMs Running</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <div class="stat-value color-green">
+                    6
+                    <span class="stat-subtitle">2 containers</span>
+                </div>
+                <canvas id="sparkline1" class="sparkline"></canvas>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">CPU Usage</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <div class="stat-value color-yellow">
+                    34%
+                </div>
+                <canvas id="sparkline2" class="sparkline"></canvas>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Memory Usage</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <div class="stat-value color-orange">
+                    58%
+                    <span class="stat-subtitle">73.6GB / 128GB</span>
+                </div>
+                <canvas id="sparkline3" class="sparkline"></canvas>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Storage Used</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <div class="stat-value color-green">
+                    51%
+                    <span class="stat-subtitle">8.2TB / 16TB</span>
+                </div>
+                <canvas id="sparkline4" class="sparkline"></canvas>
+            </div>
+        </div>
+
+        <!-- Middle Row - Time Series Graphs -->
+        <div class="panel-row row-2">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">CPU Usage by VM</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cpuChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Memory Usage by VM</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="memoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row - Network, Disk I/O, Status -->
+        <div class="panel-row row-3">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Network Traffic</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="networkChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Disk I/O</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="diskChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Service Status</span>
+                    <span class="panel-menu">⋯</span>
+                </div>
+                <table class="status-table">
+                    <tr>
+                        <td><span class="status-icon">✓</span> Wiki.js</td>
+                        <td class="uptime">45d 12h</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-icon">✓</span> Home Assistant</td>
+                        <td class="uptime">45d 12h</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-icon">✓</span> Immich</td>
+                        <td class="uptime">38d 6h</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-icon">✓</span> PostgreSQL</td>
+                        <td class="uptime">45d 12h</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-icon">✓</span> Nginx Proxy</td>
+                        <td class="uptime">45d 12h</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-icon">✓</span> Grafana</td>
+                        <td class="uptime">45d 12h</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="timestamp">
+        Last updated: November 10, 2025, 14:23:45 PST
+    </div>
+
+    <script>
+        // Chart.js default settings
+        Chart.defaults.color = '#9fa7b3';
+        Chart.defaults.borderColor = '#2a2c2e';
+
+        // Generate time labels for last 24 hours
+        function generateTimeLabels(count) {
+            const labels = [];
+            const now = new Date();
+            for (let i = count - 1; i >= 0; i--) {
+                const time = new Date(now - i * 3600000);
+                labels.push(time.getHours() + ':00');
+            }
+            return labels;
+        }
+
+        // Generate realistic fluctuating data
+        function generateData(count, base, variance) {
+            return Array.from({length: count}, () =>
+                base + (Math.random() - 0.5) * variance
+            );
+        }
+
+        // Sparkline Charts
+        const sparklineConfig = (data, color) => ({
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    data: data,
+                    borderColor: color,
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('sparkline1'), sparklineConfig(Array(20).fill(6), '#73bf69'));
+        new Chart(document.getElementById('sparkline2'), sparklineConfig(generateData(20, 34, 5), '#fa8c16'));
+        new Chart(document.getElementById('sparkline3'), sparklineConfig(generateData(20, 58, 3), '#ff7043'));
+        new Chart(document.getElementById('sparkline4'), sparklineConfig(generateData(20, 51, 2), '#73bf69'));
+
+        // CPU Usage by VM Chart
+        new Chart(document.getElementById('cpuChart'), {
+            type: 'line',
+            data: {
+                labels: generateTimeLabels(24),
+                datasets: [
+                    { label: 'Wiki.js', data: generateData(24, 4, 2), borderColor: '#33b5e5', tension: 0.4, fill: false },
+                    { label: 'Home Assistant', data: generateData(24, 8, 3), borderColor: '#73bf69', tension: 0.4, fill: false },
+                    { label: 'Immich', data: generateData(24, 12, 4), borderColor: '#ff5252', tension: 0.4, fill: false },
+                    { label: 'PostgreSQL', data: generateData(24, 6, 2), borderColor: '#fa8c16', tension: 0.4, fill: false },
+                    { label: 'Nginx', data: generateData(24, 2, 1), borderColor: '#9c27b0', tension: 0.4, fill: false },
+                    { label: 'Utility', data: generateData(24, 2, 1), borderColor: '#ff7043', tension: 0.4, fill: false }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 100, title: { display: true, text: 'CPU %' } }
+                }
+            }
+        });
+
+        // Memory Usage by VM Chart (Stacked Area)
+        new Chart(document.getElementById('memoryChart'), {
+            type: 'line',
+            data: {
+                labels: generateTimeLabels(24),
+                datasets: [
+                    { label: 'Wiki.js', data: Array(24).fill(3.2), borderColor: '#33b5e5', backgroundColor: 'rgba(51, 181, 229, 0.3)', fill: true },
+                    { label: 'Home Assistant', data: Array(24).fill(2.1), borderColor: '#73bf69', backgroundColor: 'rgba(115, 191, 105, 0.3)', fill: true },
+                    { label: 'Immich', data: Array(24).fill(12.4), borderColor: '#ff5252', backgroundColor: 'rgba(255, 82, 82, 0.3)', fill: true },
+                    { label: 'PostgreSQL', data: Array(24).fill(11.2), borderColor: '#fa8c16', backgroundColor: 'rgba(250, 140, 22, 0.3)', fill: true },
+                    { label: 'Nginx', data: Array(24).fill(0.8), borderColor: '#9c27b0', backgroundColor: 'rgba(156, 39, 176, 0.3)', fill: true },
+                    { label: 'Utility', data: Array(24).fill(1.8), borderColor: '#ff7043', backgroundColor: 'rgba(255, 112, 67, 0.3)', fill: true }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } }
+                },
+                scales: {
+                    y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Memory (GB)' } }
+                }
+            }
+        });
+
+        // Network Traffic Chart
+        new Chart(document.getElementById('networkChart'), {
+            type: 'line',
+            data: {
+                labels: generateTimeLabels(24),
+                datasets: [
+                    { label: 'Inbound', data: generateData(24, 45, 20), borderColor: '#33b5e5', fill: false, tension: 0.4 },
+                    { label: 'Outbound', data: generateData(24, 30, 15), borderColor: '#ff5252', fill: false, tension: 0.4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'MB/s' } }
+                }
+            }
+        });
+
+        // Disk I/O Chart
+        new Chart(document.getElementById('diskChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Wiki.js', 'Home Asst', 'Immich', 'PostgreSQL', 'Nginx', 'Utility'],
+                datasets: [
+                    { label: 'Read', data: [50, 80, 320, 450, 30, 60], backgroundColor: '#73bf69' },
+                    { label: 'Write', data: [30, 60, 280, 380, 20, 40], backgroundColor: '#ff7043' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'IOPS' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
