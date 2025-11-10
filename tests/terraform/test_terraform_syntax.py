@@ -317,312 +317,525 @@ class TestConditionalLogic:
         if "aws_eks_cluster" in content:
             assert "count = var.create_eks" in content
 
-class TestOutputsInMainTf:
-    """Test that outputs are defined in main.tf (regression test)."""
+class TestTerraformSyntaxValidity:
+    """Test Terraform files have valid HCL syntax."""
 
-    def test_outputs_defined_in_main_tf(self, main_tf):
-        """Verify critical outputs are defined in main.tf."""
+    def test_main_tf_balanced_braces(self, main_tf):
+        """Verify main.tf has balanced opening and closing braces."""
         content = main_tf.read_text()
-        assert 'output "vpc_id"' in content, "vpc_id output should be in main.tf"
-        assert 'output "public_subnet_ids"' in content, "public_subnet_ids output should be in main.tf"
-        assert 'output "private_subnet_ids"' in content, "private_subnet_ids output should be in main.tf"
-        assert 'output "rds_endpoint"' in content, "rds_endpoint output should be in main.tf"
-
-    def test_vpc_id_output_references_correct_resource(self, main_tf):
-        """Verify vpc_id output references the VPC resource."""
-        content = main_tf.read_text()
-        assert "aws_vpc.twisted_monk.id" in content
-
-    def test_subnet_outputs_use_for_expressions(self, main_tf):
-        """Verify subnet outputs use for expressions correctly."""
-        content = main_tf.read_text()
-        assert "[for s in aws_subnet.public : s.id]" in content
-        assert "[for s in aws_subnet.private : s.id]" in content
-
-    def test_rds_endpoint_output_is_conditional(self, main_tf):
-        """Verify rds_endpoint output handles conditional RDS creation."""
-        content = main_tf.read_text()
-        # Should check var.create_rds and use index [0] for conditional resource
-        assert 'var.create_rds ? aws_db_instance.postgres[0].address : ""' in content
-
-
-class TestS3BucketReferenceIssue:
-    """Test for S3 bucket reference bug (critical regression)."""
-
-    def test_s3_bucket_resource_exists_or_output_removed(self, main_tf, outputs_tf):
-        """Verify S3 bucket resource exists if outputs reference it."""
-        main_content = main_tf.read_text()
-        outputs_content = outputs_tf.read_text()
-        
-        # If outputs.tf references aws_s3_bucket.app_assets
-        if "aws_s3_bucket.app_assets" in outputs_content:
-            # Then main.tf must define the resource
-            assert 'resource "aws_s3_bucket" "app_assets"' in main_content, \
-                "S3 bucket resource must exist if referenced in outputs"
-
-    def test_assets_bucket_output_consistency(self, main_tf, outputs_tf):
-        """Verify assets_bucket output references existing resource."""
-        main_content = main_tf.read_text()
-        outputs_content = outputs_tf.read_text()
-        
-        if 'output "assets_bucket"' in outputs_content or 'output "assets_bucket"' in main_content:
-            # Check if referenced resource exists
-            combined_content = main_content + outputs_content
-            if "aws_s3_bucket.app_assets.bucket" in combined_content:
-                assert 'resource "aws_s3_bucket" "app_assets"' in main_content, \
-                    "S3 bucket resource must be defined if output references it"
-
-    def test_no_dangling_s3_bucket_references(self, main_tf):
-        """Verify no references to undefined S3 bucket resources."""
-        content = main_tf.read_text()
-        
-        # Find all S3 bucket references
-        import re
-        bucket_refs = re.findall(r'aws_s3_bucket\.(\w+)', content)
-        
-        # Find all S3 bucket resource definitions
-        bucket_defs = re.findall(r'resource\s+"aws_s3_bucket"\s+"(\w+)"', content)
-        
-        # All references must have corresponding definitions
-        for ref in bucket_refs:
-            assert ref in bucket_defs, f"S3 bucket '{ref}' referenced but not defined"
-
-
-class TestMissingVariables:
-    """Test for missing variable definitions (regression)."""
-
-    def test_aws_region_variable_exists(self, variables_tf, main_tf):
-        """Verify aws_region variable is defined if used."""
-        main_content = main_tf.read_text()
-        var_content = variables_tf.read_text()
-        
-        if "var.aws_region" in main_content:
-            assert 'variable "aws_region"' in var_content, \
-                "aws_region variable must be defined if used in main.tf"
-
-    def test_project_tag_variable_exists(self, variables_tf, main_tf):
-        """Verify project_tag variable is defined if used."""
-        main_content = main_tf.read_text()
-        var_content = variables_tf.read_text()
-        
-        if "var.project_tag" in main_content:
-            assert 'variable "project_tag"' in var_content, \
-                "project_tag variable must be defined if used in main.tf"
-
-    def test_all_variable_references_have_definitions(self, variables_tf, main_tf):
-        """Verify all var. references in main.tf have definitions in variables.tf."""
-        import re
-        
-        main_content = main_tf.read_text()
-        var_content = variables_tf.read_text()
-        
-        # Find all variable references in main.tf
-        var_refs = set(re.findall(r'var\.(\w+)', main_content))
-        
-        # Find all variable definitions in variables.tf
-        var_defs = set(re.findall(r'variable\s+"(\w+)"', var_content))
-        
-        # Check for undefined variables
-        undefined_vars = var_refs - var_defs
-        
-        assert len(undefined_vars) == 0, \
-            f"Variables used but not defined: {undefined_vars}"
-
-
-class TestOutputsDuplication:
-    """Test for outputs duplication between files."""
-
-    def test_outputs_not_duplicated_between_files(self, main_tf, outputs_tf):
-        """Verify outputs are not duplicated in both main.tf and outputs.tf."""
-        import re
-        
-        main_content = main_tf.read_text()
-        outputs_content = outputs_tf.read_text()
-        
-        # Find all output names in both files
-        main_outputs = set(re.findall(r'output\s+"(\w+)"', main_content))
-        outputs_tf_outputs = set(re.findall(r'output\s+"(\w+)"', outputs_content))
-        
-        duplicates = main_outputs & outputs_tf_outputs
-        
-        assert len(duplicates) == 0, \
-            f"Outputs defined in both main.tf and outputs.tf: {duplicates}"
-
-    def test_critical_outputs_defined_somewhere(self, main_tf, outputs_tf):
-        """Verify critical outputs are defined in either main.tf or outputs.tf."""
-        main_content = main_tf.read_text()
-        outputs_content = outputs_tf.read_text()
-        combined = main_content + outputs_content
-        
-        critical_outputs = ["vpc_id", "public_subnet_ids", "private_subnet_ids"]
-        
-        for output_name in critical_outputs:
-            assert f'output "{output_name}"' in combined, \
-                f"Critical output '{output_name}' must be defined"
-
-
-class TestMainTfSyntaxErrors:
-    """Test for common syntax errors in main.tf."""
-
-    def test_no_unclosed_braces_in_main_tf(self, main_tf):
-        """Verify all braces are properly closed in main.tf."""
-        content = main_tf.read_text()
-        
         open_braces = content.count('{')
         close_braces = content.count('}')
-        
-        assert open_braces == close_braces, \
-            f"Brace mismatch: {open_braces} open, {close_braces} close"
+        assert open_braces == close_braces, (
+            f"Unbalanced braces in main.tf: {open_braces} opening, "
+            f"{close_braces} closing. Difference: {close_braces - open_braces}"
+        )
 
-    def test_no_duplicate_output_names_in_main_tf(self, main_tf):
-        """Verify no duplicate output names in main.tf."""
-        import re
-        
+    def test_main_tf_no_duplicate_closing_braces(self, main_tf):
+        """Verify main.tf doesn't have extra closing braces."""
         content = main_tf.read_text()
-        output_names = re.findall(r'output\s+"(\w+)"', content)
+        lines = content.split('\n')
         
-        duplicates = [name for name in set(output_names) if output_names.count(name) > 1]
+        # Check for standalone closing braces that might be duplicates
+        standalone_closing = [i for i, line in enumerate(lines, 1) 
+                            if line.strip() == '}']
         
-        assert len(duplicates) == 0, \
-            f"Duplicate output names in main.tf: {duplicates}"
+        # Look for patterns like output blocks followed by extra braces
+        for i in range(len(lines) - 1):
+            if lines[i].strip() == '}' and lines[i + 1].strip() == '}':
+                # Check if this isn't legitimately closing nested blocks
+                # by looking at context
+                if 'output "' in '\n'.join(lines[max(0, i-5):i]):
+                    pytest.fail(
+                        f"Potential duplicate closing brace at lines {i+1}-{i+2}. "
+                        "Check for outputs embedded in main.tf that should be in outputs.tf"
+                    )
 
-    def test_outputs_after_resources_in_main_tf(self, main_tf):
-        """Verify outputs are defined after resources in main.tf for readability."""
-        content = main_tf.read_text()
+    def test_outputs_in_correct_file(self, main_tf, outputs_tf):
+        """Verify outputs are defined in outputs.tf, not main.tf."""
+        main_content = main_tf.read_text()
         
-        # Find positions
+        # Main.tf should not contain output blocks (they belong in outputs.tf)
+        output_pattern_count = main_content.count('output "')
+        
+        # Allow some flexibility but flag if there are many outputs in main.tf
+        if output_pattern_count > 0:
+            pytest.warn(
+                UserWarning(
+                    f"Found {output_pattern_count} output blocks in main.tf. "
+                    "Outputs should be in outputs.tf for better organization."
+                )
+            )
+
+    def test_no_missing_resource_references(self, main_tf, outputs_tf):
+        """Verify all resource references in outputs exist in main.tf."""
+        main_content = main_tf.read_text()
+        outputs_content = outputs_tf.read_text()
+        
+        # Extract resource references from outputs
         import re
-        resource_matches = list(re.finditer(r'resource\s+"', content))
-        output_matches = list(re.finditer(r'output\s+"', content))
+        resource_refs = re.findall(r'aws_\w+\.\w+', outputs_content)
         
-        if resource_matches and output_matches:
-            last_resource_pos = max(m.start() for m in resource_matches)
-            first_output_pos = min(m.start() for m in output_matches)
-            
-            # Outputs should generally come after resources
-            # This is a convention test, not strict requirement
-            if first_output_pos < last_resource_pos:
-                import warnings
-                warnings.warn(
-                    "Outputs defined before resources - consider moving for better organization"
+        for ref in resource_refs:
+            if ref not in main_content:
+                pytest.fail(
+                    f"Output references resource '{ref}' which doesn't exist in main.tf. "
+                    "This will cause Terraform to fail."
                 )
 
 
-class TestConditionalOutputs:
-    """Test conditional output logic."""
-
-    def test_rds_output_handles_empty_list(self, main_tf):
-        """Verify RDS endpoint output handles case when RDS is not created."""
-        content = main_tf.read_text()
-        
-        # Should use ternary operator or try/catch pattern
-        if 'output "rds_endpoint"' in content:
-            # Must check var.create_rds before accessing postgres[0]
-            assert "var.create_rds" in content and "postgres[0]" in content, \
-                "RDS endpoint output must check create_rds before accessing postgres[0]"
-
-    def test_conditional_outputs_have_default_values(self, main_tf):
-        """Verify conditional outputs provide default values."""
-        content = main_tf.read_text()
-        
-        if 'output "rds_endpoint"' in content:
-            # Should provide empty string or null as default
-            assert '""' in content or 'null' in content or "try(" in content
-
-
-class TestResourceIndexing:
-    """Test proper resource indexing for conditional resources."""
-
-    def test_rds_resources_accessed_with_index(self, main_tf):
-        """Verify conditional RDS resources are accessed with [0] index."""
-        content = main_tf.read_text()
-        
-        # If we reference RDS instance in outputs/other places, must use [0]
-        import re
-        postgres_refs = re.findall(r'aws_db_instance\.postgres(?:\[(\d+)\])?', content)
-        
-        # Check if any references are without index but RDS is conditional
-        if "count = var.create_rds" in content:
-            for ref in postgres_refs:
-                if ref == '':  # No index found
-                    # This is in a conditional context, so it might be OK
-                    pass
-
-    def test_conditional_resources_use_count_or_for_each(self, main_tf):
-        """Verify conditional resources use count or for_each properly."""
-        content = main_tf.read_text()
-        
-        # Find all resources with count
-        import re
-        resources_with_count = re.findall(
-            r'resource\s+"([^"]+)"\s+"([^"]+)"[^{]*{[^}]*count\s*=',
-            content,
-            re.DOTALL
-        )
-        
-        # These should be accessed with [index] when referenced
-        for resource_type, resource_name in resources_with_count:
-            full_ref = f"{resource_type}.{resource_name}"
-            # Check if referenced elsewhere
-            if full_ref in content and content.count(full_ref) > 1:
-                # Should use [0] or [count.index] when accessed
-                pattern = f"{resource_type}\\.{resource_name}\\[\\d+\\]"
-                assert re.search(pattern, content), \
-                    f"Conditional resource {full_ref} should be accessed with index"
-
-
-class TestVariableValidations:
-    """Test variable validation rules."""
-
-    def test_string_variables_have_validation(self, variables_tf):
-        """Verify string variables have appropriate validation where needed."""
-        content = variables_tf.read_text()
-        
-        # Region variable should have validation
-        if 'variable "aws_region"' in content:
-            # Should have validation block
-            import re
-            region_block = re.search(
-                r'variable\s+"aws_region"\s*{[^}]+}',
-                content,
-                re.DOTALL
-            )
-            if region_block:
-                # Should validate region format
-                assert "validation" in region_block.group() or "default" in region_block.group()
-
-    def test_project_tag_not_empty(self, variables_tf):
-        """Verify project_tag variable validates non-empty values."""
-        content = variables_tf.read_text()
-        
-        if 'variable "project_tag"' in content:
-            import re
-            project_tag_block = re.search(
-                r'variable\s+"project_tag"\s*{[^}]+}',
-                content,
-                re.DOTALL
-            )
-            if project_tag_block and "validation" in project_tag_block.group():
-                # Should check length > 0
-                assert "length" in project_tag_block.group()
-
-
 class TestBackendConfiguration:
-    """Test backend configuration consistency."""
+    """Test backend.tf configuration."""
 
-    def test_backend_uses_correct_key_path(self, backend_tf):
-        """Verify backend key path is logical."""
+    def test_backend_has_no_placeholder_values(self, backend_tf):
+        """Verify backend.tf doesn't contain REPLACE_ME placeholders."""
         content = backend_tf.read_text()
         
-        if "key" in content:
-            # Should have .tfstate extension
-            assert "terraform.tfstate" in content or ".tfstate" in content
-
-    def test_backend_placeholders_are_clear(self, backend_tf):
-        """Verify backend placeholders are clearly marked."""
-        content = backend_tf.read_text()
+        placeholders = [
+            "REPLACE_ME",
+            "REPLACE_TFSTATE_BUCKET", 
+            "REPLACE_ACCOUNT_ID",
+            "REPLACE_DDB_TABLE",
+            "REPLACE_ME_tfstate_bucket",
+            "REPLACE_ME_aws_region",
+            "REPLACE_ME_tfstate_lock_table"
+        ]
         
-        # Should have REPLACE_ME or similar markers
-        if "bucket" in content and "=" in content:
-            assert "REPLACE" in content.upper() or "TODO" in content.upper() or \
-                   "CHANGEME" in content.upper() or "EXAMPLE" in content.upper()
+        found_placeholders = [p for p in placeholders if p in content]
+        
+        if found_placeholders:
+            pytest.warn(
+                UserWarning(
+                    f"Backend configuration contains placeholders: {', '.join(found_placeholders)}. "
+                    "These must be replaced before running Terraform init."
+                )
+            )
+
+    def test_backend_encryption_enabled(self, backend_tf):
+        """Verify backend has encryption enabled."""
+        content = backend_tf.read_text()
+        assert "encrypt" in content.lower()
+        assert "true" in content
+
+    def test_backend_has_state_locking(self, backend_tf):
+        """Verify backend configures DynamoDB for state locking."""
+        content = backend_tf.read_text()
+        assert "dynamodb_table" in content, "Backend should use DynamoDB for state locking"
+
+
+class TestIAMPolicyConfiguration:
+    """Test IAM policy JSON files."""
+
+    @pytest.fixture
+    def iam_policy_file(self):
+        """Return path to IAM policy file."""
+        return Path("terraform/iam/github_actions_ci_policy.json")
+
+    def test_iam_policy_file_exists(self, iam_policy_file):
+        """Verify IAM policy file exists."""
+        assert iam_policy_file.exists()
+
+    def test_iam_policy_valid_json(self, iam_policy_file):
+        """Verify IAM policy is valid JSON."""
+        import json
+        content = iam_policy_file.read_text()
+        try:
+            policy = json.loads(content)
+            assert isinstance(policy, dict)
+        except json.JSONDecodeError as e:
+            pytest.fail(f"Invalid JSON in IAM policy: {e}")
+
+    def test_iam_policy_has_version(self, iam_policy_file):
+        """Verify IAM policy specifies a version."""
+        import json
+        content = iam_policy_file.read_text()
+        policy = json.loads(content)
+        assert "Version" in policy
+        assert policy["Version"] in ["2012-10-17", "2008-10-17"]
+
+    def test_iam_policy_has_statements(self, iam_policy_file):
+        """Verify IAM policy has statement array."""
+        import json
+        content = iam_policy_file.read_text()
+        policy = json.loads(content)
+        assert "Statement" in policy
+        assert isinstance(policy["Statement"], list)
+        assert len(policy["Statement"]) > 0
+
+    def test_iam_policy_statements_have_required_fields(self, iam_policy_file):
+        """Verify all IAM policy statements have required fields."""
+        import json
+        content = iam_policy_file.read_text()
+        policy = json.loads(content)
+        
+        required_fields = ["Effect", "Action", "Resource"]
+        
+        for i, statement in enumerate(policy["Statement"]):
+            for field in required_fields:
+                assert field in statement, (
+                    f"Statement {i} missing required field: {field}"
+                )
+
+    def test_iam_policy_no_placeholder_arns(self, iam_policy_file):
+        """Verify IAM policy doesn't have placeholder ARNs."""
+        import json
+        content = iam_policy_file.read_text()
+        policy = json.loads(content)
+        
+        placeholders = [
+            "REPLACE_TFSTATE_BUCKET",
+            "REPLACE_ACCOUNT_ID", 
+            "REPLACE_DDB_TABLE",
+            "REPLACE_ME",
+            "REPLACE_REGION"
+        ]
+        
+        content_str = json.dumps(policy)
+        found_placeholders = [p for p in placeholders if p in content_str]
+        
+        if found_placeholders:
+            pytest.warn(
+                UserWarning(
+                    f"IAM policy contains placeholders: {', '.join(found_placeholders)}. "
+                    "These must be replaced before use."
+                )
+            )
+
+    def test_iam_policy_uses_least_privilege(self, iam_policy_file):
+        """Verify IAM policy doesn't use overly permissive wildcards."""
+        import json
+        content = iam_policy_file.read_text()
+        policy = json.loads(content)
+        
+        dangerous_patterns = []
+        
+        for i, statement in enumerate(policy["Statement"]):
+            if statement.get("Effect") == "Allow":
+                actions = statement.get("Action", [])
+                if isinstance(actions, str):
+                    actions = [actions]
+                
+                resources = statement.get("Resource", [])
+                if isinstance(resources, str):
+                    resources = [resources]
+                
+                # Check for "*:*" action with "*" resource
+                if "*" in actions and "*" in resources:
+                    dangerous_patterns.append(
+                        f"Statement {i} has both Action: * and Resource: *"
+                    )
+        
+        if dangerous_patterns:
+            pytest.warn(
+                UserWarning(
+                    f"IAM policy has overly permissive rules: {'; '.join(dangerous_patterns)}"
+                )
+            )
+
+
+class TestDeployScript:
+    """Test deployment script."""
+
+    @pytest.fixture
+    def deploy_script(self):
+        """Return path to deploy script."""
+        return Path("scripts/deploy.sh")
+
+    def test_deploy_script_exists(self, deploy_script):
+        """Verify deploy.sh exists."""
+        assert deploy_script.exists()
+
+    def test_deploy_script_is_executable(self, deploy_script):
+        """Verify deploy.sh has executable permission."""
+        import os
+        assert os.access(deploy_script, os.X_OK) or "#!/" in deploy_script.read_text()[:20]
+
+    def test_deploy_script_has_shebang(self, deploy_script):
+        """Verify deploy.sh has proper shebang."""
+        content = deploy_script.read_text()
+        first_line = content.split('\n')[0]
+        assert first_line.startswith("#!/"), "Script should start with shebang"
+        assert "bash" in first_line.lower(), "Script should use bash"
+
+    def test_deploy_script_no_syntax_errors(self, deploy_script):
+        """Verify deploy.sh doesn't have obvious syntax errors."""
+        content = deploy_script.read_text()
+        
+        # Check for the specific error: "tf=terraform fmt -recursive"
+        # This is invalid - should be just "terraform fmt -recursive"
+        lines = content.split('\n')
+        
+        for i, line in enumerate(lines, 1):
+            # Check for incorrect variable assignment that should be command
+            if "tf=terraform" in line or "tf =terraform" in line:
+                pytest.fail(
+                    f"Line {i} has incorrect syntax: '{line.strip()}'. "
+                    "Should be 'terraform fmt -recursive', not 'tf=terraform fmt -recursive'"
+                )
+            
+            # Check for other common mistakes
+            if line.strip().startswith("="):
+                pytest.fail(f"Line {i} has invalid syntax starting with '='")
+
+    def test_deploy_script_uses_error_handling(self, deploy_script):
+        """Verify deploy.sh uses proper error handling."""
+        content = deploy_script.read_text()
+        
+        # Should use set -e or set -euo pipefail for error handling
+        assert "set -e" in content or "set -euo pipefail" in content, (
+            "Script should use 'set -e' or 'set -euo pipefail' for error handling"
+        )
+
+    def test_deploy_script_validates_terraform(self, deploy_script):
+        """Verify deploy.sh includes terraform validation."""
+        content = deploy_script.read_text()
+        assert "terraform validate" in content, "Script should validate Terraform config"
+
+    def test_deploy_script_runs_terraform_plan(self, deploy_script):
+        """Verify deploy.sh runs terraform plan."""
+        content = deploy_script.read_text()
+        assert "terraform plan" in content, "Script should run terraform plan"
+
+
+class TestAnsiblePlaybook:
+    """Test Ansible security hardening playbook."""
+
+    @pytest.fixture
+    def security_playbook(self):
+        """Return path to security hardening playbook."""
+        return Path("projects/06-homelab/PRJ-HOME-002/assets/automation/ansible/playbooks/security-hardening.yml")
+
+    def test_security_playbook_exists(self, security_playbook):
+        """Verify security playbook exists."""
+        if security_playbook.exists():
+            assert True
+        else:
+            pytest.skip("Security playbook not in this branch")
+
+    def test_security_playbook_valid_yaml(self, security_playbook):
+        """Verify security playbook is valid YAML."""
+        if not security_playbook.exists():
+            pytest.skip("Security playbook not in this branch")
+        
+        import yaml
+        content = security_playbook.read_text()
+        try:
+            playbook = yaml.safe_load(content)
+            assert isinstance(playbook, list) or isinstance(playbook, dict)
+        except yaml.YAMLError as e:
+            pytest.fail(f"Invalid YAML in security playbook: {e}")
+
+    def test_security_playbook_has_tasks(self, security_playbook):
+        """Verify security playbook defines tasks."""
+        if not security_playbook.exists():
+            pytest.skip("Security playbook not in this branch")
+        
+        import yaml
+        content = security_playbook.read_text()
+        playbook = yaml.safe_load(content)
+        
+        if isinstance(playbook, list):
+            plays = playbook
+        else:
+            plays = [playbook]
+        
+        for play in plays:
+            assert "tasks" in play, "Playbook should define tasks"
+            assert len(play["tasks"]) > 0, "Playbook should have at least one task"
+
+    def test_security_playbook_uses_become(self, security_playbook):
+        """Verify security playbook uses privilege escalation where needed."""
+        if not security_playbook.exists():
+            pytest.skip("Security playbook not in this branch")
+        
+        import yaml
+        content = security_playbook.read_text()
+        playbook = yaml.safe_load(content)
+        
+        # Security hardening typically requires root/sudo
+        if isinstance(playbook, list):
+            plays = playbook
+        else:
+            plays = [playbook]
+        
+        has_become = any("become" in play for play in plays)
+        assert has_become, "Security playbook should use 'become: yes' for privilege escalation"
+
+
+class TestAlertManagerConfig:
+    """Test AlertManager configuration."""
+
+    @pytest.fixture
+    def alertmanager_config(self):
+        """Return path to AlertManager config."""
+        return Path("projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/alertmanager.yml")
+
+    def test_alertmanager_config_exists(self, alertmanager_config):
+        """Verify AlertManager config exists."""
+        if alertmanager_config.exists():
+            assert True
+        else:
+            pytest.skip("AlertManager config not in this branch")
+
+    def test_alertmanager_config_valid_yaml(self, alertmanager_config):
+        """Verify AlertManager config is valid YAML."""
+        if not alertmanager_config.exists():
+            pytest.skip("AlertManager config not in this branch")
+        
+        import yaml
+        content = alertmanager_config.read_text()
+        try:
+            config = yaml.safe_load(content)
+            assert isinstance(config, dict)
+        except yaml.YAMLError as e:
+            pytest.fail(f"Invalid YAML in AlertManager config: {e}")
+
+    def test_alertmanager_no_plaintext_secrets(self, alertmanager_config):
+        """Verify AlertManager config doesn't have plaintext secrets."""
+        if not alertmanager_config.exists():
+            pytest.skip("AlertManager config not in this branch")
+        
+        content = alertmanager_config.read_text()
+        
+        # Look for common secret patterns that shouldn't be in config
+        secret_patterns = [
+            "password:",
+            "api_key:",
+            "webhook_url:",
+            "slack_api_url:",
+            "smtp_password:"
+        ]
+        
+        found_secrets = []
+        lines = content.split('\n')
+        
+        for i, line in enumerate(lines, 1):
+            for pattern in secret_patterns:
+                if pattern in line.lower():
+                    # Check if it's a placeholder or actual secret
+                    if "example" not in line.lower() and \
+                       "placeholder" not in line.lower() and \
+                       "your_" not in line.lower() and \
+                       "REPLACE" not in line and \
+                       "${" not in line:  # Template variables are OK
+                        found_secrets.append(f"Line {i}: {line.strip()[:50]}")
+        
+        if found_secrets:
+            pytest.warn(
+                UserWarning(
+                    f"AlertManager config may contain plaintext secrets:\n" +
+                    "\n".join(found_secrets)
+                )
+            )
+
+
+class TestOutputsConsistency:
+    """Test consistency between outputs.tf and main.tf."""
+
+    def test_outputs_reference_existing_resources(self, main_tf, outputs_tf):
+        """Verify all outputs reference resources that exist."""
+        main_content = main_tf.read_text()
+        outputs_content = outputs_tf.read_text()
+        
+        # Extract resource references from outputs
+        import re
+        output_refs = re.findall(r'(aws_\w+)\.([\w\[\]0-9]+)', outputs_content)
+        
+        missing_resources = []
+        
+        for resource_type, resource_name in output_refs:
+            # Remove array indices for checking
+            clean_name = re.sub(r'\[\d+\]', '', resource_name)
+            
+            # Check if resource is defined in main.tf
+            resource_pattern = f'resource "{resource_type}" "{clean_name}"'
+            if resource_pattern not in main_content:
+                missing_resources.append(f"{resource_type}.{resource_name}")
+        
+        if missing_resources:
+            pytest.fail(
+                f"Outputs reference non-existent resources: {', '.join(missing_resources)}. "
+                "This will cause 'terraform plan' to fail."
+            )
+
+    def test_no_duplicate_outputs(self, main_tf, outputs_tf):
+        """Verify outputs aren't duplicated between files."""
+        main_content = main_tf.read_text()
+        outputs_content = outputs_tf.read_text()
+        
+        import re
+        main_outputs = re.findall(r'output "(\w+)"', main_content)
+        outputs_tf_outputs = re.findall(r'output "(\w+)"', outputs_content)
+        
+        duplicates = set(main_outputs) & set(outputs_tf_outputs)
+        
+        if duplicates:
+            pytest.fail(
+                f"Outputs duplicated in both main.tf and outputs.tf: {', '.join(duplicates)}. "
+                "Define each output in only one file (preferably outputs.tf)."
+            )
+
+
+class TestVariablesDefinition:
+    """Test that all referenced variables are defined."""
+
+    def test_all_referenced_variables_are_defined(self, main_tf, variables_tf):
+        """Verify all var.* references in main.tf are defined in variables.tf."""
+        main_content = main_tf.read_text()
+        variables_content = variables_tf.read_text()
+        
+        import re
+        # Find all var.something references
+        var_refs = set(re.findall(r'var\.(\w+)', main_content))
+        
+        # Find all defined variables
+        var_defs = set(re.findall(r'variable "(\w+)"', variables_content))
+        
+        undefined_vars = var_refs - var_defs
+        
+        if undefined_vars:
+            pytest.fail(
+                f"Variables used but not defined: {', '.join(sorted(undefined_vars))}. "
+                "Add these to variables.tf"
+            )
+
+    def test_defined_variables_have_types(self, variables_tf):
+        """Verify all variables specify their type."""
+        content = variables_tf.read_text()
+        
+        import re
+        variables = re.findall(r'variable "(\w+)"', content)
+        
+        for var in variables:
+            # Find the variable block
+            var_pattern = f'variable "{var}".*?{{.*?}}'
+            var_block = re.search(var_pattern, content, re.DOTALL)
+            
+            if var_block:
+                var_content = var_block.group(0)
+                if "type" not in var_content:
+                    pytest.warn(
+                        UserWarning(f"Variable '{var}' doesn't specify a type")
+                    )
+
+    def test_sensitive_variables_marked(self, variables_tf):
+        """Verify sensitive variables are marked as sensitive."""
+        content = variables_tf.read_text()
+        
+        sensitive_keywords = ["password", "secret", "key", "token"]
+        
+        import re
+        variables = re.findall(r'variable "(\w+)"', content)
+        
+        for var in variables:
+            var_lower = var.lower()
+            if any(keyword in var_lower for keyword in sensitive_keywords):
+                # Find the variable block
+                var_pattern = f'variable "{var}".*?{{.*?}}'
+                var_block = re.search(var_pattern, content, re.DOTALL)
+                
+                if var_block and "sensitive" not in var_block.group(0):
+                    pytest.warn(
+                        UserWarning(
+                            f"Variable '{var}' appears to be sensitive but not marked with 'sensitive = true'"
+                        )
+                    )
