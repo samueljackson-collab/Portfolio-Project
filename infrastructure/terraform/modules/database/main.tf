@@ -91,6 +91,23 @@ variable "apply_immediately" {
   default     = true
 }
 
+variable "performance_insights_enabled" {
+  type        = bool
+  description = "Enable Amazon RDS Performance Insights for the instance"
+  default     = true
+}
+
+variable "performance_insights_retention_period" {
+  type        = number
+  description = "Retention period (in days) for Performance Insights metrics"
+  default     = 7
+
+  validation {
+    condition     = contains([7, 731], var.performance_insights_retention_period)
+    error_message = "performance_insights_retention_period must be either 7 or 731 days"
+  }
+}
+
 variable "tags" {
   type        = map(string)
   description = "Additional resource tags"
@@ -166,6 +183,8 @@ resource "aws_db_instance" "this" {
   # Use the configured variables for snapshot and apply behavior (safer defaults)
   skip_final_snapshot = var.skip_final_snapshot
   apply_immediately   = var.apply_immediately
+  performance_insights_enabled           = var.performance_insights_enabled
+  performance_insights_retention_period  = var.performance_insights_enabled ? var.performance_insights_retention_period : null
 
   publicly_accessible = false
   port                = 5432
@@ -181,4 +200,8 @@ output "db_endpoint" {
 
 output "db_security_group_id" {
   value = aws_security_group.db.id
+}
+
+output "db_instance_arn" {
+  value = aws_db_instance.this.arn
 }

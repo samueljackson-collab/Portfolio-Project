@@ -1,0 +1,13 @@
+formatter: markdown table
+settings:
+  anchor: false
+  default: true
+  required: true
+  sort:
+    by: name
+    direction: asc
+sections:
+  - header: Inputs
+    path: inputs
+  - header: Outputs
+    path: outputs

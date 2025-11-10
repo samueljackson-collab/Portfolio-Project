@@ -1,0 +1,41 @@
+name: terraform-docs
+
+on:
+  pull_request:
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform-docs.yml'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install terraform-docs
+        uses: terraform-docs/gh-actions@v1.0.4
+        with:
+          config-file: docs/terraform-docs.yaml
+          working-dir: infrastructure/terraform/modules/database
+          output-file: README.generated.md
+          git-push: false
+
+      - name: Commit Updated Docs
+        run: |
+          if git diff --quiet; then
+            echo "No documentation changes detected."
+          else
+            git config user.name "github-actions"
+            git config user.email "actions@github.com"
+            git add infrastructure/terraform/modules/database/README.generated.md
+            git commit -m "chore: update terraform docs"
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-docs
+          path: infrastructure/terraform/modules/database/README.generated.md

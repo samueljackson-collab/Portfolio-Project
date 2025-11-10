@@ -1,0 +1,78 @@
+name: Terraform Drift Detection
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to scan"
+        required: true
+        default: "prod"
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    env:
+      TF_WORKING_DIR: infrastructure/terraform/stacks/database
+      TARGET_ENV: ${{ github.event.inputs.environment || 'prod' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.STATE_BUCKET }}" \
+            -backend-config="key=database/${{ env.TARGET_ENV }}/terraform.tfstate" \
+            -backend-config="dynamodb_table=${{ vars.STATE_LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION || 'us-west-2' }}"
+
+      - name: Terraform Plan (Refresh Only)
+        id: plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -refresh-only -var-file=examples/production.tfvars.example -out=plan.out
+
+      - name: Check for Drift
+        id: drift
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform show -json plan.out > plan.json
+          CHANGES=$(jq '.resource_changes | length' plan.json)
+          if [ "$CHANGES" -gt 0 ]; then
+            echo "drift_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Issue if Drift Detected
+        if: steps.drift.outputs.drift_detected == 'true'
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: ${{ format('Drift detected in PRJ-SDE-001 ({0})', env.TARGET_ENV) }}
+          content-filepath: reports/drift-template.md
+          labels: drift,terraform
+
+      - name: Slack Alert
+        if: steps.drift.outputs.drift_detected == 'true'
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+              "text": "Terraform drift detected for PRJ-SDE-001 in environment ${{ env.TARGET_ENV }}. Review created issue."
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

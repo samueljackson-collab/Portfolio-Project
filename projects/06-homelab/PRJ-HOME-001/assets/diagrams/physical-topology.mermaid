@@ -1,0 +1,67 @@
+%% Physical network topology for PRJ-HOME-001
+%% Top-to-bottom visualization showing WAN, gateway, switching, and access layers
+flowchart TD
+    %% Internet / ISP layer
+    WAN(["<span style='color:#b22222;font-weight:bold;'>ISP / Internet</span><br/>Dynamic WAN IP"]):::wan
+    WAN -->|"DOCSIS 3.1 Bridge\nCoax to Ethernet"| Modem
+
+    Modem["ISP Cable Modem<br/>Bridge Mode"]:::wan -->|"WAN Port\nRJ45"| UDMP
+
+    %% Edge / Gateway layer
+    subgraph Rack["Rack Cabinet (12U) - Network Closet"]
+        direction TB
+        UDMP["UniFi Dream Machine Pro<br/>Mgmt IP: 192.168.1.1<br/>Router · Firewall · VPN"]:::infrastructure
+        UDMP -->|"LAN1 (Port 1)\nSFP+ 10G"| USW24
+        UDMP -->|"LAN2 (Port 2)\nCat6a"| USW8
+
+        %% Core switching layer
+        USW24["UniFi Switch 24 PoE (USW-24-POE)<br/>Mgmt IP: 192.168.1.2<br/>95W PoE Budget"]:::infrastructure
+        USW8["UniFi Switch 8 PoE (USW-8-60W)<br/>Mgmt IP: 192.168.1.3"]:::infrastructure
+
+        %% Access layer wired devices on USW24
+        subgraph Wired_Access["Wired Access Layer"]
+            direction TB
+            USW24 -->|"Port 5\nVLAN 10"| Proxmox["Proxmox Server<br/>192.168.10.10"]:::server
+            USW24 -->|"Port 6\nVLAN 10"| TrueNAS["TrueNAS Core<br/>192.168.10.5"]:::server
+            USW24 -->|"Port 7\nVLAN 10"| Desktop["Desktop Workstation<br/>192.168.10.20"]:::trusted
+            USW24 -->|"Port 8\nVLAN 10"| Printer["Network Printer<br/>192.168.10.30"]:::trusted
+            USW24 -->|"Port 9\nVLAN 50"| SmartTV["Smart TV<br/>192.168.50.10"]:::iot
+        end
+
+        %% PoE-powered APs
+        subgraph Wireless_Access["Wireless Access Layer"]
+            direction TB
+            USW24 -->|"Port 15\nPoE ⚡"| AP1["AP AC Pro #1<br/>Living Room<br/>Mgmt IP: 192.168.1.10"]:::ap
+            USW24 -->|"Port 16\nPoE ⚡"| AP2["AP AC Pro #2<br/>Bedroom<br/>Mgmt IP: 192.168.1.11"]:::ap
+            USW24 -->|"Port 17\nPoE ⚡"| AP3["AP AC Pro #3<br/>Office<br/>Mgmt IP: 192.168.1.12"]:::ap
+        end
+
+        %% Secondary switch and downstream devices
+        subgraph RemoteRoom["Remote Office"]
+            direction TB
+            USW8 -->|"Port 3\nVLAN Trunks"| LabCluster["Lab Bench Patch Panel"]:::infrastructure
+            LabCluster -->|"Port 1\nVLAN 100"| LabVMs["Proxmox Lab VMs (3)\n192.168.100.0/24"]:::lab
+        end
+    end
+
+    %% Wireless client counts per SSID/VLAN
+    AP1 -->|"SSID Broadcasts<br/>Trusted, IoT, Guest, Lab"| TrustedClients["Trusted Clients<br/>≈5 Devices"]:::trusted
+    AP1 --> IoTDevices["IoT Devices<br/>≈8 Devices"]:::iot
+    AP1 --> GuestClients["Guest Devices<br/>0-5"]:::guest
+    AP1 --> LabClients["Lab Wi-Fi VMs<br/>≈3"]:::lab
+
+    AP2 --> TrustedClients2["Trusted Clients (Bedroom)\n≈3"]:::trusted
+    AP2 --> GuestClients2["Guest Devices\nOverflow"]:::guest
+
+    AP3 --> TrustedClients3["Office Trusted Clients\nLaptops & Phones"]:::trusted
+    AP3 --> LabClients2["Wireless Test Gear"]:::lab
+
+    %% Styling classes
+    classDef wan fill:#f8d7da,stroke:#8b0000,color:#8b0000,font-weight:bold;
+    classDef infrastructure fill:#dbeafe,stroke:#1d4ed8,color:#1d4ed8;
+    classDef server fill:#d1fae5,stroke:#047857,color:#065f46;
+    classDef trusted fill:#bfdbfe,stroke:#1d4ed8,color:#1e3a8a;
+    classDef iot fill:#fef3c7,stroke:#d97706,color:#92400e;
+    classDef guest fill:#e5e7eb,stroke:#4b5563,color:#111827;
+    classDef lab fill:#ddd6fe,stroke:#6d28d9,color:#4c1d95;
+    classDef ap fill:#e0f2fe,stroke:#0284c7,color:#075985;

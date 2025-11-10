@@ -1,0 +1,88 @@
+%% AWS RDS PostgreSQL Module Architecture Diagram
+%% Mermaid syntax with explicit colors
+flowchart LR
+  %% Styles
+  classDef region fill:#fff4d6,stroke:#f59e0b,color:#111;
+  classDef vpc fill:#dbeafe,stroke:#2563eb,color:#111;
+  classDef subnet fill:#c7d2fe,stroke:#4c1d95,color:#111;
+  classDef database fill:#bbf7d0,stroke:#15803d,color:#0f172a;
+  classDef security fill:#fecaca,stroke:#dc2626,color:#111;
+  classDef app fill:#fde68a,stroke:#ca8a04,color:#111;
+  classDef service fill:#fef08a,stroke:#b45309,color:#111;
+  classDef external fill:#fecdd3,stroke:#be123c,color:#111;
+  classDef legend fill:#f5f5f5,stroke:#4b5563,color:#111;
+
+  subgraph region[AWS Region: us-west-2]
+    class region region
+
+    subgraph vpc[VPC: 10.20.0.0/16]
+      class vpc vpc
+
+      subgraph subnet1[Private Subnet A\nAZ: us-west-2a\nCIDR: 10.20.10.0/24]
+        class subnet subnet
+        rds_primary[RDS PostgreSQL 15.4\nPrimary Instance\nEncrypted at Rest\nAutomated Backups: 7 days]
+        class rds_primary database
+      end
+
+      subgraph subnet2[Private Subnet B\nAZ: us-west-2b\nCIDR: 10.20.20.0/24]
+        class subnet subnet
+        rds_standby[Standby Replica\nSynchronous\nMulti-AZ Failover]
+        class rds_standby database
+      end
+
+      sg_db[(DB Security Group\nInbound: 5432 from App SGs\nOutbound: restricted)]
+      class sg_db security
+
+      secrets[AWS Secrets Manager\nCredentials & Rotation]
+      class secrets service
+
+      cloudwatch[Amazon CloudWatch\nMetrics & Logs]
+      class cloudwatch service
+    end
+
+    appTier[Application Tier\nEC2 / ECS Services\nApp Security Group]
+    class app app
+
+  end
+
+  vpn[Operations Engineers\nTerraform Cloud Runner]
+  class vpn external
+
+  vpn -- 1. Terraform Apply --> sg_db
+  appTier -- 2. TLS Query 5432 --> sg_db
+  sg_db -- 3. Allowed Traffic --> rds_primary
+  rds_primary -- 4. Replication --> rds_standby
+  rds_primary -- 5. Metrics --> cloudwatch
+  rds_primary -- 6. Credentials Reference --> secrets
+  secrets -- 7. Fetch Secret --> appTier
+  cloudwatch -- 8. Alarms --> vpn
+
+  subgraph legendSection[Legend]
+    class legendSection legend
+    legendRegion[AWS Boundary]
+    legendVPC[VPC / Network Component]
+    legendDB[Database Tier]
+    legendSecurity[Security Control]
+    legendApp[Application Tier]
+    legendService[AWS Managed Service]
+    legendExternal[External Actor]
+    legendRegion -.-> region
+    legendVPC -.-> vpc
+    legendDB -.-> rds_primary
+    legendSecurity -.-> sg_db
+    legendApp -.-> appTier
+    legendService -.-> cloudwatch
+    legendExternal -.-> vpn
+  end
+
+  note right of sg_db
+    Security Notes:\n    • Inbound limited to whitelisted SGs\n    • No outbound internet access\n    • IAM policies audited quarterly
+  end
+
+  note bottom of rds_primary
+    Performance: <10ms avg read latency\n    Availability: 99.95% SLA
+  end
+
+  note left of appTier
+    Cost: ~$1,250/month prod tier
+  end

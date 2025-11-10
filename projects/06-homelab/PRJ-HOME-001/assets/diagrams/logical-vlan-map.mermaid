@@ -1,0 +1,70 @@
+%% Logical VLAN and security zone map for PRJ-HOME-001
+flowchart TB
+    Internet((Internet / WAN)):::wan
+
+    subgraph ManagementZone["Management Zone"]
+        direction TB
+        VLAN1["VLAN 1 - Management\n192.168.1.0/24\nGateway: 192.168.1.1\nPurpose: Network Gear"]:::management
+        Notes1(("DHCP: Disabled\nStatic IPs only")):::note
+    end
+
+    subgraph TrustedZone["Trusted Zone"]
+        direction TB
+        VLAN10["VLAN 10 - Trusted\n192.168.10.0/24\nGateway: 192.168.10.1\nDHCP: 100-200"]:::trusted
+        Notes10(("Personal devices, servers, VPN clients")):::note
+    end
+
+    subgraph Isolated["Isolated Zone"]
+        direction TB
+        VLAN50["VLAN 50 - IoT\n192.168.50.0/24\nGateway: 192.168.50.1\nDHCP: 100-200"]:::iot
+        Notes50(("Cloud-only access, mDNS reflector")):::note
+        VLAN99["VLAN 99 - Guest\n192.168.99.0/24\nGateway: 192.168.99.1\nDHCP: 100-200"]:::guest
+        Notes99(("Captive portal, client isolation")):::note
+        VLAN100["VLAN 100 - Lab\n192.168.100.0/24\nGateway: 192.168.100.1\nDHCP: 100-200"]:::lab
+        Notes100(("Test VMs, malware sandbox")):::note
+    end
+
+    %% Internet flows via UDMP firewall/NAT
+    Internet -->|"WAN NAT"| VLAN1
+
+    %% Firewall rules
+    VLAN1 -->|"Allow\nAdmin mgmt"| VLAN10
+    VLAN10 -.->|"SSH 22, HTTPS 443, UniFi 8443"| VLAN1
+
+    VLAN10 -->|"Allow\nHome automation control"| VLAN50
+    VLAN50 -.->|"Deny\n(Any)"| VLAN10
+
+    VLAN10 -.->|"Deny\n(Any)"| VLAN99
+    VLAN10 -->|"Allow\nAll"| VLAN100
+
+    VLAN50 -.->|"Deny\nAll internal"| VLAN1
+    VLAN50 -.->|"Deny\nAll internal"| VLAN100
+    VLAN50 -.->|"Deny\nAll internal"| VLAN99
+    VLAN50 -->|"Allow\nDNS 53, HTTP/HTTPS"| Internet
+
+    VLAN99 -.->|"Deny\nAll internal"| VLAN1
+    VLAN99 -.->|"Deny\nAll internal"| VLAN10
+    VLAN99 -.->|"Deny\nAll internal"| VLAN50
+    VLAN99 -.->|"Deny\nAll internal"| VLAN100
+    VLAN99 -->|"Allow\nInternet only"| Internet
+
+    VLAN100 -.->|"Deny\nMgmt/Guest/IoT"| VLAN1
+    VLAN100 -.->|"Deny\nGuest & IoT"| VLAN99
+    VLAN100 -.->|"Deny\nIoT"| VLAN50
+    VLAN100 -->|"Allow\nPorts 8080, 8443"| VLAN10
+    VLAN100 -->|"Allow\nInternet (rate limited)"| Internet
+
+    %% Styles
+    classDef wan fill:#f8d7da,stroke:#8b0000,color:#8b0000,font-weight:bold;
+    classDef management fill:#dbeafe,stroke:#1d4ed8,color:#1d4ed8,font-weight:bold;
+    classDef trusted fill:#bfdbfe,stroke:#1e40af,color:#1e3a8a;
+    classDef iot fill:#fef3c7,stroke:#d97706,color:#92400e;
+    classDef guest fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef lab fill:#ddd6fe,stroke:#6d28d9,color:#4c1d95;
+    classDef note fill:#ffffff,stroke:#9ca3af,color:#4b5563,font-size:11px;
+
+    %% Link styles
+    linkStyle default stroke-width:2px;
+    linkStyle 2,6,9,12,15 stroke:#16a34a,stroke-width:2px; %% allow arrows
+    linkStyle 3,5,7,8,10,11,13,14,16,17,18,19,20,21 stroke:#dc2626,stroke-width:2px,stroke-dasharray:5 5; %% deny arrows
+    linkStyle 4,22 stroke:#0ea5e9,stroke-width:2px,stroke-dasharray:2 4; %% restricted allow

@@ -1,0 +1,240 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (dev|staging|prod)"
+        required: true
+        default: "dev"
+      action:
+        description: "Action to execute (plan|apply|destroy)"
+        required: true
+        default: "plan"
+  schedule:
+    - cron: "0 6 * * 1"
+
+env:
+  TF_WORKING_DIR: infrastructure/terraform/stacks/database
+  TF_IN_AUTOMATION: true
+
+jobs:
+  validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: terraform-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
+
+      - name: Terraform Format
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform fmt -check
+
+      - name: Terraform Init (Backend Disabled)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: TFLint
+        uses: terraform-linters/tflint-bundle@v0.51.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          working_directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Checkov Scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ${{ env.TF_WORKING_DIR }}
+          framework: terraform
+
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request'
+    environment:
+      name: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.STATE_BUCKET }}" \
+            -backend-config="key=database/${{ github.event.pull_request.head.ref }}/terraform.tfstate" \
+            -backend-config="dynamodb_table=${{ vars.STATE_LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION || 'us-west-2' }}"
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -var-file=examples/production.tfvars.example -out=plan.out
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: ${{ env.TF_WORKING_DIR }}/plan.out
+
+      - name: Infracost Breakdown
+        uses: infracost/actions/cost-breakdown@v3
+        with:
+          path: ${{ env.TF_WORKING_DIR }}
+          terraform_plan_path: ${{ env.TF_WORKING_DIR }}/plan.out
+          terraform_plan_flags: "-json"
+          infracost_api_key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: tfsec Security Scan
+        uses: aquasecurity/tfsec-pr-commenter-action@v1.7.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          working_directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Comment Plan on PR
+        uses: robburger/terraform-pr-commenter@v1
+        with:
+          plan-file: ${{ env.TF_WORKING_DIR }}/plan.out
+          commenter: plan-and-cost
+
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://console.aws.amazon.com/rds/
+    concurrency:
+      group: terraform-apply
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.STATE_BUCKET }}" \
+            -backend-config="key=database/prod/terraform.tfstate" \
+            -backend-config="dynamodb_table=${{ vars.STATE_LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION || 'us-west-2' }}"
+
+      - name: Terraform Apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -var-file=examples/production.tfvars.example -auto-approve
+
+      - name: Post Apply Notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+              "text": "Terraform apply completed for PRJ-SDE-001 (${ github.sha }). Status: ${{ job.status }}"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Confirmation Gate
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "prod" ]; then
+            echo "Destruction of production is blocked. Update workflow inputs." >&2
+            exit 1
+          fi
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.STATE_BUCKET }}" \
+            -backend-config="key=database/${{ github.event.inputs.environment }}/terraform.tfstate" \
+            -backend-config="dynamodb_table=${{ vars.STATE_LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION || 'us-west-2' }}"
+
+      - name: Final Snapshot Backup
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          SNAPSHOT_ID=${{ github.event.inputs.environment }}-pre-destroy-$(date +%Y%m%d%H%M)
+          aws rds create-db-snapshot --db-snapshot-identifier "$SNAPSHOT_ID" --db-instance-identifier "${{ github.event.inputs.environment }}-app-db"
+          aws rds wait db-snapshot-completed --db-snapshot-identifier "$SNAPSHOT_ID"
+
+      - name: Terraform Destroy
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform destroy -auto-approve -var-file=examples/production.tfvars.example
+
+      - name: Cleanup Notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+              "text": "Terraform destroy completed for environment ${{ github.event.inputs.environment }}. Status: ${{ job.status }}"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
