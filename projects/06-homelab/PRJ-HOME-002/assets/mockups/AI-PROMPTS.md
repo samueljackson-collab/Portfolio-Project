@@ -2,16 +2,30 @@
 
 This document contains detailed prompts for generating realistic screenshot mockups of homelab infrastructure dashboards and UIs. These can be used with AI image generators (Midjourney, DALL-E 3, Stable Diffusion) or as reference for manual mockup creation.
 
-## Interactive HTML Dashboard
+## Interactive HTML Dashboards
 
-An **interactive HTML mockup** of the Grafana Homelab Infrastructure Dashboard is available:
-- **File:** `grafana-homelab-dashboard.html` (in this directory)
+Two **interactive HTML mockups** are available in this directory for live demonstrations:
+
+### 1. Grafana Homelab Infrastructure Dashboard
+- **File:** `grafana-homelab-dashboard.html`
 - **Features:**
   - Fully functional Grafana-style UI with dark theme
   - Real-time clock and animated metrics
   - Interactive charts using Chart.js (CPU, Memory, Network, Disk I/O)
   - Service status table showing all homelab services
   - Responsive dashboard panels with sparklines and progress bars
+- **Usage:** Open in any modern web browser for a live demo
+- **Screenshot:** Can be used to capture high-quality dashboard screenshots
+
+### 2. Nginx Proxy Manager Dashboard
+- **File:** `nginx-proxy-manager-dashboard.html`
+- **Features:**
+  - Modern light-theme UI with gradient header
+  - 8 configured proxy hosts with detailed statistics
+  - SSL certificate management panel
+  - Real-time metrics: requests, data transfer, latency
+  - Activity log showing recent changes
+  - Filter and search functionality
 - **Usage:** Open in any modern web browser for a live demo
 - **Screenshot:** Can be used to capture high-quality dashboard screenshots
 

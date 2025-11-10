@@ -51,7 +51,57 @@ To capture high-quality screenshots for documentation:
 - Responsive design with CSS Grid
 - SVG sparklines for mini-charts
 
-### 2. AI Generation Prompts
+### 2. Interactive Nginx Proxy Manager Dashboard
+**File:** `nginx-proxy-manager-dashboard.html`
+
+A fully functional, interactive Nginx Proxy Manager interface mockup showcasing reverse proxy and SSL certificate management.
+
+**Features:**
+- **Modern UI:** Light theme with gradient header and card-based design
+- **Proxy Host Management:**
+  - 8 configured proxy hosts with detailed statistics
+  - Domain mapping display (e.g., wiki.example.com → 192.168.40.20:3000)
+  - SSL status indicators (Let's Encrypt, Self-Signed)
+  - Online/Offline status badges
+  - Per-host metrics: requests, data transferred, latency
+- **Statistics Dashboard:**
+  - Total Hosts: 8
+  - Online Hosts: 8 (100% uptime)
+  - Requests (24h): 12.4K
+  - Data Transfer (24h): 3.2 GB
+- **SSL Certificate Management:**
+  - Wildcard certificate (*.example.com)
+  - Self-signed certificates for internal services
+  - Certificate expiry tracking
+  - Renewal status indicators
+- **Recent Activity Log:**
+  - SSL renewals
+  - Proxy host changes
+  - Access list updates
+- **Interactive Elements:**
+  - Filter and search functionality
+  - View toggle (List/Grid)
+  - Action buttons (Edit, Delete, Disable)
+  - Sortable columns
+
+**Usage:**
+```bash
+# Open in browser
+open nginx-proxy-manager-dashboard.html
+# or
+firefox nginx-proxy-manager-dashboard.html
+```
+
+**Screenshot Capture:**
+Same process as Grafana dashboard - use browser developer tools to capture full-page screenshots.
+
+**Technologies Used:**
+- Pure HTML/CSS (no JavaScript framework required)
+- CSS Grid and Flexbox for responsive layout
+- Gradient backgrounds and modern card design
+- Emoji icons for visual elements
+
+### 3. AI Generation Prompts
 **File:** `AI-PROMPTS.md`
 
 Detailed prompts for generating additional mockup screenshots using AI tools (Midjourney, DALL-E 3, etc.) or manual creation tools (Figma, Excalidraw).
