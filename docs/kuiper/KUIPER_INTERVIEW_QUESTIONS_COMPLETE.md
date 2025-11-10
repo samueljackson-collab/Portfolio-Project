@@ -3941,7 +3941,1528 @@ resource "aws_security_group" "bastion" {
 
 ---
 
-**Continue reading:** Questions 16-60 coming next...
+## Q16: Design AWS Direct Connect for Low-Latency Kuiper Ground Stations ⭐⭐⭐⭐
+
+**Category:** Advanced Networking | **Risk:** HIGH | **Timebox:** 45 min | **Owner:** Network Architect
+
+### Simple Explanation (Feynman Method)
+**Direct Connect** is like having a private fiber-optic cable directly from your data center to AWS, bypassing the public internet. For Kuiper ground stations (which communicate with satellites), we need ultra-low latency and guaranteed bandwidth. Direct Connect gives us a dedicated 10 Gbps or 100 Gbps connection with consistent performance.
+
+### Technical Explanation
+
+**Architecture Overview:**
+```
+Ground Station (Herndon, VA)
+    |
+    | Fiber (your ISP)
+    |
+Direct Connect Location (Equinix DC2)
+    |
+    | AWS backbone (private)
+    |
+AWS us-east-1 (VGW or DXGW)
+    |
+Transit Gateway
+    |
+├── VPC-control-plane (10.0.0.0/16)
+├── VPC-telemetry (10.1.0.0/16)
+└── VPC-satellite-c2 (10.2.0.0/16)
+```
+
+**Why Direct Connect for Kuiper?**
+1. **Predictable Latency:** 1-3ms (vs. 15-50ms over internet)
+2. **High Bandwidth:** 10/100 Gbps for satellite telemetry streams
+3. **No Internet Routing:** Satellite tracking commands must be reliable
+4. **PrivateLink Support:** Private connectivity to AWS services (S3, DynamoDB)
+
+**Implementation (Terraform):**
+
+```hcl
+# terraform/direct-connect.tf
+
+# 1. Direct Connect Connection (provisioned by AWS after LOA-CFA)
+resource "aws_dx_connection" "kuiper_herndon" {
+  name      = "kuiper-herndon-10g"
+  bandwidth = "10Gbps"
+  location  = "EqDC2"  # Equinix DC2 (Ashburn, VA)
+
+  tags = {
+    Environment = "production"
+    Criticality = "high"
+  }
+}
+
+# 2. Private Virtual Interface (VIF) to Transit Gateway
+resource "aws_dx_private_virtual_interface" "kuiper_tgw" {
+  connection_id = aws_dx_connection.kuiper_herndon.id
+
+  name          = "kuiper-tgw-vif"
+  vlan          = 100
+  address_family = "ipv4"
+  bgp_asn       = 65001  # Your ASN
+
+  # BGP Peering IPs (AWS assigns these from 169.254.0.0/16)
+  customer_address = "169.254.100.1/30"
+  amazon_address   = "169.254.100.2/30"
+
+  # Connect to Direct Connect Gateway (not VGW)
+  dx_gateway_id = aws_dx_gateway.kuiper.id
+
+  # Enable Jumbo Frames (9001 MTU)
+  mtu = 9001
+}
+
+# 3. Direct Connect Gateway (bridges DX to TGW)
+resource "aws_dx_gateway" "kuiper" {
+  name            = "kuiper-dxgw"
+  amazon_side_asn = 64512  # AWS ASN
+}
+
+# 4. Associate DXGW with Transit Gateway
+resource "aws_dx_gateway_association" "kuiper_tgw" {
+  dx_gateway_id         = aws_dx_gateway.kuiper.id
+  associated_gateway_id = aws_ec2_transit_gateway.kuiper.id
+
+  # What prefixes to advertise TO on-prem
+  allowed_prefixes = [
+    "10.0.0.0/16",  # Control plane VPC
+    "10.1.0.0/16",  # Telemetry VPC
+    "10.2.0.0/16",  # Satellite C2 VPC
+  ]
+}
+
+# 5. Transit Gateway Route Table (routes from DX to VPCs)
+resource "aws_ec2_transit_gateway_route" "dx_to_onprem" {
+  destination_cidr_block         = "192.168.0.0/16"  # On-prem CIDR
+  transit_gateway_attachment_id  = aws_dx_gateway_association.kuiper_tgw.id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.main.id
+}
+```
+
+**BGP Configuration (On-Prem Router - Cisco):**
+
+```cisco
+! Cisco IOS XE Configuration for Direct Connect BGP
+
+interface GigabitEthernet0/0/0.100
+ description Direct Connect to AWS DXGW
+ encapsulation dot1Q 100
+ ip address 169.254.100.1 255.255.255.252
+ ip mtu 9001  ! Jumbo frames
+
+router bgp 65001
+ bgp log-neighbor-changes
+ neighbor 169.254.100.2 remote-as 64512
+ neighbor 169.254.100.2 description AWS-DXGW
+
+ address-family ipv4
+  network 192.168.0.0 mask 255.255.0.0  ! Advertise on-prem
+  neighbor 169.254.100.2 activate
+  neighbor 169.254.100.2 soft-reconfiguration inbound
+
+  ! Prefer Direct Connect over VPN (lower local-pref on VPN)
+  neighbor 169.254.100.2 route-map DX-IN in
+  neighbor 169.254.100.2 route-map DX-OUT out
+ exit-address-family
+
+! Route-map to prefer Direct Connect
+route-map DX-IN permit 10
+ set local-preference 200  ! Higher = more preferred (default 100)
+
+route-map DX-OUT permit 10
+ match ip address prefix-list ON-PREM-PREFIXES
+
+ip prefix-list ON-PREM-PREFIXES permit 192.168.0.0/16
+```
+
+**Failover Design (DX + VPN Backup):**
+
+```
+Primary: Direct Connect (10 Gbps, local-pref 200)
+    |
+    X  <-- Fiber cut!
+    |
+Failover: Site-to-Site VPN (1 Gbps, local-pref 100)
+```
+
+**CloudWatch Alarms for Monitoring:**
+
+```python
+#!/usr/bin/env python3
+# scripts/dx-monitoring.py
+
+import boto3
+
+cloudwatch = boto3.client('cloudwatch')
+dx = boto3.client('directconnect')
+
+def create_dx_alarms(connection_id):
+    """Create comprehensive DX monitoring alarms."""
+
+    alarms = [
+        {
+            'name': f'DX-{connection_id}-ConnectionState',
+            'metric': 'ConnectionState',
+            'threshold': 1,  # 1 = UP, 0 = DOWN
+            'comparison': 'LessThanThreshold',
+            'eval_periods': 2,
+            'description': 'DX connection is DOWN'
+        },
+        {
+            'name': f'DX-{connection_id}-BgpPeerState',
+            'metric': 'VirtualInterfaceBpsEgress',
+            'threshold': 8_000_000_000,  # 8 Gbps (80% of 10G)
+            'comparison': 'GreaterThanThreshold',
+            'eval_periods': 5,
+            'description': 'DX approaching capacity'
+        },
+        {
+            'name': f'DX-{connection_id}-PacketLoss',
+            'metric': 'ConnectionErrorCount',
+            'threshold': 100,
+            'comparison': 'GreaterThanThreshold',
+            'eval_periods': 3,
+            'description': 'DX experiencing packet loss'
+        },
+    ]
+
+    for alarm_config in alarms:
+        cloudwatch.put_metric_alarm(
+            AlarmName=alarm_config['name'],
+            ComparisonOperator=alarm_config['comparison'],
+            EvaluationPeriods=alarm_config['eval_periods'],
+            MetricName=alarm_config['metric'],
+            Namespace='AWS/DX',
+            Period=60,  # 1 minute
+            Statistic='Average',
+            Threshold=alarm_config['threshold'],
+            ActionsEnabled=True,
+            AlarmActions=['arn:aws:sns:us-east-1:123456789012:network-oncall'],
+            AlarmDescription=alarm_config['description'],
+            Dimensions=[
+                {'Name': 'ConnectionId', 'Value': connection_id}
+            ]
+        )
+
+    print(f"✅ Created {len(alarms)} alarms for {connection_id}")
+
+# Usage
+create_dx_alarms('dxcon-fgk1d2x3')
+```
+
+**Testing Direct Connect Performance:**
+
+```bash
+#!/bin/bash
+# scripts/test-dx-performance.sh
+
+DX_TARGET="10.0.1.50"  # EC2 in AWS via DX
+VPN_TARGET="10.0.1.51"  # Same EC2 via VPN (for comparison)
+
+echo "=== Testing Direct Connect Performance ==="
+
+# 1. Latency Test (ICMP)
+echo -e "\n📊 Latency Test:"
+ping -c 100 $DX_TARGET | tail -1 | awk '{print "DX:  " $4 " ms"}'
+ping -c 100 $VPN_TARGET | tail -1 | awk '{print "VPN: " $4 " ms"}'
+
+# 2. Bandwidth Test (iperf3)
+echo -e "\n📊 Bandwidth Test:"
+iperf3 -c $DX_TARGET -t 30 -P 10 --json | jq '.end.sum_sent.bits_per_second / 1e9 | "DX:  \(.) Gbps"'
+
+# 3. Jitter Test (iperf3 UDP)
+echo -e "\n📊 Jitter Test:"
+iperf3 -c $DX_TARGET -u -b 1G -t 30 --json | jq '.end.sum.jitter_ms | "DX:  \(.) ms jitter"'
+
+# 4. MTU Path Discovery
+echo -e "\n📊 MTU Test:"
+ping -M do -s 8973 -c 5 $DX_TARGET && echo "✅ Jumbo frames working (9001 MTU)"
+
+# 5. Packet Loss (mtr)
+echo -e "\n📊 Packet Loss (100 pings):"
+mtr -r -c 100 $DX_TARGET | tail -1 | awk '{print "DX:  " $3 " loss"}'
+```
+
+**Expected Results:**
+- **Latency:** 1-3ms (DX) vs. 15-30ms (VPN)
+- **Bandwidth:** 9.5 Gbps (DX) vs. 0.8 Gbps (VPN)
+- **Jitter:** <0.5ms (DX) vs. 2-5ms (VPN)
+- **Packet Loss:** 0% (DX) vs. 0.1% (VPN)
+
+**Cost Analysis:**
+
+```python
+# DX Pricing (us-east-1, 2024)
+PORT_HOURS = 730  # hours/month
+DATA_OUT_TB = 50  # TB/month
+
+# Port Cost
+port_cost = 0.30 * PORT_HOURS  # $0.30/hr for 10G
+print(f"Port: ${port_cost:.2f}/mo")
+
+# Data Transfer Cost (DX is 85% cheaper than internet)
+data_cost = 50 * 0.02  # $0.02/GB for DX (vs $0.09/GB internet)
+print(f"Data: ${data_cost:.2f}/mo")
+
+# Total
+total = port_cost + data_cost
+print(f"\nTotal: ${total:.2f}/mo (~$2,800/mo)")
+print(f"Savings vs Internet: ${(50 * 1000 * 0.09) - data_cost:.2f}/mo")
+# Savings: ~$3,500/mo (with 50TB egress)
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Direct Connect Terraform** | `infra/aws/terraform/direct-connect.tf` | Complete DX setup |
+| **BGP Configuration** | `infra/routers/cisco-bgp-dx.conf` | On-prem BGP config |
+| **Performance Testing** | `scripts/test-dx-performance.sh` | Latency/bandwidth tests |
+| **Monitoring Dashboard** | `monitoring/grafana/dx-dashboard.json` | Real-time DX metrics |
+| **Failover Diagram** | `docs/diagrams/dx-vpn-failover.mmd` | DX + VPN redundancy |
+
+**Learn More:**
+- [AWS Direct Connect](https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html)
+- [Direct Connect Gateway](https://docs.aws.amazon.com/directconnect/latest/UserGuide/direct-connect-gateways.html)
+- [BGP over Direct Connect](https://aws.amazon.com/premiumsupport/knowledge-center/dx-create-dx-connection-from-console/)
+
+---
+
+## Q17: Configure ECMP for Load Balancing Across Multiple VPN Tunnels ⭐⭐⭐
+
+**Category:** Advanced Networking | **Risk:** MEDIUM | **Timebox:** 30 min | **Owner:** Network Engineer
+
+### Simple Explanation (Feynman Method)
+**ECMP (Equal-Cost Multi-Path)** is like having multiple highways to the same destination. Your GPS (router) can use ALL of them simultaneously instead of picking just one. AWS Transit Gateway supports ECMP across up to 50 VPN tunnels, letting you scale beyond a single tunnel's 1.25 Gbps limit.
+
+For Kuiper, we might have 8 VPN tunnels = 10 Gbps total throughput (8 × 1.25 Gbps).
+
+### Technical Explanation
+
+**ECMP Architecture:**
+```
+On-Prem Network (192.168.0.0/16)
+    |
+Cisco Router (ECMP enabled)
+    |
+    ├── VPN-1 (Tunnel 1) --> TGW (AWS)
+    ├── VPN-2 (Tunnel 2) --> TGW (AWS)
+    ├── VPN-3 (Tunnel 3) --> TGW (AWS)
+    └── VPN-4 (Tunnel 4) --> TGW (AWS)
+         |
+    Transit Gateway (ECMP load balancer)
+         |
+    VPC-control-plane (10.0.0.0/16)
+
+Per-Flow Load Balancing:
+- Flow 1 (src:192.168.1.10 -> dst:10.0.0.50) --> Tunnel 1
+- Flow 2 (src:192.168.1.11 -> dst:10.0.0.50) --> Tunnel 2
+- Flow 3 (src:192.168.1.12 -> dst:10.0.0.50) --> Tunnel 3
+```
+
+**Key Concept:** ECMP uses **5-tuple hashing** (src IP, dst IP, src port, dst port, protocol) to pick a tunnel. The same flow always uses the same tunnel (no packet reordering).
+
+**Terraform Configuration:**
+
+```hcl
+# terraform/ecmp-vpn.tf
+
+# Create 4 VPN connections (8 tunnels total, but only 4 active with ECMP)
+resource "aws_vpn_connection" "kuiper_ecmp" {
+  count = 4
+
+  customer_gateway_id = aws_customer_gateway.kuiper.id
+  transit_gateway_id  = aws_ec2_transit_gateway.kuiper.id
+  type                = "ipsec.1"
+
+  static_routes_only = false  # Use BGP for ECMP
+
+  tunnel1_inside_cidr   = "169.254.10.${count.index * 4}/30"
+  tunnel1_preshared_key = random_password.tunnel1[count.index].result
+
+  tunnel2_inside_cidr   = "169.254.10.${count.index * 4 + 4}/30"
+  tunnel2_preshared_key = random_password.tunnel2[count.index].result
+
+  tags = {
+    Name = "kuiper-vpn-${count.index + 1}"
+  }
+}
+
+# Attach VPN to Transit Gateway (enables ECMP automatically)
+resource "aws_ec2_transit_gateway_route_table_association" "vpn" {
+  count = 4
+
+  transit_gateway_attachment_id  = aws_vpn_connection.kuiper_ecmp[count.index].transit_gateway_attachment_id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.main.id
+}
+```
+
+**Cisco Configuration (ECMP with BGP):**
+
+```cisco
+! ECMP requires identical BGP attributes (AS-PATH, MED, local-pref)
+
+crypto ikev2 proposal AWS-IKEv2-PROPOSAL
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+
+crypto ikev2 policy AWS-IKEv2-POLICY
+ proposal AWS-IKEv2-PROPOSAL
+
+! IPsec Transform Set
+crypto ipsec transform-set AWS-TRANSFORM-SET esp-aes 256 esp-sha256-hmac
+ mode tunnel
+
+! Tunnel Interfaces (4 tunnels)
+interface Tunnel1
+ ip address 169.254.10.1 255.255.255.252
+ tunnel source GigabitEthernet0/0/0
+ tunnel destination 52.46.132.10  # AWS Endpoint 1
+ tunnel mode ipsec ipv4
+ tunnel protection ipsec profile AWS-IPSEC-PROFILE
+ ip mtu 1400
+ ip tcp adjust-mss 1360
+
+interface Tunnel2
+ ip address 169.254.10.5 255.255.255.252
+ tunnel destination 52.46.142.20  # AWS Endpoint 2
+ ! ... same config ...
+
+interface Tunnel3
+ ip address 169.254.10.9 255.255.255.252
+ tunnel destination 52.46.152.30  # AWS Endpoint 3
+
+interface Tunnel4
+ ip address 169.254.10.13 255.255.255.252
+ tunnel destination 52.46.162.40  # AWS Endpoint 4
+
+! BGP Configuration for ECMP
+router bgp 65001
+ bgp log-neighbor-changes
+ maximum-paths 4  # ENABLE ECMP (default is 1)
+
+ ! Neighbor definitions
+ neighbor 169.254.10.2 remote-as 64512
+ neighbor 169.254.10.6 remote-as 64512
+ neighbor 169.254.10.10 remote-as 64512
+ neighbor 169.254.10.14 remote-as 64512
+
+ address-family ipv4
+  network 192.168.0.0 mask 255.255.0.0
+
+  ! Activate all neighbors
+  neighbor 169.254.10.2 activate
+  neighbor 169.254.10.6 activate
+  neighbor 169.254.10.10 activate
+  neighbor 169.254.10.14 activate
+
+  ! CRITICAL: Make routes identical for ECMP
+  neighbor 169.254.10.2 route-map ECMP-OUT out
+  neighbor 169.254.10.6 route-map ECMP-OUT out
+  neighbor 169.254.10.10 route-map ECMP-OUT out
+  neighbor 169.254.10.14 route-map ECMP-OUT out
+ exit-address-family
+
+! Route-map ensures identical attributes
+route-map ECMP-OUT permit 10
+ set as-path prepend 65001  # Make AS-PATH same length
+ set metric 100             # Set identical MED
+
+! Verify ECMP is working
+! Expected: 4 routes to 10.0.0.0/16 in routing table
+```
+
+**Verification Commands:**
+
+```bash
+#!/bin/bash
+# scripts/verify-ecmp.sh
+
+echo "=== ECMP Verification ==="
+
+# 1. Check routing table (should see 4 equal-cost routes)
+echo -e "\n1️⃣ BGP Routes (expect 4 paths):"
+ssh router "show ip bgp 10.0.0.0/16" | grep -A 10 "Paths:"
+
+# 2. Check routing table
+echo -e "\n2️⃣ Routing Table:"
+ssh router "show ip route 10.0.0.0" | grep -A 5 "via"
+
+# Expected output:
+# 10.0.0.0/16 [20/100] via 169.254.10.2 (Tunnel1)
+#                      via 169.254.10.6 (Tunnel2)
+#                      via 169.254.10.10 (Tunnel3)
+#                      via 169.254.10.14 (Tunnel4)
+
+# 3. Check tunnel status
+echo -e "\n3️⃣ Tunnel Status:"
+for i in {1..4}; do
+  ssh router "show interface Tunnel$i | include line protocol"
+done
+
+# 4. Traffic Distribution (simulate)
+echo -e "\n4️⃣ Traffic Distribution Test:"
+for src_ip in {1..20}; do
+  # Generate different source IPs to trigger ECMP
+  hping3 -c 1 -a 192.168.1.$src_ip 10.0.0.50 &
+done
+wait
+
+# 5. Check which tunnel each flow used
+ssh router "show ip cef 10.0.0.0 internal" | grep -A 20 "load-bal"
+```
+
+**Monitoring ECMP with Python:**
+
+```python
+#!/usr/bin/env python3
+# scripts/monitor-ecmp.py
+
+import boto3
+import time
+
+cloudwatch = boto3.client('cloudwatch')
+
+def get_tunnel_metrics(vpn_id, tunnel_ip):
+    """Get bytes-in for specific VPN tunnel."""
+    response = cloudwatch.get_metric_statistics(
+        Namespace='AWS/VPN',
+        MetricName='TunnelDataIn',
+        Dimensions=[
+            {'Name': 'VpnId', 'Value': vpn_id},
+            {'Name': 'TunnelIpAddress', 'Value': tunnel_ip}
+        ],
+        StartTime=time.time() - 300,  # Last 5 minutes
+        EndTime=time.time(),
+        Period=60,
+        Statistics=['Sum']
+    )
+
+    if response['Datapoints']:
+        return response['Datapoints'][-1]['Sum']
+    return 0
+
+def check_ecmp_balance(vpns):
+    """Verify traffic is balanced across tunnels."""
+    print("🔍 ECMP Balance Check\n")
+
+    tunnel_traffic = {}
+
+    for vpn_id, tunnel_ip in vpns:
+        bytes_in = get_tunnel_metrics(vpn_id, tunnel_ip)
+        tunnel_traffic[tunnel_ip] = bytes_in
+        print(f"Tunnel {tunnel_ip}: {bytes_in / 1e6:.2f} MB")
+
+    # Calculate variance (should be < 20% for good balance)
+    values = list(tunnel_traffic.values())
+    avg = sum(values) / len(values)
+    variance = sum((x - avg) ** 2 for x in values) / len(values)
+    std_dev = variance ** 0.5
+    cv = (std_dev / avg) * 100  # Coefficient of variation
+
+    print(f"\n📊 Balance Coefficient: {cv:.1f}%")
+    if cv < 20:
+        print("✅ ECMP is balanced")
+    else:
+        print(f"⚠️ ECMP imbalanced (threshold: 20%)")
+
+# Usage
+vpns = [
+    ('vpn-01234', '52.46.132.10'),
+    ('vpn-01234', '52.46.142.20'),
+    ('vpn-56789', '52.46.132.11'),
+    ('vpn-56789', '52.46.142.21'),
+]
+
+check_ecmp_balance(vpns)
+```
+
+**Troubleshooting ECMP Issues:**
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Only 1 tunnel used | BGP attributes differ | Ensure identical MED, local-pref, AS-PATH |
+| `maximum-paths 1` on router | ECMP disabled | Set `maximum-paths 4` |
+| Asymmetric routing | Different paths in/out | Use BGP communities to influence AWS return path |
+| Poor load balance | Few flows (<10) | ECMP is per-flow, not per-packet. More flows = better balance |
+| One tunnel overloaded | "Elephant flow" (large transfer) | Can't fix - ECMP limitation. Consider flow-aware LB |
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **ECMP VPN Terraform** | `infra/aws/terraform/ecmp-vpn.tf` | 4 VPN connections |
+| **Cisco ECMP Config** | `infra/routers/cisco-ecmp.conf` | `maximum-paths 4` |
+| **ECMP Monitor** | `scripts/monitor-ecmp.py` | Traffic balance checks |
+| **Verification Script** | `scripts/verify-ecmp.sh` | Route table checks |
+
+**Learn More:**
+- [Transit Gateway ECMP](https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html#tgw-routing-overview)
+- [BGP ECMP on Cisco](https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/13762-40.html)
+
+---
+
+## Q18: Implement QoS for Prioritizing Satellite Control Traffic ⭐⭐⭐⭐
+
+**Category:** Advanced Networking | **Risk:** HIGH | **Timebox:** 40 min | **Owner:** Network Engineer
+
+### Simple Explanation (Feynman Method)
+**QoS (Quality of Service)** is like a hospital emergency room triage system. Not all traffic is equal:
+- **Satellite control commands** (adjust antenna angle): CRITICAL - must arrive in <10ms
+- **Telemetry data** (satellite health): IMPORTANT - can tolerate 50ms
+- **Bulk downloads** (satellite logs): LOW - can wait minutes
+
+QoS ensures critical traffic gets priority, even when the link is congested.
+
+### Technical Explanation
+
+**Traffic Classes for Kuiper:**
+```
+Priority 1 (EF - Expedited Forwarding): Satellite C2 (control/command)
+    - DSCP 46 (101110)
+    - Max latency: 10ms
+    - Bandwidth: 10% (100 Mbps of 1 Gbps)
+
+Priority 2 (AF41 - Assured Forwarding): Telemetry streams
+    - DSCP 34 (100010)
+    - Max latency: 50ms
+    - Bandwidth: 40% (400 Mbps)
+
+Priority 3 (AF21): Logs and monitoring
+    - DSCP 18 (010010)
+    - Max latency: 200ms
+    - Bandwidth: 30% (300 Mbps)
+
+Priority 4 (BE - Best Effort): Everything else
+    - DSCP 0 (000000)
+    - Bandwidth: 20% (200 Mbps)
+```
+
+**Cisco QoS Configuration:**
+
+```cisco
+! Step 1: Define Traffic Classes
+class-map match-any KUIPER-CONTROL
+ match ip dscp ef  ! DSCP 46
+ match access-group name ACL-CONTROL
+
+class-map match-any KUIPER-TELEMETRY
+ match ip dscp af41
+ match access-group name ACL-TELEMETRY
+
+class-map match-any KUIPER-LOGS
+ match ip dscp af21
+
+class-map class-default  ! Everything else
+
+! Step 2: Mark Traffic (ingress from ground station)
+ip access-list extended ACL-CONTROL
+ permit udp 192.168.100.0 0.0.0.255 host 10.0.2.10 eq 5555
+ remark Satellite C2 commands (UDP/5555)
+
+ip access-list extended ACL-TELEMETRY
+ permit tcp 192.168.100.0 0.0.0.255 10.0.1.0 0.0.0.255 eq 9090
+ remark Prometheus telemetry scrape
+
+! Step 3: Policy Map (what to do with each class)
+policy-map KUIPER-QOS-OUT
+ class KUIPER-CONTROL
+  priority percent 10
+  set dscp ef
+  police cir 100000000  ! 100 Mbps max
+
+ class KUIPER-TELEMETRY
+  bandwidth percent 40
+  set dscp af41
+  random-detect dscp-based  ! Drop AF41 packets when congested
+
+ class KUIPER-LOGS
+  bandwidth percent 30
+  set dscp af21
+  random-detect
+
+ class class-default
+  bandwidth percent 20
+  random-detect
+
+! Step 4: Apply to Interface (WAN side)
+interface GigabitEthernet0/0/0
+ description WAN to AWS (VPN)
+ service-policy output KUIPER-QOS-OUT
+ ip mtu 1400  ! Account for VPN overhead
+
+! Verification
+! show policy-map interface GigabitEthernet0/0/0
+```
+
+**Linux Traffic Shaping (tc + fq_codel):**
+
+```bash
+#!/bin/bash
+# scripts/qos-linux.sh - QoS on Linux gateway
+
+IFACE="eth0"
+TOTAL_BW="1gbit"
+
+# 1. Delete existing qdisc
+tc qdisc del dev $IFACE root 2>/dev/null
+
+# 2. Create HTB (Hierarchical Token Bucket) root
+tc qdisc add dev $IFACE root handle 1: htb default 40
+
+# 3. Create root class (1 Gbps)
+tc class add dev $IFACE parent 1: classid 1:1 htb rate $TOTAL_BW
+
+# 4. Create child classes
+tc class add dev $IFACE parent 1:1 classid 1:10 htb rate 100mbit ceil 100mbit prio 1  # Control
+tc class add dev $IFACE parent 1:1 classid 1:20 htb rate 400mbit ceil 500mbit prio 2  # Telemetry
+tc class add dev $IFACE parent 1:1 classid 1:30 htb rate 300mbit ceil 400mbit prio 3  # Logs
+tc class add dev $IFACE parent 1:1 classid 1:40 htb rate 200mbit ceil 1gbit prio 4    # Default
+
+# 5. Add fq_codel queuing discipline (fair queuing + AQM)
+tc qdisc add dev $IFACE parent 1:10 fq_codel
+tc qdisc add dev $IFACE parent 1:20 fq_codel
+tc qdisc add dev $IFACE parent 1:30 fq_codel
+tc qdisc add dev $IFACE parent 1:40 fq_codel
+
+# 6. Create filters (match DSCP marks)
+tc filter add dev $IFACE parent 1: protocol ip prio 1 u32 \
+   match ip dscp 0x2e 0xff flowid 1:10  # DSCP 46 (EF) -> class 1:10
+
+tc filter add dev $IFACE parent 1: protocol ip prio 2 u32 \
+   match ip dscp 0x22 0xff flowid 1:20  # DSCP 34 (AF41) -> class 1:20
+
+tc filter add dev $IFACE parent 1: protocol ip prio 3 u32 \
+   match ip dscp 0x12 0xff flowid 1:30  # DSCP 18 (AF21) -> class 1:30
+
+echo "✅ QoS configured on $IFACE"
+tc -s qdisc show dev $IFACE
+```
+
+**Python Application - Mark Traffic:**
+
+```python
+#!/usr/bin/env python3
+# apps/satellite_c2.py - Satellite control with QoS marking
+
+import socket
+import struct
+
+def send_satellite_command(cmd, target_ip, target_port=5555):
+    """Send satellite C2 command with DSCP EF marking."""
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # Set DSCP EF (46 << 2 = 184) in IP TOS field
+    # Linux: IP_TOS socket option
+    DSCP_EF = 46 << 2  # 184 (DSCP occupies upper 6 bits of TOS byte)
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_TOS, DSCP_EF)
+
+    # Send command
+    payload = cmd.encode('utf-8')
+    sock.sendto(payload, (target_ip, target_port))
+
+    print(f"📡 Sent command: {cmd} (DSCP {DSCP_EF >> 2})")
+    sock.close()
+
+# Example: Reorient satellite antenna
+send_satellite_command(
+    cmd='{"action": "reorient", "azimuth": 45, "elevation": 30}',
+    target_ip='10.0.2.10'
+)
+```
+
+**Testing QoS with iperf3:**
+
+```bash
+#!/bin/bash
+# scripts/test-qos.sh
+
+TARGET="10.0.2.10"
+
+echo "=== QoS Testing with Congestion ==="
+
+# 1. Start background traffic (congest the link)
+iperf3 -c $TARGET -t 60 -P 10 -b 900M &  # 900 Mbps background
+BG_PID=$!
+
+sleep 5  # Let congestion build up
+
+# 2. Test high-priority traffic (DSCP EF)
+echo -e "\n📊 High-Priority (EF) Latency:"
+ping -c 20 -Q 184 $TARGET | tail -1  # 184 = DSCP 46 << 2
+# Expected: 1-5ms (unaffected by congestion)
+
+# 3. Test low-priority traffic (default)
+echo -e "\n📊 Low-Priority (BE) Latency:"
+ping -c 20 -Q 0 $TARGET | tail -1
+# Expected: 50-200ms (affected by congestion)
+
+# 4. Kill background traffic
+kill $BG_PID
+
+echo -e "\n✅ QoS Test Complete"
+echo "If QoS works correctly:"
+echo "  - EF traffic: Low latency even during congestion"
+echo "  - BE traffic: High latency during congestion"
+```
+
+**Monitoring QoS (Prometheus + Grafana):**
+
+```yaml
+# prometheus/qos-exporter.yml
+
+scrape_configs:
+  - job_name: 'snmp-qos'
+    static_configs:
+      - targets: ['192.168.1.1']  # Router IP
+    metrics_path: /snmp
+    params:
+      module: [cisco_qos]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9116  # SNMP exporter
+
+# SNMP OIDs to collect
+# IF-MIB::ifHCOutOctets (bytes out)
+# CISCO-CLASS-BASED-QOS-MIB::cbQosDropPkt (dropped packets per class)
+```
+
+**Grafana Dashboard Query:**
+
+```promql
+# Packet drop rate per QoS class
+rate(cisco_cbqos_drop_packets{class="KUIPER-CONTROL"}[5m])
+
+# Bandwidth usage per class
+rate(cisco_cbqos_output_bytes{class="KUIPER-TELEMETRY"}[5m]) * 8
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Cisco QoS Config** | `infra/routers/cisco-qos.conf` | Complete QoS policy |
+| **Linux tc Script** | `scripts/qos-linux.sh` | HTB + fq_codel setup |
+| **QoS Test Script** | `scripts/test-qos.sh` | Latency under congestion |
+| **Python DSCP Marking** | `apps/satellite_c2.py` | Socket-level DSCP |
+| **Grafana Dashboard** | `monitoring/grafana/qos-dashboard.json` | Drop rates per class |
+
+**Learn More:**
+- [Cisco QoS Configuration Guide](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/qos/configuration/xe-16/qos-xe-16-book.html)
+- [Linux Advanced Routing & Traffic Control](https://lartc.org/)
+- [RFC 2475 - DiffServ](https://tools.ietf.org/html/rfc2475)
+
+---
+
+## Q19: Tune Network Performance for Low-Latency Applications ⭐⭐⭐
+
+**Category:** Performance Optimization | **Risk:** MEDIUM | **Timebox:** 30 min | **Owner:** Systems Engineer
+
+### Simple Explanation (Feynman Method)
+Network performance tuning is like tuning a race car. Out of the box, Linux/AWS are configured for "average" workloads. But for satellite control systems that need <10ms latency, we need to tweak:
+1. **TCP/IP stack** (buffer sizes, congestion control)
+2. **NIC (Network Interface Card)** (interrupt coalescing, offloading)
+3. **Application** (socket buffer sizes, threading)
+
+### Technical Explanation
+
+**Performance Optimization Checklist:**
+
+```
+┌─────────────────────────────────────────┐
+│ Layer 1: Hardware                       │
+│ - Enhanced Networking (ENA) on AWS      │
+│ - 25 Gbps instances (c5n.18xlarge)      │
+│ - Placement groups (cluster)            │
+└─────────────────────────────────────────┘
+         ↓
+┌─────────────────────────────────────────┐
+│ Layer 2: OS Kernel                      │
+│ - TCP buffer sizes                      │
+│ - Congestion control (BBR)              │
+│ - IRQ affinity                          │
+└─────────────────────────────────────────┘
+         ↓
+┌─────────────────────────────────────────┐
+│ Layer 3: Application                    │
+│ - Socket buffer tuning                  │
+│ - Zero-copy (sendfile, splice)          │
+│ - eBPF for packet filtering             │
+└─────────────────────────────────────────┘
+```
+
+**1. AWS Instance Optimization:**
+
+```hcl
+# terraform/high-performance-ec2.tf
+
+resource "aws_instance" "satellite_c2" {
+  ami           = "ami-0c55b159cbfafe1f0"  # Amazon Linux 2
+  instance_type = "c5n.4xlarge"  # 16 vCPU, 25 Gbps ENA
+
+  # Enable ENA (Enhanced Networking)
+  ena_support = true
+
+  # Placement group for low latency
+  placement_group = aws_placement_group.low_latency.id
+
+  # SR-IOV for direct NIC access
+  network_interface {
+    network_interface_id = aws_network_interface.c2.id
+    device_index         = 0
+  }
+
+  user_data = file("scripts/tune-network.sh")
+}
+
+resource "aws_placement_group" "low_latency" {
+  name     = "kuiper-low-latency"
+  strategy = "cluster"  # All instances in same rack
+}
+```
+
+**2. Linux Kernel Tuning:**
+
+```bash
+#!/bin/bash
+# scripts/tune-network.sh - Comprehensive network tuning
+
+echo "🔧 Tuning network performance..."
+
+# === TCP Buffer Sizes ===
+# Increase from default 4MB to 128MB
+sysctl -w net.core.rmem_max=134217728  # 128 MB receive buffer
+sysctl -w net.core.wmem_max=134217728  # 128 MB send buffer
+sysctl -w net.ipv4.tcp_rmem="4096 87380 134217728"  # min, default, max
+sysctl -w net.ipv4.tcp_wmem="4096 65536 134217728"
+
+# === TCP Congestion Control ===
+# Use BBR (Bottleneck Bandwidth and RTT) - developed by Google
+# Better than CUBIC for high-bandwidth, variable-latency links (like satellites)
+sysctl -w net.core.default_qdisc=fq  # Fair queuing
+sysctl -w net.ipv4.tcp_congestion_control=bbr
+
+# === TCP Optimization ===
+sysctl -w net.ipv4.tcp_fastopen=3  # Enable TCP Fast Open (client + server)
+sysctl -w net.ipv4.tcp_mtu_probing=1  # Automatic MTU discovery
+sysctl -w net.ipv4.tcp_no_metrics_save=1  # Don't cache TCP metrics
+sysctl -w net.ipv4.tcp_slow_start_after_idle=0  # Don't throttle after idle
+
+# === Connection Tracking ===
+sysctl -w net.netfilter.nf_conntrack_max=1048576  # 1M connections
+sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=600  # 10 min
+
+# === Network Interface Tuning ===
+NIC="eth0"
+
+# Increase RX/TX ring buffer sizes
+ethtool -G $NIC rx 4096 tx 4096
+
+# Disable interrupt coalescing for low latency
+ethtool -C $NIC rx-usecs 0 tx-usecs 0
+
+# Enable hardware offloading
+ethtool -K $NIC tso on gso on gro on
+
+# === IRQ Affinity (pin interrupts to specific CPUs) ===
+# CPU 0-3: Network IRQs
+# CPU 4-15: Application threads
+IRQ=$(cat /proc/interrupts | grep $NIC | awk '{print $1}' | tr -d ':')
+echo "2-5" > /proc/irq/$IRQ/smp_affinity_list  # CPUs 2-5 for NIC
+
+# === XDP (eXpress Data Path) - optional ===
+# Ultra-low latency packet processing (bypasses kernel network stack)
+# Requires BPF program
+# ip link set dev $NIC xdp obj xdp_filter.o
+
+# Save to /etc/sysctl.conf for persistence
+cat > /etc/sysctl.d/99-kuiper-network.conf <<EOF
+net.core.rmem_max = 134217728
+net.core.wmem_max = 134217728
+net.ipv4.tcp_rmem = 4096 87380 134217728
+net.ipv4.tcp_wmem = 4096 65536 134217728
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+net.ipv4.tcp_fastopen = 3
+EOF
+
+sysctl -p /etc/sysctl.d/99-kuiper-network.conf
+
+echo "✅ Network tuning complete"
+```
+
+**3. Application-Level Tuning (Python):**
+
+```python
+#!/usr/bin/env python3
+# apps/low_latency_server.py
+
+import socket
+import os
+
+def create_optimized_socket(port=5555):
+    """Create TCP socket with performance optimizations."""
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # 1. Set TCP_NODELAY (disable Nagle's algorithm)
+    # Nagle waits to batch small packets - bad for low latency!
+    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+    # 2. Set TCP_QUICKACK (send ACKs immediately)
+    if hasattr(socket, 'TCP_QUICKACK'):
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
+
+    # 3. Increase socket buffers (match kernel settings)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 128 * 1024 * 1024)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 128 * 1024 * 1024)
+
+    # 4. Enable SO_REUSEADDR (fast restart)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    # 5. Set CPU affinity for this process
+    # Pin to CPUs 4-7 (leave 0-3 for NIC interrupts)
+    os.sched_setaffinity(0, {4, 5, 6, 7})
+
+    # 6. Increase process priority
+    os.nice(-10)  # Requires root
+
+    sock.bind(('0.0.0.0', port))
+    sock.listen(128)  # Backlog queue
+
+    print(f"🚀 Optimized server listening on port {port}")
+    return sock
+
+# Zero-copy file sending
+def send_file_zerocopy(sock, filepath):
+    """Send file using zero-copy (no userspace buffer)."""
+    with open(filepath, 'rb') as f:
+        # sendfile() copies data in kernel space only
+        sock.sendfile(f)
+
+# Usage
+server = create_optimized_socket()
+while True:
+    client, addr = server.accept()
+    # Handle client...
+```
+
+**4. Performance Benchmarking:**
+
+```bash
+#!/bin/bash
+# scripts/benchmark-network.sh
+
+TARGET="10.0.2.10"
+
+echo "=== Network Performance Benchmark ==="
+
+# 1. Latency (baseline)
+echo -e "\n📊 Latency:"
+ping -c 100 -i 0.01 $TARGET | tail -1
+
+# 2. Throughput (iperf3)
+echo -e "\n📊 Throughput (single stream):"
+iperf3 -c $TARGET -t 10 -J | jq '.end.sum_sent.bits_per_second / 1e9 | "Throughput: \(.)Gbps"'
+
+# 3. Throughput (parallel streams)
+echo -e "\n📊 Throughput (10 parallel):"
+iperf3 -c $TARGET -t 10 -P 10 -J | jq '.end.sum_sent.bits_per_second / 1e9 | "Throughput: \(.)Gbps"'
+
+# 4. TCP connection establishment time
+echo -e "\n📊 Connection Time:"
+time bash -c "for i in {1..100}; do echo test | nc $TARGET 5555 & done; wait"
+
+# 5. Small packet latency (netperf)
+echo -e "\n📊 Request-Response Latency:"
+netperf -H $TARGET -t TCP_RR -l 10 -- -r 1,1 | grep "Per Transaction"
+# Expected: <0.5ms for 1-byte request-response
+
+# 6. Check congestion control
+echo -e "\n📊 TCP Congestion Control:"
+ss -i dst $TARGET | grep -E 'bbr|cubic'
+```
+
+**5. eBPF for Ultra-Low Latency (Advanced):**
+
+```c
+// bpf/xdp_filter.c - Drop unwanted packets in NIC driver
+
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+
+SEC("xdp_filter")
+int xdp_filter_func(struct xdp_md *ctx) {
+    void *data_end = (void *)(long)ctx->data_end;
+    void *data = (void *)(long)ctx->data;
+
+    struct ethhdr *eth = data;
+    if ((void *)(eth + 1) > data_end)
+        return XDP_DROP;
+
+    // Only allow IPv4
+    if (eth->h_proto != __constant_htons(ETH_P_IP))
+        return XDP_DROP;
+
+    struct iphdr *ip = (void *)(eth + 1);
+    if ((void *)(ip + 1) > data_end)
+        return XDP_DROP;
+
+    // Only allow traffic to satellite C2 subnet (10.0.2.0/24)
+    if ((ip->daddr & 0xFFFFFF00) == 0x0A000200)  // 10.0.2.0/24
+        return XDP_PASS;
+
+    return XDP_DROP;  // Drop everything else at NIC level
+}
+
+char _license[] SEC("license") = "GPL";
+```
+
+**Compile and load:**
+```bash
+clang -O2 -target bpf -c xdp_filter.c -o xdp_filter.o
+ip link set dev eth0 xdp obj xdp_filter.o
+```
+
+**Expected Performance Improvements:**
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| **Latency (p50)** | 15ms | 2ms | 7.5x |
+| **Latency (p99)** | 150ms | 8ms | 18x |
+| **Throughput (single)** | 5 Gbps | 9 Gbps | 1.8x |
+| **Throughput (10 parallel)** | 15 Gbps | 24 Gbps | 1.6x |
+| **Connection/sec** | 10,000 | 50,000 | 5x |
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Tuning Script** | `scripts/tune-network.sh` | sysctl + ethtool |
+| **Python Optimizations** | `apps/low_latency_server.py` | TCP_NODELAY, buffers |
+| **Benchmark Script** | `scripts/benchmark-network.sh` | Before/after metrics |
+| **eBPF Filter** | `bpf/xdp_filter.c` | XDP packet filtering |
+| **Performance Report** | `docs/performance/network-tuning.md` | Results & analysis |
+
+**Learn More:**
+- [AWS Enhanced Networking](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html)
+- [TCP BBR Congestion Control](https://queue.acm.org/detail.cfm?id=3022184)
+- [XDP Tutorial](https://github.com/xdp-project/xdp-tutorial)
+
+---
+
+## Q20: Optimize AWS Costs While Maintaining SLOs ⭐⭐⭐
+
+**Category:** Cost Optimization | **Risk:** MEDIUM | **Timebox:** 25 min | **Owner:** Solutions Architect
+
+### Simple Explanation (Feynman Method)
+Cost optimization is about spending money wisely, not spending less. For Kuiper, we have **hard SLOs** (Service Level Objectives):
+- Satellite commands: <10ms latency, 99.99% availability
+- Telemetry ingestion: 10,000 metrics/sec, no data loss
+
+We can't compromise these. But we CAN optimize:
+1. **Right-size instances** (don't pay for unused CPU)
+2. **Reserved Instances** (commit to 1-year, save 40%)
+3. **S3 lifecycle policies** (move old logs to Glacier)
+4. **Auto Scaling** (scale down during low-traffic hours)
+
+### Technical Explanation
+
+**Current Monthly Costs (Before Optimization):**
+```
+EC2 (control plane):        $3,500/mo  (10× c5.2xlarge, on-demand)
+Direct Connect:             $2,800/mo  (10 Gbps port + data transfer)
+RDS (PostgreSQL):           $1,200/mo  (db.r5.xlarge)
+S3 (telemetry logs):        $1,000/mo  (10 TB)
+VPN (backup):                 $300/mo  (4 VPN connections)
+CloudWatch:                   $200/mo  (metrics + logs)
+────────────────────────────────────
+Total:                      $9,000/mo
+```
+
+**Optimization Strategies:**
+
+**1. Right-Sizing EC2 Instances:**
+
+```python
+#!/usr/bin/env python3
+# scripts/analyze-instance-utilization.py
+
+import boto3
+from datetime import datetime, timedelta
+
+cloudwatch = boto3.client('cloudwatch')
+ec2 = boto3.client('ec2')
+
+def get_cpu_utilization(instance_id, days=14):
+    """Get average CPU utilization over last N days."""
+    response = cloudwatch.get_metric_statistics(
+        Namespace='AWS/EC2',
+        MetricName='CPUUtilization',
+        Dimensions=[{'Name': 'InstanceId', 'Value': instance_id}],
+        StartTime=datetime.now() - timedelta(days=days),
+        EndTime=datetime.now(),
+        Period=3600,  # 1 hour
+        Statistics=['Average']
+    )
+
+    if response['Datapoints']:
+        avg = sum(d['Average'] for d in response['Datapoints']) / len(response['Datapoints'])
+        return avg
+    return 0
+
+def recommend_instance_type(current_type, cpu_avg):
+    """Recommend smaller instance if underutilized."""
+
+    # If CPU < 30% for 2 weeks, downsize
+    if cpu_avg < 30:
+        downsize_map = {
+            'c5.2xlarge': 'c5.xlarge',    # 8 vCPU -> 4 vCPU
+            'c5.xlarge': 'c5.large',      # 4 vCPU -> 2 vCPU
+        }
+        return downsize_map.get(current_type, current_type)
+
+    return current_type  # Keep current
+
+# Analyze all running instances
+instances = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+
+print("📊 EC2 Right-Sizing Recommendations\n")
+
+for reservation in instances['Reservations']:
+    for instance in reservation['Instances']:
+        instance_id = instance['InstanceId']
+        instance_type = instance['InstanceType']
+
+        cpu_avg = get_cpu_utilization(instance_id)
+        recommended = recommend_instance_type(instance_type, cpu_avg)
+
+        if recommended != instance_type:
+            # Calculate savings
+            current_price = get_instance_price(instance_type)
+            new_price = get_instance_price(recommended)
+            savings = (current_price - new_price) * 730  # hours/month
+
+            print(f"💡 {instance_id} ({instance_type})")
+            print(f"   CPU: {cpu_avg:.1f}% avg")
+            print(f"   Recommend: {recommended}")
+            print(f"   Savings: ${savings:.0f}/mo\n")
+
+# Expected output:
+# 💡 i-1234567890 (c5.2xlarge)
+#    CPU: 22.3% avg
+#    Recommend: c5.xlarge
+#    Savings: $73/mo
+```
+
+**2. Reserved Instances & Savings Plans:**
+
+```python
+#!/usr/bin/env python3
+# scripts/calculate-ri-savings.py
+
+# Current: 10× c5.2xlarge on-demand
+# On-demand: $0.34/hr × 10 × 730 hr/mo = $2,482/mo
+
+# Option 1: Standard RI (1-year, all upfront)
+# Cost: $0.20/hr × 10 × 730 = $1,460/mo (41% savings)
+# Upfront: $17,520
+
+# Option 2: Compute Savings Plan (1-year, no upfront)
+# Cost: $0.22/hr × 10 × 730 = $1,606/mo (35% savings)
+# Flexibility: Can change instance types
+
+print("💰 Reserved Instance Savings")
+print(f"On-Demand:        $2,482/mo")
+print(f"Standard RI:      $1,460/mo (save $1,022/mo, $12,264/yr)")
+print(f"Savings Plan:     $1,606/mo (save $876/mo, $10,512/yr)")
+print(f"\nROI: 8.5 months")
+```
+
+**Terraform for Purchasing RIs:**
+
+```hcl
+# terraform/reserved-instances.tf
+
+resource "aws_ec2_reserved_instances" "kuiper_control_plane" {
+  instance_count   = 10
+  instance_type    = "c5.2xlarge"
+  offering_class   = "standard"
+  offering_type    = "All Upfront"
+  term             = 31536000  # 1 year in seconds
+
+  tags = {
+    Project = "kuiper-cost-optimization"
+  }
+}
+
+# Alternative: Savings Plan
+resource "aws_savingsplans_plan" "compute" {
+  savings_plan_type = "ComputeSavingsPlans"
+  term              = "ONE_YEAR"
+  payment_option    = "NO_UPFRONT"
+
+  commitment = "1.606"  # $/hour commitment
+
+  tags = {
+    Project = "kuiper"
+  }
+}
+```
+
+**3. S3 Lifecycle Policies:**
+
+```hcl
+# terraform/s3-lifecycle.tf
+
+resource "aws_s3_bucket_lifecycle_configuration" "telemetry_logs" {
+  bucket = aws_s3_bucket.kuiper_telemetry.id
+
+  rule {
+    id     = "archive-old-logs"
+    status = "Enabled"
+
+    # Telemetry logs: Hot access for 7 days, then archive
+    transition {
+      days          = 7
+      storage_class = "INTELLIGENT_TIERING"  # Automatic cost optimization
+    }
+
+    transition {
+      days          = 30
+      storage_class = "GLACIER_IR"  # Instant Retrieval, $0.004/GB
+    }
+
+    transition {
+      days          = 90
+      storage_class = "DEEP_ARCHIVE"  # $0.00099/GB (75% cheaper)
+    }
+
+    # Delete after 7 years (compliance requirement)
+    expiration {
+      days = 2555  # 7 years
+    }
+  }
+
+  rule {
+    id     = "delete-incomplete-uploads"
+    status = "Enabled"
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
+# Cost Calculation
+# Before: 10 TB in S3 Standard = 10,000 GB × $0.023/GB = $230/mo
+# After:
+#   - 1 TB (7 days) in Intelligent Tiering = $23/mo
+#   - 3 TB (30 days) in Glacier IR = 3,000 × $0.004 = $12/mo
+#   - 6 TB (90+ days) in Deep Archive = 6,000 × $0.00099 = $6/mo
+# Total: $41/mo (save $189/mo)
+```
+
+**4. Auto Scaling for Non-Critical Workloads:**
+
+```hcl
+# terraform/autoscaling.tf
+
+# Telemetry processing can scale down at night (reduced satellite traffic)
+resource "aws_autoscaling_group" "telemetry_processors" {
+  name                 = "kuiper-telemetry-asg"
+  vpc_zone_identifier  = aws_subnet.private[*].id
+  target_group_arns    = [aws_lb_target_group.telemetry.arn]
+  health_check_type    = "ELB"
+
+  min_size         = 2   # Always 2 for redundancy
+  max_size         = 10
+  desired_capacity = 5
+
+  launch_template {
+    id      = aws_launch_template.telemetry.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "kuiper-telemetry"
+    propagate_at_launch = true
+  }
+}
+
+# Scale up during peak hours (8am-8pm UTC)
+resource "aws_autoscaling_schedule" "scale_up" {
+  scheduled_action_name  = "scale-up-business-hours"
+  min_size               = 2
+  max_size               = 10
+  desired_capacity       = 8  # Peak capacity
+  recurrence             = "0 8 * * *"  # 8am UTC daily
+  autoscaling_group_name = aws_autoscaling_group.telemetry_processors.name
+}
+
+# Scale down at night
+resource "aws_autoscaling_schedule" "scale_down" {
+  scheduled_action_name  = "scale-down-night"
+  min_size               = 2
+  max_size               = 10
+  desired_capacity       = 3  # Night capacity
+  recurrence             = "0 20 * * *"  # 8pm UTC daily
+  autoscaling_group_name = aws_autoscaling_group.telemetry_processors.name
+}
+
+# Cost savings: 8 instances (16h) + 3 instances (8h) = avg 6.3 instances
+# vs. 8 instances 24/7
+# Savings: (8 - 6.3) × $0.34 × 730 = $422/mo
+```
+
+**5. CloudWatch Costs - Log Filtering:**
+
+```python
+#!/usr/bin/env python3
+# lambda/filter-cloudwatch-logs.py
+# Lambda function to filter out noisy logs before ingestion
+
+import json
+import gzip
+import base64
+
+def lambda_handler(event, context):
+    """Filter CloudWatch Logs before storage."""
+
+    # Decode log data
+    log_data = event['awslogs']['data']
+    decoded = base64.b64decode(log_data)
+    uncompressed = gzip.decompress(decoded)
+    log_json = json.loads(uncompressed)
+
+    filtered_events = []
+
+    for log_event in log_json['logEvents']:
+        message = log_event['message']
+
+        # Drop noisy debug logs (save 60% of ingestion costs)
+        if 'DEBUG' in message:
+            continue
+
+        # Drop health check logs
+        if 'GET /health' in message:
+            continue
+
+        # Keep everything else
+        filtered_events.append(log_event)
+
+    # If no events remain, return empty
+    if not filtered_events:
+        return {'statusCode': 200}
+
+    # Re-encode and return
+    log_json['logEvents'] = filtered_events
+    compressed = gzip.compress(json.dumps(log_json).encode())
+    encoded = base64.b64encode(compressed).decode()
+
+    return {
+        'awslogs': {
+            'data': encoded
+        }
+    }
+
+# CloudWatch Logs before: $0.50/GB ingestion + $0.03/GB storage
+# After filtering 60% of logs:
+# Cost: $0.20/GB ingestion + $0.012/GB storage (save $0.318/GB)
+# Savings: ~$120/mo on 500 GB/mo logs
+```
+
+**6. Monitoring & Alerting for Cost Anomalies:**
+
+```python
+#!/usr/bin/env python3
+# scripts/cost-anomaly-detection.py
+
+import boto3
+
+ce = boto3.client('ce')  # Cost Explorer
+
+def detect_cost_spikes():
+    """Alert if daily cost > 20% above 7-day average."""
+
+    response = ce.get_cost_and_usage(
+        TimePeriod={
+            'Start': '2024-01-01',
+            'End': '2024-01-08'
+        },
+        Granularity='DAILY',
+        Metrics=['UnblendedCost'],
+        GroupBy=[{'Type': 'SERVICE', 'Key': 'SERVICE'}]
+    )
+
+    for result in response['ResultsByTime']:
+        date = result['TimePeriod']['Start']
+        cost = float(result['Total']['UnblendedCost']['Amount'])
+
+        # Check if > 20% above average
+        if cost > 300 * 1.2:  # $300/day baseline
+            print(f"⚠️ Cost spike on {date}: ${cost:.2f}")
+            # Send SNS alert
+
+detect_cost_spikes()
+```
+
+**Cost Optimization Summary:**
+
+| Optimization | Savings/mo | Risk | Effort |
+|--------------|-----------|------|--------|
+| Right-size EC2 (10 → 8 vCPU) | $730 | Low | 2 hours |
+| Reserved Instances (1-year) | $1,022 | None | 1 hour |
+| S3 Lifecycle (to Glacier) | $189 | None | 1 hour |
+| Auto Scaling (telemetry) | $422 | Low | 4 hours |
+| CloudWatch Log filtering | $120 | None | 2 hours |
+| **Total** | **$2,483/mo** | | **10 hours** |
+
+**New Monthly Cost:** $9,000 - $2,483 = **$6,517/mo** (28% reduction)
+
+**SLO Verification:**
+```bash
+# After optimizations, verify SLOs still met:
+# 1. Latency: <10ms (99th percentile)
+curl -w "@curl-format.txt" https://kuiper-api.example.com/health
+
+# 2. Availability: 99.99% (measure over 30 days)
+uptime_pct=$(aws cloudwatch get-metric-statistics \
+  --namespace AWS/ApplicationELB \
+  --metric-name HealthyHostCount \
+  --start-time 2024-01-01T00:00:00Z \
+  --end-time 2024-01-31T00:00:00Z \
+  | jq '.Datapoints | map(.Average) | add / length * 100')
+
+echo "Availability: $uptime_pct%"  # Must be > 99.99%
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Right-Sizing Script** | `scripts/analyze-instance-utilization.py` | CPU analysis |
+| **RI Calculator** | `scripts/calculate-ri-savings.py` | ROI calculations |
+| **S3 Lifecycle** | `terraform/s3-lifecycle.tf` | Archive policies |
+| **Auto Scaling** | `terraform/autoscaling.tf` | Time-based scaling |
+| **Cost Dashboard** | `monitoring/grafana/cost-dashboard.json` | Real-time spend |
+
+**Learn More:**
+- [AWS Cost Optimization](https://aws.amazon.com/pricing/cost-optimization/)
+- [Well-Architected Framework - Cost Optimization](https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html)
+- [Reserved Instances vs Savings Plans](https://aws.amazon.com/savingsplans/compute-pricing/)
+
+---
+
+**Continue reading:** Questions 21-60 coming next...
 
 ## Glossary of All Terms (A-Z)
 
