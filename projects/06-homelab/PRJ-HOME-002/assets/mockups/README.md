@@ -101,7 +101,64 @@ Same process as Grafana dashboard - use browser developer tools to capture full-
 - Gradient backgrounds and modern card design
 - Emoji icons for visual elements
 
-### 3. AI Generation Prompts
+### 3. Interactive Proxmox VE Dashboard
+**File:** `proxmox-ve-dashboard.html`
+
+A fully functional, interactive Proxmox Virtual Environment web interface mockup showcasing virtualization infrastructure management.
+
+**Features:**
+- **Authentic Proxmox UI:** Light theme matching Proxmox VE 8.x design
+- **Resource Tree Navigation:**
+  - Collapsible datacenter hierarchy
+  - Virtual Machines folder with 6 VMs
+  - LXC Containers folder
+  - Storage folder
+  - Interactive node selection
+- **Node Summary Dashboard:**
+  - CPU Usage: 34% of 32 cores with gradient progress bar
+  - Memory Usage: 58% (73.6GB / 128GB) with warning indicator
+  - Swap Usage: 0% (unused)
+  - Root Filesystem: 19% (87.2GB / 450GB)
+- **Server Information Card:**
+  - Hostname: pve.homelab.local
+  - IP Address: 192.168.40.10
+  - Uptime: 45 days
+  - Proxmox Version: 8.1.4
+  - Kernel Version: Linux 6.5.11-8-pve
+- **Running VMs Table:**
+  - 6 VMs with detailed status (Wiki.js, Home Assistant, Immich, PostgreSQL, Utility, Nginx)
+  - Per-VM metrics: VMID, CPU, Memory, Disk, IP Address
+  - Mini progress bars for CPU usage visualization
+  - Green status indicators showing all VMs running
+- **Resource Charts:**
+  - CPU Usage (Last Hour) - SVG area chart with gradient
+  - Memory Usage (Last Hour) - SVG area chart showing stable utilization
+- **Interactive Elements:**
+  - Expandable/collapsible tree navigation
+  - Tabbed interface (Summary, VMs, Containers, Storage, Network, Shell)
+  - Create VM/CT buttons in header
+  - Clickable toolbar buttons
+
+**Usage:**
+```bash
+# Open in browser
+open proxmox-ve-dashboard.html
+# or
+firefox proxmox-ve-dashboard.html
+```
+
+**Screenshot Capture:**
+Same process as other dashboards - use browser developer tools to capture full-page screenshots. The interface is fully rendered and looks authentic.
+
+**Technologies Used:**
+- Pure HTML/CSS/JavaScript
+- SVG for resource usage charts
+- Interactive tree navigation with JavaScript
+- CSS Grid for layout
+- Gradient fills for usage bars
+- Orange accent color (#ff6600) for Proxmox branding
+
+### 4. AI Generation Prompts
 **File:** `AI-PROMPTS.md`
 
 Detailed prompts for generating additional mockup screenshots using AI tools (Midjourney, DALL-E 3, etc.) or manual creation tools (Figma, Excalidraw).

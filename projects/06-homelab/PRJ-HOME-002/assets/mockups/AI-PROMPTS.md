@@ -4,7 +4,7 @@ This document contains detailed prompts for generating realistic screenshot mock
 
 ## Interactive HTML Dashboards
 
-Two **interactive HTML mockups** are available in this directory for live demonstrations:
+Three **interactive HTML mockups** are available in this directory for live demonstrations:
 
 ### 1. Grafana Homelab Infrastructure Dashboard
 - **File:** `grafana-homelab-dashboard.html`
@@ -26,6 +26,20 @@ Two **interactive HTML mockups** are available in this directory for live demons
   - Real-time metrics: requests, data transfer, latency
   - Activity log showing recent changes
   - Filter and search functionality
+- **Usage:** Open in any modern web browser for a live demo
+- **Screenshot:** Can be used to capture high-quality dashboard screenshots
+
+### 3. Proxmox VE Dashboard
+- **File:** `proxmox-ve-dashboard.html`
+- **Features:**
+  - Authentic Proxmox VE 8.x interface design
+  - Interactive tree navigation with collapsible nodes
+  - 6 running VMs with detailed resource metrics
+  - Node summary with CPU, Memory, Swap, and Filesystem usage
+  - SVG resource charts (CPU and Memory over time)
+  - VM table with VMID, status, and per-VM statistics
+  - Server information panel
+  - Tabbed interface (Summary, VMs, Containers, Storage, Network, Shell)
 - **Usage:** Open in any modern web browser for a live demo
 - **Screenshot:** Can be used to capture high-quality dashboard screenshots
 
