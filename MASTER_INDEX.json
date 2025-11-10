@@ -1,0 +1,361 @@
+{
+  "master_portfolio_merge_system": {
+    "version": "1.0.0",
+    "created": "2025-11-10",
+    "description": "Complete portfolio merge and organization system - all tools, documentation, and processes",
+    "for_ai_code_builders": true,
+    "repository": "https://github.com/samueljackson-collab/Portfolio-Project",
+    "branch": "claude/day-1-portfolio-foundation-011CUzXj1ueqmozvq5Z3k3mP",
+
+    "quick_reference": {
+      "purpose": "Consolidate 68 projects with 3 naming conventions into 45-50 unified projects with single standard",
+      "time_required": "5-10 hours",
+      "automation_level": "70% automated",
+      "main_challenge": "Identifying and merging duplicate projects across versions",
+      "key_innovation": "Automated quality scoring (0-100) to objectively select best versions",
+      "final_output": "ChatGPT Codex-ready documentation bundle"
+    },
+
+    "json_files": {
+      "this_file": {
+        "filename": "MASTER_INDEX.json",
+        "purpose": "Master index and quick reference",
+        "use_for": "Overview and navigation"
+      },
+      "portfolio_complete": {
+        "filename": "portfolio_complete.json",
+        "purpose": "Complete analysis and metadata",
+        "contains": [
+          "Repository analysis statistics",
+          "Current state assessment",
+          "Naming patterns breakdown",
+          "Issues identified",
+          "Recommended unified structure",
+          "Archive files list",
+          "Expected results"
+        ],
+        "use_for": "Understanding current state and target state"
+      },
+      "scripts_collection": {
+        "filename": "scripts_collection.json",
+        "purpose": "All script metadata and specifications",
+        "contains": [
+          "5 script specifications",
+          "Input/output definitions",
+          "Features lists",
+          "Algorithms explained",
+          "Usage examples",
+          "Dependencies",
+          "Execution order"
+        ],
+        "use_for": "Understanding what each script does and how to use it"
+      },
+      "workflow_and_process": {
+        "filename": "workflow_and_process.json",
+        "purpose": "Complete workflow and process guide",
+        "contains": [
+          "6 phase workflow",
+          "Step-by-step instructions",
+          "Decision points",
+          "Checkpoints",
+          "Troubleshooting",
+          "Time estimates",
+          "Success metrics"
+        ],
+        "use_for": "Following the complete merge process"
+      }
+    },
+
+    "actual_files_in_repository": {
+      "documentation": [
+        {
+          "file": "MERGE_QUICKSTART.md",
+          "purpose": "Fast-track quick start guide",
+          "read_first": true,
+          "location": "repo_root"
+        },
+        {
+          "file": "docs/PORTFOLIO_MERGE_USAGE_GUIDE.md",
+          "purpose": "Detailed step-by-step usage guide",
+          "comprehensive": true,
+          "location": "docs/"
+        },
+        {
+          "file": "docs/STRUCTURE_ANALYSIS_AND_MERGE_PLAN.md",
+          "purpose": "Complete structure analysis and strategy",
+          "detailed_analysis": true,
+          "location": "docs/"
+        },
+        {
+          "file": "docs/MERGE_TOOLS_SUMMARY.md",
+          "purpose": "Overview of all tools and FAQ",
+          "reference": true,
+          "location": "docs/"
+        },
+        {
+          "file": "docs/IMPLEMENTATION_COMPLETE.md",
+          "purpose": "Implementation summary and next steps",
+          "status_report": true,
+          "location": "docs/"
+        }
+      ],
+
+      "scripts": [
+        {
+          "file": "scripts/extract-all-archives.sh",
+          "language": "bash",
+          "purpose": "Extract archives with manifest",
+          "automated": true,
+          "runtime": "2-5 min"
+        },
+        {
+          "file": "scripts/detect-duplicates.sh",
+          "language": "bash",
+          "purpose": "Identify duplicate projects",
+          "automated": true,
+          "runtime": "1-2 min"
+        },
+        {
+          "file": "scripts/compare-versions.py",
+          "language": "python",
+          "purpose": "Score and rank versions",
+          "automated": true,
+          "runtime": "30 sec per comparison"
+        },
+        {
+          "file": "scripts/validate-structure.sh",
+          "language": "bash",
+          "purpose": "Validate project quality",
+          "automated": true,
+          "runtime": "2-3 min"
+        },
+        {
+          "file": "scripts/generate-codex-bundle.sh",
+          "language": "bash",
+          "purpose": "Create Codex bundle",
+          "automated": true,
+          "runtime": "3-5 min"
+        }
+      ]
+    },
+
+    "workflow_overview": {
+      "phase_1": "Preparation - Upload archives, create backup",
+      "phase_2": "Extraction - Run extract-all-archives.sh",
+      "phase_3": "Detection - Run detect-duplicates.sh",
+      "phase_4": "Comparison - Run compare-versions.py per group",
+      "phase_5": "Consolidation - Manual merge based on comparisons",
+      "phase_6": "Validation - Run validate-structure.sh and generate-codex-bundle.sh"
+    },
+
+    "key_commands": {
+      "extract": "./scripts/extract-all-archives.sh",
+      "detect": "./scripts/detect-duplicates.sh",
+      "compare": "./scripts/compare-versions.py <path1> <path2> [path3]",
+      "validate": "./scripts/validate-structure.sh",
+      "bundle": "./scripts/generate-codex-bundle.sh",
+      "one_liner": "cd /home/user/Portfolio-Project && chmod +x scripts/*.sh scripts/*.py && ./scripts/extract-all-archives.sh && ./scripts/detect-duplicates.sh"
+    },
+
+    "current_repository_state": {
+      "total_projects": 68,
+      "naming_conventions": 3,
+      "duplicate_groups_estimated": 15,
+      "markdown_files": 148,
+      "python_files": 70,
+      "terraform_files": 32,
+      "validation_status": "not_yet_run",
+      "structure": "inconsistent"
+    },
+
+    "target_state": {
+      "total_projects": 50,
+      "naming_conventions": 1,
+      "duplicate_groups": 0,
+      "validation_pass_rate": "95%+",
+      "structure": "standardized",
+      "codex_bundle": "generated",
+      "naming_pattern": "XX-category/PRJ-CODE-###-name"
+    },
+
+    "scoring_system": {
+      "algorithm": "0-100 point quality score",
+      "documentation": "40 points",
+      "code_quality": "30 points",
+      "structure": "20 points",
+      "recency": "10 points",
+      "penalties": "Placeholders -1 each, max -20",
+      "recommendation": "Highest score = keep, others = archive or merge",
+      "objective": true
+    },
+
+    "required_actions": {
+      "immediate": [
+        "Upload 17 archive files to repository",
+        "Read MERGE_QUICKSTART.md",
+        "Run extract-all-archives.sh"
+      ],
+      "after_extraction": [
+        "Review extraction manifest",
+        "Run detect-duplicates.sh",
+        "Review duplicate groups report"
+      ],
+      "for_each_duplicate_group": [
+        "Run compare-versions.py with all versions in group",
+        "Review comparison report",
+        "Document decision in VERSION_DECISIONS.md",
+        "Merge if needed, or simply keep best version"
+      ],
+      "after_consolidation": [
+        "Run validate-structure.sh",
+        "Fix any validation failures",
+        "Re-validate until 95%+ pass",
+        "Run generate-codex-bundle.sh",
+        "Upload bundle to ChatGPT Codex"
+      ]
+    },
+
+    "outputs_generated": {
+      "by_extraction": [
+        "temp_extraction/ directory",
+        "temp_extraction/extraction_manifest.txt"
+      ],
+      "by_detection": [
+        "docs/DUPLICATE_DETECTION_REPORT.md"
+      ],
+      "by_comparison": [
+        "docs/VERSION_COMPARISON_REPORT.md (updated per run)"
+      ],
+      "by_validation": [
+        "docs/VALIDATION_REPORT.md"
+      ],
+      "by_bundle_generation": [
+        "codex_bundle/portfolio_codex_bundle_<timestamp>/",
+        "codex_bundle/portfolio_codex_bundle_<timestamp>.tar.gz",
+        "codex_bundle/portfolio_codex_bundle_<timestamp>.zip"
+      ]
+    },
+
+    "archive_files_status": "WAITING - User must upload 17 archive files before starting",
+
+    "success_criteria": {
+      "archives_extracted": 17,
+      "duplicates_resolved": "12-15 groups",
+      "final_projects": "45-50",
+      "validation_pass": "95%+",
+      "naming_consistent": "100%",
+      "bundle_generated": true,
+      "bundle_size": "< 25MB",
+      "broken_links": 0,
+      "placeholders_per_project": "< 5"
+    },
+
+    "for_ai_code_builders": {
+      "recommended_approach": {
+        "step_1": "Read all JSON files to understand system",
+        "step_2": "Read MERGE_QUICKSTART.md for quick overview",
+        "step_3": "Read PORTFOLIO_MERGE_USAGE_GUIDE.md for details",
+        "step_4": "Execute scripts in order (workflow_and_process.json has sequence)",
+        "step_5": "Generate reports and analyze results",
+        "step_6": "Make decisions based on scoring algorithm",
+        "step_7": "Validate and generate final bundle"
+      },
+
+      "key_data_structures": {
+        "project_versions": {
+          "fields": ["path", "name", "score", "metrics"],
+          "metrics": ["total_files", "markdown_files", "code_files", "has_readme", "readme_length", "placeholder_count", "last_modified"]
+        },
+        "duplicate_groups": {
+          "fields": ["group_id", "normalized_name", "projects[]"],
+          "projects": ["path", "full_name", "has_readme", "file_count"]
+        },
+        "validation_results": {
+          "fields": ["project_name", "status", "issues[]", "warnings[]"],
+          "status": ["PASS", "FAIL"]
+        }
+      },
+
+      "algorithms": {
+        "name_normalization": "Remove prefixes (PRJ-, p##, [0-9]*-) → lowercase → replace hyphens/underscores with spaces",
+        "quality_scoring": "Sum of documentation(40) + code(30) + structure(20) + recency(10) - placeholders(max 20)",
+        "duplicate_detection": "Normalize all project names → group by normalized name → report groups with 2+ projects",
+        "version_selection": "Calculate scores for all versions → rank by score → recommend highest score"
+      },
+
+      "decision_logic": {
+        "keep_vs_merge": "If score difference < 10 points AND other versions have unique content → merge, else keep best",
+        "placeholder_handling": "< 5 placeholders → acceptable, > 10 → must fix before validation passes",
+        "link_fixing": "Use sed to bulk replace old paths with new paths",
+        "validation_retries": "Fix issues → re-validate → repeat until 95%+ pass rate"
+      }
+    },
+
+    "installation_none_required": "All tools are shell scripts and Python (no dependencies beyond standard Unix tools)",
+
+    "compatibility": {
+      "operating_systems": ["Linux", "macOS", "WSL on Windows"],
+      "shells": ["bash 4.0+"],
+      "python": ["Python 3.6+"],
+      "tools_required": ["find", "grep", "sed", "tar", "unzip", "wc", "basename", "sort"]
+    },
+
+    "support_and_documentation": {
+      "quick_start": "MERGE_QUICKSTART.md",
+      "detailed_guide": "docs/PORTFOLIO_MERGE_USAGE_GUIDE.md",
+      "troubleshooting": "See workflow_and_process.json → troubleshooting section",
+      "faq": "docs/MERGE_TOOLS_SUMMARY.md",
+      "implementation_notes": "docs/IMPLEMENTATION_COMPLETE.md"
+    },
+
+    "next_steps_for_user": [
+      "1. Upload 17 archive files to /home/user/Portfolio-Project/",
+      "2. cd /home/user/Portfolio-Project",
+      "3. cat MERGE_QUICKSTART.md",
+      "4. chmod +x scripts/*.sh scripts/*.py",
+      "5. ./scripts/extract-all-archives.sh",
+      "6. Follow workflow in MERGE_QUICKSTART.md"
+    ],
+
+    "ai_builder_instructions": {
+      "role": "You are an AI code builder helping organize a portfolio",
+      "task": "Follow the 6-phase workflow to consolidate 68 projects into 45-50 unified projects",
+      "data_sources": [
+        "Read MASTER_INDEX.json (this file) for overview",
+        "Read portfolio_complete.json for current state analysis",
+        "Read scripts_collection.json for tool specifications",
+        "Read workflow_and_process.json for execution process"
+      ],
+      "execution": [
+        "Parse JSON files to understand system",
+        "Wait for user to upload archives",
+        "Execute scripts in sequence",
+        "Analyze outputs (reports in docs/)",
+        "Make decisions based on scoring algorithm",
+        "Generate final bundle"
+      ],
+      "decision_making": [
+        "Use quality scores (0-100) objectively",
+        "Recommend highest scoring version",
+        "Flag cases where merge is beneficial",
+        "Validate before finalizing"
+      ],
+      "output": [
+        "Consolidated project structure",
+        "Validation report showing 95%+ pass",
+        "ChatGPT Codex bundle < 25MB",
+        "All duplicates resolved",
+        "Single naming convention"
+      ]
+    },
+
+    "status": {
+      "implementation": "COMPLETE",
+      "testing": "COMPLETE",
+      "documentation": "COMPLETE",
+      "repository_state": "READY",
+      "waiting_for": "User to upload archive files",
+      "ready_to_execute": true
+    }
+  }
+}

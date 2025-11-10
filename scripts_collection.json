@@ -1,0 +1,553 @@
+{
+  "scripts_collection": {
+    "metadata": {
+      "total_scripts": 5,
+      "languages": ["bash", "python"],
+      "purpose": "Automated portfolio merge and organization tools",
+      "all_executable": true
+    },
+
+    "scripts": [
+      {
+        "name": "extract-all-archives.sh",
+        "filename": "scripts/extract-all-archives.sh",
+        "language": "bash",
+        "version": "1.0",
+        "purpose": "Extract all portfolio archives with manifest generation",
+        "runtime_estimate": "2-5 minutes",
+
+        "inputs": {
+          "file_patterns": ["*.zip", "*.tar.gz", "*.tar", "*.tgz"],
+          "search_locations": [
+            "$REPO_ROOT",
+            "$REPO_ROOT/downloads",
+            "$REPO_ROOT/archives",
+            "$(pwd)"
+          ]
+        },
+
+        "outputs": {
+          "extraction_directory": "temp_extraction/",
+          "manifest_file": "temp_extraction/extraction_manifest.txt",
+          "per_archive_directory": "temp_extraction/<archive-name>/"
+        },
+
+        "features": [
+          "Auto-detects archive types (zip, tar.gz, tar)",
+          "Organized extraction to temp directory",
+          "Comprehensive manifest generation",
+          "File and directory counting",
+          "README file identification",
+          "Project directory identification",
+          "Top-level contents listing",
+          "Colored terminal output"
+        ],
+
+        "usage": "./scripts/extract-all-archives.sh",
+
+        "exit_codes": {
+          "0": "Success - archives extracted",
+          "1": "Error - no archives found"
+        },
+
+        "algorithm": [
+          "Create temp_extraction/ base directory",
+          "Initialize manifest file",
+          "Search all specified locations for archives",
+          "For each archive found:",
+          "  - Detect type (zip/tar.gz/tar)",
+          "  - Create extraction subdirectory",
+          "  - Extract contents",
+          "  - Count files and directories",
+          "  - Find README and project directories",
+          "  - Add to manifest",
+          "Display summary statistics",
+          "Suggest next steps"
+        ],
+
+        "dependencies": ["tar", "unzip", "find", "wc", "basename"],
+
+        "manifest_format": {
+          "per_archive": [
+            "## Archive Name",
+            "Location: path/to/extracted",
+            "Files: count",
+            "Directories: count",
+            "Extracted: timestamp",
+            "### Top-level contents",
+            "### README files found",
+            "### Project directories",
+            "---"
+          ]
+        }
+      },
+
+      {
+        "name": "detect-duplicates.sh",
+        "filename": "scripts/detect-duplicates.sh",
+        "language": "bash",
+        "version": "1.0",
+        "purpose": "Identify duplicate projects across naming conventions",
+        "runtime_estimate": "1-2 minutes",
+
+        "inputs": {
+          "current_projects": "projects/ directory",
+          "extracted_projects": "temp_extraction/ directory",
+          "project_patterns": ["p[0-9]*", "PRJ-*", "[0-9]*-*"]
+        },
+
+        "outputs": {
+          "report": "docs/DUPLICATE_DETECTION_REPORT.md",
+          "format": "markdown",
+          "includes": [
+            "Duplicate groups",
+            "File counts per project",
+            "README existence status",
+            "Project locations",
+            "Summary statistics",
+            "Recommendations"
+          ]
+        },
+
+        "features": [
+          "Fuzzy name matching",
+          "Name normalization (removes prefixes, lowercases)",
+          "Groups projects by similarity",
+          "README analysis",
+          "File count comparison",
+          "Scans both current repo and extracted archives",
+          "Detailed markdown report"
+        ],
+
+        "usage": "./scripts/detect-duplicates.sh",
+
+        "algorithm": {
+          "step1": "Scan current repository projects/",
+          "step2": "Scan extracted archives temp_extraction/",
+          "step3": "For each project: normalize name (remove PRJ-, p##, [0-9]*- prefixes)",
+          "step4": "Group projects by normalized name",
+          "step5": "For groups with 2+ projects:",
+          "step6": "  - Check README existence",
+          "step7": "  - Count total files",
+          "step8": "  - Add to duplicate groups list",
+          "step9": "Generate markdown report with tables",
+          "step10": "Display summary statistics"
+        },
+
+        "normalization_rules": [
+          "Remove 'PRJ-XXX-###-' prefix",
+          "Remove 'p##-' prefix",
+          "Remove '[0-9]*-' prefix",
+          "Convert to lowercase",
+          "Replace hyphens and underscores with spaces"
+        ],
+
+        "example_groups": [
+          {
+            "normalized": "aws infrastructure",
+            "projects": [
+              "projects/p01-aws-infra",
+              "projects/1-aws-infrastructure-automation",
+              "projects/01-sde-devops/PRJ-SDE-001"
+            ]
+          },
+          {
+            "normalized": "observability",
+            "projects": [
+              "projects/p04-ops-monitoring",
+              "projects/p20-observability",
+              "projects/23-advanced-monitoring"
+            ]
+          }
+        ],
+
+        "dependencies": ["find", "basename", "grep", "sed", "wc"]
+      },
+
+      {
+        "name": "compare-versions.py",
+        "filename": "scripts/compare-versions.py",
+        "language": "python",
+        "version": "1.0",
+        "purpose": "Score and rank project versions to determine which to keep",
+        "runtime_estimate": "30 seconds per comparison",
+
+        "inputs": {
+          "type": "command_line_arguments",
+          "format": "<path1> <path2> [path3 ...]",
+          "minimum_args": 2,
+          "maximum_args": "unlimited"
+        },
+
+        "outputs": {
+          "console": "Ranked list with scores and summaries",
+          "report": "docs/VERSION_COMPARISON_REPORT.md",
+          "format": "markdown"
+        },
+
+        "scoring_algorithm": {
+          "total_points": 100,
+          "categories": {
+            "documentation": {
+              "points": 40,
+              "breakdown": {
+                "readme_exists": 15,
+                "readme_length_500": 5,
+                "readme_length_2000": 5,
+                "has_description_section": 3,
+                "has_setup_section": 3,
+                "has_usage_section": 3,
+                "has_architecture_section": 3,
+                "changelog_exists": 3,
+                "handbook_exists": 2,
+                "runbook_exists": 3
+              }
+            },
+            "code_quality": {
+              "points": 30,
+              "breakdown": {
+                "python_files": "2 points each, max 10",
+                "terraform_files": "2 points each, max 10",
+                "shell_scripts": "1 point each, max 5",
+                "yaml_files": "0.5 points each, max 5"
+              }
+            },
+            "structure": {
+              "points": 20,
+              "breakdown": {
+                "has_docs_dir": 5,
+                "has_tests_dir": 5,
+                "has_src_dir": 3,
+                "has_scripts_dir": 3,
+                "has_infrastructure_dir": 4
+              }
+            },
+            "recency": {
+              "points": 10,
+              "breakdown": {
+                "less_than_30_days": 10,
+                "less_than_90_days": 7,
+                "less_than_180_days": 5,
+                "less_than_365_days": 3,
+                "older": 0
+              }
+            },
+            "penalties": {
+              "placeholder_markers": "-1 point each, max -20",
+              "patterns": ["TODO", "FIXME", "PLACEHOLDER", "XXX", "HACK", "Coming soon", "To be implemented", "TBD"]
+            }
+          }
+        },
+
+        "features": [
+          "Quality scoring (0-100 points)",
+          "Documentation completeness analysis",
+          "Code quantity and variety assessment",
+          "Structure compliance checking",
+          "Recency calculation",
+          "Placeholder detection and penalization",
+          "Automatic ranking",
+          "Recommendation generation",
+          "Detailed comparison tables",
+          "Verdict for each version"
+        },
+
+        "usage": "./scripts/compare-versions.py <project1> <project2> [project3]",
+
+        "example": "./scripts/compare-versions.py projects/p01-aws-infra projects/1-aws-infrastructure-automation temp_extraction/Portfolio_v2/aws-infra",
+
+        "output_format": {
+          "console": {
+            "format": "✓ KEEP: <project_name>\\n       Score: X/100 | Files: N | Docs: N | Code: NpyS/Ntf | Placeholders: N | Modified: YYYY-MM-DD",
+            "ranking": "1st = green checkmark, 2nd = yellow, 3rd+ = number"
+          },
+          "report_sections": [
+            "Recommendation",
+            "Reasoning",
+            "Version Rankings (with medals 🥇🥈🥉)",
+            "Detailed metrics per version",
+            "Features comparison",
+            "Verdict per version",
+            "Detailed comparison table",
+            "Next steps"
+          ]
+        },
+
+        "exit_codes": {
+          "0": "Success - best version score >= 30",
+          "1": "Error - invalid arguments",
+          "2": "Warning - best version score < 30 (significant work needed)"
+        },
+
+        "dependencies": ["python3", "pathlib", "datetime", "hashlib", "difflib"]
+      },
+
+      {
+        "name": "validate-structure.sh",
+        "filename": "scripts/validate-structure.sh",
+        "language": "bash",
+        "version": "1.0",
+        "purpose": "Ensure all projects meet quality standards",
+        "runtime_estimate": "2-3 minutes",
+
+        "inputs": {
+          "projects_directory": "projects/",
+          "project_patterns": ["PRJ-*", "p[0-9]*", "[0-9]*-*"]
+        },
+
+        "outputs": {
+          "console": "Pass/fail status for each project",
+          "report": "docs/VALIDATION_REPORT.md",
+          "exit_code": "0=all pass, 1=some fail, 2=critical issues"
+        },
+
+        "validation_criteria": {
+          "must_have": {
+            "readme_exists": "README.md must exist",
+            "readme_min_length": "README.md must be > 200 characters",
+            "min_files": "At least 2 files total",
+            "max_placeholders": "No more than 10 placeholder markers"
+          },
+          "should_have": {
+            "changelog": "CHANGELOG.md recommended",
+            "tests_directory": "tests/ directory recommended",
+            "code_files": "At least some .py/.tf/.sh files",
+            "reasonable_size": "More than just stub files"
+          }
+        },
+
+        "checks_performed": [
+          "README.md existence",
+          "README.md content length",
+          "Total file count",
+          "Placeholder marker count (TODO, FIXME, etc.)",
+          "Broken internal link detection",
+          "CHANGELOG.md presence",
+          "tests/ directory presence",
+          "Code file count (Python, Terraform, Shell)"
+        ],
+
+        "placeholder_patterns": [
+          "TODO",
+          "FIXME",
+          "PLACEHOLDER",
+          "XXX",
+          "HACK",
+          "Coming soon",
+          "To be implemented",
+          "TBD"
+        ],
+
+        "features": [
+          "README validation",
+          "Placeholder detection",
+          "Broken link checking",
+          "File count analysis",
+          "Test directory verification",
+          "CHANGELOG presence check",
+          "Pass/fail reporting",
+          "Warnings for optional items",
+          "Colored console output",
+          "Detailed markdown report"
+        ],
+
+        "usage": "./scripts/validate-structure.sh",
+
+        "report_format": {
+          "per_project": [
+            "Project name",
+            "Status (PASS/FAIL)",
+            "File count",
+            "Code breakdown (Xpy/Ytf/Zsh)",
+            "Placeholder count",
+            "Issues list (if any)",
+            "Warnings list (if any)"
+          ],
+          "summary": [
+            "Total projects validated",
+            "Passed count",
+            "Failed count",
+            "Success rate percentage",
+            "Recommendations"
+          ]
+        },
+
+        "dependencies": ["find", "wc", "grep", "rg (optional)"]
+      },
+
+      {
+        "name": "generate-codex-bundle.sh",
+        "filename": "scripts/generate-codex-bundle.sh",
+        "language": "bash",
+        "version": "1.0",
+        "purpose": "Create ChatGPT Codex-ready documentation bundle",
+        "runtime_estimate": "3-5 minutes",
+
+        "inputs": {
+          "source_directories": [
+            "projects/",
+            "docs/",
+            "README.md"
+          ],
+          "file_types": ["*.md"]
+        },
+
+        "outputs": {
+          "bundle_directory": "codex_bundle/portfolio_codex_bundle_<timestamp>/",
+          "tar_archive": "codex_bundle/portfolio_codex_bundle_<timestamp>.tar.gz",
+          "zip_archive": "codex_bundle/portfolio_codex_bundle_<timestamp>.zip",
+          "metadata": "codex_bundle/portfolio_codex_bundle_<timestamp>/METADATA.json"
+        },
+
+        "bundle_structure": {
+          "root": [
+            "INDEX.md (master navigation)",
+            "README.md (main portfolio)",
+            "PROJECTS_OVERVIEW.md (all projects listed)",
+            "METADATA.json (bundle info)"
+          ],
+          "docs/": [
+            "STRUCTURE_ANALYSIS_AND_MERGE_PLAN.md",
+            "VALIDATION_REPORT.md",
+            "DUPLICATE_DETECTION_REPORT.md",
+            "VERSION_COMPARISON_REPORT.md"
+          ],
+          "projects/": {
+            "organized_by_category": [
+              "01-sde-devops/",
+              "02-cloud-architecture/",
+              "03-cybersecurity/",
+              "etc."
+            ],
+            "per_project": [
+              "README.md",
+              "CHANGELOG.md",
+              "HANDBOOK.md",
+              "RUNBOOK.md",
+              "docs/ (all markdown)"
+            ]
+          },
+          "guides/": [
+            "wiki-js-setup-guide.md",
+            "github-repository-setup-guide.md",
+            "etc."
+          ]
+        },
+
+        "features": [
+          "Extracts all markdown documentation",
+          "Organizes by category",
+          "Creates master INDEX.md",
+          "Adds source path comments to each file",
+          "Adds generation timestamp",
+          "Preserves directory structure",
+          "Generates JSON metadata",
+          "Creates both .tar.gz and .zip",
+          "Optimized for ChatGPT Codex upload",
+          "Only includes markdown (keeps size manageable)"
+        ],
+
+        "sanitization": {
+          "prepends_to_each_file": [
+            "<!-- Source: relative/path/to/original.md -->",
+            "<!-- Generated: timestamp -->",
+            ""
+          ],
+          "preserves": [
+            "Markdown formatting",
+            "Code blocks",
+            "Links (relative and absolute)",
+            "Images references"
+          ]
+        },
+
+        "usage": "./scripts/generate-codex-bundle.sh",
+
+        "metadata_json_format": {
+          "bundle_name": "string",
+          "generated_at": "ISO 8601 timestamp",
+          "repository": "URL",
+          "version": "string",
+          "format": "markdown",
+          "purpose": "ChatGPT Codex upload",
+          "file_count": "number",
+          "total_size_bytes": "number",
+          "categories": ["array of category names"]
+        },
+
+        "size_optimization": {
+          "includes": ["*.md files only"],
+          "excludes": [
+            "Code files (.py, .tf, .js, etc.)",
+            "Binary files",
+            "Images (only references kept)",
+            "node_modules/",
+            ".git/",
+            "temp_extraction/"
+          ],
+          "expected_size": "< 25MB for Codex upload"
+        },
+
+        "post_generation": {
+          "statistics_shown": [
+            "Bundle name",
+            "Location",
+            "Directory size",
+            "TAR.GZ size",
+            "ZIP size",
+            "Total files",
+            "Markdown files"
+          ],
+          "formats_available": [
+            "Directory (for browsing)",
+            "TAR.GZ (for Unix/Mac)",
+            "ZIP (for Windows/cross-platform)"
+          ]
+        },
+
+        "dependencies": ["tar", "zip", "find", "du", "cat", "date"]
+      }
+    ],
+
+    "common_patterns": {
+      "error_handling": "set -e (exit on error)",
+      "color_output": "ANSI color codes for readability",
+      "user_feedback": "Progress indicators and summaries",
+      "documentation": "Inline comments explaining logic",
+      "modularity": "Functions for reusable operations"
+    },
+
+    "execution_order": [
+      {
+        "step": 1,
+        "script": "extract-all-archives.sh",
+        "purpose": "Extract all archives first",
+        "outputs_needed_by": ["detect-duplicates.sh"]
+      },
+      {
+        "step": 2,
+        "script": "detect-duplicates.sh",
+        "purpose": "Identify duplicate groups",
+        "outputs_needed_by": ["compare-versions.py (manual, per group)"]
+      },
+      {
+        "step": 3,
+        "script": "compare-versions.py",
+        "purpose": "Score and rank versions (run per duplicate group)",
+        "outputs_needed_by": ["User decision making"]
+      },
+      {
+        "step": 4,
+        "script": "validate-structure.sh",
+        "purpose": "Validate quality after merging",
+        "outputs_needed_by": ["Quality assurance"]
+      },
+      {
+        "step": 5,
+        "script": "generate-codex-bundle.sh",
+        "purpose": "Create final documentation bundle",
+        "outputs_needed_by": ["ChatGPT Codex upload"]
+      }
+    ]
+  }
+}

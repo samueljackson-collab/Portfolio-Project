@@ -1,0 +1,427 @@
+{
+  "portfolio_merge_workflow": {
+    "overview": {
+      "total_phases": 6,
+      "estimated_time": "5-10 hours",
+      "automation_level": "70% automated, 30% manual review",
+      "difficulty": "intermediate",
+      "prerequisites": ["bash", "python3", "git", "unzip", "tar"]
+    },
+
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Preparation",
+        "duration": "15-30 minutes",
+        "steps": [
+          {
+            "step": "1.1",
+            "action": "Create backup branch",
+            "command": "git branch backup-$(date +%Y%m%d) && git commit -am 'Backup before merge'",
+            "reason": "Safety - can rollback if needed"
+          },
+          {
+            "step": "1.2",
+            "action": "Upload archive files",
+            "location": "/home/user/Portfolio-Project/ or /home/user/Portfolio-Project/archives/",
+            "files_needed": 17,
+            "verification": "ls -la *.zip *.tar.gz 2>/dev/null | wc -l"
+          },
+          {
+            "step": "1.3",
+            "action": "Verify scripts are executable",
+            "command": "chmod +x scripts/*.sh scripts/*.py"
+          },
+          {
+            "step": "1.4",
+            "action": "Read quick start guide",
+            "file": "MERGE_QUICKSTART.md",
+            "reason": "Understand process before starting"
+          }
+        ],
+        "outputs": ["Backup branch created", "Archives in place", "Scripts ready"],
+        "success_criteria": "All 17 archive files present and scripts executable"
+      },
+
+      {
+        "phase": 2,
+        "name": "Extraction",
+        "duration": "2-5 minutes",
+        "automation": "100% automated",
+        "steps": [
+          {
+            "step": "2.1",
+            "action": "Run extraction script",
+            "command": "./scripts/extract-all-archives.sh",
+            "expected_output": "temp_extraction/ directory with subdirectories"
+          },
+          {
+            "step": "2.2",
+            "action": "Review extraction manifest",
+            "command": "cat temp_extraction/extraction_manifest.txt",
+            "lookfor": ["File counts per archive", "Project directories found", "README files"]
+          },
+          {
+            "step": "2.3",
+            "action": "Verify extraction success",
+            "command": "find temp_extraction/ -type f | wc -l",
+            "expected": "Several hundred to several thousand files"
+          }
+        ],
+        "outputs": [
+          "temp_extraction/ directory populated",
+          "extraction_manifest.txt generated",
+          "All archives extracted"
+        ],
+        "success_criteria": "All 17 archives extracted without errors"
+      },
+
+      {
+        "phase": 3,
+        "name": "Duplicate Detection",
+        "duration": "1-2 minutes",
+        "automation": "100% automated",
+        "steps": [
+          {
+            "step": "3.1",
+            "action": "Run duplicate detection",
+            "command": "./scripts/detect-duplicates.sh",
+            "expected_output": "docs/DUPLICATE_DETECTION_REPORT.md"
+          },
+          {
+            "step": "3.2",
+            "action": "Review duplicate groups",
+            "command": "cat docs/DUPLICATE_DETECTION_REPORT.md",
+            "focus_on": ["Number of duplicate groups", "Projects in each group", "File counts"]
+          },
+          {
+            "step": "3.3",
+            "action": "Create tracking document",
+            "file": "docs/VERSION_DECISIONS.md",
+            "purpose": "Track which versions to keep for each group"
+          }
+        ],
+        "outputs": [
+          "DUPLICATE_DETECTION_REPORT.md",
+          "List of 12-15 duplicate groups",
+          "Projects grouped by similarity"
+        ],
+        "success_criteria": "Duplicate groups identified with clear groupings"
+      },
+
+      {
+        "phase": 4,
+        "name": "Version Comparison",
+        "duration": "20-40 minutes",
+        "automation": "Automated per group, manual selection",
+        "steps": [
+          {
+            "step": "4.1",
+            "action": "For each duplicate group identified in phase 3",
+            "loop": true,
+            "iterations": "12-15 groups"
+          },
+          {
+            "step": "4.2",
+            "action": "Run version comparison",
+            "command_template": "./scripts/compare-versions.py <path1> <path2> [path3]",
+            "example": "./scripts/compare-versions.py projects/p01-aws-infra projects/1-aws-infrastructure-automation",
+            "per_group_time": "30 seconds"
+          },
+          {
+            "step": "4.3",
+            "action": "Review comparison report",
+            "file": "docs/VERSION_COMPARISON_REPORT.md",
+            "updated_per_run": true,
+            "lookfor": ["Score rankings", "Recommendation", "Reasoning"]
+          },
+          {
+            "step": "4.4",
+            "action": "Document decision",
+            "file": "docs/VERSION_DECISIONS.md",
+            "record": ["Which version to keep", "Unique content in other versions", "Merge needed?"]
+          }
+        ],
+        "outputs": [
+          "VERSION_COMPARISON_REPORT.md (updated per group)",
+          "VERSION_DECISIONS.md (tracking document)",
+          "Clear decisions for each duplicate group"
+        ],
+        "success_criteria": "All duplicate groups have version selection decision"
+      },
+
+      {
+        "phase": 5,
+        "name": "Consolidation",
+        "duration": "2-6 hours",
+        "automation": "Manual merge process",
+        "steps": [
+          {
+            "step": "5.1",
+            "action": "For projects marked 'KEEP' - no action needed",
+            "criteria": "Best version already in correct location"
+          },
+          {
+            "step": "5.2",
+            "action": "For projects needing merge",
+            "substeps": [
+              "Create unified project directory",
+              "Copy best version as base",
+              "Extract unique documentation from other versions",
+              "Merge unique code/configs",
+              "Combine test suites",
+              "Update cross-references and links",
+              "Verify no broken links"
+            ]
+          },
+          {
+            "step": "5.3",
+            "action": "Archive old versions",
+            "command": "mkdir -p archive/ && mv <old-project> archive/",
+            "reason": "Keep originals for reference, don't delete"
+          },
+          {
+            "step": "5.4",
+            "action": "Apply standard structure",
+            "template": "See recommended_unified_structure in portfolio_complete.json",
+            "ensure": ["README.md", "CHANGELOG.md", "docs/", "tests/", "src/"]
+          },
+          {
+            "step": "5.5",
+            "action": "Remove placeholders",
+            "patterns": ["TODO", "FIXME", "PLACEHOLDER", "Coming soon"],
+            "action_needed": "Complete implementation or document as future work"
+          }
+        ],
+        "outputs": [
+          "Unified project structure",
+          "~45-50 final projects (from 68)",
+          "No duplicates",
+          "Standard structure across all",
+          "archive/ directory with old versions"
+        ],
+        "success_criteria": "Single naming convention, no duplicates, consistent structure"
+      },
+
+      {
+        "phase": 6,
+        "name": "Validation & Finalization",
+        "duration": "30-60 minutes",
+        "automation": "Automated validation, manual fixes",
+        "steps": [
+          {
+            "step": "6.1",
+            "action": "Run structure validation",
+            "command": "./scripts/validate-structure.sh",
+            "expected_output": "docs/VALIDATION_REPORT.md"
+          },
+          {
+            "step": "6.2",
+            "action": "Review validation failures",
+            "command": "cat docs/VALIDATION_REPORT.md | grep -A 10 '❌'",
+            "action_needed": "Fix issues in failed projects"
+          },
+          {
+            "step": "6.3",
+            "action": "Fix validation issues",
+            "common_fixes": [
+              "Add missing README.md",
+              "Expand README to >200 characters",
+              "Remove/complete placeholder code",
+              "Fix broken internal links",
+              "Add CHANGELOG.md"
+            ]
+          },
+          {
+            "step": "6.4",
+            "action": "Re-validate until passing",
+            "command": "./scripts/validate-structure.sh",
+            "loop": true,
+            "target": "95%+ pass rate"
+          },
+          {
+            "step": "6.5",
+            "action": "Generate Codex bundle",
+            "command": "./scripts/generate-codex-bundle.sh",
+            "expected_output": "codex_bundle/portfolio_codex_bundle_<timestamp>/"
+          },
+          {
+            "step": "6.6",
+            "action": "Review bundle",
+            "commands": [
+              "cd codex_bundle/portfolio_codex_bundle_<timestamp>",
+              "cat INDEX.md",
+              "tree -L 2"
+            ],
+            "verify": ["All categories present", "INDEX.md complete", "Size < 25MB"]
+          },
+          {
+            "step": "6.7",
+            "action": "Upload to ChatGPT Codex",
+            "file": "codex_bundle/portfolio_codex_bundle_<timestamp>.zip",
+            "platform": "ChatGPT Codex"
+          },
+          {
+            "step": "6.8",
+            "action": "Commit changes",
+            "commands": [
+              "git add -A",
+              "git commit -m 'Portfolio merge complete'",
+              "git push"
+            ]
+          }
+        ],
+        "outputs": [
+          "VALIDATION_REPORT.md showing 95%+ pass",
+          "Codex bundle generated (.zip and .tar.gz)",
+          "Bundle uploaded to ChatGPT Codex",
+          "Changes committed to Git"
+        ],
+        "success_criteria": "Validation passing, bundle generated, uploaded successfully"
+      }
+    ],
+
+    "decision_points": [
+      {
+        "phase": 4,
+        "decision": "Which version to keep for each duplicate group",
+        "factors": [
+          "Quality score (0-100)",
+          "Documentation completeness",
+          "Code quality",
+          "Recency",
+          "Placeholder count"
+        ],
+        "recommendation": "Trust the compare-versions.py score unless special circumstances"
+      },
+      {
+        "phase": 5,
+        "decision": "Whether to merge or simply keep best version",
+        "factors": [
+          "Unique content in other versions",
+          "Substantial differences in implementation",
+          "Different feature sets"
+        ],
+        "recommendation": "Merge if other versions have unique valuable content, otherwise keep best"
+      },
+      {
+        "phase": 5,
+        "decision": "What to do with placeholder code",
+        "options": [
+          "Complete implementation",
+          "Document as future work in README",
+          "Remove if not critical"
+        ],
+        "recommendation": "Remove to pass validation, document planned work in issues/roadmap"
+      }
+    ],
+
+    "parallel_execution": {
+      "phase_2_and_3": "Can run extract then immediately detect without review",
+      "phase_4": "Can queue up multiple compare-versions.py runs if needed",
+      "note": "Phase 5 (consolidation) is inherently sequential and manual"
+    },
+
+    "checkpoints": [
+      {
+        "after_phase": 1,
+        "verify": "Archives in place, scripts executable",
+        "rollback_if": "Missing archives",
+        "action": "Upload missing archives before proceeding"
+      },
+      {
+        "after_phase": 2,
+        "verify": "All archives extracted successfully",
+        "rollback_if": "Extraction errors",
+        "action": "Check archive file integrity, re-download if needed"
+      },
+      {
+        "after_phase": 4,
+        "verify": "All duplicate groups have decisions",
+        "rollback_if": "Unclear decisions",
+        "action": "Re-run compare-versions.py, review reports again"
+      },
+      {
+        "after_phase": 5,
+        "verify": "Git status shows all changes tracked",
+        "rollback_if": "Accidental deletions",
+        "action": "Use git to restore from backup branch"
+      },
+      {
+        "after_phase": 6,
+        "verify": "Validation passing, bundle uploaded",
+        "rollback_if": "Validation failures",
+        "action": "Fix validation issues and re-run"
+      }
+    ],
+
+    "troubleshooting": {
+      "issue_archives_not_found": {
+        "symptom": "extract-all-archives.sh reports 0 files",
+        "cause": "Archives not in searched locations",
+        "solution": "Move archives to repo root or archives/ directory",
+        "command": "mv /path/to/archives/*.zip /home/user/Portfolio-Project/"
+      },
+      "issue_permission_denied": {
+        "symptom": "bash: ./scripts/xxx: Permission denied",
+        "cause": "Scripts not executable",
+        "solution": "Make scripts executable",
+        "command": "chmod +x scripts/*.sh scripts/*.py"
+      },
+      "issue_python_not_found": {
+        "symptom": "python3: command not found",
+        "cause": "Python 3 not installed",
+        "solution": "Install Python 3",
+        "command": "apt-get install python3 (or appropriate for your system)"
+      },
+      "issue_validation_failures": {
+        "symptom": "validate-structure.sh shows fails",
+        "cause": "Projects don't meet quality standards",
+        "solution": "Review VALIDATION_REPORT.md and fix issues",
+        "common_fixes": ["Add README", "Remove placeholders", "Fix links"]
+      },
+      "issue_bundle_too_large": {
+        "symptom": "Codex bundle > 25MB",
+        "cause": "Too many files or large assets included",
+        "solution": "Edit generate-codex-bundle.sh to exclude more",
+        "note": "Only markdown should be included by default"
+      },
+      "issue_broken_links": {
+        "symptom": "Validation reports broken links",
+        "cause": "Links pointing to moved/deleted files",
+        "solution": "Update links to new locations",
+        "command": "sed -i 's|old-path|new-path|g' file.md"
+      }
+    },
+
+    "time_breakdown": {
+      "phase_1_preparation": "15-30 minutes",
+      "phase_2_extraction": "2-5 minutes (automated)",
+      "phase_3_detection": "1-2 minutes (automated)",
+      "phase_4_comparison": "20-40 minutes (mostly automated)",
+      "phase_5_consolidation": "2-6 hours (manual)",
+      "phase_6_validation": "30-60 minutes (mostly automated)",
+      "total": "4-8 hours",
+      "note": "Can be split across multiple work sessions"
+    },
+
+    "success_metrics": {
+      "quantitative": {
+        "archives_extracted": 17,
+        "duplicate_groups_resolved": "12-15",
+        "final_project_count": "45-50 (from 68)",
+        "validation_pass_rate": "95%+",
+        "naming_conventions": "1 (from 3)",
+        "bundle_size": "< 25MB",
+        "broken_links": 0,
+        "placeholder_count_per_project": "< 5"
+      },
+      "qualitative": {
+        "structure": "Consistent across all projects",
+        "documentation": "Complete for all projects",
+        "naming": "Professional and consistent",
+        "quality": "High, portfolio-ready"
+      }
+    }
+  }
+}
