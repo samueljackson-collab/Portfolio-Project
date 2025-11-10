@@ -6788,7 +6788,1410 @@ resource "aws_iam_role_policy_attachment" "github_actions_eks" {
 
 ---
 
-**Continue reading:** Questions 24-60 coming next...
+## Q24: Configure Ansible for Automated Server Configuration Management ⭐⭐⭐
+
+**Category:** Configuration Management | **Risk:** MEDIUM | **Timebox:** 30 min | **Owner:** Systems Engineer
+
+### Simple Explanation (Feynman Method)
+**Ansible** is like having a personal assistant that configures all your servers identically. Instead of SSH-ing into each server and running commands manually, you write a "playbook" (recipe) once, and Ansible applies it to hundreds of servers simultaneously. For Kuiper ground stations, this ensures every server has the same security patches, configuration files, and software versions.
+
+### Technical Explanation
+
+**Ansible Inventory:**
+
+```ini
+# inventory/production.ini
+# Kuiper ground station servers
+
+[ground_stations]
+gs-herndon-01 ansible_host=192.168.100.10
+gs-herndon-02 ansible_host=192.168.100.11
+gs-seattle-01 ansible_host=192.168.200.10
+gs-seattle-02 ansible_host=192.168.200.11
+
+[control_plane]
+cp-primary ansible_host=10.0.1.50
+cp-secondary ansible_host=10.0.1.51
+
+[database]
+db-primary ansible_host=10.0.2.20 ansible_port=5432
+db-replica ansible_host=10.0.2.21 ansible_port=5432
+
+[all:vars]
+ansible_user=ansible
+ansible_ssh_private_key_file=~/.ssh/ansible_key
+ansible_python_interpreter=/usr/bin/python3
+```
+
+**Playbook Example:**
+
+```yaml
+# playbooks/configure-ground-station.yml
+---
+- name: Configure Kuiper Ground Station Servers
+  hosts: ground_stations
+  become: yes
+
+  vars:
+    ntp_servers:
+      - 0.amazon.pool.ntp.org
+      - 1.amazon.pool.ntp.org
+    syslog_server: 10.0.3.100
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Install required packages
+      apt:
+        name:
+          - chrony
+          - prometheus-node-exporter
+          - rsyslog
+          - fail2ban
+        state: present
+
+    - name: Configure NTP with Chrony
+      template:
+        src: templates/chrony.conf.j2
+        dest: /etc/chrony/chrony.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart chrony
+
+    - name: Ensure chrony is running
+      systemd:
+        name: chronyd
+        state: started
+        enabled: yes
+
+    - name: Configure rsyslog forwarding
+      template:
+        src: templates/rsyslog.conf.j2
+        dest: /etc/rsyslog.d/99-forward.conf
+      notify: restart rsyslog
+
+    - name: Deploy satellite control scripts
+      copy:
+        src: files/satellite-control.sh
+        dest: /usr/local/bin/satellite-control.sh
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Configure firewall rules
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - 22    # SSH
+        - 9100  # Prometheus node exporter
+        - 5555  # Satellite C2
+
+    - name: Enable firewall
+      ufw:
+        state: enabled
+        policy: deny
+
+  handlers:
+    - name: restart chrony
+      systemd:
+        name: chronyd
+        state: restarted
+
+    - name: restart rsyslog
+      systemd:
+        name: rsyslog
+        state: restarted
+```
+
+**Jinja2 Template:**
+
+```jinja2
+# templates/chrony.conf.j2
+# Kuiper Ground Station NTP Configuration
+
+# NTP servers
+{% for server in ntp_servers %}
+server {{ server }} iburst
+{% endfor %}
+
+# Allow local network to sync time
+allow 192.168.0.0/16
+
+# Make time steps larger than 1 second immediately
+makestep 1.0 3
+
+# Record rate info
+driftfile /var/lib/chrony/drift
+
+# Log measurements
+logdir /var/log/chrony
+log measurements statistics tracking
+```
+
+**Ansible Roles Structure:**
+
+```
+ansible/
+├── inventory/
+│   ├── production.ini
+│   └── staging.ini
+├── playbooks/
+│   ├── site.yml
+│   ├── configure-ground-station.yml
+│   └── security-hardening.yml
+├── roles/
+│   ├── common/
+│   │   ├── tasks/main.yml
+│   │   ├── handlers/main.yml
+│   │   ├── templates/
+│   │   └── vars/main.yml
+│   ├── satellite-control/
+│   │   ├── tasks/main.yml
+│   │   ├── files/satellite-control.sh
+│   │   └── templates/config.j2
+│   └── monitoring/
+│       ├── tasks/main.yml
+│       └── templates/prometheus.yml.j2
+└── ansible.cfg
+```
+
+**Running Playbooks:**
+
+```bash
+#!/bin/bash
+# scripts/deploy-config.sh
+
+# Check syntax
+ansible-playbook playbooks/configure-ground-station.yml --syntax-check
+
+# Dry run
+ansible-playbook playbooks/configure-ground-station.yml --check --diff
+
+# Run for real (with limit to one host first)
+ansible-playbook playbooks/configure-ground-station.yml --limit gs-herndon-01
+
+# Run on all ground stations
+ansible-playbook playbooks/configure-ground-station.yml
+
+# Run with tags (only specific tasks)
+ansible-playbook playbooks/configure-ground-station.yml --tags "firewall,monitoring"
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Ansible Playbooks** | `ansible/playbooks/` | Server configuration automation |
+| **Inventory Management** | `ansible/inventory/` | Multi-environment setup |
+| **Roles** | `ansible/roles/` | Reusable configuration modules |
+
+**Learn More:**
+- [Ansible Documentation](https://docs.ansible.com/)
+- [Ansible Best Practices](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
+
+---
+
+## Q25: Implement Automated Testing for Infrastructure Code ⭐⭐⭐
+
+**Category:** Testing | **Risk:** MEDIUM | **Timebox:** 25 min | **Owner:** DevOps Engineer
+
+### Simple Explanation (Feynman Method)
+Infrastructure testing is like doing a practice fire drill - you test your infrastructure changes before applying them to production. Tools like **Terratest**, **Kitchen-Terraform**, and **Inspec** let you write automated tests that verify your infrastructure works correctly, preventing costly production failures.
+
+### Technical Explanation
+
+**Unit Tests with Terratest (Go):**
+
+```go
+// test/vpc_test.go
+package test
+
+import (
+    "testing"
+    "github.com/gruntwork-io/terratest/modules/terraform"
+    "github.com/gruntwork-io/terratest/modules/aws"
+    "github.com/stretchr/testify/assert"
+)
+
+func TestVPCCreation(t *testing.T) {
+    t.Parallel()
+
+    awsRegion := "us-east-1"
+
+    terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+        TerraformDir: "../terraform/modules/vpc",
+
+        Vars: map[string]interface{}{
+            "environment": "test",
+            "vpc_cidr":    "10.100.0.0/16",
+            "azs":         []string{"us-east-1a", "us-east-1b"},
+        },
+
+        EnvVars: map[string]string{
+            "AWS_DEFAULT_REGION": awsRegion,
+        },
+    })
+
+    defer terraform.Destroy(t, terraformOptions)
+    terraform.InitAndApply(t, terraformOptions)
+
+    // Verify VPC created
+    vpcID := terraform.Output(t, terraformOptions, "vpc_id")
+    vpc := aws.GetVpcById(t, vpcID, awsRegion)
+
+    assert.Equal(t, "10.100.0.0/16", *vpc.CidrBlock)
+    assert.True(t, *vpc.EnableDnsHostnames)
+    assert.True(t, *vpc.EnableDnsSupport)
+
+    // Verify subnets
+    subnetIDs := terraform.OutputList(t, terraformOptions, "private_subnet_ids")
+    assert.Equal(t, 2, len(subnetIDs))
+
+    for _, subnetID := range subnetIDs {
+        subnet := aws.GetSubnetById(t, subnetID, awsRegion)
+        assert.Equal(t, vpcID, *subnet.VpcId)
+        assert.False(t, *subnet.MapPublicIpOnLaunch)
+    }
+}
+
+func TestSecurityGroupRules(t *testing.T) {
+    t.Parallel()
+
+    terraformOptions := &terraform.Options{
+        TerraformDir: "../terraform/modules/security-groups",
+    }
+
+    defer terraform.Destroy(t, terraformOptions)
+    terraform.InitAndApply(t, terraformOptions)
+
+    sgID := terraform.Output(t, terraformOptions, "app_sg_id")
+
+    // Verify no 0.0.0.0/0 ingress
+    rules := aws.GetSecurityGroupRulesById(t, sgID, "us-east-1")
+    for _, rule := range rules.IngressRules {
+        for _, cidr := range rule.CidrBlocks {
+            assert.NotEqual(t, "0.0.0.0/0", cidr)
+        }
+    }
+}
+```
+
+**Integration Tests (Python):**
+
+```python
+#!/usr/bin/env python3
+# tests/integration/test_infrastructure.py
+
+import boto3
+import pytest
+import requests
+from typing import List
+
+class TestKuiperInfrastructure:
+
+    @pytest.fixture(scope="class")
+    def aws_clients(self):
+        return {
+            'ec2': boto3.client('ec2', region_name='us-east-1'),
+            'elbv2': boto3.client('elbv2', region_name='us-east-1'),
+            'rds': boto3.client('rds', region_name='us-east-1'),
+        }
+
+    def test_alb_targets_healthy(self, aws_clients):
+        """Verify all ALB targets are healthy"""
+        elbv2 = aws_clients['elbv2']
+
+        target_groups = elbv2.describe_target_groups(
+            Names=['kuiper-control-plane-tg']
+        )
+
+        for tg in target_groups['TargetGroups']:
+            health = elbv2.describe_target_health(
+                TargetGroupArn=tg['TargetGroupArn']
+            )
+
+            unhealthy = [t for t in health['TargetHealthDescriptions']
+                        if t['TargetHealth']['State'] != 'healthy']
+
+            assert len(unhealthy) == 0, f"Found {len(unhealthy)} unhealthy targets"
+
+    def test_endpoint_responds(self):
+        """Verify application endpoint returns 200"""
+        response = requests.get('https://kuiper-api.example.com/health', timeout=10)
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data['status'] == 'healthy'
+        assert data['version'] is not None
+
+    def test_database_connectivity(self, aws_clients):
+        """Verify database is reachable and configured correctly"""
+        rds = aws_clients['rds']
+
+        db = rds.describe_db_instances(
+            DBInstanceIdentifier='kuiper-prod-db'
+        )['DBInstances'][0]
+
+        assert db['DBInstanceStatus'] == 'available'
+        assert db['MultiAZ'] == True
+        assert db['StorageEncrypted'] == True
+        assert db['PubliclyAccessible'] == False
+```
+
+**Compliance Tests (InSpec):**
+
+```ruby
+# test/integration/default/controls/security.rb
+# InSpec security compliance tests
+
+control 'ssh-hardening' do
+  impact 1.0
+  title 'SSH Server Hardening'
+  desc 'Ensure SSH is configured securely'
+
+  describe sshd_config do
+    its('PermitRootLogin') { should eq 'no' }
+    its('PasswordAuthentication') { should eq 'no' }
+    its('PubkeyAuthentication') { should eq 'yes' }
+    its('Protocol') { should eq '2' }
+  end
+end
+
+control 'firewall-enabled' do
+  impact 1.0
+  title 'Firewall is enabled'
+
+  describe command('ufw status') do
+    its('stdout') { should match /Status: active/ }
+  end
+end
+
+control 'no-world-writable-files' do
+  impact 1.0
+  title 'No world-writable files in /etc'
+
+  describe command('find /etc -type f -perm -0002') do
+    its('stdout') { should be_empty }
+  end
+end
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Terratest Suite** | `test/vpc_test.go` | Infrastructure unit tests |
+| **Integration Tests** | `tests/integration/` | End-to-end testing |
+| **Compliance Tests** | `test/integration/controls/` | Security validation |
+
+**Learn More:**
+- [Terratest Documentation](https://terratest.gruntwork.io/)
+- [InSpec Documentation](https://docs.chef.io/inspec/)
+
+---
+
+## Q26: Set Up Container Orchestration with Docker and Kubernetes Basics ⭐⭐⭐
+
+**Category:** Containers | **Risk:** MEDIUM | **Timebox:** 30 min | **Owner:** Platform Engineer
+
+### Simple Explanation (Feynman Method)
+**Containers** are like shipping containers for software - they package your application with all its dependencies so it runs identically everywhere. **Docker** creates these containers, while **Kubernetes** (K8s) manages thousands of them across many servers, handling scaling, failover, and updates automatically.
+
+For Kuiper, containers ensure satellite control software runs consistently across all ground stations.
+
+### Technical Explanation
+
+**Dockerfile Example:**
+
+```dockerfile
+# Dockerfile
+# Multi-stage build for Kuiper control plane
+
+# Stage 1: Build
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o kuiper-control-plane .
+
+# Stage 2: Runtime
+FROM alpine:3.19
+
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+COPY --from=builder /app/kuiper-control-plane .
+COPY --from=builder /app/config/ ./config/
+
+# Create non-root user
+RUN addgroup -g 1000 kuiper && \
+    adduser -D -u 1000 -G kuiper kuiper && \
+    chown -R kuiper:kuiper /root
+
+USER kuiper
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
+CMD ["./kuiper-control-plane"]
+```
+
+**Kubernetes Deployment:**
+
+```yaml
+# k8s/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuiper-control-plane
+  namespace: kuiper-prod
+  labels:
+    app: kuiper-control-plane
+    version: v1.2.3
+spec:
+  replicas: 10
+  revisionHistoryLimit: 5
+
+  selector:
+    matchLabels:
+      app: kuiper-control-plane
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+
+  template:
+    metadata:
+      labels:
+        app: kuiper-control-plane
+        version: v1.2.3
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+
+    spec:
+      serviceAccountName: kuiper-control-plane
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      containers:
+      - name: control-plane
+        image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/kuiper-control-plane:v1.2.3
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: kuiper-database
+              key: host
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: kuiper-database
+              key: password
+
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "2000m"
+          limits:
+            memory: "4Gi"
+            cpu: "4000m"
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+
+        volumeMounts:
+        - name: config
+          mountPath: /root/config
+          readOnly: true
+
+      volumes:
+      - name: config
+        configMap:
+          name: kuiper-config
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - kuiper-control-plane
+              topologyKey: kubernetes.io/hostname
+```
+
+**Service and Ingress:**
+
+```yaml
+# k8s/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kuiper-control-plane
+  namespace: kuiper-prod
+spec:
+  type: ClusterIP
+  selector:
+    app: kuiper-control-plane
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+
+---
+# k8s/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kuiper-ingress
+  namespace: kuiper-prod
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - kuiper-api.example.com
+    secretName: kuiper-tls
+  rules:
+  - host: kuiper-api.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kuiper-control-plane
+            port:
+              number: 80
+```
+
+**Docker Compose (Local Development):**
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  control-plane:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ENVIRONMENT=development
+      - DB_HOST=postgres
+      - DB_PASSWORD=devpassword
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kuiper-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=kuiper
+      - POSTGRES_USER=kuiper
+      - POSTGRES_PASSWORD=devpassword
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - kuiper-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - kuiper-network
+
+volumes:
+  postgres-data:
+
+networks:
+  kuiper-network:
+    driver: bridge
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Dockerfile** | `Dockerfile` | Multi-stage container build |
+| **K8s Manifests** | `k8s/*.yaml` | Production deployment config |
+| **Docker Compose** | `docker-compose.yml` | Local development setup |
+
+**Learn More:**
+- [Docker Documentation](https://docs.docker.com/)
+- [Kubernetes Documentation](https://kubernetes.io/docs/home/)
+
+---
+
+## Q27: Implement Secret Management with AWS Secrets Manager ⭐⭐⭐
+
+**Category:** Security | **Risk:** HIGH | **Timebox:** 25 min | **Owner:** Security Engineer
+
+### Simple Explanation (Feynman Method)
+**Secrets** (passwords, API keys, certificates) should never be hard-coded in your application. **AWS Secrets Manager** is like a secure vault that stores secrets, rotates them automatically, and provides audited access. Applications retrieve secrets at runtime using IAM permissions.
+
+### Technical Explanation
+
+**Store Secrets:**
+
+```python
+#!/usr/bin/env python3
+# scripts/store-secrets.py
+
+import boto3
+import json
+
+secrets_manager = boto3.client('secretsmanager', region_name='us-east-1')
+
+# Store database credentials
+db_secret = {
+    'username': 'kuiper_admin',
+    'password': 'GeneratedSecurePassword123!',
+    'engine': 'postgres',
+    'host': 'kuiper-prod-db.abc123.us-east-1.rds.amazonaws.com',
+    'port': 5432,
+    'dbname': 'kuiper_production'
+}
+
+response = secrets_manager.create_secret(
+    Name='kuiper/production/database',
+    Description='Kuiper production database credentials',
+    SecretString=json.dumps(db_secret),
+    Tags=[
+        {'Key': 'Environment', 'Value': 'production'},
+        {'Key': 'Application', 'Value': 'kuiper'}
+    ]
+)
+
+print(f"Secret ARN: {response['ARN']}")
+```
+
+**Retrieve Secrets in Application:**
+
+```python
+# app/database.py
+import boto3
+import json
+import psycopg2
+from functools import lru_cache
+
+@lru_cache(maxsize=1)
+def get_secret(secret_name):
+    """Retrieve secret from AWS Secrets Manager with caching"""
+    client = boto3.client('secretsmanager', region_name='us-east-1')
+
+    try:
+        response = client.get_secret_value(SecretId=secret_name)
+        return json.loads(response['SecretString'])
+    except Exception as e:
+        print(f"Error retrieving secret: {e}")
+        raise
+
+def get_database_connection():
+    """Create database connection using secrets from Secrets Manager"""
+    secret = get_secret('kuiper/production/database')
+
+    conn = psycopg2.connect(
+        host=secret['host'],
+        port=secret['port'],
+        dbname=secret['dbname'],
+        user=secret['username'],
+        password=secret['password'],
+        sslmode='require'
+    )
+
+    return conn
+```
+
+**Automatic Rotation Lambda:**
+
+```python
+# lambda/rotate-db-password.py
+import boto3
+import json
+import psycopg2
+
+secrets_client = boto3.client('secretsmanager')
+
+def lambda_handler(event, context):
+    """Rotate RDS database password automatically"""
+
+    secret_arn = event['SecretId']
+    token = event['ClientRequestToken']
+    step = event['Step']
+
+    if step == "createSecret":
+        # Generate new password
+        current = json.loads(secrets_client.get_secret_value(SecretId=secret_arn)['SecretString'])
+        new_password = secrets_client.get_random_password(
+            PasswordLength=32,
+            ExcludeCharacters='/@"\'\\',
+            RequireEachIncludedType=True
+        )['RandomPassword']
+
+        current['password'] = new_password
+        secrets_client.put_secret_value(
+            SecretId=secret_arn,
+            ClientRequestToken=token,
+            SecretString=json.dumps(current),
+            VersionStages=['AWSPENDING']
+        )
+
+    elif step == "setSecret":
+        # Update database with new password
+        pending = json.loads(secrets_client.get_secret_value(
+            SecretId=secret_arn,
+            VersionStage='AWSPENDING'
+        )['SecretString'])
+
+        conn = psycopg2.connect(
+            host=pending['host'],
+            user='rotation_admin',
+            password=os.environ['ROTATION_ADMIN_PASSWORD']
+        )
+        cursor = conn.cursor()
+        cursor.execute(f"ALTER USER {pending['username']} PASSWORD %s", (pending['password'],))
+        conn.commit()
+
+    elif step == "testSecret":
+        # Test new credentials work
+        pending = json.loads(secrets_client.get_secret_value(
+            SecretId=secret_arn,
+            VersionStage='AWSPENDING'
+        )['SecretString'])
+
+        conn = psycopg2.connect(
+            host=pending['host'],
+            user=pending['username'],
+            password=pending['password']
+        )
+        conn.close()
+
+    elif step == "finishSecret":
+        # Finalize rotation
+        secrets_client.update_secret_version_stage(
+            SecretId=secret_arn,
+            VersionStage='AWSCURRENT',
+            MoveToVersionId=token,
+            RemoveFromVersionId=secrets_client.describe_secret(SecretId=secret_arn)['VersionIdsToStages'].get('AWSCURRENT', [None])[0]
+        )
+
+    return {'statusCode': 200}
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Secret Storage** | `scripts/store-secrets.py` | Centralized secret management |
+| **Application Integration** | `app/database.py` | Runtime secret retrieval |
+| **Rotation Lambda** | `lambda/rotate-db-password.py` | Automatic password rotation |
+
+**Learn More:**
+- [AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/)
+- [Secret Rotation](https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html)
+
+---
+
+## Q28: Build Comprehensive Monitoring with Prometheus and Grafana ⭐⭐⭐⭐
+
+**Category:** Monitoring | **Risk:** MEDIUM | **Timebox:** 35 min | **Owner:** SRE
+
+### Simple Explanation (Feynman Method)
+**Monitoring** is like having a dashboard in your car - it tells you speed, fuel, engine temperature in real-time. **Prometheus** collects metrics (CPU, memory, request rates) from your infrastructure, while **Grafana** creates beautiful dashboards to visualize them. Alerts notify you when something goes wrong.
+
+### Technical Explanation
+
+**Prometheus Configuration:**
+
+```yaml
+# prometheus/prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'kuiper-prod'
+    region: 'us-east-1'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+# Rule files
+rule_files:
+  - 'alerts/*.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter (system metrics)
+  - job_name: 'node'
+    static_configs:
+      - targets:
+        - 'gs-herndon-01:9100'
+        - 'gs-herndon-02:9100'
+        - 'gs-seattle-01:9100'
+        labels:
+          environment: 'production'
+
+  # Application metrics
+  - job_name: 'kuiper-control-plane'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+```
+
+**Alert Rules:**
+
+```yaml
+# prometheus/alerts/kuiper.yml
+groups:
+  - name: kuiper-alerts
+    interval: 30s
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # Service down
+      - alert: ServiceDown
+        expr: up{job="kuiper-control-plane"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "Kuiper control plane is down"
+          description: "{{ $labels.instance }} has been down for more than 1 minute"
+
+      # High API latency
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile latency is {{ $value }}s"
+```
+
+**Grafana Dashboard (JSON):**
+
+```json
+{
+  "dashboard": {
+    "title": "Kuiper Infrastructure Overview",
+    "panels": [
+      {
+        "title": "CPU Usage by Instance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "{{ instance }}"
+          }
+        ]
+      },
+      {
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+            "legendFormat": "{{ instance }}"
+          }
+        ]
+      },
+      {
+        "title": "API Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m])) by (status_code)",
+            "legendFormat": "{{ status_code }}"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Application Instrumentation:**
+
+```python
+# app/metrics.py
+from prometheus_client import Counter, Histogram, Gauge
+import time
+
+# Metrics
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status_code']
+)
+
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request latency',
+    ['method', 'endpoint']
+)
+
+SATELLITE_COUNT = Gauge(
+    'active_satellites_total',
+    'Number of active satellites'
+)
+
+def track_request(method, endpoint):
+    """Decorator to track HTTP requests"""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+
+            try:
+                result = func(*args, **kwargs)
+                status_code = 200
+                return result
+            except Exception as e:
+                status_code = 500
+                raise
+            finally:
+                REQUEST_COUNT.labels(method=method, endpoint=endpoint, status_code=status_code).inc()
+                REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(time.time() - start_time)
+
+        return wrapper
+    return decorator
+
+@track_request('GET', '/satellites')
+def get_satellites():
+    satellites = fetch_satellites_from_db()
+    SATELLITE_COUNT.set(len(satellites))
+    return satellites
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Prometheus Config** | `prometheus/prometheus.yml` | Metric collection |
+| **Alert Rules** | `prometheus/alerts/*.yml` | Automated alerting |
+| **Grafana Dashboards** | `grafana/dashboards/*.json` | Visualization |
+| **Application Metrics** | `app/metrics.py` | Instrumentation |
+
+**Learn More:**
+- [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
+- [Grafana Documentation](https://grafana.com/docs/)
+
+---
+
+## Q29: Implement Centralized Logging with ELK Stack ⭐⭐⭐
+
+**Category:** Logging | **Risk:** MEDIUM | **Timebox:** 25 min | **Owner:** Platform Engineer
+
+### Simple Explanation (Feynman Method)
+**Centralized logging** is like having all your application logs in one searchable place instead of scattered across hundreds of servers. The **ELK Stack** (Elasticsearch, Logstash, Kibana) or **EFK** (Elasticsearch, Fluentd, Kibana) collects logs from all services, indexes them for fast searching, and provides a web interface to analyze them.
+
+### Technical Explanation
+
+**Fluentd Configuration:**
+
+```yaml
+# fluent/fluent.conf
+<source>
+  @type tail
+  path /var/log/kuiper/*.log
+  pos_file /var/log/td-agent/kuiper.log.pos
+  tag kuiper.app
+  <parse>
+    @type json
+    time_format %Y-%m-%dT%H:%M:%S.%NZ
+  </parse>
+</source>
+
+<filter kuiper.**>
+  @type record_transformer
+  <record>
+    hostname "#{Socket.gethostname}"
+    environment "production"
+    cluster "kuiper-prod"
+  </record>
+</filter>
+
+<match kuiper.**>
+  @type elasticsearch
+  host elasticsearch.kuiper.internal
+  port 9200
+  logstash_format true
+  logstash_prefix kuiper
+  <buffer>
+    @type file
+    path /var/log/td-agent/buffer/kuiper
+    flush_interval 5s
+  </buffer>
+</match>
+```
+
+**Application Logging (Structured JSON):**
+
+```python
+# app/logging_config.py
+import logging
+import json
+from datetime import datetime
+
+class JSONFormatter(logging.Formatter):
+    """Format logs as JSON for easy parsing"""
+
+    def format(self, record):
+        log_data = {
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+            'module': record.module,
+            'function': record.funcName,
+            'line': record.lineno,
+        }
+
+        if record.exc_info:
+            log_data['exception'] = self.formatException(record.exc_info)
+
+        if hasattr(record, 'user_id'):
+            log_data['user_id'] = record.user_id
+
+        if hasattr(record, 'request_id'):
+            log_data['request_id'] = record.request_id
+
+        return json.dumps(log_data)
+
+# Configure logging
+logger = logging.getLogger('kuiper')
+logger.setLevel(logging.INFO)
+
+handler = logging.FileHandler('/var/log/kuiper/app.log')
+handler.setFormatter(JSONFormatter())
+logger.addHandler(handler)
+```
+
+**Kibana Query Examples:**
+
+```
+# Find all errors in last hour
+level:ERROR AND timestamp:[now-1h TO now]
+
+# Find slow API requests (>1s)
+request_duration:>1000 AND endpoint:/api/*
+
+# Find specific user's actions
+user_id:"12345" AND action:*
+
+# Count requests by status code
+{
+  "query": {
+    "range": {
+      "timestamp": {
+        "gte": "now-24h"
+      }
+    }
+  },
+  "aggs": {
+    "status_codes": {
+      "terms": {
+        "field": "status_code"
+      }
+    }
+  }
+}
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Fluentd Config** | `fluent/fluent.conf` | Log collection |
+| **Structured Logging** | `app/logging_config.py` | JSON log formatting |
+| **Kibana Dashboards** | `kibana/dashboards/*.ndjson` | Log visualization |
+
+**Learn More:**
+- [Fluentd Documentation](https://docs.fluentd.org/)
+- [Elasticsearch Guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html)
+
+---
+
+## Q30: Create Living Documentation with Docs-as-Code ⭐⭐⭐
+
+**Category:** Documentation | **Risk:** LOW | **Timebox:** 20 min | **Owner:** Technical Writer / SRE
+
+### Simple Explanation (Feynman Method)
+**Docs-as-Code** treats documentation like code - it lives in Git, gets reviewed in pull requests, and is automatically published when merged. Tools like **MkDocs**, **Docusaurus**, or **Wiki.js** convert Markdown files into beautiful documentation websites. For Kuiper, this ensures runbooks, architecture diagrams, and troubleshooting guides stay up-to-date.
+
+### Technical Explanation
+
+**MkDocs Configuration:**
+
+```yaml
+# mkdocs.yml
+site_name: Kuiper Infrastructure Documentation
+site_description: Complete documentation for AWS Kuiper project
+site_author: Kuiper SRE Team
+
+theme:
+  name: material
+  palette:
+    primary: blue
+    accent: light blue
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+
+nav:
+  - Home: index.md
+  - Architecture:
+      - Overview: architecture/overview.md
+      - Network Design: architecture/network.md
+      - Security: architecture/security.md
+  - Runbooks:
+      - VPN Tunnel Down: runbooks/vpn-down.md
+      - Database Failover: runbooks/db-failover.md
+      - Scaling: runbooks/scaling.md
+  - API Reference: api/reference.md
+  - FAQ: faq.md
+
+plugins:
+  - search
+  - mermaid2
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.details
+  - toc:
+      permalink: true
+```
+
+**Example Runbook (Markdown):**
+
+```markdown
+# VPN Tunnel Down Runbook
+
+## Severity: P1 - Critical
+**Owner:** Network Team
+**Last Updated:** 2024-11-06
+
+## Symptoms
+- Prometheus alert: `VPNTunnelDown`
+- Ground station unable to reach AWS control plane
+- Packet loss to 10.0.0.0/16 subnet
+
+## Investigation Steps
+
+### 1. Check Tunnel Status (2 min)
+```bash
+aws ec2 describe-vpn-connections \
+  --vpn-connection-ids vpn-0123456789 \
+  --query 'VpnConnections[0].VgwTelemetry'
+```
+
+**Expected:** Both tunnels show `UP`
+**If DOWN:** Proceed to step 2
+
+### 2. Check On-Prem Router (3 min)
+```bash
+ssh router "show crypto ikev2 sa"
+ssh router "show crypto ipsec sa"
+```
+
+**Look for:** Failed negotiation, mismatched PSK
+
+### 3. Common Fixes
+
+#### Reset Tunnel
+```bash
+aws ec2 delete-vpn-connection --vpn-connection-id vpn-0123456789
+terraform apply  # Recreate tunnel
+```
+
+#### Check Firewall Rules
+```bash
+# UDP 500 and 4500 must be allowed
+sudo iptables -L -n | grep -E '500|4500'
+```
+
+## Escalation
+If not resolved in 10 minutes, page: `@network-oncall`
+
+## Post-Resolution
+- [ ] Verify BGP routes restored
+- [ ] Test connectivity to all VPCs
+- [ ] Document root cause in incident report
+```
+
+**Architecture Diagrams (Mermaid):**
+
+```markdown
+# Network Architecture
+
+```mermaid
+graph TD
+    A[Internet] --> B[CloudFront CDN]
+    B --> C[ALB]
+    C --> D[EC2 ASG]
+    D --> E[RDS Primary]
+    E --> F[RDS Replica]
+    D --> G[ElastiCache]
+    D --> H[S3]
+```
+
+**Automated Publishing:**
+
+```yaml
+# .github/workflows/docs.yml
+name: Publish Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs-material
+          pip install mkdocs-mermaid2-plugin
+
+      - name: Build docs
+        run: mkdocs build
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync site/ s3://kuiper-docs/ --delete
+          aws cloudfront create-invalidation --distribution-id E123456 --paths "/*"
+```
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **MkDocs Site** | `docs/` | Comprehensive documentation |
+| **Runbooks** | `docs/runbooks/*.md` | Operational procedures |
+| **Architecture Diagrams** | `docs/architecture/*.md` | Visual system design |
+| **Publishing Pipeline** | `.github/workflows/docs.yml` | Automated deployment |
+
+**Learn More:**
+- [MkDocs Documentation](https://www.mkdocs.org/)
+- [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/)
+
+---
+
+**Continue reading:** Questions 31-60 coming next (SRE Practices, Advanced Networking, Homelab, Behavioral)...
 
 ## Glossary of All Terms (A-Z)
 
