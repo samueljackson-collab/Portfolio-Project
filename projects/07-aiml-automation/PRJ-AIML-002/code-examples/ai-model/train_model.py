@@ -38,8 +38,16 @@ KEYWORD_PATTERNS = {
 
 def generate_synthetic_data(num_samples=10000):
     """
-    Generate synthetic training data for tab classification
-    In production, this would be replaced with real user data
+    Generate synthetic feature vectors and corresponding category labels for training.
+    
+    Generates approximately `num_samples` examples by evenly splitting the total across CATEGORIES and calling `extract_features_synthetic` for each sample to produce a feature vector.
+    
+    Parameters:
+        num_samples (int): Approximate total number of samples to produce; samples are distributed evenly across categories.
+    
+    Returns:
+        data (np.ndarray): 2D array of feature vectors with shape (N, D) where N is the total produced samples (approximately `num_samples`) and D is the feature dimension.
+        labels (np.ndarray): 1D array of category strings with length N corresponding to each row in `data`.
     """
     data = []
     labels = []
@@ -58,7 +66,18 @@ def generate_synthetic_data(num_samples=10000):
 
 def extract_features_synthetic(category):
     """
-    Extract features for synthetic data generation
+    Create a synthetic feature vector representing a browser tab for the given category.
+    
+    Parameters:
+        category (str): Target category name (one of CATEGORIES) used to bias synthetic feature values.
+    
+    Returns:
+        list: Feature vector containing:
+            - domain-based features for each category in CATEGORIES except 'custom' (higher values when matching `category`),
+            - keyword-based features for each category in CATEGORIES except 'custom' (higher values when matching `category`),
+            - normalized path depth (float in [0,1]),
+            - has query params indicator (0.0 or 1.0),
+            - has fragment indicator (0.0 or 1.0).
     """
     features = []
 
@@ -88,7 +107,23 @@ def extract_features_synthetic(category):
 
 def extract_features_real(url, title, content):
     """
-    Extract features from real tab data
+    Extracts a feature vector from a browser tab's URL, title, and content for category classification.
+    
+    The returned list contains features in the following order:
+    1) Domain-match indicators: for each category in DOMAIN_PATTERNS, `1.0` if any pattern appears in the URL (case-insensitive), otherwise `0.0`.
+    2) Keyword-match scores: for each category in KEYWORD_PATTERNS, a score in [0.0, 1.0] computed as (2 * title_matches + content_matches) / (len(keywords) * 3) and clipped to 1.0.
+    3) URL-structure features:
+       - Normalized path depth in [0.0, 1.0] (path segments beyond protocol+domain divided by 10, clipped to 1.0).
+       - Query presence indicator: `1.0` if the URL contains '?', otherwise `0.0`.
+       - Fragment presence indicator: `1.0` if the URL contains '#', otherwise `0.0`.
+    
+    Parameters:
+        url (str): The full URL of the tab.
+        title (str): The tab or page title.
+        content (str): The page content or snippet.
+    
+    Returns:
+        list: A 1D list of float features following the order described above.
     """
     features = []
 
@@ -119,7 +154,12 @@ def extract_features_real(url, title, content):
 
 def build_model(input_dim, num_classes):
     """
-    Build neural network model for tab classification
+    Create and compile a Keras Sequential classification model with a small dense architecture.
+    
+    The model is configured with an input layer matching `input_dim`, three hidden dense layers (128, 64, 32 units) with ReLU activations and dropout between layers, and a softmax output layer sized for `num_classes`. The model is compiled with the Adam optimizer, `sparse_categorical_crossentropy` loss, and accuracy metric.
+    
+    Returns:
+        keras.Model: A compiled Keras Sequential model ready for training.
     """
     model = models.Sequential([
         layers.Input(shape=(input_dim,)),
@@ -142,7 +182,19 @@ def build_model(input_dim, num_classes):
 
 def train_model(X_train, y_train, X_val, y_val):
     """
-    Train the classification model
+    Train a tab classification model and return the trained model, fitted label encoder, and training history.
+    
+    Parameters:
+        X_train (np.ndarray): Training feature matrix with shape (n_samples, n_features).
+        y_train (Sequence[str] | np.ndarray): Training labels as category strings.
+        X_val (np.ndarray): Validation feature matrix with shape (n_val_samples, n_features).
+        y_val (Sequence[str] | np.ndarray): Validation labels as category strings.
+    
+    Returns:
+        tuple: A 3-tuple containing:
+            - model: The compiled and trained Keras Sequential model.
+            - label_encoder: A fitted sklearn LabelEncoder for mapping category strings to integer labels.
+            - history: The Keras History object returned by model.fit containing training metrics.
     """
     # Encode labels
     label_encoder = LabelEncoder()
@@ -185,7 +237,13 @@ def train_model(X_train, y_train, X_val, y_val):
 
 def convert_to_tflite(model, output_path='tab_classifier.tflite'):
     """
-    Convert Keras model to TensorFlow Lite format
+    Convert a trained Keras model to TensorFlow Lite and save the converted file.
+    
+    This function creates a TFLiteConverter from the provided Keras model, applies default optimizations, converts the model to TFLite format, and writes the resulting .tflite file to the given output path. It also prints the save location and the written file's size.
+    
+    Parameters:
+        model (tf.keras.Model): Trained Keras model to convert.
+        output_path (str): Filesystem path where the .tflite file will be written.
     """
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
 
@@ -209,7 +267,16 @@ def convert_to_tflite(model, output_path='tab_classifier.tflite'):
 
 def evaluate_model(model, X_test, y_test, label_encoder):
     """
-    Evaluate model performance
+    Evaluate a trained classifier on test data and print performance metrics.
+    
+    Encodes true labels using the provided LabelEncoder, computes and prints test loss and accuracy, generates predictions to produce and print a classification report and a confusion matrix using the encoder's class names.
+    
+    Parameters:
+        model: Trained Keras model used for evaluation.
+        X_test (array-like): Feature matrix for the test set.
+        y_test (array-like): True class labels for the test set (raw string/label form expected by `label_encoder`).
+        label_encoder: Fitted sklearn.preprocessing.LabelEncoder used to transform `y_test` to integer class indices.
+    
     """
     y_test_encoded = label_encoder.transform(y_test)
 
@@ -238,7 +305,9 @@ def evaluate_model(model, X_test, y_test, label_encoder):
 
 def main():
     """
-    Main training pipeline
+    Orchestrates the end-to-end training, evaluation, and export pipeline for the tab classification model.
+    
+    Performs synthetic data generation, splits data into training/validation/test sets, trains the model (with early stopping and checkpointing), evaluates performance on the test set, converts the trained model to TensorFlow Lite, and saves the label encoder classes to `label_encoder.json`.
     """
     print("Generating synthetic training data...")
     X, y = generate_synthetic_data(num_samples=10000)

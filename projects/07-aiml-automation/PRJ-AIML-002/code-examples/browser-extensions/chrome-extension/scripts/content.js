@@ -9,7 +9,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true; // Keep channel open for async response
 });
 
-// Handle messages
+/**
+ * Route and handle content-script requests from the background script.
+ * @param {Object} request - Message object received from the background script.
+ * @param {string} request.type - The request type: 'ANALYZE_PAGE', 'GET_PAGE_CONTENT', or 'GET_PAGE_KEYWORDS'.
+ * @returns {Object} The response for the given request type: for 'ANALYZE_PAGE' the page analysis object; for 'GET_PAGE_CONTENT' an object with `content` (string); for 'GET_PAGE_KEYWORDS' an object with `keywords` (string[]); otherwise an object with `error` (string).
+ */
 async function handleContentMessage(request) {
   switch (request.type) {
     case 'ANALYZE_PAGE':
@@ -26,7 +31,16 @@ async function handleContentMessage(request) {
   }
 }
 
-// Analyze page content for classification
+/**
+ * Build a summary analysis of the current page.
+ *
+ * @returns {{content: string, keywords: string[], metadata: Object, url: string, title: string}} An object containing the page analysis:
+ *   - content: cleaned textual content extracted from the page (truncated when necessary).
+ *   - keywords: ordered list of extracted keywords.
+ *   - metadata: collected meta tags and parsed schema data.
+ *   - url: the current page URL.
+ *   - title: the document title.
+ */
 async function analyzePage() {
   const content = getPageContent();
   const keywords = extractKeywords();
@@ -41,7 +55,10 @@ async function analyzePage() {
   };
 }
 
-// Get page text content
+/**
+ * Extracts the main textual content of the page body, excluding common non-content elements.
+ * @returns {string} The cleaned page text with collapsed whitespace, truncated to 5000 characters; empty string if the document body is absent.
+ */
 function getPageContent() {
   // Get main content, excluding scripts and styles
   const body = document.body;
@@ -60,7 +77,14 @@ function getPageContent() {
   return text.replace(/\s+/g, ' ').trim().slice(0, 5000); // Limit to 5000 chars
 }
 
-// Extract keywords from page
+/**
+ * Produce a list of the page's most frequent keywords.
+ *
+ * Keywords are derived from the page's main text: text is lowercased, common stop words are removed,
+ * words of length 3 or less are ignored, and the remaining words are ranked by frequency.
+ * The function returns up to the top 20 keywords ordered from highest to lowest frequency.
+ * @returns {string[]} Top keywords found on the page ordered by descending frequency (up to 20).
+ */
 function extractKeywords() {
   const text = getPageContent().toLowerCase();
 
@@ -92,7 +116,13 @@ function extractKeywords() {
   return sortedWords;
 }
 
-// Get page metadata
+/**
+ * Collects page metadata from meta tags, Open Graph tags, and JSON-LD schema blocks.
+ *
+ * Searches the document for meta[name] or meta[property] tags and adds their content to a metadata map keyed by the tag's name or property. Also collects meta[property^="og:"] entries and parses any script[type="application/ld+json"] blocks into an array attached as `metadata.schema` when present (JSON parse errors are ignored).
+ *
+ * @returns {Object} An object mapping meta tag names/properties to their content. If JSON-LD schema blocks were found and successfully parsed, includes a `schema` array of parsed objects.
+ */
 function getPageMetadata() {
   const metadata = {};
 
@@ -134,7 +164,13 @@ function getPageMetadata() {
   return metadata;
 }
 
-// Detect page category based on content
+/**
+ * Determine the page's category by matching weighted keyword occurrences in the URL, title, and main content.
+ *
+ * Matches predefined category keyword sets and scores each category with weights for URL (highest), title, and content (lowest); returns the category with the highest positive score or `'other'` if none match.
+ *
+ * @returns {string} The detected category: one of `'work'`, `'research'`, `'shopping'`, `'social'`, `'entertainment'`, `'news'`, or `'other'`.
+ */
 function detectCategory() {
   const url = window.location.href.toLowerCase();
   const title = document.title.toLowerCase();
@@ -181,6 +217,12 @@ if (document.readyState === 'complete') {
   window.addEventListener('load', sendAnalysisToBackground);
 }
 
+/**
+ * Sends a page analysis to the extension background script.
+ *
+ * Runs the page analysis and dispatches a `PAGE_ANALYZED` message containing the analysis.
+ * Any errors encountered during analysis or messaging are caught and logged to the console.
+ */
 async function sendAnalysisToBackground() {
   try {
     const analysis = await analyzePage();
