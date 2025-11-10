@@ -23,19 +23,31 @@ def check_s3_bucket_logging():
     buckets = s3.list_buckets()
 
     issues = []
+    errors = []
     for bucket in buckets['Buckets']:
         try:
             logging = s3.get_bucket_logging(Bucket=bucket['Name'])
             if 'LoggingEnabled' not in logging:
                 issues.append(bucket['Name'])
+        except s3.exceptions.NoSuchBucket:
+            # Bucket was deleted between list and check, skip
+            continue
         except Exception as e:
-            pass
+            # Log permission errors or other issues for investigation
+            error_msg = f"{bucket['Name']}: {type(e).__name__} - {str(e)}"
+            errors.append(error_msg)
+            print(f"  ⚠️  Unable to check bucket {bucket['Name']}: {type(e).__name__}")
+
+    if errors:
+        print(f"  ℹ️  Encountered {len(errors)} errors during bucket checks (may indicate permission issues)")
 
     if len(issues) == 0:
         print("✓ CIS 2.6: S3 bucket logging is enabled for all buckets")
         return True
     else:
-        print(f"✗ CIS 2.6: S3 bucket logging disabled for {len(issues)} buckets")
+        print(f"✗ CIS 2.6: S3 bucket logging disabled for {len(issues)} buckets: {', '.join(issues[:5])}")
+        if len(issues) > 5:
+            print(f"  ... and {len(issues) - 5} more")
         return False
 
 def check_mfa_root_account():
