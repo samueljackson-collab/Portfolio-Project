@@ -354,16 +354,31 @@ sudo cp -r projects/06-homelab/PRJ-HOME-002/assets/configs/monitoring/* /opt/mon
 
 # 3. Configure environment variables
 cat > /opt/monitoring/.env << 'ENV'
+# Grafana authentication
+GRAFANA_ADMIN_USER=admin
 GRAFANA_ADMIN_PASSWORD=your_secure_password
-SMTP_PASSWORD=your_gmail_app_password
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+
+# Database credentials
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_database_password
+POSTGRES_DB=homelab
+
+# Promtail hostname (for log identification)
+HOSTNAME=monitoring-vm
 ENV
 
-# 4. Deploy stack
-cd /opt/monitoring
-docker-compose up -d
+# 4. Update Alertmanager credentials
+# Edit alertmanager/alertmanager.yml and replace:
+#   - smtp_auth_username: 'your-email@gmail.com'
+#   - smtp_auth_password: 'your-gmail-app-password'
+#   - to: 'oncall@homelab.local'
+#   - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
 
-# 5. Verify deployment
+# 5. Deploy stack
+cd /opt/monitoring
+docker-compose -f docker-compose-full-stack.yml up -d
+
+# 6. Verify deployment
 curl http://192.168.40.30:9090/api/v1/targets  # Prometheus targets
 curl http://192.168.40.30:3100/ready           # Loki health
 open http://192.168.40.30:3000                 # Grafana UI (admin/<password>)

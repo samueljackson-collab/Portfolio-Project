@@ -8,7 +8,7 @@ global:
   smtp_from: 'alertmanager@homelab.local'
   smtp_smarthost: 'smtp.gmail.com:587'
   smtp_auth_username: 'your-email@gmail.com'
-  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_auth_password: 'your-gmail-app-password'
   smtp_require_tls: true
 
 templates:
