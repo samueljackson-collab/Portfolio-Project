@@ -2590,7 +2590,154 @@ ssh admin@gateway-router "show route-map FROM-AWS"
 
 ---
 
-**Continue reading:** Questions 8-60 coming next...
+### Q8: Design a complete observability stack for Kuiper gateways using Prometheus and Grafana. What metrics are critical?
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** Observability & Monitoring
+**Risk Level:** High (poor observability = slow incident response)
+**Timebox:** 10-12 minutes
+**Owner:** SRE or DevOps Engineer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Imagine you're flying a plane. You need instruments showing altitude, speed, fuel, engine temperature, etc. Without these, you're flying blind and will crash.
+
+For Kuiper gateways, Prometheus is like collecting all these instrument readings every few seconds, and Grafana is the dashboard displaying them in an easy-to-read format. We need to track things like "Is the VPN tunnel up?", "How many packets are we losing?", "Is BGP working?", etc.
+
+**Technical Explanation:**
+
+**Critical Metrics Summary:**
+1. **VPN Tunnel State** (TunnelState: 0=down, 1=up) - Most critical
+2. **BGP Session State** (bgpPeerState: 6=Established)
+3. **Satellite Link Quality** (0-100%)
+4. **Packet Loss Rate** (< 1% acceptable)
+5. **Latency** (< 50ms target)
+6. **Interface Errors** (ifInErrors/ifOutErrors)
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Prometheus Configuration** | `observability/prometheus/prometheus.yml` | Complete scrape configs |
+| **Grafana Dashboards** | `dashboards/grafana/` | 12 JSON dashboards |
+| **Deployment** | `infra/aws/terraform/observability/` | Terraform for Prometheus/Grafana |
+
+**Learn More:**
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Dashboards](https://grafana.com/docs/grafana/latest/dashboards/)
+
+---
+
+### Q9: You're on-call and get paged: "Gateway-VA BGP session to AWS is down". Walk me through your incident response process.
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** SRE & Incident Response
+**Risk Level:** Critical (slow response = extended outage)
+**Timebox:** 8-12 minutes
+**Owner:** SRE or On-Call Engineer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Being on-call is like being a firefighter. When the alarm goes off (you get paged), you need to:
+1. **Acknowledge** - "I got the call, I'm on it"
+2. **Assess** - "How big is the fire? Is anyone hurt?"
+3. **Respond** - "Put out the fire using the right tools"
+4. **Communicate** - "Update everyone on the status"
+5. **Follow-up** - "Make sure it doesn't happen again"
+
+**Incident Response Steps:**
+1. **T+0:30** - Acknowledge alert, check Grafana dashboard
+2. **T+1:00** - Post initial status to Slack
+3. **T+1:00-6:00** - Gather diagnostic data (SSH to router, check BGP, check AWS Service Health)
+4. **T+6:00** - Communicate root cause
+5. **T+6:00+** - Implement mitigation if needed, monitor
+6. **Resolution** - Verify recovery, post resolution, write postmortem
+
+**Key Actions:**
+- Check if traffic failed over to Tunnel 2 (ECMP)
+- Verify BGP state: `show ip bgp neighbors 169.254.10.2`
+- Check IPsec: `show crypto session detail`
+- Check AWS Service Health Dashboard
+- Write blameless postmortem within 24 hours
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Incident Response Runbook** | `docs/runbooks/incident-response.md` | Step-by-step guide |
+| **Postmortem Template** | `docs/postmortems/template.md` | Blameless postmortem format |
+| **Historical Postmortems** | `docs/postmortems/` | 10+ past incidents |
+
+**Learn More:**
+- [Google SRE Book - Managing Incidents](https://sre.google/sre-book/managing-incidents/)
+- [PagerDuty Incident Response](https://response.pagerduty.com/)
+
+---
+
+### Q10: How would you implement cost optimization for the Kuiper AWS infrastructure while maintaining SLOs?
+
+**Difficulty:** ⭐⭐⭐ (Advanced)
+**Category:** AWS Cost Optimization & Architecture
+**Risk Level:** Medium (aggressive optimization = service degradation)
+**Timebox:** 8-10 minutes
+**Owner:** Solutions Architect or FinOps Engineer
+
+#### Detailed Answer:
+
+**Simple Explanation (Feynman):**
+Imagine you're trying to reduce your electricity bill at home. You could:
+1. Turn off lights when not in use (delete unused resources)
+2. Use LED bulbs instead of incandescent (right-size instances)
+3. Run dishwasher at night when rates are lower (use Spot instances)
+4. Insulate your house (Reserved Instances for predictable workloads)
+
+For AWS, it's the same idea: Delete what you don't need, use cheaper alternatives where possible, and commit to Reserved Instances for steady workloads.
+
+**Technical Explanation:**
+
+**Cost Optimization Strategy (Prioritized):**
+
+| Priority | Initiative | Savings/Month | Effort | Risk |
+|----------|-----------|---------------|--------|------|
+| P0 | Reserved Instances (EC2) | $92 | Low | None |
+| P0 | Savings Plans (Compute) | $60 | Low | None |
+| P1 | Right-size EC2 instances | $102 | Med | Low |
+| P1 | gp3 → gp2 (slower EBS) | $20 | Low | Low |
+| P2 | Reduce CloudWatch retention | $10 | Low | None |
+| P2 | S3 Lifecycle policies | $15 | Low | None |
+
+**Total Savings:** $299/month ($3,588/year)
+
+**Key Actions:**
+1. **Purchase Reserved Instances** - 1-year RI for m5.large (save $74/month)
+2. **Right-size** - Use CloudWatch metrics to find underutilized instances
+3. **S3 Lifecycle** - Move logs to IA after 30 days, Glacier after 90 days
+4. **Delete unused resources** - EBS snapshots, old AMIs, detached EBS volumes
+
+**Cost Monitoring:**
+- Set up CloudWatch billing alarms (daily budget: $120)
+- Alert on cost spike (>30% increase in 24 hours)
+- Monthly cost review meeting
+
+**Portfolio Artifacts:**
+
+| Artifact | Location | What It Shows |
+|----------|----------|---------------|
+| **Cost Optimization Analysis** | `docs/cost/optimization-plan.md` | Complete analysis with ROI |
+| **Right-Sizing Script** | `scripts/cost/right-size-analysis.py` | Automated recommendations |
+| **S3 Lifecycle Policies** | `infra/aws/terraform/s3-lifecycle.tf` | Terraform lifecycle rules |
+| **Cost Dashboard** | `dashboards/grafana/aws-cost.json` | Real-time cost monitoring |
+
+**Learn More:**
+- [AWS Cost Optimization Pillar](https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html)
+- [AWS Pricing Calculator](https://calculator.aws/)
+- [FinOps Foundation](https://www.finops.org/)
+
+---
+
+**Continue reading:** Questions 11-60 coming next...
 
 ## Glossary of All Terms (A-Z)
 
