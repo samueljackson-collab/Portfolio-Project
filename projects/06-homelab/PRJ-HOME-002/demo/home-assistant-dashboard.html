@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Home Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .ha-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .ha-logo {
+            font-size: 24px;
+            color: #03a9f4;
+        }
+
+        .dashboard-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .header-tabs {
+            display: flex;
+            gap: 24px;
+            margin-left: 32px;
+        }
+
+        .header-tabs a {
+            text-decoration: none;
+            color: #666;
+            padding: 8px 0;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+        }
+
+        .header-tabs a.active {
+            color: #03a9f4;
+            border-bottom-color: #03a9f4;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .notification-icon {
+            position: relative;
+            cursor: pointer;
+            font-size: 20px;
+            color: #666;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #f44336;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-icon {
+            font-size: 20px;
+        }
+
+        .card-menu {
+            color: #999;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+        }
+
+        .quick-action-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            white-space: nowrap;
+            transition: transform 0.2s;
+        }
+
+        .quick-action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .light-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .light-control:last-child {
+            border-bottom: none;
+        }
+
+        .light-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .light-icon {
+            font-size: 24px;
+        }
+
+        .light-icon.on {
+            color: #FDB813;
+            filter: drop-shadow(0 0 8px rgba(253, 184, 19, 0.5));
+        }
+
+        .light-icon.off {
+            color: #ccc;
+        }
+
+        .light-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .light-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .light-status {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.on {
+            background: #03a9f4;
+        }
+
+        .toggle-switch-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.on .toggle-switch-slider {
+            transform: translateX(24px);
+        }
+
+        .thermostat {
+            text-align: center;
+        }
+
+        .temp-display {
+            font-size: 48px;
+            font-weight: 300;
+            color: #03a9f4;
+            margin: 16px 0;
+        }
+
+        .temp-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 16px 0;
+        }
+
+        .temp-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #03a9f4;
+            background: white;
+            color: #03a9f4;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .temp-btn:hover {
+            background: #03a9f4;
+            color: white;
+        }
+
+        .temp-current {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .mode-select {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .mode-btn {
+            padding: 6px 12px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .mode-btn.active {
+            background: #03a9f4;
+            color: white;
+            border-color: #03a9f4;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .sensor-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sensor-icon {
+            font-size: 24px;
+        }
+
+        .sensor-icon.clear { color: #4caf50; }
+        .sensor-icon.motion { color: #ff9800; }
+
+        .sensor-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sensor-location {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .sensor-status {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .energy-chart {
+            height: 120px;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            height: 100%;
+            gap: 4px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #03a9f4 0%, #0288d1 100%);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+
+        .energy-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        .energy-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .energy-value {
+            font-size: 20px;
+            font-weight: 500;
+            color: #03a9f4;
+        }
+
+        .energy-label {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .media-player {
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .media-info {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .album-art {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .media-details {
+            flex: 1;
+        }
+
+        .media-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .media-artist {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .media-source {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .media-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .media-btn.play {
+            width: 48px;
+            height: 48px;
+            background: #03a9f4;
+            color: white;
+            font-size: 20px;
+        }
+
+        .status-list {
+            list-style: none;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .status-indicator.online {
+            background: #4caf50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+        }
+
+        .status-indicator.warning {
+            background: #ff9800;
+            box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+        }
+
+        .security-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .security-item:last-child {
+            border-bottom: none;
+        }
+
+        .lock-icon {
+            font-size: 24px;
+            color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="ha-header">
+        <div class="header-left">
+            <div class="ha-logo">🏠</div>
+            <div class="dashboard-title">Home</div>
+            <div class="header-tabs">
+                <a href="#" class="active">Overview</a>
+                <a href="#">Lights</a>
+                <a href="#">Climate</a>
+                <a href="#">Security</a>
+                <a href="#">System</a>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="notification-icon">
+                🔔
+                <span class="notification-badge">1</span>
+            </div>
+            <div class="user-avatar">S</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="cards-grid">
+            <!-- Quick Actions Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">⚡</span>
+                        Quick Actions
+                    </div>
+                </div>
+                <div class="quick-actions">
+                    <button class="quick-action-btn">
+                        <span>🌙</span>
+                        <span>All Lights Off</span>
+                    </button>
+                    <button class="quick-action-btn">
+                        <span>😴</span>
+                        <span>Goodnight</span>
+                    </button>
+                    <button class="quick-action-btn">
+                        <span>🔒</span>
+                        <span>Away Mode</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Climate Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🌡️</span>
+                        Climate Control
+                    </div>
+                    <div class="card-menu">⋮</div>
+                </div>
+                <div class="thermostat">
+                    <div class="temp-display">72°F</div>
+                    <div class="temp-controls">
+                        <button class="temp-btn">−</button>
+                        <div style="font-size: 18px; font-weight: 500;">72</div>
+                        <button class="temp-btn">+</button>
+                    </div>
+                    <div class="temp-current">Current: 68°F · Heating</div>
+                    <div class="mode-select">
+                        <button class="mode-btn">Off</button>
+                        <button class="mode-btn active">Heat</button>
+                        <button class="mode-btn">Cool</button>
+                        <button class="mode-btn">Auto</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lights Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">💡</span>
+                        Lights
+                    </div>
+                    <div class="card-menu">⋮</div>
+                </div>
+                <div class="light-control">
+                    <div class="light-info">
+                        <div class="light-icon on">💡</div>
+                        <div class="light-details">
+                            <div class="light-name">Living Room</div>
+                            <div class="light-status">85% · Warm White</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch on" onclick="this.classList.toggle('on')">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                </div>
+                <div class="light-control">
+                    <div class="light-info">
+                        <div class="light-icon off">💡</div>
+                        <div class="light-details">
+                            <div class="light-name">Bedroom</div>
+                            <div class="light-status">Off</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch" onclick="this.classList.toggle('on')">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                </div>
+                <div class="light-control">
+                    <div class="light-info">
+                        <div class="light-icon on">💡</div>
+                        <div class="light-details">
+                            <div class="light-name">Kitchen</div>
+                            <div class="light-status">60% · Cool White</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch on" onclick="this.classList.toggle('on')">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                </div>
+                <div class="light-control">
+                    <div class="light-info">
+                        <div class="light-icon off">💡</div>
+                        <div class="light-details">
+                            <div class="light-name">Office</div>
+                            <div class="light-status">Off</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch" onclick="this.classList.toggle('on')">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🔐</span>
+                        Security
+                    </div>
+                    <div class="card-menu">⋮</div>
+                </div>
+                <div class="security-item">
+                    <div class="light-info">
+                        <div class="lock-icon">🔒</div>
+                        <div class="light-details">
+                            <div class="light-name">Front Door</div>
+                            <div class="light-status">Locked</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <div class="light-info">
+                        <div class="lock-icon">🔒</div>
+                        <div class="light-details">
+                            <div class="light-name">Garage Door</div>
+                            <div class="light-status">Closed</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <div class="light-info">
+                        <div style="font-size: 24px;">📡</div>
+                        <div class="light-details">
+                            <div class="light-name">Motion Sensors</div>
+                            <div class="light-status">2 active</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensors Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">📡</span>
+                        Motion Sensors
+                    </div>
+                    <div class="card-menu">⋮</div>
+                </div>
+                <div class="sensor-grid">
+                    <div class="sensor-item">
+                        <div class="sensor-icon clear">✓</div>
+                        <div class="sensor-info">
+                            <div class="sensor-location">Living Room</div>
+                            <div class="sensor-status">Clear</div>
+                        </div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon motion">👤</div>
+                        <div class="sensor-info">
+                            <div class="sensor-location">Kitchen</div>
+                            <div class="sensor-status">Motion detected</div>
+                        </div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon clear">✓</div>
+                        <div class="sensor-info">
+                            <div class="sensor-location">Bedroom</div>
+                            <div class="sensor-status">Clear</div>
+                        </div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-icon clear">✓</div>
+                        <div class="sensor-info">
+                            <div class="sensor-location">Garage</div>
+                            <div class="sensor-status">Clear</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Energy Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">⚡</span>
+                        Energy Today
+                    </div>
+                    <div class="card-menu">⋮</div>
+                </div>
+                <div class="energy-chart">
+                    <div class="chart-bars">
+                        <div class="chart-bar" style="height: 30%"></div>
+                        <div class="chart-bar" style="height: 25%"></div>
+                        <div class="chart-bar" style="height: 45%"></div>
+                        <div class="chart-bar" style="height: 60%"></div>
+                        <div class="chart-bar" style="height: 75%"></div>
+                        <div class="chart-bar" style="height: 65%"></div>
+                        <div class="chart-bar" style="height: 50%"></div>
+                        <div class="chart-bar" style="height: 40%"></div>
+                    </div>
+                </div>
+                <div class="energy-stats">
+                    <div class="energy-stat">
+                        <div class="energy-value">12.3</div>
+                        <div class="energy-label">kWh Used</div>
+                    </div>
+                    <div class="energy-stat">
+                        <div class="energy-value">$2.15</div>
+                        <div class="energy-label">Cost</div>
+                    </div>
+                    <div class="energy-stat">
+                        <div class="energy-value">0</div>
+                        <div class="energy-label">Solar</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Player Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🎵</span>
+                        Now Playing
+                    </div>
+                    <div class="card-menu">⋮</div>
+                </div>
+                <div class="media-player">
+                    <div class="media-info">
+                        <div class="album-art">🎵</div>
+                        <div class="media-details">
+                            <div class="media-title">Bohemian Rhapsody</div>
+                            <div class="media-artist">Queen</div>
+                            <div class="media-source">Spotify · Living Room</div>
+                        </div>
+                    </div>
+                    <div class="media-controls">
+                        <button class="media-btn">⏮</button>
+                        <button class="media-btn play">⏸</button>
+                        <button class="media-btn">⏭</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🖥️</span>
+                        Homelab Services
+                    </div>
+                    <div class="card-menu">⋮</div>
+                </div>
+                <ul class="status-list">
+                    <li class="status-item">
+                        <div style="display: flex; align-items: center;">
+                            <span class="status-indicator online"></span>
+                            <span>Proxmox VE</span>
+                        </div>
+                        <span style="color: #4caf50; font-size: 12px;">Online</span>
+                    </li>
+                    <li class="status-item">
+                        <div style="display: flex; align-items: center;">
+                            <span class="status-indicator online"></span>
+                            <span>TrueNAS</span>
+                        </div>
+                        <span style="color: #4caf50; font-size: 12px;">Online</span>
+                    </li>
+                    <li class="status-item">
+                        <div style="display: flex; align-items: center;">
+                            <span class="status-indicator online"></span>
+                            <span>PostgreSQL</span>
+                        </div>
+                        <span style="color: #4caf50; font-size: 12px;">Online</span>
+                    </li>
+                    <li class="status-item">
+                        <div style="display: flex; align-items: center;">
+                            <span class="status-indicator warning"></span>
+                            <span>Backup Server</span>
+                        </div>
+                        <span style="color: #ff9800; font-size: 12px;">High Load</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
