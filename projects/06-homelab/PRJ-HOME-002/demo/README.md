@@ -21,6 +21,27 @@ A fully styled mockup of the Wiki.js documentation interface showcasing the home
 
 **To View**: Open `wiki-infrastructure-overview.html` in any web browser.
 
+### home-assistant-dashboard.html
+A fully interactive mockup of a Home Assistant smart home dashboard. This HTML file demonstrates:
+
+- **Modern UI Design**: Clean, responsive card-based layout with gradient backgrounds and smooth animations
+- **Interactive Components**: Functional toggles, buttons, and controls with real-time state management
+- **Dashboard Features**:
+  - Quick action buttons for common automations
+  - Climate control with temperature adjustment
+  - Light management with on/off toggles
+  - Security monitoring (door locks, motion sensors)
+  - Energy usage visualization with bar charts
+  - Media player controls
+  - Homelab service status monitoring (Proxmox, TrueNAS, PostgreSQL)
+- **Design Patterns**: Card-based UI, sticky header navigation, status indicators, and hover effects
+
+**Purpose**: Demonstrates Home Assistant integration in the homelab environment and showcases front-end development skills with modern CSS techniques (gradients, backdrop-filter, transitions, grid/flexbox layouts).
+
+**Live Demo**: Available as a React component at `/home-assistant` route in the portfolio frontend.
+
+**To View**: Open `home-assistant-dashboard.html` in any web browser.
+
 ## Related Documentation
 
 - Main project README: [../README.md](../README.md)
