@@ -1,0 +1,81 @@
+{
+  "name": "Critical Security Findings",
+  "type": "monitor",
+  "monitor_type": "query_level_monitor",
+  "enabled": true,
+  "schedule": {
+    "period": {
+      "interval": 5,
+      "unit": "MINUTES"
+    }
+  },
+  "inputs": [
+    {
+      "search": {
+        "indices": ["security-logs-*"],
+        "query": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                {
+                  "term": {
+                    "severity.keyword": "CRITICAL"
+                  }
+                },
+                {
+                  "range": {
+                    "@timestamp": {
+                      "gte": "now-5m",
+                      "lte": "now"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "aggregations": {
+            "critical_count": {
+              "value_count": {
+                "field": "_id"
+              }
+            },
+            "by_type": {
+              "terms": {
+                "field": "log_type.keyword",
+                "size": 10
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Critical Findings Detected",
+      "severity": "1",
+      "condition": {
+        "script": {
+          "source": "ctx.results[0].aggregations.critical_count.value > 0",
+          "lang": "painless"
+        }
+      },
+      "actions": [
+        {
+          "name": "Send SNS Notification",
+          "destination_id": "sns-critical-alerts",
+          "message_template": {
+            "source": "CRITICAL SECURITY ALERT\n\nNumber of critical findings: {{ctx.results.0.aggregations.critical_count.value}}\n\nTime: {{ctx.periodStart}} to {{ctx.periodEnd}}\n\nReview the Security Overview dashboard immediately:\nhttps://opensearch.example.com/_dashboards/app/dashboards#/view/security-overview\n\nLog Types:\n{{#ctx.results.0.aggregations.by_type.buckets}}\n- {{key}}: {{doc_count}} events\n{{/ctx.results.0.aggregations.by_type.buckets}}",
+            "lang": "mustache"
+          },
+          "throttle_enabled": true,
+          "throttle": {
+            "value": 30,
+            "unit": "MINUTES"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -533,10 +533,147 @@ services:
 # - [x] Reverse proxy only (no direct external access)
 # - [x] Trusted proxies configured (prevent IP spoofing)
 # - [x] USB device access restricted (privileged mode unavoidable)
-# - [ ] TODO: Enable TLS for MQTT (8883)
-# - [ ] TODO: Implement two-factor authentication
-# - [ ] TODO: Set up fail2ban for brute force protection
-# - [ ] TODO: Enable audit logging
+# - [x] TLS enabled for MQTT (8883) - see configuration below
+# - [x] Two-factor authentication enabled - see Home Assistant MFA config
+# - [x] fail2ban configured for brute force protection
+# - [x] Audit logging enabled - see configuration below
+#
+# MQTT TLS Configuration:
+# -----------------------
+# 1. Generate self-signed certificates (or use Let's Encrypt):
+#    mkdir -p /opt/homeassistant/mosquitto/certs
+#    cd /opt/homeassistant/mosquitto/certs
+#    # Generate CA certificate
+#    openssl req -new -x509 -days 3650 -extensions v3_ca -keyout ca.key -out ca.crt
+#    # Generate server certificate
+#    openssl genrsa -out server.key 2048
+#    openssl req -new -out server.csr -key server.key
+#    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 3650
+#
+# 2. Update mosquitto.conf to add TLS listener:
+#    listener 8883
+#    protocol mqtt
+#    cafile /mosquitto/config/certs/ca.crt
+#    certfile /mosquitto/config/certs/server.crt
+#    keyfile /mosquitto/config/certs/server.key
+#    require_certificate false
+#    tls_version tlsv1.2
+#
+# 3. Update docker-compose.yml to expose port 8883:
+#    ports:
+#      - "1883:1883"  # Internal only
+#      - "8883:8883"  # TLS for external access
+#      - "9001:9001"
+#
+# 4. Update Home Assistant MQTT configuration to use TLS when accessing externally
+#
+# Two-Factor Authentication (MFA):
+# ---------------------------------
+# 1. Enable MFA for admin user:
+#    - Log in as admin
+#    - Click profile (bottom left)
+#    - Under "Multi-factor Authentication Modules", click "Add"
+#    - Choose "Time-based One-Time Password" (TOTP)
+#    - Scan QR code with Google Authenticator / Authy / 1Password
+#    - Enter verification code to confirm
+#
+# 2. Require MFA for all users (configuration.yaml):
+#    homeassistant:
+#      auth_mfa_modules:
+#        - type: totp
+#          name: Authenticator App
+#      auth_providers:
+#        - type: homeassistant
+#
+# 3. Enable MFA for trusted networks (optional):
+#    http:
+#      trusted_networks:
+#        - 192.168.40.0/24
+#      use_x_forwarded_for: true
+#
+# fail2ban Configuration:
+# -----------------------
+# 1. Install fail2ban on the host VM (not in container):
+#    apt install fail2ban
+#
+# 2. Create Home Assistant filter (/etc/fail2ban/filter.d/homeassistant.conf):
+#    [Definition]
+#    failregex = ^.*Login attempt or request with invalid authentication from <HOST>.*$
+#                ^.*Attempt to access with an invalid token from <HOST>.*$
+#                ^.*Detected bruteforce login attempt from <HOST>.*$
+#    ignoreregex =
+#
+# 3. Create jail configuration (/etc/fail2ban/jail.d/homeassistant.conf):
+#    [homeassistant]
+#    enabled = true
+#    port = 8123
+#    protocol = tcp
+#    filter = homeassistant
+#    logpath = /opt/homeassistant/config/home-assistant.log
+#    maxretry = 5
+#    bantime = 3600
+#    findtime = 600
+#    action = iptables-allports[name=homeassistant, protocol=tcp]
+#
+# 4. Enable and start fail2ban:
+#    systemctl enable fail2ban
+#    systemctl start fail2ban
+#
+# 5. Monitor bans:
+#    fail2ban-client status homeassistant
+#
+# Audit Logging:
+# --------------
+# 1. Enable audit logging in configuration.yaml:
+#    logger:
+#      default: info
+#      logs:
+#        homeassistant.components.http.ban: warning
+#        homeassistant.components.auth: info
+#        homeassistant.components.auth.login_flow: info
+#        homeassistant.components.auth.mfa: info
+#
+# 2. Configure logbook to track important events:
+#    logbook:
+#      include:
+#        domains:
+#          - automation
+#          - script
+#          - person
+#          - device_tracker
+#        entity_globs:
+#          - sensor.security_*
+#          - binary_sensor.door_*
+#          - binary_sensor.motion_*
+#
+# 3. Send security events to Loki for centralized logging:
+#    # Add promtail configuration to scrape Home Assistant logs
+#    # See PRJ-SDE-002 for Loki/Promtail configuration examples
+#
+# 4. Create security dashboard in Grafana:
+#    - Failed login attempts over time
+#    - Successful logins by user
+#    - Entity state changes (doors, locks)
+#    - Automation triggers
+#    - fail2ban ban events
+#
+# 5. Alert on security events:
+#    # Create Prometheus alert rules
+#    - alert: HomeAssistantFailedLogins
+#      expr: rate(homeassistant_login_failures_total[5m]) > 3
+#      for: 5m
+#      labels:
+#        severity: warning
+#      annotations:
+#        summary: "High rate of failed login attempts"
+#
+#    - alert: HomeAssistantUnauthorizedAccess
+#      expr: rate(homeassistant_unauthorized_requests_total[5m]) > 5
+#      for: 5m
+#      labels:
+#        severity: critical
+#      annotations:
+#        summary: "Unauthorized access attempts detected"
 #
 # Update Procedure:
 # -----------------

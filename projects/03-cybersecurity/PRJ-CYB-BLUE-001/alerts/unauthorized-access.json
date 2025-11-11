@@ -1,0 +1,107 @@
+{
+  "name": "Unauthorized Access Attempts",
+  "type": "monitor",
+  "monitor_type": "query_level_monitor",
+  "enabled": true,
+  "schedule": {
+    "period": {
+      "interval": 5,
+      "unit": "MINUTES"
+    }
+  },
+  "inputs": [
+    {
+      "search": {
+        "indices": ["security-logs-*"],
+        "query": {
+          "size": 100,
+          "query": {
+            "bool": {
+              "should": [
+                {
+                  "bool": {
+                    "must": [
+                      {"term": {"log_type.keyword": "cloudtrail"}},
+                      {"term": {"error_code.keyword": "UnauthorizedOperation"}}
+                    ]
+                  }
+                },
+                {
+                  "bool": {
+                    "must": [
+                      {"term": {"log_type.keyword": "cloudtrail"}},
+                      {"term": {"error_code.keyword": "AccessDenied"}}
+                    ]
+                  }
+                },
+                {
+                  "bool": {
+                    "must": [
+                      {"term": {"log_type.keyword": "guardduty"}},
+                      {"wildcard": {"finding_type.keyword": "*UnauthorizedAccess*"}}
+                    ]
+                  }
+                }
+              ],
+              "minimum_should_match": 1,
+              "filter": {
+                "range": {
+                  "@timestamp": {
+                    "gte": "now-5m",
+                    "lte": "now"
+                  }
+                }
+              }
+            }
+          },
+          "aggregations": {
+            "unauthorized_count": {
+              "value_count": {
+                "field": "_id"
+              }
+            },
+            "by_source_ip": {
+              "terms": {
+                "field": "source_ip.keyword",
+                "size": 10
+              }
+            },
+            "by_user": {
+              "terms": {
+                "field": "user_identity.keyword",
+                "size": 10
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "triggers": [
+    {
+      "name": "Multiple Unauthorized Access Attempts",
+      "severity": "2",
+      "condition": {
+        "script": {
+          "source": "ctx.results[0].aggregations.unauthorized_count.value >= 5",
+          "lang": "painless"
+        }
+      },
+      "actions": [
+        {
+          "name": "Send Alert",
+          "destination_id": "sns-high-priority-alerts",
+          "message_template": {
+            "source": "HIGH PRIORITY: Unauthorized Access Attempts Detected\n\nTotal attempts: {{ctx.results.0.aggregations.unauthorized_count.value}}\nTime window: {{ctx.periodStart}} to {{ctx.periodEnd}}\n\nTop Source IPs:\n{{#ctx.results.0.aggregations.by_source_ip.buckets}}\n- {{key}}: {{doc_count}} attempts\n{{/ctx.results.0.aggregations.by_source_ip.buckets}}\n\nTop Users/Identities:\n{{#ctx.results.0.aggregations.by_user.buckets}}\n- {{key}}: {{doc_count}} attempts\n{{/ctx.results.0.aggregations.by_user.buckets}}\n\nInvestigate immediately.",
+            "lang": "mustache"
+          },
+          "throttle_enabled": true,
+          "throttle": {
+            "value": 15,
+            "unit": "MINUTES"
+          }
+        }
+      ]
+    }
+  ]
+}
