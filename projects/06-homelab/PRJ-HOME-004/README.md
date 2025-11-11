@@ -30,6 +30,28 @@ This foundation enables Phase 2: developing an elder-friendly, accessibility-fir
 
 ---
 
+## Quick Start Guide
+
+**New to this project?** Start here:
+
+1. **Overview:** Read the [Executive Summary](#executive-summary) above for project goals and KPIs
+2. **Architecture:** Review [Solution Architecture](#3-solution-architecture) for system design
+3. **Operations:** Check [Daily Operations Runbook](assets/documentation/runbooks/daily-operations.md) for day-to-day tasks
+4. **Configuration:** Explore [assets/configs/](assets/configs/) for ready-to-use configuration templates
+5. **Network:** See [IP Allocation Table](assets/documentation/network/ip-allocation-table.md) for network layout
+
+**For Operators:**
+- [Daily Operations](assets/documentation/runbooks/daily-operations.md) - Your morning routine
+- [Incident Response](assets/documentation/runbooks/incident-response.md) - When things go wrong
+- [Disaster Recovery](assets/documentation/runbooks/disaster-recovery.md) - Emergency procedures
+
+**For Implementers:**
+- [Implementation Timeline](#8-implementation-timeline--milestones) - Project phases and milestones
+- [Bill of Materials](#7-bill-of-materials--budget) - Required hardware and budget
+- [Configuration Files](assets/configs/) - All service configurations
+
+---
+
 ## Table of Contents
 
 - [1. Problem Statement & Business Case](#1-problem-statement--business-case)
@@ -820,23 +842,42 @@ homelab-configs/
 ### Configuration Files
 
 Located in [assets/configs/](assets/configs/):
-- Proxmox host configuration
-- TrueNAS ZFS and dataset definitions
-- UniFi network and firewall rules
-- WireGuard VPN peer configurations
-- Nginx Proxy Manager host definitions
-- Docker Compose files for all services
-- Prometheus, Grafana, and Loki configurations
+
+**Proxmox Configuration:**
+- [Network interfaces configuration](assets/configs/proxmox/interfaces.conf) - VLAN and bridge setup
+- [Backup schedule configuration](assets/configs/proxmox/backup-schedule.conf) - Automated backup jobs
+
+**TrueNAS Configuration:**
+- [ZFS dataset creation script](assets/configs/truenas/zfs-datasets.sh) - Storage layout
+- [Snapshot and scrub tasks](assets/configs/truenas/snapshot-tasks.json) - Automated maintenance
+
+**Networking Configuration:**
+- [WireGuard VPN server configuration](assets/configs/networking/wireguard-server.conf) - Secure remote access
+- [UniFi firewall rules](assets/configs/networking/unifi-firewall-rules.json) - Network security policies
+
+**Service Configuration:**
+- [Immich Docker Compose](assets/configs/services/docker-compose-immich.yml) - Photo service stack
+- [Monitoring Docker Compose](assets/configs/services/docker-compose-monitoring.yml) - Observability stack
+
+**Monitoring Configuration:**
+- [Prometheus configuration](assets/configs/monitoring/prometheus.yml) - Metrics collection
+- [Alerting rules](assets/configs/monitoring/alerting-rules.yml) - Alert definitions and thresholds
 
 ### Documentation
 
 Located in [assets/documentation/](assets/documentation/):
-- Network architecture diagrams
-- System topology maps
-- Operational runbooks
-- Disaster recovery procedures
-- Security policies and procedures
-- Change management templates
+
+**Operational Runbooks:**
+- [Daily Operations](assets/documentation/runbooks/daily-operations.md) - Daily health checks and maintenance
+- [Weekly Maintenance](assets/documentation/runbooks/weekly-maintenance.md) - Scheduled system updates and reviews
+- [Incident Response](assets/documentation/runbooks/incident-response.md) - Structured incident handling procedures
+- [Disaster Recovery](assets/documentation/runbooks/disaster-recovery.md) - Complete DR procedures with RTO/RPO targets
+
+**Security Documentation:**
+- [Security Hardening Checklist](assets/documentation/security/security-hardening-checklist.md) - CIS compliance checklist
+
+**Network Documentation:**
+- [IP Allocation Table](assets/documentation/network/ip-allocation-table.md) - Complete network inventory
 
 ### Evidence
 
