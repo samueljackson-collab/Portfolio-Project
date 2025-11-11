@@ -1,0 +1,183 @@
+# Prometheus Alerting Rules
+# Critical alerts for homelab infrastructure monitoring
+
+groups:
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # Host down detection
+      - alert: HostDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Host {{ $labels.instance }} is down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 2 minutes."
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% (current value: {{ $value | humanize }}%)"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% (current value: {{ $value | humanize }}%)"
+
+      # Disk space critical
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Filesystem {{ $labels.mountpoint }} has less than 10% free space (current: {{ $value | humanize }}%)"
+
+      # Disk space warning
+      - alert: DiskSpaceWarning
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        for: 10m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Filesystem {{ $labels.mountpoint }} has less than 20% free space (current: {{ $value | humanize }}%)"
+
+  - name: service_alerts
+    interval: 30s
+    rules:
+      # Service endpoint down
+      - alert: ServiceEndpointDown
+        expr: probe_success == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: service
+        annotations:
+          summary: "Service {{ $labels.instance }} is unreachable"
+          description: "Endpoint {{ $labels.instance }} has been down for more than 2 minutes."
+
+      # High HTTP error rate
+      - alert: HighHTTPErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "HTTP 5xx error rate is above 5% (current: {{ $value | humanizePercentage }})"
+
+      # Container down
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name!=""})
+        for: 2m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} is down"
+          description: "Container {{ $labels.name }} has been down for more than 2 minutes."
+
+  - name: backup_alerts
+    interval: 1h
+    rules:
+      # Backup job failed
+      - alert: BackupJobFailed
+        expr: proxmox_backup_status == 0
+        for: 1h
+        labels:
+          severity: critical
+          category: backup
+        annotations:
+          summary: "Backup job failed on {{ $labels.instance }}"
+          description: "Proxmox backup job for VM {{ $labels.vmid }} failed."
+
+      # Backup not running (missing metrics)
+      - alert: BackupNotRunning
+        expr: absent(proxmox_backup_status)
+        for: 26h
+        labels:
+          severity: critical
+          category: backup
+        annotations:
+          summary: "Backup job has not run in 26 hours"
+          description: "No backup metrics detected. Daily backups may not be running."
+
+  - name: security_alerts
+    interval: 30s
+    rules:
+      # Unauthorized SSH attempts
+      - alert: HighSSHFailedLogins
+        expr: rate(node_auth_failures_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High SSH failed login attempts on {{ $labels.instance }}"
+          description: "More than 5 failed SSH login attempts per minute detected."
+
+      # SSL certificate expiring soon
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "SSL certificate expiring soon for {{ $labels.instance }}"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}."
+
+      # SSL certificate expired
+      - alert: SSLCertificateExpired
+        expr: probe_ssl_earliest_cert_expiry - time() < 0
+        for: 1h
+        labels:
+          severity: critical
+          category: security
+        annotations:
+          summary: "SSL certificate expired for {{ $labels.instance }}"
+          description: "SSL certificate for {{ $labels.instance }} has expired."
+
+  - name: network_alerts
+    interval: 30s
+    rules:
+      # High network errors
+      - alert: HighNetworkErrors
+        expr: rate(node_network_receive_errs_total[5m]) + rate(node_network_transmit_errs_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: network
+        annotations:
+          summary: "High network errors on {{ $labels.instance }}"
+          description: "Network interface {{ $labels.device }} is experiencing high error rates."
+
+      # WireGuard VPN peer disconnected
+      - alert: VPNPeerDisconnected
+        expr: wireguard_peer_last_handshake_seconds > 180
+        for: 5m
+        labels:
+          severity: warning
+          category: network
+        annotations:
+          summary: "VPN peer {{ $labels.public_key }} disconnected"
+          description: "WireGuard peer has not completed handshake in {{ $value | humanizeDuration }}."
