@@ -1,3 +1,21 @@
+variable "terraform_backend_bucket" {
+  description = "Optional override for the remote state S3 bucket"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_backend_key" {
+  description = "Optional override for the remote state object key"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_backend_dynamodb_table" {
+  description = "Optional override for the DynamoDB state lock table"
+  type        = string
+  default     = ""
+}
+
 variable "aws_region" {
   description = "AWS region for all resources"
   type        = string

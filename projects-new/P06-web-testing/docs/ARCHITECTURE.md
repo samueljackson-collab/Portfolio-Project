@@ -1,5 +1,7 @@
 # Web Application Testing Framework - Architecture Documentation
 
+> **Implementation status:** This repository currently includes a lightweight FastAPI service stub and automation scaffolding. The capabilities described below represent the target architecture and should be treated as a roadmap until the corresponding infrastructure and features are delivered.
+
 **Version:** 1.0.0 | **Last Updated:** 2025-11-10
 
 ## System Overview

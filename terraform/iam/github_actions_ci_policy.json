@@ -44,7 +44,7 @@
         "kms:CreateGrant",
         "kms:RetireGrant"
       ],
-      "Resource": "*",
+      "Resource": "arn:aws:kms:${AWS_REGION}:${AWS_ACCOUNT_ID}:key/REPLACE_WITH_KMS_KEY_ID",
       "Condition": {
         "StringEquals": {
           "kms:ViaService": [

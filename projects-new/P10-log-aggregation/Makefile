@@ -1,3 +1,5 @@
+PROJECT_SLUG := $(notdir $(CURDIR))
+
 .PHONY: help install test test-unit test-integration test-e2e lint format clean build deploy
 
 help:
@@ -44,7 +46,7 @@ clean:
 	rm -rf .pytest_cache .coverage htmlcov
 
 build:
-	docker build -t ${PROJECT_SLUG}:latest .
+	docker build -t $(PROJECT_SLUG):latest .
 
 deploy:
 	@if [ -z "$(ENV)" ]; then \

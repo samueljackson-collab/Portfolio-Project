@@ -29,6 +29,10 @@
 # terraform {
 #   backend "s3" {
 #     bucket         = "twisted-monk-tfstate-XXXXX"  # From bootstrap output
+#     # Example using variables when leveraging partial configuration overrides:
+#     # bucket         = var.terraform_backend_bucket
+#     # key            = var.terraform_backend_key
+#     # dynamodb_table = var.terraform_backend_dynamodb_table
 #     key            = "twisted-monk/terraform.tfstate"
 #     region         = "us-east-1"                    # Your AWS region
 #     dynamodb_table = "twisted-monk-tfstate-lock"   # From bootstrap output

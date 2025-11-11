@@ -133,21 +133,21 @@ export AWS_DEFAULT_REGION="us-east-1"
    # Export variables from config
    export $(jq -r '.variables | to_entries | .[] | "\(.key)=\(.value)"' policy-config.json)
 
-   # Substitute into policy template
-   envsubst < github_actions_ci_policy.json > github_actions_ci_policy_final.json
+   # Substitute into policy template (run from repository root)
+   envsubst < terraform/iam/github_actions_ci_policy.json > terraform/iam/github_actions_ci_policy_final.json
    ```
 
 4. **Create IAM policy in AWS**:
    ```bash
    aws iam create-policy \
      --policy-name GitHubActionsTerraformPolicy \
-     --policy-document file://github_actions_ci_policy_final.json
+     --policy-document file://terraform/iam/github_actions_ci_policy_final.json
    ```
 
 5. **Add to .gitignore**:
    ```bash
    echo "policy-config.json" >> .gitignore
-   echo "github_actions_ci_policy_final.json" >> .gitignore
+   echo "terraform/iam/github_actions_ci_policy_final.json" >> .gitignore
    ```
 
 ---
