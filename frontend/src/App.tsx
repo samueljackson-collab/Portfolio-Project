@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context'
 import { Navbar, ProtectedRoute } from './components'
 import { Home, Login, Register, Dashboard } from './pages'
+import { PhotosPage } from './pages/Photos/PhotosPage'
 
 const App: React.FC = () => {
   return (
@@ -28,6 +29,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/photos"
+              element={
+                <ProtectedRoute>
+                  <PhotosPage />
                 </ProtectedRoute>
               }
             />
