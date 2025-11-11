@@ -1,64 +1,47 @@
-# Portfolio Structure Completion Notes
+# Portfolio Structure & Content Status Notes
 
-**Date:** November 5, 2025
-**Completed By:** Repository Structure Bot
-
----
-
-## 🎯 Summary of Changes
-
-All missing subdirectories referenced in `COMPLETION_SUMMARY.md` have been created and verified.
-
-### ✅ Directories Created
-
-**PRJ-HOME-001: Homelab & Secure Network Build**
-- `projects/06-homelab/PRJ-HOME-001/assets/diagrams/`
-- `projects/06-homelab/PRJ-HOME-001/assets/configs/`
-- `projects/06-homelab/PRJ-HOME-001/assets/docs/`
-- `projects/06-homelab/PRJ-HOME-001/assets/photos/`
-
-**PRJ-HOME-002: Virtualization & Core Services**
-- `projects/06-homelab/PRJ-HOME-002/assets/diagrams/`
-- `projects/06-homelab/PRJ-HOME-002/assets/configs/`
-- `projects/06-homelab/PRJ-HOME-002/assets/docs/`
-- `projects/06-homelab/PRJ-HOME-002/assets/screenshots/`
-
-**PRJ-WEB-001: E-commerce & Booking Systems**
-- `projects/08-web-data/PRJ-WEB-001/assets/code/sql/`
-- `projects/08-web-data/PRJ-WEB-001/assets/code/php/`
-- `projects/08-web-data/PRJ-WEB-001/assets/code/scripts/`
-- `projects/08-web-data/PRJ-WEB-001/assets/diagrams/`
-- `projects/08-web-data/PRJ-WEB-001/assets/docs/runbooks/`
-- `projects/08-web-data/PRJ-WEB-001/assets/docs/case-studies/`
-- `projects/08-web-data/PRJ-WEB-001/assets/screenshots/`
-
-### 📊 Statistics
-
-- **Total new subdirectories:** 13
-- **Total .gitkeep files added:** 13
-- **Projects updated:** 3 (PRJ-HOME-001, PRJ-HOME-002, PRJ-WEB-001)
-
-### ✅ Verification
-
-All directories have been verified and include `.gitkeep` files to ensure Git tracks them.
-
-To verify yourself, run:
-```bash
-find projects/06-homelab/PRJ-HOME-001/assets -type d | sort
-find projects/06-homelab/PRJ-HOME-002/assets -type d | sort
-find projects/08-web-data/PRJ-WEB-001/assets -type d | sort
-find projects/ -name .gitkeep
-```
+**Updated:** 19 November 2025  
+**Maintainer:** Samuel Jackson
 
 ---
 
-## 🎯 Next Steps
+## Current State Snapshot
 
-The directory structure is now complete and ready for content. Repository owners should:
+The scaffold produced at the start of November now holds substantive artefacts for all three flagship homelab projects. Asset folders contain sanitised configurations, diagrams, and runbooks rather than `.gitkeep` placeholders, and navigation aids link recruiters directly to evidence packs.
 
-1. Review `QUICK_START_GUIDE.md` for file upload instructions
-2. Use `PROJECT_COMPLETION_CHECKLIST.md` to track progress
-3. Refer to `MISSING_DOCUMENTS_ANALYSIS.md` for specific content requirements
-4. Check each project's `assets/README.md` for subdirectory-specific guidance
+### Populated Workstreams
+- **PRJ-HOME-001 · Homelab Network:** pfSense/UniFi exports, VLAN + firewall matrices, physical/logical diagrams, and operations runbooks.
+- **PRJ-HOME-002 · Virtualisation & Core Services:** Proxmox, Ceph, Docker Compose, and Ansible automation assets plus DR rehearsals and monitoring diagrams.
+- **PRJ-SDE-002 · Observability & Backups:** Prometheus/Alertmanager/Loki configurations, Grafana dashboard JSON, PBS verification scripts, and alert runbooks.
 
-**Status:** ✅ Structure Complete | 📝 Ready for Content Population
+### Scaffolding Awaiting Content
+- **PRJ-SDE-001 · Database IaC:** RDS module live; additional modules, diagrams, and CI pipeline pending.
+- **PRJ-WEB-001 · Commercial Recovery:** Directory tree available, but content blocked on offline recovery.
+- **Professional Resume Portfolio:** Role-based folders created; resumes and recruiter collateral not yet uploaded.
+
+---
+
+## Key Improvements Since Last Review
+- Added [Portfolio Completion Summary](./COMPLETION_SUMMARY.md) to give a single source of truth on what is done, missing, and planned.
+- Refreshed [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) to focus on remaining artefacts and storytelling polish rather than repeating legacy instructions.
+- Rebuilt [Project Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md) with clear separation between core evidence, polish, and operational hygiene tasks.
+
+---
+
+## Outstanding Risks & Opportunities
+
+| Area | Risk / Opportunity | Mitigation |
+|------|-------------------|------------|
+| Visual proof | Limited screenshots and photos across completed projects | Schedule capture session; ensure sanitisation before commit |
+| Resume readiness | No recruiter-ready collateral yet | Prioritise resume sprint leveraging new outcome report |
+| Terraform depth | Single-module story for PRJ-SDE-001 | Deliver VPC/app/monitoring modules + CI checks |
+| Commercial recovery | Artefacts offline; timeline unclear | Track recovery tasks in checklist and log progress in analysis report |
+
+---
+
+## Next Structural Actions
+- Populate visual subdirectories (`screenshots/`, `photos/`) with sanitised artefacts once capture is complete.
+- Add CI automation folders/workflows alongside Terraform modules when PRJ-SDE-001 expands.
+- Update directory README files whenever new artefact types are introduced to maintain clarity for reviewers.
+
+**Status:** ✅ Structure complete · ✅ Core homelab content delivered · 🟠 Resume & recovery collateral pending

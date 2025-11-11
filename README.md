@@ -11,7 +11,7 @@
 
 > **Note:** Some project directories referenced below contain planning documentation and structure but are awaiting evidence/asset uploads. Check individual project READMEs for current status.
 
-> 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
+> 📚 **Updated insights:** [Portfolio Completion Summary](./COMPLETION_SUMMARY.md) | [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
 
 ---
 ## 🎯 Summary
@@ -28,6 +28,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 ## 📘 Guides
 
 - [Wiki.js Setup Guide](./docs/wiki-js-setup-guide.md) — Complete walkthrough to deploy, harden, and populate a Wiki.js instance for portfolio documentation.
+- [Homelab Outcome Report](./reports/homelab-outcome-report.md) — Executive summary linking proposal, network build, and core services evidence.
 
 ## 💻 UI Components
 
@@ -75,19 +76,19 @@ System-minded engineer specializing in building, securing, and operating infrast
 ## 🟢 Completed Projects (📝 Documentation in Progress)
 
 ### Homelab & Secure Network Build
-**Status:** 🟢 Complete · 📝 Docs pending
+**Status:** 🟢 Complete · ✅ Evidence published
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets) *(being prepared)*
+**Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence Pack](./projects/06-homelab/PRJ-HOME-001/assets) *(sanitised configs, diagrams, runbooks)*
 
 ### Virtualization & Core Services
-**Status:** 🟢 Complete · 📝 Docs pending
+**Status:** 🟢 Complete · ✅ Evidence published
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets) *(being prepared)*
+**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Evidence Pack](./projects/06-homelab/PRJ-HOME-002/assets) *(configs, runbooks, backups)*
 
 ### Observability & Backups Stack
-**Status:** 🟢 Complete · 📝 Docs pending
+**Status:** 🟢 Complete · ✅ Evidence published
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
+**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Evidence Pack](./projects/01-sde-devops/PRJ-SDE-002/assets)
 
 ---
 ## 🔄 Past Projects Requiring Recovery
