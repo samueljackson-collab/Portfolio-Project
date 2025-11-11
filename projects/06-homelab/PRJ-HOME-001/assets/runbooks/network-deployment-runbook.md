@@ -277,7 +277,8 @@ nslookup google.com 192.168.10.2
 ### Step 9.1: Enable WireGuard
 - Settings → VPN → WireGuard → Enable
 - Listen Port: 51820
-- Network: 192.168.10.0/24
+- Network: 10.10.10.0/24 (dedicated VPN subnet)
+- Routes: Add 192.168.10.0/24 so VPN clients can reach the trusted VLAN
 
 ### Step 9.2: Create VPN User
 1. Add user account
@@ -287,7 +288,7 @@ nslookup google.com 192.168.10.2
 ### Step 9.3: Test VPN
 ```bash
 # From external network with VPN connected
-ping 192.168.10.1    # Should work
+ping 192.168.10.1    # Should work (routed via WireGuard 10.10.10.0/24 tunnel)
 ```
 
 ## 10. Verification and Testing (Day 5)
