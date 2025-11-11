@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+.pytest_cache/
+htmlcov/
+node_modules/
+dist/
+coverage.xml
+.DS_Store
+*.log
+terraform.tfstate*
+.svelte-kit
