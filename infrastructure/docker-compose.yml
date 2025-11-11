@@ -1,0 +1,218 @@
+version: "3.9"
+
+services:
+  matomo-db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MATOMO_DB_DATABASE}
+      MARIADB_USER: ${MATOMO_DB_USERNAME}
+      MARIADB_PASSWORD: ${MATOMO_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MATOMO_DB_ROOT_PASSWORD}
+    volumes:
+      - matomo_db:/var/lib/mysql
+    networks:
+      - core
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  matomo:
+    image: matomo:4-apache
+    restart: unless-stopped
+    depends_on:
+      matomo-db:
+        condition: service_healthy
+    environment:
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USERNAME}
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD}
+      MATOMO_DATABASE_DBNAME: ${MATOMO_DB_DATABASE}
+      MATOMO_DATABASE_ADAPTER: ${MATOMO_DB_ADAPTER:-PDO_MYSQL}
+      MATOMO_GENERAL_ENABLE_TRUSTED_HOST_CHECK: ${MATOMO_ENABLE_TRUSTED_HOST_CHECK:-0}
+    ports:
+      - "${MATOMO_HTTP_PORT:-8080}:80"
+    volumes:
+      - matomo_html:/var/www/html
+    networks:
+      - core
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1.5G
+        reservations:
+          memory: 1G
+
+  n8n:
+    image: n8nio/n8n:1.38.1
+    restart: unless-stopped
+    environment:
+      GENERIC_TIMEZONE: ${TIMEZONE:-UTC}
+      N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-true}
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_HOST: ${N8N_HOST:-n8n.local}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-}
+      DB_TYPE: sqlite
+    ports:
+      - "${N8N_HTTP_PORT:-5678}:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - core
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/rest/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 768M
+        reservations:
+          memory: 512M
+
+  llm:
+    image: ghcr.io/huggingface/text-generation-inference:1.3.5-cpu
+    restart: unless-stopped
+    environment:
+      MODEL_ID: ${LLM_MODEL_ID:-TinyLlama/TinyLlama-1.1B-Chat-v1.0}
+      HUGGING_FACE_HUB_TOKEN: ${HUGGINGFACEHUB_API_TOKEN:-}
+      NUM_SHARD: ${LLM_NUM_SHARD:-1}
+      MAX_INPUT_LENGTH: ${LLM_MAX_INPUT_LENGTH:-4096}
+      MAX_TOTAL_TOKENS: ${LLM_MAX_TOTAL_TOKENS:-4096}
+    command:
+      - "--model-id"
+      - "${LLM_MODEL_ID:-TinyLlama/TinyLlama-1.1B-Chat-v1.0}"
+      - "--max-input-length"
+      - "${LLM_MAX_INPUT_LENGTH:-4096}"
+      - "--max-total-tokens"
+      - "${LLM_MAX_TOTAL_TOKENS:-4096}"
+    ports:
+      - "${LLM_HTTP_PORT:-8081}:80"
+    volumes:
+      - llm_models:/data
+    networks:
+      - core
+    shm_size: "1g"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 16G
+        reservations:
+          memory: 4G
+
+  stable-diffusion:
+    image: ghcr.io/invoke-ai/invokeai:latest
+    restart: unless-stopped
+    environment:
+      INVOKEAI_WEB_UI_PASSWORD: ${INVOKEAI_WEB_UI_PASSWORD:-}
+      INVOKEAI_AUTO_CONFIGURE: "true"
+      INVOKEAI_MODEL: ${STABLE_DIFFUSION_MODEL_ID:-runwayml/stable-diffusion-v1-5}
+      HF_TOKEN: ${HUGGINGFACEHUB_API_TOKEN:-}
+    ports:
+      - "${STABLE_DIFFUSION_HTTP_PORT:-9090}:9090"
+    volumes:
+      - stable_diffusion_data:/opt/invokeai
+    networks:
+      - core
+    deploy:
+      resources:
+        limits:
+          cpus: "6"
+          memory: 24G
+        reservations:
+          memory: 8G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+
+  whisper:
+    image: ghcr.io/ahmetoner/whisper-asr-webservice:latest
+    restart: unless-stopped
+    environment:
+      ASR_MODEL: ${WHISPER_MODEL_SIZE:-small}
+      ASR_ENGINE: ${WHISPER_ENGINE:-cpu}
+    ports:
+      - "${WHISPER_HTTP_PORT:-9000}:9000"
+    volumes:
+      - whisper_models:/root/.cache
+    networks:
+      - core
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4G
+        reservations:
+          memory: 1G
+
+  scrapy:
+    build:
+      context: ./scrapy
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SCRAPYD_USERNAME: ${SCRAPYD_USERNAME:-admin}
+      SCRAPYD_PASSWORD: ${SCRAPYD_PASSWORD:-changeme}
+    ports:
+      - "${SCRAPYD_HTTP_PORT:-6800}:6800"
+    volumes:
+      - scrapy_projects:/opt/scrapy/projects
+    networks:
+      - core
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6800/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  matomo_db:
+  matomo_html:
+  n8n_data:
+  llm_models:
+  stable_diffusion_data:
+  whisper_models:
+  scrapy_projects:
+
+networks:
+  core:
+    driver: bridge
