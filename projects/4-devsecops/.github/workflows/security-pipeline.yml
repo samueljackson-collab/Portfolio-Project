@@ -45,6 +45,12 @@ jobs:
           name: bandit-security-report
           path: bandit-report.json
 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+
+      - name: Autobuild CodeQL database
+        uses: github/codeql-action/autobuild@v2
+
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
