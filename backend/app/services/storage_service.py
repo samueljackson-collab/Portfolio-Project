@@ -3,11 +3,13 @@ Storage service for managing photo file storage.
 
 Handles saving photos and thumbnails to the local filesystem.
 Organizes files by user ID and date to avoid directory bloat.
+Integrates with backup service for automatic replication.
 """
 
 import os
 import uuid
 import aiofiles
+import asyncio
 from pathlib import Path
 from datetime import datetime
 from typing import Tuple
@@ -16,7 +18,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Base storage directory (configurable via environment variable)
-STORAGE_BASE = os.getenv("PHOTO_STORAGE_PATH", "/tmp/elderphoto_storage")
+STORAGE_BASE = os.getenv("PRIMARY_STORAGE_PATH", os.getenv("PHOTO_STORAGE_PATH", "/tmp/elderphoto_storage"))
+
+# Enable/disable automatic backups
+AUTO_BACKUP_ENABLED = os.getenv("AUTO_BACKUP_ENABLED", "true").lower() == "true"
 
 
 def _ensure_directory(directory: Path) -> None:
@@ -89,6 +94,32 @@ def _sanitize_filename(filename: str) -> str:
     return f"{name}{ext}"
 
 
+async def _trigger_backup(photo_path: str, thumbnail_path: str = None) -> None:
+    """
+    Trigger async backup of photo to configured backup locations.
+
+    This runs in the background without blocking the upload response.
+
+    Args:
+        photo_path: Relative path to photo
+        thumbnail_path: Optional relative path to thumbnail
+    """
+    if not AUTO_BACKUP_ENABLED:
+        return
+
+    try:
+        # Import here to avoid circular dependency
+        from app.services.backup_service import backup_photo
+
+        # Run backup in background task
+        asyncio.create_task(backup_photo(photo_path, thumbnail_path))
+        logger.info(f"Triggered backup for {photo_path}")
+
+    except Exception as e:
+        # Don't fail upload if backup fails
+        logger.error(f"Backup trigger failed: {e}")
+
+
 async def save_photo(
     user_id: str,
     filename: str,
@@ -132,6 +163,10 @@ async def save_photo(
         relative_path = f"users/{user_id}/{date_path}/{unique_name}"
 
         logger.info(f"Saved photo to: {relative_path}")
+
+        # Trigger backup asynchronously (non-blocking)
+        await _trigger_backup(relative_path)
+
         return relative_path
 
     except Exception as e:
@@ -186,6 +221,10 @@ async def save_thumbnail(
         relative_path = "/".join(relative_parts)
 
         logger.info(f"Saved thumbnail to: {relative_path}")
+
+        # Trigger backup with both photo and thumbnail paths
+        await _trigger_backup(original_path, relative_path)
+
         return relative_path
 
     except Exception as e:
