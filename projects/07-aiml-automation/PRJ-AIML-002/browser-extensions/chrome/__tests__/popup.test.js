@@ -29,16 +29,22 @@ describe('Popup Script', () => {
     global.chrome = mockChrome;
 
     // Mock DOM elements
+    const elementCache = new Map();
     mockDocument = {
-      getElementById: jest.fn((id) => ({
-        id,
-        textContent: '',
-        classList: {
-          add: jest.fn(),
-          remove: jest.fn(),
-        },
-        addEventListener: jest.fn(),
-      })),
+      getElementById: jest.fn((id) => {
+        if (!elementCache.has(id)) {
+          elementCache.set(id, {
+            id,
+            textContent: '',
+            classList: {
+              add: jest.fn(),
+              remove: jest.fn(),
+            },
+            addEventListener: jest.fn(),
+          });
+        }
+        return elementCache.get(id);
+      }),
     };
     global.document = mockDocument;
   });
