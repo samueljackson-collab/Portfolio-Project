@@ -35,6 +35,12 @@ export const Navbar: React.FC = () => {
               >
                 Home
               </Link>
+              <Link
+                to="/enterprise-portfolio"
+                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+              >
+                Portfolio Showcase
+              </Link>
               {isAuthenticated && (
                 <Link
                   to="/dashboard"
