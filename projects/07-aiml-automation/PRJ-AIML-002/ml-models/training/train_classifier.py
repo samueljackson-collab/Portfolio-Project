@@ -142,7 +142,7 @@ class TabClassifierModel:
 
         return history
 
-    def convert_to_tflite(self, output_path='tab_classifier.tflite'):
+    def convert_to_tflite(self, output_path='tab_classifier.tflite', representative_dataset=None):
         """Convert model to TensorFlow Lite"""
         print("Converting to TensorFlow Lite...")
 
@@ -151,7 +151,10 @@ class TabClassifierModel:
 
         # Optimizations
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        converter.target_spec.supported_types = [tf.int8]
+
+        if representative_dataset is not None:
+            converter.representative_dataset = representative_dataset
+            converter.target_spec.supported_types = [tf.int8]
 
         # Convert
         tflite_model = converter.convert()
