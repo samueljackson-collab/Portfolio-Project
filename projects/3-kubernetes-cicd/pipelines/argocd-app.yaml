@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portfolio-app
+spec:
+  destination:
+    namespace: portfolio
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: https://github.com/example/portfolio
+    path: manifests
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

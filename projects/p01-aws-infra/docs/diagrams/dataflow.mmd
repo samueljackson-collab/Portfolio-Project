@@ -1,0 +1,43 @@
+sequenceDiagram
+    participant Dev as Developer
+    participant Git as GitHub
+    participant CI as GitHub Actions
+    participant CFN as CloudFormation
+    participant AWS as AWS Resources
+    participant RDS as RDS Multi-AZ
+    participant SNS as SNS/PagerDuty
+
+    Dev->>Git: Push template changes
+    Git->>CI: Trigger workflow
+    CI->>CI: Lint templates (cfn-lint)
+    CI->>CI: Run unit tests (pytest)
+    CI->>CFN: Create change set
+    CFN->>CFN: Validate template
+    CFN-->>CI: Change set preview
+
+    alt Auto-deploy (dev/stage)
+        CI->>CFN: Execute change set
+    else Manual approval (prod)
+        CI->>Dev: Request approval
+        Dev->>CI: Approve deployment
+        CI->>CFN: Execute change set
+    end
+
+    CFN->>AWS: Provision VPC, Subnets, IGW
+    CFN->>RDS: Create Multi-AZ instance
+    RDS-->>CFN: Instance available
+    CFN-->>CI: Stack CREATE_COMPLETE
+
+    CI->>AWS: Run smoke tests
+    AWS-->>CI: Health checks pass
+
+    alt Drift detected
+        AWS->>CFN: Config rule evaluation
+        CFN->>SNS: Drift alert
+        SNS->>SNS: Page on-call SRE
+    end
+
+    Note over Dev,SNS: DR Drill (monthly)
+    Dev->>RDS: Execute failover script
+    RDS->>RDS: Promote standby to primary
+    RDS-->>Dev: Failover complete (< 2 min)

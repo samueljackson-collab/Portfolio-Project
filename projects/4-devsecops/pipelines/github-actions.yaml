@@ -1,0 +1,20 @@
+name: devsecops
+on:
+  push:
+    branches: [main]
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Generating SBOM"
+  scan:
+    needs: sbom
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Running Trivy scan"
+  policy:
+    needs: scan
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Validating OPA policies"

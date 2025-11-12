@@ -1,0 +1,10 @@
+[
+  {
+    "id": "alert-001",
+    "severity": "high",
+    "source_ip": "203.0.113.5",
+    "asset_id": "prod-web-1",
+    "description": "Multiple failed logins",
+    "tags": ["authentication", "anomaly"]
+  }
+]

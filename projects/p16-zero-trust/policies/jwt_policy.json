@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "statement": [
+    {
+      "effect": "allow",
+      "action": ["read", "write"],
+      "resource": "/api/*",
+      "condition": {
+        "jwt": {
+          "iss": "https://auth.example.com",
+          "aud": "api.example.com",
+          "exp": {"gt": "now"}
+        }
+      }
+    }
+  ]
+}

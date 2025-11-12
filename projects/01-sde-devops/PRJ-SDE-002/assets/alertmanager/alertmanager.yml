@@ -1,15 +1,22 @@
 # Alertmanager Configuration for Homelab Observability Stack
 # Project: PRJ-SDE-002 - Observability & Monitoring Implementation
 # Location: projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/alertmanager.yml
+#
+# IMPORTANT: This is a TEMPLATE file. Before deploying:
+# 1. Copy this to alertmanager-production.yml
+# 2. Replace {{ VARIABLE }} placeholders with actual values from your .env file
+# 3. Use envsubst or similar tool: envsubst < alertmanager.yml > alertmanager-production.yml
+# 4. Deploy the production file, NOT this template
+# 5. Add alertmanager-production.yml to .gitignore
 
 global:
   resolve_timeout: 5m
   smtp_smarthost: 'smtp.gmail.com:587'
   smtp_from: 'alerts@homelab.local'
   smtp_auth_username: 'alerts@homelab.local'
-  smtp_auth_password: 'your-smtp-password'
+  smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD}'
   smtp_require_tls: true
-  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+  slack_api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
   pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
 
 route:
@@ -54,7 +61,7 @@ receivers:
           *Runbook:* {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}
         color: 'danger'
     pagerduty_configs:
-      - service_key: 'your-pagerduty-service-key'
+      - service_key: '${ALERTMANAGER_PAGERDUTY_SERVICE_KEY}'
         description: '{{ .GroupLabels.alertname }} - {{ .GroupLabels.instance }}'
 
   - name: 'warning-slack'

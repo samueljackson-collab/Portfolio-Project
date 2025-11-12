@@ -1,0 +1,256 @@
+#cloud-config
+# ===========================================================================
+# Cloud-Init Configuration Template for Ubuntu Server VMs
+# ===========================================================================
+# This cloud-init configuration is used with Proxmox cloud-init templates
+# to automate initial VM provisioning and configuration
+#
+# Usage:
+#   1. Create VM template with cloud-init enabled
+#   2. Apply this config via Proxmox API or qm command
+#   3. Clone template and cloud-init will run on first boot
+#
+# Variables to replace:
+#   - {{ hostname }} - VM hostname
+#   - {{ ssh_public_key }} - Your SSH public key
+#   - {{ ip_address }} - Static IP address
+#   - {{ gateway }} - Default gateway
+#   - {{ dns_server }} - DNS server IP
+# ===========================================================================
+
+# Hostname configuration
+hostname: {{ hostname }}
+fqdn: {{ hostname }}.homelab.local
+manage_etc_hosts: true
+
+# User configuration
+users:
+  - name: admin
+    groups: sudo, docker
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - {{ ssh_public_key }}
+    lock_passwd: true
+
+# Disable root login
+disable_root: true
+
+# Package management
+package_update: true
+package_upgrade: true
+package_reboot_if_required: false
+
+# Packages to install
+packages:
+  # Essential tools
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - net-tools
+  - dnsutils
+
+  # Security
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+
+  # Docker
+  - docker.io
+  - docker-compose
+
+  # Monitoring
+  - prometheus-node-exporter
+
+  # Python
+  - python3
+  - python3-pip
+
+  # Build tools
+  - build-essential
+  - software-properties-common
+
+# Write files
+write_files:
+  # UFW default configuration
+  - path: /etc/ufw/ufw.conf
+    content: |
+      # /etc/ufw/ufw.conf
+      ENABLED=yes
+      LOGLEVEL=low
+    owner: root:root
+    permissions: '0644'
+
+  # Promtail configuration for log shipping
+  - path: /etc/promtail/config.yml
+    content: |
+      server:
+        http_listen_port: 9080
+        grpc_listen_port: 0
+
+      positions:
+        filename: /tmp/positions.yaml
+
+      clients:
+        - url: http://192.168.10.103:3100/loki/api/v1/push
+
+      scrape_configs:
+        - job_name: system
+          static_configs:
+            - targets:
+                - localhost
+              labels:
+                job: varlogs
+                host: {{ hostname }}
+                __path__: /var/log/*log
+
+        - job_name: docker
+          static_configs:
+            - targets:
+                - localhost
+              labels:
+                job: docker
+                host: {{ hostname }}
+                __path__: /var/lib/docker/containers/*/*.log
+    owner: root:root
+    permissions: '0644'
+
+  # Automatic security updates configuration
+  - path: /etc/apt/apt.conf.d/50unattended-upgrades
+    content: |
+      Unattended-Upgrade::Allowed-Origins {
+        "${distro_id}:${distro_codename}";
+        "${distro_id}:${distro_codename}-security";
+        "${distro_id}ESMApps:${distro_codename}-apps-security";
+        "${distro_id}ESM:${distro_codename}-infra-security";
+      };
+      Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+      Unattended-Upgrade::MinimalSteps "true";
+      Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+      Unattended-Upgrade::Remove-Unused-Dependencies "true";
+      Unattended-Upgrade::Automatic-Reboot "false";
+    owner: root:root
+    permissions: '0644'
+
+  # Docker daemon configuration
+  - path: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2",
+        "metrics-addr": "0.0.0.0:9323",
+        "experimental": false
+      }
+    owner: root:root
+    permissions: '0644'
+
+# Run commands on first boot
+runcmd:
+  # Configure firewall
+  - systemctl enable ufw
+  - ufw --force enable
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp comment 'SSH'
+  - ufw allow 80/tcp comment 'HTTP'
+  - ufw allow 443/tcp comment 'HTTPS'
+  - ufw allow 9100/tcp comment 'Node Exporter'
+
+  # Configure SSH hardening
+  - sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+  - sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+  - sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+  - systemctl restart sshd
+
+  # Enable and start Docker
+  - systemctl enable docker
+  - systemctl start docker
+  - usermod -aG docker admin
+
+  # Enable node exporter
+  - systemctl enable prometheus-node-exporter
+  - systemctl start prometheus-node-exporter
+
+  # Configure automatic updates
+  - systemctl enable unattended-upgrades
+  - systemctl start unattended-upgrades
+
+  # Set timezone
+  - timedatectl set-timezone America/Los_Angeles
+
+  # Install Promtail
+  - |
+    curl -s https://api.github.com/repos/grafana/loki/releases/latest | \
+    grep browser_download_url | \
+    grep promtail-linux-amd64.zip | \
+    cut -d '"' -f 4 | \
+    wget -qi - -O /tmp/promtail.zip
+  - unzip -o /tmp/promtail.zip -d /usr/local/bin/
+  - chmod +x /usr/local/bin/promtail-linux-amd64
+  - mv /usr/local/bin/promtail-linux-amd64 /usr/local/bin/promtail
+
+  # Create Promtail systemd service
+  - |
+    cat > /etc/systemd/system/promtail.service <<EOF
+    [Unit]
+    Description=Promtail service
+    After=network.target
+
+    [Service]
+    Type=simple
+    User=root
+    ExecStart=/usr/local/bin/promtail -config.file=/etc/promtail/config.yml
+    Restart=on-failure
+    RestartSec=20
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+  - systemctl daemon-reload
+  - systemctl enable promtail
+  - systemctl start promtail
+
+  # Clean up
+  - apt-get autoremove -y
+  - apt-get autoclean -y
+
+# Grow partition to use full disk
+growpart:
+  mode: auto
+  devices: ['/']
+  ignore_growroot_disabled: false
+
+# Power state - reboot after cloud-init completes
+power_state:
+  mode: reboot
+  timeout: 300
+  condition: true
+
+# Final message
+final_message: |
+  Cloud-init has completed!
+  System: {{ hostname }}.homelab.local
+  IP: {{ ip_address }}
+  Time: $TIMESTAMP
+  Uptime: $UPTIME
+
+  Services configured:
+  - SSH (password auth disabled, key-only)
+  - Docker + Docker Compose
+  - UFW firewall
+  - Automatic security updates
+  - Node Exporter (metrics on :9100)
+  - Promtail (log shipping to Loki)
+
+  You can now SSH with: ssh admin@{{ ip_address }}
+
+  Next steps:
+  1. Deploy application containers
+  2. Configure reverse proxy
+  3. Verify monitoring integration

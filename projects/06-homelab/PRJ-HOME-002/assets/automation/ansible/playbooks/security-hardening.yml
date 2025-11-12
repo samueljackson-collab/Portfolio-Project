@@ -1,19 +1,490 @@
 ---
-# Ansible Playbook: Security Hardening
-- name: Apply security hardening
+# Ansible Playbook: Comprehensive Security Hardening
+# Project: PRJ-HOME-002 - Homelab Infrastructure Automation
+# Purpose: Apply CIS security benchmarks and hardening best practices
+# Supports: Ubuntu 20.04/22.04, Debian 11/12
+
+- name: Security Hardening - Linux Servers
   hosts: all
   become: yes
-  tasks:
-    - name: Install fail2ban
-      apt:
+  vars:
+    ssh_port: 22
+    allowed_ssh_users: ["admin", "ansible"]
+    fail2ban_bantime: 3600
+    fail2ban_findtime: 600
+    fail2ban_maxretry: 5
+    auto_updates_enabled: true
+    audit_logs_enabled: true
+
+  handlers:
+    - name: restart sshd
+      service:
+        name: sshd
+        state: restarted
+
+    - name: restart fail2ban
+      service:
         name: fail2ban
+        state: restarted
+
+    - name: restart ufw
+      service:
+        name: ufw
+        state: restarted
+
+    - name: restart auditd
+      service:
+        name: auditd
+        state: restarted
+
+  tasks:
+    # ==============================================================================
+    # PHASE 1: System Updates and Package Management
+    # ==============================================================================
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: [updates, always]
+
+    - name: Upgrade all packages to latest version
+      apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+      register: apt_upgrade
+      tags: [updates]
+
+    - name: Install security packages
+      apt:
+        name:
+          - fail2ban
+          - ufw
+          - unattended-upgrades
+          - apt-listchanges
+          - needrestart
+          - debsums
+          - aide
+          - rkhunter
+          - lynis
+          - auditd
+          - audispd-plugins
         state: present
-    - name: Configure UFW firewall
+      tags: [packages]
+
+    # ==============================================================================
+    # PHASE 2: SSH Hardening
+    # ==============================================================================
+    - name: Configure SSH daemon security
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+        backup: yes
+      loop:
+        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
+        - { regexp: '^#?PermitEmptyPasswords', line: 'PermitEmptyPasswords no' }
+        - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
+        - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries 3' }
+        - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval 300' }
+        - { regexp: '^#?ClientAliveCountMax', line: 'ClientAliveCountMax 2' }
+        - { regexp: '^#?Protocol', line: 'Protocol 2' }
+        - { regexp: '^#?LogLevel', line: 'LogLevel VERBOSE' }
+        - { regexp: '^#?IgnoreRhosts', line: 'IgnoreRhosts yes' }
+        - { regexp: '^#?HostbasedAuthentication', line: 'HostbasedAuthentication no' }
+        - { regexp: '^#?UsePAM', line: 'UsePAM yes' }
+      notify: restart sshd
+      tags: [ssh]
+
+    - name: Set SSH allowed users
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^AllowUsers'
+        line: "AllowUsers {{ allowed_ssh_users | join(' ') }}"
+        state: present
+      notify: restart sshd
+      tags: [ssh]
+
+    - name: Set strong SSH ciphers
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Ciphers'
+        line: 'Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr'
+        state: present
+      notify: restart sshd
+      tags: [ssh]
+
+    - name: Set strong SSH MACs
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^MACs'
+        line: 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256'
+        state: present
+      notify: restart sshd
+      tags: [ssh]
+
+    # ==============================================================================
+    # PHASE 3: Firewall Configuration (UFW)
+    # ==============================================================================
+    - name: Reset UFW to defaults
       ufw:
-        state: enabled
-        policy: deny
-        direction: incoming
-    - name: Allow SSH
+        state: reset
+      tags: [firewall]
+
+    - name: Configure UFW default policies
+      ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: 'incoming', policy: 'deny' }
+        - { direction: 'outgoing', policy: 'allow' }
+        - { direction: 'routed', policy: 'deny' }
+      tags: [firewall]
+
+    - name: Allow SSH through firewall
+      ufw:
+        rule: limit
+        port: "{{ ssh_port }}"
+        proto: tcp
+      tags: [firewall]
+
+    - name: Allow specific ports for services
       ufw:
         rule: allow
-        port: '22'
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+        comment: "{{ item.comment }}"
+      loop:
+        - { port: '9090', proto: 'tcp', comment: 'Prometheus' }
+        - { port: '3000', proto: 'tcp', comment: 'Grafana' }
+        - { port: '9100', proto: 'tcp', comment: 'Node Exporter' }
+        - { port: '80', proto: 'tcp', comment: 'HTTP' }
+        - { port: '443', proto: 'tcp', comment: 'HTTPS' }
+      tags: [firewall]
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+        logging: 'on'
+      tags: [firewall]
+
+    # ==============================================================================
+    # PHASE 4: Fail2Ban Configuration
+    # ==============================================================================
+    - name: Create fail2ban local configuration
+      template:
+        src: ../templates/fail2ban-jail.local.j2
+        dest: /etc/fail2ban/jail.local
+        mode: '0644'
+        backup: yes
+      notify: restart fail2ban
+      tags: [fail2ban]
+
+    - name: Configure fail2ban SSH jail
+      blockinfile:
+        path: /etc/fail2ban/jail.local
+        create: yes
+        block: |
+          [sshd]
+          enabled = true
+          port = {{ ssh_port }}
+          filter = sshd
+          logpath = /var/log/auth.log
+          maxretry = {{ fail2ban_maxretry }}
+          findtime = {{ fail2ban_findtime }}
+          bantime = {{ fail2ban_bantime }}
+          banaction = ufw
+      notify: restart fail2ban
+      tags: [fail2ban]
+
+    - name: Enable and start fail2ban
+      service:
+        name: fail2ban
+        state: started
+        enabled: yes
+      tags: [fail2ban]
+
+    # ==============================================================================
+    # PHASE 5: Kernel Hardening (sysctl)
+    # ==============================================================================
+    - name: Apply kernel hardening via sysctl
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+        sysctl_file: /etc/sysctl.d/99-security-hardening.conf
+      loop:
+        # Network security
+        - { name: 'net.ipv4.ip_forward', value: '0' }
+        - { name: 'net.ipv4.conf.all.send_redirects', value: '0' }
+        - { name: 'net.ipv4.conf.default.send_redirects', value: '0' }
+        - { name: 'net.ipv4.conf.all.accept_redirects', value: '0' }
+        - { name: 'net.ipv4.conf.default.accept_redirects', value: '0' }
+        - { name: 'net.ipv4.conf.all.secure_redirects', value: '0' }
+        - { name: 'net.ipv4.conf.default.secure_redirects', value: '0' }
+        - { name: 'net.ipv4.icmp_echo_ignore_broadcasts', value: '1' }
+        - { name: 'net.ipv4.icmp_ignore_bogus_error_responses', value: '1' }
+        - { name: 'net.ipv4.conf.all.rp_filter', value: '1' }
+        - { name: 'net.ipv4.conf.default.rp_filter', value: '1' }
+        - { name: 'net.ipv4.tcp_syncookies', value: '1' }
+        - { name: 'net.ipv4.conf.all.log_martians', value: '1' }
+        - { name: 'net.ipv4.conf.default.log_martians', value: '1' }
+        # IPv6 security (disable if not used)
+        - { name: 'net.ipv6.conf.all.disable_ipv6', value: '1' }
+        - { name: 'net.ipv6.conf.default.disable_ipv6', value: '1' }
+        # Kernel security
+        - { name: 'kernel.dmesg_restrict', value: '1' }
+        - { name: 'kernel.kptr_restrict', value: '2' }
+        - { name: 'kernel.yama.ptrace_scope', value: '1' }
+        - { name: 'fs.suid_dumpable', value: '0' }
+      tags: [kernel]
+
+    # ==============================================================================
+    # PHASE 6: Automatic Security Updates
+    # ==============================================================================
+    - name: Configure unattended-upgrades
+      template:
+        src: ../templates/50unattended-upgrades.j2
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        mode: '0644'
+        backup: yes
+      when: auto_updates_enabled
+      tags: [updates]
+
+    - name: Enable automatic updates
+      lineinfile:
+        path: /etc/apt/apt.conf.d/20auto-upgrades
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        create: yes
+      loop:
+        - { regexp: '^APT::Periodic::Update-Package-Lists', line: 'APT::Periodic::Update-Package-Lists "1";' }
+        - { regexp: '^APT::Periodic::Unattended-Upgrade', line: 'APT::Periodic::Unattended-Upgrade "1";' }
+        - { regexp: '^APT::Periodic::Download-Upgradeable-Packages', line: 'APT::Periodic::Download-Upgradeable-Packages "1";' }
+        - { regexp: '^APT::Periodic::AutocleanInterval', line: 'APT::Periodic::AutocleanInterval "7";' }
+      when: auto_updates_enabled
+      tags: [updates]
+
+    # ==============================================================================
+    # PHASE 7: Audit Logging (auditd)
+    # ==============================================================================
+    - name: Configure auditd rules
+      copy:
+        content: |
+          # Audit rules for security monitoring
+          # File: /etc/audit/rules.d/hardening.rules
+
+          # Remove any existing rules
+          -D
+
+          # Buffer Size
+          -b 8192
+
+          # Failure Mode (0=silent, 1=printk, 2=panic)
+          -f 1
+
+          # Audit system calls
+          -a always,exit -F arch=b64 -S adjtimex,settimeofday -k time-change
+          -a always,exit -F arch=b32 -S adjtimex,settimeofday,stime -k time-change
+          -a always,exit -F arch=b64 -S clock_settime -k time-change
+          -a always,exit -F arch=b32 -S clock_settime -k time-change
+
+          # Audit user/group changes
+          -w /etc/group -p wa -k identity
+          -w /etc/passwd -p wa -k identity
+          -w /etc/gshadow -p wa -k identity
+          -w /etc/shadow -p wa -k identity
+          -w /etc/security/opasswd -p wa -k identity
+
+          # Audit network changes
+          -a always,exit -F arch=b64 -S sethostname,setdomainname -k system-locale
+          -a always,exit -F arch=b32 -S sethostname,setdomainname -k system-locale
+          -w /etc/issue -p wa -k system-locale
+          -w /etc/issue.net -p wa -k system-locale
+          -w /etc/hosts -p wa -k system-locale
+          -w /etc/network -p wa -k system-locale
+
+          # Audit file permission changes
+          -a always,exit -F arch=b64 -S chmod,fchmod,fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod
+          -a always,exit -F arch=b32 -S chmod,fchmod,fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod
+          -a always,exit -F arch=b64 -S chown,fchown,lchown,fchownat -F auid>=1000 -F auid!=4294967295 -k perm_mod
+          -a always,exit -F arch=b32 -S chown,fchown,lchown,fchownat -F auid>=1000 -F auid!=4294967295 -k perm_mod
+
+          # Audit unauthorized access attempts
+          -a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access
+          -a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access
+          -a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access
+          -a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access
+
+          # Audit privileged commands
+          -a always,exit -F path=/usr/bin/passwd -F perm=x -F auid>=1000 -F auid!=4294967295 -k privileged-passwd
+          -a always,exit -F path=/usr/bin/sudo -F perm=x -F auid>=1000 -F auid!=4294967295 -k privileged-sudo
+          -a always,exit -F path=/usr/bin/su -F perm=x -F auid>=1000 -F auid!=4294967295 -k privileged-su
+
+          # Make configuration immutable
+          -e 2
+        dest: /etc/audit/rules.d/hardening.rules
+        mode: '0640'
+      when: audit_logs_enabled
+      notify: restart auditd
+      tags: [audit]
+
+    - name: Load auditd rules
+      command: /sbin/augenrules --load
+      when: audit_logs_enabled
+      tags: [audit]
+
+    - name: Enable and start auditd
+      service:
+        name: auditd
+        state: started
+        enabled: yes
+      when: audit_logs_enabled
+      tags: [audit]
+
+    # ==============================================================================
+    # PHASE 8: File System Hardening
+    # ==============================================================================
+    - name: Set secure permissions on sensitive files
+      file:
+        path: "{{ item.path }}"
+        mode: "{{ item.mode }}"
+        owner: root
+        group: root
+      loop:
+        - { path: '/etc/passwd', mode: '0644' }
+        - { path: '/etc/shadow', mode: '0600' }
+        - { path: '/etc/group', mode: '0644' }
+        - { path: '/etc/gshadow', mode: '0600' }
+        - { path: '/boot/grub/grub.cfg', mode: '0600' }
+      tags: [filesystem]
+
+    - name: Disable unnecessary filesystems
+      lineinfile:
+        path: /etc/modprobe.d/hardening.conf
+        line: "install {{ item }} /bin/true"
+        create: yes
+        mode: '0644'
+      loop:
+        - cramfs
+        - freevxfs
+        - jffs2
+        - hfs
+        - hfsplus
+        - udf
+        - vfat
+      tags: [filesystem]
+
+    # ==============================================================================
+    # PHASE 9: Service Hardening
+    # ==============================================================================
+    - name: Disable unnecessary services
+      service:
+        name: "{{ item }}"
+        state: stopped
+        enabled: no
+      loop:
+        - avahi-daemon
+        - cups
+        - isc-dhcp-server
+        - isc-dhcp-server6
+        - rpcbind
+        - rsync
+      ignore_errors: yes
+      tags: [services]
+
+    # ==============================================================================
+    # PHASE 10: Security Scanning and Reporting
+    # ==============================================================================
+    - name: Initialize AIDE database
+      command: aideinit
+      args:
+        creates: /var/lib/aide/aide.db.new
+      tags: [aide]
+
+    - name: Copy AIDE database to production location
+      command: mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+      args:
+        creates: /var/lib/aide/aide.db
+      tags: [aide]
+
+    - name: Create security audit script
+      copy:
+        content: |
+          #!/bin/bash
+          # Security Audit Script
+          # Generated by Ansible security hardening playbook
+
+          echo "==================================="
+          echo "Security Audit Report"
+          echo "Generated: $(date)"
+          echo "==================================="
+
+          echo -e "\n[*] Running Lynis security audit..."
+          lynis audit system --quick --quiet
+
+          echo -e "\n[*] Running rkhunter scan..."
+          rkhunter --check --skip-keypress --report-warnings-only
+
+          echo -e "\n[*] Checking for failed login attempts..."
+          grep "Failed password" /var/log/auth.log | tail -20
+
+          echo -e "\n[*] Checking UFW status..."
+          ufw status verbose
+
+          echo -e "\n[*] Checking fail2ban status..."
+          fail2ban-client status
+
+          echo -e "\n[*] Checking for available security updates..."
+          apt list --upgradable 2>/dev/null | grep -i security
+
+          echo -e "\n==================================="
+          echo "Audit Complete"
+          echo "==================================="
+        dest: /usr/local/bin/security-audit.sh
+        mode: '0750'
+        owner: root
+        group: root
+      tags: [audit]
+
+    - name: Create daily security audit cron job
+      cron:
+        name: "Daily security audit"
+        minute: "0"
+        hour: "2"
+        job: "/usr/local/bin/security-audit.sh > /var/log/security-audit.log 2>&1"
+        user: root
+      tags: [audit]
+
+    # ==============================================================================
+    # FINAL TASKS
+    # ==============================================================================
+    - name: Generate security hardening report
+      debug:
+        msg:
+          - "=============================================="
+          - "Security Hardening Complete!"
+          - "=============================================="
+          - "The following hardening measures have been applied:"
+          - "  ✓ SSH hardened (key-based auth, no root login)"
+          - "  ✓ Firewall configured (UFW)"
+          - "  ✓ Fail2Ban installed and configured"
+          - "  ✓ Kernel parameters hardened"
+          - "  ✓ Automatic security updates enabled"
+          - "  ✓ Audit logging configured (auditd)"
+          - "  ✓ File permissions secured"
+          - "  ✓ Unnecessary services disabled"
+          - "  ✓ AIDE intrusion detection initialized"
+          - "  ✓ Daily security audits scheduled"
+          - ""
+          - "Next steps:"
+          - "  1. Review /var/log/security-audit.log"
+          - "  2. Run: lynis audit system"
+          - "  3. Run: aide --check"
+          - "  4. Test SSH access before closing session!"
+          - "=============================================="
+      tags: [always]

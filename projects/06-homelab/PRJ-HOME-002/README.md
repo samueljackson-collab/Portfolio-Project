@@ -222,6 +222,14 @@ Creates production-ready VM template (ID 9000) with:
 - [`disaster-recovery-plan.md`](assets/recovery/disaster-recovery-plan.md) - Comprehensive DR plan with RTO/RPO
 - [`recovery-procedures/`](assets/recovery/recovery-procedures/) - Step-by-step recovery guides
 
+### Demo & Visualizations
+- [`demo/home-assistant-dashboard.html`](demo/home-assistant-dashboard.html) - Interactive Home Assistant dashboard mockup
+  - Demonstrates smart home integration with homelab services
+  - Features: Climate control, lighting, security monitoring, energy tracking, media player, and service status
+  - Live React version available in portfolio frontend at `/home-assistant`
+- [`demo/wiki-infrastructure-overview.html`](demo/wiki-infrastructure-overview.html) - Wiki.js infrastructure documentation mockup
+- See [`demo/README.md`](demo/README.md) for detailed information about all demo files
+
 ## Skills Demonstrated
 
 ### Virtualization

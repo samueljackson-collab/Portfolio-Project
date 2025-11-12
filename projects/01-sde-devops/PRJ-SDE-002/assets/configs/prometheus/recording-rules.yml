@@ -1,0 +1,304 @@
+# Prometheus Recording Rules
+# ===========================
+# Recording rules allow you to precompute frequently needed or computationally
+# expensive expressions and save their result as a new set of time series.
+#
+# Benefits:
+# - Faster dashboard queries
+# - Reduced query complexity
+# - Lower resource usage
+# - Better performance for alerting
+#
+# Usage:
+#   Include this file in prometheus.yml:
+#     rule_files:
+#       - /etc/prometheus/rules/recording-rules.yml
+
+groups:
+  # ===========================================================================
+  # CPU METRICS - Aggregated CPU usage metrics
+  # ===========================================================================
+  - name: cpu_metrics
+    interval: 30s
+    rules:
+      # Overall CPU usage rate
+      - record: instance:cpu:usage_rate
+        expr: |
+          100 - (avg by (instance) (
+            rate(node_cpu_seconds_total{mode="idle"}[5m])
+          ) * 100)
+
+      # CPU usage by mode
+      - record: instance:cpu:usage_by_mode
+        expr: |
+          rate(node_cpu_seconds_total[5m])
+
+      # CPU steal time (for VMs)
+      - record: instance:cpu:steal_rate
+        expr: |
+          rate(node_cpu_seconds_total{mode="steal"}[5m]) * 100
+
+      # High CPU usage instances
+      - record: instance:cpu:high_usage
+        expr: |
+          instance:cpu:usage_rate > 80
+
+  # ===========================================================================
+  # MEMORY METRICS - Memory utilization metrics
+  # ===========================================================================
+  - name: memory_metrics
+    interval: 30s
+    rules:
+      # Memory utilization percentage
+      - record: instance:memory:usage_percent
+        expr: |
+          100 - (
+            node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100
+          )
+
+      # Available memory in GB
+      - record: instance:memory:available_gb
+        expr: |
+          node_memory_MemAvailable_bytes / 1024 / 1024 / 1024
+
+      # Used memory in GB
+      - record: instance:memory:used_gb
+        expr: |
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / 1024 / 1024 / 1024
+
+      # Memory pressure indicator
+      - record: instance:memory:pressure
+        expr: |
+          instance:memory:usage_percent > 85
+
+  # ===========================================================================
+  # DISK METRICS - Disk usage and I/O metrics
+  # ===========================================================================
+  - name: disk_metrics
+    interval: 30s
+    rules:
+      # Disk usage percentage by mount point
+      - record: instance:disk:usage_percent
+        expr: |
+          100 - (
+            node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} /
+            node_filesystem_size_bytes{fstype!~"tmpfs|overlay"} * 100
+          )
+
+      # Disk available in GB
+      - record: instance:disk:available_gb
+        expr: |
+          node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / 1024 / 1024 / 1024
+
+      # Disk I/O rate (reads + writes per second)
+      - record: instance:disk:io_rate
+        expr: |
+          rate(node_disk_reads_completed_total[5m]) +
+          rate(node_disk_writes_completed_total[5m])
+
+      # Disk throughput (MB/s)
+      - record: instance:disk:throughput_mb
+        expr: |
+          (
+            rate(node_disk_read_bytes_total[5m]) +
+            rate(node_disk_write_bytes_total[5m])
+          ) / 1024 / 1024
+
+  # ===========================================================================
+  # NETWORK METRICS - Network traffic and errors
+  # ===========================================================================
+  - name: network_metrics
+    interval: 30s
+    rules:
+      # Network receive rate (MB/s)
+      - record: instance:network:receive_mb
+        expr: |
+          rate(node_network_receive_bytes_total{device!~"lo|docker.*|veth.*"}[5m]) / 1024 / 1024
+
+      # Network transmit rate (MB/s)
+      - record: instance:network:transmit_mb
+        expr: |
+          rate(node_network_transmit_bytes_total{device!~"lo|docker.*|veth.*"}[5m]) / 1024 / 1024
+
+      # Network total bandwidth (MB/s)
+      - record: instance:network:bandwidth_total_mb
+        expr: |
+          instance:network:receive_mb + instance:network:transmit_mb
+
+      # Network error rate
+      - record: instance:network:error_rate
+        expr: |
+          rate(node_network_receive_errs_total[5m]) +
+          rate(node_network_transmit_errs_total[5m])
+
+  # ===========================================================================
+  # SERVICE AVAILABILITY - Uptime and availability metrics
+  # ===========================================================================
+  - name: availability_metrics
+    interval: 30s
+    rules:
+      # Instance uptime in days
+      - record: instance:uptime:days
+        expr: |
+          (time() - node_boot_time_seconds) / 86400
+
+      # Service up indicator (1 = up, 0 = down)
+      - record: instance:up
+        expr: |
+          up
+
+      # Availability percentage (last hour)
+      - record: instance:availability:1h
+        expr: |
+          avg_over_time(up[1h]) * 100
+
+      # Availability percentage (last 24h)
+      - record: instance:availability:24h
+        expr: |
+          avg_over_time(up[24h]) * 100
+
+  # ===========================================================================
+  # CONTAINER METRICS - Docker container resource usage
+  # ===========================================================================
+  - name: container_metrics
+    interval: 30s
+    rules:
+      # Container CPU usage percentage
+      - record: container:cpu:usage_percent
+        expr: |
+          rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100
+
+      # Container memory usage in MB
+      - record: container:memory:usage_mb
+        expr: |
+          container_memory_usage_bytes{name!=""} / 1024 / 1024
+
+      # Container memory limit in MB
+      - record: container:memory:limit_mb
+        expr: |
+          container_spec_memory_limit_bytes{name!=""} / 1024 / 1024
+
+      # Container memory utilization percentage
+      - record: container:memory:usage_percent
+        expr: |
+          (container_memory_usage_bytes{name!=""} /
+           container_spec_memory_limit_bytes{name!=""}) * 100
+
+      # Container network receive rate (MB/s)
+      - record: container:network:receive_mb
+        expr: |
+          rate(container_network_receive_bytes_total{name!=""}[5m]) / 1024 / 1024
+
+      # Container network transmit rate (MB/s)
+      - record: container:network:transmit_mb
+        expr: |
+          rate(container_network_transmit_bytes_total{name!=""}[5m]) / 1024 / 1024
+
+  # ===========================================================================
+  # BACKUP METRICS - Proxmox Backup Server metrics
+  # ===========================================================================
+  - name: backup_metrics
+    interval: 60s
+    rules:
+      # Successful backups in last 24 hours
+      - record: backup:success:24h
+        expr: |
+          count_over_time(
+            (proxmox_backup_job_status{status="success"}[24h])
+          )
+
+      # Failed backups in last 24 hours
+      - record: backup:failed:24h
+        expr: |
+          count_over_time(
+            (proxmox_backup_job_status{status="failed"}[24h])
+          )
+
+      # Average backup duration (minutes)
+      - record: backup:duration:avg_minutes
+        expr: |
+          avg(proxmox_backup_job_duration_seconds) / 60
+
+      # Backup success rate (last 7 days)
+      - record: backup:success_rate:7d
+        expr: |
+          (
+            backup:success:24h /
+            (backup:success:24h + backup:failed:24h)
+          ) * 100
+
+  # ===========================================================================
+  # AGGREGATED CLUSTER METRICS - Cluster-wide statistics
+  # ===========================================================================
+  - name: cluster_metrics
+    interval: 60s
+    rules:
+      # Total cluster CPU usage
+      - record: cluster:cpu:usage_total
+        expr: |
+          sum(instance:cpu:usage_rate)
+
+      # Total cluster memory used (GB)
+      - record: cluster:memory:used_total_gb
+        expr: |
+          sum(instance:memory:used_gb)
+
+      # Total cluster memory available (GB)
+      - record: cluster:memory:available_total_gb
+        expr: |
+          sum(instance:memory:available_gb)
+
+      # Cluster disk usage percentage (average)
+      - record: cluster:disk:usage_percent_avg
+        expr: |
+          avg(instance:disk:usage_percent)
+
+      # Cluster network total bandwidth (MB/s)
+      - record: cluster:network:bandwidth_total_mb
+        expr: |
+          sum(instance:network:bandwidth_total_mb)
+
+      # Cluster availability (percentage of nodes up)
+      - record: cluster:availability:percent
+        expr: |
+          (count(up == 1) / count(up)) * 100
+
+# ===========================================================================
+# NOTES
+# ===========================================================================
+#
+# Recording Rule Best Practices:
+# 1. Use consistent naming: level:metric:aggregation
+# 2. Keep expressions simple and focused
+# 3. Don't over-aggregate (preserve useful labels)
+# 4. Use appropriate intervals (default: evaluation_interval)
+# 5. Test rules before deploying to production
+#
+# Naming Convention:
+#   level:metric:aggregation[_unit][_timewindow]
+#
+# Examples:
+#   instance:cpu:usage_rate           - Instance level, CPU metric, usage rate
+#   container:memory:usage_mb         - Container level, memory in MB
+#   cluster:disk:usage_percent_avg    - Cluster level, average disk usage
+#   backup:success:24h                - Backup count over 24 hours
+#
+# Performance Tips:
+# - Recording rules run on the Prometheus server
+# - Pre-compute expensive queries used in dashboards
+# - Use recording rules as input for alert rules
+# - Monitor recording rule evaluation time
+#
+# Verification:
+#   # Check rule syntax
+#   promtool check rules recording-rules.yml
+#
+#   # Test rule evaluation
+#   promtool test rules test-rules.yml
+#
+# Reload Configuration:
+#   # Send SIGHUP to Prometheus
+#   kill -HUP $(pidof prometheus)
+#
+#   # Or use API
+#   curl -X POST http://localhost:9090/-/reload

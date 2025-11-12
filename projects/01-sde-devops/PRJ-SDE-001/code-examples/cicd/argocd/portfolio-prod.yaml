@@ -1,0 +1,131 @@
+# argocd/applications/portfolio-prod.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portfolio-production
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: production-deploys
+    notifications.argoproj.io/subscribe.on-health-degraded.pagerduty: production-alerts
+
+spec:
+  project: production
+
+  source:
+    repoURL: https://github.com/org/portfolio-gitops.git
+    targetRevision: main
+    path: k8s/overlays/production
+
+    kustomize:
+      namePrefix: prod-
+      commonLabels:
+        app: portfolio
+        environment: production
+        managed-by: argocd
+
+      commonAnnotations:
+        argocd.argoproj.io/sync-wave: "0"
+
+      images:
+        - newName: ghcr.io/org/portfolio
+          newTag: __IMAGE_TAG__  # This should be dynamically updated by the CI pipeline
+
+      patches:
+        - target:
+            kind: Deployment
+            name: portfolio
+          patch: |
+            - op: add
+              path: /spec/template/spec/containers/0/resources
+              value:
+                requests:
+                  memory: "256Mi"
+                  cpu: "200m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  revisionHistoryLimit: 10
+
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/clusterIP
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: production
+  namespace: argocd
+spec:
+  description: Production applications
+
+  sourceRepos:
+    - 'https://github.com/org/*'
+
+  destinations:
+    - namespace: production
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+
+  namespaceResourceBlacklist:
+    - group: ''
+      kind: ResourceQuota
+    - group: ''
+      kind: LimitRange
+
+  roles:
+    - name: admin
+      description: Admin role for production
+      policies:
+        - p, proj:production:admin, applications, *, production/*, allow
+      groups:
+        - platform-team
+
+    - name: developer
+      description: Developer role (read-only)
+      policies:
+        - p, proj:production:developer, applications, get, production/*, allow
+      groups:
+        - dev-team

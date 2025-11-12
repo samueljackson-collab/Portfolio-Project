@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Organizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 350px;
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f5f5f5;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      padding: 15px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #666;
+      margin-top: 3px;
+    }
+
+    .actions {
+      padding: 15px;
+      background: white;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .status {
+      padding: 15px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .status.syncing {
+      color: #667eea;
+    }
+
+    .status.error {
+      color: #e74c3c;
+    }
+
+    .categories {
+      padding: 15px;
+      background: white;
+      margin-top: 10px;
+    }
+
+    .categories h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .category {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+      background: #f9f9f9;
+    }
+
+    .category-name {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .category-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .category-count {
+      background: #667eea;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Tab Organizer</h1>
+    <p>AI-powered tab management</p>
+  </div>
+
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <div id="content" style="display: none;">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="totalTabs">0</div>
+        <div class="stat-label">Tabs</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="totalGroups">0</div>
+        <div class="stat-label">Groups</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="ungroupedTabs">0</div>
+        <div class="stat-label">Ungrouped</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="autoGroupBtn">
+        <span>✨</span>
+        <span>Auto-Group Tabs</span>
+      </button>
+      <button class="btn btn-secondary" id="syncBtn">
+        <span>🔄</span>
+        <span>Sync Now</span>
+      </button>
+      <button class="btn btn-secondary" id="openAppBtn">
+        <span>📱</span>
+        <span>Open Desktop App</span>
+      </button>
+    </div>
+
+    <div class="categories">
+      <h3>Categories</h3>
+      <div id="categoriesList"></div>
+    </div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <script src="../scripts/popup.js"></script>
+</body>
+</html>
