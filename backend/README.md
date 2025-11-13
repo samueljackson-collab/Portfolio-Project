@@ -46,6 +46,13 @@ A modern, production-ready REST API built with FastAPI, featuring JWT authentica
    # Edit .env with your database credentials and secret key
    ```
 
+   Optional storage overrides:
+   ```bash
+   PHOTO_PRIMARY_STORAGE_PATH=/mnt/home-server/photos
+   PHOTO_BACKUP_PATHS=/mnt/aunt-backup/photos,/mnt/tucson-backup/photos
+   ```
+   The defaults already map to the home server, aunt's house, and Tucson backups.
+
 5. **Run database migrations**
    ```bash
    alembic upgrade head
@@ -111,6 +118,8 @@ backend/
 │   ├── schemas.py           # Pydantic schemas
 │   ├── auth.py              # Authentication utilities
 │   ├── dependencies.py      # FastAPI dependencies
+│   ├── services/            # Shared service layer helpers
+│   │   └── storage.py       # Photo storage with multi-site backups
 │   └── routers/
 │       ├── __init__.py
 │       ├── health.py        # Health check endpoints
@@ -169,6 +178,8 @@ alembic history
 | `SECRET_KEY` | JWT secret key (min 32 chars) | Required |
 | `CORS_ORIGINS` | Allowed CORS origins | ["http://localhost:3000"] |
 | `LOG_LEVEL` | Logging level | INFO |
+| `PHOTO_PRIMARY_STORAGE_PATH` | Primary photo storage directory (home server) | /srv/elderphoto/home-server |
+| `PHOTO_BACKUP_PATHS` | Comma-separated backup paths (aunt's house, Tucson AZ) | /srv/elderphoto/aunt-backup,/srv/elderphoto/tucson-backup |
 
 ## Security Considerations
 

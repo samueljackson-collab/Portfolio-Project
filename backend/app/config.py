@@ -55,6 +55,21 @@ class Settings(BaseSettings):
     # Logging Settings
     log_level: str = Field(default="INFO", description="Logging level")
 
+    # Photo Storage Settings
+    photo_primary_storage_path: str = Field(
+        default="/srv/elderphoto/home-server",
+        description="Primary storage path located on the home server",
+    )
+    photo_backup_paths: list[str] = Field(
+        default_factory=lambda: [
+            "/srv/elderphoto/aunt-backup",
+            "/srv/elderphoto/tucson-backup",
+        ],
+        description=(
+            "Backup storage directories, e.g. aunt's house NAS and Tucson remote backup"
+        ),
+    )
+
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, v: str) -> str:
