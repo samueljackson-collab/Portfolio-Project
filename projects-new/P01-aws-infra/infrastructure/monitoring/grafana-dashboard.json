@@ -1,0 +1,28 @@
+{
+  "title": "AWS Infra Automation",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request Rate",
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(aws_infra_requests_total[1m]))",
+          "legendFormat": "{{status}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "AWS SDK Calls",
+      "targets": [
+        {
+          "expr": "sum by (service,operation) (rate(aws_infra_aws_calls_total[5m]))",
+          "legendFormat": "{{service}}/{{operation}}"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": []
+  }
+}

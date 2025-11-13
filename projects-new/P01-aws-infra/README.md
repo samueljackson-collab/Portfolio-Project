@@ -52,14 +52,21 @@ P01-aws-infra/
 └── ci/                       # CI/CD workflows
 ```
 
+## Application Components
+
+- **FastAPI control plane** exposing `/health`, `/metrics`, `/aws/*`, and `/security/posture` endpoints.
+- **Security middleware** enforcing API keys plus modern security headers (CSP, HSTS, referrer policy).
+- **AWS SDK integrations** for S3 inventory, Secrets Manager metadata, and CloudWatch metric publishing.
+- **Observability hooks** via Prometheus metrics counters/histograms and structured JSON logging with `structlog`.
+
 ## Features
 
 - ✅ Enterprise-grade implementation
 - ✅ Comprehensive test coverage (≥80%)
 - ✅ Infrastructure as Code
 - ✅ CI/CD automation
-- ✅ Production-ready monitoring
-- ✅ Security best practices
+- ✅ Production-ready monitoring (Prometheus rules, Grafana dashboards, OpenTelemetry collector config)
+- ✅ Security best practices (API key enforcement, secrets management, Terraform guardrails)
 
 ## Requirements
 
@@ -95,17 +102,17 @@ make deploy ENV=prod
 
 ## Monitoring
 
-- **Metrics:** Prometheus metrics exposed on `:9090/metrics`
-- **Logs:** Structured JSON logging to stdout
-- **Traces:** OpenTelemetry integration
-- **Dashboards:** Grafana dashboards in `infrastructure/monitoring/`
+- **Metrics:** Prometheus scrape endpoint exposed at `/metrics` plus alert rules in `infrastructure/monitoring/prometheus-rules.yaml`
+- **Logs:** Structured JSON logging to stdout for ingestion into CloudWatch Logs or Loki
+- **Traces:** OpenTelemetry Collector configuration supplied (`infrastructure/monitoring/otel-collector-config.yaml`); application auto-instrumentation is a roadmap task
+- **Dashboards:** Ready-to-import Grafana dashboard JSON in `infrastructure/monitoring/grafana-dashboard.json`
 
 ## Security
 
-- 🔒 OWASP Top 10 compliance
-- 🔒 CIS benchmark compliance
-- 🔒 Automated security scanning
-- 🔒 Secrets management via AWS Secrets Manager
+- 🔒 API key enforcement + hardened headers for every protected endpoint
+- 🔒 Automated AWS guardrails through Terraform (encryption, public access blocks, log retention)
+- 🔒 Secrets management via AWS Secrets Manager metadata surfaced through `/secrets/{name}`
+- 🔵 OWASP Top 10 + CIS Level 2 audit evidence is tracked as a roadmap item while automated checks are implemented in CI
 
 ## Contributing
 
