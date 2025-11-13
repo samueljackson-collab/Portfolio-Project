@@ -1,0 +1,80 @@
+.prose pre {
+  background-color: #1f2937 !important;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+code[class*='language-'],
+pre[class*='language-'] {
+  color: #d1d5db;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #6b7280;
+}
+
+.token.punctuation {
+  color: #9ca3af;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #f08d49;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a5d6ff;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #67e8f9;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #d8b4fe;
+}
+
+.token.function,
+.token.class-name {
+  color: #fde047;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #fca5a5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
