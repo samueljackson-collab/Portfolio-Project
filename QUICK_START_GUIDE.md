@@ -18,6 +18,13 @@ professional/resume/                      ← Resume PDFs
 
 📖 **Detailed breakdown:** See `MISSING_DOCUMENTS_ANALYSIS.md`
 
+### Enterprise Blueprints (P01–P20)
+
+- Canonical directory: `projects-new/`
+- Example path: `projects-new/P01-aws-infra/`
+- Navigation command: `cd projects-new/P01-aws-infra`
+- Reference playbook: [Enterprise Project Quick Start](./projects-new/QUICK_START_GUIDE.md)
+
 ---
 
 ## 🚀 Three Methods (Pick One)

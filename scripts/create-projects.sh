@@ -5,7 +5,11 @@ set -euo pipefail
 # Creates standardized project structure for 20 projects
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECTS_DIR="${SCRIPT_DIR}/../projects-new"
+CANONICAL_PROJECTS_DIR="${SCRIPT_DIR}/../projects-new"
+PROJECTS_DIR="${CANONICAL_PROJECTS_DIR}"
+
+mkdir -p "${PROJECTS_DIR}"
+echo -e "Creating projects inside canonical directory: ${PROJECTS_DIR}"
 
 # Color output
 GREEN='\033[0;32m'
