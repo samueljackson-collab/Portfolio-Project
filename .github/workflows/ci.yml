@@ -29,13 +29,13 @@ jobs:
     
     - name: Validate Markdown
       run: |
-        markdownlint '**/*.md' --ignore node_modules || true
-        
+        markdownlint '**/*.md' --ignore node_modules
+
     - name: Check Python formatting
-      run: black --check . || true
-      
+      run: black --check .
+
     - name: Lint Python code
-      run: ruff check . || true
-      
+      run: ruff check .
+
     - name: Run tests
-      run: pytest || true
+      run: pytest
