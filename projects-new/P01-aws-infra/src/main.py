@@ -50,7 +50,7 @@ def get_aws_service() -> AWSResourceService:
 
 
 @app.middleware("http")
-async def secure_headers_middleware(request, call_next):  # type: ignore[override]
+async def secure_headers_middleware(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
     response = await call_next(request)
     for key, value in apply_security_headers({}).items():
         response.headers.setdefault(key, value)
