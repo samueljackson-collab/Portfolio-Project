@@ -791,22 +791,20 @@ cd /opt/immich
 
 # Download official docker-compose
 wget https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
-wget https://github.com/immich-app/immich/releases/latest/download/example.env -O .env
+wget https://github.com/immich-app/immich/releases/latest/download/example.env
 
-# Configure environment
-cat > .env << 'EOF'
-UPLOAD_LOCATION=/mnt/media/upload
-DB_PASSWORD=CHANGE_ME_IMMICH_DB_PASSWORD
-DB_DATABASE_NAME=immich
-DB_USERNAME=postgres
-REDIS_PASSWORD=CHANGE_ME_REDIS_PASSWORD
-
-IMMICH_SERVER_URL=https://immich.andrewvongsady.com
-
-# Machine learning (use GPU if available)
-MACHINE_LEARNING_WORKERS=2
-MACHINE_LEARNING_WORKER_TIMEOUT=120
-EOF
+# Configure environment by creating a .env file from the example and modifying it
+cp example.env .env
+sed -i \
+    -e 's|^UPLOAD_LOCATION=.*|UPLOAD_LOCATION=/mnt/media/upload|' \
+    -e 's|^DB_PASSWORD=.*|DB_PASSWORD=CHANGE_ME_IMMICH_DB_PASSWORD|' \
+    -e 's|^DB_DATABASE_NAME=.*|DB_DATABASE_NAME=immich|' \
+    -e 's|^DB_USERNAME=.*|DB_USERNAME=postgres|' \
+    -e 's|^REDIS_PASSWORD=.*|REDIS_PASSWORD=CHANGE_ME_REDIS_PASSWORD|' \
+    -e 's|^# IMMICH_SERVER_URL=.*|IMMICH_SERVER_URL=https://immich.andrewvongsady.com|' \
+    -e 's/^# *MACHINE_LEARNING_WORKERS=.*/MACHINE_LEARNING_WORKERS=2/' \
+    -e 's/^# *MACHINE_LEARNING_WORKER_TIMEOUT=.*/MACHINE_LEARNING_WORKER_TIMEOUT=120/' \
+    .env
 
 # Start Immich
 docker compose up -d
