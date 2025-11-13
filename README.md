@@ -24,6 +24,9 @@ System-minded engineer specializing in building, securing, and operating infrast
 **QA-forward** Quality-driven systems engineer turning ambiguous requirements into testable runbooks, acceptance criteria, and regression checklists. Builds monitoring dashboards for golden signals and SLOs.
 </details>
 
+## 📊 Success Metrics & Analytics Operations
+Success criteria, dashboards, alert routing, and data-quality rituals for the portfolio are documented in [docs/success-metrics.md](./docs/success-metrics.md).
+
 ---
 ## 📘 Guides
 
