@@ -27,6 +27,43 @@ interface Service {
   statusText: string
 }
 
+const TABS = ['Overview', 'Lights', 'Climate', 'Security', 'System'] as const
+
+type Tab = typeof TABS[number]
+
+type ClimateMode = 'off' | 'heat' | 'cool' | 'auto'
+
+const CLIMATE_MODES: readonly ClimateMode[] = ['off', 'heat', 'cool', 'auto']
+
+const SENSORS: Sensor[] = [
+  { id: '1', location: 'Living Room', status: 'Clear', hasMotion: false },
+  { id: '2', location: 'Kitchen', status: 'Motion detected', hasMotion: true },
+  { id: '3', location: 'Bedroom', status: 'Clear', hasMotion: false },
+  { id: '4', location: 'Garage', status: 'Clear', hasMotion: false },
+]
+
+const SERVICES: Service[] = [
+  { id: '1', name: 'Proxmox VE', status: 'online', statusText: 'Online' },
+  { id: '2', name: 'TrueNAS', status: 'online', statusText: 'Online' },
+  { id: '3', name: 'PostgreSQL', status: 'online', statusText: 'Online' },
+  { id: '4', name: 'Backup Server', status: 'warning', statusText: 'High Load' },
+]
+
+const STATUS_STYLES: Record<Service['status'], { indicator: string; text: string }> = {
+  online: {
+    indicator: 'bg-green-500 shadow-[0_0_8px_rgba(76,175,80,0.5)]',
+    text: 'text-green-500',
+  },
+  warning: {
+    indicator: 'bg-orange-500 shadow-[0_0_8px_rgba(255,152,0,0.5)]',
+    text: 'text-orange-500',
+  },
+  offline: {
+    indicator: 'bg-red-500 shadow-[0_0_8px_rgba(244,67,54,0.5)]',
+    text: 'text-red-500',
+  },
+}
+
 export const HomeAssistant: React.FC = () => {
   const [lights, setLights] = useState<Light[]>([
     { id: '1', name: 'Living Room', status: '85% · Warm White', isOn: true },
@@ -36,30 +73,16 @@ export const HomeAssistant: React.FC = () => {
   ])
 
   const [temperature, setTemperature] = useState(72)
-  const [climateMode, setClimateMode] = useState<'off' | 'heat' | 'cool' | 'auto'>('heat')
+  const [climateMode, setClimateMode] = useState<ClimateMode>('heat')
   const [isPlaying, setIsPlaying] = useState(true)
-  const [activeTab, setActiveTab] = useState('Overview')
-
-  const sensors: Sensor[] = [
-    { id: '1', location: 'Living Room', status: 'Clear', hasMotion: false },
-    { id: '2', location: 'Kitchen', status: 'Motion detected', hasMotion: true },
-    { id: '3', location: 'Bedroom', status: 'Clear', hasMotion: false },
-    { id: '4', location: 'Garage', status: 'Clear', hasMotion: false },
-  ]
-
-  const services: Service[] = [
-    { id: '1', name: 'Proxmox VE', status: 'online', statusText: 'Online' },
-    { id: '2', name: 'TrueNAS', status: 'online', statusText: 'Online' },
-    { id: '3', name: 'PostgreSQL', status: 'online', statusText: 'Online' },
-    { id: '4', name: 'Backup Server', status: 'warning', statusText: 'High Load' },
-  ]
-
-  const tabs = ['Overview', 'Lights', 'Climate', 'Security', 'System']
+  const [activeTab, setActiveTab] = useState<Tab>('Overview')
 
   const toggleLight = (id: string) => {
-    setLights(lights.map(light =>
-      light.id === id ? { ...light, isOn: !light.isOn } : light
-    ))
+    setLights(prevLights =>
+      prevLights.map(light =>
+        light.id === id ? { ...light, isOn: !light.isOn } : light
+      )
+    )
   }
 
   const adjustTemperature = (delta: number) => {
@@ -76,7 +99,7 @@ export const HomeAssistant: React.FC = () => {
               <div className="text-2xl text-blue-400">🏠</div>
               <div className="text-xl font-medium text-gray-800">Home</div>
               <nav className="ml-8 flex gap-6">
-                {tabs.map(tab => (
+                {TABS.map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -141,7 +164,13 @@ export const HomeAssistant: React.FC = () => {
                 <span className="text-xl">🌡️</span>
                 Climate Control
               </div>
-              <div className="text-gray-400 cursor-pointer text-lg">⋮</div>
+              <button
+                type="button"
+                className="text-gray-400 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                aria-label="Open climate control menu"
+              >
+                ⋮
+              </button>
             </div>
             <div className="text-center">
               <div className="text-5xl font-light text-blue-400 my-4">{temperature}°F</div>
@@ -162,7 +191,7 @@ export const HomeAssistant: React.FC = () => {
               </div>
               <div className="text-sm text-gray-600">Current: 68°F · Heating</div>
               <div className="flex gap-2 justify-center mt-3">
-                {(['off', 'heat', 'cool', 'auto'] as const).map(mode => (
+                {CLIMATE_MODES.map(mode => (
                   <button
                     key={mode}
                     onClick={() => setClimateMode(mode)}
@@ -186,7 +215,13 @@ export const HomeAssistant: React.FC = () => {
                 <span className="text-xl">💡</span>
                 Lights
               </div>
-              <div className="text-gray-400 cursor-pointer text-lg">⋮</div>
+              <button
+                type="button"
+                className="text-gray-400 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                aria-label="Open lights menu"
+              >
+                ⋮
+              </button>
             </div>
             <div className="space-y-0">
               {lights.map((light, index) => (
@@ -229,7 +264,13 @@ export const HomeAssistant: React.FC = () => {
                 <span className="text-xl">🔐</span>
                 Security
               </div>
-              <div className="text-gray-400 cursor-pointer text-lg">⋮</div>
+              <button
+                type="button"
+                className="text-gray-400 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                aria-label="Open security menu"
+              >
+                ⋮
+              </button>
             </div>
             <div className="space-y-0">
               <div className="flex items-center justify-between py-3 border-b border-gray-100">
@@ -269,10 +310,16 @@ export const HomeAssistant: React.FC = () => {
                 <span className="text-xl">📡</span>
                 Motion Sensors
               </div>
-              <div className="text-gray-400 cursor-pointer text-lg">⋮</div>
+              <button
+                type="button"
+                className="text-gray-400 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                aria-label="Open motion sensors menu"
+              >
+                ⋮
+              </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {sensors.map(sensor => (
+              {SENSORS.map(sensor => (
                 <div key={sensor.id} className="bg-gray-50 p-3 rounded-lg flex items-center gap-3">
                   <div className={`text-2xl ${sensor.hasMotion ? 'text-orange-500' : 'text-green-500'}`}>
                     {sensor.hasMotion ? '👤' : '✓'}
@@ -293,7 +340,13 @@ export const HomeAssistant: React.FC = () => {
                 <span className="text-xl">⚡</span>
                 Energy Today
               </div>
-              <div className="text-gray-400 cursor-pointer text-lg">⋮</div>
+              <button
+                type="button"
+                className="text-gray-400 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                aria-label="Open energy menu"
+              >
+                ⋮
+              </button>
             </div>
             <div className="h-30 my-4">
               <div className="flex items-end h-full gap-1">
@@ -329,7 +382,13 @@ export const HomeAssistant: React.FC = () => {
                 <span className="text-xl">🎵</span>
                 Now Playing
               </div>
-              <div className="text-gray-400 cursor-pointer text-lg">⋮</div>
+              <button
+                type="button"
+                className="text-gray-400 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                aria-label="Open now playing menu"
+              >
+                ⋮
+              </button>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex gap-4 mb-3">
@@ -366,28 +425,29 @@ export const HomeAssistant: React.FC = () => {
                 <span className="text-xl">🖥️</span>
                 Homelab Services
               </div>
-              <div className="text-gray-400 cursor-pointer text-lg">⋮</div>
+              <button
+                type="button"
+                className="text-gray-400 text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+                aria-label="Open homelab services menu"
+              >
+                ⋮
+              </button>
             </div>
             <ul className="space-y-2">
-              {services.map(service => (
-                <li key={service.id} className="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className={`w-2 h-2 rounded-full mr-3 ${
-                      service.status === 'online' ? 'bg-green-500 shadow-[0_0_8px_rgba(76,175,80,0.5)]' :
-                      service.status === 'warning' ? 'bg-orange-500 shadow-[0_0_8px_rgba(255,152,0,0.5)]' :
-                      'bg-red-500 shadow-[0_0_8px_rgba(244,67,54,0.5)]'
-                    }`} />
-                    <span className="text-sm">{service.name}</span>
-                  </div>
-                  <span className={`text-xs ${
-                    service.status === 'online' ? 'text-green-500' :
-                    service.status === 'warning' ? 'text-orange-500' :
-                    'text-red-500'
-                  }`}>
-                    {service.statusText}
-                  </span>
-                </li>
-              ))}
+              {SERVICES.map(service => {
+                const styles = STATUS_STYLES[service.status]
+                return (
+                  <li key={service.id} className="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className={`w-2 h-2 rounded-full mr-3 ${styles.indicator}`} />
+                      <span className="text-sm">{service.name}</span>
+                    </div>
+                    <span className={`text-xs ${styles.text}`}>
+                      {service.statusText}
+                    </span>
+                  </li>
+                )
+              })}
             </ul>
           </div>
 

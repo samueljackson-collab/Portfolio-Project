@@ -154,6 +154,14 @@
             color: #999;
             cursor: pointer;
             font-size: 18px;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .card-menu:focus-visible {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
         }
 
         .quick-actions {
@@ -476,6 +484,9 @@
 
         .status-list {
             list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .status-item {
@@ -483,30 +494,52 @@
             align-items: center;
             justify-content: space-between;
             padding: 12px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
-
-        .status-item:last-child {
-            margin-bottom: 0;
+            background: #f7f9fc;
+            border-radius: 10px;
         }
 
         .status-indicator {
             width: 8px;
             height: 8px;
             border-radius: 50%;
+            display: inline-block;
             margin-right: 12px;
         }
 
         .status-indicator.online {
             background: #4caf50;
-            box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
         }
 
         .status-indicator.warning {
             background: #ff9800;
-            box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+            box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+        }
+
+        .status-indicator.offline {
+            background: #f44336;
+            box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+        }
+
+        .status-item-name {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-item-text {
+            font-size: 12px;
+        }
+
+        .status-online {
+            color: #4caf50;
+        }
+
+        .status-warning {
+            color: #ff9800;
+        }
+
+        .status-offline {
+            color: #f44336;
         }
 
         .security-item {
@@ -582,7 +615,7 @@
                         <span class="card-icon">🌡️</span>
                         Climate Control
                     </div>
-                    <div class="card-menu">⋮</div>
+                    <button type="button" class="card-menu" aria-label="Open climate control menu">⋮</button>
                 </div>
                 <div class="thermostat">
                     <div class="temp-display">72°F</div>
@@ -608,7 +641,7 @@
                         <span class="card-icon">💡</span>
                         Lights
                     </div>
-                    <div class="card-menu">⋮</div>
+                    <button type="button" class="card-menu" aria-label="Open lights menu">⋮</button>
                 </div>
                 <div class="light-control">
                     <div class="light-info">
@@ -618,7 +651,7 @@
                             <div class="light-status">85% · Warm White</div>
                         </div>
                     </div>
-                    <div class="toggle-switch on" onclick="this.classList.toggle('on')">
+                    <div class="toggle-switch on">
                         <div class="toggle-switch-slider"></div>
                     </div>
                 </div>
@@ -630,7 +663,7 @@
                             <div class="light-status">Off</div>
                         </div>
                     </div>
-                    <div class="toggle-switch" onclick="this.classList.toggle('on')">
+                    <div class="toggle-switch">
                         <div class="toggle-switch-slider"></div>
                     </div>
                 </div>
@@ -642,7 +675,7 @@
                             <div class="light-status">60% · Cool White</div>
                         </div>
                     </div>
-                    <div class="toggle-switch on" onclick="this.classList.toggle('on')">
+                    <div class="toggle-switch on">
                         <div class="toggle-switch-slider"></div>
                     </div>
                 </div>
@@ -654,7 +687,7 @@
                             <div class="light-status">Off</div>
                         </div>
                     </div>
-                    <div class="toggle-switch" onclick="this.classList.toggle('on')">
+                    <div class="toggle-switch">
                         <div class="toggle-switch-slider"></div>
                     </div>
                 </div>
@@ -667,7 +700,7 @@
                         <span class="card-icon">🔐</span>
                         Security
                     </div>
-                    <div class="card-menu">⋮</div>
+                    <button type="button" class="card-menu" aria-label="Open security menu">⋮</button>
                 </div>
                 <div class="security-item">
                     <div class="light-info">
@@ -705,7 +738,7 @@
                         <span class="card-icon">📡</span>
                         Motion Sensors
                     </div>
-                    <div class="card-menu">⋮</div>
+                    <button type="button" class="card-menu" aria-label="Open motion sensors menu">⋮</button>
                 </div>
                 <div class="sensor-grid">
                     <div class="sensor-item">
@@ -746,7 +779,7 @@
                         <span class="card-icon">⚡</span>
                         Energy Today
                     </div>
-                    <div class="card-menu">⋮</div>
+                    <button type="button" class="card-menu" aria-label="Open energy menu">⋮</button>
                 </div>
                 <div class="energy-chart">
                     <div class="chart-bars">
@@ -783,7 +816,7 @@
                         <span class="card-icon">🎵</span>
                         Now Playing
                     </div>
-                    <div class="card-menu">⋮</div>
+                    <button type="button" class="card-menu" aria-label="Open now playing menu">⋮</button>
                 </div>
                 <div class="media-player">
                     <div class="media-info">
@@ -809,40 +842,47 @@
                         <span class="card-icon">🖥️</span>
                         Homelab Services
                     </div>
-                    <div class="card-menu">⋮</div>
+                    <button type="button" class="card-menu" aria-label="Open homelab services menu">⋮</button>
                 </div>
                 <ul class="status-list">
                     <li class="status-item">
-                        <div style="display: flex; align-items: center;">
+                        <div class="status-item-name">
                             <span class="status-indicator online"></span>
                             <span>Proxmox VE</span>
                         </div>
-                        <span style="color: #4caf50; font-size: 12px;">Online</span>
+                        <span class="status-item-text status-online">Online</span>
                     </li>
                     <li class="status-item">
-                        <div style="display: flex; align-items: center;">
+                        <div class="status-item-name">
                             <span class="status-indicator online"></span>
                             <span>TrueNAS</span>
                         </div>
-                        <span style="color: #4caf50; font-size: 12px;">Online</span>
+                        <span class="status-item-text status-online">Online</span>
                     </li>
                     <li class="status-item">
-                        <div style="display: flex; align-items: center;">
+                        <div class="status-item-name">
                             <span class="status-indicator online"></span>
                             <span>PostgreSQL</span>
                         </div>
-                        <span style="color: #4caf50; font-size: 12px;">Online</span>
+                        <span class="status-item-text status-online">Online</span>
                     </li>
                     <li class="status-item">
-                        <div style="display: flex; align-items: center;">
+                        <div class="status-item-name">
                             <span class="status-indicator warning"></span>
                             <span>Backup Server</span>
                         </div>
-                        <span style="color: #ff9800; font-size: 12px;">High Load</span>
+                        <span class="status-item-text status-warning">High Load</span>
                     </li>
                 </ul>
             </div>
         </div>
     </div>
+    <script>
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('on');
+            });
+        });
+    </script>
 </body>
 </html>
