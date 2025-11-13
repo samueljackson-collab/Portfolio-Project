@@ -138,7 +138,7 @@ The frontend communicates with the backend API through:
 import { authService, contentService } from './api'
 
 // Authentication
-await authService.login({ username, password })
+await authService.login({ email, password })
 await authService.register({ email, password })
 const user = await authService.getCurrentUser()
 

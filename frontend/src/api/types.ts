@@ -23,7 +23,7 @@ export interface Content {
 }
 
 export interface LoginRequest {
-  username: string
+  email: string
   password: string
 }
 
