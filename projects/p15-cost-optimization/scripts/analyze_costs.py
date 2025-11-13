@@ -14,7 +14,12 @@ class AWSCostAnalyzer:
     """Analyzes AWS costs and generates optimization recommendations."""
 
     def __init__(self):
-        """Initialize AWS Cost Explorer client."""
+        """Initialize AWS service clients."""
+        self.ce_client = None
+        self.ec2_client = None
+        self.s3_client = None
+        self.rds_client = None
+
         try:
             self.ce_client = boto3.client('ce')  # Cost Explorer
             self.ec2_client = boto3.client('ec2')
@@ -25,6 +30,9 @@ class AWSCostAnalyzer:
             print(f"⚠ Warning: Could not connect to AWS: {e}")
             print("  Running in demo mode with sample data")
             self.ce_client = None
+            self.ec2_client = None
+            self.s3_client = None
+            self.rds_client = None
 
     def get_cost_data(self, days_back: int = 30) -> Dict:
         """Fetch cost data from AWS Cost Explorer."""

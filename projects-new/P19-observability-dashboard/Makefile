@@ -1,3 +1,9 @@
+PROJECT_NAME_RAW := $(notdir $(CURDIR))
+PROJECT_SLUG := $(shell echo "$(PROJECT_NAME_RAW)" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9_.-]/-/g' -e 's/^-*//' -e 's/-*$//')
+ifeq ($(strip $(PROJECT_SLUG)),)
+$(error Failed to derive Docker image name from directory '$(PROJECT_NAME_RAW)')
+endif
+
 .PHONY: help install test test-unit test-integration test-e2e lint format clean build deploy
 
 help:
@@ -44,7 +50,7 @@ clean:
 	rm -rf .pytest_cache .coverage htmlcov
 
 build:
-	docker build -t ${PROJECT_SLUG}:latest .
+	docker build -t $(PROJECT_SLUG):latest .
 
 deploy:
 	@if [ -z "$(ENV)" ]; then \
