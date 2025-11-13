@@ -47,6 +47,13 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
+# Backwards-compatible alias --------------------------------------------------
+def get_password_hash(password: str) -> str:
+    """Compatibility wrapper around :func:`hash_password`."""
+
+    return hash_password(password)
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a plain text password against a hashed password.

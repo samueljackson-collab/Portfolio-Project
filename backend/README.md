@@ -92,11 +92,11 @@ A modern, production-ready REST API built with FastAPI, featuring JWT authentica
 - `GET /auth/me` - Get current user info (requires auth)
 
 ### Content Management
-- `GET /content` - List all content (with pagination)
-- `GET /content/{id}` - Get single content item
-- `POST /content` - Create new content (requires auth)
-- `PUT /content/{id}` - Update content (owner only)
-- `DELETE /content/{id}` - Delete content (owner only)
+- `GET /content` - List published content (public). Authenticated users also see their drafts.
+- `GET /content/{id}` - Get single content item (public if published, owner-only for drafts)
+- `POST /content` - Create new content (**requires auth**)
+- `PUT /content/{id}` - Update content (**owner only**)
+- `DELETE /content/{id}` - Delete content (**owner only**)
 
 ## Project Structure
 
