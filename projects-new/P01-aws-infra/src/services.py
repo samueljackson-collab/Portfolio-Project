@@ -31,7 +31,7 @@ class AWSResourceService:
         self.secrets_client = secrets_client or boto3.client("secretsmanager", region_name=region)
         self.cloudwatch_client = cloudwatch_client or boto3.client("cloudwatch", region_name=region)
 
-    def list_s3_buckets(self) -> List[Dict[str, str]]:
+    def list_s3_buckets(self) -> List[Dict[str, Optional[str]]]:
         """Return metadata for all accessible S3 buckets."""
 
         try:
