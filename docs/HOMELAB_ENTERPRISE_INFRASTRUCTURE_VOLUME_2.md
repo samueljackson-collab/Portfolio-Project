@@ -726,8 +726,9 @@ cscli collections install crowdsec/nginx
 cscli collections install crowdsec/linux
 cscli collections install crowdsec/base-http-scenarios
 
-# Configure log sources
-cat >> /etc/crowdsec/acquis.yaml << 'EOF'
+# Configure log sources in a separate file for safety and modularity.
+# CrowdSec will automatically load YAML files from this directory.
+cat > /etc/crowdsec/acquis.d/custom-sources.yaml << 'EOF'
 ---
 filenames:
   - /var/log/auth.log
