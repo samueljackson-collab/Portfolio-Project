@@ -21,6 +21,8 @@
 8. [Data Flow - Photo Service End-to-End](#8-data-flow---photo-service-end-to-end)
 9. [High-Level System Architecture - Complete Homelab](#9-high-level-system-architecture---complete-homelab)
 10. [Cloud Translation - Homelab to AWS Mapping](#10-cloud-translation---homelab-to-aws-mapping)
+11. [Configuration File Repository Structure](#configuration-file-repository-structure)
+12. [Interview Preparation Cheat Sheet](#interview-preparation-cheat-sheet)
 
 ---
 
@@ -1583,15 +1585,15 @@ Home Assistant / IoT integrations         →  AWS IoT Core (device shadows) + L
 
 ### Control Plane Translation
 
-| Capability            | Homelab Implementation               | AWS Equivalent Stack                                             |
-|-----------------------|--------------------------------------|------------------------------------------------------------------|
-| Identity & Access     | Authentik + local LDAP               | AWS IAM Identity Center (SSO) + IAM roles                        |
-| Network Security      | UniFi firewall rules per VLAN        | Security Groups + Network ACLs + AWS Firewall Manager            |
-| Secrets Management    | Bitwarden + .env files               | AWS Secrets Manager + Parameter Store                            |
-| CI/CD                 | GitHub Actions → Docker host         | GitHub Actions → ECR → EKS (via ArgoCD or CodePipeline)          |
-| Backup Scheduling     | Cron + rsync scripts                 | AWS Backup (policies, vaults)                                    |
-| Observability         | Prometheus/Loki/Grafana on LXC       | Amazon Managed Prometheus + Amazon Managed Grafana               |
-| Incident Response     | Grafana alerts + PagerDuty           | CloudWatch Alarms + SNS + PagerDuty + AWS Config for compliance  |
+| Capability         | Homelab Implementation         | AWS Equivalent Stack                                             |
+|--------------------|--------------------------------|------------------------------------------------------------------|
+| Identity & Access  | Authentik + local LDAP         | AWS IAM Identity Center (SSO) + IAM roles                        |
+| Network Security   | UniFi firewall rules per VLAN  | Security Groups + Network ACLs + AWS Firewall Manager            |
+| Secrets Management | Bitwarden + `.env` files       | AWS Secrets Manager + Parameter Store                            |
+| CI/CD              | GitHub Actions → Docker host   | GitHub Actions → ECR → EKS (via ArgoCD or CodePipeline)          |
+| Backup Scheduling  | Cron + rsync scripts           | AWS Backup (policies, vaults)                                    |
+| Observability      | Prometheus/Loki/Grafana on LXC | Amazon Managed Prometheus + Amazon Managed Grafana               |
+| Incident Response  | Grafana alerts + PagerDuty     | CloudWatch Alarms + SNS + PagerDuty + AWS Config for compliance  |
 
 ### Migration Considerations
 
@@ -1621,5 +1623,267 @@ Home Assistant / IoT integrations         →  AWS IoT Core (device shadows) + L
 
 ### Interview Talking Point
 *"Every component in my homelab maps cleanly to an AWS service. The 5-VLAN layout becomes a VPC with segmented subnets and security groups; ZFS replication becomes S3 lifecycle policies plus cross-region backup; Prometheus/Loki migrate to Amazon Managed Prometheus and Managed Grafana. Showing that translation proves I can scale these ideas from a rack in my office to a multi-account AWS environment."*
+
+---
+---
+
+## Configuration File Repository Structure
+
+### Complete GitHub Repository Organization
+
+```
+homelab-infrastructure/
+│
+├── README.md                          # Project overview, quick start
+├── LICENSE                            # MIT License
+├── .gitignore                         # Exclude secrets, logs
+│
+├── docs/                              # Documentation
+│   ├── architecture/
+│   │   ├── network-diagram.png        # Visual network topology
+│   │   ├── storage-architecture.md    # ZFS design explanation
+│   │   ├── security-model.md          # Zero-trust security
+│   │   └── adr/                       # Architecture Decision Records
+│   │       ├── 001-proxmox-over-esxi.md
+│   │       ├── 002-single-host-vs-cluster.md
+│   │       └── 003-zfs-mirroring.md
+│   │
+│   ├── runbooks/                      # Operational procedures
+│   │   ├── disaster-recovery.md       # Complete DR runbook
+│   │   ├── service-oom-recovery.md    # OOM incident response
+│   │   ├── network-troubleshoot.md    # VLAN debugging
+│   │   └── security-incident.md       # Security breach response
+│   │
+│   ├── guides/                        # Setup tutorials
+│   │   ├── initial-setup.md           # From bare metal to production
+│   │   ├── vlan-configuration.md      # UniFi VLAN setup
+│   │   ├── zfs-setup.md               # TrueNAS ZFS configuration
+│   │   └── monitoring-setup.md        # Prometheus/Grafana deployment
+│   │
+│   └── evidence/                      # Portfolio evidence
+│       ├── grafana-dashboards/        # JSON exports
+│       │   ├── infrastructure-overview.json
+│       │   ├── service-health.json
+│       │   └── security-monitoring.json
+│       ├── benchmarks/                # Performance tests
+│       │   ├── storage-fio-results.txt
+│       │   ├── network-iperf.txt
+│       │   └── database-sysbench.txt
+│       └── security-scans/            # Compliance reports
+│           ├── openscap-2025-01-11.xml
+│           ├── nmap-scan-2025-01-11.txt
+│           └── cis-compliance-report.pdf
+│
+├── configs/                           # Configuration files
+│   ├── proxmox/
+│   │   ├── network-interfaces         # /etc/network/interfaces
+│   │   ├── backup-schedule.conf       # Vzdump configuration
+│   │   └── storage.cfg                # Storage definitions
+│   │
+│   ├── truenas/
+│   │   ├── pool-config.json           # ZFS pool layout
+│   │   ├── nfs-exports.json           # NFS share definitions
+│   │   └── snapshot-tasks.json        # Automated snapshot schedule
+│   │
+│   ├── network/
+│   │   ├── unifi-config-export.json   # Full UniFi configuration
+│   │   ├── vlan-design.md             # VLAN IP schema
+│   │   └── firewall-rules.md          # Documented firewall rules
+│   │
+│   ├── monitoring/
+│   │   ├── prometheus/
+│   │   │   ├── prometheus.yml         # Main Prometheus config
+│   │   │   ├── alerts/
+│   │   │   │   ├── infrastructure.yml # Host alerts
+│   │   │   │   ├── services.yml       # Application alerts
+│   │   │   │   └── security.yml       # Security alerts
+│   │   │   └── recording_rules/
+│   │   │       └── aggregations.yml   # Pre-computed metrics
+│   │   │
+│   │   ├── loki/
+│   │   │   ├── loki.yml               # Loki configuration
+│   │   │   └── promtail.yml           # Log shipper config
+│   │   │
+│   │   ├── grafana/
+│   │   │   ├── datasources/
+│   │   │   │   ├── prometheus.yml
+│   │   │   │   └── loki.yml
+│   │   │   └── dashboards/            # Dashboard JSON files
+│   │   │       ├── infrastructure.json
+│   │   │       ├── services.json
+│   │   │       └── security.json
+│   │   │
+│   │   └── alertmanager/
+│   │       ├── alertmanager.yml       # Alert routing
+│   │       └── templates/
+│   │           └── email.tmpl         # Email alert template
+│   │
+│   └── services/
+│       ├── docker-compose/
+│       │   ├── monitoring-stack.yml   # Prom/Graf/Loki
+│       │   ├── immich.yml             # Photo service
+│       │   ├── wikijs.yml             # Documentation
+│       │   └── homeassistant.yml      # Home automation
+│       │
+│       └── nginx/
+│           ├── nginx.conf             # Main Nginx config
+│           ├── sites-available/
+│           │   ├── photos.conf        # Immich proxy config
+│           │   ├── wiki.conf          # Wiki.js proxy
+│           │   └── monitor.conf       # Grafana proxy
+│           └── ssl/                   # TLS certificates
+│               └── README.md          # Certificate management
+│
+├── scripts/                           # Automation scripts
+│   ├── backup/
+│   │   ├── backup-verification.py     # Verify backup integrity
+│   │   ├── homelab-backup.sh          # Nightly backup script
+│   │   └── restore-test.sh            # Weekly DR test
+│   │
+│   ├── monitoring/
+│   │   ├── custom-exporters/
+│   │   │   ├── truenas_exporter.py    # TrueNAS metrics
+│   │   │   └── unifi_exporter.go      # UniFi stats
+│   │   └── health-checks/
+│   │       ├── service-check.sh       # Verify services up
+│   │       └── ssl-expiry-check.sh    # Warn on cert expiry
+│   │
+│   ├── deployment/
+│   │   ├── deploy-service.sh          # Blue-green deployment
+│   │   └── rollback-service.sh        # Emergency rollback
+│   │
+│   └── maintenance/
+│       ├── update-packages.sh         # Monthly updates
+│       ├── cleanup-logs.sh            # Log rotation
+│       └── zfs-scrub.sh               # Weekly ZFS scrub
+│
+├── ansible/                           # Configuration management
+│   ├── inventory/
+│   │   ├── hosts.yml                  # All hosts + groups
+│   │   └── group_vars/
+│   │       ├── all.yml                # Global variables
+│   │       ├── proxmox.yml            # Proxmox-specific
+│   │       └── docker_hosts.yml       # Docker host config
+│   │
+│   ├── roles/
+│   │   ├── common/                    # Base system setup
+│   │   │   ├── tasks/main.yml
+│   │   │   ├── files/
+│   │   │   └── templates/
+│   │   ├── docker/                    # Docker installation
+│   │   ├── monitoring/                # Monitoring stack
+│   │   └── security/                  # SSH hardening, Fail2Ban
+│   │
+│   └── playbooks/
+│       ├── site.yml                   # Apply all roles
+│       ├── update-all.yml             # Update all hosts
+│       └── deploy-monitoring.yml      # Deploy monitoring
+│
+├── terraform/                         # IaC (if using cloud)
+│   ├── modules/
+│   │   ├── vpc/                       # VPC module
+│   │   ├── ec2/                       # EC2 instances
+│   │   └── monitoring/                # CloudWatch setup
+│   │
+│   └── environments/
+│       ├── dev/                       # Development environment
+│       └── prod/                      # Production environment
+│
+└── tests/                             # Testing
+    ├── integration/
+    │   ├── test_backup_restore.sh     # Backup/restore test
+    │   ├── test_vlan_isolation.sh     # VLAN firewall test
+    │   └── test_monitoring.py         # Check all exporters up
+    │
+    └── performance/
+        ├── storage_benchmark.sh       # fio tests
+        └── network_benchmark.sh       # iperf tests
+```
+
+---
+
+## Interview Preparation Cheat Sheet
+
+### One-Page Quick Reference
+
+#### Top 5 Quantified Achievements
+
+1. **Cost Savings:** 97% reduction ($13,005 over 3 years) - homelab vs AWS
+2. **Reliability:** 99.8% uptime, 18-minute average MTTR
+3. **Security:** 1,695 threats blocked, 0 successful breaches, 92% CIS compliance
+4. **Automation:** 480+ hours/year manual work eliminated
+5. **Performance:** 12,450 IOPS (24% over target), 596 MB/s throughput
+
+#### STAR Stories (30-Second Version)
+
+1. **Improved System Reliability**
+   - *Situation:* Photo service at 97.2% uptime (target 99.5%)
+   - *Task:* Identify root causes, implement fixes
+   - *Action:* Deployed observability (Prom/Graf/Loki), analyzed failures, fixed top 3 causes
+   - *Result:* 99.8% uptime (exceeded target), MTTR 45min → 18min (60% improvement)
+
+2. **Trade-Off Decision**
+   - *Situation:* Limited budget ($240), needed infrastructure
+   - *Task:* Choose between single host vs 3-node cluster
+   - *Action:* Analyzed cost/benefit, chose single host + multi-site backup
+   - *Result:* $450 saved, skills demonstrated, RTO 45min (beat 4h target)
+
+3. **Automation Win**
+   - *Situation:* Manual backup verification (30 min/week, 5% error rate)
+   - *Task:* Automate to reduce errors and save time
+   - *Action:* Built Python script with Prometheus integration, created runbook
+   - *Result:* 83% time savings (100 hrs/yr), error rate <0.1%, ROI 6 months
+
+4. **Security Implementation**
+   - *Situation:* Needed production-grade security for homelab
+   - *Task:* Design zero-trust architecture
+   - *Action:* Implemented 7-layer defense (VPN, MFA, VLAN isolation, SSH hardening, IDS)
+   - *Result:* 1,695 threats blocked, 0 breaches, 92% CIS compliance
+
+5. **Learning New Technology**
+   - *Situation:* Needed video deduplication for photo service
+   - *Task:* Learn ML/computer vision from scratch
+   - *Action:* Self-taught (Fast.ai course), built AstraDup (5 AI models)
+   - *Result:* 95%+ precision, 92%+ recall, processing 250+ videos/hour
+
+#### Technical Deep-Dive Answers
+
+- **Design a monitoring system:** 3-tier collection/storage/visualization, SLO-based alerting, Prometheus + Loki + Grafana, runbooks drive 18-minute MTTR.
+- **Secure SSH access:** VPN-only ingress, key-based auth, MFA for admins, Fail2Ban/CrowdSec enforcement, Grafana/Loki alerts on anomalies.
+- **Design disaster recovery:** 3-2-1 rule with ZFS snapshots (RPO 1h), USB backups (RPO 24h), offsite Syncthing copies (RPO 7d), quarterly DR drills.
+
+#### Key Metrics By Category
+
+| Category       | Metric                         | Value                      |
+|----------------|---------------------------------|----------------------------|
+| Cost           | Homelab vs AWS (3-year)         | $675 vs $13,680 (95% save) |
+| Reliability    | Uptime                          | 99.8%                      |
+| Reliability    | MTTR                            | 18 minutes                 |
+| Security       | Threats blocked                 | 1,695 / month              |
+| Security       | Successful breaches             | 0                          |
+| Security       | CIS compliance                  | 92.3%                      |
+| Performance    | Storage IOPS (read)             | 12,450                     |
+| Performance    | Storage throughput              | 596 MB/s                   |
+| Automation     | Manual work eliminated          | 480 hours / year           |
+
+#### Skill Demonstration Map
+
+- **Infrastructure:** Full-stack ownership (rack → workloads)
+- **DevOps:** CI/CD (87% faster deploys), IaC (Terraform/Ansible)
+- **SRE:** SLO alerting, incident response, capacity planning
+- **Security:** Zero-trust network, MFA everywhere, 92% CIS compliance
+- **Cloud:** Demonstrated mapping from homelab components to AWS services
+
+#### Competitive Advantages
+
+1. Production mindset: real users, uptime tracked.
+2. Business framing: cost, risk, ROI called out in every decision.
+3. Systems thinking: network, compute, storage, and app layers covered.
+4. Documentation-first: ADRs, runbooks, evidence folder for interviews.
+5. Learning velocity: self-taught ML pipeline powering AstraDup.
+
+#### Elevator Pitch (60 Seconds)
+
+"I built an enterprise-grade homelab that demonstrates production infrastructure skills at 97% less cost than AWS. The system achieves 99.8% uptime serving 10+ family members, with comprehensive security (zero breaches, 92% CIS compliance) and observability (18-minute average MTTR). I've automated away 480 hours/year of manual work and documented everything with runbooks and architecture decision records. Every component maps directly to AWS equivalents—VLANs to VPCs, Prometheus/Loki to CloudWatch/OpenSearch, ZFS backups to S3/Glacier—so the skills translate immediately to cloud-scale environments. I even self-taught machine learning to build AstraDup, a video deduplication service running on the same stack, proving I can learn and deliver new capabilities quickly."
 
 ---
