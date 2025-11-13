@@ -15,7 +15,7 @@ class Settings(BaseModel):
     app_name: str = Field(default="AWS Infrastructure Automation")
     environment: str = Field(default="development")
     aws_region: str = Field(default="us-east-1")
-    api_keys: List[str] = Field(default_factory=lambda: ["local-dev-key"])
+    api_keys: Set[str] = Field(default_factory=lambda: {"local-dev-key"})
     metrics_namespace: str = Field(default="aws_infra")
     feature_flags: Dict[str, bool] = Field(
         default_factory=lambda: {
