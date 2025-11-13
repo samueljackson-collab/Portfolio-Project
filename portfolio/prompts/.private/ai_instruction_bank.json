@@ -1,0 +1,43 @@
+{
+  "agents": [
+    {
+      "name": "InstructionalExplainer",
+      "description": "Creates step-by-step onboarding guides for new contributors.",
+      "input": "Topic or workflow name",
+      "output": "Markdown instructions with prerequisites, steps, and validation checks.",
+      "approach": "Break tasks into discrete steps, cite relevant runbooks, and highlight safety considerations.",
+      "tools": ["docs/", "Makefile", "scripts/"]
+    },
+    {
+      "name": "TechGuideWriter",
+      "description": "Produces technical deep dives on system components (backend, frontend, infra).",
+      "input": "Component identifier",
+      "output": "Architecture notes with diagram cues and follow-up tasks.",
+      "approach": "Summarize existing docs, inspect code, and outline extension points.",
+      "tools": ["docs/architecture.md", "backend/", "frontend/", "infra/"]
+    },
+    {
+      "name": "DiagramBuilder",
+      "description": "Generates Mermaid diagrams for infrastructure and service flows.",
+      "input": "Diagram type and required nodes",
+      "output": "Mermaid code block ready for embedding in docs.",
+      "approach": "Validate relationships against BUILD_SPEC, ensure readability, and include a legend if needed.",
+      "tools": ["docs/", "SPEC/BUILD_SPEC.json"]
+    },
+    {
+      "name": "ResearchOrchestrator",
+      "description": "Coordinates research prompts to produce structured dossiers.",
+      "input": "Topic, timeframe, and audience",
+      "output": "Markdown dossier with sections: executive summary, findings, recommendations, appendix.",
+      "approach": "Follow prompts in the research sections, aggregate findings, and enforce citation standards.",
+      "tools": ["prompts/.private/ai_instruction_bank.json", "tools/research_agent.py"]
+    }
+  ],
+  "research_sections": {
+    "strategy": "# Research Strategy\n\n1. **Scope Definition** – Clarify topic, audience, and desired depth.\n2. **Breadth Pass** – Capture diverse viewpoints using broad queries.\n3. **Depth Pass** – Drill into primary sources and technical specifications.\n4. **Evidence Grading** – Rank findings as A (primary), B (secondary), C (opinion/blog).\n5. **Source Typology** – Classify sources: academic, vendor, community, regulatory, news.\n6. **Synthesis Plan** – Map claims to evidence and identify gaps for validation.\n",
+    "collection": "# Research Collection\n\n- **Search Patterns** – Use boolean operators, `site:` filters, and advanced parameters (filetype:pdf).\n- **Harvesting** – Store URLs, titles, authors, and access dates in a structured table.\n- **Duplicate Suppression** – Normalize URLs, remove tracking parameters, and dedupe by canonical title.\n- **Citation Capture** – Record citations in APA format with direct quotes/snippets.\n- **Tooling** – Recommend `curl`, `wget`, APIs, or manual retrieval with notes on licensing.\n",
+    "analysis": "# Research Analysis\n\n- **Claims Table** – Column for claim, supporting evidence, confidence, and counterpoints.\n- **Risk Flags** – Highlight high-variance findings, contested sources, or regulatory implications.\n- **Counter-Arguments** – Prompt deeper investigation to challenge assumptions.\n- **Synthesis Templates** – Provide narrative outline: context, findings, implications, recommendations.\n",
+    "reporting": "# Research Reporting\n\n## Outline\n1. Executive Summary\n2. Key Findings\n3. Recommendations\n4. Risks & Mitigations\n5. Appendix (raw notes, citations)\n\n## Guidance\n- Use tables for side-by-side comparisons.\n- Provide action items with owners and due dates when possible.\n- Include citation list in consistent style (APA/Chicago).\n",
+    "validation": "# Research Validation\n\n- **Verification Checklist** – Confirm citation accuracy, link accessibility, and data freshness.\n- **Reproducibility Steps** – Document search queries, filters, timestamps, and tools.\n- **Red Team Prompts** – Challenge conclusions, identify missing perspectives, and stress-test recommendations.\n- **Sign-off** – Capture reviewer name, date, and outcome (approved/needs revisions).\n"
+  }
+}

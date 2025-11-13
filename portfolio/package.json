@@ -1,0 +1,15 @@
+{
+  "name": "portfolio-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fmt": "prettier --write \"frontend/src/**/*.{ts,tsx,css}\"",
+    "lint": "cd frontend && npm run lint",
+    "test": "cd backend && pytest",
+    "audit": "npm audit || true"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}

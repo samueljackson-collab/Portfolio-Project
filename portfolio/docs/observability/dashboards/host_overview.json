@@ -1,0 +1,36 @@
+{
+  "title": "Host Overview",
+  "description": "Baseline host metrics for Compose environment.",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "CPU Usage",
+      "targets": [
+        {
+          "expr": "avg(rate(node_cpu_seconds_total{mode!='idle'}[5m])) * 100",
+          "legend": "cpu%"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory Usage",
+      "targets": [
+        {
+          "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+          "legend": "mem%"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Disk Usage",
+      "targets": [
+        {
+          "expr": "node_filesystem_size_bytes - node_filesystem_avail_bytes",
+          "legend": "used bytes"
+        }
+      ]
+    }
+  ]
+}
