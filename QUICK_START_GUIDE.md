@@ -18,6 +18,8 @@ professional/resume/                      ← Resume PDFs
 
 📖 **Detailed breakdown:** See `MISSING_DOCUMENTS_ANALYSIS.md`
 
+> 🆕 **Enterprise templates (P01–P20)** are located in `projects-new/`. See [`projects-new/QUICK_START_GUIDE.md`](./projects-new/QUICK_START_GUIDE.md) for a deep dive, or jump directly with `cd projects-new/P01-aws-infra`.
+
 ---
 
 ## 🚀 Three Methods (Pick One)
