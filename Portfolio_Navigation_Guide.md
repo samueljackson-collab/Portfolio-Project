@@ -82,6 +82,7 @@ Use this quick-reference to digest the 75,000+ words across the Portfolio Master
 > “I built a production-grade homelab demonstrating enterprise infrastructure skills—5-VLAN zero-trust security, ZFS storage with DR procedures, comprehensive observability, and CI/CD automation. It delivers 99.8% uptime while saving $13k versus cloud and cutting MTTR to 18 minutes, proving production rigor at any scale.”
 
 ## Contact & Distribution
+
 - Include links to both Master Index files in README, DOCUMENTATION_INDEX, and PR summaries.
 - For recruiters, share Navigation Guide + role-specific extract PDFs for fast onboarding.
 

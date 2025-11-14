@@ -28,19 +28,23 @@ AWS Equivalent
 ### 4.1.2 Architecture Decisions & Trade-offs
 
 **ADR-001: Virtualization Platform**
+
 - **Options:** VMware ESXi, Docker-only, Proxmox VE
 - **Decision:** Proxmox VE selected for zero licensing cost, VM + LXC support, built-in backups.
 - **Trade-off:** Smaller enterprise adoption than VMware, but virtualization concepts transfer.
 
 **ADR-002: Topology – Single Host vs Multi-Host Cluster**
+
 - **Decision:** Single host + multi-site replication.
 - **Rationale:** Budget/power limits; demonstrates HA concepts via replication/DR. Accepted risk of host failure mitigated via 45-minute RTO.
 
 **ADR-003: Orchestration – Kubernetes vs Docker Compose**
+
 - **Decision:** Docker Compose for Phase 1, plan K3s migration Phase 2.
 - **Rationale:** Compose provides 80% of benefits with 20% complexity; establishes baseline before layering K8s.
 
 **ADR-004: Storage – ZFS on TrueNAS vs Native LVM**
+
 - **Decision:** TrueNAS VM with ZFS mirror.
 - **Rationale:** Checksums, snapshots, replication, NFS/SMB sharing justify extra complexity.
 
@@ -63,6 +67,7 @@ VLAN 50 – Guest: Internet-only, blocks RFC1918 ranges.
 ### 4.1.4 Storage Architecture – ZFS Data Integrity
 
 **ZFS Features Leveraged:**
+
 - End-to-end checksums catch bit-rot.
 - Copy-on-write snapshots (hourly/daily/weekly/monthly retention).
 - LZ4 compression (+20% effective capacity).
@@ -73,6 +78,7 @@ VLAN 50 – Guest: Internet-only, blocks RFC1918 ranges.
 **Performance Benchmarks:** Sequential read 596 MB/s, write 511 MB/s; random 4K read 12,450 IOPS, write 9,876 IOPS—exceeding requirements for photo workloads.
 
 **Data Protection Strategy:**
+
 1. RAID1 mirror (drive failure tolerance)
 2. Hourly snapshots (ransomware/accidental deletion)
 3. Offsite replication via Syncthing (site disasters)
@@ -83,6 +89,7 @@ VLAN 50 – Guest: Internet-only, blocks RFC1918 ranges.
 **Problem:** Exposed admin ports invite brute force/zero-days.
 
 **Solution:**
+
 - WireGuard VPN as sole WAN entry (port 51820).
 - MFA enforced on Proxmox, TrueNAS, UniFi, Nginx Proxy Manager, Grafana.
 - Access control matrix ensures services require VPN + MFA as appropriate.
@@ -105,6 +112,7 @@ AllowedIPs = 10.0.60.10/32
 ### 4.1.6 SSH Hardening & Intrusion Detection
 
 **Hardening Checklist:**
+
 - Disable password auth (`PasswordAuthentication no`).
 - Deny root login (`PermitRootLogin no`).
 - Restrict users (`AllowUsers sam`).
@@ -112,6 +120,7 @@ AllowedIPs = 10.0.60.10/32
 - Limit sessions/auth attempts (`MaxAuthTries 3`).
 
 **Defense Layers:**
+
 1. VPN requirement.
 2. SSH keys only.
 3. Fail2Ban bans after 3 failures (exponential backoff).
@@ -123,17 +132,20 @@ AllowedIPs = 10.0.60.10/32
 ### 4.1.7 Disaster Recovery & Business Continuity
 
 **Service Tiers:**
+
 - Tier 1 (Photos): RPO 12h, RTO 45m.
 - Tier 2 (Wiki, Home Assistant): RPO 24h, RTO 4h.
 - Tier 3 (Monitoring, test VMs): RPO 7d, RTO 24h.
 
 **Backup Architecture:**
+
 1. Hourly ZFS snapshots (onsite)
 2. Nightly Proxmox backups to USB
 3. Weekly Syncthing replication to family sites
 4. Monthly optional cloud archive
 
 **DR Runbook Highlights:**
+
 - Hardware prep (60m), network restore (30m), VM restore (120m), verification (30m).
 - Quarterly DR drills validate 45m actual RTO (<4h target) and RPO objectives.
 
