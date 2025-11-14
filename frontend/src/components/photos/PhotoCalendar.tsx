@@ -26,7 +26,7 @@ export const PhotoCalendar: React.FC<PhotoCalendarProps> = ({
 }) => {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [monthData, setMonthData] = useState<CalendarMonthResponse | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
 
   useEffect(() => {
     loadMonthData(selectedDate)
@@ -81,7 +81,7 @@ export const PhotoCalendar: React.FC<PhotoCalendarProps> = ({
 
     return (
       <div className="mt-1">
-        <span className="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+        <span className="inline-block bg-blue-800 text-white text-xs font-bold px-2 py-1 rounded-full">
           {count}
         </span>
       </div>
@@ -107,7 +107,7 @@ export const PhotoCalendar: React.FC<PhotoCalendarProps> = ({
           background-color: #eff6ff;
         }
         .photo-calendar .react-calendar__tile--active {
-          background-color: #3b82f6 !important;
+          background-color: #1e40af !important;
           color: white;
         }
         .photo-calendar .react-calendar__month-view__weekdays {

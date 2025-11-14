@@ -97,7 +97,7 @@ src/
 ```
 
 #### Design System
-- **Colors**: Blue primary (#3b82f6), high contrast text
+- **Colors**: Deep blue primary (#1e40af, Tailwind blue-800) with 8.7:1 contrast against white
 - **Typography**: 18px base, 24px+ headings, semibold weights
 - **Spacing**: Generous padding (12-24px)
 - **Borders**: 2-4px for visibility
@@ -218,7 +218,7 @@ def extract_exif_data(image_data: bytes) -> PhotoMetadata:
 - **Caching**: Browser caching for thumbnails
 
 ### Accessibility (WCAG AAA)
-- **Color Contrast**: 7:1 for normal text, 4.5:1 for large text
+- **Color Contrast**: 7:1 for normal text (primary color contrast measured at 8.7:1), 4.5:1 for large text
 - **Keyboard Navigation**: Full keyboard support
 - **Screen Readers**: ARIA labels on all interactive elements
 - **Focus Indicators**: 4px visible focus rings

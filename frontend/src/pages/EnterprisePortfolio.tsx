@@ -1320,7 +1320,7 @@ export const EnterprisePortfolio: React.FC = () => {
         acc[project.category].push(project)
         return acc
       }, {})
-    }, [portfolioData.projects])
+    }, [])
 
     return (
       <div className={`fixed inset-0 z-40 md:hidden transition-transform transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>

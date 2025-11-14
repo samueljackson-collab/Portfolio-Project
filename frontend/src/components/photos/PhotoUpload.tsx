@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useRef } from 'react'
+import axios from 'axios'
 import { photoService } from '../../api/services'
 import type { PhotoUploadResponse } from '../../api/types'
 import { LargeButton } from '../elderly/LargeButton'
@@ -55,8 +56,22 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         const response = await photoService.upload(file)
         onUploadComplete?.(response)
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to upload photo'
+        let errorMessage = 'Failed to upload photo'
+        if (axios.isAxiosError(error)) {
+          const detail = error.response?.data?.detail
+          if (typeof detail === 'string') {
+            errorMessage = detail
+          } else if (Array.isArray(detail) && detail.length > 0) {
+            const first = detail[0]
+            if (typeof first === 'string') {
+              errorMessage = first
+            } else if (first?.msg) {
+              errorMessage = first.msg as string
+            }
+          }
+        } else if (error instanceof Error) {
+          errorMessage = error.message
+        }
         onUploadError?.(errorMessage)
       } finally {
         setUploading(false)
@@ -83,6 +98,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files)
+    e.target.value = ''
   }
 
   const handleButtonClick = () => {
@@ -110,7 +126,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         className={`
           border-4 border-dashed rounded-xl p-12
           transition-all duration-200
-          ${isDragging ? 'border-blue-600 bg-blue-50' : 'border-gray-300 bg-gray-50'}
+          ${isDragging ? 'border-blue-800 bg-blue-50' : 'border-gray-300 bg-gray-50'}
           ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
         onClick={!uploading ? handleButtonClick : undefined}
