@@ -24,20 +24,15 @@
 # - DynamoDB table prevents concurrent modifications
 # - Bucket is private with no public access
 
-# Uncomment and configure after running bootstrap script:
-#
-# terraform {
-#   backend "s3" {
-#     bucket         = "twisted-monk-tfstate-XXXXX"  # From bootstrap output
-#     key            = "twisted-monk/terraform.tfstate"
-#     region         = "us-east-1"                    # Your AWS region
-#     dynamodb_table = "twisted-monk-tfstate-lock"   # From bootstrap output
-#     encrypt        = true
-#   }
-# }
-
-# Local backend (default until S3 backend is configured)
 terraform {
+  backend "s3" {
+    bucket         = "twisted-monk-tfstate-xxxxx"  # Override via -backend-config or backend.hcl
+    key            = "twisted-monk/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "twisted-monk-tfstate-lock"
+    encrypt        = true
+  }
+
   required_version = ">= 1.0"
 
   required_providers {
