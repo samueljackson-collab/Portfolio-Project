@@ -1,326 +1,165 @@
 # Project Completion Checklist
 
-Use this checklist to track completion status for each project in your portfolio.
+_Last updated: 19 November 2025_
+
+Use this checklist to track what is already live in the repository and which follow-up items remain for each workstream. Items are grouped by **Core Evidence** (must-have), **Polish** (nice-to-have storytelling upgrades), and **Operational Hygiene** (sanitisation, links, automation).
 
 ---
 
-## PRJ-HOME-001: Homelab & Secure Network Build
+## PRJ-HOME-001 · Homelab & Secure Network Build
+**Status:** 🟢 Complete – ✅ Evidence Pack Published
 
-**Status:** 🟢 Complete (📝 Documentation Pending)
+### Core Evidence
+- [x] Project README documents network design and validation steps
+- [x] Sanitised pfSense export committed (`assets/pfsense/pfsense-config.xml`)
+- [x] Sanitised UniFi export committed (`assets/unifi/unifi-config.json`)
+- [x] Firewall/IP matrices documented (`assets/configs/`)
+- [x] Physical & logical diagrams available (`assets/diagrams/*.mermaid`)
+- [x] Deployment & operations runbooks published (`RUNBOOK.md`, `assets/runbooks/`)
 
-### Core Documentation
-- [x] Project README exists
-- [ ] Assets directory created
-- [ ] Installation guide written
+### Polish & Storytelling
+- [ ] Wi-Fi heatmap or coverage screenshots (optional)
+- [ ] Rack photos with sensitive elements redacted (optional)
+- [ ] One-page “Homelab Quick Reference” for recruiters
 
-### Diagrams & Visuals
-- [ ] Physical topology diagram (rack layout, cabling)
-- [ ] Logical network diagram (VLANs, IP ranges, routing)
-- [ ] Wi-Fi coverage map (optional)
-- [ ] Photo of physical setup (optional)
-
-### Configuration Files
-- [ ] UniFi controller export (sanitized)
-- [ ] VLAN configuration documented
-- [ ] Firewall rules table
-- [ ] DHCP settings documented (sanitized)
-
-### Documentation
-- [ ] Setup guide / installation notes
-- [ ] Configuration runbook (how to modify)
-- [ ] Troubleshooting guide
-- [ ] Lessons learned
-
-### Verification
-- [ ] All sensitive data sanitized (IPs, passwords, domains)
-- [ ] Files uploaded to GitHub
-- [ ] Links in main README verified
-- [ ] Status updated in main README
+### Operational Hygiene
+- [x] Sensitive data sanitised prior to upload
+- [x] README links validated from root portfolio
+- [ ] Visual assets reviewed for metadata before publishing
 
 ---
 
-## PRJ-HOME-002: Virtualization & Core Services
+## PRJ-HOME-002 · Virtualisation & Core Services
+**Status:** 🟢 Complete – ✅ Evidence Pack Published
 
-**Status:** 🟢 Complete (📝 Documentation Pending)
+### Core Evidence
+- [x] Project README explains architecture, Ceph tiers, and service layout
+- [x] Docker Compose bundles committed (`assets/configs/`)
+- [x] Proxmox/Ceph configuration exports stored (`assets/proxmox/`, `assets/services/`)
+- [x] Automation scripts/playbooks added (`assets/automation/`)
+- [x] Backup & recovery runbooks/logs available (`assets/runbooks/`, `assets/recovery/`)
+- [x] Architecture & backup diagrams published (`assets/diagrams/`)
 
-### Core Documentation
-- [x] Project README exists
-- [ ] Assets directory created
-- [ ] Deployment guide written
+### Polish & Storytelling
+- [ ] Screenshot gallery (Wiki.js, Immich, Home Assistant)
+- [ ] Ceph performance snapshot or benchmark notes
+- [ ] “Services map” infographic summarising platform surface area
 
-### Diagrams & Visuals
-- [ ] Service architecture diagram (Proxmox, VMs, containers)
-- [ ] Data flow diagram (user → proxy → services)
-- [ ] Network diagram (how services connect)
-- [ ] Screenshots of key services
-
-### Configuration Files
-- [ ] Docker Compose files (Wiki.js, Home Assistant, Immich)
-- [ ] Proxmox VM/container configurations
-- [ ] Nginx Proxy Manager configs (sanitized domains)
-- [ ] TrueNAS dataset/share configuration
-
-### Backup Documentation
-- [ ] Backup strategy document
-- [ ] Sample backup logs
-- [ ] Restore test results
-- [ ] Retention policy documented
-
-### Documentation
-- [ ] Service deployment runbook
-- [ ] Disaster recovery procedures
-- [ ] Troubleshooting guide
-- [ ] Lessons learned
-
-### Verification
-- [ ] All sensitive data sanitized
-- [ ] Files uploaded to GitHub
-- [ ] Links in main README verified
-- [ ] Status updated in main README
+### Operational Hygiene
+- [x] Sensitive data sanitised prior to upload
+- [x] README links validated from root portfolio
+- [ ] Screenshots and media sanitised (EXIF/PII) before commit
 
 ---
 
-## PRJ-SDE-002: Observability & Backups Stack
+## PRJ-SDE-002 · Observability & Backups Stack
+**Status:** 🟢 Complete – ✅ Evidence Pack Published
 
-**Status:** 🟢 Complete (📝 Documentation Pending)
+### Core Evidence
+- [x] Project README outlines monitoring scope and golden signals
+- [x] Prometheus configuration committed (`assets/configs/prometheus.yml`)
+- [x] Alertmanager + alert rules committed (`assets/alertmanager/`)
+- [x] Loki & Promtail configuration committed (`assets/loki/`)
+- [x] Grafana dashboards exported as JSON (`assets/grafana/`)
+- [x] PBS verification scripts and logs included (`assets/scripts/`, `assets/logs/`)
+- [x] Alert response runbooks documented (`assets/runbooks/`)
 
-### Core Documentation
-- [x] Project README exists
-- [ ] Assets directory created
-- [ ] Monitoring philosophy documented
+### Polish & Storytelling
+- [ ] Sanitised dashboard screenshots for quick review
+- [ ] Optional docker-compose quickstart bundle for demo environments
 
-### Dashboards
-- [ ] Infrastructure overview dashboard (JSON export)
-- [ ] Service health dashboard (JSON export)
-- [ ] Alerting dashboard (JSON export)
-- [ ] Screenshots of dashboards with real data
-
-### Configuration Files
-- [ ] Prometheus configuration (prometheus.yml)
-- [ ] Alert rules (critical and warning)
-- [ ] Alertmanager configuration (alertmanager.yml)
-- [ ] Loki configuration (loki.yml)
-- [ ] Promtail configuration (promtail.yml)
-
-### Backup Configuration
-- [ ] Proxmox Backup Server setup documented
-- [ ] Backup job definitions
-- [ ] Sample backup logs
-- [ ] Retention policies documented
-
-### Documentation
-- [ ] Monitoring philosophy (USE/RED methods)
-- [ ] Alert runbooks (how to respond to alerts)
-- [ ] Dashboard design rationale
-- [ ] Lessons learned
-
-### Verification
-- [ ] All sensitive data sanitized
-- [ ] Files uploaded to GitHub
-- [ ] Links in main README verified
-- [ ] Status updated in main README
+### Operational Hygiene
+- [x] Sensitive data sanitised prior to upload
+- [x] README links validated from root portfolio
+- [ ] Monitoring artefacts referenced in resume/portfolio summaries
 
 ---
 
-## PRJ-SDE-001: Database Infrastructure Module
+## PRJ-SDE-001 · Database Infrastructure Module
+**Status:** 🟠 In Progress – Core RDS Module Delivered
 
-**Status:** 🟠 In Progress (Module Complete, Expanding to Full Stack)
+### Core Evidence
+- [x] Terraform RDS module committed with README and usage instructions
+- [ ] VPC module implemented and documented
+- [ ] Application/service module implemented and documented
+- [ ] Monitoring/observability module implemented and documented
 
-### Core Infrastructure
-- [x] RDS database module complete
-- [x] Module README complete
-- [ ] VPC module created
-- [ ] Application module created
-- [ ] Monitoring module created
+### Polish & Storytelling
+- [ ] Architecture diagram showing module interactions
+- [ ] Example environment tying all modules together
+- [ ] Cost, security, and scaling considerations captured in README
 
-### Root Configuration
-- [ ] Main Terraform configuration (main.tf)
-- [ ] Backend configuration (S3 + DynamoDB)
-- [ ] Variables and outputs defined
-- [ ] Example configurations created
-
-### Diagrams & Visuals
-- [ ] Full stack architecture diagram
-- [ ] Network/VPC diagram
-- [ ] Component interaction diagram
-
-### CI/CD
-- [ ] GitHub Actions workflow for Terraform
-- [ ] Automated plan on PR
-- [ ] Automated apply on merge (with approval)
-
-### Documentation
-- [ ] Full stack deployment guide
-- [ ] Prerequisites documented
-- [ ] Security best practices guide
-- [ ] Cost estimation included
-
-### Verification
-- [ ] Code validated (terraform validate)
-- [ ] Security scan passed (tfsec)
-- [ ] Formatting checked (terraform fmt)
-- [ ] Links in main README verified
+### Operational Hygiene
+- [ ] GitHub Actions workflow running `terraform fmt`, `terraform validate`, and `tfsec`
+- [ ] Example CI plan/apply process documented
+- [x] Links validated from portfolio README
 
 ---
 
-## PRJ-WEB-001: Commercial E-commerce & Booking Systems
+## PRJ-WEB-001 · Commercial E-commerce & Booking Systems
+**Status:** 🔄 Recovery – Artefacts Offline
 
-**Status:** 🔄 Recovery in Progress
+### Recovery Phase 1 · Catalog & Restore
+- [ ] Locate and sanitise SQL/database exports
+- [ ] Reconstruct ERD and data-flow diagrams
+- [ ] Recover automation scripts (cron, import/export)
+- [ ] Identify reusable code snippets for publication
 
-### Recovery Phase 1: Catalog and Restore (Week 1)
-- [ ] Locate and extract data from backup exports
-- [ ] Reconstruct database schema diagrams
-- [ ] Document SQL workflow patterns from memory
-- [ ] Identify recoverable code snippets
+### Recovery Phase 2 · Document & Narrate
+- [ ] Rebuild operational runbooks (CMS workflows, deployments)
+- [ ] Capture architectural decisions and lessons learned
+- [ ] Draft anonymised case studies with key metrics
 
-### Recovery Phase 2: Re-document Processes (Week 2)
-- [ ] Recreate content management runbooks
-- [ ] Document deployment procedures
-- [ ] Rebuild automation script templates
-- [ ] Capture architectural decisions
+### Recovery Phase 3 · Publish
+- [ ] Commit sanitised SQL/code samples
+- [ ] Upload diagrams and screenshots (metadata scrubbed)
+- [ ] Update README with recovered artefacts and links
 
-### Recovery Phase 3: Publish Artifacts (Week 3)
-- [ ] Create sanitized code examples
-- [ ] Write project narratives
-- [ ] Publish architecture diagrams
-- [ ] Document lessons learned
-
-### Assets to Publish (Once Recovered)
-- [ ] SQL scripts (anonymized)
-- [ ] PHP code excerpts
-- [ ] System architecture diagrams
-- [ ] Database ERD
-- [ ] Operational runbooks
-- [ ] Case studies with metrics
-- [ ] Screenshots (anonymized)
-
-### Verification
-- [ ] All client data removed/anonymized
-- [ ] Code sanitized and generic
-- [ ] Recovery timeline documented
-- [ ] Links in main README verified
+### Operational Hygiene
+- [ ] Recovery log updated in `MISSING_DOCUMENTS_ANALYSIS.md`
+- [ ] Sensitive client data removed/redacted prior to commit
+- [ ] Portfolio README status updated once artefacts land
 
 ---
 
 ## Professional Resume Portfolio
+**Status:** 🟠 In Progress – Structure Only
 
-**Status:** 🟠 In Progress (Structure Created, Content Pending)
+### Core Deliverables
+- [ ] System Development Engineer resume (Markdown + PDF)
+- [ ] Cloud Engineer resume (Markdown + PDF)
+- [ ] QA Engineer resume (Markdown + PDF)
+- [ ] Network Engineer resume (Markdown + PDF)
+- [ ] Cybersecurity Analyst resume (Markdown + PDF)
+- [ ] Cover letter template linked to homelab outcomes
+- [ ] One-page portfolio summary referencing evidence packs
 
-### Resume Files to Create
-- [ ] System Development Engineer resume (PDF)
-- [ ] Cloud Engineer resume (PDF)
-- [ ] QA Engineer resume (PDF)
-- [ ] Network Engineer resume (PDF)
-- [ ] Cybersecurity Analyst resume (PDF)
+### Polish & Storytelling
+- [ ] Tailor skills/metrics per role with direct repo links
+- [ ] Prepare recruiter outreach email template referencing new artefacts
 
-### Supporting Documents
-- [ ] Cover letter template
-- [ ] Portfolio summary (one-pager)
-- [ ] References document (if applicable)
-
-### Resume Content
-- [ ] Work history complete and accurate
-- [ ] Skills tailored to each role
-- [ ] Projects linked from this portfolio
-- [ ] Metrics and achievements quantified
-- [ ] Contact info and links updated
-
-### Quality Checks
-- [ ] ATS-friendly formatting
-- [ ] No spelling/grammar errors
-- [ ] Consistent formatting across variants
-- [ ] File names follow convention: `YYYY-MM-DD_Jackson_Sam_Role.pdf`
-- [ ] Each resume is 1-2 pages max
-
-### Verification
-- [ ] Files uploaded to GitHub
-- [ ] Links in main README verified
-- [ ] Tested with ATS checker tools
-- [ ] PDF and DOCX versions available (optional)
+### Operational Hygiene
+- [ ] Check formatting with ATS validator prior to commit
+- [ ] Ensure personal/contact data accurate and up to date
+- [ ] Confirm README + navigation docs link to resume files
 
 ---
 
-## Global Checklist (All Projects)
+## Global Checklist
 
 ### Security & Privacy
-- [ ] No real IP addresses (use examples: 10.x.x.x, 192.168.x.x)
-- [ ] No real passwords or API keys
-- [ ] No real domain names (use example.com)
-- [ ] No real email addresses (use example@example.com)
-- [ ] No client names or proprietary information
-- [ ] Screenshots do not contain sensitive data
+- [ ] No real IP addresses, passwords, domains, or client identifiers in committed artefacts
+- [ ] Screenshots scrubbed for EXIF/metadata and sensitive UI elements
+- [ ] `.gitignore` updated when new tooling introduces secret-bearing files
 
-### File Organization
-- [ ] All assets in proper directories
-- [ ] Naming conventions followed
-- [ ] README files are clear and complete
-- [ ] No broken links within project
+### Documentation Maintenance
+- [ ] Update `COMPLETION_SUMMARY.md` after major uploads
+- [ ] Update `MISSING_DOCUMENTS_ANALYSIS.md` when gaps close
+- [ ] Verify portfolio README links whenever new artefacts are added
 
-### Git & GitHub
-- [ ] All files committed
-- [ ] Commit messages are descriptive
-- [ ] No sensitive files committed (check .gitignore)
-- [ ] Files viewable on GitHub web interface
-- [ ] Large files (>100MB) use Git LFS if needed
+### Automation & Quality
+- [ ] Run lint/validation scripts for Terraform, Markdown, and YAML before commits
+- [ ] Track recovery tasks and resume progress in issue tracker or task list
+- [ ] Capture changelog entries for significant documentation updates
 
-### Main README Updates
-- [ ] Remove "(being prepared)" notes where applicable
-- [ ] Update status indicators (🟢/🟠/🔵/🔄/📝)
-- [ ] Verify all hyperlinks work
-- [ ] Update "last updated" dates
-
----
-
-## Priority Order Recommendation
-
-### Week 1: High-Impact Quick Wins
-1. **PRJ-HOME-001** - Add network diagrams (most visible)
-2. **PRJ-HOME-002** - Add architecture diagram
-3. **Resume Portfolio** - Create SDE resume (for job applications)
-4. Create missing asset directories for all projects
-
-### Week 2: Fill Out Documentation
-1. **PRJ-SDE-002** - Add dashboard exports and configs
-2. **PRJ-HOME-001** - Add configuration files and runbooks
-3. **PRJ-HOME-002** - Add service configs and backup docs
-4. **Resume Portfolio** - Create 2 more resume variants
-
-### Week 3: Complete and Polish
-1. **PRJ-SDE-001** - Add VPC and monitoring modules
-2. **PRJ-WEB-001** - Begin recovery Phase 1
-3. Add screenshots/photos to all projects
-4. Final review and link verification
-
-### Ongoing
-- **PRJ-WEB-001** - Continue recovery effort (multi-week)
-- Keep all documentation updated as you learn/improve
-- Take screenshots as you work on systems
-- Document lessons learned immediately
-
----
-
-## How to Use This Checklist
-
-1. **Print or bookmark** this file for easy reference
-2. **Check off items** as you complete them (edit this file directly)
-3. **Commit updates** to track progress over time
-4. **Share with collaborators** if working with others
-5. **Celebrate milestones** - each completed project is an achievement!
-
----
-
-## Completion Criteria
-
-Your portfolio is "complete" when:
-- [ ] All 🟢 projects have asset directories with content
-- [ ] All 🟢 projects have removed "(being prepared)" notes
-- [ ] At least 2-3 resume variants exist
-- [ ] PRJ-WEB-001 shows visible recovery progress
-- [ ] No broken links in main README
-- [ ] All security checks passed
-
----
-
-**Remember:** Progress over perfection. Start with one project, complete it fully, then move to the next.
-
-**Last Updated:** November 4, 2025
+Stay disciplined about checking items off in Git; the history becomes a record of progress for collaborators and hiring managers alike.
