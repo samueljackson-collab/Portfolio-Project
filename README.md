@@ -11,6 +11,8 @@
 
 > **Note:** Some project directories referenced below contain planning documentation and structure but are awaiting evidence/asset uploads. Check individual project READMEs for current status.
 
+> **Directory update:** Enterprise project templates P01–P20 now live exclusively under `./projects-new/`. The `./projects/1-*` directories remain for archival reference only.
+
 > 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
 
 ---
@@ -40,26 +42,28 @@ System-minded engineer specializing in building, securing, and operating infrast
 
 ## 📦 Portfolio Blueprints
 
-- [Project 1: AWS Infrastructure Automation](./projects/1-aws-infrastructure-automation) — Multi-tool infrastructure-as-code implementation covering Terraform, AWS CDK, and Pulumi with reusable deploy scripts.
-- [Project 2: Database Migration Platform](./projects/2-database-migration) — Change data capture pipelines and automation for zero-downtime migrations.
-- [Project 3: Kubernetes CI/CD Pipeline](./projects/3-kubernetes-cicd) — GitOps, progressive delivery, and environment promotion policies.
-- [Project 4: DevSecOps Pipeline](./projects/4-devsecops) — Security scanning, SBOM publishing, and policy-as-code enforcement.
-- [Project 5: Real-time Data Streaming](./projects/5-real-time-data-streaming) — Kafka, Flink, and schema registry patterns for resilient stream processing.
-- [Project 6: Machine Learning Pipeline](./projects/6-mlops-platform) — End-to-end MLOps workflows with experiment tracking and automated promotion.
-- [Project 7: Serverless Data Processing](./projects/7-serverless-data-processing) — Event-driven analytics built on AWS Lambda, Step Functions, and DynamoDB.
-- [Project 8: Advanced AI Chatbot](./projects/8-advanced-ai-chatbot) — Retrieval-augmented assistant with vector search, tool execution, and streaming responses.
-- [Project 9: Multi-Region Disaster Recovery](./projects/9-multi-region-disaster-recovery) — Automated failover, replication validation, and DR runbooks.
-- [Project 10: Blockchain Smart Contract Platform](./projects/10-blockchain-smart-contract-platform) — Hardhat-based DeFi stack with staking contracts and security tooling.
-- [Project 11: IoT Data Ingestion & Analytics](./projects/11-iot-data-analytics) — Edge telemetry simulation, ingestion, and real-time dashboards.
-- [Project 12: Quantum Computing Integration](./projects/12-quantum-computing) — Hybrid quantum/classical optimization workflows using Qiskit.
-- [Project 13: Advanced Cybersecurity Platform](./projects/13-advanced-cybersecurity) — SOAR engine with enrichment adapters and automated response playbooks.
-- [Project 14: Edge AI Inference Platform](./projects/14-edge-ai-inference) — ONNX Runtime service optimized for Jetson-class devices.
-- [Project 15: Real-time Collaborative Platform](./projects/15-real-time-collaboration) — Operational transform collaboration server with CRDT reconciliation.
-- [Project 16: Advanced Data Lake & Analytics](./projects/16-advanced-data-lake) — Medallion architecture transformations and Delta Lake patterns.
-- [Project 17: Multi-Cloud Service Mesh](./projects/17-multi-cloud-service-mesh) — Istio multi-cluster configuration with mTLS and network overlays.
-- [Project 18: GPU-Accelerated Computing](./projects/18-gpu-accelerated-computing) — CuPy-powered Monte Carlo simulations and GPU workload orchestration.
-- [Project 19: Advanced Kubernetes Operators](./projects/19-advanced-kubernetes-operators) — Kopf-based operator managing portfolio stack lifecycles.
-- [Project 20: Blockchain Oracle Service](./projects/20-blockchain-oracle-service) — Chainlink adapter and consumer contracts for on-chain metrics.
+> **Canonical directory:** Enterprise templates P01–P20 live in `./projects-new/`. The historical `./projects/1-*` hierarchy is now legacy/archival only.
+
+- [Project P01: AWS Infrastructure Automation](./projects-new/P01-aws-infra) — Terraform-first landing zone with automated networking, compute, and IAM baselines.
+- [Project P02: Kubernetes Cluster Management](./projects-new/P02-k8s-cluster) — EKS cluster automation, scaling policies, and RBAC templates.
+- [Project P03: CI/CD Pipeline Implementation](./projects-new/P03-cicd-pipeline) — Multi-stage GitHub Actions workflows with policy gates and automated rollbacks.
+- [Project P04: Operational Monitoring Stack](./projects-new/P04-monitoring-stack) — Prometheus/Grafana stack with alerting-as-code and golden-signal dashboards.
+- [Project P05: Database Performance Optimization](./projects-new/P05-db-optimization) — Query analysis tooling, connection tuning, and reproducible benchmarks.
+- [Project P06: Web Application Testing Framework](./projects-new/P06-web-testing) — Playwright + pytest harness for API/UI regression, visual, and smoke suites.
+- [Project P07: Security Compliance Automation](./projects-new/P07-security-compliance) — CIS + OWASP scanning profiles with automated evidence capture.
+- [Project P08: Cost Optimization Tooling](./projects-new/P08-cost-optimization) — AWS cost explorer integration, idle resource sweeps, and budget alerting.
+- [Project P09: Disaster Recovery Orchestration](./projects-new/P09-dr-orchestration) — Automated DR drills, failover orchestration, and RTO/RPO scoring.
+- [Project P10: Log Aggregation System](./projects-new/P10-log-aggregation) — ELK-based aggregation with retention policies and Kibana dashboards.
+- [Project P11: API Gateway Configuration](./projects-new/P11-api-gateway) — Rate-limited, authenticated API Gateway patterns with Terraform modules.
+- [Project P12: Container Registry Management](./projects-new/P12-container-registry) — ECR lifecycle automation with image scanning and replication.
+- [Project P13: Secrets Management System](./projects-new/P13-secrets-management) — AWS Secrets Manager automation with rotation and audit hooks.
+- [Project P14: Network Configuration Automation](./projects-new/P14-network-automation) — Infrastructure-as-code for routing, ACLs, and VLAN orchestration.
+- [Project P15: Incident Response Automation](./projects-new/P15-incident-response) — Playbook-driven automation for triage, enrichment, and chat-ops notifications.
+- [Project P16: Backup Verification System](./projects-new/P16-backup-verification) — Scheduled restore validations with integrity checks and compliance evidence.
+- [Project P17: Performance Load Testing](./projects-new/P17-load-testing) — k6-based load suite with scenario templates and automated reports.
+- [Project P18: Service Mesh Implementation](./projects-new/P18-service-mesh) — Istio multi-cluster mesh with mTLS policies and traffic shifting recipes.
+- [Project P19: Observability Dashboard](./projects-new/P19-observability-dashboard) — Unified metrics/logs/traces dashboards with OpenTelemetry pipelines.
+- [Project P20: Multi-Cloud Orchestration](./projects-new/P20-multi-cloud) — Cross-cloud workflow automation with Terraform, GitHub Actions, and guardrails.
 - [Project 21: Quantum-Safe Cryptography](./projects/21-quantum-safe-cryptography) — Hybrid Kyber + ECDH key exchange prototype.
 - [Project 22: Autonomous DevOps Platform](./projects/22-autonomous-devops-platform) — Event-driven remediation workflows and runbooks-as-code.
 - [Project 23: Advanced Monitoring & Observability](./projects/23-advanced-monitoring) — Grafana dashboards, alerting rules, and distributed tracing config.
