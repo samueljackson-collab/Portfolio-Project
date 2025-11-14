@@ -1,0 +1,46 @@
+graph TB
+    subgraph "Data Sources"
+        APP[Application Servers]
+        INFRA[Infrastructure Metrics]
+        LOGS[Application Logs]
+        TRACES[Distributed Traces]
+    end
+
+    subgraph "Collection Layer"
+        PROMETHEUS[Prometheus<br/>Metrics Scraping]
+        LOKI[Loki<br/>Log Aggregation]
+        TEMPO[Tempo<br/>Trace Storage]
+        EXPORTERS[Node/Service Exporters]
+    end
+
+    subgraph "Storage Layer"
+        TSDB[Time Series Database]
+        OBJECT[Object Storage<br/>S3/MinIO]
+    end
+
+    subgraph "Visualization & Alerting"
+        GRAFANA[Grafana Dashboards]
+        ALERTMANAGER[Alert Manager]
+        PAGERDUTY[PagerDuty/Slack]
+    end
+
+    APP --> EXPORTERS
+    INFRA --> EXPORTERS
+    LOGS --> LOKI
+    TRACES --> TEMPO
+
+    EXPORTERS --> PROMETHEUS
+    PROMETHEUS --> TSDB
+    LOKI --> OBJECT
+    TEMPO --> OBJECT
+
+    TSDB --> GRAFANA
+    OBJECT --> GRAFANA
+
+    PROMETHEUS --> ALERTMANAGER
+    ALERTMANAGER --> PAGERDUTY
+
+    style PROMETHEUS fill:#ff9999
+    style LOKI fill:#90ee90
+    style GRAFANA fill:#ffcc99
+    style ALERTMANAGER fill:#e1f5ff
