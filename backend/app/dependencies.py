@@ -8,7 +8,7 @@ They handle common tasks like:
 - Permission checks
 """
 
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,6 +23,16 @@ from app.models import User
 security = HTTPBearer(
     scheme_name="Bearer Token",
     description="JWT access token from login endpoint"
+)
+
+
+# Optional security scheme that does not raise when missing credentials
+optional_security = HTTPBearer(
+    scheme_name="Optional Bearer Token",
+    description=(
+        "JWT access token. Optional for read-only endpoints, required for mutating operations."
+    ),
+    auto_error=False,
 )
 
 
@@ -109,6 +119,22 @@ async def get_current_active_user(
             detail="Inactive user"
         )
     return current_user
+
+
+# Optional user dependency ---------------------------------------------------
+async def get_optional_user(
+    credentials: Annotated[
+        Optional[HTTPAuthorizationCredentials],
+        Depends(optional_security)
+    ],
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> Optional[User]:
+    """Return the authenticated user if a token is provided, else ``None``."""
+
+    if not credentials:
+        return None
+
+    return await get_current_user(credentials, db)
 
 
 # Type alias for cleaner endpoint signatures

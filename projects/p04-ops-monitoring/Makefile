@@ -35,6 +35,30 @@ logs-grafana: ## Tail Grafana logs
 
 reload-prometheus: ## Reload Prometheus configuration without restart
 	@docker-compose exec -T prometheus wget -qO- http://localhost:9090/-/reload >/dev/null && echo "✓ Prometheus configuration reloaded"
+restart: stop run ## Restart monitoring stack
+
+status: ## Check status of monitoring services
+	@echo "P04 Monitoring Stack Status:"
+	@echo ""
+	@docker-compose ps
+	@echo ""
+	@echo "Service Health Checks:"
+	@curl -s http://localhost:9090/-/healthy > /dev/null && echo "  ✅ Prometheus: Healthy" || echo "  ❌ Prometheus: Unhealthy or not running"
+	@curl -s http://localhost:3000/api/health > /dev/null && echo "  ✅ Grafana: Healthy" || echo "  ❌ Grafana: Unhealthy or not running"
+	@curl -s http://localhost:9093/-/healthy > /dev/null && echo "  ✅ AlertManager: Healthy" || echo "  ❌ AlertManager: Unhealthy or not running"
+	@curl -s http://localhost:9100/metrics > /dev/null && echo "  ✅ Node Exporter: Healthy" || echo "  ❌ Node Exporter: Unhealthy or not running"
+
+logs: ## Show logs from all services
+	docker-compose logs -f
+
+logs-prometheus: ## Show Prometheus logs only
+	docker-compose logs -f prometheus
+
+logs-grafana: ## Show Grafana logs only
+	docker-compose logs -f grafana
+
+reload-prometheus: ## Reload Prometheus config without restart
+	@curl -X POST http://localhost:9090/-/reload && echo "✅ Prometheus config reloaded"
 
 validate-prometheus: ## Validate Prometheus config
 	@docker run --rm -v $(PWD)/config:/config prom/prometheus:v2.47.0 \

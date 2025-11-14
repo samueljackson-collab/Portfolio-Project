@@ -41,6 +41,7 @@ __pycache__/
 *.pfx
 .env
 .env.*
+!.env.example
 *secrets*
 *password*
 *credential*

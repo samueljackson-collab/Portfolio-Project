@@ -1,0 +1,71 @@
+graph TB
+    subgraph "AWS Cloud"
+        subgraph "VPC 10.0.0.0/16"
+            IGW[Internet Gateway]
+
+            subgraph "Availability Zone A"
+                subgraph "Public Subnet A<br/>10.0.1.0/24"
+                    NAT1[NAT Gateway]
+                    ALB1[Application Load Balancer]
+                end
+
+                subgraph "Private Subnet A<br/>10.0.3.0/24"
+                    APP1[Application Server]
+                    WORKER1[Background Worker]
+                end
+
+                subgraph "Database Subnet A<br/>10.0.5.0/24"
+                    RDS1[RDS Primary<br/>PostgreSQL]
+                end
+            end
+
+            subgraph "Availability Zone B"
+                subgraph "Public Subnet B<br/>10.0.2.0/24"
+                    NAT2[NAT Gateway]
+                end
+
+                subgraph "Private Subnet B<br/>10.0.4.0/24"
+                    APP2[Application Server]
+                    WORKER2[Background Worker]
+                end
+
+                subgraph "Database Subnet B<br/>10.0.6.0/24"
+                    RDS2[RDS Standby<br/>PostgreSQL]
+                end
+            end
+        end
+
+        subgraph "Monitoring & Security"
+            CLOUDWATCH[CloudWatch Logs & Metrics]
+            GUARDDUTY[GuardDuty]
+            CLOUDTRAIL[CloudTrail Audit]
+        end
+    end
+
+    INTERNET[Internet] --> IGW
+    IGW --> ALB1
+    ALB1 --> APP1
+    ALB1 --> APP2
+
+    APP1 --> NAT1
+    APP2 --> NAT2
+    NAT1 --> IGW
+    NAT2 --> IGW
+
+    APP1 --> RDS1
+    APP2 --> RDS1
+    WORKER1 --> RDS1
+    WORKER2 --> RDS1
+
+    RDS1 -.replication.-> RDS2
+
+    APP1 --> CLOUDWATCH
+    APP2 --> CLOUDWATCH
+    WORKER1 --> CLOUDWATCH
+    WORKER2 --> CLOUDWATCH
+
+    style IGW fill:#ff9999
+    style ALB1 fill:#90ee90
+    style RDS1 fill:#ffcc99
+    style RDS2 fill:#ffffcc
+    style CLOUDWATCH fill:#e1f5ff

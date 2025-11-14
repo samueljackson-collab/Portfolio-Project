@@ -22,8 +22,9 @@ async def test_list_content_empty(client: AsyncClient):
 
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) == 0
+    assert isinstance(data, dict)
+    assert data["total"] == 0
+    assert data["items"] == []
 
 
 @pytest.mark.asyncio
@@ -33,10 +34,9 @@ async def test_list_content(client: AsyncClient, test_content: Content):
 
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 1
-    assert data[0]["id"] == str(test_content.id)
-    assert data[0]["title"] == test_content.title
+    assert isinstance(data, dict)
+    assert data["total"] >= 1
+    assert any(item["id"] == str(test_content.id) for item in data["items"])
 
 
 @pytest.mark.asyncio
@@ -57,17 +57,17 @@ async def test_list_content_pagination(
         test_db.add(content)
     await test_db.commit()
 
-    # Test with limit
-    response = await client.get("/content?skip=0&limit=10")
+    # Test first page
+    response = await client.get("/content", params={"page": 1, "page_size": 10})
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 10
+    assert len(data["items"]) == 10
 
-    # Test with skip
-    response = await client.get("/content?skip=10&limit=10")
+    # Test second page
+    response = await client.get("/content", params={"page": 2, "page_size": 10})
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 5  # Remaining items
+    assert len(data["items"]) == 5  # Remaining items
 
 
 @pytest.mark.asyncio
@@ -80,6 +80,58 @@ async def test_get_content_by_id(client: AsyncClient, test_content: Content):
     assert data["id"] == str(test_content.id)
     assert data["title"] == test_content.title
     assert data["body"] == test_content.body
+
+
+@pytest.mark.asyncio
+async def test_public_content_accessible_without_auth(
+    client: AsyncClient,
+    test_content: Content
+):
+    """Ensure published content is accessible without credentials."""
+
+    list_response = await client.get("/content")
+    assert list_response.status_code == 200
+    list_data = list_response.json()
+    assert any(item["id"] == str(test_content.id) for item in list_data["items"])
+
+    detail_response = await client.get(f"/content/{test_content.id}")
+    assert detail_response.status_code == 200
+    assert detail_response.json()["id"] == str(test_content.id)
+
+
+@pytest.mark.asyncio
+async def test_private_content_requires_auth(
+    client: AsyncClient,
+    authenticated_client: AsyncClient,
+    test_db,
+    test_user: User
+):
+    """Verify private content stays hidden without authentication."""
+
+    private_content = Content(
+        title="Private Article",
+        body="Hidden text",
+        owner_id=test_user.id,
+        is_published=False
+    )
+    test_db.add(private_content)
+    await test_db.commit()
+    await test_db.refresh(private_content)
+
+    # Unauthenticated users should not see the private item in listings
+    list_response = await client.get("/content", params={"page": 1, "page_size": 10, "published_only": False})
+    assert list_response.status_code == 200
+    list_data = list_response.json()
+    assert all(item["id"] != str(private_content.id) for item in list_data["items"])
+
+    # Unauthenticated detail requests should return 404
+    detail_response = await client.get(f"/content/{private_content.id}")
+    assert detail_response.status_code == 404
+
+    # Owner can access after authenticating
+    authed_detail = await authenticated_client.get(f"/content/{private_content.id}")
+    assert authed_detail.status_code == 200
+    assert authed_detail.json()["id"] == str(private_content.id)
 
 
 @pytest.mark.asyncio

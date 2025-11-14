@@ -255,3 +255,149 @@ class HealthResponse(BaseModel):
             }
         }
     )
+
+
+# ============================================================================
+# Album Schemas
+# ============================================================================
+
+class AlbumBase(BaseModel):
+    """Base album schema with common fields."""
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Album name",
+        examples=["San Francisco, CA"]
+    )
+    type: str = Field(
+        default="custom",
+        description="Album type: location, date, or custom",
+        examples=["location", "date", "custom"]
+    )
+
+
+class AlbumCreate(AlbumBase):
+    """Schema for creating new album."""
+    pass
+
+
+class AlbumUpdate(BaseModel):
+    """Schema for updating existing album."""
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    cover_photo_id: Optional[UUID] = Field(None, description="Cover photo ID")
+
+
+class AlbumResponse(AlbumBase, TimestampMixin):
+    """Schema for album in API responses."""
+    id: UUID = Field(..., description="Album unique identifier")
+    owner_id: UUID = Field(..., description="Owner user ID")
+    photo_count: int = Field(..., description="Number of photos in album")
+    cover_photo_id: Optional[UUID] = Field(None, description="Cover photo ID")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AlbumListResponse(BaseModel):
+    """Schema for paginated album list responses."""
+    items: list[AlbumResponse] = Field(..., description="Album items")
+    total: int = Field(..., description="Total number of albums")
+    page: int = Field(..., description="Current page number")
+    page_size: int = Field(..., description="Items per page")
+    pages: int = Field(..., description="Total number of pages")
+
+
+# ============================================================================
+# Photo Schemas
+# ============================================================================
+
+class PhotoBase(BaseModel):
+    """Base photo schema with common fields."""
+    filename: str = Field(..., description="Original filename")
+    album_id: Optional[UUID] = Field(None, description="Album ID")
+
+
+class PhotoCreate(PhotoBase):
+    """Schema for creating new photo (internal use after upload)."""
+    file_path: str = Field(..., description="Storage path")
+    file_size: int = Field(..., description="File size in bytes")
+    mime_type: str = Field(default="image/jpeg", description="MIME type")
+    width: Optional[int] = None
+    height: Optional[int] = None
+    capture_date: Optional[datetime] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    camera_make: Optional[str] = None
+    camera_model: Optional[str] = None
+
+
+class PhotoUpdate(BaseModel):
+    """Schema for updating existing photo."""
+    filename: Optional[str] = Field(None, description="Updated filename")
+    album_id: Optional[UUID] = Field(None, description="Move to different album")
+
+
+class PhotoResponse(TimestampMixin):
+    """Schema for photo in API responses."""
+    id: UUID = Field(..., description="Photo unique identifier")
+    owner_id: UUID = Field(..., description="Owner user ID")
+    album_id: Optional[UUID] = Field(None, description="Album ID")
+    filename: str = Field(..., description="Filename")
+    file_path: str = Field(..., description="Storage path")
+    thumbnail_path: Optional[str] = Field(None, description="Thumbnail path")
+    file_size: int = Field(..., description="File size in bytes")
+    mime_type: str = Field(..., description="MIME type")
+    width: Optional[int] = Field(None, description="Image width")
+    height: Optional[int] = Field(None, description="Image height")
+    capture_date: Optional[datetime] = Field(None, description="Date taken")
+    upload_date: datetime = Field(..., description="Upload date")
+    latitude: Optional[float] = Field(None, description="GPS latitude")
+    longitude: Optional[float] = Field(None, description="GPS longitude")
+    city: Optional[str] = Field(None, description="City name")
+    state: Optional[str] = Field(None, description="State/region")
+    country: Optional[str] = Field(None, description="Country")
+    camera_make: Optional[str] = Field(None, description="Camera make")
+    camera_model: Optional[str] = Field(None, description="Camera model")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PhotoListResponse(BaseModel):
+    """Schema for paginated photo list responses."""
+    items: list[PhotoResponse] = Field(..., description="Photo items")
+    total: int = Field(..., description="Total number of photos")
+    page: int = Field(..., description="Current page number")
+    page_size: int = Field(..., description="Items per page")
+    pages: int = Field(..., description="Total number of pages")
+
+
+class PhotoUploadResponse(BaseModel):
+    """Schema for photo upload success response."""
+    photo: PhotoResponse = Field(..., description="Uploaded photo details")
+    album: Optional[AlbumResponse] = Field(None, description="Auto-assigned album")
+    message: str = Field(
+        default="Photo uploaded successfully",
+        description="Success message"
+    )
+
+
+class CalendarDateResponse(BaseModel):
+    """Schema for calendar view - photo count by date."""
+    date: datetime = Field(..., description="Date")
+    photo_count: int = Field(..., description="Number of photos on this date")
+    preview_photos: list[PhotoResponse] = Field(
+        default=[],
+        max_length=4,
+        description="Preview thumbnails (max 4)"
+    )
+
+
+class CalendarMonthResponse(BaseModel):
+    """Schema for calendar month view."""
+    year: int = Field(..., description="Year")
+    month: int = Field(..., description="Month (1-12)")
+    dates: list[CalendarDateResponse] = Field(..., description="Dates with photos")
+    total_photos: int = Field(..., description="Total photos in month")

@@ -23,7 +23,7 @@ from app.schemas import (
     ContentResponse,
     ContentListResponse
 )
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_optional_user
 
 
 router = APIRouter(
@@ -40,7 +40,7 @@ router = APIRouter(
 )
 async def list_content(
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
     published_only: bool = Query(True, description="Show only published content"),
@@ -73,9 +73,9 @@ async def list_content(
             )
         )
     else:
-        # Not authenticated: only published content
-        if published_only:
-            query = query.where(Content.is_published == True)
+        # Not authenticated: only published content regardless of flag
+        published_only = True
+        query = query.where(Content.is_published == True)
 
     # Apply search filter
     if search:
@@ -124,7 +124,7 @@ async def list_content(
 async def get_content(
     content_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_user)
 ) -> Content:
     """
     Get a single content item by ID.

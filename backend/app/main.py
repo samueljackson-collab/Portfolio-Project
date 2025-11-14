@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
+from prometheus_fastapi_instrumentator import Instrumentator
 import logging
 import time
 
@@ -17,7 +18,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import health, auth, content
+from app.routers import health, auth, content, photos, backup
 
 
 # Configure logging
@@ -159,6 +160,13 @@ async def general_exception_handler(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(content.router)
+app.include_router(photos.router)
+app.include_router(backup.router)
+
+
+# Prometheus metrics instrumentation
+# Expose metrics at /metrics endpoint for Prometheus scraping
+Instrumentator().instrument(app).expose(app, endpoint="/metrics", tags=["Monitoring"])
 
 
 # Root endpoint
@@ -178,6 +186,8 @@ async def root() -> dict:
         "endpoints": {
             "auth": "/auth (register, login)",
             "content": "/content (CRUD operations)",
+            "photos": "/photos (photo upload and management)",
+            "backup": "/backup (backup status and management)",
             "health": "/health (status check)"
         }
     }
