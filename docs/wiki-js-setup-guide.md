@@ -1419,6 +1419,60 @@ End-to-end CI/CD with GitHub Actions, ArgoCD, and Kubernetes deployment.
 
 3. **Apply tags to pages** as you create them
 
+### 4. 25-Project Coverage Matrix (Required Wiki Pages)
+
+> **Goal:** Every portfolio repository below must have a corresponding Wiki.js page that uses the standard project template (Executive Summary → Objectives → Architecture → Decisions → Implementation → Results → Documentation → Skills) plus the "Wiki Deliverables" column.
+
+| # | Project | GitHub Path | Wiki Path | Status | Wiki Deliverables |
+|---|---------|-------------|-----------|--------|-------------------|
+| 1 | AWS Infrastructure Automation | `projects/1-aws-infrastructure-automation` | `/projects/aws-infrastructure-automation` | Partial | Multi-AZ network + IaC comparison table (Terraform vs CDK vs Pulumi) and `scripts/validate.sh` output embedded. |
+| 2 | Database Migration Platform | `projects/2-database-migration` | `/projects/database-migration-platform` | Minimal | Debezium topology diagram, cutover/rollback timeline, and CDC health checklist. |
+| 3 | Kubernetes CI/CD Pipeline | `projects/3-kubernetes-cicd` | `/projects/kubernetes-cicd` | Minimal | GitHub Actions badge, ArgoCD app-of-apps diagram, progressive delivery stages. |
+| 4 | DevSecOps Pipeline | `projects/4-devsecops` | `/projects/devsecops-pipeline` | Minimal | SBOM sample, container scanning report screenshots, policy-as-code snippet. |
+| 5 | Real-time Data Streaming | `projects/5-real-time-data-streaming` | `/projects/real-time-data-streaming` | Minimal | Kafka/Flink event flow, exactly-once validation script, throughput metrics table. |
+| 6 | MLOps Platform | `projects/6-mlops-platform` | `/projects/mlops-platform` | Partial | ML lifecycle diagram, feature pipeline breakdown, MLflow experiment summary. |
+| 7 | Serverless Data Processing | `projects/7-serverless-data-processing` | `/projects/serverless-data-processing` | Partial | Event-driven architecture (Step Functions + Lambda), cost model, deployment checklist. |
+| 8 | Advanced AI Chatbot | `projects/8-advanced-ai-chatbot` | `/projects/advanced-ai-chatbot` | Partial | Conversation flow, prompt safety guardrails, evaluation rubric. |
+| 9 | Multi-Region Disaster Recovery | `projects/9-multi-region-disaster-recovery` | `/projects/multi-region-disaster-recovery` | Partial | Failover topology, RPO/RTO matrix, last chaos drill evidence. |
+| 10 | Blockchain Smart Contract Platform | `projects/10-blockchain-smart-contract-platform` | `/projects/blockchain-smart-contract-platform` | Partial | Contract architecture, Hardhat test summary, network deployment steps. |
+| 11 | IoT Data Analytics | `projects/11-iot-data-analytics` | `/projects/iot-data-analytics` | Minimal | Device ingestion flow, time-series storage plan, anomaly detection results. |
+| 12 | Quantum Computing Integration | `projects/12-quantum-computing` | `/projects/quantum-computing-integration` | Minimal | Hybrid workflow diagram (classical + quantum), Qiskit job sample, benchmarking notes. |
+| 13 | Advanced Cybersecurity Platform | `projects/13-advanced-cybersecurity` | `/projects/advanced-cybersecurity-platform` | Minimal | Detection coverage map, SOC automation steps, MITRE ATT&CK alignment table. |
+| 14 | Edge AI Inference Platform | `projects/14-edge-ai-inference` | `/projects/edge-ai-inference-platform` | Minimal | Edge deployment diagram, ONNX optimization checklist, latency measurements. |
+| 15 | Real-time Collaboration Platform | `projects/15-real-time-collaboration` | `/projects/real-time-collaboration-platform` | Minimal | WebRTC topology, scaling/HA notes, synthetic monitoring screenshot. |
+| 16 | Advanced Data Lake | `projects/16-advanced-data-lake` | `/projects/advanced-data-lake` | Minimal | Bronze/Silver/Gold layer diagram, data catalog references, Glue/Athena query samples. |
+| 17 | Multi-Cloud Service Mesh | `projects/17-multi-cloud-service-mesh` | `/projects/multi-cloud-service-mesh` | Minimal | Mesh topology (Istio/Linkerd), traffic policies, zero-trust references. |
+| 18 | GPU-Accelerated Computing | `projects/18-gpu-accelerated-computing` | `/projects/gpu-accelerated-computing` | Minimal | Cluster layout, scheduler/quotas table, CUDA benchmark excerpts. |
+| 19 | Advanced Kubernetes Operators | `projects/19-advanced-kubernetes-operators` | `/projects/advanced-kubernetes-operators` | Minimal | CRD definitions, reconciliation flow diagram, failure-handling runbook. |
+| 20 | Blockchain Oracle Service | `projects/20-blockchain-oracle-service` | `/projects/blockchain-oracle-service` | Minimal | Oracle data path (off-chain→on-chain), signing process, SLA matrix. |
+| 21 | Quantum-Safe Cryptography | `projects/21-quantum-safe-cryptography` | `/projects/quantum-safe-cryptography` | Minimal | Algorithm comparison chart, key rotation schedule, compliance checklist. |
+| 22 | Autonomous DevOps Platform | `projects/22-autonomous-devops-platform` | `/projects/autonomous-devops-platform` | Minimal | Workflow automation diagram, runbook generator screenshots, AI-assist guardrails. |
+| 23 | Advanced Monitoring & Observability | `projects/23-advanced-monitoring` | `/projects/advanced-monitoring-observability` | Minimal | End-to-end telemetry map, alert routing matrix, Grafana dashboard embeds. |
+| 24 | Report Generator | `projects/24-report-generator` | `/projects/report-generator` | Minimal | Data source inventory, templating pipeline diagram, PDF export evidence. |
+| 25 | Portfolio Website | `projects/25-portfolio-website` | `/projects/portfolio-website` | Partial | Site map + navigation screenshot, VitePress build/CI badge, deployment commands. |
+
+**How to use the matrix:**
+
+1. **Create/verify each page path** exactly as listed so automation (Git sync + `tools/wikijs_push.py`) can target predictable URLs.
+2. **Apply required tags** from the previous step plus any domain-specific tags (e.g., `ai`, `blockchain`, `data-platform`).
+3. **Embed evidence** called out in "Wiki Deliverables"—upload diagrams/screenshots under Assets → Media, then reference them inside the template sections.
+4. **Link to GitHub** using the repository path shown so readers can jump from the wiki to source code and CI badges.
+
+### 5. Coverage Automation & QA
+
+1. **Author content locally** in `docs/wiki/` or within each project (`projects/<id>/docs/wiki/`).
+2. **Use `tools/wikijs_push.py`** to publish Markdown in bulk:
+   ```bash
+   python tools/wikijs_push.py \
+     --content-root projects \
+     --glob "*/wiki/*.md" \
+     --base-path /projects \
+     --api-url https://wiki.example.com/graphql \
+     --api-token $WIKI_TOKEN
+   ```
+3. **Run a validation pass** after publishing by following the [validation script](#backup-and-recovery) and visually confirming that navigation shows all 25 entries.
+4. **Update the wiki changelog** (`/operations/weekly-reports`) whenever a project page is added or materially changed.
+
 ---
 
 <a id="migrating-portfolio-documentation"></a>
