@@ -5,7 +5,8 @@ set -euo pipefail
 # Validates all 20 projects for completeness and standards compliance
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECTS_DIR="${SCRIPT_DIR}/../projects-new"
+CANONICAL_PROJECTS_DIR="${SCRIPT_DIR}/../projects-new"
+PROJECTS_DIR="${CANONICAL_PROJECTS_DIR}"
 
 # Color output
 GREEN='\033[0;32m'

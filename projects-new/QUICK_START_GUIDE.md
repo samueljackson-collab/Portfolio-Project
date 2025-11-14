@@ -6,6 +6,8 @@
 
 This guide will help you quickly get started with the 20 standardized enterprise projects in this portfolio. Each project follows the same structure and conventions defined in the [Enterprise Engineer's Handbook](../docs/PRJ-MASTER-HANDBOOK/README.md).
 
+> **Canonical location:** Every P01–P20 directory lives under `./projects-new/` at the repository root. Use `cd projects-new/PXX-*` when following the navigation examples below.
+
 ---
 
 ## Table of Contents
@@ -197,7 +199,7 @@ make deploy ENV=prod
 ### Infrastructure & Platform (P01-P03)
 
 #### P01: AWS Infrastructure Automation
-**Directory:** `P01-aws-infra`
+**Directory:** `projects-new/P01-aws-infra`
 
 Automates AWS infrastructure provisioning with Terraform.
 
@@ -209,7 +211,7 @@ Automates AWS infrastructure provisioning with Terraform.
 
 **Quick Start:**
 ```bash
-cd P01-aws-infra
+cd projects-new/P01-aws-infra
 make install
 cp .env.example .env
 cd infrastructure/terraform
@@ -222,7 +224,7 @@ terraform plan
 ---
 
 #### P02: Kubernetes Cluster Management
-**Directory:** `P02-k8s-cluster`
+**Directory:** `projects-new/P02-k8s-cluster`
 
 Manages Kubernetes clusters with automated deployment and scaling.
 
@@ -234,7 +236,7 @@ Manages Kubernetes clusters with automated deployment and scaling.
 
 **Quick Start:**
 ```bash
-cd P02-k8s-cluster
+cd projects-new/P02-k8s-cluster
 make install
 kubectl cluster-info
 kubectl get nodes
@@ -245,7 +247,7 @@ kubectl get nodes
 ---
 
 #### P03: CI/CD Pipeline Implementation
-**Directory:** `P03-cicd-pipeline`
+**Directory:** `projects-new/P03-cicd-pipeline`
 
 Complete CI/CD pipeline with automated testing and deployment.
 
@@ -257,7 +259,7 @@ Complete CI/CD pipeline with automated testing and deployment.
 
 **Quick Start:**
 ```bash
-cd P03-cicd-pipeline
+cd projects-new/P03-cicd-pipeline
 cat ci/ci-cd.yml
 # Push to trigger pipeline
 git push origin main
@@ -270,7 +272,7 @@ git push origin main
 ### Monitoring & Observability (P04, P10, P19)
 
 #### P04: Operational Monitoring Stack
-**Directory:** `P04-monitoring-stack`
+**Directory:** `projects-new/P04-monitoring-stack`
 
 Prometheus and Grafana monitoring stack.
 
@@ -282,7 +284,7 @@ Prometheus and Grafana monitoring stack.
 
 **Quick Start:**
 ```bash
-cd P04-monitoring-stack
+cd projects-new/P04-monitoring-stack
 docker-compose up -d
 # Access Grafana at http://localhost:3000
 ```
@@ -292,7 +294,7 @@ docker-compose up -d
 ---
 
 #### P10: Log Aggregation System
-**Directory:** `P10-log-aggregation`
+**Directory:** `projects-new/P10-log-aggregation`
 
 Centralized log aggregation with ELK stack.
 
@@ -304,7 +306,7 @@ Centralized log aggregation with ELK stack.
 
 **Quick Start:**
 ```bash
-cd P10-log-aggregation
+cd projects-new/P10-log-aggregation
 docker-compose up -d elasticsearch kibana
 # Access Kibana at http://localhost:5601
 ```
@@ -312,7 +314,7 @@ docker-compose up -d elasticsearch kibana
 ---
 
 #### P19: Observability Dashboard
-**Directory:** `P19-observability-dashboard`
+**Directory:** `projects-new/P19-observability-dashboard`
 
 Unified observability dashboard combining metrics, logs, and traces.
 
@@ -324,7 +326,7 @@ Unified observability dashboard combining metrics, logs, and traces.
 
 **Quick Start:**
 ```bash
-cd P19-observability-dashboard
+cd projects-new/P19-observability-dashboard
 make install
 make deploy ENV=dev
 ```
@@ -334,7 +336,7 @@ make deploy ENV=dev
 ### Database & Performance (P05, P17)
 
 #### P05: Database Performance Optimization
-**Directory:** `P05-db-optimization`
+**Directory:** `projects-new/P05-db-optimization`
 
 Tools for database performance analysis and optimization.
 
@@ -346,7 +348,7 @@ Tools for database performance analysis and optimization.
 
 **Quick Start:**
 ```bash
-cd P05-db-optimization
+cd projects-new/P05-db-optimization
 source venv/bin/activate
 python src/main.py --analyze --database mydb
 ```
@@ -354,7 +356,7 @@ python src/main.py --analyze --database mydb
 ---
 
 #### P17: Performance Load Testing
-**Directory:** `P17-load-testing`
+**Directory:** `projects-new/P17-load-testing`
 
 Load testing framework with k6 and custom scripts.
 
@@ -366,7 +368,7 @@ Load testing framework with k6 and custom scripts.
 
 **Quick Start:**
 ```bash
-cd P17-load-testing
+cd projects-new/P17-load-testing
 k6 run tests/performance/load_test.js
 ```
 
@@ -375,7 +377,7 @@ k6 run tests/performance/load_test.js
 ### Testing & Quality (P06)
 
 #### P06: Web Application Testing Framework
-**Directory:** `P06-web-testing`
+**Directory:** `projects-new/P06-web-testing`
 
 Comprehensive web testing with Playwright and pytest.
 
@@ -387,7 +389,7 @@ Comprehensive web testing with Playwright and pytest.
 
 **Quick Start:**
 ```bash
-cd P06-web-testing
+cd projects-new/P06-web-testing
 make install
 playwright install
 pytest tests/e2e -v
@@ -398,7 +400,7 @@ pytest tests/e2e -v
 ### Security & Compliance (P07, P13)
 
 #### P07: Security Compliance Automation
-**Directory:** `P07-security-compliance`
+**Directory:** `projects-new/P07-security-compliance`
 
 Automated security compliance checks.
 
@@ -410,14 +412,14 @@ Automated security compliance checks.
 
 **Quick Start:**
 ```bash
-cd P07-security-compliance
+cd projects-new/P07-security-compliance
 python src/main.py --scan --profile cis-aws
 ```
 
 ---
 
 #### P13: Secrets Management System
-**Directory:** `P13-secrets-management`
+**Directory:** `projects-new/P13-secrets-management`
 
 Secure secrets management with AWS Secrets Manager.
 
@@ -429,7 +431,7 @@ Secure secrets management with AWS Secrets Manager.
 
 **Quick Start:**
 ```bash
-cd P13-secrets-management
+cd projects-new/P13-secrets-management
 make install
 python src/main.py --list-secrets
 ```
@@ -439,7 +441,7 @@ python src/main.py --list-secrets
 ### Cost & Resource Optimization (P08)
 
 #### P08: Cost Optimization Tooling
-**Directory:** `P08-cost-optimization`
+**Directory:** `projects-new/P08-cost-optimization`
 
 AWS cost analysis and optimization recommendations.
 
@@ -451,7 +453,7 @@ AWS cost analysis and optimization recommendations.
 
 **Quick Start:**
 ```bash
-cd P08-cost-optimization
+cd projects-new/P08-cost-optimization
 python src/main.py --analyze --days 30
 ```
 
@@ -460,7 +462,7 @@ python src/main.py --analyze --days 30
 ### Disaster Recovery (P09, P16)
 
 #### P09: Disaster Recovery Orchestration
-**Directory:** `P09-dr-orchestration`
+**Directory:** `projects-new/P09-dr-orchestration`
 
 Automated disaster recovery workflows.
 
@@ -472,14 +474,14 @@ Automated disaster recovery workflows.
 
 **Quick Start:**
 ```bash
-cd P09-dr-orchestration
+cd projects-new/P09-dr-orchestration
 python src/main.py --run-drill
 ```
 
 ---
 
 #### P16: Backup Verification System
-**Directory:** `P16-backup-verification`
+**Directory:** `projects-new/P16-backup-verification`
 
 Automated backup testing and verification.
 
@@ -491,7 +493,7 @@ Automated backup testing and verification.
 
 **Quick Start:**
 ```bash
-cd P16-backup-verification
+cd projects-new/P16-backup-verification
 ./scripts/verify_backups.sh
 ```
 
@@ -500,13 +502,13 @@ cd P16-backup-verification
 ### Networking & Infrastructure (P11, P12, P14, P18)
 
 #### P11: API Gateway Configuration
-**Directory:** `P11-api-gateway`
+**Directory:** `projects-new/P11-api-gateway`
 
 API Gateway setup with rate limiting and authentication.
 
 **Quick Start:**
 ```bash
-cd P11-api-gateway
+cd projects-new/P11-api-gateway
 terraform -chdir=infrastructure/terraform init
 terraform -chdir=infrastructure/terraform apply
 ```
@@ -514,13 +516,13 @@ terraform -chdir=infrastructure/terraform apply
 ---
 
 #### P12: Container Registry Management
-**Directory:** `P12-container-registry`
+**Directory:** `projects-new/P12-container-registry`
 
 ECR registry management with image scanning.
 
 **Quick Start:**
 ```bash
-cd P12-container-registry
+cd projects-new/P12-container-registry
 make build
 make push
 ```
@@ -528,26 +530,26 @@ make push
 ---
 
 #### P14: Network Configuration Automation
-**Directory:** `P14-network-automation`
+**Directory:** `projects-new/P14-network-automation`
 
 Network infrastructure automation.
 
 **Quick Start:**
 ```bash
-cd P14-network-automation
+cd projects-new/P14-network-automation
 terraform -chdir=infrastructure/terraform plan
 ```
 
 ---
 
 #### P18: Service Mesh Implementation
-**Directory:** `P18-service-mesh`
+**Directory:** `projects-new/P18-service-mesh`
 
 Istio service mesh deployment and configuration.
 
 **Quick Start:**
 ```bash
-cd P18-service-mesh
+cd projects-new/P18-service-mesh
 kubectl apply -f infrastructure/k8s/
 ```
 
@@ -556,7 +558,7 @@ kubectl apply -f infrastructure/k8s/
 ### Incident Response (P15)
 
 #### P15: Incident Response Automation
-**Directory:** `P15-incident-response`
+**Directory:** `projects-new/P15-incident-response`
 
 Automated incident detection and response.
 
@@ -568,7 +570,7 @@ Automated incident detection and response.
 
 **Quick Start:**
 ```bash
-cd P15-incident-response
+cd projects-new/P15-incident-response
 python src/main.py --monitor
 ```
 
@@ -577,7 +579,7 @@ python src/main.py --monitor
 ### Multi-Cloud (P20)
 
 #### P20: Multi-Cloud Orchestration
-**Directory:** `P20-multi-cloud`
+**Directory:** `projects-new/P20-multi-cloud`
 
 Multi-cloud resource orchestration across AWS, Azure, GCP.
 
@@ -589,7 +591,7 @@ Multi-cloud resource orchestration across AWS, Azure, GCP.
 
 **Quick Start:**
 ```bash
-cd P20-multi-cloud
+cd projects-new/P20-multi-cloud
 make install
 python src/main.py --list-resources
 ```
