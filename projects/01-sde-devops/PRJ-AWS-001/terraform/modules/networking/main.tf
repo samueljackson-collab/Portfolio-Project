@@ -468,8 +468,8 @@ resource "aws_network_acl_rule" "private_db_ingress" {
   protocol       = "tcp"
   rule_action    = "allow"
   cidr_block     = var.vpc_cidr
-  from_port      = 3306
-  to_port        = 3306
+  from_port      = var.db_port
+  to_port        = var.db_port
 }
 
 resource "aws_network_acl_rule" "private_db_egress" {
@@ -479,6 +479,6 @@ resource "aws_network_acl_rule" "private_db_egress" {
   protocol       = "tcp"
   rule_action    = "allow"
   cidr_block     = var.vpc_cidr
-  from_port      = 3306
-  to_port        = 3306
+  from_port      = var.db_port
+  to_port        = var.db_port
 }

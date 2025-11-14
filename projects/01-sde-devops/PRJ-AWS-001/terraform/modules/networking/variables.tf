@@ -100,6 +100,12 @@ variable "enable_dynamodb_endpoint" {
   default     = true
 }
 
+variable "db_port" {
+  description = "Database port for private subnet NACL rules"
+  type        = number
+  default     = 3306
+}
+
 variable "common_tags" {
   description = "Common tags applied to all resources"
   type        = map(string)

@@ -38,6 +38,7 @@ module "networking" {
   flow_logs_retention_days = var.flow_logs_retention_days
   enable_s3_endpoint     = true
   enable_dynamodb_endpoint = true
+  db_port                = var.db_port
 
   cost_center = var.cost_center
   common_tags = local.common_tags
