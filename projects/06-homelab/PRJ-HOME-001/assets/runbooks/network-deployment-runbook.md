@@ -1,6 +1,7 @@
 # Homelab Network Build - Deployment Runbook
 
 ## Runbook Information
+
 - **Version**: 2.0
 - **Last Updated**: 2024-11-06
 - **Purpose**: Complete homelab network deployment procedure
@@ -8,6 +9,7 @@
 ## 1. Prerequisites
 
 ### Hardware Checklist
+
 - [ ] UniFi Dream Machine Pro (UDMP)
 - [ ] UniFi Switch 24 PoE
 - [ ] UniFi Switch 8 PoE  
@@ -19,6 +21,7 @@
 - [ ] Cable Tester
 
 ### Pre-Deployment Tasks
+
 - [ ] Rack cabinet installed and secured
 - [ ] Cable runs planned and measured
 - [ ] Power outlets available
@@ -28,7 +31,9 @@
 ## 2. Physical Installation (Day 1)
 
 ### Step 2.1: Rack Equipment Mounting
+
 **Mounting Order (Top to Bottom):**
+
 1. Patch Panel (RU 1-2)
 2. UniFi Dream Machine Pro (RU 3)
 3. UniFi Switch 24 PoE (RU 4-5)
@@ -36,6 +41,7 @@
 5. UPS (RU 11-12)
 
 **Procedure:**
+
 ```bash
 # Use cage nuts and M6 screws
 # Torque: Hand-tight only
@@ -80,14 +86,18 @@
 
 **Verification:**
 ```bash
+
 ssh admin@192.168.1.1
 ping -c 4 1.1.1.1
 ping -c 4 google.com
+
 ```
 
 **Expected Output:**
 ```
+
 4 packets transmitted, 4 received, 0% packet loss
+
 ```
 
 ### Step 3.3: Adopt Network Devices
@@ -223,6 +233,7 @@ ping 192.168.50.10    # Should work
 ### Step 7.1: Configure Static IPs
 
 **Proxmox Server:**
+
 ```bash
 # Edit /etc/network/interfaces
 auto eth0
@@ -248,14 +259,20 @@ iface eth0 inet static
 
 ### Step 8.1: Install Pi-hole
 ```bash
+
 ssh pi@192.168.10.2
 curl -sSL https://install.pi-hole.net | bash
 
 # Follow prompts:
+
 # - Interface: eth0
+
 # - Static IP: 192.168.10.2
+
 # - Upstream DNS: 1.1.1.1
+
 # - Admin interface: Yes
+
 ```
 
 ### Step 8.2: Configure DHCP to Use Pi-hole
@@ -275,16 +292,19 @@ nslookup google.com 192.168.10.2
 ## 9. VPN Configuration (WireGuard) (Day 4)
 
 ### Step 9.1: Enable WireGuard
+
 - Settings → VPN → WireGuard → Enable
 - Listen Port: 51820
 - Network: 192.168.10.0/24
 
 ### Step 9.2: Create VPN User
+
 1. Add user account
 2. Generate WireGuard config
 3. Download .conf file
 
 ### Step 9.3: Test VPN
+
 ```bash
 # From external network with VPN connected
 ping 192.168.10.1    # Should work
@@ -300,10 +320,14 @@ ping 192.168.10.1    # Should work
 
 ### Step 10.2: Performance Tests
 ```bash
+
 # Internal speed test
+
 iperf3 -s  # Server
 iperf3 -c 192.168.10.10  # Client
+
 # Expected: 900+ Mbps
+
 ```
 
 ### Step 10.3: Backup Configuration
