@@ -55,6 +55,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     const isActive = activeId === item.id
     const isExpanded = expanded[item.id]
     const hasChildren = item.children && item.children.length > 0
+    const paddingLeftRem = `${level + 1}rem`
 
     return (
       <div key={item.id} className="w-full">
@@ -64,9 +65,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             w-full flex items-center gap-3 px-4 py-3 text-left text-lg
             transition-colors duration-150
             hover:bg-blue-50 focus:outline-none focus:bg-blue-100
-            ${isActive ? 'bg-blue-100 border-l-4 border-blue-600 font-semibold' : 'border-l-4 border-transparent'}
-            ${level > 0 ? 'pl-' + (4 + level * 4) : ''}
+            ${isActive ? 'bg-blue-100 border-l-4 border-blue-800 font-semibold' : 'border-l-4 border-transparent'}
           `}
+          style={{ paddingLeft: paddingLeftRem }}
         >
           {/* Expand/collapse indicator */}
           {hasChildren && (

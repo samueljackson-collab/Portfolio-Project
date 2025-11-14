@@ -4,7 +4,7 @@
  * Authenticated user dashboard with content management
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { contentService, type Content, type CreateContentRequest } from '../api'
 import { ContentCard } from '../components'
 import { useAuth } from '../context'
@@ -22,23 +22,23 @@ export const Dashboard: React.FC = () => {
   const [isPublished, setIsPublished] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const fetchContents = async () => {
+  const fetchContents = useCallback(async () => {
     try {
       setIsLoading(true)
       const data = await contentService.getAll()
       // Filter to show only current user's content
-      setContents(data.filter(item => item.owner_id === user?.id))
+      setContents(data.filter((item) => item.owner_id === user?.id))
     } catch (err) {
       setError('Failed to load content')
       console.error(err)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [user?.id])
 
   useEffect(() => {
     fetchContents()
-  }, [user?.id])
+  }, [fetchContents])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()

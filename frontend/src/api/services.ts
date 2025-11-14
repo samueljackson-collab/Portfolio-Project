@@ -14,7 +14,6 @@ import type {
   CreateContentRequest,
   UpdateContentRequest,
   Photo,
-  Album,
   PhotoListResponse,
   AlbumListResponse,
   PhotoUploadResponse,
