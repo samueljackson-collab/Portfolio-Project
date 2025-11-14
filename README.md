@@ -1,4 +1,5 @@
 # Hi, I'm Sam Jackson!
+
 **[System Development Engineer](https://github.com/samueljackson-collab)** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **Freelance Full-Stack Web Developer**
 
 [![CI](https://github.com/samueljackson-collab/Portfolio-Project/workflows/CI/badge.svg?branch=main)](https://github.com/samueljackson-collab/Portfolio-Project/actions/workflows/ci.yml)
@@ -12,6 +13,12 @@
 > **Note:** Some project directories referenced below contain planning documentation and structure but are awaiting evidence/asset uploads. Check individual project READMEs for current status.
 
 > 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
+>
+> 📓 **Portfolio Master Index (75k words):**
+>
+> - [Continuation (4.1.1–4.1.7)](./Portfolio_Master_Index_CONTINUATION.md)
+> - [Complete Edition (4.1.8–11)](./Portfolio_Master_Index_COMPLETE.md)
+> - [Navigation Guide](./Portfolio_Navigation_Guide.md)
 
 ---
 ## 🧭 Reviewer Fast Reference

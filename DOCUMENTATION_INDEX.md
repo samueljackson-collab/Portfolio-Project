@@ -10,16 +10,31 @@ This index guides you through the comprehensive analysis of the 25-project portf
 
 ## Main Documents
 
+### Portfolio Master Index Collection
+
+Three companion files provide the full 75,000-word Portfolio Master Index deliverable.
+
+| File | Focus | Why it matters |
+|------|-------|----------------|
+| `Portfolio_Master_Index_CONTINUATION.md` | Sections 4.1.1–4.1.7 (homelab business case, architecture, security, storage, DR) | Definitive reference for the flagship infrastructure project with metrics, ADRs, and runbooks. |
+| `Portfolio_Master_Index_COMPLETE.md` | Sections 4.1.8–11 (observability, CI/CD, IaC, evidence, interview prep, learning roadmap) | Captures automation, SLO alerting, interview narratives, and cross-reference maps for every role. |
+| `Portfolio_Navigation_Guide.md` | How-to guide for the Master Index set | 1.5-hour prep workflow, metrics cheat sheet, and distribution checklist for recruiters/interviewers. |
+
+Use the navigation guide first, then dive into the continuation or complete volume depending on the section you need to reference.
+
 ### 1. SURVEY_EXECUTIVE_SUMMARY.md
+
 **Purpose**: High-level overview and key findings  
 **Length**: ~3,000 words  
-**Best For**: 
+**Best For**:
+
 - Getting started with the analysis
 - Understanding portfolio breadth and depth
 - Planning next development phases
 - Stakeholder communication
 
 **Contains**:
+
 - Portfolio-wide metrics
 - Completion status breakdown
 - Technology stack analysis
@@ -31,15 +46,18 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ---
 
 ### 2. PORTFOLIO_SURVEY.md
+
 **Purpose**: Detailed breakdown of each project  
 **Length**: ~25,000 words  
 **Best For**:
+
 - Generating documentation pages
 - Understanding each project's scope
 - Referencing README content
 - Building project cards for website
 
 **Contains**:
+
 - Complete README text for all 25 projects
 - File and directory structure for each
 - Technologies identified per project
@@ -47,6 +65,7 @@ This index guides you through the comprehensive analysis of the 25-project portf
 - Summary statistics
 
 **Structure**: One section per project (1-25), each with:
+
 - README Content (full text)
 - Files/Directories Present
 - Technologies Identified
@@ -57,15 +76,18 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ---
 
 ### 3. IMPLEMENTATION_ANALYSIS.md
+
 **Purpose**: Gap analysis and completion roadmap  
 **Length**: ~14,000 words  
 **Best For**:
+
 - Planning development sprints
 - Understanding what's missing
 - Estimating effort for completion
 - Identifying priority areas
 
 **Contains**:
+
 - Detailed gaps for each project
 - Missing components by category
 - Quick wins to improve completion
@@ -73,6 +95,7 @@ This index guides you through the comprehensive analysis of the 25-project portf
 - Recommended next steps by priority
 
 **Organized By**:
+
 - Infrastructure & IaC (Projects 1, 9, 17)
 - Machine Learning & Data (Projects 6, 12, 16, 18)
 - Cloud & Serverless (Projects 7, 8)
@@ -87,15 +110,18 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ---
 
 ### 4. TECHNOLOGY_MATRIX.md
+
 **Purpose**: Quick reference and setup guide  
 **Length**: ~9,500 words  
 **Best For**:
+
 - Setting up projects locally
 - Understanding dependencies
 - Finding quick start commands
 - Technology lookup and reference
 
 **Contains**:
+
 - Quick lookup table (all 25 projects)
 - Technology dependencies by project
 - Missing dependencies checklist
@@ -105,6 +131,7 @@ This index guides you through the comprehensive analysis of the 25-project portf
 - Completion time estimates
 
 **Sections**:
+
 - Projects Using AWS (9 projects)
 - Projects Using Kubernetes (7 projects)
 - Python ML/Data Projects (12 projects)
@@ -121,28 +148,33 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ## How to Use These Documents
 
 ### Scenario 1: "I need to explain the portfolio to someone"
+
 1. Read: SURVEY_EXECUTIVE_SUMMARY.md (key findings section)
 2. Show: Technology stack analysis section
 3. Reference: Project interdependencies section
 
 ### Scenario 2: "I want to build comprehensive documentation pages"
+
 1. Start: PORTFOLIO_SURVEY.md (project descriptions)
 2. Reference: SURVEY_EXECUTIVE_SUMMARY.md (categorization)
 3. Use: Project Quick Lookup Table from TECHNOLOGY_MATRIX.md
 
 ### Scenario 3: "I want to improve project completion"
+
 1. Read: IMPLEMENTATION_ANALYSIS.md (gap analysis)
 2. Check: Quick wins section for each category
 3. Plan: Using estimated completion times
 4. Setup: Using TECHNOLOGY_MATRIX.md
 
 ### Scenario 4: "I want to run a project locally"
+
 1. Find: TECHNOLOGY_MATRIX.md quick start commands
 2. Follow: Installation guide for your platform
 3. Use: Environment variable templates
 4. Reference: Project-specific setup sections
 
 ### Scenario 5: "I need to report on portfolio status"
+
 1. Use: SURVEY_EXECUTIVE_SUMMARY.md metrics
 2. Cite: Completion statistics and breakdowns
 3. Show: Technology matrix chart
@@ -173,6 +205,7 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ## Project Categories (from SURVEY_EXECUTIVE_SUMMARY.md)
 
 ### By Domain
+
 - **Cloud & Infrastructure**: 8 projects (52% avg)
 - **Data & Analytics**: 4 projects (49% avg)
 - **Machine Learning & AI**: 5 projects (54% avg)
@@ -183,6 +216,7 @@ This index guides you through the comprehensive analysis of the 25-project portf
 - **Utilities & Integrations**: 2 projects (55% avg)
 
 ### By Technology Stack
+
 - **Primary**: Python (19), Terraform (4), Solidity (2), Node.js (3)
 - **Cloud**: AWS (9), Kubernetes (7), Azure (2), Blockchain (2)
 - **Frameworks**: FastAPI, MLflow, Hardhat, Istio, Prometheus
@@ -192,6 +226,7 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ## Navigation Guide
 
 ### Finding a Specific Project
+
 1. Go to TECHNOLOGY_MATRIX.md
 2. Use "Project Quick Lookup Table"
 3. Find your project number and status
@@ -200,17 +235,20 @@ This index guides you through the comprehensive analysis of the 25-project portf
    - IMPLEMENTATION_ANALYSIS.md for gaps
 
 ### Finding Projects by Technology
+
 1. Go to TECHNOLOGY_MATRIX.md
 2. Look for "Technology Dependencies by Project"
 3. Find your technology (AWS, K8s, Python, etc.)
 4. See list of projects using that tech
 
 ### Finding Completion Time Estimates
+
 1. Go to IMPLEMENTATION_ANALYSIS.md
 2. Look for "Recommended Next Steps by Priority"
 3. Or check TECHNOLOGY_MATRIX.md table at end
 
 ### Finding Setup Instructions
+
 1. Go to TECHNOLOGY_MATRIX.md
 2. Find "Quick Start Commands by Project"
 3. Or use "Technology Installation Guide"
@@ -268,24 +306,28 @@ To generate documentation pages:
 ## Recommended Reading Order
 
 ### For Developers
+
 1. TECHNOLOGY_MATRIX.md (setup and quick reference)
 2. PORTFOLIO_SURVEY.md (detailed project info)
 3. IMPLEMENTATION_ANALYSIS.md (gaps and tasks)
 4. SURVEY_EXECUTIVE_SUMMARY.md (context)
 
 ### For Project Managers
+
 1. SURVEY_EXECUTIVE_SUMMARY.md (overview)
 2. IMPLEMENTATION_ANALYSIS.md (effort estimation)
 3. TECHNOLOGY_MATRIX.md (resource needs)
 4. PORTFOLIO_SURVEY.md (detailed scope)
 
 ### For Portfolio Reviewers
+
 1. SURVEY_EXECUTIVE_SUMMARY.md (metrics)
 2. PORTFOLIO_SURVEY.md (complete view)
 3. TECHNOLOGY_MATRIX.md (breadth check)
 4. IMPLEMENTATION_ANALYSIS.md (assessment)
 
 ### For Documentation Writers
+
 1. PORTFOLIO_SURVEY.md (source material)
 2. TECHNOLOGY_MATRIX.md (details)
 3. IMPLEMENTATION_ANALYSIS.md (context)
@@ -296,12 +338,14 @@ To generate documentation pages:
 ## Key Statistics Summary
 
 ### Completion Status
+
 - 3 projects 70%+ (ready for documentation)
 - 6 projects 50-69% (substantial work done)
 - 12 projects 40-49% (foundation present)
 - 4 projects <40% (skeleton stage)
 
 ### Technology Distribution
+
 - Python: 19 projects (dominant language)
 - AWS: 9 projects (primary cloud)
 - Kubernetes: 7 projects (orchestration)
@@ -309,6 +353,7 @@ To generate documentation pages:
 - Solidity: 2 projects (blockchain)
 
 ### Common Gaps
+
 1. Testing (unit, integration, test data)
 2. Deployment (Docker, Kubernetes, cloud manifests)
 3. Documentation (architecture, runbooks, API docs)
@@ -320,21 +365,25 @@ To generate documentation pages:
 ## Quick Links Within Documents
 
 ### In PORTFOLIO_SURVEY.md:
+
 - Jump to Project X: Search for `## Project [X]:`
 - Technology summary: Go to end for "Technology Distribution"
 - Completion table: Go to end for "Completion Levels"
 
 ### In IMPLEMENTATION_ANALYSIS.md:
+
 - By category: Search for `CATEGORY [N]:`
 - Quick wins: Search for "Quick Wins to Reach"
 - Priority actions: Go to end for "Recommended Next Steps"
 
 ### In TECHNOLOGY_MATRIX.md:
+
 - Quick lookup: See "Project Quick Lookup Table"
 - Setup for technology X: Search for "Projects Using X"
 - Time estimates: Go to end for completion time table
 
 ### In SURVEY_EXECUTIVE_SUMMARY.md:
+
 - By domain: See "Portfolio Diversity Matrix"
 - Metrics: See "At-a-Glance Project Metrics"
 - Findings: See "Key Findings & Recommendations"
