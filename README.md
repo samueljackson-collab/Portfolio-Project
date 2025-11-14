@@ -14,6 +14,11 @@
 > 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
 
 ---
+## 🧭 Reviewer Fast Reference
+
+- **Reviewer Checklist:** For a detailed validation checklist covering top metrics, interview workflow, and file map, please see [**PORTFOLIO_VALIDATION.md**](./PORTFOLIO_VALIDATION.md). This file serves as the single source of truth for validation runs.
+
+---
 ## 🎯 Summary
 System-minded engineer specializing in building, securing, and operating infrastructure and data-heavy web systems. Hands-on with homelab → production-like setups (wired rack, UniFi network, VPN, backup/restore drills), and pragmatic DevOps/QA practices.
 
