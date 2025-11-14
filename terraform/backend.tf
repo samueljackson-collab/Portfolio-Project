@@ -6,15 +6,9 @@
 # ===================
 # 1. Run the bootstrap script to create S3 bucket and DynamoDB table:
 #    ./scripts/bootstrap_remote_state.sh <project-name> <aws-region>
-#
-#    Example:
-#    ./scripts/bootstrap_remote_state.sh twisted-monk us-east-1
-#
-# 2. The script will output the values you need below.
-#
-# 3. Uncomment the backend block below and fill in the values.
-#
-# 4. Run: terraform init
+# 2. Export TF_VAR_tfstate_* variables or provide a terraform.tfvars file with
+#    the bucket, key, region, and lock table names printed by the script.
+# 3. Run: terraform init
 #    Terraform will migrate local state to S3.
 #
 # SECURITY NOTES:
@@ -24,20 +18,15 @@
 # - DynamoDB table prevents concurrent modifications
 # - Bucket is private with no public access
 
-# Uncomment and configure after running bootstrap script:
-#
-# terraform {
-#   backend "s3" {
-#     bucket         = "twisted-monk-tfstate-XXXXX"  # From bootstrap output
-#     key            = "twisted-monk/terraform.tfstate"
-#     region         = "us-east-1"                    # Your AWS region
-#     dynamodb_table = "twisted-monk-tfstate-lock"   # From bootstrap output
-#     encrypt        = true
-#   }
-# }
-
-# Local backend (default until S3 backend is configured)
 terraform {
+  backend "s3" {
+    bucket         = var.tfstate_bucket_name
+    key            = var.tfstate_key
+    region         = var.tfstate_region
+    dynamodb_table = var.tfstate_lock_table
+    encrypt        = true
+  }
+
   required_version = ">= 1.0"
 
   required_providers {
