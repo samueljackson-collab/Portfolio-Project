@@ -17,6 +17,11 @@
 ## 🧭 Reviewer Fast Reference
 
 - **Reviewer Checklist:** For a detailed validation checklist covering top metrics, interview workflow, and file map, please see [**PORTFOLIO_VALIDATION.md**](./PORTFOLIO_VALIDATION.md). This file serves as the single source of truth for validation runs.
+- **Portfolio Master Index:** Use the new documentation hub to deep-dive specific domains:
+  - [Portfolio_Master_Index_COMPLETE.md](./Portfolio_Master_Index_COMPLETE.md) — canonical reference for infrastructure, observability, automation, and learning content.
+  - [Portfolio_Master_Index_CONTINUATION.md](./Portfolio_Master_Index_CONTINUATION.md) — extended cost modeling, KPI analytics, and scenario narratives.
+  - [Portfolio_Navigation_Guide.md](./Portfolio_Navigation_Guide.md) — rapid interview prep, stakeholder playbooks, and the top 10 metrics (15-minute MTTR, 95% cost savings, etc.).
+  - [AI_PROMPT_LIST_FOR_GAPS.md](./AI_PROMPT_LIST_FOR_GAPS.md) — curated prompts that generate missing evidence while keeping the core metrics consistent.
 
 ---
 ## 🎯 Summary

@@ -6,6 +6,12 @@ Complete analysis of all 25 Enterprise Portfolio Projects
 
 This index guides you through the comprehensive analysis of the 25-project portfolio. Four documents provide complete coverage from executive summary to technical details.
 
+### Portfolio Master Index Set (New)
+- [Portfolio_Master_Index_COMPLETE.md](./Portfolio_Master_Index_COMPLETE.md) — canonical, section-numbered guide to infrastructure, observability, automation, and learning investments. Source for the authoritative MTTR (15-minute) and cost-savings (95%) metrics.
+- [Portfolio_Master_Index_CONTINUATION.md](./Portfolio_Master_Index_CONTINUATION.md) — continuation volume covering cost modeling, KPI analytics, scenario narratives, and the cross-document consistency checklist.
+- [Portfolio_Navigation_Guide.md](./Portfolio_Navigation_Guide.md) — interview-ready navigation plan with stakeholder playbooks, rapid prep plans, and the “Top 10 Metrics to Memorize” list.
+- [AI_PROMPT_LIST_FOR_GAPS.md](./AI_PROMPT_LIST_FOR_GAPS.md) — curated prompt catalog to generate missing runbooks, diagrams, or summaries without drifting from the master metrics.
+
 ---
 
 ## Main Documents
