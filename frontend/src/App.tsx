@@ -33,6 +33,14 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/photos"
+              element={
+                <ProtectedRoute>
+                  <PhotosPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Catch-all redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
