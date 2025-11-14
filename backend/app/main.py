@@ -13,6 +13,8 @@ from sqlalchemy.exc import SQLAlchemyError
 import logging
 import time
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 from app.config import settings
 from app.database import init_db, close_db
 from app.routers import health, auth, content
@@ -26,6 +28,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# Configure Prometheus metrics instrumentator once during module import
+instrumentator = Instrumentator(
+    should_group_status_codes=True,
+    should_ignore_untemplated=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers={"/metrics"},
+)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown tasks."""
@@ -37,6 +48,8 @@ async def lifespan(app: FastAPI):
     if settings.debug:
         logger.warning("Running in debug mode - initializing database")
         await init_db()
+
+    instrumentator.instrument(app).expose(app, include_in_schema=False)
 
     logger.info("Application startup complete")
 

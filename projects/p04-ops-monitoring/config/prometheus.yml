@@ -1,3 +1,7 @@
+# Prometheus configuration for the local monitoring stack
+# Note: host.docker.internal requires Docker Desktop on macOS/Windows. On Linux the
+# docker-compose file maps it via extra_hosts so the same hostname works everywhere.
+
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -22,9 +26,24 @@ scrape_configs:
     static_configs:
       - targets: ['node-exporter:9100']
         labels:
-          instance: 'local-node'
+          service: 'host'
+          environment: 'dev'
 
-  # Example: scrape application metrics
-  # - job_name: 'my-api'
+  - job_name: 'backend-api'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+        labels:
+          service: 'backend'
+          environment: 'dev'
+
+  # Pending frontend instrumentation. Uncomment once the frontend exposes /metrics.
+  # - job_name: 'frontend-app'
+  #   scrape_interval: 30s
+  #   metrics_path: '/metrics'
   #   static_configs:
-  #     - targets: ['api:8080']
+  #     - targets: ['host.docker.internal:3000']
+  #       labels:
+  #         service: 'frontend'
+  #         environment: 'dev'
