@@ -1,0 +1,14 @@
+graph LR
+    subgraph "Firewall Rules - Default Deny"
+        VLAN20 -->|Allow: 443,22| VLAN10
+        VLAN20 -->|Allow: 443| VLAN30
+        VLAN30 -->|Allow: 7441/tcp,10001/udp| VLAN50
+        VLAN40 -->|Deny: All| VLAN10
+        VLAN40 -->|Deny: All| VLAN20
+        VLAN40 -->|Deny: All| VLAN30
+    end
+
+    style VLAN10 fill:#e1f5fe
+    style VLAN20 fill:#f3e5f5
+    style VLAN30 fill:#e8f5e8
+    style VLAN40 fill:#fff3e0

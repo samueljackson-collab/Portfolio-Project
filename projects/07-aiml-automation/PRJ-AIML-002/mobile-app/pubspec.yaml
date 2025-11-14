@@ -1,0 +1,101 @@
+name: tab_organizer
+description: AI-powered cross-platform tab organization application
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.1
+
+  # Cloud Storage & Auth
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3
+  cloud_firestore: ^4.13.6
+
+  # ML & AI
+  tflite_flutter: ^0.10.4
+  tflite_flutter_helper: ^0.3.1
+
+  # Networking
+  web_socket_channel: ^2.4.0
+  http: ^1.1.2
+  dio: ^5.4.0
+
+  # UI Components
+  flutter_slidable: ^3.0.1
+  fl_chart: ^0.65.0
+  animations: ^2.0.11
+  flutter_staggered_grid_view: ^0.7.0
+  shimmer: ^3.0.0
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.2.2
+  json_annotation: ^4.8.1
+  freezed_annotation: ^2.4.1
+  logger: ^2.0.2+1
+
+  # Cryptography
+  encrypt: ^5.0.3
+  crypto: ^3.0.3
+  pointycastle: ^3.7.3
+
+  # Platform Integration
+  url_launcher: ^6.2.2
+  share_plus: ^7.2.1
+  package_info_plus: ^5.0.1
+
+  # Icons
+  cupertino_icons: ^1.0.6
+  font_awesome_flutter: ^10.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting & Analysis
+  flutter_lints: ^3.0.1
+  very_good_analysis: ^5.1.0
+
+  # Code Generation
+  build_runner: ^2.4.7
+  riverpod_generator: ^2.3.9
+  json_serializable: ^6.7.1
+  freezed: ^2.4.6
+  hive_generator: ^2.0.1
+
+  # Testing
+  mockito: ^5.4.4
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/models/
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: fonts/Inter-Regular.ttf
+        - asset: fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: fonts/Inter-Bold.ttf
+          weight: 700
