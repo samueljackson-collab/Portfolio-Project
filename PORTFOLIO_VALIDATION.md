@@ -29,10 +29,10 @@ _Source: `PORTFOLIO_SUMMARY_TABLE.txt` top priorities section._【F:PORTFOLIO_SU
 
 ## Interview Workflow Validation
 
-1. Walk through **PRJ-HOME-002** (homelab build).
-2. Demo **PRJ-SDE-002** observability dashboards.
-3. Explain **PRJ-CYB-BLUE-001** SIEM and response loops.
-4. Show the Terraform modules powering IaC stories.
+- [ ] Walk through **PRJ-HOME-002** (homelab build).
+- [ ] Demo **PRJ-SDE-002** observability dashboards.
+- [ ] Explain **PRJ-CYB-BLUE-001** SIEM and response loops.
+- [ ] Show the Terraform modules powering IaC stories.
 
 _Source: `EXECUTIVE_SUMMARY.md` “How to use this portfolio – For Interviews.”_【F:EXECUTIVE_SUMMARY.md†L338-L354】
 
