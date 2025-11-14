@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxmox Virtual Environment - Datacenter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: #2b5797;
+            color: white;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 50px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .logo img {
+            height: 28px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: #e9ecef;
+            border-bottom: 1px solid #dee2e6;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-button {
+            background: white;
+            border: 1px solid #ced4da;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-button:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        .toolbar-button.primary {
+            background: #2b5797;
+            color: white;
+            border-color: #2b5797;
+        }
+
+        .toolbar-button.primary:hover {
+            background: #1e3f6d;
+        }
+
+        .toolbar-separator {
+            width: 1px;
+            height: 24px;
+            background: #dee2e6;
+            margin: 0 4px;
+        }
+
+        /* Main Container */
+        .container {
+            display: flex;
+            height: calc(100vh - 96px);
+        }
+
+        /* Sidebar Tree */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        .tree-item:hover {
+            background: #f8f9fa;
+        }
+
+        .tree-item.selected {
+            background: #e7f3ff;
+            border-left: 3px solid #2b5797;
+            font-weight: 600;
+        }
+
+        .tree-item.level-0 {
+            padding-left: 8px;
+        }
+
+        .tree-item.level-1 {
+            padding-left: 24px;
+        }
+
+        .tree-item.level-2 {
+            padding-left: 40px;
+        }
+
+        .tree-item.level-3 {
+            padding-left: 56px;
+        }
+
+        .tree-icon {
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .expand-icon {
+            font-size: 10px;
+            width: 12px;
+        }
+
+        .status-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .status-running {
+            background: #28a745;
+        }
+
+        .status-stopped {
+            background: #6c757d;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            background: #f8f9fa;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .content-header {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .content-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .content-subtitle {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 16px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2b5797;
+        }
+
+        .stat-subtext {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        /* Resource Usage */
+        .usage-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .usage-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .usage-item {
+            margin-bottom: 16px;
+        }
+
+        .usage-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .usage-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .usage-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .usage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s;
+        }
+
+        .usage-fill.warning {
+            background: linear-gradient(90deg, #ffc107, #fd7e14);
+        }
+
+        .usage-fill.critical {
+            background: linear-gradient(90deg, #dc3545, #c82333);
+        }
+
+        .usage-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* VM Table */
+        .vm-table-container {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .vm-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .vm-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .vm-table th {
+            text-align: left;
+            padding: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .vm-table td {
+            padding: 12px;
+            font-size: 13px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .vm-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .vm-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .vm-status.running {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .vm-status.stopped {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .vm-type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #e7f3ff;
+            color: #2b5797;
+        }
+
+        .vm-type-badge.lxc {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* Progress Mini Bar */
+        .mini-progress {
+            width: 80px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .mini-progress-fill {
+            height: 100%;
+            background: #28a745;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 2px;
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #6c757d;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: #2b5797;
+        }
+
+        .tab.active {
+            color: #2b5797;
+            border-bottom-color: #2b5797;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span style="font-size: 20px;">🖥️</span>
+                <span>Proxmox Virtual Environment</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <span>👤</span>
+                <span>root@pam</span>
+            </div>
+            <button class="logout-btn">Logout</button>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <button class="toolbar-button primary">
+            <span>▶</span>
+            <span>Start</span>
+        </button>
+        <button class="toolbar-button">
+            <span>⏸</span>
+            <span>Shutdown</span>
+        </button>
+        <button class="toolbar-button">
+            <span>⏹</span>
+            <span>Stop</span>
+        </button>
+        <button class="toolbar-button">
+            <span>🔄</span>
+            <span>Reboot</span>
+        </button>
+        <div class="toolbar-separator"></div>
+        <button class="toolbar-button">
+            <span>📺</span>
+            <span>Console</span>
+        </button>
+        <button class="toolbar-button">
+            <span>📊</span>
+            <span>Monitor</span>
+        </button>
+        <div class="toolbar-separator"></div>
+        <button class="toolbar-button">
+            <span>➕</span>
+            <span>Create VM</span>
+        </button>
+        <button class="toolbar-button">
+            <span>💾</span>
+            <span>Backup</span>
+        </button>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar Tree -->
+        <div class="sidebar">
+            <div class="tree-item level-0 selected">
+                <span class="expand-icon">▼</span>
+                <span class="tree-icon">🏢</span>
+                <span>Datacenter</span>
+            </div>
+            <div class="tree-item level-1">
+                <span class="expand-icon">▼</span>
+                <span class="tree-icon">🖥️</span>
+                <span>proxmox-host</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-running"></span>
+                <span class="tree-icon">💻</span>
+                <span>100 (wiki-vm)</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-running"></span>
+                <span class="tree-icon">💻</span>
+                <span>101 (homeassistant-vm)</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-running"></span>
+                <span class="tree-icon">💻</span>
+                <span>102 (immich-vm)</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-running"></span>
+                <span class="tree-icon">💻</span>
+                <span>103 (monitoring-vm)</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-running"></span>
+                <span class="tree-icon">💻</span>
+                <span>104 (database-vm)</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-running"></span>
+                <span class="tree-icon">💻</span>
+                <span>105 (reverse-proxy-vm)</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-running"></span>
+                <span class="tree-icon">📦</span>
+                <span>200 (docker-lxc)</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-running"></span>
+                <span class="tree-icon">📦</span>
+                <span>201 (backup-lxc)</span>
+            </div>
+            <div class="tree-item level-2">
+                <span class="expand-icon"></span>
+                <span class="status-icon status-stopped"></span>
+                <span class="tree-icon">📦</span>
+                <span>202 (test-lxc)</span>
+            </div>
+            <div class="tree-item level-1">
+                <span class="expand-icon">▶</span>
+                <span class="tree-icon">💾</span>
+                <span>local (proxmox-host)</span>
+            </div>
+            <div class="tree-item level-1">
+                <span class="expand-icon">▶</span>
+                <span class="tree-icon">💾</span>
+                <span>local-lvm (proxmox-host)</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <div class="content-title">Datacenter: homelab</div>
+                <div class="content-subtitle">Production homelab infrastructure</div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active">Summary</button>
+                <button class="tab">Cluster</button>
+                <button class="tab">Options</button>
+                <button class="tab">Storage</button>
+                <button class="tab">Backup</button>
+                <button class="tab">Replication</button>
+                <button class="tab">Permissions</button>
+                <button class="tab">HA</button>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Nodes</div>
+                    <div class="stat-value">1</div>
+                    <div class="stat-subtext">1 online</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Guests</div>
+                    <div class="stat-value">9</div>
+                    <div class="stat-subtext">6 VMs • 3 LXC</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">CPU Usage</div>
+                    <div class="stat-value">38%</div>
+                    <div class="stat-subtext">12 of 32 cores</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Memory</div>
+                    <div class="stat-value">42%</div>
+                    <div class="stat-subtext">54 GB of 128 GB</div>
+                </div>
+            </div>
+
+            <!-- Resource Usage -->
+            <div class="usage-card">
+                <div class="usage-title">Resource Utilization</div>
+
+                <div class="usage-item">
+                    <div class="usage-label">
+                        <span>CPU</span>
+                        <span>38% (12 of 32 cores)</span>
+                    </div>
+                    <div class="usage-bar">
+                        <div class="usage-fill" style="width: 38%;"></div>
+                        <div class="usage-text">12.16 / 32.00 cores</div>
+                    </div>
+                </div>
+
+                <div class="usage-item">
+                    <div class="usage-label">
+                        <span>Memory</span>
+                        <span>42% (54.2 GB of 128 GB)</span>
+                    </div>
+                    <div class="usage-bar">
+                        <div class="usage-fill" style="width: 42%;"></div>
+                        <div class="usage-text">54.2 GB / 128.0 GB</div>
+                    </div>
+                </div>
+
+                <div class="usage-item">
+                    <div class="usage-label">
+                        <span>Storage (local-lvm)</span>
+                        <span>58% (1.16 TB of 2 TB)</span>
+                    </div>
+                    <div class="usage-bar">
+                        <div class="usage-fill warning" style="width: 58%;"></div>
+                        <div class="usage-text">1.16 TB / 2.00 TB</div>
+                    </div>
+                </div>
+
+                <div class="usage-item">
+                    <div class="usage-label">
+                        <span>Network (bond0)</span>
+                        <span>↓ 45.2 MB/s ↑ 12.8 MB/s</span>
+                    </div>
+                    <div class="usage-bar">
+                        <div class="usage-fill" style="width: 22%;"></div>
+                        <div class="usage-text">22% of 1 Gbps capacity</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VM/Container Table -->
+            <div class="vm-table-container">
+                <table class="vm-table">
+                    <thead>
+                        <tr>
+                            <th>VMID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                            <th>Node</th>
+                            <th>CPU</th>
+                            <th>Memory</th>
+                            <th>Disk</th>
+                            <th>Uptime</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>100</td>
+                            <td>wiki-vm</td>
+                            <td><span class="vm-status running">● running</span></td>
+                            <td><span class="vm-type-badge">QEMU</span></td>
+                            <td>proxmox-host</td>
+                            <td>
+                                18%
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width: 18%;"></div>
+                                </div>
+                            </td>
+                            <td>2.1 GB / 4 GB</td>
+                            <td>28 GB / 50 GB</td>
+                            <td>15d 8h</td>
+                        </tr>
+                        <tr>
+                            <td>101</td>
+                            <td>homeassistant-vm</td>
+                            <td><span class="vm-status running">● running</span></td>
+                            <td><span class="vm-type-badge">QEMU</span></td>
+                            <td>proxmox-host</td>
+                            <td>
+                                24%
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width: 24%;"></div>
+                                </div>
+                            </td>
+                            <td>3.2 GB / 4 GB</td>
+                            <td>18 GB / 32 GB</td>
+                            <td>15d 8h</td>
+                        </tr>
+                        <tr>
+                            <td>102</td>
+                            <td>immich-vm</td>
+                            <td><span class="vm-status running">● running</span></td>
+                            <td><span class="vm-type-badge">QEMU</span></td>
+                            <td>proxmox-host</td>
+                            <td>
+                                42%
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width: 42%;"></div>
+                                </div>
+                            </td>
+                            <td>6.8 GB / 8 GB</td>
+                            <td>287 GB / 500 GB</td>
+                            <td>15d 8h</td>
+                        </tr>
+                        <tr>
+                            <td>103</td>
+                            <td>monitoring-vm</td>
+                            <td><span class="vm-status running">● running</span></td>
+                            <td><span class="vm-type-badge">QEMU</span></td>
+                            <td>proxmox-host</td>
+                            <td>
+                                35%
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width: 35%;"></div>
+                                </div>
+                            </td>
+                            <td>5.4 GB / 8 GB</td>
+                            <td>64 GB / 100 GB</td>
+                            <td>15d 8h</td>
+                        </tr>
+                        <tr>
+                            <td>104</td>
+                            <td>database-vm</td>
+                            <td><span class="vm-status running">● running</span></td>
+                            <td><span class="vm-type-badge">QEMU</span></td>
+                            <td>proxmox-host</td>
+                            <td>
+                                52%
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width: 52%;"></div>
+                                </div>
+                            </td>
+                            <td>12.3 GB / 16 GB</td>
+                            <td>128 GB / 200 GB</td>
+                            <td>15d 8h</td>
+                        </tr>
+                        <tr>
+                            <td>105</td>
+                            <td>reverse-proxy-vm</td>
+                            <td><span class="vm-status running">● running</span></td>
+                            <td><span class="vm-type-badge">QEMU</span></td>
+                            <td>proxmox-host</td>
+                            <td>
+                                12%
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width: 12%;"></div>
+                                </div>
+                            </td>
+                            <td>1.4 GB / 2 GB</td>
+                            <td>8 GB / 20 GB</td>
+                            <td>15d 8h</td>
+                        </tr>
+                        <tr>
+                            <td>200</td>
+                            <td>docker-lxc</td>
+                            <td><span class="vm-status running">● running</span></td>
+                            <td><span class="vm-type-badge lxc">LXC</span></td>
+                            <td>proxmox-host</td>
+                            <td>
+                                28%
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width: 28%;"></div>
+                                </div>
+                            </td>
+                            <td>3.2 GB / 4 GB</td>
+                            <td>45 GB / 100 GB</td>
+                            <td>15d 8h</td>
+                        </tr>
+                        <tr>
+                            <td>201</td>
+                            <td>backup-lxc</td>
+                            <td><span class="vm-status running">● running</span></td>
+                            <td><span class="vm-type-badge lxc">LXC</span></td>
+                            <td>proxmox-host</td>
+                            <td>
+                                8%
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width: 8%;"></div>
+                                </div>
+                            </td>
+                            <td>512 MB / 2 GB</td>
+                            <td>12 GB / 50 GB</td>
+                            <td>15d 8h</td>
+                        </tr>
+                        <tr>
+                            <td>202</td>
+                            <td>test-lxc</td>
+                            <td><span class="vm-status stopped">● stopped</span></td>
+                            <td><span class="vm-type-badge lxc">LXC</span></td>
+                            <td>proxmox-host</td>
+                            <td>-</td>
+                            <td>0 B / 1 GB</td>
+                            <td>2 GB / 20 GB</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
