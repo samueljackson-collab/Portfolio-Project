@@ -10,6 +10,7 @@ This module provides:
 - Album management (auto-created by location)
 """
 
+import asyncio
 from uuid import UUID
 from typing import Optional, List
 from datetime import datetime, date
@@ -25,10 +26,12 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, extract
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models import User, Photo, Album
+from app.config import settings
 from app.schemas import (
     PhotoResponse,
     PhotoListResponse,
@@ -89,15 +92,18 @@ async def upload_photo(
             detail="Invalid image file. Supported formats: JPEG, PNG, GIF, WEBP",
         )
 
-    # Check file size (max 20MB for elderly-friendly app)
-    if file_size > 20 * 1024 * 1024:
+    # Check file size against configuration
+    if file_size > settings.max_photo_size_bytes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File size too large. Maximum 20MB allowed.",
+            detail=(
+                "File size too large. Maximum "
+                f"{settings.max_photo_size_mb}MB allowed."
+            ),
         )
 
     # Extract EXIF metadata
-    metadata = photo_service.extract_exif_data(file_data)
+    metadata = await asyncio.to_thread(photo_service.extract_exif_data, file_data)
 
     # Reverse geocode GPS coordinates if available
     city = None
@@ -148,7 +154,18 @@ async def upload_photo(
                 photo_count=0,
             )
             db.add(album)
-            await db.flush()  # Get album ID
+            try:
+                await db.flush()  # Get album ID
+            except IntegrityError:
+                # Another request likely created the album concurrently
+                await db.rollback()
+                result = await db.execute(album_query)
+                album = result.scalar_one_or_none()
+                if not album:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Could not create location album. Please retry.",
+                    )
 
     # Create photo record
     photo = Photo(
@@ -172,6 +189,7 @@ async def upload_photo(
     )
 
     db.add(photo)
+    await db.flush()
 
     # Update album photo count and cover photo
     if album:

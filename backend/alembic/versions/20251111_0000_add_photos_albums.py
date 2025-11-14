@@ -37,6 +37,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_albums_owner_id'), 'albums', ['owner_id'], unique=False)
     op.create_index('ix_albums_owner_type', 'albums', ['owner_id', 'type'], unique=False)
     op.create_index('ix_albums_owner_updated', 'albums', ['owner_id', 'updated_at'], unique=False)
+    op.create_unique_constraint('uq_albums_owner_name', 'albums', ['owner_id', 'name'])
 
     # Create photos table
     op.create_table(
@@ -104,6 +105,7 @@ def downgrade() -> None:
     op.drop_table('photos')
 
     # Drop albums table
+    op.drop_constraint('uq_albums_owner_name', 'albums', type_='unique')
     op.drop_index('ix_albums_owner_updated', table_name='albums')
     op.drop_index('ix_albums_owner_type', table_name='albums')
     op.drop_index(op.f('ix_albums_owner_id'), table_name='albums')

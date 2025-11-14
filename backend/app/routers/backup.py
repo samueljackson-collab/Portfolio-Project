@@ -8,6 +8,8 @@ These endpoints allow administrators to:
 - Verify backup integrity
 """
 
+import asyncio
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Dict, Any
 from app.dependencies import get_current_user
@@ -22,6 +24,8 @@ router = APIRouter(
     prefix="/backup",
     tags=["Backup"],
 )
+
+logger = logging.getLogger(__name__)
 
 
 @router.get(
@@ -98,8 +102,13 @@ async def trigger_backup_sync(
     # In production, check if user is admin
     # For now, all authenticated users can trigger backups
 
-    # Note: This should be run as a background task
-    # For demonstration, we'll just return a message
+    async def _run_sync_task():
+        try:
+            await sync_all_photos()
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.exception("Backup sync task failed: %s", exc)
+
+    asyncio.create_task(_run_sync_task())
 
     return {
         "message": "Backup sync initiated",

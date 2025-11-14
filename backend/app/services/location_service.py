@@ -5,6 +5,7 @@ Uses the Nominatim geocoder (OpenStreetMap) to convert latitude/longitude
 coordinates into human-readable location names.
 """
 
+import asyncio
 from typing import Optional, Dict
 from geopy.geocoders import Nominatim
 from geopy.exc import GeopyError
@@ -44,14 +45,17 @@ async def reverse_geocode(
     location_info = LocationInfo()
 
     try:
-        # Query Nominatim for location details
-        # Note: Nominatim is synchronous, but we run it in the async context
-        location = geocoder.reverse(
+        # Query Nominatim for location details without blocking the event loop
+        location = await asyncio.to_thread(
+            geocoder.reverse,
             f"{latitude}, {longitude}",
             exactly_one=True,
             language="en",
             timeout=timeout,
         )
+
+        # Respect Nominatim's 1 request/second rate limit
+        await asyncio.sleep(1)
 
         if not location:
             logger.warning(

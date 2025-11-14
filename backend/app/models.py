@@ -17,6 +17,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Float,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -295,6 +296,7 @@ class Album(Base):
     __table_args__ = (
         Index("ix_albums_owner_type", "owner_id", "type"),
         Index("ix_albums_owner_updated", "owner_id", "updated_at"),
+        UniqueConstraint("owner_id", "name", name="uq_albums_owner_name"),
     )
 
     def __repr__(self) -> str:

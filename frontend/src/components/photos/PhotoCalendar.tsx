@@ -8,12 +8,13 @@
  * - Easy navigation
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 import { photoService } from '../../api/services'
 import type { CalendarMonthResponse, Photo } from '../../api/types'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, startOfMonth } from 'date-fns'
+import './PhotoCalendar.css'
 
 interface PhotoCalendarProps {
   onDateSelect?: (date: Date, photos: Photo[]) => void
@@ -25,12 +26,13 @@ export const PhotoCalendar: React.FC<PhotoCalendarProps> = ({
   className = '',
 }) => {
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [activeMonth, setActiveMonth] = useState(startOfMonth(new Date()))
   const [monthData, setMonthData] = useState<CalendarMonthResponse | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    loadMonthData(selectedDate)
-  }, [selectedDate])
+    loadMonthData(activeMonth)
+  }, [activeMonth])
 
   const loadMonthData = async (date: Date) => {
     setLoading(true)
@@ -47,26 +49,24 @@ export const PhotoCalendar: React.FC<PhotoCalendarProps> = ({
     }
   }
 
-  const getPhotosForDate = (date: Date): number => {
-    if (!monthData) return 0
-
-    const dateStr = format(date, 'yyyy-MM-dd')
-    const dateData = monthData.dates.find((d) => {
-      const dStr = format(parseISO(d.date), 'yyyy-MM-dd')
-      return dStr === dateStr
+  const dateLookup = useMemo(() => {
+    if (!monthData) return new Map<string, CalendarMonthResponse['dates'][number]>()
+    const map = new Map<string, CalendarMonthResponse['dates'][number]>()
+    monthData.dates.forEach((entry) => {
+      map.set(format(parseISO(entry.date), 'yyyy-MM-dd'), entry)
     })
+    return map
+  }, [monthData])
 
-    return dateData?.photo_count || 0
+  const getPhotosForDate = (date: Date): number => {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    return dateLookup.get(dateStr)?.photo_count ?? 0
   }
 
   const handleDateClick = (date: Date) => {
-    if (!monthData) return
-
+    setSelectedDate(date)
     const dateStr = format(date, 'yyyy-MM-dd')
-    const dateData = monthData.dates.find((d) => {
-      const dStr = format(parseISO(d.date), 'yyyy-MM-dd')
-      return dStr === dateStr
-    })
+    const dateData = dateLookup.get(dateStr)
 
     if (dateData && dateData.photo_count > 0) {
       onDateSelect?.(date, dateData.preview_photos)
@@ -81,7 +81,7 @@ export const PhotoCalendar: React.FC<PhotoCalendarProps> = ({
 
     return (
       <div className="mt-1">
-        <span className="inline-block bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+        <span className="inline-block bg-blue-900 text-white text-xs font-bold px-2 py-1 rounded-full">
           {count}
         </span>
       </div>
@@ -89,53 +89,29 @@ export const PhotoCalendar: React.FC<PhotoCalendarProps> = ({
   }
 
   return (
-    <div className={`photo-calendar ${className}`}>
-      <style>{`
-        .photo-calendar .react-calendar {
-          width: 100%;
-          border: 2px solid #e5e7eb;
-          border-radius: 0.75rem;
-          font-family: inherit;
-          line-height: 1.5;
-        }
-        .photo-calendar .react-calendar__tile {
-          padding: 1.25rem 0.5rem;
-          font-size: 1.125rem;
-          min-height: 80px;
-        }
-        .photo-calendar .react-calendar__tile:enabled:hover {
-          background-color: #eff6ff;
-        }
-        .photo-calendar .react-calendar__tile--active {
-          background-color: #3b82f6 !important;
-          color: white;
-        }
-        .photo-calendar .react-calendar__month-view__weekdays {
-          font-size: 1.125rem;
-          font-weight: 600;
-          text-transform: uppercase;
-        }
-        .photo-calendar .react-calendar__navigation button {
-          font-size: 1.25rem;
-          min-height: 48px;
-        }
-      `}</style>
-
+    <div className={`photo-calendar ${className}`.trim()}>
       <Calendar
         value={selectedDate}
         onClickDay={handleDateClick}
-        onActiveStartDateChange={({ activeStartDate }) =>
-          activeStartDate && setSelectedDate(activeStartDate)
-        }
+        onActiveStartDateChange={({ activeStartDate }) => {
+          if (activeStartDate) {
+            setActiveMonth(startOfMonth(activeStartDate))
+            setSelectedDate(activeStartDate)
+          }
+        }}
         tileContent={tileContent}
         className="text-lg"
       />
+
+      {loading && (
+        <p className="mt-4 text-base text-gray-600">Loading photos for this month…</p>
+      )}
 
       {monthData && (
         <div className="mt-6 p-6 bg-gray-50 rounded-lg">
           <p className="text-xl text-gray-700">
             <span className="font-semibold">{monthData.total_photos}</span> photos in{' '}
-            {format(selectedDate, 'MMMM yyyy')}
+            {format(activeMonth, 'MMMM yyyy')}
           </p>
         </div>
       )}

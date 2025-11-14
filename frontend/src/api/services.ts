@@ -160,11 +160,14 @@ export const photoService = {
   },
 
   /**
-   * Get photo file URL (for displaying image)
+   * Download a photo or thumbnail as a Blob (preserves auth headers)
    */
-  getFileUrl(id: string, thumbnail = false): string {
-    const baseUrl = apiClient.defaults.baseURL || ''
-    return `${baseUrl}/photos/${id}/file${thumbnail ? '?thumbnail=true' : ''}`
+  async downloadFile(id: string, thumbnail = false): Promise<Blob> {
+    const response = await apiClient.get(`/photos/${id}/file`, {
+      params: thumbnail ? { thumbnail: true } : undefined,
+      responseType: 'blob',
+    })
+    return response.data
   },
 
   /**
