@@ -10,6 +10,17 @@ This index guides you through the comprehensive analysis of the 25-project portf
 
 ## Main Documents
 
+### Portfolio Master Index Collection
+Three companion files provide the full 75,000-word Portfolio Master Index deliverable.
+
+| File | Focus | Why it matters |
+|------|-------|----------------|
+| `Portfolio_Master_Index_CONTINUATION.md` | Sections 4.1.1–4.1.7 (homelab business case, architecture, security, storage, DR) | Definitive reference for the flagship infrastructure project with metrics, ADRs, and runbooks. |
+| `Portfolio_Master_Index_COMPLETE.md` | Sections 4.1.8–11 (observability, CI/CD, IaC, evidence, interview prep, learning roadmap) | Captures automation, SLO alerting, interview narratives, and cross-reference maps for every role. |
+| `Portfolio_Navigation_Guide.md` | How-to guide for the Master Index set | 1.5-hour prep workflow, metrics cheat sheet, and distribution checklist for recruiters/interviewers. |
+
+Use the navigation guide first, then dive into the continuation or complete volume depending on the section you need to reference.
+
 ### 1. SURVEY_EXECUTIVE_SUMMARY.md
 **Purpose**: High-level overview and key findings  
 **Length**: ~3,000 words  
