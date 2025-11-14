@@ -16,9 +16,7 @@
 ---
 ## 🧭 Reviewer Fast Reference
 
-- **Top metrics:** Portfolio Summary Table tracks 25 enterprise projects with 2 production-ready builds (8%), 10 partial (40%), and 13 minimal implementations (52%). Component coverage highlights 100% README completion, 92% application code, but only 4% tests and 0% CI/CD pipelines, making those the highest-risk deltas.【F:PORTFOLIO_SUMMARY_TABLE.txt†L37-L74】
-- **Interview prep workflow:** Follow the four-step flow from the Executive Summary—walk homelab PRJ-HOME-002, demo PRJ-SDE-002 dashboards, explain PRJ-CYB-BLUE-001’s SIEM, and show Terraform modules—so reviewers can confirm behavioral + technical narratives are prepped.【F:EXECUTIVE_SUMMARY.md†L338-L354】
-- **File map:** Primary review path is README → CODE_QUALITY_REPORT.md → REMEDIATION_PLAN.md → SCREENSHOT_GUIDE.md, with secondary references in MISSING_DOCUMENTS_ANALYSIS.md, PROJECT_COMPLETION_CHECKLIST.md, QUICK_START_GUIDE.md, and scripts/README.md. Each project also has its own README/runbook under the corresponding directory.【F:EXECUTIVE_SUMMARY.md†L391-L408】
+- **Reviewer Checklist:** For a detailed validation checklist covering top metrics, interview workflow, and file map, please see [**PORTFOLIO_VALIDATION.md**](./PORTFOLIO_VALIDATION.md). This file serves as the single source of truth for validation runs.
 
 ---
 ## 🎯 Summary
