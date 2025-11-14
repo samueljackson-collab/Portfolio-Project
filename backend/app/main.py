@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
+from prometheus_fastapi_instrumentator import Instrumentator
 import logging
 import time
 
@@ -148,6 +149,11 @@ app.include_router(auth.router)
 app.include_router(content.router)
 app.include_router(photos.router)
 app.include_router(backup.router)
+
+
+# Prometheus metrics instrumentation
+# Expose metrics at /metrics endpoint for Prometheus scraping
+Instrumentator().instrument(app).expose(app, endpoint="/metrics", tags=["Monitoring"])
 
 
 # Root endpoint
