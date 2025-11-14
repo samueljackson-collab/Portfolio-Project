@@ -24,6 +24,18 @@ make test
 make deploy
 ```
 
+## Configuration
+
+Create a `.env` file (based on `.env.example`) with the variables required by the Makefile targets and deployment scripts:
+
+| Variable | Description |
+| --- | --- |
+| `AWS_ACCOUNT_ID` | AWS account that hosts the container registry. |
+| `AWS_REGION` | AWS region where infrastructure resources are provisioned. |
+| `PROJECT_SLUG` | Identifier used for tagging Docker images in the Makefile. |
+
+These values are consumed by `make build`, the deployment script in `scripts/deploy.sh`, and can also be referenced by local tooling such as `docker run --env-file .env ...`.
+
 ## Documentation
 
 - [📘 HANDBOOK](docs/HANDBOOK.md) - Engineering standards and best practices
@@ -48,7 +60,7 @@ P01-aws-infra/
 ├── tests/                    # Test suite
 ├── infrastructure/           # IaC configurations
 │   ├── terraform/
-│   └── k8s/
+│   └── k8s/                  # Starter Kubernetes manifests
 └── ci/                       # CI/CD workflows
 ```
 
