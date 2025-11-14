@@ -1,6 +1,15 @@
 apiVersion: 1
 
 providers:
+  - name: portfolio-dashboards
+    orgId: 1
+    folder: Portfolio
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
   - name: 'default'
     orgId: 1
     folder: ''

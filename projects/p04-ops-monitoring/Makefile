@@ -1,4 +1,4 @@
-.PHONY: setup run stop validate-prometheus test-alerts test clean help
+.PHONY: setup run stop restart status logs logs-prometheus logs-grafana reload-prometheus validate-prometheus test-alerts test clean help
 
 setup: ## Install dependencies
 	@echo "Checking Docker..."
@@ -17,6 +17,24 @@ run: ## Start monitoring stack
 stop: ## Stop monitoring stack
 	docker-compose down
 
+restart: ## Restart monitoring stack
+	$(MAKE) stop
+	$(MAKE) run
+
+status: ## Show container status
+	docker-compose ps
+
+logs: ## Tail logs for all services
+	docker-compose logs -f
+
+logs-prometheus: ## Tail Prometheus logs
+	docker-compose logs -f prometheus
+
+logs-grafana: ## Tail Grafana logs
+	docker-compose logs -f grafana
+
+reload-prometheus: ## Reload Prometheus configuration without restart
+	@docker-compose exec -T prometheus wget -qO- http://localhost:9090/-/reload >/dev/null && echo "✓ Prometheus configuration reloaded"
 restart: stop run ## Restart monitoring stack
 
 status: ## Check status of monitoring services
@@ -44,20 +62,20 @@ reload-prometheus: ## Reload Prometheus config without restart
 
 validate-prometheus: ## Validate Prometheus config
 	@docker run --rm -v $(PWD)/config:/config prom/prometheus:v2.47.0 \
-		promtool check config /config/prometheus.yml
+	promtool check config /config/prometheus.yml
 	@docker run --rm -v $(PWD)/config:/config prom/prometheus:v2.47.0 \
-		promtool check rules /config/alerts.yml
+	promtool check rules /config/alerts.yml
 
 test-alerts: ## Test alerting rules
 	@echo "Testing alert rules..."
 	@docker run --rm -v $(PWD)/config:/config prom/prometheus:v2.47.0 \
-		promtool test rules /config/alerts.yml || echo "⚠ Create test file: config/alerts.test.yml"
+	promtool test rules /config/alerts.yml || echo "⚠ Create test file: config/alerts.test.yml"
 
 test: ## Run tests
 	@if command -v pytest >/dev/null 2>&1; then \
-		pytest -v tests/; \
+	pytest -v tests/; \
 	else \
-		echo "pytest not installed"; \
+	echo "pytest not installed"; \
 	fi
 
 clean: ## Clean up volumes and containers
@@ -65,6 +83,6 @@ clean: ## Clean up volumes and containers
 	@echo "✓ Cleaned up monitoring stack"
 
 help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m%s\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help
