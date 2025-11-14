@@ -1,0 +1,351 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+  TERRAFORM_VERSION: '1.9.5'
+
+jobs:
+  quality:
+    name: Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('portfolio/backend/requirements.txt', 'tools/dupefinder/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Python tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff==0.6.9 bandit==1.7.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('portfolio/frontend/package-lock.json', 'portfolio/frontend/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+      - name: Install frontend dependencies
+        run: |
+          cd portfolio/frontend
+          npm install
+      - name: Prepare report directory
+        run: mkdir -p reports
+      - name: Ruff Lint
+        run: |
+          ruff check portfolio/backend --output-format full --output-file reports/ruff.txt
+      - name: Bandit Security Scan
+        run: |
+          bandit -r portfolio/backend -f txt -o reports/bandit.txt
+      - name: ESLint
+        run: |
+          cd portfolio/frontend
+          npx eslint "src/**/*.{ts,tsx}" -f stylish -o ../reports/eslint.txt
+      - name: Prettier Check
+        run: |
+          cd portfolio/frontend
+          npx prettier --check "src/**/*.{ts,tsx}" | tee ../reports/prettier.txt
+      - name: npm Audit
+        run: |
+          cd portfolio/frontend
+          npm audit --audit-level=high | tee ../reports/npm-audit.txt
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - name: Cache Terraform plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: ${{ runner.os }}-tf-${{ env.TERRAFORM_VERSION }}-${{ hashFiles('portfolio/infra/**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-tf-
+      - name: tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: portfolio/infra
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+      - name: TFLint
+        run: |
+          cd portfolio/infra
+          tflint --init
+          tflint
+      - name: Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          path: .
+          format: table
+          output: reports/trivy.txt
+      - name: Upload quality artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports
+          path: reports
+      - name: Annotate PR on failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `❌ Quality checks failed in run ${context.runId}. See details: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-unit-${{ hashFiles('portfolio/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-unit-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r portfolio/backend/requirements.txt
+      - name: Run pytest
+        run: |
+          cd portfolio/backend
+          pytest -q --maxfail=1 --disable-warnings --cov=app --cov-report=xml:coverage.xml --cov-report=term
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage
+          path: portfolio/backend/coverage.xml
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-integration-${{ hashFiles('portfolio/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-integration-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r portfolio/backend/requirements.txt
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/app
+        run: |
+          cd portfolio/backend
+          pytest tests/test_integration.py -q --maxfail=1 --disable-warnings --cov=app --cov-report=xml:integration-coverage.xml
+      - name: Upload integration coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-coverage
+          path: portfolio/backend/integration-coverage.xml
+
+  e2e:
+    name: Playwright E2E (skeleton)
+    runs-on: ubuntu-latest
+    needs: unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install frontend dependencies
+        run: |
+          cd portfolio/frontend
+          npm ci || npm install
+      - name: Playwright stub
+        run: |
+          if [ -d "portfolio/e2e" ]; then
+            cd portfolio/e2e
+            npx playwright install --with-deps
+            npx playwright test || true
+          else
+            echo "Playwright tests not yet implemented" | tee playwright.txt
+          fi
+      - name: Upload e2e log
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            playwright.txt
+          if-no-files-found: ignore
+
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [integration, e2e]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: portfolio/backend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ github.repository }}/backend:latest
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: portfolio/frontend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ github.repository }}/frontend:latest
+
+  sbom:
+    name: SBOM Generation
+    runs-on: ubuntu-latest
+    needs: docker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Generate CycloneDX SBOM (frontend)
+        run: |
+          cd portfolio/frontend
+          npm ci
+          npx @cyclonedx/cyclonedx-npm --output-file ../frontend-sbom.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Generate CycloneDX SBOM (backend)
+        run: |
+          python -m pip install --upgrade pip
+          pip install cyclonedx-bom
+          cd portfolio/backend
+          cyclonedx-py --format json --output ../backend-sbom.json
+      - name: Upload SBOMs
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: |
+            portfolio/frontend-sbom.json
+            portfolio/backend-sbom.json
+
+  deploy_staging:
+    name: Deploy Staging (Helm)
+    runs-on: ubuntu-latest
+    needs: sbom
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      - name: Helm upgrade (dry-run)
+        run: |
+          if [ -d "charts/portfolio" ]; then
+            helm upgrade --install portfolio charts/portfolio --namespace staging --dry-run --set image.tag=${{ github.sha }}
+          else
+            echo "Charts/portfolio not present - staging deployment skipped"
+          fi
+
+  performance:
+    name: k6 Performance Tests
+    runs-on: ubuntu-latest
+    needs: integration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - name: Run k6 smoke test
+        run: |
+          if [ -f "perf/smoke.js" ]; then
+            k6 run perf/smoke.js --vus 5 --duration 30s
+          else
+            echo "No k6 scripts defined" > k6.txt
+          fi
+      - name: Upload k6 results
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: |
+            k6.txt
+          if-no-files-found: ignore
+
+  deploy_prod:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: [deploy_staging, performance]
+    if: github.event_name == 'release'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      - name: Helm upgrade production
+        run: |
+          if [ -d "charts/portfolio" ]; then
+            helm upgrade --install portfolio charts/portfolio --namespace production --set image.tag=${{ github.event.release.tag_name }}
+          else
+            echo "Charts/portfolio not present - production deployment skipped"
+          fi
