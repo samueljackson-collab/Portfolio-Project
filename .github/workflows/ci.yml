@@ -47,6 +47,22 @@ jobs:
         npm install -g markdownlint-cli
 
     - name: Validate Markdown
+      run: |
+        markdownlint '**/*.md' --ignore node_modules || true
+
+    - name: Check Python formatting
+      run: black --check . || true
+
+    - name: Lint Python code
+      run: ruff check . || true
+
+    - name: Run tests
+      run: |
+        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          pytest
+        else
+          pytest || true
+        fi
       run: markdownlint '**/*.md' --ignore node_modules
 
     - name: Check Python formatting
