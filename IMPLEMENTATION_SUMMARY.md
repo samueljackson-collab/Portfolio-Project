@@ -153,7 +153,7 @@ Home Server (Primary)
 **Design Principles:**
 - **Large Elements**: 48-60px touch targets
 - **Clear Text**: 18-24px fonts, never small
-- **High Contrast**: 7:1 ratio (WCAG AAA)
+ - **High Contrast**: ≥4.5:1 ratio (WCAG AA) using dark blue primary (#1e3a8a)
 - **Icons + Text**: Never icon-only
 - **Simple Navigation**: Windows XP folder tree
 - **No Jargon**: "Upload Photos" not "Import Media"
@@ -507,7 +507,7 @@ docker-compose up -d
 2. **Automatic**: Photos organized by location without user action
 3. **Reliable**: 3-location backup ensures photos never lost
 4. **Fast**: Instant upload, background backups
-5. **Accessible**: WCAG AAA compliant, keyboard navigable
+5. **Accessible**: WCAG AA compliant, keyboard navigable
 6. **Complete**: Full-stack with monitoring and recovery
 
 ### Technologies Used

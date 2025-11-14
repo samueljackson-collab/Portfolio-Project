@@ -26,7 +26,6 @@ export const PhotosPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null)
-  const [showUploadModal, setShowUploadModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -63,7 +62,6 @@ export const PhotosPage: React.FC = () => {
     )
     loadPhotos()
     loadAlbums()
-    setShowUploadModal(false)
 
     // Clear success message after 5 seconds
     setTimeout(() => setSuccessMessage(''), 5000)
@@ -131,6 +129,16 @@ export const PhotosPage: React.FC = () => {
     },
   ]
 
+  const activeNavId = selectedAlbumId
+    ? selectedAlbumId
+    : viewMode === 'all'
+    ? 'all-photos'
+    : viewMode === 'calendar'
+    ? 'calendar'
+    : viewMode === 'upload'
+    ? 'upload'
+    : viewMode
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar Navigation */}
@@ -143,7 +151,7 @@ export const PhotosPage: React.FC = () => {
             My Photos
           </h1>
         </div>
-        <SidebarNav items={navItems} activeId={selectedAlbumId || viewMode} />
+        <SidebarNav items={navItems} activeId={activeNavId} />
       </aside>
 
       {/* Main Content */}
@@ -200,23 +208,12 @@ export const PhotosPage: React.FC = () => {
             />
           )}
 
-          {viewMode === 'calendar' && (
-            <PhotoCalendar
-              onDateSelect={(date, photos) => {
-                console.log('Selected date:', date, 'Photos:', photos)
-                // Could show photos from that date
-              }}
-            />
-          )}
+          {viewMode === 'calendar' && <PhotoCalendar />}
 
           {(viewMode === 'all' || viewMode === 'album') && (
             <PhotoGrid
               photos={photos}
               loading={loading}
-              onPhotoClick={(photo) => {
-                console.log('Photo clicked:', photo)
-                // Could open photo detail modal
-              }}
             />
           )}
         </div>

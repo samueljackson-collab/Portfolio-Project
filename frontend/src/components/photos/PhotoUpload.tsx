@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useRef } from 'react'
+import { isAxiosError } from 'axios'
 import { photoService } from '../../api/services'
 import type { PhotoUploadResponse } from '../../api/types'
 import { LargeButton } from '../elderly/LargeButton'
@@ -55,8 +56,13 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         const response = await photoService.upload(file)
         onUploadComplete?.(response)
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to upload photo'
+        let errorMessage = 'Failed to upload photo'
+        if (isAxiosError(error)) {
+          const detail = (error.response?.data as { detail?: string } | undefined)?.detail
+          errorMessage = detail ?? error.message
+        } else if (error instanceof Error) {
+          errorMessage = error.message
+        }
         onUploadError?.(errorMessage)
       } finally {
         setUploading(false)
@@ -78,11 +84,12 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    handleFiles(e.dataTransfer.files)
+    void handleFiles(e.dataTransfer.files)
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files)
+    void handleFiles(e.target.files)
+    e.target.value = ''
   }
 
   const handleButtonClick = () => {
@@ -110,7 +117,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         className={`
           border-4 border-dashed rounded-xl p-12
           transition-all duration-200
-          ${isDragging ? 'border-blue-600 bg-blue-50' : 'border-gray-300 bg-gray-50'}
+          ${isDragging ? 'border-blue-900 bg-blue-50' : 'border-gray-300 bg-gray-50'}
           ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
         onClick={!uploading ? handleButtonClick : undefined}
@@ -137,7 +144,12 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
               <p className="text-xl text-gray-600 mb-6 max-w-lg">
                 Drag and drop photos here, or click the button below to select files
               </p>
-              <LargeButton variant="primary" size="large" disabled={uploading}>
+              <LargeButton
+                variant="primary"
+                size="large"
+                disabled={uploading}
+                onClick={handleButtonClick}
+              >
                 Choose Photos
               </LargeButton>
               <p className="text-lg text-gray-500 mt-4">
