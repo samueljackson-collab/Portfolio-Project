@@ -9,6 +9,7 @@ Handles extraction of metadata from uploaded photos including:
 """
 
 import io
+import asyncio
 from datetime import datetime
 from typing import Optional, Dict, Any
 from PIL import Image
@@ -171,27 +172,30 @@ async def create_thumbnail(
     Returns:
         Thumbnail image bytes
     """
-    try:
-        # Open original image
-        image = Image.open(io.BytesIO(image_data))
+    def _generate_thumbnail() -> bytes:
+        try:
+            # Open original image
+            image = Image.open(io.BytesIO(image_data))
 
-        # Convert to RGB if necessary (handles RGBA, P, etc.)
-        if image.mode not in ("RGB", "L"):
-            image = image.convert("RGB")
+            # Convert to RGB if necessary (handles RGBA, P, etc.)
+            if image.mode not in ("RGB", "L"):
+                image = image.convert("RGB")
 
-        # Create thumbnail (maintains aspect ratio)
-        image.thumbnail(max_size, Image.Resampling.LANCZOS)
+            # Create thumbnail (maintains aspect ratio)
+            image.thumbnail(max_size, Image.Resampling.LANCZOS)
 
-        # Save to bytes
-        output = io.BytesIO()
-        image.save(output, format="JPEG", quality=quality, optimize=True)
-        output.seek(0)
+            # Save to bytes
+            output = io.BytesIO()
+            image.save(output, format="JPEG", quality=quality, optimize=True)
+            output.seek(0)
 
-        return output.read()
+            return output.read()
 
-    except Exception as e:
-        logger.error(f"Error creating thumbnail: {e}")
-        raise
+        except Exception as e:
+            logger.error(f"Error creating thumbnail: {e}")
+            raise
+
+    return await asyncio.to_thread(_generate_thumbnail)
 
 
 def validate_image(image_data: bytes) -> bool:

@@ -153,7 +153,7 @@ Home Server (Primary)
 **Design Principles:**
 - **Large Elements**: 48-60px touch targets
 - **Clear Text**: 18-24px fonts, never small
-- **High Contrast**: 7:1 ratio (WCAG AAA)
+- **High Contrast**: 7:1 ratio (WCAG AAA) using primary #1e3a8a against white text
 - **Icons + Text**: Never icon-only
 - **Simple Navigation**: Windows XP folder tree
 - **No Jargon**: "Upload Photos" not "Import Media"

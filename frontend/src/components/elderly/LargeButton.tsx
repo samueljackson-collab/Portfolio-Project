@@ -46,8 +46,8 @@ export const LargeButton: React.FC<LargeButtonProps> = ({
 
   const variantClasses = {
     primary:
-      'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-300 ' +
-      'border-2 border-blue-700',
+      'bg-blue-900 hover:bg-blue-800 text-white focus:ring-blue-400 ' +
+      'border-2 border-blue-900',
     secondary:
       'bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-300 ' +
       'border-2 border-gray-400',

@@ -9,7 +9,7 @@
  * - Loading states
  */
 
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import type { Photo } from '../../api/types'
 import { photoService } from '../../api/services'
 import { format, parseISO } from 'date-fns'
@@ -27,6 +27,79 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
   loading = false,
   emptyMessage = 'No photos to display. Click Upload to add photos.',
 }) => {
+  const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({})
+  const thumbnailUrlsRef = useRef<Record<string, string>>({})
+
+  useEffect(() => {
+    thumbnailUrlsRef.current = thumbnailUrls
+  }, [thumbnailUrls])
+
+  useEffect(() => {
+    return () => {
+      Object.values(thumbnailUrlsRef.current).forEach((url) =>
+        URL.revokeObjectURL(url)
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    const photoIds = new Set(photos.map((photo) => photo.id))
+    setThumbnailUrls((prev) => {
+      let changed = false
+      const next: Record<string, string> = {}
+
+      for (const [id, url] of Object.entries(prev)) {
+        if (photoIds.has(id)) {
+          next[id] = url
+        } else {
+          URL.revokeObjectURL(url)
+          changed = true
+        }
+      }
+
+      return changed ? next : prev
+    })
+  }, [photos])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadThumbnails = async () => {
+      const missing = photos.filter((photo) => !thumbnailUrls[photo.id])
+      if (missing.length === 0) return
+
+      const newUrls: Record<string, string> = {}
+
+      for (const photo of missing) {
+        try {
+          const blob = await photoService.downloadFile(photo.id, true)
+          if (cancelled) {
+            break
+          }
+          const objectUrl = URL.createObjectURL(blob)
+          newUrls[photo.id] = objectUrl
+        } catch (error) {
+          console.error('Failed to load thumbnail:', error)
+        }
+      }
+
+      if (cancelled) {
+        Object.values(newUrls).forEach((url) => URL.revokeObjectURL(url))
+        return
+      }
+
+      if (Object.keys(newUrls).length > 0) {
+        setThumbnailUrls((prev) => ({ ...prev, ...newUrls }))
+      }
+    }
+
+    loadThumbnails()
+
+    return () => {
+      cancelled = true
+    }
+  }, [photos, thumbnailUrls])
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Unknown date'
     try {
@@ -93,12 +166,16 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
         >
           {/* Photo thumbnail */}
           <div className="relative aspect-square bg-gray-200 rounded-lg overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
-            <img
-              src={photoService.getFileUrl(photo.id, true)}
-              alt={photo.filename}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
+            {thumbnailUrls[photo.id] ? (
+              <img
+                src={thumbnailUrls[photo.id]}
+                alt={photo.filename}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 animate-pulse" aria-hidden="true"></div>
+            )}
             <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
           </div>
 

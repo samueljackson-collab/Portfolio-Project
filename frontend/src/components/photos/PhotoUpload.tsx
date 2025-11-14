@@ -11,8 +11,9 @@
  */
 
 import React, { useState, useRef } from 'react'
+import { AxiosError } from 'axios'
 import { photoService } from '../../api/services'
-import type { PhotoUploadResponse } from '../../api/types'
+import type { PhotoUploadResponse, ApiError } from '../../api/types'
 import { LargeButton } from '../elderly/LargeButton'
 
 interface PhotoUploadProps {
@@ -28,6 +29,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const [uploading, setUploading] = useState(false)
   const [uploadingFile, setUploadingFile] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const MAX_FILE_SIZE_MB = 20
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return
@@ -43,8 +45,10 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
       }
 
       // Validate file size (20MB max)
-      if (file.size > 20 * 1024 * 1024) {
-        onUploadError?.(`${file.name} is too large. Maximum size is 20MB.`)
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        onUploadError?.(
+          `${file.name} is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`
+        )
         continue
       }
 
@@ -55,8 +59,18 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         const response = await photoService.upload(file)
         onUploadComplete?.(response)
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to upload photo'
+        const axiosError = error as AxiosError<ApiError>
+        let errorMessage = 'Failed to upload photo'
+
+        if (axiosError?.response?.data) {
+          const detail = axiosError.response.data.detail
+          if (typeof detail === 'string') {
+            errorMessage = detail
+          } else if (Array.isArray(detail) && detail[0]?.msg) {
+            errorMessage = detail[0].msg as string
+          }
+        }
+
         onUploadError?.(errorMessage)
       } finally {
         setUploading(false)
@@ -83,6 +97,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files)
+    e.target.value = ''
   }
 
   const handleButtonClick = () => {
@@ -110,7 +125,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         className={`
           border-4 border-dashed rounded-xl p-12
           transition-all duration-200
-          ${isDragging ? 'border-blue-600 bg-blue-50' : 'border-gray-300 bg-gray-50'}
+          ${isDragging ? 'border-blue-900 bg-blue-50' : 'border-gray-300 bg-gray-50'}
           ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
         onClick={!uploading ? handleButtonClick : undefined}
