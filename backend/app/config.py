@@ -55,6 +55,34 @@ class Settings(BaseSettings):
     # Logging Settings
     log_level: str = Field(default="INFO", description="Logging level")
 
+    # Photo/Media Settings
+    max_photo_size_bytes: int = Field(
+        default=20 * 1024 * 1024,
+        description="Maximum upload size for a single photo in bytes",
+    )
+    photo_storage_dir: str = Field(
+        default="storage/photos",
+        description="Root directory for storing uploaded photos",
+    )
+    thumbnail_subdir: str = Field(
+        default="thumbnails",
+        description="Folder name for generated thumbnails inside each photo directory",
+    )
+
+    # Geocoding Settings
+    nominatim_user_agent: str = Field(
+        default="elderphoto/1.0",
+        description="User agent used when calling OpenStreetMap Nominatim",
+    )
+    nominatim_request_timeout: float = Field(
+        default=5.0,
+        description="Timeout in seconds for reverse geocoding requests",
+    )
+    nominatim_rate_limit_seconds: float = Field(
+        default=1.0,
+        description="Delay between consecutive reverse geocoding requests to respect the 1 req/sec policy",
+    )
+
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, v: str) -> str:

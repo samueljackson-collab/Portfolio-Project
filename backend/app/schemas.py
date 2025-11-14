@@ -210,6 +210,95 @@ class ContentListResponse(BaseModel):
 
 
 # ============================================================================
+# Album & Photo Schemas
+# ============================================================================
+
+
+class AlbumBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = Field(None, max_length=1000)
+    type: str = Field(default="custom", description="Album category e.g. custom/location")
+
+
+class AlbumCreate(AlbumBase):
+    pass
+
+
+class AlbumUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = Field(None, max_length=1000)
+
+
+class AlbumResponse(AlbumBase, TimestampMixin):
+    id: UUID
+    owner_id: UUID
+    cover_photo_id: Optional[UUID]
+    photo_count: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AlbumListResponse(BaseModel):
+    items: list[AlbumResponse]
+
+
+class PhotoBase(BaseModel):
+    title: Optional[str] = Field(None, max_length=255)
+    description: Optional[str] = Field(None, max_length=2000)
+    album_id: Optional[UUID] = Field(None, description="Album identifier")
+
+
+class PhotoCreate(PhotoBase):
+    pass
+
+
+class PhotoResponse(PhotoBase, TimestampMixin):
+    id: UUID
+    owner_id: UUID
+    file_name: str
+    mime_type: str
+    file_size: int
+    width: Optional[int]
+    height: Optional[int]
+    capture_date: Optional[datetime]
+    camera_make: Optional[str]
+    camera_model: Optional[str]
+    focal_length: Optional[str]
+    aperture: Optional[str]
+    iso: Optional[int]
+    latitude: Optional[float]
+    longitude: Optional[float]
+    location_name: Optional[str]
+    city: Optional[str]
+    state: Optional[str]
+    country: Optional[str]
+    thumbnail_url: Optional[str] = Field(None, description="Pre-signed thumbnail URL")
+    file_url: Optional[str] = Field(None, description="Pre-signed original URL")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PhotoListResponse(BaseModel):
+    items: list[PhotoResponse]
+    total: int
+
+
+class PhotoUploadResponse(PhotoResponse):
+    message: str = "Photo uploaded successfully"
+
+
+class CalendarDateResponse(BaseModel):
+    date: datetime
+    photo_count: int
+    preview_photos: list[PhotoResponse] = []
+
+
+class CalendarMonthResponse(BaseModel):
+    total_photos: int
+    dates: list[CalendarDateResponse]
+
+
+# ============================================================================
 # Error Schemas
 # ============================================================================
 

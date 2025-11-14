@@ -13,6 +13,12 @@ import type {
   RegisterRequest,
   CreateContentRequest,
   UpdateContentRequest,
+  Photo,
+  PhotoListResponse,
+  PhotoUploadResponse,
+  CalendarMonthResponse,
+  Album,
+  AlbumListResponse,
 } from './types'
 
 /**
@@ -107,6 +113,50 @@ export const healthService = {
    */
   async check(): Promise<{ status: string; timestamp: string }> {
     const response = await apiClient.get<{ status: string; timestamp: string }>('/health')
+    return response.data
+  },
+}
+
+export const albumService = {
+  async list(): Promise<Album[]> {
+    const response = await apiClient.get<AlbumListResponse>('/photos/albums')
+    return response.data.items
+  },
+}
+
+export const photoService = {
+  async list(params?: { skip?: number; limit?: number; albumId?: string }): Promise<PhotoListResponse> {
+    const response = await apiClient.get<PhotoListResponse>('/photos', {
+      params: {
+        skip: params?.skip ?? 0,
+        limit: params?.limit ?? 50,
+        album_id: params?.albumId,
+      },
+    })
+    return response.data
+  },
+
+  async upload(file: File): Promise<PhotoUploadResponse> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await apiClient.post<PhotoUploadResponse>('/photos/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+
+  async fetchPhotoBlob(id: string, options?: { thumbnail?: boolean }): Promise<Blob> {
+    const response = await apiClient.get<Blob>(`/photos/${id}/file`, {
+      params: { thumbnail: options?.thumbnail ?? false },
+      responseType: 'blob',
+    })
+    return response.data
+  },
+
+  async getCalendar(year: number, month: number): Promise<CalendarMonthResponse> {
+    const response = await apiClient.get<CalendarMonthResponse>('/photos/calendar', {
+      params: { year, month },
+    })
     return response.data
   },
 }

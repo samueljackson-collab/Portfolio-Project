@@ -15,7 +15,7 @@ import time
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import health, auth, content
+from app.routers import health, auth, content, photos, backup
 
 
 # Configure logging
@@ -146,6 +146,8 @@ async def general_exception_handler(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(content.router)
+app.include_router(photos.router)
+app.include_router(backup.router)
 
 
 # Root endpoint

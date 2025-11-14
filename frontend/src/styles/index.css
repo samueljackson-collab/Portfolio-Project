@@ -25,3 +25,29 @@
     @apply bg-white rounded-lg shadow-md p-6;
   }
 }
+
+.photo-calendar .react-calendar {
+  width: 100%;
+  border: none;
+  font-family: inherit;
+}
+
+.photo-calendar .react-calendar__tile {
+  min-height: 80px;
+  padding: 1rem 0.5rem;
+  font-size: 1.125rem;
+}
+
+.photo-calendar .react-calendar__tile:enabled:hover {
+  background-color: #eff6ff;
+}
+
+.photo-calendar .react-calendar__tile--active {
+  background-color: #1d4ed8;
+  color: #fff;
+}
+
+.photo-calendar .react-calendar__month-view__weekdays {
+  font-size: 1rem;
+  font-weight: 600;
+}

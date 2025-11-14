@@ -8,7 +8,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context'
 import { Navbar, ProtectedRoute } from './components'
-import { Home, Login, Register, Dashboard, HomeAssistant, EnterprisePortfolio } from './pages'
+import { Home, Login, Register, Dashboard, HomeAssistant, EnterprisePortfolio, PhotosPage } from './pages'
 
 const App: React.FC = () => {
   return (
@@ -30,6 +30,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/photos"
+              element={
+                <ProtectedRoute>
+                  <PhotosPage />
                 </ProtectedRoute>
               }
             />
