@@ -2,6 +2,12 @@
 
 Welcome! This portfolio repository now includes comprehensive documentation to help you complete all missing materials.
 
+## 📑 Document Quick Links
+
+- [MISSING_DOCUMENTS_ANALYSIS.md](./MISSING_DOCUMENTS_ANALYSIS.md) — Portfolio-wide gap tracker with prioritized to-dos per project.
+- [QUICK_START_GUIDE.md](./QUICK_START_GUIDE.md) — Step-by-step upload instructions for GitHub Web, Desktop, and CLI workflows.
+- [PROJECT_COMPLETION_CHECKLIST.md](./PROJECT_COMPLETION_CHECKLIST.md) — Progress checklist with week-by-week sequencing and notes space.
+
 ---
 
 ## 📚 Start Here

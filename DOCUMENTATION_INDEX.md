@@ -87,8 +87,8 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ---
 
 ### 4. TECHNOLOGY_MATRIX.md
-**Purpose**: Quick reference and setup guide  
-**Length**: ~9,500 words  
+**Purpose**: Quick reference and setup guide
+**Length**: ~9,500 words
 **Best For**:
 - Setting up projects locally
 - Understanding dependencies
@@ -115,6 +115,59 @@ This index guides you through the comprehensive analysis of the 25-project portf
 - Setup Templates
 
 **Start Here**: If you need to run a project locally
+
+---
+
+### 5. MISSING_DOCUMENTS_ANALYSIS.md
+**Purpose**: Repository-wide gap analysis and upload checklist
+**Length**: 500+ lines
+**Best For**:
+- Understanding what's missing per project
+- Prioritizing uploads and documentation work
+- Reviewing security considerations before publishing assets
+
+**Contains**:
+- Status overview tables for all 25 projects
+- Detailed "What's Needed" section per project
+- File format and sanitization guidance
+- Priority recommendations and sequencing
+
+**Start Here**: When you need a definitive list of missing artifacts
+
+---
+
+### 6. QUICK_START_GUIDE.md
+**Purpose**: Hands-on instructions for getting files into this repository
+**Length**: Fast reference (multi-section)
+**Best For**:
+- Uploading existing assets via GitHub Web, Desktop, or CLI
+- Mapping local folders to the repo structure
+- Resolving common Git issues during uploads
+
+**Contains**:
+- Step-by-step workflows for three upload methods
+- Required Git commands and troubleshooting tips
+- Directory placement guidance for every asset type
+- Mini checklist to confirm each upload
+
+**Start Here**: When you're ready to import files and need procedural help
+
+---
+
+### 7. PROJECT_COMPLETION_CHECKLIST.md
+**Purpose**: Progress tracker for finishing each portfolio project
+**Length**: Checklist-style reference
+**Best For**:
+- Tracking completion across all documentation tasks
+- Sequencing work week-by-week
+- Sharing status updates with collaborators
+
+**Contains**:
+- Checklist per project with priority labels
+- Timeline suggestions (Week 1–3) and dependencies
+- Space to record evidence links and notes
+
+**Start Here**: When you want to monitor progress and stay organized
 
 ---
 
