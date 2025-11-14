@@ -9,7 +9,7 @@ ElderPhoto is a Google Photos/iCloud-style photo management application specific
 ### 🎯 Elderly-Friendly Design
 - **Large Touch Targets**: Minimum 48x48px buttons (up to 60px)
 - **Clear Text Labels**: 18-24px fonts, no icon-only buttons
-- **High Contrast**: WCAG AAA compliant color schemes
+- **High Contrast**: WCAG AA+ color schemes with dark blue accents (#1e3a8a)
 - **Simple Navigation**: Windows XP-style folder hierarchy
 - **Keyboard Accessible**: Tab navigation with visible focus indicators
 
@@ -97,7 +97,7 @@ src/
 ```
 
 #### Design System
-- **Colors**: Blue primary (#3b82f6), high contrast text
+- **Colors**: Deep blue primary (#1e3a8a, 6.5:1 vs white) with neutral grays
 - **Typography**: 18px base, 24px+ headings, semibold weights
 - **Spacing**: Generous padding (12-24px)
 - **Borders**: 2-4px for visibility
@@ -217,8 +217,8 @@ def extract_exif_data(image_data: bytes) -> PhotoMetadata:
 - **Pagination**: 20 photos per page by default
 - **Caching**: Browser caching for thumbnails
 
-### Accessibility (WCAG AAA)
-- **Color Contrast**: 7:1 for normal text, 4.5:1 for large text
+### Accessibility (WCAG AA+)
+- **Color Contrast**: ≥4.5:1 for normal text; primary blue (#1e3a8a) reaches ~6.5:1 vs white
 - **Keyboard Navigation**: Full keyboard support
 - **Screen Readers**: ARIA labels on all interactive elements
 - **Focus Indicators**: 4px visible focus rings

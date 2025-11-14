@@ -55,6 +55,18 @@ class Settings(BaseSettings):
     # Logging Settings
     log_level: str = Field(default="INFO", description="Logging level")
 
+    # Photo Management Settings
+    max_photo_size_mb: int = Field(
+        default=20,
+        ge=1,
+        description="Maximum upload size for a single photo in megabytes",
+    )
+
+    @property
+    def max_photo_size_bytes(self) -> int:
+        """Return the maximum photo size in bytes."""
+        return self.max_photo_size_mb * 1024 * 1024
+
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, v: str) -> str:

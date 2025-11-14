@@ -9,10 +9,70 @@
  * - Loading states
  */
 
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import type { Photo } from '../../api/types'
 import { photoService } from '../../api/services'
 import { format, parseISO } from 'date-fns'
+
+interface PhotoThumbnailProps {
+  photoId: string
+  alt: string
+}
+
+const PhotoThumbnail: React.FC<PhotoThumbnailProps> = ({ photoId, alt }) => {
+  const [src, setSrc] = useState<string | null>(null)
+  const [error, setError] = useState(false)
+  const objectUrlRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadThumbnail = async () => {
+      try {
+        const blob = await photoService.downloadPhotoBlob(photoId, true)
+        if (cancelled) return
+
+        if (objectUrlRef.current) {
+          URL.revokeObjectURL(objectUrlRef.current)
+        }
+
+        const url = URL.createObjectURL(blob)
+        objectUrlRef.current = url
+        setSrc(url)
+        setError(false)
+      } catch (err) {
+        console.error('Failed to load photo thumbnail', err)
+        if (!cancelled) {
+          setError(true)
+        }
+      }
+    }
+
+    loadThumbnail()
+
+    return () => {
+      cancelled = true
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current)
+        objectUrlRef.current = null
+      }
+    }
+  }, [photoId])
+
+  if (error) {
+    return (
+      <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm">
+        Image unavailable
+      </div>
+    )
+  }
+
+  if (!src) {
+    return <div className="w-full h-full bg-gray-200 animate-pulse" aria-label="Loading photo" />
+  }
+
+  return <img src={src} alt={alt} className="w-full h-full object-cover" loading="lazy" />
+}
 
 interface PhotoGridProps {
   photos: Photo[]
@@ -85,7 +145,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
           onClick={() => onPhotoClick?.(photo)}
           className="
             group cursor-pointer text-left
-            focus:outline-none focus:ring-4 focus:ring-blue-500 rounded-lg
+            focus:outline-none focus:ring-4 focus:ring-blue-900 rounded-lg
             transition-transform duration-200 hover:scale-105
           "
           role="listitem"
@@ -93,12 +153,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
         >
           {/* Photo thumbnail */}
           <div className="relative aspect-square bg-gray-200 rounded-lg overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
-            <img
-              src={photoService.getFileUrl(photo.id, true)}
-              alt={photo.filename}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
+            <PhotoThumbnail photoId={photo.id} alt={photo.filename} />
             <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
           </div>
 

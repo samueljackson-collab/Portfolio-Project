@@ -168,6 +168,17 @@ export const photoService = {
   },
 
   /**
+   * Download a photo (or thumbnail) as a Blob with auth headers
+   */
+  async downloadPhotoBlob(id: string, thumbnail = false): Promise<Blob> {
+    const response = await apiClient.get<Blob>(`/photos/${id}/file`, {
+      params: thumbnail ? { thumbnail: true } : undefined,
+      responseType: 'blob',
+    })
+    return response.data
+  },
+
+  /**
    * Delete a photo
    */
   async delete(id: string): Promise<void> {

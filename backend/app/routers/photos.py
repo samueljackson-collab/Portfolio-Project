@@ -10,6 +10,7 @@ This module provides:
 - Album management (auto-created by location)
 """
 
+import asyncio
 from uuid import UUID
 from typing import Optional, List
 from datetime import datetime, date
@@ -26,6 +27,7 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, extract
 from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
 from app.models import User, Photo, Album
@@ -40,6 +42,7 @@ from app.schemas import (
 )
 from app.dependencies import get_current_user
 from app.services import photo_service, location_service, storage_service
+from app.config import settings
 
 router = APIRouter(
     prefix="/photos",
@@ -83,21 +86,25 @@ async def upload_photo(
     file_size = len(file_data)
 
     # Validate image
-    if not photo_service.validate_image(file_data):
+    is_valid_image = await asyncio.to_thread(photo_service.validate_image, file_data)
+    if not is_valid_image:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid image file. Supported formats: JPEG, PNG, GIF, WEBP",
         )
 
-    # Check file size (max 20MB for elderly-friendly app)
-    if file_size > 20 * 1024 * 1024:
+    max_file_size = settings.max_photo_size_bytes
+    if file_size > max_file_size:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File size too large. Maximum 20MB allowed.",
+            detail=(
+                "File size too large. Maximum "
+                f"{settings.max_photo_size_mb}MB allowed."
+            ),
         )
 
     # Extract EXIF metadata
-    metadata = photo_service.extract_exif_data(file_data)
+    metadata = await asyncio.to_thread(photo_service.extract_exif_data, file_data)
 
     # Reverse geocode GPS coordinates if available
     city = None
@@ -132,23 +139,34 @@ async def upload_photo(
     if location_service.should_create_location_album(city):
         album_name = location_service.format_location_name(city, state, country)
 
-        # Check if album exists
         album_query = select(Album).where(
             and_(Album.owner_id == current_user.id, Album.name == album_name)
         )
         result = await db.execute(album_query)
         album = result.scalar_one_or_none()
 
-        # Create album if it doesn't exist
         if not album:
-            album = Album(
+            new_album = Album(
                 owner_id=current_user.id,
                 name=album_name,
                 type="location",
                 photo_count=0,
             )
-            db.add(album)
-            await db.flush()  # Get album ID
+            db.add(new_album)
+            try:
+                await db.flush()
+                album = new_album
+            except IntegrityError:
+                await db.rollback()
+                result = await db.execute(album_query)
+                album = result.scalar_one_or_none()
+                if not album:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Failed to create or retrieve album",
+                    )
+
+    mime_type = await asyncio.to_thread(photo_service.get_mime_type, file_data)
 
     # Create photo record
     photo = Photo(
@@ -158,7 +176,7 @@ async def upload_photo(
         file_path=file_path,
         thumbnail_path=thumbnail_path,
         file_size=file_size,
-        mime_type=photo_service.get_mime_type(file_data),
+        mime_type=mime_type,
         width=metadata.width,
         height=metadata.height,
         capture_date=metadata.capture_date,
@@ -172,10 +190,11 @@ async def upload_photo(
     )
 
     db.add(photo)
+    await db.flush()
 
     # Update album photo count and cover photo
     if album:
-        album.photo_count += 1
+        album.photo_count = (album.photo_count or 0) + 1
         if not album.cover_photo_id:
             album.cover_photo_id = photo.id
 
