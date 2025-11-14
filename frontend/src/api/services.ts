@@ -31,15 +31,7 @@ export const authService = {
    * Login user and get access token
    */
   async login(data: LoginRequest): Promise<LoginResponse> {
-    const formData = new FormData()
-    formData.append('username', data.username)
-    formData.append('password', data.password)
-
-    const response = await apiClient.post<LoginResponse>('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    })
+    const response = await apiClient.post<LoginResponse>('/auth/login', data)
     return response.data
   },
 
