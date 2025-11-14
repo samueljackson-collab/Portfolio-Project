@@ -32,6 +32,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 ---
 ## 📘 Guides
 
+- [Documentation Index & Navigation Guide](./DOCUMENTATION_INDEX.md#navigation-guide) — Understand how the portfolio documents connect and where to start.
 - [Wiki.js Setup Guide](./docs/wiki-js-setup-guide.md) — Complete walkthrough to deploy, harden, and populate a Wiki.js instance for portfolio documentation.
 
 ## 💻 UI Components
