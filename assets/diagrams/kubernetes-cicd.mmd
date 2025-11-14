@@ -1,0 +1,61 @@
+graph LR
+    subgraph "Development"
+        DEV[Developer]
+        GIT[Git Repository]
+    end
+
+    subgraph "CI Pipeline"
+        TRIGGER[GitHub Actions Trigger]
+        BUILD[Build Container Image]
+        TEST[Run Tests]
+        SCAN[Security Scan<br/>Trivy/Snyk]
+        PUSH[Push to Registry]
+    end
+
+    subgraph "GitOps"
+        ARGOCD[ArgoCD]
+        HELM[Helm Charts]
+        MANIFESTS[K8s Manifests]
+    end
+
+    subgraph "Kubernetes Cluster"
+        subgraph "Staging Namespace"
+            STAGING[Staging Deployment]
+        end
+
+        subgraph "Production Namespace"
+            CANARY[Canary Deployment]
+            PROD[Production Deployment]
+        end
+
+        INGRESS[Ingress Controller]
+        MONITORING[Prometheus/Grafana]
+    end
+
+    DEV --> GIT
+    GIT --> TRIGGER
+    TRIGGER --> BUILD
+    BUILD --> TEST
+    TEST --> SCAN
+    SCAN --> PUSH
+
+    PUSH --> ARGOCD
+    HELM --> ARGOCD
+    MANIFESTS --> ARGOCD
+
+    ARGOCD --> STAGING
+    STAGING -.manual approval.-> CANARY
+    CANARY -.automated promotion.-> PROD
+
+    INGRESS --> STAGING
+    INGRESS --> CANARY
+    INGRESS --> PROD
+
+    MONITORING --> STAGING
+    MONITORING --> CANARY
+    MONITORING --> PROD
+
+    style BUILD fill:#90ee90
+    style SCAN fill:#ff9999
+    style ARGOCD fill:#ffcc99
+    style PROD fill:#e1f5ff
