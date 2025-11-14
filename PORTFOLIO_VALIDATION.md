@@ -38,7 +38,9 @@ _Source: `EXECUTIVE_SUMMARY.md` “How to use this portfolio – For Interviews.
 
 ## File Map Quick Reference
 
-Primary review order: `README.md → CODE_QUALITY_REPORT.md → REMEDIATION_PLAN.md → SCREENSHOT_GUIDE.md`. Secondary docs: `MISSING_DOCUMENTS_ANALYSIS.md`, `PROJECT_COMPLETION_CHECKLIST.md`, `QUICK_START_GUIDE.md`, and `scripts/README.md`. Each project directory (`projects/*`, `projects-new/*`, `professional/*`) also includes localized READMEs and runbooks.
+- **Primary review order:** `README.md` → `CODE_QUALITY_REPORT.md` → `REMEDIATION_PLAN.md` → `SCREENSHOT_GUIDE.md`.
+- **Secondary docs:** `MISSING_DOCUMENTS_ANALYSIS.md`, `PROJECT_COMPLETION_CHECKLIST.md`, `QUICK_START_GUIDE.md`, and `scripts/README.md`.
+- **Project-specific docs:** Each project directory (`projects/*`, `projects-new/*`, `professional/*`) also includes localized READMEs and runbooks.
 
 _Source: `EXECUTIVE_SUMMARY.md` documentation index section._【F:EXECUTIVE_SUMMARY.md†L391-L408】
 
