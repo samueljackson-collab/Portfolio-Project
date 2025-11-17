@@ -1,0 +1,17 @@
+{
+  "title": "Container Monitoring",
+  "uid": "container-monitoring",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "1m",
+  "templating": {"list": [{"name": "container", "type": "query", "datasource": "Prometheus", "query": "label_values(container_memory_usage_bytes, name)", "refresh": 1}]},
+  "panels": [
+    {"type": "stat", "title": "Running", "id": 1, "targets": [{"expr": "count(container_last_seen)", "legendFormat": "running"}]},
+    {"type": "timeseries", "title": "CPU per container", "id": 2, "targets": [{"expr": "rate(container_cpu_usage_seconds_total{name=~'$container'}[5m])"}], "fieldConfig": {"defaults": {"unit": "percentunit"}}},
+    {"type": "timeseries", "title": "Memory per container", "id": 3, "targets": [{"expr": "container_memory_usage_bytes{name=~'$container'}"}], "fieldConfig": {"defaults": {"unit": "bytes"}}},
+    {"type": "timeseries", "title": "Network I/O", "id": 4, "targets": [{"expr": "rate(container_network_receive_bytes_total{name=~'$container'}[5m])", "legendFormat": "recv"}, {"expr": "rate(container_network_transmit_bytes_total{name=~'$container'}[5m])", "legendFormat": "sent"}], "fieldConfig": {"defaults": {"unit": "Bps"}}},
+    {"type": "gauge", "title": "Filesystem usage", "id": 5, "targets": [{"expr": "container_fs_usage_bytes{name=~'$container'}"}], "fieldConfig": {"defaults": {"unit": "bytes"}}},
+    {"type": "table", "title": "Restart count", "id": 6, "targets": [{"expr": "sort_desc(container_restart_count)", "legendFormat": "{{name}}"}]}
+  ]
+}

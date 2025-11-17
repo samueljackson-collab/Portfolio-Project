@@ -1,0 +1,65 @@
+# Alertmanager configuration with hierarchical routing and inhibition to prevent alert storms.
+# Secrets (SMTP creds, Slack webhook) are injected via environment variables referenced by the container.
+
+route:
+  receiver: default
+  group_by: [cluster, alertname, severity]
+  group_wait: 10s        # Initial delay to batch related alerts.
+  group_interval: 10s    # Additional alerts in same group within 10s are batched.
+  repeat_interval: 12h   # Resend unresolved alerts every 12h to avoid notification fatigue.
+
+  routes:
+    - matchers:
+        - severity = "critical"
+      receiver: pagerduty-critical
+      group_wait: 0s        # Critical alerts deliver immediately.
+      repeat_interval: 4h   # More frequent repeats for critical incidents.
+
+    - matchers:
+        - severity = "warning"
+      receiver: slack-notifications
+      group_wait: 5m        # Warnings grouped to reduce noise.
+      group_interval: 5m
+      repeat_interval: 12h
+
+    - receiver: email-alerts # Default route handles all other severities (info, etc.).
+
+receivers:
+  - name: email-alerts
+    email_configs:
+      - to: ${ALERTMANAGER_SMTP_TO}
+        from: ${ALERTMANAGER_SMTP_FROM}
+        smarthost: ${ALERTMANAGER_SMTP_HOST}
+        auth_username: ${ALERTMANAGER_SMTP_USERNAME}
+        auth_password: ${ALERTMANAGER_SMTP_PASSWORD}
+        require_tls: true
+        headers:
+          subject: "[Monitoring] Alert: {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})"
+
+  - name: slack-notifications
+    slack_configs:
+      - api_url: ${ALERTMANAGER_SLACK_WEBHOOK_URL}
+        channel: "#monitoring"
+        send_resolved: true
+        title: "{{ .CommonAnnotations.summary }}"
+        text: "{{ .CommonAnnotations.description }}"
+
+  - name: pagerduty-critical
+    pagerduty_configs:
+      - routing_key: ${ALERTMANAGER_PAGERDUTY_KEY}
+        severity: critical
+        description: "{{ .CommonAnnotations.summary }}"
+
+inhibit_rules:
+  # Suppress warning-level alerts when a critical of same alertname/instance is active to reduce duplication.
+  - source_matchers: [severity="critical"]
+    target_matchers: [severity="warning"]
+    equal: [alertname, instance]
+
+  # Disk space alerts are redundant if instance is already down.
+  - source_matchers: [alertname="InstanceDown"]
+    target_matchers: [alertname="DiskSpaceLow", alertname="DiskSpaceLowCritical"]
+    equal: [instance]
+
+# Testing guidance: run `amtool check-config alertmanager.yml` inside container to validate syntax,
+# and trigger a synthetic alert with `amtool alert add testAlert alertname=test severity=critical`.

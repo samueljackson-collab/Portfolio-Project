@@ -1,0 +1,17 @@
+{
+  "title": "Logs Explorer",
+  "uid": "logs-explorer",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "30s",
+  "templating": {"list": [
+    {"name": "container_name", "type": "query", "datasource": "Loki", "query": "label_values({container=~".*"}, container)", "refresh": 1},
+    {"name": "log_level", "type": "custom", "query": "info,warning,error"}
+  ]},
+  "panels": [
+    {"type": "logs", "title": "Live Logs", "id": 1, "datasource": "Loki", "targets": [{"expr": "{container=~'$container_name'}"}]},
+    {"type": "timeseries", "title": "Log volume", "id": 2, "datasource": "Loki", "targets": [{"expr": "sum by (container) (rate({container=~'$container_name'}[5m]))"}], "fieldConfig": {"defaults": {"unit": "ops"}}},
+    {"type": "table", "title": "Errors", "id": 3, "datasource": "Loki", "targets": [{"expr": "{container=~'$container_name', level='$log_level'}"}]}
+  ]
+}

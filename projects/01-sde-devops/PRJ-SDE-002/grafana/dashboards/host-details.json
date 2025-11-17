@@ -1,0 +1,18 @@
+{
+  "title": "Host Details",
+  "uid": "host-details",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "1m",
+  "templating": {"list": [{"name": "instance", "type": "query", "datasource": "Prometheus", "query": "label_values(node_uname_info, instance)", "refresh": 1}]},
+  "panels": [
+    {"type": "timeseries", "title": "CPU per core", "id": 1, "targets": [{"expr": "sum by (cpu) (rate(node_cpu_seconds_total{mode!='idle',instance=~'$instance'}[5m]))"}], "fieldConfig": {"defaults": {"unit": "percentunit"}}},
+    {"type": "timeseries", "title": "Memory breakdown", "id": 2, "targets": [{"expr": "node_memory_MemAvailable_bytes{instance=~'$instance'}/node_memory_MemTotal_bytes{instance=~'$instance'}", "legendFormat": "Available"}, {"expr": "node_memory_Buffers_bytes{instance=~'$instance'}/node_memory_MemTotal_bytes{instance=~'$instance'}", "legendFormat": "Buffers"}, {"expr": "node_memory_Cached_bytes{instance=~'$instance'}/node_memory_MemTotal_bytes{instance=~'$instance'}", "legendFormat": "Cached"}]},
+    {"type": "timeseries", "title": "Disk IO Ops", "id": 3, "targets": [{"expr": "rate(node_disk_reads_completed_total{instance=~'$instance'}[5m])", "legendFormat": "Reads"}, {"expr": "rate(node_disk_writes_completed_total{instance=~'$instance'}[5m])", "legendFormat": "Writes"}]},
+    {"type": "timeseries", "title": "Network interfaces", "id": 4, "targets": [{"expr": "rate(node_network_receive_bytes_total{instance=~'$instance'}[5m])", "legendFormat": "{{interface}} in"}, {"expr": "rate(node_network_transmit_bytes_total{instance=~'$instance'}[5m])", "legendFormat": "{{interface}} out"}]},
+    {"type": "gauge", "title": "Filesystem usage", "id": 5, "targets": [{"expr": "node_filesystem_avail_bytes{fstype!~'tmpfs|overlay',instance=~'$instance'}/node_filesystem_size_bytes{fstype!~'tmpfs|overlay',instance=~'$instance'}"}], "fieldConfig": {"defaults": {"unit": "percentunit"}}},
+    {"type": "stat", "title": "Load Average", "id": 6, "targets": [{"expr": "node_load1{instance=~'$instance'}"}], "fieldConfig": {"defaults": {"unit": "none"}}},
+    {"type": "table", "title": "Top processes", "id": 7, "targets": [{"expr": "topk(5, process_resident_memory_bytes{instance=~'$instance'})"}], "fieldConfig": {"defaults": {"unit": "bytes"}}}
+  ]
+}
