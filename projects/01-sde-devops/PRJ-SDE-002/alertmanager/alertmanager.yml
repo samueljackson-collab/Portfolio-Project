@@ -1,0 +1,59 @@
+# Alertmanager configuration
+# Routing strategy groups alerts by cluster/alertname/severity to reduce noise
+# Notification channels are placeholders; populate via environment variables for secrets
+
+route:
+  receiver: default
+  group_by: ['cluster', 'alertname', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  routes:
+    - match:
+        severity: critical
+      receiver: pagerduty-critical
+      group_wait: 0s  # Immediately page for critical issues
+      repeat_interval: 30m
+    - match:
+        severity: warning
+      receiver: slack-notifications
+      group_wait: 5m  # Batch similar warnings to avoid alert storms
+      repeat_interval: 3h
+    - receiver: email-alerts  # Default path for non-matched alerts
+      continue: false
+
+receivers:
+  - name: email-alerts
+    email_configs:
+      - to: ${ALERTMANAGER_SMTP_TO}
+        from: ${ALERTMANAGER_SMTP_FROM}
+        smarthost: ${ALERTMANAGER_SMTP_HOST}
+        auth_username: ${ALERTMANAGER_SMTP_USERNAME}
+        auth_password: ${ALERTMANAGER_SMTP_PASSWORD}
+        require_tls: true
+  - name: slack-notifications
+    slack_configs:
+      - api_url: ${ALERTMANAGER_SLACK_WEBHOOK_URL}
+        channel: '#monitoring'
+        send_resolved: true
+  - name: pagerduty-critical
+    pagerduty_configs:
+      - routing_key: ${ALERTMANAGER_PAGERDUTY_KEY}
+        severity: 'critical'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['instance', 'alertname']
+  - source_match:
+      alertname: 'InstanceDown'
+    target_match:
+      alertname: 'DiskSpaceLow'
+    equal: ['instance']
+
+# Testing guidance:
+# - Use amtool: `amtool alert add AlertmanagerTestAlert severity=critical instance=test`
+# - Verify routing via UI or receiver channel; silence once confirmed.
+# Inhibition strategy prevents redundant noise when root-cause alerts already firing.

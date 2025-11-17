@@ -1,0 +1,94 @@
+{
+  "title": "Infrastructure Overview",
+  "description": "Executive summary of host health and alert status.",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Hosts",
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "count(count(node_uname_info) by (instance))" } ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal" }
+    },
+    {
+      "type": "gauge",
+      "title": "Uptime %",
+      "id": 2,
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "min": 0, "max": 100, "thresholds": { "mode": "percentage", "steps": [ {"color": "green", "value": null}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90} ] } } },
+      "targets": [ { "expr": "(1 - avg_over_time(probe_failed_total[1d])) * 100" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Average CPU Usage",
+      "id": 3,
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "avg(rate(node_cpu_seconds_total{mode!='idle'}[5m])) * 100" } ],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "mode": "percentage", "steps": [ {"color": "green", "value": null}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90} ] } } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Average Memory Usage",
+      "id": 4,
+      "gridPos": { "x": 0, "y": 4, "w": 8, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "avg((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes) * 100" } ],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "type": "bargauge",
+      "title": "Top 5 CPU Hosts",
+      "id": 5,
+      "gridPos": { "x": 8, "y": 4, "w": 8, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "topk(5, avg by (instance) (rate(node_cpu_seconds_total{mode!='idle'}[5m])) * 100)" } ],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "type": "bargauge",
+      "title": "Top 5 Memory Hosts",
+      "id": 6,
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "topk(5, (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100)" } ],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "type": "table",
+      "title": "Disk Usage by Host",
+      "id": 7,
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 6 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "node_filesystem_avail_bytes{fstype!~'tmpfs|overlay'} / node_filesystem_size_bytes{fstype!~'tmpfs|overlay'} * 100" } ],
+      "transformations": [ { "id": "organize", "options": { "renameByName": { "Value": "Free %" } } } ]
+    },
+    {
+      "type": "state-timeline",
+      "title": "Active Alerts",
+      "id": 8,
+      "gridPos": { "x": 0, "y": 12, "w": 8, "h": 6 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "ALERTS{alertstate='firing'}" } ],
+      "options": { "displayMode": "gradient" }
+    },
+    {
+      "type": "timeseries",
+      "title": "Network Traffic",
+      "id": 9,
+      "gridPos": { "x": 8, "y": 14, "w": 8, "h": 6 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(rate(node_network_receive_bytes_total[5m]))" }, { "expr": "sum(rate(node_network_transmit_bytes_total[5m]))" } ],
+      "fieldConfig": { "defaults": { "unit": "Bps" } },
+      "legend": { "show": true }
+    }
+  ],
+  "templating": { "list": [] }
+}

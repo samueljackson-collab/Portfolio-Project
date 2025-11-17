@@ -1,0 +1,22 @@
+{
+  "title": "Container Monitoring",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {"name":"container", "type":"query", "datasource":"Prometheus", "query":"label_values(container_cpu_usage_seconds_total, name)"}
+    ]
+  },
+  "panels": [
+    {"type":"stat", "title":"Running Containers", "id":1, "gridPos":{"x":0,"y":0,"w":6,"h":4}, "datasource":"Prometheus", "targets":[{"expr":"count(container_last_seen)"}]},
+    {"type":"stat", "title":"Restarting Containers", "id":2, "gridPos":{"x":6,"y":0,"w":6,"h":4}, "datasource":"Prometheus", "targets":[{"expr":"count(increase(container_last_seen[15m]) > 1)"}]},
+    {"type":"timeseries", "title":"CPU by Container", "id":3, "gridPos":{"x":0,"y":4,"w":12,"h":6}, "datasource":"Prometheus", "targets":[{"expr":"rate(container_cpu_usage_seconds_total{name=~'$container'}[5m]) * 100"}], "fieldConfig":{"defaults":{"unit":"percent"}}},
+    {"type":"timeseries", "title":"Memory by Container", "id":4, "gridPos":{"x":12,"y":4,"w":12,"h":6}, "datasource":"Prometheus", "targets":[{"expr":"container_memory_usage_bytes{name=~'$container'}"}], "fieldConfig":{"defaults":{"unit":"bytes"}}},
+    {"type":"timeseries", "title":"Network IO", "id":5, "gridPos":{"x":0,"y":10,"w":12,"h":6}, "datasource":"Prometheus", "targets":[{"expr":"rate(container_network_receive_bytes_total{name=~'$container'}[5m])"},{"expr":"rate(container_network_transmit_bytes_total{name=~'$container'}[5m])"}], "fieldConfig":{"defaults":{"unit":"Bps"}}},
+    {"type":"gauge", "title":"Filesystem Usage", "id":6, "gridPos":{"x":12,"y":10,"w":12,"h":6}, "datasource":"Prometheus", "targets":[{"expr":"container_fs_usage_bytes{name=~'$container'} / container_fs_limit_bytes{name=~'$container'} * 100"}], "fieldConfig":{"defaults":{"unit":"percent","thresholds":{"mode":"percentage","steps":[{"color":"green","value":null},{"color":"yellow","value":70},{"color":"red","value":90}]}}}},
+    {"type":"table", "title":"Restart Counts", "id":7, "gridPos":{"x":0,"y":16,"w":12,"h":6}, "datasource":"Prometheus", "targets":[{"expr":"sort_desc(increase(container_last_seen[15m]))"}], "transformations":[{"id":"organize","options":{"renameByName":{"Value":"Restarts"}}}]},
+    {"type":"state-timeline", "title":"Health Status", "id":8, "gridPos":{"x":12,"y":16,"w":12,"h":6}, "datasource":"Prometheus", "targets":[{"expr":"container_last_seen{name=~'$container'}"}], "options":{"legend":{"displayMode":"table"}}}
+  ]
+}

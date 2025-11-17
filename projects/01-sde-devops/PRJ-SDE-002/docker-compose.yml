@@ -1,0 +1,244 @@
+version: '3.8'
+
+# Enterprise Monitoring & Observability Stack
+# Purpose: Production-ready deployment of metrics, logs, and alerting services
+# Security: Dual-network model isolates frontend (user access) from backend (exporters)
+# Resilience: Health checks, restart policies, and resource limits to ensure uptime
+services:
+  prometheus:
+    image: prom/prometheus:v2.48.0  # Pinned version for reproducibility
+    container_name: prometheus
+    command:
+      # Load main configuration with scrape jobs and alerting
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      # Persist the time-series database onto named volume for durability
+      - '--storage.tsdb.path=${PROMETHEUS_STORAGE_PATH}'
+      # Retain metrics for defined window (default 15d via env)
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION}'
+      # Enable hot-reload without container restart for safer config changes
+      - '--web.enable-lifecycle'
+    volumes:
+      # Read-only config to avoid mutation from inside container
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+      # Persistent TSDB storage
+      - prometheus_data:${PROMETHEUS_STORAGE_PATH}
+    networks:
+      - monitoring_frontend  # Allows Grafana API access
+      - monitoring_backend   # Allows scraping exporters
+    ports:
+      - "127.0.0.1:9090:9090"  # Localhost binding to avoid unsolicited access
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.0"
+        reservations:
+          memory: 1G
+          cpus: "0.5"
+    depends_on:
+      alertmanager:
+        condition: service_healthy
+    labels:
+      - "monitoring.stack=core"
+      - "monitoring.role=metrics"
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL}
+      GF_INSTALL_PLUGINS: ${GF_INSTALL_PLUGINS}
+    volumes:
+      - grafana_data:/var/lib/grafana  # Persistent dashboards and users
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards-files:ro
+    networks:
+      - monitoring_frontend  # User access and datasource queries
+      - monitoring_backend   # Talks to Prometheus and Loki
+    ports:
+      - "127.0.0.1:3000:3000"  # Localhost-only; fronted by reverse proxy in prod
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # Grafana plugin install can take longer
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+        reservations:
+          memory: 512M
+          cpus: "0.25"
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    command: ["-config.file=/etc/loki/loki-config.yml"]
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki  # Stores log chunks and indexes
+    networks:
+      - monitoring_backend  # Receives logs from Promtail and serves Grafana
+    ports:
+      - "3100:3100"  # Exposed for Promtail; restrict via firewall in prod
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+        reservations:
+          memory: 512M
+          cpus: "0.25"
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    command: ["-config.file=/etc/promtail/promtail-config.yml"]
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/log:/var/log:ro  # System logs
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro  # Container logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring_backend  # Pushes logs to Loki
+    depends_on:
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.35"
+        reservations:
+          memory: 256M
+          cpus: "0.2"
+
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks:
+      - monitoring_frontend  # Expose UI to operators
+      - monitoring_backend   # Receives alerts from Prometheus
+    ports:
+      - "9093:9093"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.35"
+        reservations:
+          memory: 256M
+          cpus: "0.2"
+
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node-exporter
+    command:
+      # Disable default collectors if not needed to reduce cardinality
+      - '--path.rootfs=/host'
+    pid: host  # Allows access to host metrics
+    network_mode: host  # Exposes on host port 9100 for scraping
+    volumes:
+      - /:/host:ro,rslave  # Provides view into host filesystem
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor
+    privileged: true  # Required to read cgroup metrics
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - monitoring_backend  # Scraped by Prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.35"
+        reservations:
+          memory: 256M
+          cpus: "0.2"
+
+# Network separation: frontend exposed to operators, backend isolated for inter-service traffic
+networks:
+  monitoring_frontend:
+    driver: bridge
+  monitoring_backend:
+    driver: bridge
+
+# Persistent volumes to preserve stateful data across container recreations
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  alertmanager_data:

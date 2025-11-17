@@ -1,0 +1,78 @@
+# Promtail configuration
+# Collects system, Docker, and journald logs and ships to Loki with label hygiene
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0  # Disabled to reduce attack surface
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 102400  # 100KB batches to balance latency and overhead
+
+positions:
+  filename: /tmp/positions.yaml
+
+scrape_configs:
+  # Docker container logs
+  - job_name: docker-logs
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: varlogs
+          host: ${HOSTNAME}
+          environment: homelab
+          __path__: /var/lib/docker/containers/*/*-json.log
+    pipeline_stages:
+      - json  # Parses Docker JSON log lines
+      - labeldrop:
+          - stream  # Reduce high-cardinality stream label
+      - regex:
+          expression: '.*"log":"(?P<log>.*)"'
+      - multiline:
+          firstline: '^{'
+          max_wait_time: 3s
+      - timestamp:
+          source: time
+          format: RFC3339
+      - labels:
+          container_name: container_name
+          container_image: image
+
+  # System log files
+  - job_name: system-logs
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: syslog
+          host: ${HOSTNAME}
+          environment: homelab
+          __path__: /var/log/*.log
+
+  # Journald logs
+  - job_name: journald
+    journal:
+      max_age: 12h
+      labels:
+        job: systemd-journal
+        environment: homelab
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: systemd_unit
+
+  # Auth logs for security monitoring
+  - job_name: auth-logs
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: auth
+          host: ${HOSTNAME}
+          environment: homelab
+          __path__: /var/log/auth.log
+
+# Pipeline order matters: parse first, drop noisy labels, then normalize timestamps.
+# Keep label sets small; excessive cardinality increases Loki memory and query costs.
+# Useful LogQL queries:
+# - `{job="auth"} |= "Failed password"` to monitor SSH attempts
+# - `count_over_time({job="docker-logs", container_name=~"app.*"}[5m])` to detect chatty containers
+# - `rate({job="systemd-journal"} |= "error" [5m])` for error-rate alerting

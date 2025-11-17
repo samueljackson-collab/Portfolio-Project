@@ -1,0 +1,29 @@
+{
+  "title": "Logs Explorer",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {"name":"container_name","type":"query","datasource":"Loki","query":"label_values(container_name)"},
+      {"name":"log_level","type":"custom","options":[{"text":"error","value":"error"},{"text":"warn","value":"warn"},{"text":"info","value":"info"}]}
+    ]
+  },
+  "panels": [
+    {"type":"logs", "title":"Live Logs", "id":1, "gridPos":{"x":0,"y":0,"w":12,"h":8}, "datasource":"Loki", "targets":[{"expr":"{container_name=~'$container_name', level=~'$log_level'}"}]},
+    {"type":"barchart", "title":"Log Volume", "id":2, "gridPos":{"x":12,"y":0,"w":12,"h":6}, "datasource":"Loki", "targets":[{"expr":"sum by (level)(count_over_time({container_name=~'$container_name'}[$__interval]))"}], "fieldConfig":{"defaults":{"unit":"short"}}},
+    {"type":"table", "title":"Log Samples", "id":3, "gridPos":{"x":0,"y":8,"w":12,"h":8}, "datasource":"Loki", "targets":[{"expr":"{container_name=~'$container_name'} | line_format '{{ .level }} - {{ .message }}'"}]},
+    {"type":"timeseries", "title":"Error Rate", "id":4, "gridPos":{"x":12,"y":6,"w":12,"h":6}, "datasource":"Loki", "targets":[{"expr":"count_over_time({level=~'error',container_name=~'$container_name'}[5m])"}], "fieldConfig":{"defaults":{"unit":"short","thresholds":{"mode":"percentage","steps":[{"color":"green","value":null},{"color":"yellow","value":10},{"color":"red","value":50}]}}}, "options":{"legend":{"displayMode":"table"}}}
+  ],
+  "annotations": {
+    "list": [
+      {
+        "name": "Saved Query - Errors by Container",
+        "datasource": "Loki",
+        "enable": true,
+        "expr": "sum by(container_name)(count_over_time({level='error'}[1h]))"
+      }
+    ]
+  }
+}
