@@ -1,0 +1,84 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 102400
+
+positions:
+  filename: /tmp/positions.yaml
+
+scrape_configs:
+  - job_name: docker-logs
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: docker
+          host: ${HOSTNAME}
+          environment: ${ENVIRONMENT}
+          __path__: /var/lib/docker/containers/*/*.log
+    pipeline_stages:
+      - docker: {}
+      - json:
+          expressions:
+            level: level
+            msg: message
+      - regex:
+          expression: '.*'
+      - labels:
+          level:
+          job:
+      - drop:
+          source: filename
+      - multiline:
+          firstline: '^[^\s]'
+          max_wait_time: 3s
+    # Pipeline parses Docker JSON logs, extracts level/message, and handles multiline stack traces.
+
+  - job_name: system-logs
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: varlogs
+          host: ${HOSTNAME}
+          environment: ${ENVIRONMENT}
+          __path__: /var/log/*.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<ts>[^ ]+) (?P<level>[A-Za-z]+) (?P<msg>.*)'
+      - timestamp:
+          source: ts
+          format: RFC3339
+      - labels:
+          level:
+      - drop:
+          source: filename
+
+  - job_name: journald
+    journal:
+      max_age: 12h
+      path: /var/log/journal
+      labels:
+        job: journald
+        host: ${HOSTNAME}
+        environment: ${ENVIRONMENT}
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: systemd_unit
+    pipeline_stages:
+      - match:
+          selector: '{job="journald"}'
+          stages:
+            - labels:
+                systemd_unit:
+            - drop:
+                source: filename
+
+# Notes on label hygiene:
+# - High-cardinality labels are avoided; only level/job/systemd_unit kept.
+# - Drop filename to prevent unique labels per file path.
+# Useful LogQL queries:
+# - Error rate: sum(rate({job="docker", level="error"}[5m])) by (container)
+# - Recent auth issues: {job="journald", systemd_unit="sshd.service"} |= "Failed password"
