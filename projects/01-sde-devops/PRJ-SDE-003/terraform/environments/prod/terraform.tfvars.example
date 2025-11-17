@@ -1,0 +1,21 @@
+project_name              = "prj-sde-003"
+environment               = "prod"
+aws_region                = "us-east-1"
+vpc_cidr                  = "10.2.0.0/16"
+azs_count                 = 3
+enable_nat_gateway        = true
+single_nat_gateway        = false
+enable_nat_gateway_per_az = true
+enable_flow_logs          = true
+flow_logs_retention_days  = 30
+enable_s3_endpoint        = true
+enable_dynamodb_endpoint  = true
+enable_ecr_endpoints      = true
+enable_ssm_endpoints      = true
+common_tags = {
+  Project     = "PRJ-SDE-003"
+  Environment = "prod"
+  Owner       = "platform-team"
+  Terraform   = "true"
+  Compliance  = "prod"
+}
