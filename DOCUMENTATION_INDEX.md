@@ -118,6 +118,57 @@ This index guides you through the comprehensive analysis of the 25-project portf
 
 ---
 
+### 5. MISSING_DOCUMENTS_ANALYSIS.md
+**Purpose**: Exhaustive audit of everything still missing
+**Length**: ~500+ lines
+**Best For**:
+- Getting a project-by-project list of missing artifacts
+- Reviewing hyperlink and asset gaps pulled from README references
+- Prioritizing what to upload first
+
+**Contains**:
+- Detailed "What's Needed" tables for all 25 projects
+- Sanitization guidance before publishing assets
+- Priority tags grouped by project maturity
+
+**Start Here**: When you need an authoritative missing-items inventory.
+
+---
+
+### 6. QUICK_START_GUIDE.md
+**Purpose**: Fast path for uploading and organizing files
+**Length**: ~1,200 words
+**Best For**:
+- Choosing an upload workflow (web UI, Desktop app, or Git CLI)
+- Copy/pasting common Git commands
+- Troubleshooting common GitHub upload issues
+
+**Contains**:
+- Step-by-step instructions for three upload methods
+- File-placement matrix so assets land in the right folders
+- Mini checklist before opening a pull request
+
+**Start Here**: When you're ready to move files from local storage into this repo quickly.
+
+---
+
+### 7. PROJECT_COMPLETION_CHECKLIST.md
+**Purpose**: Tracking sheet to monitor portfolio progress
+**Length**: ~1,000 words
+**Best For**:
+- Ensuring each project has required docs, code, and assets
+- Assigning work across weeks with clear milestones
+- Verifying when a project is "portfolio ready"
+
+**Contains**:
+- Itemized checklist for all 25 projects
+- Priority sequencing (Week 1/2/3) and readiness criteria
+- Columns for status, owner, and blockers
+
+**Start Here**: When you want to manage execution and show completion status at a glance.
+
+---
+
 ## How to Use These Documents
 
 ### Scenario 1: "I need to explain the portfolio to someone"
