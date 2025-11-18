@@ -1,0 +1,12 @@
+| Risk ID | Description | Likelihood | Impact | Rating | Mitigation | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| ZT-1 | SPIRE server outage stops certificate issuance | M | H | High | HA deployment, alerts, backups | Platform | Open |
+| ZT-2 | Stale OPA policies block critical path | M | H | High | Versioned policies, rollout with canaries | Security | Open |
+| ZT-3 | Expired SVIDs due to agent failure | M | M | Medium | Agent DaemonSet health checks | Platform | Open |
+| ZT-4 | Envoy bypass via host networking | L | H | Medium | NetworkPolicies + admission control | Security | Mitigating |
+| ZT-5 | Misconfigured trust domain | L | H | Medium | CI linting of SPIRE configs | Platform | Open |
+| ZT-6 | CA key compromise | L | H | High | HSM-backed CA, key rotation, audit | Security | Open |
+| ZT-7 | Missing audit logs | M | M | Medium | Centralized log aggregation, retention policies | Compliance | Open |
+| ZT-8 | Excessive deny rate causing latency | M | M | Medium | Rate alerts, policy profiling | Platform | Open |
+| ZT-9 | Unauthorized admin endpoint access | L | H | Medium | Claims-based policy, mTLS | Security | Mitigating |
+| ZT-10 | Misapplied NetworkPolicy allows plaintext | M | H | High | Policy tests, CI validation | Platform | Open |

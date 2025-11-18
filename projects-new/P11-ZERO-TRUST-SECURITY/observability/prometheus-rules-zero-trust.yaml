@@ -1,0 +1,24 @@
+groups:
+  - name: zero-trust
+    rules:
+      - alert: SpireServerDown
+        expr: up{job="spire-server"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SPIRE server is unreachable"
+      - alert: OPADenyRateHigh
+        expr: rate(opa_criteria_decision{decision="deny"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OPA deny rate elevated"
+      - alert: mTLSHandshakeFailures
+        expr: rate(envoy_tls_handshake_error_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "mTLS handshake errors detected"
