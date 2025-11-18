@@ -1,0 +1,58 @@
+# Loki configuration for single-node deployment optimized for homelab
+# Uses boltdb-shipper with filesystem object store for simplicity and durability
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: info
+
+ingester:
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1  # Single-node deployment
+    final_sleep: 0s
+  chunk_idle_period: 3m
+  max_chunk_age: 1h
+  chunk_target_size: 1048576  # 1MB chunks balance compression vs query fan-out
+
+schema_config:
+  configs:
+    - from: 2023-01-01
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+      chunks:
+        retention_period: 168h  # 7 days of logs retained
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/boltdb-cache
+    shared_store: filesystem
+  filesystem:
+    directory: /loki/chunks
+
+limits_config:
+  max_streams_per_user: 10000
+  max_query_lookback: 720h
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+
+compactor:
+  working_directory: /loki/compactor
+  shared_store: filesystem
+  compaction_interval: 10m
+
+chunk_store_config:
+  max_look_back_period: 0s
+
+# Notes:
+# - Chunk size impacts compression and query fan-out; 1MB works well for mixed log sizes.
+# - Retention at 7 days keeps disk bounded; estimate ~5-10GB/week depending on log volume.
+# - Increase replication_factor and switch ring kvstore to memberlist for multi-node deployments.

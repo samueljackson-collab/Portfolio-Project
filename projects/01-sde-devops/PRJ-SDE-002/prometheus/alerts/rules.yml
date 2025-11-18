@@ -1,0 +1,218 @@
+# Alert Rules - organized by domain with rich annotations for fast triage
+# Thresholds tuned for homelab scale; adjust based on baselines to reduce noise
+
+# Infrastructure Alerts
+- alert: InstanceDown
+  expr: up == 0
+  for: 2m
+  labels:
+    severity: critical
+  annotations:
+    summary: "Instance unreachable: {{ $labels.instance }}"
+    description: "Prometheus has not scraped {{ $labels.instance }} for 2 minutes (value={{ $value }}). Host or exporter likely down."
+    runbook: |
+      1. Ping the host or open SSH to confirm reachability.
+      2. Validate exporter process: `systemctl status node-exporter`.
+      3. Check firewall or security group allowing scrape port.
+      4. If maintenance, create silence in Alertmanager to avoid noise.
+  # Rationale: 2m avoids flapping from short network blips; critical because observability gap impacts all alerts.
+
+- alert: HighCPUUsage
+  expr: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.8
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "High CPU usage on {{ $labels.instance }}"
+    description: "CPU utilization averaged {{ $value | humanizePercentage }} for 5m on {{ $labels.instance }}."
+    runbook: |
+      1. Check top processes: `top -o %CPU` on host.
+      2. Review container CPU usage: `docker stats --no-stream`.
+      3. Validate workloads scheduled appropriately; consider CPU limits.
+      4. If expected (batch job), adjust threshold to 90% or add silence.
+  # False positives: bursty build workloads; adjust for environment norms.
+
+- alert: HighCPUUsageCritical
+  expr: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[2m])) > 0.95
+  for: 2m
+  labels:
+    severity: critical
+  annotations:
+    summary: "Critical CPU saturation on {{ $labels.instance }}"
+    description: "CPU usage exceeded 95% for 2m on {{ $labels.instance }}. Risk of throttling and latency."
+    runbook: |
+      1. Identify runaway processes; consider restart.
+      2. Check for noisy neighbors on shared hosts.
+      3. Scale vertically (add vCPU) or horizontally if sustained.
+  # Rationale: Short window catches sustained saturation; lower tolerance than warning.
+
+- alert: HighMemoryUsage
+  expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.85
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "High memory usage on {{ $labels.instance }}"
+    description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }} for 5m."
+    runbook: |
+      1. Inspect memory: `free -h` and `smem -r` for per-process usage.
+      2. Review container memory with `docker stats`.
+      3. Investigate caching vs. leak using `vmstat 1 5` trends.
+      4. Raise threshold if due to legitimate cache pressure.
+  # Business impact: May cause OOM kills leading to app downtime.
+
+- alert: HighMemoryUsageCritical
+  expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.95
+  for: 2m
+  labels:
+    severity: critical
+  annotations:
+    summary: "Critical memory pressure on {{ $labels.instance }}"
+    description: "Memory usage exceeded 95% on {{ $labels.instance }} (value={{ $value | humanizePercentage }})."
+    runbook: |
+      1. Capture heap dumps if JVM app; otherwise gather ps/top snapshots.
+      2. Kill runaway processes cautiously; prioritize service continuity.
+      3. Add swap temporarily if safe; plan for memory upgrade.
+  # False positives rare; if seen, increase hardware or optimize workloads.
+
+- alert: DiskSpaceLow
+  expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) < 0.15
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Disk space low on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+    description: "Free space dropped below 15% on {{ $labels.instance }} mount {{ $labels.mountpoint }} (value={{ $value | humanizePercentage }})."
+    runbook: |
+      1. Identify large files: `sudo du -sh /* | sort -h`.
+      2. Rotate/compress logs; prune Docker images `docker system prune`.
+      3. Extend filesystem or relocate data.
+  # Threshold leaves room for remediation before running out completely.
+
+- alert: DiskSpaceLowCritical
+  expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) < 0.05
+  for: 2m
+  labels:
+    severity: critical
+  annotations:
+    summary: "Critical disk space low on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+    description: "Free space below 5% on {{ $labels.instance }} mount {{ $labels.mountpoint }}. Imminent risk of write failures."
+    runbook: |
+      1. Stop non-essential services to reduce writes.
+      2. Clear caches/logs; offload archives to external storage.
+      3. Resize volume or migrate workloads.
+  # Business impact: Data loss or service crash if disk fills.
+
+- alert: DiskWillFillSoon
+  expr: predict_linear(node_filesystem_free_bytes{fstype!~"tmpfs|overlay"}[6h], 24*3600) < 0
+  for: 30m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Disk likely to fill within 24h on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+    description: "Trend indicates disk {{ $labels.mountpoint }} on {{ $labels.instance }} will be full within 24h (prediction={{ $value }} bytes)."
+    runbook: |
+      1. Identify growth source (logs, backups, temp files).
+      2. Adjust retention or move workload to larger volume.
+      3. Increase storage quota proactively.
+  # Predictive alert minimizes surprise outages; false positives if usage pattern non-linear.
+
+# Container Alerts
+- alert: ContainerHighCPU
+  expr: rate(container_cpu_usage_seconds_total{name!=""}[5m]) / container_spec_cpu_quota{name!=""} * container_spec_cpu_period{name!=""} > 0.9
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Container CPU high: {{ $labels.name }}"
+    description: "Container {{ $labels.name }} using >90% CPU limit for 5m (value={{ $value | humanizePercentage }})."
+    runbook: |
+      1. Check container process: `docker top {{ $labels.name }}`.
+      2. Inspect throttling in cAdvisor UI.
+      3. Increase CPU limit if workload expected; otherwise optimize app.
+  # Uses cgroup quota to respect per-container limits; adjust if limits unset.
+
+- alert: ContainerHighMemory
+  expr: container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""} > 0.9
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Container memory high: {{ $labels.name }}"
+    description: "Container {{ $labels.name }} using >90% of memory limit for 5m (value={{ $value | humanizePercentage }})."
+    runbook: |
+      1. Capture heap/pprof profiles where applicable.
+      2. Right-size memory limits; check for memory leak patterns in Grafana.
+      3. Add liveness/readiness probes to protect host.
+  # Consider raising threshold for bursty services; watch for OOM kills.
+
+- alert: ContainerRestarting
+  expr: changes(container_last_seen{name!=""}[15m]) > 3
+  for: 1m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Container restarting frequently: {{ $labels.name }}"
+    description: "Container {{ $labels.name }} restarted more than 3 times in 15m; instability suspected."
+    runbook: |
+      1. Inspect container logs in Loki for crash loops.
+      2. Review health checks and dependency readiness.
+      3. Pin image version; rollback if regression.
+  # Prevent alert storms by short for-window and restart threshold.
+
+# Monitoring Stack Alerts
+- alert: PrometheusDown
+  expr: absent(up{job="prometheus"} == 1)
+  for: 2m
+  labels:
+    severity: critical
+  annotations:
+    summary: "Prometheus service down"
+    description: "Prometheus has no active self-scrape for 2 minutes. All alerting/metrics degraded."
+    runbook: |
+      1. Check container status: `docker ps -f name=prometheus`.
+      2. Inspect Prometheus logs for TSDB or config errors.
+      3. Restore from backup if corruption detected.
+  # Critical because alerting pipeline depends on Prometheus availability.
+
+- alert: PrometheusTSDBReloadsFailing
+  expr: increase(prometheus_tsdb_reloads_failures_total[5m]) > 0
+  for: 10m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Prometheus TSDB reload failures detected"
+    description: "TSDB reloads failed {{ $value }} times in last 5m; indicates potential data corruption or disk issues."
+    runbook: |
+      1. Review Prometheus logs around reload events.
+      2. Check disk space and I/O latency.
+      3. Consider stopping Prometheus and running `tsdb` repair tools.
+  # Warn first to allow proactive repair before full outage.
+
+- alert: PrometheusRuleEvaluationFailures
+  expr: increase(prometheus_rule_evaluation_failures_total[5m]) > 0
+  for: 10m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Prometheus rule evaluation failures"
+    description: "Rule evaluations failed in last 5m (count={{ $value }}). Alerts may be incomplete."
+    runbook: |
+      1. Validate rule syntax and variables; run `promtool check rules`.
+      2. Check for missing series or high query latency.
+      3. Reduce rule complexity or increase evaluation interval if CPU constrained.
+  # Avoid false positives by using 5m window; increase if environment noisy.
+
+- alert: GrafanaDown
+  expr: absent(up{job="grafana"} == 1)
+  for: 2m
+  labels:
+    severity: warning
+  annotations:
+    summary: "Grafana not reachable"
+    description: "Grafana did not respond to /metrics for 2m. Users cannot visualize dashboards."
+    runbook: |
+      1. Restart Grafana container and check plugins.
+      2. Verify datasource connectivity to Prometheus/Loki.
+      3. Check reverse proxy or firewall if UI unreachable.
+  # Warning severity because metrics still collected; impact is observability UI.

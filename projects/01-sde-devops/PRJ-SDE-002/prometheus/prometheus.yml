@@ -1,0 +1,92 @@
+# Prometheus Configuration
+# Purpose: Collect metrics from infrastructure, monitoring stack, and Proxmox hosts
+# Strategy: 15s scrape/evaluation balances fidelity with TSDB size for homelab scale
+# External labels allow stitching metrics across clusters for global alerting
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: 'homelab'  # Distinguishes metrics when federating across envs
+    cluster: 'proxmox-cluster'
+
+# Alertmanager integration for routing alerts; Prometheus retries on failures
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+# Rule files loaded and evaluated every evaluation_interval
+rule_files:
+  - /etc/prometheus/alerts/rules.yml
+
+scrape_configs:
+  # Self-monitoring ensures Prometheus health and storage behavior are visible
+  - job_name: 'prometheus'
+    scrape_interval: 15s  # Keep consistent with default for accurate alerts
+    static_configs:
+      - targets: ['prometheus:9090']
+    metrics_path: /metrics  # Default; explicitly stated for clarity
+    # Labels here propagate to series for quick filtering in dashboards
+    relabel_configs:
+      - target_label: job
+        replacement: prometheus
+
+  # Host metrics via Node Exporter - CPU, memory, disk, network
+  - job_name: 'node-exporter'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          role: 'monitoring-host'
+    # Metric path stays default; comments guide how to add additional hosts
+    # To add more nodes: duplicate target list or use file_sd_configs pointing to JSON file
+
+  # Container-level metrics from cAdvisor for Docker workloads
+  - job_name: 'cadvisor'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          role: 'container-runtime'
+    metrics_path: /metrics
+    # Adjust interval to 30s for quieter environments to save TSDB space
+
+  # Grafana internal metrics (helps troubleshoot dashboard latency/auth issues)
+  - job_name: 'grafana'
+    scrape_interval: 30s  # Less dynamic than host metrics; slower cadence acceptable
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: /metrics
+    scheme: http
+
+  # Loki metrics for ingest/query health and cardinality indicators
+  - job_name: 'loki'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['loki:3100']
+    metrics_path: /metrics
+
+  # Proxmox VE hosts - replace targets with homelab IPs; auth via basic_auth
+  - job_name: 'proxmox'
+    scrape_interval: 30s  # Hypervisor metrics change slower than application metrics
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - '192.168.1.10:9221'  # Example Proxmox exporter endpoint
+          - '192.168.1.11:9221'
+        labels:
+          role: 'hypervisor'
+    # Uncomment and set credentials if exporter is protected
+    basic_auth:
+      username: '${PROMETHEUS_PROXMOX_USER}'
+      password: '${PROMETHEUS_PROXMOX_PASSWORD}'
+    # Example for adding more hypervisors: append IP:9221 under targets
+    # For dynamic discovery, consider file_sd_configs fed by CMDB inventory
+
+# Guidance on extending scrape configs:
+# - To add application exporters, create new job with unique job_name and label role/service
+# - Keep scrape_interval consistent per service type to simplify dashboard panels
+# - For high-churn environments, enable honor_labels to preserve exporter-provided labels
+# - Avoid high-cardinality labels such as container_id when not required for alerting
