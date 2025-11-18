@@ -74,6 +74,21 @@ output "alb_dns_name" {
   value       = var.deploy_application ? module.application[0].alb_dns_name : null
 }
 
+output "target_groups" {
+  description = "Structured target group outputs for downstream consumers"
+  value       = var.deploy_application ? module.application[0].target_groups : {}
+}
+
+output "security_groups" {
+  description = "Structured security group outputs for downstream consumers"
+  value       = var.deploy_application ? module.application[0].security_groups : {}
+}
+
+output "scaling_policies" {
+  description = "Structured auto scaling policy outputs for downstream consumers"
+  value       = var.deploy_application ? module.application[0].scaling_policies : {}
+}
+
 output "ecs_cluster_name" {
   description = "Name of the ECS cluster"
   value       = var.deploy_application ? module.application[0].ecs_cluster_name : null
@@ -91,9 +106,39 @@ output "ecs_service_name" {
 output "cloudwatch_alarms" {
   description = "CloudWatch alarm names for monitoring"
   value = {
-    database_cpu         = aws_cloudwatch_metric_alarm.database_cpu.alarm_name
-    database_storage     = aws_cloudwatch_metric_alarm.database_storage.alarm_name
-    database_connections = aws_cloudwatch_metric_alarm.database_connections.alarm_name
+    database_cpu = {
+      name                 = aws_cloudwatch_metric_alarm.database_cpu.alarm_name
+      arn                  = aws_cloudwatch_metric_alarm.database_cpu.arn
+      metric_name          = aws_cloudwatch_metric_alarm.database_cpu.metric_name
+      namespace            = aws_cloudwatch_metric_alarm.database_cpu.namespace
+      threshold            = aws_cloudwatch_metric_alarm.database_cpu.threshold
+      comparison_operator  = aws_cloudwatch_metric_alarm.database_cpu.comparison_operator
+      evaluation_periods   = aws_cloudwatch_metric_alarm.database_cpu.evaluation_periods
+      period               = aws_cloudwatch_metric_alarm.database_cpu.period
+      statistic            = aws_cloudwatch_metric_alarm.database_cpu.statistic
+    }
+    database_storage = {
+      name                 = aws_cloudwatch_metric_alarm.database_storage.alarm_name
+      arn                  = aws_cloudwatch_metric_alarm.database_storage.arn
+      metric_name          = aws_cloudwatch_metric_alarm.database_storage.metric_name
+      namespace            = aws_cloudwatch_metric_alarm.database_storage.namespace
+      threshold            = aws_cloudwatch_metric_alarm.database_storage.threshold
+      comparison_operator  = aws_cloudwatch_metric_alarm.database_storage.comparison_operator
+      evaluation_periods   = aws_cloudwatch_metric_alarm.database_storage.evaluation_periods
+      period               = aws_cloudwatch_metric_alarm.database_storage.period
+      statistic            = aws_cloudwatch_metric_alarm.database_storage.statistic
+    }
+    database_connections = {
+      name                 = aws_cloudwatch_metric_alarm.database_connections.alarm_name
+      arn                  = aws_cloudwatch_metric_alarm.database_connections.arn
+      metric_name          = aws_cloudwatch_metric_alarm.database_connections.metric_name
+      namespace            = aws_cloudwatch_metric_alarm.database_connections.namespace
+      threshold            = aws_cloudwatch_metric_alarm.database_connections.threshold
+      comparison_operator  = aws_cloudwatch_metric_alarm.database_connections.comparison_operator
+      evaluation_periods   = aws_cloudwatch_metric_alarm.database_connections.evaluation_periods
+      period               = aws_cloudwatch_metric_alarm.database_connections.period
+      statistic            = aws_cloudwatch_metric_alarm.database_connections.statistic
+    }
   }
 }
 
