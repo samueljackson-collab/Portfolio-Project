@@ -1,17 +1,364 @@
-name: portfolio-delivery
+name: kubernetes-cicd
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PIPELINE_ROOT: projects/3-kubernetes-cicd
+  MANIFEST_FILE: projects/3-kubernetes-cicd/pipelines/argocd-app.yaml
+  ARGOCD_VERSION: v2.10.2
+
 jobs:
   build:
+    name: Build container artifact
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/setup-kubectl@v3
-      - run: echo "Running unit tests"
-  deploy:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build reference container image
+        run: |
+          docker build -t portfolio/reference-app:ci - <<'DOCKERFILE'
+          FROM alpine:3.19
+          LABEL maintainer="portfolio-ci"
+          RUN apk add --no-cache bash curl
+          CMD ["/bin/sh", "-c", "echo Kubernetes CI/CD reference image"]
+          DOCKERFILE
+
+      - name: Save build artifact
+        run: |
+          docker save portfolio/reference-app:ci | gzip > portfolio-reference-app.tar.gz
+
+      - name: Upload container artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-container-image
+          path: portfolio-reference-app.tar.gz
+
+  test:
+    name: Lint, validate manifests, and scan
+    runs-on: ubuntu-latest
     needs: build
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Syncing ArgoCD application"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install lint dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yamllint==1.32.0
+
+      - name: Run YAML lint
+        run: |
+          yamllint ${{ env.PIPELINE_ROOT }}/pipelines
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.0
+
+      - name: Validate ArgoCD application manifest
+        run: |
+          kubectl apply --dry-run=client -f ${{ env.MANIFEST_FILE }}
+
+      - name: Run Trivy config scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: config
+          scan-ref: ${{ env.PIPELINE_ROOT }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-config-scan
+          path: trivy-results.sarif
+
+  deploy-dev:
+    name: Deploy to development
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    environment:
+      name: dev
+    env:
+      ARGO_APP_NAME: portfolio-app-dev
+      DEPLOYMENT_NAMESPACE: dev
+      KUBECONFIG_CONTENTS: ${{ secrets.KUBECONFIG_DEV }}
+      ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+      ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.0
+
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd "https://github.com/argoproj/argo-cd/releases/download/${{ env.ARGOCD_VERSION }}/argocd-linux-amd64"
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin/argocd
+
+      - name: Configure kubeconfig
+        if: env.KUBECONFIG_CONTENTS != ''
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "$KUBECONFIG_CONTENTS" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Sync ArgoCD application
+        id: dev-sync
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [[ -z "$ARGOCD_SERVER" || -z "$ARGOCD_AUTH_TOKEN" ]]; then
+            echo "ArgoCD credentials not provided. Skipping sync."
+            exit 0
+          fi
+          argocd app sync "$ARGO_APP_NAME" \
+            --server "$ARGOCD_SERVER" \
+            --grpc-web \
+            --auth-token "$ARGOCD_AUTH_TOKEN" \
+            --prune \
+            --timeout 300
+          argocd app wait "$ARGO_APP_NAME" \
+            --server "$ARGOCD_SERVER" \
+            --grpc-web \
+            --auth-token "$ARGOCD_AUTH_TOKEN" \
+            --health \
+            --timeout 300
+
+      - name: Run smoke tests (dev)
+        id: dev-smoke
+        if: env.KUBECONFIG_CONTENTS != ''
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          kubectl -n "$DEPLOYMENT_NAMESPACE" get pods
+          kubectl -n "$DEPLOYMENT_NAMESPACE" rollout status deploy/$ARGO_APP_NAME --timeout=120s
+
+      - name: Evaluate deployment state
+        run: |
+          if [[ "${{ steps.dev-sync.outcome }}" == 'failure' ]]; then
+            echo "ArgoCD sync failed"
+            exit 1
+          fi
+          if [[ "${{ steps.dev-smoke.outcome }}" == 'failure' ]]; then
+            echo "Smoke tests failed"
+            exit 1
+          fi
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          if [[ -n "$ARGOCD_SERVER" && -n "$ARGOCD_AUTH_TOKEN" ]]; then
+            argocd app rollback "$ARGO_APP_NAME" 1 \
+              --server "$ARGOCD_SERVER" \
+              --grpc-web \
+              --auth-token "$ARGOCD_AUTH_TOKEN"
+          else
+            echo "Skipping rollback - missing ArgoCD credentials"
+          fi
+
+  deploy-staging:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+    env:
+      ARGO_APP_NAME: portfolio-app-staging
+      DEPLOYMENT_NAMESPACE: staging
+      KUBECONFIG_CONTENTS: ${{ secrets.KUBECONFIG_STAGING }}
+      ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+      ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.0
+
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd "https://github.com/argoproj/argo-cd/releases/download/${{ env.ARGOCD_VERSION }}/argocd-linux-amd64"
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin/argocd
+
+      - name: Configure kubeconfig
+        if: env.KUBECONFIG_CONTENTS != ''
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "$KUBECONFIG_CONTENTS" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Sync ArgoCD application
+        id: staging-sync
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [[ -z "$ARGOCD_SERVER" || -z "$ARGOCD_AUTH_TOKEN" ]]; then
+            echo "ArgoCD credentials not provided. Skipping sync."
+            exit 0
+          fi
+          argocd app sync "$ARGO_APP_NAME" \
+            --server "$ARGOCD_SERVER" \
+            --grpc-web \
+            --auth-token "$ARGOCD_AUTH_TOKEN" \
+            --prune \
+            --timeout 300
+          argocd app wait "$ARGO_APP_NAME" \
+            --server "$ARGOCD_SERVER" \
+            --grpc-web \
+            --auth-token "$ARGOCD_AUTH_TOKEN" \
+            --health \
+            --timeout 300
+
+      - name: Run smoke tests (staging)
+        id: staging-smoke
+        if: env.KUBECONFIG_CONTENTS != ''
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          kubectl -n "$DEPLOYMENT_NAMESPACE" get pods
+          kubectl -n "$DEPLOYMENT_NAMESPACE" rollout status deploy/$ARGO_APP_NAME --timeout=120s
+
+      - name: Evaluate deployment state
+        run: |
+          if [[ "${{ steps.staging-sync.outcome }}" == 'failure' ]]; then
+            echo "ArgoCD sync failed"
+            exit 1
+          fi
+          if [[ "${{ steps.staging-smoke.outcome }}" == 'failure' ]]; then
+            echo "Smoke tests failed"
+            exit 1
+          fi
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          if [[ -n "$ARGOCD_SERVER" && -n "$ARGOCD_AUTH_TOKEN" ]]; then
+            argocd app rollback "$ARGO_APP_NAME" 1 \
+              --server "$ARGOCD_SERVER" \
+              --grpc-web \
+              --auth-token "$ARGOCD_AUTH_TOKEN"
+          else
+            echo "Skipping rollback - missing ArgoCD credentials"
+          fi
+
+  deploy-production:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+    env:
+      ARGO_APP_NAME: portfolio-app
+      DEPLOYMENT_NAMESPACE: production
+      KUBECONFIG_CONTENTS: ${{ secrets.KUBECONFIG_PROD }}
+      ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+      ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.0
+
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd "https://github.com/argoproj/argo-cd/releases/download/${{ env.ARGOCD_VERSION }}/argocd-linux-amd64"
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin/argocd
+
+      - name: Configure kubeconfig
+        if: env.KUBECONFIG_CONTENTS != ''
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "$KUBECONFIG_CONTENTS" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Sync ArgoCD application
+        id: prod-sync
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [[ -z "$ARGOCD_SERVER" || -z "$ARGOCD_AUTH_TOKEN" ]]; then
+            echo "ArgoCD credentials not provided. Skipping sync."
+            exit 0
+          fi
+          argocd app sync "$ARGO_APP_NAME" \
+            --server "$ARGOCD_SERVER" \
+            --grpc-web \
+            --auth-token "$ARGOCD_AUTH_TOKEN" \
+            --prune \
+            --timeout 300
+          argocd app wait "$ARGO_APP_NAME" \
+            --server "$ARGOCD_SERVER" \
+            --grpc-web \
+            --auth-token "$ARGOCD_AUTH_TOKEN" \
+            --health \
+            --timeout 300
+
+      - name: Run smoke tests (production)
+        id: prod-smoke
+        if: env.KUBECONFIG_CONTENTS != ''
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          kubectl -n "$DEPLOYMENT_NAMESPACE" get pods
+          kubectl -n "$DEPLOYMENT_NAMESPACE" rollout status deploy/$ARGO_APP_NAME --timeout=180s
+
+      - name: Evaluate deployment state
+        run: |
+          if [[ "${{ steps.prod-sync.outcome }}" == 'failure' ]]; then
+            echo "ArgoCD sync failed"
+            exit 1
+          fi
+          if [[ "${{ steps.prod-smoke.outcome }}" == 'failure' ]]; then
+            echo "Smoke tests failed"
+            exit 1
+          fi
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          if [[ -n "$ARGOCD_SERVER" && -n "$ARGOCD_AUTH_TOKEN" ]]; then
+            argocd app rollback "$ARGO_APP_NAME" 1 \
+              --server "$ARGOCD_SERVER" \
+              --grpc-web \
+              --auth-token "$ARGOCD_AUTH_TOKEN"
+          else
+            echo "Skipping rollback - missing ArgoCD credentials"
+          fi
