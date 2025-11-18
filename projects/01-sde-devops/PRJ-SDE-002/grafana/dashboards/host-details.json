@@ -1,0 +1,36 @@
+{
+  "title": "Host Details",
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(node_uname_info, instance)",
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {"type": "timeseries", "title": "CPU per Core", "gridPos": {"x":0,"y":0,"w":12,"h":5},
+     "targets": [{"expr": "rate(node_cpu_seconds_total{mode!='idle',instance=~'$instance'}[5m])"}]},
+    {"type": "timeseries", "title": "Memory Breakdown", "gridPos": {"x":0,"y":5,"w":12,"h":5},
+     "targets": [
+        {"expr": "node_memory_MemAvailable_bytes{instance=~'$instance'}"},
+        {"expr": "node_memory_Buffers_bytes{instance=~'$instance'}"},
+        {"expr": "node_memory_Cached_bytes{instance=~'$instance'}"}
+     ]},
+    {"type": "timeseries", "title": "Disk IO", "gridPos": {"x":0,"y":10,"w":12,"h":5},
+     "targets": [{"expr": "rate(node_disk_reads_completed_total{instance=~'$instance'}[5m])"}, {"expr": "rate(node_disk_writes_completed_total{instance=~'$instance'}[5m])"}]},
+    {"type": "timeseries", "title": "Network Traffic", "gridPos": {"x":12,"y":0,"w":12,"h":5},
+     "targets": [{"expr": "sum by(device)(rate(node_network_receive_bytes_total{instance=~'$instance'}[5m]))"}, {"expr": "sum by(device)(rate(node_network_transmit_bytes_total{instance=~'$instance'}[5m]))"}]},
+    {"type": "gauge", "title": "Filesystem Usage", "gridPos": {"x":12,"y":5,"w":12,"h":5},
+     "targets": [{"expr": "(node_filesystem_size_bytes{instance=~'$instance',fstype!~'tmpfs|overlay'} - node_filesystem_free_bytes{instance=~'$instance',fstype!~'tmpfs|overlay'}) / node_filesystem_size_bytes{instance=~'$instance',fstype!~'tmpfs|overlay'}"}]},
+    {"type": "stat", "title": "Load Average", "gridPos": {"x":12,"y":10,"w":12,"h":5},
+     "targets": [{"expr": "node_load1{instance=~'$instance'}"}, {"expr": "node_load5{instance=~'$instance'}"}, {"expr": "node_load15{instance=~'$instance'}"}]},
+    {"type": "table", "title": "Top Processes", "gridPos": {"x":0,"y":15,"w":24,"h":6},
+     "targets": [{"expr": "topk(10, rate(container_cpu_usage_seconds_total{instance=~'$instance'}[5m]))"}]}
+  ]
+}

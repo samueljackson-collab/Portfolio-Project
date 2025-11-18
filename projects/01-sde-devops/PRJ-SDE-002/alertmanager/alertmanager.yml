@@ -1,0 +1,66 @@
+# Alertmanager routing tree tuned for homelab with production-like behavior.
+route:
+  group_by: ['cluster', 'alertname', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: monitoring-default
+  routes:
+    - match:
+        severity: critical
+      receiver: pagerduty-critical
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 1h
+    - match:
+        severity: warning
+      receiver: slack-notifications
+      group_wait: 1m
+      group_interval: 5m
+      repeat_interval: 6h
+
+receivers:
+  - name: monitoring-default
+    slack_configs:
+      - api_url: ${ALERTMANAGER_SLACK_WEBHOOK_URL}
+        channel: '#monitoring'
+        send_resolved: true
+        title: '[Default] {{ .CommonLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}'
+
+  - name: pagerduty-critical
+    pagerduty_configs:
+      - routing_key: ${PAGERDUTY_ROUTING_KEY:-placeholder}
+        severity: 'critical'
+        send_resolved: true
+
+  - name: slack-notifications
+    slack_configs:
+      - api_url: ${ALERTMANAGER_SLACK_WEBHOOK_URL}
+        channel: '#monitoring-warnings'
+        title: '[Warning] {{ .CommonLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}'
+        send_resolved: true
+
+  - name: email-alerts
+    email_configs:
+      - to: ${ALERTMANAGER_SMTP_TO}
+        from: ${ALERTMANAGER_SMTP_FROM}
+        smarthost: ${ALERTMANAGER_SMTP_HOST}
+        auth_username: ${ALERTMANAGER_SMTP_USERNAME}
+        auth_password: ${ALERTMANAGER_SMTP_PASSWORD}
+        require_tls: true
+        send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['instance', 'alertname']
+
+  - source_match:
+      alertname: 'InstanceDown'
+    target_match_re:
+      alertname: 'DiskSpace.*'
+    equal: ['instance']

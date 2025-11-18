@@ -1,0 +1,80 @@
+{
+  "title": "Infrastructure Overview",
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "type": "custom",
+        "query": "homelab,staging,prod",
+        "label": "Environment",
+        "current": {"text": "homelab", "value": "homelab"}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Hosts Monitored",
+      "gridPos": {"x":0,"y":0,"w":4,"h":3},
+      "targets": [
+        {"expr": "count(count(node_uname_info) by (instance))", "refId": "A"}
+      ],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": ""}}
+    },
+    {
+      "type": "gauge",
+      "title": "Uptime Percentage",
+      "gridPos": {"x":4,"y":0,"w":4,"h":3},
+      "fieldConfig": {"defaults": {"thresholds": {"mode": "percentage", "steps": [{"color": "red", "value": 0},{"color": "yellow", "value": 90},{"color": "green", "value": 99}]}}, "overrides": []},
+      "targets": [{"expr": "avg_over_time(node_time_seconds[6h]) / (6*3600) * 100"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Average CPU Usage",
+      "gridPos": {"x":0,"y":3,"w":8,"h":5},
+      "targets": [{"expr": "avg by(instance) (rate(node_cpu_seconds_total{mode!='idle'}[5m]))"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Average Memory Usage",
+      "gridPos": {"x":8,"y":3,"w":8,"h":5},
+      "targets": [{"expr": "avg by(instance)((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes)"}]
+    },
+    {
+      "type": "bargauge",
+      "title": "Top CPU Hosts",
+      "gridPos": {"x":0,"y":8,"w":8,"h":5},
+      "options": {"orientation": "horizontal"},
+      "targets": [{"expr": "topk(5, rate(node_cpu_seconds_total{mode!='idle'}[5m]))"}]
+    },
+    {
+      "type": "bargauge",
+      "title": "Top Memory Hosts",
+      "gridPos": {"x":8,"y":8,"w":8,"h":5},
+      "targets": [{"expr": "topk(5, (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes)"}]
+    },
+    {
+      "type": "table",
+      "title": "Disk Usage by Host",
+      "gridPos": {"x":0,"y":13,"w":8,"h":6},
+      "targets": [{"expr": "node_filesystem_avail_bytes{fstype!~'tmpfs|overlay'} / node_filesystem_size_bytes{fstype!~'tmpfs|overlay'}"}]
+    },
+    {
+      "type": "bargauge",
+      "title": "Network In/Out",
+      "gridPos": {"x":8,"y":13,"w":8,"h":6},
+      "targets": [
+        {"expr": "sum by(instance)(rate(node_network_receive_bytes_total[5m]))"},
+        {"expr": "sum by(instance)(rate(node_network_transmit_bytes_total[5m]))"}
+      ]
+    },
+    {
+      "type": "state-timeline",
+      "title": "Alert Status",
+      "gridPos": {"x":0,"y":19,"w":16,"h":5},
+      "targets": [{"expr": "ALERTS"}]
+    }
+  ]
+}
