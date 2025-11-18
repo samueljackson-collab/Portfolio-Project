@@ -1,160 +1,72 @@
-"""
-Authentication and authorization utilities.
-
-This module provides:
-- Password hashing and verification using bcrypt
-- JWT token generation and validation
-- User authentication helpers
-- Token decoding with expiration handling
-
-Security Considerations:
-- Passwords are never stored in plain text
-- bcrypt automatically handles salt generation
-- JWT tokens expire after 30 minutes by default
-- Token signature prevents tampering
-"""
-
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
+from app import models, schemas
 from app.config import settings
+from app.database import get_db
 
-
-# Password hashing context using bcrypt
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12
-)
-
-
-def hash_password(password: str) -> str:
-    """
-    Hash a plain text password using bcrypt.
-
-    bcrypt automatically generates a unique salt for each password,
-    so two users with the same password will have different hashes.
-
-    Args:
-        password: Plain text password from user input
-
-    Returns:
-        str: Hashed password safe for database storage
-    """
-    return pwd_context.hash(password)
-
-
-# Backwards-compatible alias --------------------------------------------------
-def get_password_hash(password: str) -> str:
-    """Compatibility wrapper around :func:`hash_password`."""
-
-    return hash_password(password)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+password_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verify a plain text password against a hashed password.
-
-    This is a constant-time comparison to prevent timing attacks.
-
-    Args:
-        plain_password: Password entered by user during login
-        hashed_password: Hashed password from database
-
-    Returns:
-        bool: True if password matches, False otherwise
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+    return password_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """
-    Create a JWT access token with expiration.
+def get_password_hash(password: str) -> str:
+    return password_context.hash(password)
 
-    The token contains:
-    - sub: Subject (usually user ID)
-    - exp: Expiration timestamp
-    - iat: Issued at timestamp
-    - Any additional claims passed in data
 
-    Args:
-        data: Dictionary of claims to encode in token
-        expires_delta: Optional custom expiration time
-
-    Returns:
-        str: Encoded JWT token
-
-    Security Note:
-        The token is signed but NOT encrypted. Don't put sensitive
-        data like passwords or credit cards in the payload!
-    """
+def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
-
-    # Calculate expiration time
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(
-            minutes=settings.access_token_expire_minutes
-        )
-
-    # Add standard claims
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.utcnow(),
-    })
-
-    # Encode and sign the token
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.secret_key,
-        algorithm=settings.algorithm
-    )
-
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
 
-def decode_access_token(token: str) -> dict:
-    """
-    Decode and validate a JWT token.
+async def authenticate_user(db: AsyncSession, username: str, password: str) -> Optional[models.User]:
+    result = await db.execute(select(models.User).where(models.User.username == username))
+    user = result.scalar_one_or_none()
+    if not user:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user
 
-    This function:
-    1. Verifies the signature matches
-    2. Checks the token hasn't expired
-    3. Returns the payload if valid
 
-    Args:
-        token: JWT token string from Authorization header
-
-    Returns:
-        dict: Decoded token payload
-
-    Raises:
-        HTTPException: If token is invalid or expired
-    """
+async def get_current_user(
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+) -> models.User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
     try:
-        # Decode token with signature verification
-        payload = jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=[settings.algorithm]
-        )
-
-        # Extract subject (user identifier)
-        user_identifier: str = payload.get("sub")
-        if user_identifier is None:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        username: str | None = payload.get("sub")
+        if username is None:
             raise credentials_exception
+        token_data = schemas.TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
 
-        return payload
+    result = await db.execute(select(models.User).where(models.User.username == token_data.username))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise credentials_exception
+    return user
 
-    except JWTError as e:
-        raise credentials_exception from e
+
+async def require_admin(current_user: models.User = Depends(get_current_user)) -> models.User:
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
+    return current_user

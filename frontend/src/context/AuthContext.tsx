@@ -99,7 +99,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Automatically login after registration
       await login({
-        username: data.email,
+        username: data.username,
         password: data.password,
       })
     } catch (error) {

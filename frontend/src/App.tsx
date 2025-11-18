@@ -1,14 +1,8 @@
-/**
- * Main App Component
- *
- * Root component with routing configuration
- */
-
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context'
 import { Navbar, ProtectedRoute } from './components'
-import { Home, Login, Register, Dashboard, HomeAssistant, EnterprisePortfolio } from './pages'
+import { Home, Login, Register, Projects, ProjectDetail } from './pages'
 
 const App: React.FC = () => {
   return (
@@ -17,32 +11,19 @@ const App: React.FC = () => {
         <div className="min-h-screen bg-gray-50">
           <Navbar />
           <Routes>
-            {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/home-assistant" element={<HomeAssistant />} />
-            <Route path="/enterprise-portfolio" element={<EnterprisePortfolio />} />
-
-            {/* Protected routes */}
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/:slug" element={<ProjectDetail />} />
             <Route
-              path="/dashboard"
+              path="/admin"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Projects />
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/photos"
-              element={
-                <ProtectedRoute>
-                  <PhotosPage />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Catch-all redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

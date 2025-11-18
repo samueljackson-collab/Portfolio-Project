@@ -1,0 +1,202 @@
+[
+  {
+    "title": "AWS Infrastructure Automation",
+    "slug": "aws-infrastructure-automation",
+    "category": "Infrastructure",
+    "summary": "Terraform, CDK, and Pulumi patterns for reusable AWS stacks.",
+    "stack": ["Terraform", "CDK", "Pulumi", "AWS"],
+    "status": "complete"
+  },
+  {
+    "title": "Database Migration Platform",
+    "slug": "database-migration-platform",
+    "category": "Data",
+    "summary": "Change data capture migration platform with validation gates.",
+    "stack": ["Debezium", "PostgreSQL", "Kafka"],
+    "status": "complete"
+  },
+  {
+    "title": "Kubernetes CI/CD Pipeline",
+    "slug": "kubernetes-cicd",
+    "category": "DevOps",
+    "summary": "GitOps pipeline with Argo CD and progressive delivery.",
+    "stack": ["Argo CD", "Kubernetes", "GitHub Actions"],
+    "status": "complete"
+  },
+  {
+    "title": "DevSecOps Pipeline",
+    "slug": "devsecops-pipeline",
+    "category": "Security",
+    "summary": "Supply chain scanning, SBOM publishing, and policy automation.",
+    "stack": ["Trivy", "Sigstore", "Open Policy Agent"],
+    "status": "complete"
+  },
+  {
+    "title": "Real-time Data Streaming",
+    "slug": "real-time-data-streaming",
+    "category": "Data",
+    "summary": "Kafka and Flink streaming with governance and monitoring.",
+    "stack": ["Kafka", "Flink", "Schema Registry"],
+    "status": "complete"
+  },
+  {
+    "title": "Machine Learning Pipeline",
+    "slug": "mlops-platform",
+    "category": "AI/ML",
+    "summary": "Experiment tracking, registry, and promotion workflows.",
+    "stack": ["MLflow", "Kubeflow", "Seldon"],
+    "status": "complete"
+  },
+  {
+    "title": "Serverless Data Processing",
+    "slug": "serverless-data-processing",
+    "category": "Cloud",
+    "summary": "Lambda and Step Functions orchestration for ETL.",
+    "stack": ["Lambda", "Step Functions", "DynamoDB"],
+    "status": "complete"
+  },
+  {
+    "title": "Advanced AI Chatbot",
+    "slug": "advanced-ai-chatbot",
+    "category": "AI/ML",
+    "summary": "Retrieval-augmented chatbot with tool execution and streaming.",
+    "stack": ["OpenAI", "Pinecone", "FastAPI"],
+    "status": "complete"
+  },
+  {
+    "title": "Multi-Region Disaster Recovery",
+    "slug": "multi-region-disaster-recovery",
+    "category": "Reliability",
+    "summary": "Automated failover and replication validation playbooks.",
+    "stack": ["AWS", "PostgreSQL", "Barman"],
+    "status": "complete"
+  },
+  {
+    "title": "Blockchain Smart Contract Platform",
+    "slug": "blockchain-smart-contract-platform",
+    "category": "Blockchain",
+    "summary": "Hardhat staking contracts with auditing guardrails.",
+    "stack": ["Solidity", "Hardhat", "OpenZeppelin"],
+    "status": "complete"
+  },
+  {
+    "title": "IoT Data Ingestion & Analytics",
+    "slug": "iot-analytics",
+    "category": "IoT",
+    "summary": "Edge telemetry ingestion and analytics dashboards.",
+    "stack": ["MQTT", "TimescaleDB", "Grafana"],
+    "status": "complete"
+  },
+  {
+    "title": "Quantum Computing Integration",
+    "slug": "quantum-computing",
+    "category": "Research",
+    "summary": "Hybrid quantum/classical optimization workflows.",
+    "stack": ["Qiskit", "Python"],
+    "status": "complete"
+  },
+  {
+    "title": "Advanced Cybersecurity Platform",
+    "slug": "advanced-cybersecurity",
+    "category": "Security",
+    "summary": "SOAR engine with enrichment adapters and automated response.",
+    "stack": ["Python", "FastAPI", "Elasticsearch"],
+    "status": "complete"
+  },
+  {
+    "title": "Edge AI Inference Platform",
+    "slug": "edge-ai-inference",
+    "category": "AI/ML",
+    "summary": "ONNX Runtime service optimized for edge accelerators.",
+    "stack": ["ONNX", "TensorRT", "Python"],
+    "status": "complete"
+  },
+  {
+    "title": "Real-time Collaborative Platform",
+    "slug": "real-time-collaboration",
+    "category": "Web",
+    "summary": "CRDT collaboration server with presence and history.",
+    "stack": ["Node.js", "WebSockets", "Redis"],
+    "status": "complete"
+  },
+  {
+    "title": "Advanced Data Lake & Analytics",
+    "slug": "advanced-data-lake",
+    "category": "Data",
+    "summary": "Medallion architecture with Delta Lake and governance.",
+    "stack": ["Spark", "Delta", "Databricks"],
+    "status": "complete"
+  },
+  {
+    "title": "Multi-Cloud Service Mesh",
+    "slug": "multi-cloud-service-mesh",
+    "category": "Networking",
+    "summary": "Istio multi-cluster mesh with mTLS and observability.",
+    "stack": ["Istio", "Kubernetes", "Prometheus"],
+    "status": "complete"
+  },
+  {
+    "title": "GPU-Accelerated Computing",
+    "slug": "gpu-accelerated-computing",
+    "category": "Compute",
+    "summary": "GPU orchestration and Monte Carlo simulations with CuPy.",
+    "stack": ["CUDA", "CuPy", "Dask"],
+    "status": "complete"
+  },
+  {
+    "title": "Advanced Kubernetes Operators",
+    "slug": "advanced-kubernetes-operators",
+    "category": "Kubernetes",
+    "summary": "Kopf-based operator managing portfolio lifecycles.",
+    "stack": ["Kopf", "Python", "Kubernetes"],
+    "status": "complete"
+  },
+  {
+    "title": "Blockchain Oracle Service",
+    "slug": "blockchain-oracle-service",
+    "category": "Blockchain",
+    "summary": "Chainlink adapter and consumer contracts for on-chain metrics.",
+    "stack": ["Solidity", "Chainlink", "Node.js"],
+    "status": "complete"
+  },
+  {
+    "title": "Quantum-Safe Cryptography",
+    "slug": "quantum-safe-cryptography",
+    "category": "Security",
+    "summary": "Hybrid Kyber + ECDH key exchange prototype.",
+    "stack": ["Kyber", "Python", "OpenSSL"],
+    "status": "complete"
+  },
+  {
+    "title": "Autonomous DevOps Platform",
+    "slug": "autonomous-devops-platform",
+    "category": "DevOps",
+    "summary": "Event-driven remediation workflows and runbooks-as-code.",
+    "stack": ["Temporal", "FastAPI", "Terraform"],
+    "status": "complete"
+  },
+  {
+    "title": "Advanced Monitoring & Observability",
+    "slug": "advanced-monitoring",
+    "category": "Observability",
+    "summary": "Grafana dashboards, alerting rules, and distributed tracing.",
+    "stack": ["Grafana", "Prometheus", "OpenTelemetry"],
+    "status": "complete"
+  },
+  {
+    "title": "Portfolio Report Generator",
+    "slug": "portfolio-report-generator",
+    "category": "Automation",
+    "summary": "Automated report templating with Jinja2 and exports.",
+    "stack": ["Python", "Jinja2", "MkDocs"],
+    "status": "complete"
+  },
+  {
+    "title": "Portfolio Website & Documentation Hub",
+    "slug": "portfolio-website",
+    "category": "Web",
+    "summary": "Static documentation hub aggregating project artifacts.",
+    "stack": ["VitePress", "TypeScript", "Docker"],
+    "status": "complete"
+  }
+]
