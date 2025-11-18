@@ -1,0 +1,16 @@
+{
+  "uid": "logs-explorer",
+  "title": "Logs Explorer",
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {"list": [
+    {"name":"container_name","type":"query","datasource":"Loki","query":"label_values({job='docker'}, container_name)"},
+    {"name":"log_level","type":"custom","options":[{"text":"info","value":"info"},{"text":"error","value":"error"},{"text":"warn","value":"warn"}]}
+  ]},
+  "panels": [
+    {"type":"logs","title":"Log Stream","gridPos":{"x":0,"y":0,"w":12,"h":8},"targets":[{"datasource":"Loki","expr":"{job='docker',container_name=~'$container_name',level=~'$log_level'}"}],"options":{"showTime":true,"wrapLogMessage":true}},
+    {"type":"barchart","title":"Log Volume","gridPos":{"x":0,"y":8,"w":12,"h":4},"targets":[{"datasource":"Loki","expr":"sum by (level) (count_over_time({job='docker'}[5m]))"}]},
+    {"type":"table","title":"Errors","gridPos":{"x":0,"y":12,"w":12,"h":6},"targets":[{"datasource":"Loki","expr":"{job='docker', level='error'}"}],"options":{"showHeader":true}},
+    {"type":"timeseries","title":"Error Rate","gridPos":{"x":0,"y":18,"w":12,"h":4},"targets":[{"datasource":"Loki","expr":"sum(rate({job='docker', level='error'}[5m]))"}]}
+  ]
+}

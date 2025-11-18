@@ -1,0 +1,16 @@
+{
+  "uid": "container-monitoring",
+  "title": "Container Monitoring",
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "panels": [
+    {"type":"stat","title":"Running Containers","gridPos":{"x":0,"y":0,"w":6,"h":3},"targets":[{"expr":"count(container_last_seen{container_label_com_docker_swarm_task_id!=""})"}]},
+    {"type":"stat","title":"Restarting Containers","gridPos":{"x":6,"y":0,"w":6,"h":3},"targets":[{"expr":"count(increase(container_restart_count_total[30m]))"}]},
+    {"type":"timeseries","title":"CPU by Container","gridPos":{"x":0,"y":3,"w":12,"h":4},"targets":[{"expr":"sum by (name) (rate(container_cpu_usage_seconds_total{image!=""}[5m]))"}],"fieldConfig":{"defaults":{"unit":"percentunit"}}},
+    {"type":"timeseries","title":"Memory by Container","gridPos":{"x":0,"y":7,"w":12,"h":4},"targets":[{"expr":"sum by (name) (container_memory_usage_bytes{image!=""})"}],"fieldConfig":{"defaults":{"unit":"bytes"}}},
+    {"type":"timeseries","title":"Network I/O","gridPos":{"x":0,"y":11,"w":12,"h":4},"targets":[{"expr":"sum by (name) (rate(container_network_receive_bytes_total[5m]))"},{"expr":"sum by (name) (rate(container_network_transmit_bytes_total[5m]))"}],"fieldConfig":{"defaults":{"unit":"Bps"}}},
+    {"type":"gauge","title":"Filesystem Usage","gridPos":{"x":0,"y":15,"w":6,"h":4},"targets":[{"expr":"container_fs_usage_bytes/container_fs_limit_bytes"}],"fieldConfig":{"defaults":{"unit":"percentunit"}}},
+    {"type":"table","title":"Restart Counts","gridPos":{"x":6,"y":15,"w":6,"h":4},"targets":[{"expr":"topk(10, container_restart_count_total)"}]},
+    {"type":"state-timeline","title":"Health Status","gridPos":{"x":0,"y":19,"w":12,"h":5},"targets":[{"expr":"container_last_seen"}]}
+  ]
+}

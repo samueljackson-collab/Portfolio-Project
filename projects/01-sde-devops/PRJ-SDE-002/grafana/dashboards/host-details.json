@@ -1,0 +1,69 @@
+{
+  "uid": "host-details",
+  "title": "Host Details",
+  "timezone": "browser",
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(node_uname_info, instance)",
+        "refresh": 1
+      }
+    ]
+  },
+  "time": {"from": "now-6h", "to": "now"},
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "CPU per Core",
+      "gridPos": {"x":0,"y":0,"w":12,"h":4},
+      "targets": [{"expr": "rate(node_cpu_seconds_total{mode!='idle',instance=~'$instance'}[5m])"}],
+      "fieldConfig": {"defaults": {"unit": "percentunit"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory Breakdown",
+      "gridPos": {"x":0,"y":4,"w":12,"h":4},
+      "targets": [
+        {"expr": "node_memory_MemAvailable_bytes{instance=~'$instance'}"},
+        {"expr": "node_memory_Cached_bytes{instance=~'$instance'}"},
+        {"expr": "node_memory_Buffers_bytes{instance=~'$instance'}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "bytes"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Disk I/O Ops",
+      "gridPos": {"x":0,"y":8,"w":12,"h":4},
+      "targets": [{"expr": "rate(node_disk_reads_completed_total{instance=~'$instance'}[5m])"},{"expr": "rate(node_disk_writes_completed_total{instance=~'$instance'}[5m])"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Network Interfaces",
+      "gridPos": {"x":0,"y":12,"w":12,"h":4},
+      "targets": [{"expr": "sum by (device) (rate(node_network_receive_bytes_total{instance=~'$instance'}[5m]))"},{"expr": "sum by (device) (rate(node_network_transmit_bytes_total{instance=~'$instance'}[5m]))"}]
+    },
+    {
+      "type": "gauge",
+      "title": "Filesystem Usage",
+      "gridPos": {"x":0,"y":16,"w":6,"h":4},
+      "targets": [{"expr": "(node_filesystem_size_bytes{fstype!~'tmpfs|overlay',instance=~'$instance'}-node_filesystem_free_bytes{fstype!~'tmpfs|overlay',instance=~'$instance'})/node_filesystem_size_bytes{fstype!~'tmpfs|overlay',instance=~'$instance'}"}],
+      "fieldConfig": {"defaults": {"unit": "percentunit"}}
+    },
+    {
+      "type": "stat",
+      "title": "Load Average 1/5/15",
+      "gridPos": {"x":6,"y":16,"w":6,"h":4},
+      "targets": [{"expr": "node_load1{instance=~'$instance'}"},{"expr": "node_load5{instance=~'$instance'}"},{"expr": "node_load15{instance=~'$instance'}"}]
+    },
+    {
+      "type": "table",
+      "title": "Top Processes (CPU/Memory)",
+      "gridPos": {"x":0,"y":20,"w":12,"h":6},
+      "targets": [{"expr": "topk(5, process_cpu_seconds_total{instance=~'$instance'})"}]
+    }
+  ]
+}

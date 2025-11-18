@@ -1,0 +1,75 @@
+# Prometheus configuration focused on homelab observability with rich documentation for operators.
+# Global settings govern scrape cadence and label strategy, balancing fidelity and storage costs.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: "homelab"
+    cluster: "proxmox-cluster"
+
+rule_files:
+  - /etc/prometheus/alerts/rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+      # Using service DNS keeps failover simple when scaling alertmanager replicas.
+
+scrape_configs:
+  - job_name: prometheus
+    scrape_interval: 15s  # Tight interval for control-plane visibility without excessive data
+    static_configs:
+      - targets: ["localhost:9090"]
+    # Self-scrape validates Prometheus health and surfaces query engine performance metrics.
+
+  - job_name: node-exporter
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["node-exporter:9100"]
+    # Collects host-level CPU, memory, disk, and network counters; critical for capacity planning.
+
+  - job_name: cadvisor
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["cadvisor:8080"]
+    # cAdvisor exposes per-container CPU/memory/IO metrics to correlate with Prometheus targets.
+
+  - job_name: grafana
+    metrics_path: /metrics
+    scrape_interval: 30s  # Slightly wider; Grafana metrics change slower than exporters
+    static_configs:
+      - targets: ["grafana:3000"]
+    # Tracks dashboard query rate, datasource errors, and login metrics for SRE audit trails.
+
+  - job_name: loki
+    metrics_path: /metrics
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["loki:3100"]
+    # Monitors ingester throughput, query performance, and storage utilization.
+
+  - job_name: proxmox
+    scrape_interval: 30s
+    metrics_path: /api2/json/metrics
+    scheme: http
+    basic_auth:
+      username: ${PROXMOX_USERNAME}
+      password: ${PROXMOX_PASSWORD}
+    static_configs:
+      - targets:
+          - ${PROXMOX_HOST_1}
+          - ${PROXMOX_HOST_2}
+    # Proxmox job keeps hypervisor utilization in view; basic_auth placeholders sourced from .env.
+    # Add additional hosts by appending to static_configs.targets; prefer service DNS where possible.
+
+  - job_name: alertmanager
+    metrics_path: /metrics
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["alertmanager:9093"]
+    # Pulls alert dispatch metrics to catch delivery latency or queue backlogs.
+
+# To extend: duplicate a job block, adjust job_name, metrics_path, and target addresses.
+# For heterogeneous environments, consider relabel_configs to normalize instance labels across sites.
