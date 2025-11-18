@@ -1,0 +1,29 @@
+{
+  "project": "portfolio",
+  "stacks": {
+    "backend": {
+      "language": "python",
+      "framework": "fastapi",
+      "database": "postgresql",
+      "auth": "jwt"
+    },
+    "frontend": {
+      "language": "typescript",
+      "framework": "react",
+      "bundler": "vite"
+    },
+    "infrastructure": {
+      "terraform_version": ">=1.6.0",
+      "providers": ["aws", "random"],
+      "state": {
+        "backend": "s3",
+        "locking": "dynamodb"
+      }
+    }
+  },
+  "quality_gates": {
+    "coverage": 80,
+    "lint": ["ruff", "black", "isort", "bandit", "eslint", "prettier", "tfsec", "tflint", "trivy", "npm audit"],
+    "ci_pipeline": ["quality", "unit", "integration", "build", "sbom", "staging_deploy", "performance", "release"]
+  }
+}
