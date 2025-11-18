@@ -1,0 +1,85 @@
+# Prometheus configuration
+# Purpose: scrape metrics from monitoring stack, Proxmox, and container hosts with sensible defaults.
+# All scrape jobs are documented with rationale to enable future operators to extend safely.
+
+global:
+  scrape_interval: 15s   # Balanced granularity vs storage; 4 samples/min per target keeps TSDB manageable.
+  evaluation_interval: 15s
+  external_labels:
+    environment: "homelab"       # Adds context to remote-write or federation targets.
+    cluster: "proxmox-cluster"   # Identifies monitored Proxmox cluster for Alertmanager grouping.
+
+# Alerting configuration integrates with local Alertmanager service.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093   # Internal service endpoint; secured via Docker network isolation.
+
+# Rule files are grouped under alerts directory for modular management.
+rule_files:
+  - /etc/prometheus/alerts/rules.yml
+
+scrape_configs:
+  - job_name: prometheus
+    # Purpose: self-monitoring of Prometheus performance and rule evaluation health.
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  - job_name: node-exporter
+    # Purpose: host-level metrics (CPU, memory, disk, network) for capacity planning and alerting.
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - node-exporter:9100
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: ${HOSTNAME} # Tags metrics with host identifier for dashboards.
+
+  - job_name: cadvisor
+    # Purpose: container-level CPU/memory/network metrics; useful for container right-sizing.
+    scrape_interval: 30s # Slightly slower than node-exporter to reduce cardinality.
+    static_configs:
+      - targets:
+          - cadvisor:8080
+
+  - job_name: grafana
+    # Purpose: monitor Grafana health and query performance; requires admin metrics endpoint enabled.
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - grafana:3000
+    scrape_interval: 30s
+
+  - job_name: loki
+    # Purpose: observe Loki ingester/query performance to tune retention and chunk sizing.
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - loki:3100
+    scrape_interval: 30s
+
+  - job_name: proxmox
+    # Purpose: scrape Proxmox VE metrics via built-in exporter or external exporter.
+    # Replace IPs below with your Proxmox hosts; add basic_auth if API requires it.
+    metrics_path: /metrics
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 192.168.40.11:9100 # Example host; update to actual Proxmox node exporter address.
+          - 192.168.40.12:9100
+    # Example of enabling basic auth (uncomment when needed):
+    # basic_auth:
+    #   username: ${PROMETHEUS_BASIC_AUTH_USER}
+    #   password: ${PROMETHEUS_BASIC_AUTH_PASSWORD}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: role
+        replacement: proxmox-node
+
+# Guidance: to add additional targets, duplicate a static_configs entry or integrate
+# service discovery. For example, to add a Kubernetes cluster via kube_sd_configs,
+# define a new job_name and specify relabeling to control label cardinality.

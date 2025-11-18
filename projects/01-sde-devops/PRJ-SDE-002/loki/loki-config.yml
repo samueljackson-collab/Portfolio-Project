@@ -1,0 +1,58 @@
+# Loki single-node configuration optimized for moderate homelab log volumes with 7-day retention.
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: info
+
+ingester:
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1 # Single-node deployment; increase when adding replicas.
+  chunk_idle_period: 3m       # Flush idle chunks to reduce memory usage.
+  chunk_retain_period: 1m
+  max_chunk_age: 1h           # Ensures chunks are flushed hourly to meet retention guarantees.
+  chunk_target_size: 1048576  # 1MB chunks balance query performance with storage efficiency.
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h  # Daily index chunks simplify backups and compaction.
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/cache
+    cache_ttl: 24h
+  filesystem:
+    directory: /loki/data
+
+compactor:
+  working_directory: /loki/compactor
+  shared_store: filesystem
+  retention_enabled: true
+  compaction_interval: 10m
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 2
+
+limits_config:
+  max_streams_per_user: 10000       # Prevent cardinality explosions from overly granular labels.
+  max_query_lookback: 720h          # Allow querying up to 30 days when data retained.
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h  # Reject samples older than 7 days to enforce retention.
+  ingestion_rate_mb: 8
+  ingestion_burst_size_mb: 16
+
+chunk_store_config:
+  max_look_back_period: 0
+
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 168h # 7-day retention aligns with homelab storage planning; adjust for larger disks.

@@ -1,0 +1,19 @@
+{
+  "title": "Infrastructure Overview",
+  "uid": "infra-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {"type": "stat", "title": "Total Hosts", "id": 1, "targets": [{"expr": "count(count(node_uname_info) by (instance))"}], "options": {"colorMode": "value"}, "fieldConfig": {"defaults": {"unit": "none"}}},
+    {"type": "gauge", "title": "Uptime %", "id": 2, "targets": [{"expr": "avg_over_time((node_time_seconds - node_boot_time_seconds) / (node_time_seconds) [6h])"}], "fieldConfig": {"defaults": {"min": 0, "max": 1, "thresholds": {"mode": "percentage", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.7}, {"color": "red", "value": 0.9}]}, "unit": "percentunit"}}},
+    {"type": "timeseries", "title": "Average CPU", "id": 3, "targets": [{"expr": "avg(rate(node_cpu_seconds_total{mode!='idle'}[5m]))"}], "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"mode": "percentage", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.7}, {"color": "red", "value": 0.9}]}}}},
+    {"type": "timeseries", "title": "Average Memory", "id": 4, "targets": [{"expr": "avg((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes)"}], "fieldConfig": {"defaults": {"unit": "percentunit"}}},
+    {"type": "bargauge", "title": "Top CPU Hosts", "id": 5, "targets": [{"expr": "topk(5, rate(node_cpu_seconds_total{mode!='idle'}[5m]))"}], "fieldConfig": {"defaults": {"unit": "percentunit"}}},
+    {"type": "bargauge", "title": "Top Memory Hosts", "id": 6, "targets": [{"expr": "topk(5, (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes)"}], "fieldConfig": {"defaults": {"unit": "percentunit"}}},
+    {"type": "table", "title": "Disk Usage", "id": 7, "targets": [{"expr": "node_filesystem_avail_bytes{fstype!~'tmpfs|overlay'}/node_filesystem_size_bytes{fstype!~'tmpfs|overlay'}"}], "fieldConfig": {"defaults": {"unit": "percentunit"}}},
+    {"type": "state-timeline", "title": "Active Alerts", "id": 8, "datasource": "Prometheus", "targets": [{"expr": "ALERTS"}]},
+    {"type": "timeseries", "title": "Network Traffic", "id": 9, "targets": [{"expr": "sum(rate(node_network_receive_bytes_total[5m]))", "legendFormat": "In"}, {"expr": "sum(rate(node_network_transmit_bytes_total[5m]))", "legendFormat": "Out"}], "fieldConfig": {"defaults": {"unit": "Bps"}}}
+  ]
+}

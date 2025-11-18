@@ -1,0 +1,266 @@
+version: "3.9"
+
+# Enterprise-grade monitoring and observability stack built for homelab/Proxmox monitoring.
+# Every service is pinned to a specific version for reproducibility and documented with
+# inline rationale to demonstrate operational excellence and security-minded defaults.
+services:
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus
+    command:
+      # --config.file: Mounts full Prometheus configuration (scrape jobs + alerting) from local repo.
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      # --storage.tsdb.path: Stores all time-series data in a persistent named volume to survive restarts.
+      - "--storage.tsdb.path=/prometheus"
+      # --storage.tsdb.retention.time: 15 days retention aligns to portfolio requirement and disk sizing guidance.
+      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION}"
+      # --web.enable-lifecycle: Allows hot reloads via POST /-/reload without container restart.
+      - "--web.enable-lifecycle"
+    volumes:
+      # Configuration and rules mounted read-only to prevent runtime tampering from inside container.
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+      # Persistent TSDB data; Docker manages lifecycle of named volume.
+      - prometheus_data:/prometheus
+    networks:
+      - monitoring_frontend   # Shared with Grafana for dashboard queries.
+      - monitoring_backend    # Internal scraping path to exporters.
+    ports:
+      - "127.0.0.1:9090:9090" # Bind to loopback to avoid unauthenticated exposure; use reverse proxy if needed.
+    healthcheck:
+      # Health endpoint verifies process readiness and TSDB health before Compose marks service healthy.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.0"
+        reservations:
+          memory: 1G
+          cpus: "0.5"
+    depends_on:
+      alertmanager:
+        condition: service_healthy # Prometheus validates Alertmanager on startup; wait until healthy.
+    labels:
+      com.docker.compose.project: monitoring-stack
+      monitoring.role: metrics
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    environment:
+      # Environment-driven configuration keeps secrets out of Compose file and supports overrides per env.
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
+      - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS}
+    volumes:
+      - grafana_data:/var/lib/grafana               # Persistent dashboards, users, and preferences.
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro # Auto-provision datasources/dashboards.
+    networks:
+      - monitoring_frontend   # Exposes UI to trusted clients via loopback binding.
+      - monitoring_backend    # Internal access to Prometheus/Loki datasources.
+    ports:
+      - "127.0.0.1:3000:3000" # Bound to localhost to prevent unauthenticated WAN exposure.
+    healthcheck:
+      # Grafana exposes /api/health to report readiness; start_period accounts for plugin install time.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 50s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+        reservations:
+          memory: 512M
+          cpus: "0.25"
+    depends_on:
+      prometheus:
+        condition: service_healthy # Datasource tests depend on Prometheus availability.
+      loki:
+        condition: service_healthy # Loki datasource required for log panels.
+    labels:
+      com.docker.compose.project: monitoring-stack
+      monitoring.role: visualization
+
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    command: ["-config.file=/etc/loki/loki-config.yml"]
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki/data
+    networks:
+      - monitoring_backend
+    ports:
+      - "3100:3100" # Exposed to backend network; keep firewall restricted if host is multi-tenant.
+    healthcheck:
+      # Loki exposes /ready for readiness; ensures ingester/querier initialized before accepting traffic.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+        reservations:
+          memory: 512M
+          cpus: "0.25"
+    labels:
+      com.docker.compose.project: monitoring-stack
+      monitoring.role: logs
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    command: ["--config.file=/etc/promtail/promtail-config.yml"]
+    volumes:
+      # Access to Docker logs and system logs; adjust paths for non-Docker hosts.
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+    networks:
+      - monitoring_backend
+    depends_on:
+      loki:
+        condition: service_healthy # Avoids log loss during Loki startup.
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.25"
+        reservations:
+          memory: 256M
+          cpus: "0.1"
+    labels:
+      com.docker.compose.project: monitoring-stack
+      monitoring.role: log-collector
+
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks:
+      - monitoring_backend
+    ports:
+      - "127.0.0.1:9093:9093" # Local-only binding; integrate with reverse proxy for external reach.
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.25"
+        reservations:
+          memory: 256M
+          cpus: "0.1"
+    labels:
+      com.docker.compose.project: monitoring-stack
+      monitoring.role: alerting
+
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node-exporter
+    command:
+      # Disable default collectors not relevant to containers to reduce cardinality.
+      - "--collector.disable-defaults=true"
+      - "--collector.cpu"
+      - "--collector.meminfo"
+      - "--collector.filesystem"
+      - "--collector.loadavg"
+      - "--collector.netdev"
+      - "--collector.netstat"
+      - "--collector.stat"
+      - "--web.listen-address=:9100"
+    pid: host # Grants visibility into host namespaces for accurate system metrics.
+    network_mode: host # Exposes exporter on host network for Prometheus scraping.
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.1"
+        reservations:
+          memory: 128M
+          cpus: "0.05"
+    labels:
+      com.docker.compose.project: monitoring-stack
+      monitoring.role: node-exporter
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor
+    volumes:
+      # Standard mounts required for cAdvisor to read container runtime metadata.
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitoring_backend
+    ports:
+      - "8080:8080" # Limit exposure with host firewall if not needed externally.
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.25"
+        reservations:
+          memory: 256M
+          cpus: "0.1"
+    labels:
+      com.docker.compose.project: monitoring-stack
+      monitoring.role: container-exporter
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  alertmanager_data:
+
+networks:
+  monitoring_frontend:
+    driver: bridge
+  monitoring_backend:
+    driver: bridge # Deliberately isolated from host network to minimize lateral movement risk.

@@ -1,0 +1,220 @@
+# Alerting rules grouped by category with detailed annotations and operator runbooks.
+# Thresholds aim to balance early detection with low false-positive rates; adjust with historical data.
+
+groups:
+  - name: infrastructure
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance unreachable for >2m"
+          description: "{{$labels.instance}} has been unreachable for more than 2 minutes. up = {{$value}}"
+          runbook: |
+            1. Verify host power/network status.
+            2. Ping the host from Prometheus network namespace.
+            3. Check firewall changes or maintenance windows.
+            4. If host is Proxmox, review cluster quorum.
+        # Threshold rationale: 2m avoids flapping on transient restarts while catching outages quickly.
+
+      - alert: HighCPUUsage
+        expr: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{$labels.instance}} (>80% for 5m)"
+          description: "CPU utilization is {{ $value | humanizePercentage }} on {{$labels.instance}} averaged over 5 minutes."
+          runbook: |
+            1. ssh {{$labels.instance}} and run `top` to identify processes.
+            2. Check container CPU usage in Grafana container dashboard.
+            3. Right-size container limits or migrate workloads if persistent.
+        # Expect occasional bursts; 5m window reduces false positives. Promote to critical at 95% below.
+
+      - alert: HighCPUUsageCritical
+        expr: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[2m])) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: CPU >95% on {{$labels.instance}}"
+          description: "CPU utilization is {{ $value | humanizePercentage }} on {{$labels.instance}} averaged over 2 minutes."
+          runbook: |
+            1. Immediately capture `top -b -n1` for evidence.
+            2. Check for runaway processes or noisy neighbors.
+            3. Consider temporary throttle/eviction of offending container.
+        # Shorter window ensures fast response when CPU saturation risks service denial.
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{$labels.instance}} (>85% for 5m)"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{$labels.instance}}."
+          runbook: |
+            1. Check `free -h` and `top` for memory hogs.
+            2. Inspect container memory usage via Grafana container dashboard.
+            3. Restart leaking services or increase limits if justified.
+        # 85% warning allows time to react before swapping; 5m smooths short spikes.
+
+      - alert: HighMemoryUsageCritical
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: Memory >95% on {{$labels.instance}}"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{$labels.instance}}."
+          runbook: |
+            1. Capture `dmesg` for OOM warnings.
+            2. Restart offending services or fail over.
+            3. Evaluate scaling or memory leak remediation.
+        # 95% signals imminent OOM risk; short window balances urgency vs noise.
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) < 0.15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space low on {{$labels.instance}} (<15% free)"
+          description: "Filesystem {{$labels.mountpoint}} has {{ $value | humanizePercentage }} free."
+          runbook: |
+            1. Run `df -h` to validate space.
+            2. Clear logs/WAL; rotate logs if needed.
+            3. Consider expanding volume or pruning containers/images.
+        # 15% leaves buffer for sudden growth; 10m avoids alerting on temporary spikes during backups.
+
+      - alert: DiskSpaceLowCritical
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) < 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: Disk space <5% on {{$labels.instance}}"
+          description: "Filesystem {{$labels.mountpoint}} critically low at {{ $value | humanizePercentage }} free."
+          runbook: |
+            1. Halt writes if possible to prevent corruption.
+            2. Purge caches/logs; move data to alternate storage.
+            3. Expand volume immediately.
+        # 5% is emergency threshold; short for-window drives rapid remediation.
+
+      - alert: DiskWillFillSoon
+        expr: predict_linear(node_filesystem_free_bytes[1h], 24*3600) < 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk projected to fill within 24h on {{$labels.instance}}"
+          description: "Filesystem {{$labels.mountpoint}} trend indicates depletion within 24 hours (current free: {{$value}})."
+          runbook: |
+            1. Identify top growth directories: `du -shx /* | sort -h`.
+            2. Trim logs/backups; adjust retention.
+            3. Plan capacity increase before depletion.
+        # Predictive alert reduces paging for reactive DiskSpaceLow alerts; expect occasional false positives on bursty hosts.
+
+  - name: containers
+    rules:
+      - alert: ContainerHighCPU
+        expr: rate(container_cpu_usage_seconds_total{image!=""}[5m]) / on (id) group_left cgroup_cpu_quota_us > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container high CPU (>90% of quota)"
+          description: "Container {{$labels.name}} using {{ $value | humanizePercentage }} of CPU quota."
+          runbook: |
+            1. Inspect workload in Grafana container dashboard.
+            2. Adjust CPU limits/requests or optimize code.
+            3. Validate no noisy neighbor contention.
+        # Uses cAdvisor metrics; ensure cadvisor is scraping container CPU quotas.
+
+      - alert: ContainerHighMemory
+        expr: container_memory_usage_bytes{image!=""} / on (id) group_left container_spec_memory_limit_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container high memory (>90% of limit)"
+          description: "Container {{$labels.name}} using {{ $value | humanizePercentage }} of memory limit."
+          runbook: |
+            1. Check for memory leaks; review application logs.
+            2. Increase limits or optimize memory usage.
+            3. Restart container if required and safe.
+        # 90% threshold balances early detection vs noisy workloads with caching behavior.
+
+      - alert: ContainerRestarting
+        expr: rate(container_last_seen[15m]) < 0.8
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container restart storm detected"
+          description: "Container {{$labels.name}} has restarted multiple times in 15 minutes."
+          runbook: |
+            1. Inspect `docker logs` for crash loops.
+            2. Validate health checks and readiness probes.
+            3. Roll back recent changes if issue correlates with deployments.
+        # Using last_seen drop as proxy for restarts; adjust threshold for workload patterns.
+
+  - name: monitoring-stack
+    rules:
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus target {{$labels.instance}} unreachable for 1 minute."
+          runbook: |
+            1. Check docker-compose status for prometheus container.
+            2. Inspect Prometheus logs for TSDB corruption or config errors.
+            3. Restore from latest backup if necessary.
+        # Short detection window because Prometheus outage hides all downstream alerts.
+
+      - alert: PrometheusTSDBReloadsFailing
+        expr: rate(prometheus_tsdb_reloads_failed_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus TSDB reload failures"
+          description: "Prometheus TSDB reloads are failing; check WAL for corruption."
+          runbook: |
+            1. Inspect Prometheus logs for reload errors.
+            2. Validate disk space and permissions on /prometheus.
+            3. Consider WAL replay or restore.
+        # Non-zero reload failure suggests possible corruption; early warning helps prevent data loss.
+
+      - alert: PrometheusRuleEvaluationFailures
+        expr: rate(prometheus_rule_evaluation_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus rule evaluation failures"
+          description: "Rule evaluation failures detected; check syntax or upstream targets."
+          runbook: |
+            1. Inspect prometheus.yml and rules.yml for syntax errors.
+            2. Validate scraped metrics existence.
+            3. Reload configuration after fixes.
+        # Captures silent rule failures that would otherwise hide alert gaps.
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Grafana is unreachable"
+          description: "Grafana target {{$labels.instance}} not responding for 2 minutes."
+          runbook: |
+            1. Check docker-compose status for grafana container.
+            2. Validate plugins installation logs for issues.
+            3. Restart Grafana and verify datasource connectivity.
+        # Grafana downtime impacts visibility but not alerting; warning severity is sufficient.
