@@ -1,0 +1,88 @@
+# CodeRabbit Configuration - Safer Settings
+# This configuration prioritizes privacy, control, and targeted reviews
+
+# Scope learning to this repository only (not global)
+learnings_scope: repo
+
+# Language and review settings
+language: en-US
+early_access: false
+enable_free_tier: true
+
+# Review behavior - more conservative approach
+reviews:
+  # Don't automatically review all files
+  review_all_files: false
+  
+  # Targeted path filters for what should be reviewed
+  # Note: Some paths (src/, *.py, *.js) are for future use as the project grows
+  path_filters:
+    - "src/**"
+    - "scripts/**"
+    - "docs/**"
+    - "**/*.md"
+    - "**/*.py"
+    - "**/*.js"
+    - "**/*.sh"
+    - "**/*.yml"
+    - "**/*.yaml"
+  
+  # Explicitly ignore vendor, generated, and build directories
+  # Note: .github/** is excluded to avoid reviewing workflow configurations
+  path_ignore:
+    - "node_modules/**"
+    - "vendor/**"
+    - ".venv/**"
+    - "venv/**"
+    - "dist/**"
+    - "build/**"
+    - ".git/**"
+    - ".github/**"
+    - "**/*.min.js"
+    - "**/*.lock"
+  
+  # Disable automatic request changes workflow
+  request_changes_workflow: false
+  
+  # Disable high-level summary (more focused reviews)
+  high_level_summary: false
+  
+  # Disable poem feature
+  poem: false
+  
+  # Path-specific instructions for better context
+  path_instructions:
+    - path: "src/**"
+      instructions: "Review for code quality, security vulnerabilities, and best practices. Focus on logic errors and potential bugs."
+    
+    - path: "docs/**"
+      instructions: "Review for clarity, accuracy, and completeness. Check for broken links and formatting issues."
+    
+    - path: "**/*.md"
+      instructions: "Check for spelling, grammar, and markdown formatting. Ensure technical accuracy."
+
+# Chat settings - disable auto-reply for more control
+chat:
+  auto_reply: false
+
+# Enable appropriate linters for this project
+linters:
+  # Python linter
+  ruff:
+    enabled: true
+  
+  # Shell script linter
+  shellcheck:
+    enabled: true
+  
+  # Markdown linter
+  markdownlint:
+    enabled: true
+  
+  # YAML linter
+  yamllint:
+    enabled: true
+  
+  # JavaScript/TypeScript linter
+  eslint:
+    enabled: true
