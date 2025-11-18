@@ -1,0 +1,209 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spire-server
+  namespace: spire
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: spire-server
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: spire-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: spire-server
+subjects:
+  - kind: ServiceAccount
+    name: spire-server
+    namespace: spire
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-server
+  namespace: spire
+  labels:
+    app: spire-server
+    component: config
+data:
+  server.conf: |
+    server {
+        bind_address = "0.0.0.0"
+        bind_port = "8081"
+        socket_path = "/tmp/spire-server/private/api.sock"
+        trust_domain = "example.org"
+        data_dir = "/run/spire/data"
+        log_level = "INFO"
+        ca_key_type = "ecdsa"
+        default_svid_ttl = "1h"
+        jwt_issuer = "spiffe://example.org"
+    }
+
+    plugins {
+        DataStore "sql" {
+            plugin_data {
+                database_type = "sqlite3"
+                connection_string = "/run/spire/data/datastore.sqlite3"
+            }
+        }
+
+        NodeAttestor "k8s_psat" {
+            plugin_data {
+                cluster = "demo-cluster"
+            }
+        }
+
+        KeyManager "memory" {}
+
+        UpstreamAuthority "disk" {
+            plugin_data {
+                cert_file_path = "/run/spire/server/ca/ca.crt"
+                key_file_path  = "/run/spire/server/ca/ca.key"
+            }
+        }
+    }
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: spire-server-ca
+  namespace: spire
+  labels:
+    app: spire-server
+stringData:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDBzCCAe+gAwIBAgIUZ/kp8bs+hbc/OzeWcHKuxku4w5YwDQYJKoZIhvcNAQEL
+    BQAwEzERMA8GA1UEAwwIc3BpcmUtY2EwHhcNMjUxMTE4MTY0MDQ1WhcNMzUxMTE2
+    MTY0MDQ1WjATMREwDwYDVQQDDAhzcGlyZS1jYTCCASIwDQYJKoZIhvcNAQEBBQAD
+    ggEPADCCAQoCggEBALNyAc1J5hQRpanvr2ritSchD12n6KKmKsLB9saV4OPRTOb0
+    Nv8IVH0F7iEmsR+Jv0AEZbxFSKaGB7HZCSBTAO+8FHV/dJIcb7GVDp+IzNYEQbs2
+    hzn0DgXU0JcpmSMRW6U7ggOfP8gmOIC39um7vYA0W4WmfK5uJJr/IOWwoXFGbADR
+    yt5bhLvapopYN6TqNH7M7z+LDf9hyWV3y+o6FnVJ/xfJhSQuGd2/6qukKlkqx7Gn
+    6UGrdJzKb4WdvVI2Kk4MJZSO0wfqu/2VoJBGdQZWpCzUzes8LXI9n0H8narGbHn4
+    sB2rDwC6CEyvaXpgtcKP9syDhprj0BU3UqU3EI8CAwEAAaNTMFEwHQYDVR0OBBYE
+    FBsy/NH7lqyqEJQpTS1GT4aQm9TuMB8GA1UdIwQYMBaAFBsy/NH7lqyqEJQpTS1G
+    T4aQm9TuMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAFqI+KUk
+    Qf3JjIrAE4RErsYJmmcuSIm6rsOseO6oBWMjnNtyDf2UBFfPWabkrAzgTeafvtO1
+    8QY2rOE91H2xuj9OThlAR+yOBDEmHJrX2DNGq9y5eTIVQim2FiLVyiJbcGxFu3no
+    oc91LFj12odEfxSn/GTZQv6I8AetI4moKH3a5FRdxaGLLuQGm2IUodhThJdGLvg1
+    buJ4X+STqa9DvBhE2ev31dfaxwMV8a7eXHpCiAIjU5RL922nX8x4OUi6m0SltlZJ
+    DAY4Dl4+CWkbN0ai6dhmdkQGChDx+FhkUlItEtIuwwGe82Y3FPXhGVE3hzGf58Gz
+    /MeJu1SymkmQiTc=
+    -----END CERTIFICATE-----
+  ca.key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCzcgHNSeYUEaWp
+    769q4rUnIQ9dp+iipirCwfbGleDj0Uzm9Db/CFR9Be4hJrEfib9ABGW8RUimhgex
+    2QkgUwDvvBR1f3SSHG+xlQ6fiMzWBEG7Noc59A4F1NCXKZkjEVulO4IDnz/IJjiA
+    t/bpu72ANFuFpnyubiSa/yDlsKFxRmwA0creW4S72qaKWDek6jR+zO8/iw3/Ycll
+    d8vqOhZ1Sf8XyYUkLhndv+qrpCpZKsexp+lBq3Scym+Fnb1SNipODCWUjtMH6rv9
+    laCQRnUGVqQs1M3rPC1yPZ9B/J2qxmx5+LAdqw8AughMr2l6YLXCj/bMg4aa49AV
+    N1KlNxCPAgMBAAECggEABu2/gRA56It35JRjJxLi4MRnhfu+QU1+OC/qGefem51Q
+    xVgnqXhGXt90PuZyD2AvuMaSsQ7Ry9BACs9xCUT7M8aE2baWpy+e5nH1cxaCpj7a
+    1OI5nXS9d98sQLHz/kUkzz/5eK9U9KL5Kosv5v1/Ryx+Xi48ATYyhqOUPxovWaLI
+    VoPYZlVwLhY0VYUgVyI/3SgSmsRcmV7fK74vDvPQIsa3wvxfYhAn6k/+ZiJZ1Gbd
+    4aZhaufyrR48aDXY54cNfoLAeZ+DtnHnwT0+BagttiSmALdf8Kc23/kAkWInzyAq
+    9VHS98yPgHI6B7ClVIq8Fhbuxm4PLSeYcZOuBccEnQKBgQDsOT88Bv+u4DGpqBZi
+    E7TlC9vEr4Y0eeOiEvVwk5+SxWa/spjVVDsNTWpfmvZeFLsLo07muU+EPTUsLh9t
+    YtemtiajLdrCkSZ6slZhZb4PbzycOZTD9vAzZ3ySwQXNLoWBPIro1EXr1sogsGE0
+    FyKhCJUNn5jCDvTs2l6ZFkfYnQKBgQDCd+LKgszv9M++CYN0UhJbmTBrRjjP1izp
+    zUngNKzq6u7G1e0FJvKyepe8HhvRwVs4STMd0YP+BilRDh9bRzxrQa2q1F495DdP
+    mCIimNVyqJ4WlRPDVnZptcmK7AaGtQKKrbG7lu+NYx+OZAofNp8v6EL0XkCLq3go
+    3XVE0T6YGwKBgHrgBF6LHXCvueWQQ6Rcr9n84yJaUyr0xE3IIteeUoEcIahRlGJT
+    YCw5Or3kc4bYrbsOBbrKZexZklEa5MoXgil70nlLHuHacvOb1IbxT33j1NlGsnWE
+    +8khaZFEymnCazugbHlUAdL9dUKvvMBF0IOHXVEq1WEMOqcBp/dluZWZAoGBALOs
+    Xp7qwPyHPRWA5rKnTYzR+ZlztPPaF38hDDuZj5Yw39JYPvh+psfeWqkVTHC9bFGR
+    2CeZt5EREkVwfeow5BLZCOMH+dbHL49bqVY7zSJ1xjJpJGxbS2aZ7g9ryQ/W1/VX
+    TBpc9xGz3qkJpwx1xBhYSNxM5Ofm0ks3aazegy23AoGAGlm1lwOGWjL8lJ1BkQDP
+    7Ek0iYXjdmI7oWjpp++WInzTwz7eZRvSpvX2iEq+/tq4tScVlayoOpio3hRhfd/p
+    0zgW7tchGFqnnmQSSymPtHR1GPBq1dTsR/vBhTtp1ZTugy+rFNJOa6qb10W/xADI
+    J4Rq8rlNKYa6mzN1eI072cE=
+    -----END PRIVATE KEY-----
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spire-server
+  namespace: spire
+  labels:
+    app: spire-server
+spec:
+  clusterIP: None
+  ports:
+    - name: grpc
+      port: 8081
+      targetPort: 8081
+  selector:
+    app: spire-server
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: spire-server
+  namespace: spire
+  labels:
+    app: spire-server
+spec:
+  serviceName: spire-server
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spire-server
+  template:
+    metadata:
+      labels:
+        app: spire-server
+    spec:
+      serviceAccountName: spire-server
+      containers:
+        - name: spire-server
+          image: ghcr.io/spiffe/spire-server:1.9.5
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-config"
+            - "/run/spire/config/server.conf"
+          ports:
+            - containerPort: 8081
+              name: grpc
+          volumeMounts:
+            - name: spire-server-config
+              mountPath: /run/spire/config
+            - name: spire-data
+              mountPath: /run/spire/data
+            - name: spire-ca
+              mountPath: /run/spire/server/ca
+              readOnly: true
+      volumes:
+        - name: spire-server-config
+          configMap:
+            name: spire-server
+            items:
+              - key: server.conf
+                path: server.conf
+        - name: spire-ca
+          secret:
+            secretName: spire-server-ca
+  volumeClaimTemplates:
+    - metadata:
+        name: spire-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

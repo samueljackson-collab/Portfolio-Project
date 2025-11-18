@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-demo-policy
+  namespace: zero-trust-demo
+  labels:
+    app: opa-sidecar
+    component: policy
+data:
+  policy.rego: |
+    package envoy.authz
+
+    default allow = false
+
+    allow {
+      # Permit readiness/liveness probes
+      input.attributes.request.http.path == "/healthz"
+    }
+
+    allow {
+      input.attributes.request.http.method == "GET"
+      input.attributes.request.http.headers["x-identity"] == "demo-frontend"
+    }
+
+    allow {
+      input.attributes.request.http.method == "POST"
+      input.attributes.request.http.headers["x-identity"] == "demo-frontend"
+      input.attributes.request.http.path == "/api"
+    }
+  opa-config.yaml: |
+    services: []
+    bundles: {}
+    decision_logs:
+      console: true
+    default_decision: /envoy/authz/allow
