@@ -26,7 +26,6 @@ export const PhotosPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null)
-  const [showUploadModal, setShowUploadModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -63,7 +62,6 @@ export const PhotosPage: React.FC = () => {
     )
     loadPhotos()
     loadAlbums()
-    setShowUploadModal(false)
 
     // Clear success message after 5 seconds
     setTimeout(() => setSuccessMessage(''), 5000)
@@ -201,22 +199,13 @@ export const PhotosPage: React.FC = () => {
           )}
 
           {viewMode === 'calendar' && (
-            <PhotoCalendar
-              onDateSelect={(date, photos) => {
-                console.log('Selected date:', date, 'Photos:', photos)
-                // Could show photos from that date
-              }}
-            />
+            <PhotoCalendar />
           )}
 
           {(viewMode === 'all' || viewMode === 'album') && (
             <PhotoGrid
               photos={photos}
               loading={loading}
-              onPhotoClick={(photo) => {
-                console.log('Photo clicked:', photo)
-                // Could open photo detail modal
-              }}
             />
           )}
         </div>
