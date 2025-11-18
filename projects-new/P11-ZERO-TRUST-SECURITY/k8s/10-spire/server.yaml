@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: spire-server
+  namespace: security
+spec:
+  serviceName: spire-server
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spire-server
+  template:
+    metadata:
+      labels:
+        app: spire-server
+    spec:
+      containers:
+        - name: spire-server
+          image: ghcr.io/spiffe/spire-server:1.9.0
+          args: ["-config", "/spire/conf/server/server.conf"]
+          volumeMounts:
+            - name: config
+              mountPath: /spire/conf/server
+      volumes:
+        - name: config
+          configMap:
+            name: spire-server-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spire-server
+  namespace: security
+spec:
+  selector:
+    app: spire-server
+  ports:
+    - name: grpc
+      port: 8081
+      targetPort: 8081
