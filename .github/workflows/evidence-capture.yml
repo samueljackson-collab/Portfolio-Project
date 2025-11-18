@@ -1,0 +1,53 @@
+name: evidence-capture
+on:
+  workflow_dispatch:
+    inputs:
+      dashboard:
+        description: Grafana dashboard title
+        required: true
+        default: Demo App
+      panel:
+        description: Grafana panel title
+        required: true
+        default: Latency (p95)
+      lookback:
+        description: Jaeger lookback window
+        required: true
+        default: 30m
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    env:
+      GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+      JAEGER_BASE: ${{ secrets.JAEGER_BASE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      - name: Install script deps
+        run: |
+          python -m pip install -U pip
+          pip install -r tools/requirements-scripts.txt
+
+      - name: Capture Grafana & Jaeger artifacts
+        run: |
+          mkdir -p projects/P25-observability/docs/evidence projects/P09-rag-chatbot/docs/evidence
+          python scripts/grafana_list_panels.py --format md > projects/P25-observability/docs/evidence/panels.md
+          bash scripts/capture_grafana_by_title.sh "${{ github.event.inputs.dashboard }}" "${{ github.event.inputs.panel }}" now-15m now "projects/P25-observability/docs/evidence/${{ github.event.inputs.panel }}.png"
+          python scripts/jaeger_recent_trace.py --service rag-chatbot --lookback "${{ github.event.inputs.lookback }}" --export "projects/P09-rag-chatbot/docs/evidence/trace.png"
+
+      - name: Commit artifacts
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "evidence: ${ { github.event.inputs.dashboard } } / ${ { github.event.inputs.panel } } ($(date))"
+          file_pattern: |
+            projects/P25-observability/docs/evidence/*
+            projects/P09-rag-chatbot/docs/evidence/*
