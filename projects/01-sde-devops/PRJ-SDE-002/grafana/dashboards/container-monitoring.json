@@ -1,0 +1,19 @@
+{
+  "title": "Container Monitoring",
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {"name": "container", "type": "query", "datasource": "Prometheus", "query": "label_values(container_memory_usage_bytes, container)", "refresh": 2}
+    ]
+  },
+  "panels": [
+    {"type": "stat", "title": "Running Containers", "gridPos": {"x":0,"y":0,"w":6,"h":3}, "targets": [{"expr": "count(container_last_seen)"}]},
+    {"type": "stat", "title": "Restarting Containers", "gridPos": {"x":6,"y":0,"w":6,"h":3}, "targets": [{"expr": "count_over_time((changes(container_last_seen[15m])>0)[15m])"}]},
+    {"type": "timeseries", "title": "CPU Usage", "gridPos": {"x":0,"y":3,"w":12,"h":6}, "targets": [{"expr": "rate(container_cpu_usage_seconds_total{container=~'$container'}[5m])"}]},
+    {"type": "timeseries", "title": "Memory Usage", "gridPos": {"x":12,"y":3,"w":12,"h":6}, "targets": [{"expr": "container_memory_usage_bytes{container=~'$container'}"}]},
+    {"type": "timeseries", "title": "Network I/O", "gridPos": {"x":0,"y":9,"w":12,"h":6}, "targets": [{"expr": "rate(container_network_receive_bytes_total{container=~'$container'}[5m])"}, {"expr": "rate(container_network_transmit_bytes_total{container=~'$container'}[5m])"}]},
+    {"type": "gauge", "title": "Filesystem Usage", "gridPos": {"x":12,"y":9,"w":12,"h":6}, "targets": [{"expr": "container_fs_usage_bytes{container=~'$container'}"}]},
+    {"type": "table", "title": "Restart Count", "gridPos": {"x":0,"y":15,"w":24,"h":6}, "targets": [{"expr": "topk(10, changes(container_last_seen[1h]))"}]}
+  ]
+}

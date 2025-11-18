@@ -1,0 +1,17 @@
+{
+  "title": "Logs Explorer",
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {"name": "container_name", "type": "query", "datasource": "Loki", "query": "label_values({job=\"varlogs\"}, container)", "refresh": 2},
+      {"name": "log_level", "type": "custom", "query": "info,warning,error,critical", "current": {"text": "error", "value": "error"}}
+    ]
+  },
+  "panels": [
+    {"type": "logs", "title": "Live Logs", "gridPos": {"x":0,"y":0,"w":24,"h":8}, "options": {"showTime": true}, "targets": [{"query": "{job='varlogs',container=~'$container_name'} |~ ''"}]},
+    {"type": "timeseries", "title": "Log Volume", "gridPos": {"x":0,"y":8,"w":12,"h":6}, "targets": [{"queryType": "range", "refId": "A", "expr": "sum by(container)(count_over_time({job='varlogs',container=~'$container_name'}[$__interval]))"}]},
+    {"type": "timeseries", "title": "Error Rate", "gridPos": {"x":12,"y":8,"w":12,"h":6}, "targets": [{"queryType": "range", "expr": "sum by(container)(count_over_time({job='varlogs',level=~'$log_level',container=~'$container_name'}[$__interval]))"}]},
+    {"type": "table", "title": "Recent Errors", "gridPos": {"x":0,"y":14,"w":24,"h":6}, "targets": [{"query": "{job='varlogs',level=~'$log_level'} | line_format '{{.level}} - {{.message}}'"}]}
+  ]
+}
