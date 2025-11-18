@@ -1,164 +1,60 @@
-"""
-Authentication endpoints for user registration and login.
-
-This module handles:
-- User registration with validation
-- User authentication (login)
-- JWT token generation
-- Password hashing
-"""
-
 from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.database import get_db
-from app.models import User
-from app.schemas import UserCreate, UserResponse, UserLogin, Token
-from app.auth import hash_password, verify_password, create_access_token
+from app import models, schemas
+from app.auth import authenticate_user, create_access_token, get_password_hash
 from app.config import settings
-from app.dependencies import get_current_user
+from app.database import get_db
+from app.auth import get_current_user
+
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"],
-)
+@router.post("/register", response_model=schemas.UserRead)
+async def register(user_in: schemas.UserCreate, db: AsyncSession = Depends(get_db)):
+    existing = await db.execute(select(models.User).where(models.User.email == user_in.email))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-
-@router.post(
-    "/register",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register New User",
-    description="Create a new user account with email and password"
-)
-async def register(
-    user_data: UserCreate,
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    """
-    Register a new user account.
-
-    Args:
-        user_data: User registration data (email, password)
-        db: Database session
-
-    Returns:
-        UserResponse: Created user data
-
-    Raises:
-        HTTPException 400: If email already registered
-    """
-    # Check if user already exists
-    result = await db.execute(
-        select(User).where(User.email == user_data.email)
+    existing_username = await db.execute(
+        select(models.User).where(models.User.username == user_in.username)
     )
-    existing_user = result.scalar_one_or_none()
+    if existing_username.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Username already registered")
 
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-
-    # Hash password before storing
-    hashed_password = hash_password(user_data.password)
-
-    # Create new user
-    new_user = User(
-        email=user_data.email,
-        hashed_password=hashed_password,
-        is_active=True
+    user = models.User(
+        email=user_in.email,
+        username=user_in.username,
+        hashed_password=get_password_hash(user_in.password),
+        is_admin=False,
     )
-
-    db.add(new_user)
+    db.add(user)
     await db.commit()
-    await db.refresh(new_user)
+    await db.refresh(user)
+    return user
 
-    return new_user
 
-
-@router.post(
-    "/login",
-    response_model=Token,
-    status_code=status.HTTP_200_OK,
-    summary="User Login",
-    description="Authenticate user and receive JWT token"
-)
+@router.post("/login", response_model=schemas.Token)
 async def login(
-    credentials: UserLogin,
-    db: AsyncSession = Depends(get_db)
-) -> Token:
-    """
-    Authenticate user and generate JWT token.
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db),
+):
+    user = await authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    Args:
-        credentials: Login credentials (email, password)
-        db: Database session
-
-    Returns:
-        Token: JWT access token with expiration
-
-    Raises:
-        HTTPException 401: If credentials are invalid
-    """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Incorrect email or password",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    # Look up user
-    result = await db.execute(
-        select(User).where(User.email == credentials.email)
-    )
-    user = result.scalar_one_or_none()
-
-    # User not found or password incorrect
-    if not user or not verify_password(credentials.password, user.hashed_password):
-        raise credentials_exception
-
-    # Check if account is active
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is inactive"
-        )
-
-    # Create JWT token
-    access_token_expires = timedelta(
-        minutes=settings.access_token_expire_minutes
-    )
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
-        data={"sub": user.email},
-        expires_delta=access_token_expires
+        data={"sub": user.username, "is_admin": user.is_admin},
+        expires_delta=access_token_expires,
     )
-
-    return Token(
-        access_token=access_token,
-        token_type="bearer",
-        expires_in=int(access_token_expires.total_seconds())
-    )
+    return schemas.Token(access_token=access_token)
 
 
-@router.get(
-    "/me",
-    response_model=UserResponse,
-    summary="Get Current User",
-    description="Get the currently authenticated user's information"
-)
-async def get_current_user_info(
-    current_user: User = Depends(get_current_user)
-) -> User:
-    """
-    Get information about the currently authenticated user.
-
-    Args:
-        current_user: Authenticated user (injected by dependency)
-
-    Returns:
-        UserResponse: Current user's data
-    """
+@router.get("/me", response_model=schemas.UserRead)
+async def read_users_me(current_user: models.User = Depends(get_current_user)):
     return current_user

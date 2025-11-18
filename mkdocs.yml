@@ -1,0 +1,13 @@
+site_name: Portfolio Projects
+nav:
+  - Home: index.md
+  - Backend: docs/backend.md
+  - Frontend: docs/frontend.md
+  - Data: docs/data.md
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - content.code.copy
+plugins:
+  - search

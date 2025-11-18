@@ -36,17 +36,17 @@ export const Navbar: React.FC = () => {
                 Home
               </Link>
               <Link
-                to="/enterprise-portfolio"
+                to="/projects"
                 className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
               >
-                Portfolio Showcase
+                Projects
               </Link>
               {isAuthenticated && (
                 <Link
-                  to="/dashboard"
+                  to="/admin"
                   className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
                 >
-                  Dashboard
+                  Admin
                 </Link>
               )}
             </div>
