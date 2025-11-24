@@ -8,7 +8,8 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context'
 import { Navbar, ProtectedRoute } from './components'
-import { Home, Login, Register, Dashboard, HomeAssistant, EnterprisePortfolio } from './pages'
+import { Home, Login, Register, Dashboard, HomeAssistant, EnterprisePortfolio, OperatorConsole } from './pages'
+import PhotosPage from './pages/Photos/PhotosPage'
 
 const App: React.FC = () => {
   return (
@@ -38,6 +39,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <PhotosPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator-console"
+              element={
+                <ProtectedRoute>
+                  <OperatorConsole />
                 </ProtectedRoute>
               }
             />

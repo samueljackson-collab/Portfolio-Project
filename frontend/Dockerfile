@@ -1,37 +1,24 @@
-# Multi-stage Dockerfile for React frontend
-
-# Stage 1: Build
+# Multi-stage Dockerfile for React frontend with hardened runtime
 FROM node:18-alpine AS build
 
 WORKDIR /app
-
-# Copy package files
 COPY package.json package-lock.json* ./
-
-# Install dependencies
-RUN npm ci --only=production=false
-
-# Copy source code
+RUN npm ci --ignore-scripts
 COPY . .
-
-# Build application
 RUN npm run build
 
-# Stage 2: Production
-FROM nginx:alpine
+FROM nginx:1.25-alpine
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
+    && apk add --no-cache curl
 
-# Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy built files from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
+RUN chown -R appuser:appgroup /usr/share/nginx/html
 
-# Expose port
+USER appuser
 EXPOSE 80
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl --fail http://localhost || exit 1
 
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]

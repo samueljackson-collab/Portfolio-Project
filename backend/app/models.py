@@ -496,3 +496,76 @@ class Photo(Base):
 
     def __repr__(self) -> str:
         return f"<Photo(id={self.id}, filename={self.filename}, city={self.city})>"
+
+
+class ServiceDeployment(Base):
+    """Operational record of a service deployment across regions and clusters."""
+
+    __tablename__ = "service_deployments"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        comment="Deployment record ID",
+    )
+    service_name = Column(
+        String(100),
+        nullable=False,
+        index=True,
+        comment="Logical service name",
+    )
+    region = Column(
+        String(50),
+        nullable=False,
+        index=True,
+        comment="AWS region for the workload",
+    )
+    cluster = Column(
+        String(120),
+        nullable=False,
+        comment="Kubernetes cluster identifier",
+    )
+    version = Column(
+        String(50),
+        nullable=False,
+        comment="Application version or tag",
+    )
+    status = Column(
+        String(40),
+        nullable=False,
+        default="Progressing",
+        comment="Kubernetes deployment status",
+    )
+    git_commit = Column(
+        String(64),
+        nullable=True,
+        comment="Git SHA deployed",
+    )
+    desired_replicas = Column(Integer, nullable=False, default=1)
+    available_replicas = Column(Integer, nullable=False, default=0)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    owner = relationship("User", lazy="joined")
+
+    __table_args__ = (
+        UniqueConstraint("service_name", "region", "cluster", name="uq_service_region_cluster"),
+        Index("ix_service_status", "service_name", "status"),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<ServiceDeployment(service={self.service_name}, region={self.region}, "
+            f"version={self.version}, status={self.status})>"
+        )

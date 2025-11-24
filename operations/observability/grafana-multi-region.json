@@ -1,0 +1,46 @@
+{
+  "title": "Portfolio Multi-Region Overview",
+  "schemaVersion": 38,
+  "tags": ["portfolio", "multi-region"],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Healthy services",
+      "targets": [
+        {
+          "expr": "sum(service_deployment_health{status='Healthy'})",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Deployment duration",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.9, sum(rate(fastapi_request_duration_seconds_bucket{handler='/deployments'}[5m])) by (le))",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Replicas by region",
+      "targets": [
+        {
+          "expr": "sum(deployment_replicas{job='portfolio-api'}) by (region)",
+          "refId": "C"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "region",
+        "type": "query",
+        "query": "label_values(deployment_replicas, region)"
+      }
+    ]
+  }
+}

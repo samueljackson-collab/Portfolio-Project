@@ -401,3 +401,49 @@ class CalendarMonthResponse(BaseModel):
     month: int = Field(..., description="Month (1-12)")
     dates: list[CalendarDateResponse] = Field(..., description="Dates with photos")
     total_photos: int = Field(..., description="Total photos in month")
+
+
+# =============================================================================
+# Deployment / Operations Schemas
+# =============================================================================
+
+
+class DeploymentBase(BaseModel):
+    service_name: str = Field(..., max_length=100, description="Logical service name")
+    region: str = Field(..., max_length=50, description="AWS region of deployment")
+    cluster: str = Field(..., max_length=120, description="Kubernetes cluster name")
+    version: str = Field(..., max_length=50, description="Application version or tag")
+    status: str = Field(default="Progressing", description="Deployment status")
+    git_commit: Optional[str] = Field(None, max_length=64, description="Git SHA deployed")
+    desired_replicas: int = Field(default=1, ge=0, le=50)
+    available_replicas: int = Field(default=0, ge=0, le=50)
+
+
+class DeploymentCreate(DeploymentBase):
+    """Schema for creating new deployment records."""
+
+
+class DeploymentResponse(DeploymentBase, TimestampMixin):
+    """Schema returned for deployment record endpoints."""
+
+    id: UUID = Field(..., description="Deployment record identifier")
+    created_by: Optional[UUID] = Field(None, description="User who created the record")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RegionRollup(BaseModel):
+    """Aggregated deployment health by region."""
+
+    region: str
+    services: int
+    desired_replicas: int
+    available_replicas: int
+    healthy: int
+
+
+class DeploymentDashboardResponse(BaseModel):
+    """Payload consumed by the operator console for rollups."""
+
+    regions: list[RegionRollup]
+    latest_releases: list[DeploymentResponse]
