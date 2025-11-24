@@ -1,0 +1,35 @@
+---
+- name: Ensure dependencies are present
+  ansible.builtin.package:
+    name:
+      - containerd
+      - curl
+    state: present
+
+- name: Create application user
+  ansible.builtin.user:
+    name: roaming
+    shell: /bin/false
+    create_home: true
+
+- name: Pull roaming API container image
+  community.docker.docker_image:
+    name: "{{ app_image }}"
+    source: pull
+
+- name: Deploy systemd unit for FastAPI service
+  ansible.builtin.template:
+    src: roaming-api.service.j2
+    dest: /etc/systemd/system/roaming-api.service
+    mode: "0644"
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start roaming API
+  ansible.builtin.systemd:
+    name: roaming-api
+    state: started
+    enabled: true
+

@@ -18,7 +18,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import health, auth, content, photos, backup
+from app.routers import health, auth, content, photos, backup, roaming
 
 
 # Configure logging
@@ -162,6 +162,7 @@ app.include_router(auth.router)
 app.include_router(content.router)
 app.include_router(photos.router)
 app.include_router(backup.router)
+app.include_router(roaming.router)
 
 
 # Prometheus metrics instrumentation

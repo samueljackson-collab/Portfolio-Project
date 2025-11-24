@@ -1,0 +1,17 @@
+[Unit]
+Description=Roaming FastAPI service
+After=network.target containerd.service
+
+[Service]
+User=roaming
+Group=roaming
+ExecStart=/usr/bin/docker run --rm \
+  --name roaming-api \
+  -p 8000:8000 \
+  -e OTEL_EXPORTER_OTLP_ENDPOINT={{ otlp_endpoint }} \
+  {{ app_image }}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

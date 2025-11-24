@@ -1,0 +1,12 @@
+all:
+  children:
+    primary:
+      hosts:
+        api-primary-1:
+          ansible_host: 10.20.0.10
+          region: primary
+    secondary:
+      hosts:
+        api-secondary-1:
+          ansible_host: 10.20.16.10
+          region: secondary

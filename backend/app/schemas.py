@@ -401,3 +401,52 @@ class CalendarMonthResponse(BaseModel):
     month: int = Field(..., description="Month (1-12)")
     dates: list[CalendarDateResponse] = Field(..., description="Dates with photos")
     total_photos: int = Field(..., description="Total photos in month")
+
+# ============================================================================
+# Roaming Schemas
+# ============================================================================
+
+class RoamingSessionCreate(BaseModel):
+    """Schema for initiating roaming simulation session."""
+
+    imsi: str = Field(..., description="Subscriber IMSI")
+    home_network: str = Field(..., description="Home MCC-MNC (e.g., 310-410)")
+    visited_network: str = Field(..., description="Visited MCC-MNC")
+    roaming_enabled: bool = Field(default=True, description="Whether subscriber roaming is enabled")
+
+
+class RoamingEventRequest(BaseModel):
+    """Schema for appending events to a roaming session."""
+
+    type: str = Field(..., description="Event type: authenticate, location_update, activate_roaming, detach")
+    message: str = Field(..., description="Human readable event details")
+
+
+class RoamingEventResponse(BaseModel):
+    """Schema for event details in responses."""
+
+    type: str
+    message: str
+    timestamp: datetime
+
+
+class RoamingSessionResponse(BaseModel):
+    """Schema returned to operators for roaming sessions."""
+
+    session_id: UUID
+    imsi: str
+    home_network: str
+    visited_network: str
+    state: str
+    events: list[RoamingEventResponse]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
+
+
+class RoamingAgreementsResponse(BaseModel):
+    """Schema summarizing roaming agreements used by the simulator."""
+
+    agreements: dict[str, list[str]]
+
