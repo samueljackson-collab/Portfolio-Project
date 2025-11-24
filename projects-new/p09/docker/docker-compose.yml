@@ -1,0 +1,11 @@
+version: '3.9'
+services:
+  consumer:
+    build: ./consumer
+    ports:
+      - "8090:8090"
+  producer:
+    build: ./producer
+    environment:
+      TARGET_URL: http://consumer:8090/events
+    depends_on: [consumer]

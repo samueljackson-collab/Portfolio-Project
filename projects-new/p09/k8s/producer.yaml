@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: poc-producer
+  namespace: cloud-poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: poc-producer
+  template:
+    metadata:
+      labels:
+        app: poc-producer
+    spec:
+      containers:
+        - name: producer
+          image: cloud-poc/producer:latest
+          env:
+            - name: TARGET_URL
+              value: http://poc-consumer.cloud-poc.svc.cluster.local:8090/events

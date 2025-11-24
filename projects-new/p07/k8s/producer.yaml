@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roaming-producer
+  namespace: roaming-sim
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: roaming-producer
+  template:
+    metadata:
+      labels:
+        app: roaming-producer
+    spec:
+      containers:
+        - name: producer
+          image: roaming/producer:latest
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka.roaming:9092
+            - name: SCENARIO_PATH
+              value: /app/jobs/scenarios/demo.yaml
