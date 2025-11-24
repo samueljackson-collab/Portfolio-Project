@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portfolio-multi-region
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/samueljackson-collab/Portfolio-Project.git
+    targetRevision: HEAD
+    path: infrastructure/gitops/overlays/us-east-1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: portfolio
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true

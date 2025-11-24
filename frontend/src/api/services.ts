@@ -118,6 +118,27 @@ export const healthService = {
 }
 
 /**
+ * Operations Services
+ */
+export const operationsService = {
+  /**
+   * Fetch deployment dashboard rollups
+   */
+  async getDashboard() {
+    const response = await apiClient.get('/deployments/dashboard')
+    return response.data
+  },
+
+  /**
+   * Fetch latest deployment records
+   */
+  async getDeployments() {
+    const response = await apiClient.get('/deployments')
+    return response.data
+  },
+}
+
+/**
  * Photo Services
  */
 export const photoService = {

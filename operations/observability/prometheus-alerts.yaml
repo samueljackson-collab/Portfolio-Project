@@ -1,0 +1,22 @@
+groups:
+  - name: portfolio-availability
+    rules:
+      - alert: PortfolioAPIDown
+        expr: up{job="portfolio-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Portfolio API is unreachable"
+          description: "No scrape targets responding for job=portfolio-api"
+
+      - alert: MultiRegionDrift
+        expr: |
+          sum by (region) (deployment_replicas{job="portfolio-api"})
+            < sum by (region) (deployment_desired_replicas{job="portfolio-api"})
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Replica shortfall detected"
+          description: "Desired replicas not satisfied across one or more regions"

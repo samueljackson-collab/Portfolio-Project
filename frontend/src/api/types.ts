@@ -124,3 +124,31 @@ export interface CalendarMonthResponse {
   dates: CalendarDateResponse[]
   total_photos: number
 }
+
+// Deployment / operations types
+export interface DeploymentRecord {
+  id: string
+  service_name: string
+  region: string
+  cluster: string
+  version: string
+  status: string
+  git_commit?: string
+  desired_replicas: number
+  available_replicas: number
+  created_at: string
+  updated_at: string
+}
+
+export interface RegionRollup {
+  region: string
+  services: number
+  desired_replicas: number
+  available_replicas: number
+  healthy: number
+}
+
+export interface DeploymentDashboardResponse {
+  regions: RegionRollup[]
+  latest_releases: DeploymentRecord[]
+}

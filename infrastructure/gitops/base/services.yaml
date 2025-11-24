@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-api
+  labels:
+    app: portfolio-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: portfolio-api
+  template:
+    metadata:
+      labels:
+        app: portfolio-api
+    spec:
+      serviceAccountName: portfolio-api
+      containers:
+        - name: api
+          image: ghcr.io/example/portfolio-api:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: platform-config
+          env:
+            - name: REGION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['topology.kubernetes.io/region']
+            - name: PRIMARY_BUCKET
+              value: "$(PRIMARY_BUCKET)"
+            - name: SECONDARY_BUCKET
+              value: "$(SECONDARY_BUCKET)"
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-api
+spec:
+  type: ClusterIP
+  selector:
+    app: portfolio-api
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: portfolio-api
+spec:
+  selector:
+    matchLabels:
+      app: portfolio-api
+  endpoints:
+    - port: http
+      interval: 30s
+      path: /metrics
