@@ -1,0 +1,9 @@
+---
+- name: Deploy roaming simulator API
+  hosts: all
+  become: true
+  vars:
+    app_image: ghcr.io/example/roaming-api:latest
+    otlp_endpoint: "http://otel-collector:4317"
+  roles:
+    - roaming_api

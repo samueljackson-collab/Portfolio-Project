@@ -1,0 +1,32 @@
+{
+  "title": "Roaming Simulation Overview",
+  "description": "Operator view for FastAPI roaming simulator with dual-region lenses",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request latency",
+      "metrics": ["http_server_duration_seconds_bucket"],
+      "query": "sum(rate(http_server_duration_seconds_bucket{job=\"fastapi-roaming\"}[5m])) by (le)",
+      "unit": "seconds"
+    },
+    {
+      "type": "stat",
+      "title": "Active sessions",
+      "query": "sum(roaming_sessions_active)",
+      "thresholds": [5, 25, 50],
+      "unit": "sessions"
+    },
+    {
+      "type": "bargauge",
+      "title": "Response codes",
+      "query": "sum(rate(http_server_requests_total{job=\"fastapi-roaming\"}[5m])) by (status)",
+      "unit": "req/s"
+    },
+    {
+      "type": "heatmap",
+      "title": "Region distribution",
+      "query": "sum(rate(http_server_requests_total{region!=\"\"}[5m])) by (region, method)",
+      "unit": "req/s"
+    }
+  ]
+}
