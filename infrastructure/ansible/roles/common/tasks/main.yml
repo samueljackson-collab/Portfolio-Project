@@ -1,0 +1,29 @@
+---
+- name: Install prerequisite packages
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Install container runtime
+  ansible.builtin.package:
+    name: "{{ container_runtime }}"
+    state: present
+
+- name: Ensure docker service is enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Add user to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Log into container registry when credentials provided
+  community.docker.docker_login:
+    registry_url: "https://{{ registry.url }}"
+    username: "{{ registry.username }}"
+    password: "{{ registry.password }}"
+  when: registry.password | length > 0

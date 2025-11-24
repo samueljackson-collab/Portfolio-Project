@@ -1,0 +1,34 @@
+---
+- name: Create backend configuration directory
+  ansible.builtin.file:
+    path: /opt/portfolio/backend
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Render backend environment file
+  ansible.builtin.copy:
+    dest: /opt/portfolio/backend/.env
+    content: |
+      DATABASE_URL={{ backend_env.DATABASE_URL }}
+      OTEL_EXPORTER_OTLP_ENDPOINT={{ backend_env.OTEL_EXPORTER_OTLP_ENDPOINT }}
+      LOG_LEVEL={{ backend_env.LOG_LEVEL }}
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0640'
+
+- name: Deploy backend API container
+  community.docker.docker_container:
+    name: portfolio-api
+    image: "{{ backend_image }}"
+    restart_policy: always
+    env_file: /opt/portfolio/backend/.env
+    published_ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

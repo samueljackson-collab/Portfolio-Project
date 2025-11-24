@@ -1,0 +1,33 @@
+---
+- name: Create frontend configuration directory
+  ansible.builtin.file:
+    path: /opt/portfolio/frontend
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Render frontend environment file
+  ansible.builtin.copy:
+    dest: /opt/portfolio/frontend/.env
+    content: |
+      VITE_API_URL={{ frontend_env.VITE_API_URL }}
+      VITE_FEATURE_ORCHESTRATION={{ frontend_env.VITE_FEATURE_ORCHESTRATION }}
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0640'
+
+- name: Deploy frontend console container
+  community.docker.docker_container:
+    name: portfolio-console
+    image: "{{ frontend_image }}"
+    restart_policy: always
+    env_file: /opt/portfolio/frontend/.env
+    published_ports:
+      - "4173:4173"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

@@ -1,0 +1,24 @@
+---
+- name: Prepare hosts
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Deploy orchestration service
+  hosts: orchestrator
+  become: true
+  roles:
+    - orchestrator
+
+- name: Deploy backend API
+  hosts: backend
+  become: true
+  roles:
+    - backend
+
+- name: Deploy React console
+  hosts: frontend
+  become: true
+  roles:
+    - frontend

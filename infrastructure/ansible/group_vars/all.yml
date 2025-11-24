@@ -1,0 +1,35 @@
+---
+ansible_user: ubuntu
+ansible_become: true
+
+common_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - python3-pip
+
+container_runtime: docker.io
+
+registry:
+  url: ghcr.io
+  username: "{{ lookup('env', 'REGISTRY_USER') | default('ci-user', true) }}"
+  password: "{{ lookup('env', 'REGISTRY_PASSWORD') | default('', true) }}"
+
+orchestrator_image: ghcr.io/acme/portfolio-orchestrator:latest
+backend_image: ghcr.io/acme/portfolio-api:latest
+frontend_image: ghcr.io/acme/portfolio-console:latest
+
+orchestrator_env:
+  API_BASE_URL: "http://api:8000"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+  LOG_LEVEL: info
+
+backend_env:
+  DATABASE_URL: "postgresql://app:password@db:5432/app"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+  LOG_LEVEL: info
+
+frontend_env:
+  VITE_API_URL: "http://localhost:8000"
+  VITE_FEATURE_ORCHESTRATION: "true"

@@ -124,3 +124,22 @@ export interface CalendarMonthResponse {
   dates: CalendarDateResponse[]
   total_photos: number
 }
+
+export interface StepEvent {
+  message: string
+  timestamp: string
+  level: string
+}
+
+export interface OrchestrationRun {
+  id: string
+  name: string
+  environment: string
+  target_version: string
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+  started_at: string
+  updated_at: string
+  steps: StepEvent[]
+}
+
+export type OrchestrationSummary = Record<OrchestrationRun['status'], number>

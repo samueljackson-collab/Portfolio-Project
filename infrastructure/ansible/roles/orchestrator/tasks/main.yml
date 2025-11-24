@@ -1,0 +1,34 @@
+---
+- name: Create orchestrator configuration directory
+  ansible.builtin.file:
+    path: /opt/portfolio/orchestrator
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Render orchestrator environment file
+  ansible.builtin.copy:
+    dest: /opt/portfolio/orchestrator/.env
+    content: |
+      API_BASE_URL={{ orchestrator_env.API_BASE_URL }}
+      OTEL_EXPORTER_OTLP_ENDPOINT={{ orchestrator_env.OTEL_EXPORTER_OTLP_ENDPOINT }}
+      LOG_LEVEL={{ orchestrator_env.LOG_LEVEL }}
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0640'
+
+- name: Deploy orchestrator container
+  community.docker.docker_container:
+    name: portfolio-orchestrator
+    image: "{{ orchestrator_image }}"
+    restart_policy: always
+    env_file: /opt/portfolio/orchestrator/.env
+    published_ports:
+      - "8400:8400"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8400/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

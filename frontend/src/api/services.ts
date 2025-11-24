@@ -19,6 +19,8 @@ import type {
   AlbumListResponse,
   PhotoUploadResponse,
   CalendarMonthResponse,
+  OrchestrationRun,
+  OrchestrationSummary,
 } from './types'
 
 /**
@@ -201,6 +203,41 @@ export const albumService = {
     album_type?: 'location' | 'date' | 'custom'
   }): Promise<AlbumListResponse> {
     const response = await apiClient.get<AlbumListResponse>('/photos/albums', { params })
+    return response.data
+  },
+}
+
+export const orchestrationService = {
+  async createRun(payload: {
+    name: string
+    environment: string
+    target_version: string
+    kickoff_notes?: string
+  }): Promise<OrchestrationRun> {
+    const response = await apiClient.post<OrchestrationRun>('/orchestration/runs', payload)
+    return response.data
+  },
+
+  async listRuns(): Promise<OrchestrationRun[]> {
+    const response = await apiClient.get<OrchestrationRun[]>('/orchestration/runs')
+    return response.data
+  },
+
+  async getRun(id: string): Promise<OrchestrationRun> {
+    const response = await apiClient.get<OrchestrationRun>(`/orchestration/runs/${id}`)
+    return response.data
+  },
+
+  async appendEvent(
+    id: string,
+    payload: { message: string; status?: OrchestrationRun['status']; level?: string }
+  ): Promise<OrchestrationRun> {
+    const response = await apiClient.post<OrchestrationRun>(`/orchestration/runs/${id}/events`, payload)
+    return response.data
+  },
+
+  async getSummary(): Promise<OrchestrationSummary> {
+    const response = await apiClient.get<OrchestrationSummary>('/orchestration/summary')
     return response.data
   },
 }

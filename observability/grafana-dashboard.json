@@ -1,0 +1,58 @@
+{
+  "id": null,
+  "title": "Portfolio Orchestration Overview",
+  "time": {"from": "now-6h", "to": "now"},
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Successful Runs",
+      "targets": [
+        {
+          "expr": "sum(orchestration_runs_total{status='succeeded'})"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 8, "x": 0, "y": 0}
+    },
+    {
+      "type": "stat",
+      "title": "Failed Runs",
+      "targets": [
+        {
+          "expr": "sum(orchestration_runs_total{status='failed'})"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 8, "x": 8, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "Run Duration (p95)",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(orchestration_run_duration_seconds_bucket[5m])) by (le))"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 4}
+    },
+    {
+      "type": "logs",
+      "title": "Orchestrator Logs",
+      "targets": [
+        {
+          "expr": "{app='portfolio-orchestrator'} |~ 'run'"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12}
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(orchestration_runs_total, environment)",
+        "current": {"text": "All", "value": ""}
+      }
+    ]
+  }
+}
