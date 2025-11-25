@@ -1,0 +1,406 @@
+###############################################################################
+# Prometheus Configuration
+# Time-Series Metrics Collection and Alerting
+###############################################################################
+#
+# Purpose: Defines what metrics to collect, from where, and alert rules
+# Documentation: https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+#
+# Configuration Philosophy:
+#   - Scrape interval balanced between granularity and storage
+#   - External labels enable federation and multi-cluster setups
+#   - Conservative timeout values prevent cascading failures
+#   - Job names are descriptive and follow naming conventions
+#
+# Hot Reload:
+#   After editing, reload without restarting:
+#   curl -X POST http://localhost:9090/-/reload
+#   OR: docker-compose exec prometheus kill -HUP 1
+#
+###############################################################################
+
+###############################################################################
+# GLOBAL CONFIGURATION
+###############################################################################
+# Applies to all scrape configs unless overridden
+global:
+  # scrape_interval: How often to scrape targets for metrics
+  # Default: 1m, Set to: 15s for responsive dashboards
+  # Rationale:
+  #   - 15s provides good granularity for alerting (detect issues quickly)
+  #   - Balance between data resolution and storage requirements
+  #   - Can be overridden per-job for targets that need different intervals
+  # Storage impact: 15s interval = 4 samples/min = 5,760 samples/day per metric
+  scrape_interval: 15s
+
+  # evaluation_interval: How often to evaluate alert rules
+  # Should generally match scrape_interval for consistent alerting
+  # Rules evaluated against all collected data in TSDB
+  evaluation_interval: 15s
+
+  # scrape_timeout: Maximum time to wait for target to respond
+  # Must be shorter than scrape_interval to prevent overlapping scrapes
+  # Set to 10s (allows targets time to respond while preventing blocking)
+  scrape_timeout: 10s
+
+  # external_labels: Labels added to all time series and alerts
+  # Purpose:
+  #   - Identify metrics source in federated Prometheus setups
+  #   - Enable filtering in Alertmanager based on environment
+  #   - Useful when aggregating metrics from multiple Prometheus instances
+  # Modify these labels to match your environment
+  external_labels:
+    # environment: Deployment environment identifier
+    # Options: homelab, dev, staging, production
+    environment: 'homelab'
+
+    # cluster: Physical or logical cluster name
+    # Useful when monitoring multiple locations or clusters
+    cluster: 'proxmox-cluster'
+
+    # region: Geographic or network region (optional)
+    # Example: us-west, us-east, eu-central
+    region: 'primary'
+
+###############################################################################
+# ALERTING CONFIGURATION
+###############################################################################
+# Configures how Prometheus sends alerts to Alertmanager
+alerting:
+  # alertmanagers: List of Alertmanager instances
+  # Prometheus will send all firing alerts to these endpoints
+  alertmanagers:
+    - static_configs:
+        # targets: List of Alertmanager addresses
+        # Format: hostname:port or service-name:port (Docker DNS)
+        - targets:
+            - 'alertmanager:9093'  # Docker Compose service name
+
+      # scheme: HTTP or HTTPS
+      # Use HTTPS in production with proper TLS certificates
+      scheme: http
+
+      # timeout: Max time to wait for Alertmanager to accept alert
+      # 10s allows for network latency and Alertmanager processing
+      timeout: 10s
+
+      # path_prefix: API path if Alertmanager behind reverse proxy
+      # Default: / (no prefix)
+      # path_prefix: /alertmanager  # Uncomment if behind reverse proxy
+
+###############################################################################
+# ALERT RULE FILES
+###############################################################################
+# Specifies where Prometheus loads alert rule definitions
+# Rules are evaluated at the interval specified in evaluation_interval
+rule_files:
+  # alerts/rules.yml: Main alert rules file
+  # Contains all alert definitions organized by category
+  # Supports glob patterns: alerts/*.yml would load all YAML files in alerts/
+  - 'alerts/rules.yml'
+
+  # Additional rule files can be added here
+  # Example: - 'alerts/custom-rules.yml'
+  #          - 'alerts/service-specific/*.yml'
+
+###############################################################################
+# SCRAPE CONFIGURATIONS
+###############################################################################
+# Defines what targets to scrape and how
+# Each scrape_config defines a "job" (group of targets with same purpose)
+scrape_configs:
+
+  ###########################################################################
+  # JOB: prometheus (Self-Monitoring)
+  ###########################################################################
+  # Purpose: Prometheus scrapes its own metrics
+  # Why: Essential for monitoring Prometheus health and performance
+  # Metrics include:
+  #   - prometheus_tsdb_* : Database performance and storage metrics
+  #   - prometheus_rule_* : Alert rule evaluation metrics
+  #   - prometheus_target_* : Scrape target health and timing
+  #   - go_* : Go runtime metrics (memory, goroutines, GC)
+  - job_name: 'prometheus'
+
+    # honor_labels: If target exports job/instance labels, keep them
+    # Set to false (default) to overwrite with Prometheus-assigned labels
+    # Rationale: Prometheus should control its own job/instance labels
+    honor_labels: false
+
+    # Static targets: Manually specified target list
+    # For Prometheus self-monitoring, just localhost
+    static_configs:
+      - targets:
+          - 'localhost:9090'  # Prometheus itself
+
+        # labels: Additional labels added to all metrics from this target
+        # Useful for identifying target in queries and alerts
+        labels:
+          service: 'prometheus'
+          tier: 'monitoring'
+
+    # metric_relabel_configs: Transform metrics after scraping
+    # Example: Drop high-cardinality metrics to save space
+    # metric_relabel_configs:
+    #   - source_labels: [__name__]
+    #     regex: 'prometheus_sd_.*'  # Drop service discovery metrics
+    #     action: drop
+
+  ###########################################################################
+  # JOB: node-exporter (Host System Metrics)
+  ###########################################################################
+  # Purpose: Collect hardware and OS metrics from monitored hosts
+  # Metrics include:
+  #   - node_cpu_* : Per-CPU usage, modes (user, system, idle, iowait)
+  #   - node_memory_* : Memory usage (total, available, cached, buffers)
+  #   - node_disk_* : Disk I/O operations, read/write bytes, latency
+  #   - node_filesystem_* : Filesystem usage per mount point
+  #   - node_network_* : Network interface traffic, errors, drops
+  #   - node_load* : System load averages (1, 5, 15 minutes)
+  - job_name: 'node-exporter'
+
+    # scrape_interval: Override global interval if needed
+    # For system metrics, 15s (global default) is appropriate
+    # If you want less frequent scraping to reduce storage:
+    # scrape_interval: 30s
+
+    static_configs:
+      - targets:
+          - 'node-exporter:9100'  # Docker Compose service
+        labels:
+          instance: 'docker-host'  # Friendly name for this host
+          service: 'node-exporter'
+
+      # Example: Scraping node-exporter on external Proxmox hosts
+      # Uncomment and modify for your environment
+      # - targets:
+      #     - 'proxmox-host-01.home.local:9100'
+      #     - 'proxmox-host-02.home.local:9100'
+      #   labels:
+      #     instance_group: 'proxmox-hosts'
+      #     datacenter: 'homelab'
+
+  ###########################################################################
+  # JOB: cadvisor (Container Metrics)
+  ###########################################################################
+  # Purpose: Collect resource usage metrics from Docker containers
+  # Metrics include:
+  #   - container_cpu_usage_seconds_total : CPU time per container
+  #   - container_memory_usage_bytes : Current memory usage
+  #   - container_memory_working_set_bytes : Memory actively used
+  #   - container_network_transmit_bytes_total : Network TX
+  #   - container_network_receive_bytes_total : Network RX
+  #   - container_fs_* : Container filesystem usage
+  # Cardinality Warning:
+  #   - container_label_* can be very high cardinality
+  #   - Consider dropping unused labels with metric_relabel_configs
+  - job_name: 'cadvisor'
+
+    static_configs:
+      - targets:
+          - 'cadvisor:8080'  # Docker Compose service
+        labels:
+          service: 'cadvisor'
+
+    # metric_relabel_configs: Drop high-cardinality labels
+    # Container labels can create excessive time series
+    # Uncomment to drop all container labels (keeps container name/id)
+    # metric_relabel_configs:
+    #   - regex: 'container_label_.*'
+    #     action: labeldrop
+
+  ###########################################################################
+  # JOB: grafana (Grafana Metrics)
+  ###########################################################################
+  # Purpose: Monitor Grafana performance and health
+  # Metrics include:
+  #   - grafana_alerting_* : Alert evaluation and notification metrics
+  #   - grafana_api_* : API request rates and latencies
+  #   - grafana_db_* : Database query performance
+  #   - grafana_page_* : Page load times
+  #   - go_* : Go runtime metrics
+  - job_name: 'grafana'
+
+    static_configs:
+      - targets:
+          - 'grafana:3000'  # Docker Compose service
+        labels:
+          service: 'grafana'
+
+    # metrics_path: Path to metrics endpoint (default /metrics)
+    # Grafana exposes metrics at /metrics by default
+    metrics_path: /metrics
+
+  ###########################################################################
+  # JOB: loki (Loki Metrics)
+  ###########################################################################
+  # Purpose: Monitor Loki log aggregation performance
+  # Metrics include:
+  #   - loki_ingester_* : Log ingestion rate and latency
+  #   - loki_distributor_* : Distribution of logs to ingesters
+  #   - loki_querier_* : Query performance
+  #   - loki_chunk_store_* : Storage performance
+  # Important for detecting log ingestion issues and query slowness
+  - job_name: 'loki'
+
+    static_configs:
+      - targets:
+          - 'loki:3100'  # Docker Compose service
+        labels:
+          service: 'loki'
+
+  ###########################################################################
+  # JOB: promtail (Promtail Metrics)
+  ###########################################################################
+  # Purpose: Monitor log shipping agent health
+  # Metrics include:
+  #   - promtail_sent_bytes_total : Total bytes sent to Loki
+  #   - promtail_dropped_bytes_total : Bytes dropped (Loki unavailable)
+  #   - promtail_encoded_bytes_total : Log compression effectiveness
+  #   - promtail_read_* : Log file reading performance
+  # Essential for detecting log collection issues
+  - job_name: 'promtail'
+
+    static_configs:
+      - targets:
+          - 'promtail:9080'  # Docker Compose service
+        labels:
+          service: 'promtail'
+
+  ###########################################################################
+  # JOB: alertmanager (Alertmanager Metrics)
+  ###########################################################################
+  # Purpose: Monitor alert routing and notification delivery
+  # Metrics include:
+  #   - alertmanager_alerts : Current number of active alerts
+  #   - alertmanager_notifications_total : Notifications sent per integration
+  #   - alertmanager_notifications_failed_total : Failed notifications
+  #   - alertmanager_silences : Active alert silences
+  # Critical for ensuring alerts are being delivered
+  - job_name: 'alertmanager'
+
+    static_configs:
+      - targets:
+          - 'alertmanager:9093'  # Docker Compose service
+        labels:
+          service: 'alertmanager'
+
+  ###########################################################################
+  # EXAMPLE: Proxmox VE Hosts (Commented Out)
+  ###########################################################################
+  # Purpose: Monitor Proxmox hypervisor hosts
+  # Requires node-exporter installed on each Proxmox host
+  # Installation:
+  #   apt install prometheus-node-exporter
+  #   systemctl enable prometheus-node-exporter
+  #   systemctl start prometheus-node-exporter
+  # Uncomment and modify IPs for your environment:
+  #
+  # - job_name: 'proxmox-hosts'
+  #
+  #   # scrape_interval: Can be longer for less critical metrics
+  #   scrape_interval: 30s
+  #
+  #   static_configs:
+  #     - targets:
+  #         - '192.168.1.100:9100'  # Proxmox host 1
+  #         - '192.168.1.101:9100'  # Proxmox host 2
+  #       labels:
+  #         environment: 'homelab'
+  #         role: 'hypervisor'
+  #
+  #   # basic_auth: If node-exporter secured with basic auth
+  #   # Credentials should be stored in .env and referenced here
+  #   # basic_auth:
+  #   #   username: 'prometheus'
+  #   #   password: 'SecurePasswordHere'
+  #
+  #   # tls_config: If using HTTPS
+  #   # tls_config:
+  #   #   insecure_skip_verify: true  # For self-signed certs (not recommended)
+
+  ###########################################################################
+  # EXAMPLE: Blackbox Exporter (HTTP/ICMP Probing)
+  ###########################################################################
+  # Purpose: Monitor website/service availability and response time
+  # Requires separate blackbox-exporter container
+  # Uncomment to enable:
+  #
+  # - job_name: 'blackbox-http'
+  #   metrics_path: /probe
+  #   params:
+  #     module: [http_2xx]  # HTTP module defined in blackbox config
+  #   static_configs:
+  #     - targets:
+  #         - https://example.com
+  #         - https://google.com
+  #       labels:
+  #         probe_type: 'http'
+  #   relabel_configs:
+  #     - source_labels: [__address__]
+  #       target_label: __param_target
+  #     - source_labels: [__param_target]
+  #       target_label: instance
+  #     - target_label: __address__
+  #       replacement: blackbox-exporter:9115
+
+  ###########################################################################
+  # EXAMPLE: Custom Application Metrics
+  ###########################################################################
+  # Purpose: Scrape metrics from your own applications
+  # If your application exposes /metrics endpoint (Prometheus client library):
+  #
+  # - job_name: 'my-application'
+  #   static_configs:
+  #     - targets:
+  #         - 'app-server-01:8080'
+  #         - 'app-server-02:8080'
+  #       labels:
+  #         app: 'my-web-app'
+  #         version: 'v1.2.3'
+
+###############################################################################
+# ADVANCED CONFIGURATION OPTIONS
+###############################################################################
+
+# remote_write: Send metrics to remote Prometheus or other TSDB
+# Useful for long-term storage or federated setups
+# Example: Write to Thanos, Cortex, or Prometheus remote storage
+# remote_write:
+#   - url: "http://remote-prometheus:9090/api/v1/write"
+#     queue_config:
+#       capacity: 10000
+#       max_shards: 50
+#       min_shards: 1
+
+# remote_read: Read metrics from remote storage
+# Enables querying historical data beyond local retention
+# remote_read:
+#   - url: "http://remote-prometheus:9090/api/v1/read"
+#     read_recent: true
+
+# storage: Advanced storage tuning (rarely needed)
+# storage:
+#   tsdb:
+#     retention.time: 15d  # Can also set in command args
+#     retention.size: 100GB  # Alternative to time-based retention
+
+###############################################################################
+# CONFIGURATION VALIDATION
+###############################################################################
+# Before reloading Prometheus, validate configuration:
+#   docker-compose exec prometheus promtool check config /etc/prometheus/prometheus.yml
+#
+# Check alert rules syntax:
+#   docker-compose exec prometheus promtool check rules /etc/prometheus/alerts/rules.yml
+#
+# Hot reload configuration:
+#   curl -X POST http://localhost:9090/-/reload
+#   OR: docker-compose exec prometheus kill -HUP 1
+#
+# View loaded configuration in Prometheus UI:
+#   http://localhost:9090/config
+#
+# View service discovery targets:
+#   http://localhost:9090/targets
+###############################################################################
