@@ -49,3 +49,9 @@ mlflow server --backend-store-uri sqlite:///mlruns.db --default-artifact-root ./
 
 ## Documentation
 Refer to the `docs/` directory for decision records, runbooks, and integration guides.
+
+## Testing
+```bash
+# From repository root
+python -m pytest projects/6-mlops-platform/tests
+```

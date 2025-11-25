@@ -7,3 +7,9 @@ Kafka + Flink pipeline for processing portfolio events with exactly-once semanti
 pip install -r requirements.txt
 python src/process_events.py
 ```
+
+## Testing
+```bash
+# From repository root
+python -m pytest projects/5-real-time-data-streaming/tests
+```
