@@ -4,17 +4,16 @@ Main FastAPI application factory.
 This module creates and configures the FastAPI application instance.
 """
 
+import logging
+import time
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.exc import SQLAlchemyError
-from prometheus_fastapi_instrumentator import Instrumentator
-import logging
-import time
-
-from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.config import settings
 from app.database import init_db, close_db
@@ -165,11 +164,6 @@ app.include_router(backup.router)
 app.include_router(orchestration.router)
 
 
-# Prometheus metrics instrumentation
-# Expose metrics at /metrics endpoint for Prometheus scraping
-Instrumentator().instrument(app).expose(app, endpoint="/metrics", tags=["Monitoring"])
-
-
 # Root endpoint
 @app.get(
     "/",
@@ -189,7 +183,8 @@ async def root() -> dict:
             "content": "/content (CRUD operations)",
             "photos": "/photos (photo upload and management)",
             "backup": "/backup (backup status and management)",
-            "health": "/health (status check)"
+            "health": "/health (status check)",
+            "orchestration": "/orchestration (plans, runs)",
         }
     }
 
