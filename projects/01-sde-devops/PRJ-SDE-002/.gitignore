@@ -1,0 +1,46 @@
+# Environment files (contain secrets)
+.env
+
+# Grafana data (generated at runtime)
+grafana/data/
+
+# Prometheus data (generated at runtime)
+prometheus_data/
+prometheus/data/
+
+# Loki data (generated at runtime)
+loki_data/
+loki/data/
+
+# Alertmanager data (generated at runtime)
+alertmanager_data/
+alertmanager/data/
+
+# Promtail positions file (generated at runtime)
+promtail/positions.yaml
+
+# Docker volumes (managed by Docker)
+*.db
+
+# Backup files
+*.bak
+backup/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

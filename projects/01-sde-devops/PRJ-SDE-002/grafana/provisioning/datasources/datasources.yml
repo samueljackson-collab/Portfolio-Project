@@ -1,0 +1,308 @@
+###############################################################################
+# Grafana Datasource Provisioning
+# Auto-provision datasources on Grafana startup
+###############################################################################
+#
+# Purpose: Automatically configure Prometheus and Loki datasources
+# Documentation: https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources
+#
+# Advantages of Provisioning:
+#   - Infrastructure as Code (version controlled)
+#   - Consistent across environments
+#   - No manual UI configuration needed
+#   - Reproducible deployments
+#
+# Usage:
+#   Place this file in /etc/grafana/provisioning/datasources/
+#   Grafana auto-loads on startup
+#   Changes require Grafana restart to take effect
+#
+###############################################################################
+
+apiVersion: 1
+
+# deleteDatasources: Remove datasources not defined here (optional)
+# Uncomment to enforce declarative datasource management
+# deleteDatasources:
+#   - name: Prometheus
+#     orgId: 1
+
+###############################################################################
+# DATASOURCES
+###############################################################################
+datasources:
+  ###########################################################################
+  # PROMETHEUS - Metrics Datasource
+  ###########################################################################
+  - name: Prometheus
+    # type: Datasource type identifier
+    # prometheus: For Prometheus-compatible datasources
+    type: prometheus
+
+    # access: How Grafana connects to datasource
+    # proxy: Grafana backend proxies requests (recommended)
+    #        - Hides datasource URL from browser
+    #        - Works with datasources not accessible from browser
+    #        - Better for authentication/authorization
+    # direct: Browser connects directly to datasource
+    #        - Lower latency
+    #        - Requires datasource accessible from browser
+    #        - Less secure (exposes datasource URL)
+    access: proxy
+
+    # url: Datasource endpoint URL
+    # Docker Compose: Use service name (prometheus)
+    # External: Use hostname or IP
+    # Include port and path as needed
+    url: http://prometheus:9090
+
+    # uid: Unique identifier for datasource
+    # Used in dashboard JSON to reference this datasource
+    # Keep stable across environments for dashboard portability
+    uid: prometheus-uid
+
+    # orgId: Grafana organization ID
+    # 1: Default organization
+    # For multi-tenant setups, specify appropriate org
+    orgId: 1
+
+    # isDefault: Set as default datasource
+    # true: Auto-selected in new panels/dashboards
+    # Only one datasource should be default per type
+    isDefault: true
+
+    # version: Datasource plugin version (optional)
+    # Usually omitted to use latest compatible version
+    version: 1
+
+    # editable: Allow editing via UI
+    # false: Prevents accidental UI modifications (recommended for production)
+    # true: Allows UI editing (useful for development)
+    editable: false
+
+    # jsonData: Datasource-specific configuration (Prometheus options)
+    jsonData:
+      # httpMethod: HTTP method for queries
+      # POST: Recommended for large queries (no URL length limits)
+      # GET: Simpler, cacheable, but limited by URL length
+      httpMethod: POST
+
+      # timeInterval: Minimum scrape interval
+      # Should match Prometheus scrape_interval (15s)
+      # Used for auto-interval in queries ($__interval)
+      timeInterval: "15s"
+
+      # queryTimeout: Query timeout duration
+      # 60s: Generous timeout for complex queries
+      # Prevents queries from running indefinitely
+      queryTimeout: "60s"
+
+      # customQueryParameters: Add URL parameters to all queries (optional)
+      # Example: customQueryParameters: "step=15"
+
+      # exemplars: Enable exemplars support (links traces to metrics)
+      # true: If using distributed tracing (Tempo, Jaeger)
+      # false: Not using exemplars
+      exemplarTraceIdDestinations: []
+
+      # prometheusType: Prometheus variant
+      # Prometheus: Standard Prometheus
+      # Alternatives: Cortex, Thanos, Mimir
+      prometheusType: Prometheus
+
+      # prometheusVersion: Prometheus version (optional)
+      # Used for feature detection
+      # prometheusVersion: "2.48.0"
+
+      # cacheLevel: Query caching strategy
+      # none: No caching (always fetch fresh data)
+      # Low: Cache metadata queries
+      # Medium: Cache + dashboard queries
+      # High: Aggressive caching
+      cacheLevel: "Low"
+
+      # incrementalQuerying: Split large queries into smaller chunks
+      # true: Better performance for large time ranges
+      # false: Single query (simpler, but slower for large ranges)
+      incrementalQuerying: true
+
+      # incrementalQueryOverlapWindow: Overlap between query chunks
+      # 10m: 10-minute overlap ensures no data gaps
+      incrementalQueryOverlapWindow: "10m"
+
+      # disableMetricsLookup: Disable autocomplete metric list
+      # false: Enable autocomplete (user-friendly)
+      # true: Faster Grafana startup for large Prometheus instances
+      disableMetricsLookup: false
+
+      # manageAlerts: Allow managing Prometheus alerts from Grafana
+      # true: Can view/edit alert rules in Grafana UI
+      # false: Read-only alert viewing
+      manageAlerts: false
+
+    # secureJsonData: Sensitive configuration (passwords, tokens)
+    # Values here are encrypted in Grafana database
+    # For Prometheus, typically not needed (no authentication)
+    # Uncomment if Prometheus requires authentication:
+    # secureJsonData:
+    #   basicAuthPassword: "your-password-here"
+
+    # basicAuth: Enable HTTP basic authentication
+    # false: No authentication (typical for internal Prometheus)
+    # true: Use basic auth credentials
+    basicAuth: false
+
+    # basicAuthUser: Username for basic auth
+    # basicAuthUser: "admin"
+
+    # withCredentials: Send cookies/auth headers
+    # false: No credentials sent (default)
+    # true: Include credentials in requests
+    withCredentials: false
+
+  ###########################################################################
+  # LOKI - Logs Datasource
+  ###########################################################################
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+
+    # uid: Unique identifier for Loki datasource
+    uid: loki-uid
+
+    orgId: 1
+
+    # isDefault: Not default (Prometheus is default)
+    # Grafana will auto-select appropriate datasource based on query type
+    isDefault: false
+
+    version: 1
+    editable: false
+
+    jsonData:
+      # maxLines: Maximum log lines to return per query
+      # 1000: Reasonable default, prevents browser overload
+      # Increase if you need to see more logs at once
+      maxLines: 1000
+
+      # derivedFields: Extract fields from logs and link to other datasources
+      # Example: Link trace IDs in logs to Tempo traces
+      # derivedFields:
+      #   - name: traceID
+      #     matcherRegex: "trace_id=(\\w+)"
+      #     url: "$${__value.raw}"
+      #     datasourceUid: tempo-uid
+
+      # timeout: Query timeout
+      # 60s: Generous for log searches
+      timeout: 60
+
+      # httpHeaderName1: Custom HTTP header name (optional)
+      # For authentication or custom headers
+      # httpHeaderName1: "X-Custom-Header"
+
+    # secureJsonData: Sensitive Loki configuration
+    # Uncomment if Loki requires authentication:
+    # secureJsonData:
+    #   httpHeaderValue1: "header-value"
+    #   basicAuthPassword: "password"
+
+    basicAuth: false
+    withCredentials: false
+
+###############################################################################
+# ADDITIONAL DATASOURCES (Optional)
+###############################################################################
+# Uncomment and configure additional datasources as needed
+
+  ###########################################################################
+  # ALERTMANAGER - Alert Visualization (Optional)
+  ###########################################################################
+  # - name: Alertmanager
+  #   type: alertmanager
+  #   access: proxy
+  #   url: http://alertmanager:9093
+  #   uid: alertmanager-uid
+  #   orgId: 1
+  #   isDefault: false
+  #   version: 1
+  #   editable: false
+  #   jsonData:
+  #     implementation: prometheus
+  #     handleGrafanaManagedAlerts: false
+  #   basicAuth: false
+
+  ###########################################################################
+  # TEMPO - Distributed Tracing (If using Tempo)
+  ###########################################################################
+  # - name: Tempo
+  #   type: tempo
+  #   access: proxy
+  #   url: http://tempo:3200
+  #   uid: tempo-uid
+  #   orgId: 1
+  #   isDefault: false
+  #   version: 1
+  #   editable: false
+  #   jsonData:
+  #     tracesToLogs:
+  #       datasourceUid: loki-uid
+  #       tags: ['job', 'instance', 'pod', 'namespace']
+  #       mappedTags: [{ key: 'service.name', value: 'service' }]
+  #       mapTagNamesEnabled: true
+  #       spanStartTimeShift: '-1h'
+  #       spanEndTimeShift: '1h'
+  #     tracesToMetrics:
+  #       datasourceUid: prometheus-uid
+  #     serviceMap:
+  #       datasourceUid: prometheus-uid
+  #     nodeGraph:
+  #       enabled: true
+  #     search:
+  #       hide: false
+  #     lokiSearch:
+  #       datasourceUid: loki-uid
+  #   basicAuth: false
+
+  ###########################################################################
+  # TESTDATA - Sample Data (Development Only)
+  ###########################################################################
+  # - name: TestData
+  #   type: testdata
+  #   uid: testdata-uid
+  #   orgId: 1
+  #   isDefault: false
+  #   version: 1
+  #   editable: false
+
+###############################################################################
+# TROUBLESHOOTING
+###############################################################################
+#
+# Datasource not appearing:
+#   1. Check file location: /etc/grafana/provisioning/datasources/
+#   2. Restart Grafana: docker-compose restart grafana
+#   3. Check Grafana logs: docker logs monitoring-grafana
+#   4. Verify YAML syntax: yamllint datasources.yml
+#
+# Connection errors:
+#   1. Verify datasource URL is correct
+#   2. Test from Grafana container: docker exec monitoring-grafana curl http://prometheus:9090
+#   3. Check network connectivity
+#   4. Verify datasource service is running: docker ps
+#
+# Queries not working:
+#   1. Test datasource in Settings → Data Sources → Test
+#   2. Check datasource health endpoint:
+#      - Prometheus: http://prometheus:9090/-/healthy
+#      - Loki: http://loki:3100/ready
+#   3. Review query syntax (PromQL for Prometheus, LogQL for Loki)
+#
+# Provisioning not applying:
+#   1. Datasources created manually in UI take precedence
+#   2. Delete manual datasources or use matching uid
+#   3. Enable deleteDatasources to enforce provisioned only
+#   4. Check Grafana logs for provisioning errors
+#
+###############################################################################
