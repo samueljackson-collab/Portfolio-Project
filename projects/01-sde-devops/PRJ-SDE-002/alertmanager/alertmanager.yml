@@ -1,0 +1,441 @@
+###############################################################################
+# Alertmanager Configuration
+# Alert Routing, Grouping, and Notification Management
+###############################################################################
+#
+# Purpose: Route alerts from Prometheus to appropriate notification channels
+# Documentation: https://prometheus.io/docs/alerting/latest/configuration/
+#
+# Routing Strategy:
+#   - Group related alerts together (reduce notification spam)
+#   - Route by severity (critical → pager, warning → email/slack)
+#   - Inhibit lower-severity alerts when higher ones exist
+#   - Repeat notifications for unresolved critical alerts
+#
+# Testing:
+#   amtool check-config alertmanager.yml  # Validate syntax
+#   amtool alert add test severity=critical  # Send test alert
+#   curl -H "Content-Type: application/json" -d '[{"labels":{"alertname":"test"}}]' localhost:9093/api/v1/alerts
+#
+###############################################################################
+
+###############################################################################
+# GLOBAL CONFIGURATION
+###############################################################################
+# Default values applied to all notification integrations unless overridden
+global:
+  # resolve_timeout: Time to wait before marking alert as resolved
+  # If Prometheus stops sending an alert, wait this long before considering it resolved
+  # Set to 5m to match Prometheus scrape and evaluation intervals
+  resolve_timeout: 5m
+
+  # SMTP Configuration for Email Alerts
+  # Used by email receivers defined below
+  # Credentials from environment variables for security (not hardcoded)
+  smtp_from: '${ALERTMANAGER_SMTP_FROM}'
+  smtp_smarthost: '${ALERTMANAGER_SMTP_HOST}'  # Format: smtp.gmail.com:587
+  smtp_auth_username: '${ALERTMANAGER_SMTP_USERNAME}'
+  smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+  # Slack API URL (optional, if using Slack)
+  # slack_api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
+
+  # PagerDuty Integration URL (optional)
+  # pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+###############################################################################
+# TEMPLATES
+###############################################################################
+# Custom notification templates (optional)
+# Allows custom formatting of alert messages
+# templates:
+#   - '/etc/alertmanager/templates/*.tmpl'
+
+###############################################################################
+# ROUTING CONFIGURATION
+###############################################################################
+# Defines how alerts are routed to receivers based on labels
+# Tree structure: root route with child routes for specific criteria
+route:
+  # group_by: Labels used to group alerts together
+  # Alerts with same group_by labels are batched into one notification
+  # Reduces notification spam (e.g., 10 servers down → 1 grouped notification)
+  group_by: ['alertname', 'cluster', 'severity']
+
+  # group_wait: Time to wait before sending first notification for new group
+  # Allows additional alerts to accumulate before sending
+  # 10s: Quick enough for timely alerts, long enough to group related alerts
+  group_wait: 10s
+
+  # group_interval: Time to wait before sending notification about new alerts in existing group
+  # After first notification, wait this long before sending updates
+  # 10s: Keep notifications timely for evolving situations
+  group_interval: 10s
+
+  # repeat_interval: How often to resend notification if alert still firing
+  # 12h: Remind every 12 hours that issue is unresolved
+  # Prevents alert fatigue while ensuring issues aren't forgotten
+  repeat_interval: 12h
+
+  # receiver: Default receiver if no child routes match
+  # All alerts go here unless matched by routes below
+  receiver: 'default-receiver'
+
+  ###########################################################################
+  # CHILD ROUTES
+  # Evaluated in order, first match wins
+  ###########################################################################
+  routes:
+    #########################################################################
+    # Route 1: Critical Alerts → Immediate Notification
+    # High-priority alerts requiring immediate attention
+    #########################################################################
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      # Override group settings for critical alerts
+      group_wait: 5s         # Send faster for critical
+      group_interval: 5s     # Updates faster
+      repeat_interval: 4h    # Remind more frequently
+      continue: false        # Don't evaluate further routes
+
+    #########################################################################
+    # Route 2: Warning Alerts → Email/Slack
+    # Medium-priority alerts for investigation
+    #########################################################################
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s        # Can wait a bit longer to group
+      group_interval: 30s
+      repeat_interval: 24h   # Less frequent reminders
+      continue: false
+
+    #########################################################################
+    # Route 3: Monitoring Stack Alerts → Special Handling
+    # Alerts about monitoring infrastructure itself
+    #########################################################################
+    - match:
+        category: monitoring
+      receiver: 'monitoring-team'
+      group_wait: 15s
+      group_interval: 15s
+      repeat_interval: 6h
+      continue: false
+
+    #########################################################################
+    # Route 4: Container Alerts → Container Team
+    # Container-specific issues
+    #########################################################################
+    - match_re:
+        category: 'container.*'  # Matches container-performance, container-stability
+      receiver: 'container-alerts'
+      group_wait: 20s
+      group_interval: 20s
+      repeat_interval: 12h
+      continue: false
+
+    #########################################################################
+    # Route 5: Info Alerts → Low Priority
+    # Informational alerts, no immediate action needed
+    #########################################################################
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      group_wait: 60s
+      group_interval: 60s
+      repeat_interval: 48h   # Very infrequent reminders
+      continue: false
+
+###############################################################################
+# INHIBITION RULES
+###############################################################################
+# Suppress (inhibit) alerts based on presence of other alerts
+# Prevents alert storms and redundant notifications
+# Use case: If server is down, don't alert on high CPU/memory on that server
+inhibit_rules:
+  #########################################################################
+  # Inhibit Warning if Critical Exists
+  # If critical alert firing for same instance, suppress warnings
+  #########################################################################
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    # equal: Inhibit only if these labels match between source and target
+    # Only inhibit warnings on the SAME instance that has critical alert
+    equal: ['instance', 'cluster']
+
+  #########################################################################
+  # Inhibit Disk Alerts if Instance Down
+  # If server is down, disk alerts are meaningless
+  #########################################################################
+  - source_match:
+      alertname: 'InstanceDown'
+    target_match_re:
+      alertname: '.*Disk.*'  # Matches DiskSpaceLow, CriticalDiskSpace, DiskWillFillSoon
+    equal: ['instance']
+
+  #########################################################################
+  # Inhibit Container Alerts if Instance Down
+  # If host is down, container alerts are expected
+  #########################################################################
+  - source_match:
+      alertname: 'InstanceDown'
+    target_match_re:
+      category: 'container.*'
+    equal: ['instance']
+
+  #########################################################################
+  # Inhibit Memory Alerts if OOM Occurring
+  # If critical memory alert exists, warning is redundant
+  #########################################################################
+  - source_match:
+      alertname: 'CriticalMemoryUsage'
+    target_match:
+      alertname: 'HighMemoryUsage'
+    equal: ['instance']
+
+###############################################################################
+# RECEIVERS
+###############################################################################
+# Define how to send notifications (email, Slack, PagerDuty, webhook, etc.)
+receivers:
+  #########################################################################
+  # Default Receiver
+  # Catch-all for alerts not matched by specific routes
+  #########################################################################
+  - name: 'default-receiver'
+    email_configs:
+      - to: '${ALERTMANAGER_SMTP_TO}'
+        # Email subject template
+        # Uses Go templating with alert data
+        headers:
+          subject: '[ALERT] {{ .GroupLabels.alertname }} - {{ .GroupLabels.severity }}'
+        # Email body template (HTML supported)
+        html: |
+          <h2>Alert: {{ .GroupLabels.alertname }}</h2>
+          <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+          <p><strong>Summary:</strong> {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}</p>
+          <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+          <hr>
+          <p><em>Sent by Alertmanager at {{ .ExternalURL }}</em></p>
+
+        # send_resolved: Send notification when alert resolves
+        # true: Inform when problem is fixed
+        send_resolved: true
+
+    # Optional: Slack configuration
+    # Uncomment and configure if using Slack
+    # slack_configs:
+    #   - api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
+    #     channel: '#alerts'
+    #     title: '{{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+    #     send_resolved: true
+
+  #########################################################################
+  # Critical Alerts Receiver
+  # High-priority notifications (page/SMS/phone)
+  #########################################################################
+  - name: 'critical-alerts'
+    # Email with HIGH priority
+    email_configs:
+      - to: '${ALERTMANAGER_SMTP_TO}'
+        headers:
+          subject: '[CRITICAL] {{ .GroupLabels.alertname }} - IMMEDIATE ACTION REQUIRED'
+          # Set email priority to high
+          X-Priority: '1'
+          Importance: 'high'
+        html: |
+          <div style="background-color: #dc3545; color: white; padding: 20px;">
+            <h1>🚨 CRITICAL ALERT</h1>
+            <h2>{{ .GroupLabels.alertname }}</h2>
+          </div>
+          <div style="padding: 20px;">
+            <p><strong>Severity:</strong> <span style="color: red;">CRITICAL</span></p>
+            <p><strong>Cluster:</strong> {{ .GroupLabels.cluster }}</p>
+            <p><strong>Firing Alerts:</strong> {{ len .Alerts.Firing }}</p>
+
+            {{ range .Alerts }}
+            <hr>
+            <h3>{{ .Labels.alertname }}</h3>
+            <p><strong>Instance:</strong> {{ .Labels.instance }}</p>
+            <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+            <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+            <details>
+              <summary>Runbook</summary>
+              <pre>{{ .Annotations.runbook }}</pre>
+            </details>
+            <p><strong>Started:</strong> {{ .StartsAt }}</p>
+            {{ end }}
+          </div>
+        send_resolved: true
+
+    # PagerDuty integration for critical alerts (optional)
+    # Uncomment if using PagerDuty for on-call paging
+    # pagerduty_configs:
+    #   - service_key: '${PAGERDUTY_SERVICE_KEY}'
+    #     description: '{{ .GroupLabels.alertname }}: {{ .GroupLabels.severity }}'
+    #     severity: 'critical'
+    #     details:
+    #       firing: '{{ len .Alerts.Firing }}'
+    #       summary: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+    #     send_resolved: true
+
+    # Slack with @channel mention for critical
+    # slack_configs:
+    #   - api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
+    #     channel: '#critical-alerts'
+    #     username: 'Alertmanager'
+    #     icon_emoji: ':rotating_light:'
+    #     title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+    #     text: '<!channel> {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+    #     color: 'danger'
+    #     send_resolved: true
+
+  #########################################################################
+  # Warning Alerts Receiver
+  # Medium-priority notifications
+  #########################################################################
+  - name: 'warning-alerts'
+    email_configs:
+      - to: '${ALERTMANAGER_SMTP_TO}'
+        headers:
+          subject: '[WARNING] {{ .GroupLabels.alertname }}'
+        html: |
+          <div style="background-color: #ffc107; color: black; padding: 20px;">
+            <h2>⚠️  WARNING ALERT</h2>
+            <h3>{{ .GroupLabels.alertname }}</h3>
+          </div>
+          <div style="padding: 20px;">
+            {{ range .Alerts }}
+            <p><strong>Instance:</strong> {{ .Labels.instance }}</p>
+            <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+            <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+            <hr>
+            {{ end }}
+          </div>
+        send_resolved: true
+
+    # Slack for warnings (no @channel)
+    # slack_configs:
+    #   - api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
+    #     channel: '#alerts'
+    #     title: '⚠️  {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+    #     color: 'warning'
+    #     send_resolved: true
+
+  #########################################################################
+  # Monitoring Team Receiver
+  # Alerts about monitoring infrastructure
+  #########################################################################
+  - name: 'monitoring-team'
+    email_configs:
+      - to: '${ALERTMANAGER_SMTP_TO}'
+        headers:
+          subject: '[MONITORING] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Monitoring Infrastructure Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          {{ range .Alerts }}
+          <p>{{ .Annotations.description }}</p>
+          {{ end }}
+          <p><em>This alert is about the monitoring system itself.</em></p>
+        send_resolved: true
+
+  #########################################################################
+  # Container Alerts Receiver
+  # Container-specific issues
+  #########################################################################
+  - name: 'container-alerts'
+    email_configs:
+      - to: '${ALERTMANAGER_SMTP_TO}'
+        headers:
+          subject: '[CONTAINER] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Container Alert</h2>
+          {{ range .Alerts }}
+          <p><strong>Container:</strong> {{ .Labels.name }}</p>
+          <p><strong>Image:</strong> {{ .Labels.image }}</p>
+          <p><strong>Issue:</strong> {{ .Annotations.summary }}</p>
+          <p>{{ .Annotations.description }}</p>
+          <details>
+            <summary>Troubleshooting Steps</summary>
+            <pre>{{ .Annotations.runbook }}</pre>
+          </details>
+          <hr>
+          {{ end }}
+        send_resolved: true
+
+  #########################################################################
+  # Info Alerts Receiver
+  # Low-priority informational alerts
+  #########################################################################
+  - name: 'info-alerts'
+    email_configs:
+      - to: '${ALERTMANAGER_SMTP_TO}'
+        headers:
+          subject: '[INFO] {{ .GroupLabels.alertname }}'
+        html: |
+          <h3>ℹ️  Information: {{ .GroupLabels.alertname }}</h3>
+          {{ range .Alerts }}
+          <p>{{ .Annotations.summary }}</p>
+          {{ end }}
+        send_resolved: true
+
+###############################################################################
+# ADVANCED CONFIGURATION
+###############################################################################
+
+# time_intervals: Define time periods for muting alerts (optional)
+# Use case: Mute non-critical alerts during off-hours
+# time_intervals:
+#   - name: 'business-hours'
+#     time_intervals:
+#       - times:
+#         - start_time: '09:00'
+#           end_time: '17:00'
+#         weekdays: ['monday:friday']
+#
+#   - name: 'off-hours'
+#     time_intervals:
+#       - times:
+#         - start_time: '17:00'
+#           end_time: '09:00'
+#         weekdays: ['monday:friday']
+#       - weekdays: ['saturday', 'sunday']
+
+# mute_time_intervals: Apply time-based muting to routes
+# Example in route:
+#   - match:
+#       severity: warning
+#     receiver: 'warning-alerts'
+#     mute_time_intervals:
+#       - 'off-hours'  # Don't send warnings during off-hours
+
+###############################################################################
+# TESTING & VALIDATION
+###############################################################################
+# Validate configuration:
+#   docker-compose exec alertmanager amtool check-config /etc/alertmanager/alertmanager.yml
+#
+# Send test alert:
+#   amtool alert add test_alert severity=warning instance=test
+#
+# View active alerts:
+#   amtool alert query
+#   OR: http://localhost:9093/#/alerts
+#
+# Create silence (mute alert):
+#   amtool silence add alertname=HighCPUUsage --duration=1h --comment="Planned maintenance"
+#   OR: Use Alertmanager web UI
+#
+# Query silences:
+#   amtool silence query
+#
+# Delete silence:
+#   amtool silence expire <silence-id>
+###############################################################################

@@ -1,0 +1,407 @@
+###############################################################################
+# Loki Configuration
+# Horizontally Scalable Log Aggregation System
+###############################################################################
+#
+# Purpose: Store and query logs at scale with label-based indexing
+# Documentation: https://grafana.com/docs/loki/latest/configuration/
+#
+# Architecture:
+#   - Single-node deployment (suitable for homelab/small deployments)
+#   - BoltDB for index storage (embedded database)
+#   - Filesystem for chunk storage (logs)
+#   - 7-day retention with automatic cleanup
+#
+# Key Concepts:
+#   - Labels: Indexed metadata (low cardinality!)
+#   - Chunks: Compressed log batches
+#   - Streams: Unique label set combination
+#   - LogQL: Query language similar to PromQL
+#
+###############################################################################
+
+###############################################################################
+# SERVER CONFIGURATION
+###############################################################################
+# HTTP and GRPC server settings
+server:
+  # http_listen_port: Port for HTTP API and UI
+  # Used by Promtail to push logs and Grafana to query logs
+  http_listen_port: 3100
+
+  # grpc_listen_port: Port for GRPC (used in distributed deployments)
+  # Set to 9096 to avoid conflicts, or 0 to disable
+  grpc_listen_port: 9096
+
+  # log_level: Logging verbosity
+  # Options: debug, info, warn, error
+  # info: Good balance between visibility and log volume
+  log_level: info
+
+  # log_format: Log output format
+  # Options: logfmt, json
+  # logfmt: Human-readable, good for development
+  log_format: logfmt
+
+###############################################################################
+# AUTHENTICATION (Disabled for Internal Use)
+###############################################################################
+# In production, enable authentication to prevent unauthorized access
+# auth_enabled: false means no multi-tenancy, all logs in single tenant
+auth_enabled: false
+
+###############################################################################
+# INGESTER CONFIGURATION
+###############################################################################
+# Controls how logs are buffered and flushed to storage
+ingester:
+  # lifecycler: Manages ingester lifecycle in ring (cluster coordination)
+  # For single-node, simplified configuration
+  lifecycler:
+    address: 127.0.0.1
+    ring:
+      # kvstore: Key-value store for ring coordination
+      # inmemory: Simplest option for single-node
+      # For multi-node, use etcd or consul
+      kvstore:
+        store: inmemory
+
+      # replication_factor: How many ingesters hold each log stream
+      # 1: Single node, no replication
+      # For HA, set to 3 with multiple ingesters
+      replication_factor: 1
+
+    # final_sleep: Grace period before shutdown to flush pending logs
+    # 0s: Immediate shutdown (acceptable for single-node dev/homelab)
+    # In production, set to 30s to ensure clean shutdown
+    final_sleep: 0s
+
+  # chunk_idle_period: How long to wait before flushing idle chunk
+  # 3m: Flush chunks that haven't received logs for 3 minutes
+  # Balances memory usage vs. chunk size
+  chunk_idle_period: 3m
+
+  # chunk_block_size: Target size of compressed chunk
+  # 262144 bytes = 256KB
+  # Larger chunks = better compression, but more memory
+  chunk_block_size: 262144
+
+  # chunk_retain_period: How long to keep chunks in memory after flushing
+  # 1m: Keep chunks briefly for late-arriving logs
+  # Prevents duplicate chunks for out-of-order logs
+  chunk_retain_period: 1m
+
+  # max_transfer_retries: Retries when transferring chunks (distributed mode)
+  # 0: No retries needed for single-node
+  max_transfer_retries: 0
+
+###############################################################################
+# SCHEMA CONFIGURATION
+###############################################################################
+# Defines storage schema (how logs are indexed and stored)
+# CRITICAL: Schema changes require data migration
+schema_config:
+  configs:
+    # from: Schema effective date (YYYY-MM-DD)
+    # Use date before first Loki deployment
+    - from: 2024-01-01
+
+      # store: Index storage backend
+      # boltdb-shipper: Recommended for single-node
+      #   - BoltDB: Embedded database for index
+      #   - Shipper: Uploads indexes to object store
+      # Alternatives: tsdb (newer, for high-volume)
+      store: boltdb-shipper
+
+      # object_store: Where log chunks are stored
+      # filesystem: Local disk storage (simple, single-node)
+      # Alternatives: s3, gcs, azure for cloud deployments
+      object_store: filesystem
+
+      # schema: Index schema version
+      # v11: Current stable version
+      # v12: Newer, supports TSDB
+      schema: v11
+
+      # index: Configuration for index storage
+      # prefix: Index name prefix
+      # period: How often to create new index table
+      #   24h: Daily indexes (good for homelab scale)
+      #   168h: Weekly (for very low volume)
+      index:
+        prefix: index_
+        period: 24h
+
+###############################################################################
+# STORAGE CONFIGURATION
+###############################################################################
+# Configures where and how data is stored
+storage_config:
+  # boltdb_shipper: Configuration for BoltDB index storage
+  boltdb_shipper:
+    # active_index_directory: Where active index is stored
+    # Active index = currently being written to
+    # Keep on fast storage (SSD preferred)
+    active_index_directory: /loki/boltdb-shipper-active
+
+    # cache_location: Cache directory for index queries
+    # Speeds up queries by caching recently accessed indexes
+    cache_location: /loki/boltdb-shipper-cache
+
+    # cache_ttl: How long to cache index entries
+    # 24h: Good balance for daily index rotation
+    cache_ttl: 24h
+
+    # shared_store: Where indexes are uploaded
+    # filesystem: Local filesystem (same as chunk storage)
+    shared_store: filesystem
+
+  # filesystem: Configuration for chunk storage on local disk
+  filesystem:
+    # directory: Where log chunks are stored
+    # This can grow large! Monitor disk usage
+    # Estimate: ~1-10GB per day depending on log volume
+    directory: /loki/chunks
+
+###############################################################################
+# COMPACTOR CONFIGURATION
+###############################################################################
+# Compacts and cleans up old index data
+# Essential for managing disk space and query performance
+compactor:
+  # working_directory: Temporary space for compaction
+  working_directory: /loki/boltdb-shipper-compactor
+
+  # shared_store: Must match boltdb_shipper.shared_store
+  shared_store: filesystem
+
+  # compaction_interval: How often to run compaction
+  # 10m: Frequent compaction keeps index optimized
+  # Increase to 1h if CPU constrained
+  compaction_interval: 10m
+
+  # retention_enabled: Enable automatic deletion of old data
+  # true: Automatically delete logs older than retention_period
+  # CRITICAL: Ensure backups before enabling in production
+  retention_enabled: true
+
+  # retention_delete_delay: Grace period before actual deletion
+  # 2h: Allows time to recover if retention misconfigured
+  retention_delete_delay: 2h
+
+  # retention_delete_worker_count: Parallel workers for deletion
+  # 150: Good default for single-node
+  retention_delete_worker_count: 150
+
+###############################################################################
+# LIMITS CONFIGURATION
+###############################################################################
+# Prevents resource exhaustion from high log volume or bad queries
+limits_config:
+  # reject_old_samples: Reject logs older than max_lookback
+  # true: Prevents ingesting very old logs (clock skew, replays)
+  reject_old_samples: true
+
+  # reject_old_samples_max_age: How old is "too old"
+  # 168h: 7 days (matches retention_period)
+  # Logs older than this are rejected
+  reject_old_samples_max_age: 168h
+
+  # ingestion_rate_mb: Max ingestion rate per tenant (MB/sec)
+  # 4: 4MB/sec = 240MB/min = 14GB/hour
+  # Adjust based on your log volume
+  # Higher values for busy systems
+  ingestion_rate_mb: 4
+
+  # ingestion_burst_size_mb: Burst allowance above rate limit
+  # 6: Can burst to 6MB for short periods
+  # Handles temporary spikes
+  ingestion_burst_size_mb: 6
+
+  # max_streams_per_user: Limit unique label combinations
+  # 10000: Prevents cardinality explosion
+  # CRITICAL: Too many streams = poor performance
+  # Each unique label combo = new stream
+  # If hit: Reduce labels or increase limit carefully
+  max_streams_per_user: 10000
+
+  # max_global_streams_per_user: Global limit across all ingesters
+  # 50000: For single-node, same as max_streams_per_user
+  max_global_streams_per_user: 50000
+
+  # max_query_length: Longest time range for queries
+  # 720h: 30 days (4x retention period)
+  # Prevents expensive queries spanning too much data
+  max_query_length: 720h
+
+  # max_query_lookback: How far back queries can look
+  # 0: No limit (use retention_period instead)
+  # Set to retention_period to prevent querying deleted data
+  max_query_lookback: 0
+
+  # max_entries_limit_per_query: Max log lines returned per query
+  # 5000: Prevents huge result sets
+  # Use filtering in LogQL to narrow results
+  max_entries_limit_per_query: 5000
+
+  # max_label_name_length: Max characters in label name
+  # 1024: Very generous, prevents abuse
+  max_label_name_length: 1024
+
+  # max_label_value_length: Max characters in label value
+  # 2048: Allows detailed label values
+  max_label_value_length: 2048
+
+  # max_label_names_per_series: Max labels per log stream
+  # 30: Generous limit, but enforce low cardinality
+  # More labels = more streams = worse performance
+  max_label_names_per_series: 30
+
+  # per_stream_rate_limit: Max ingestion rate per stream
+  # 3MB: Prevents single stream from consuming all resources
+  per_stream_rate_limit: 3MB
+
+  # per_stream_rate_limit_burst: Burst allowance per stream
+  # 15MB: Allows short bursts
+  per_stream_rate_limit_burst: 15MB
+
+  # cardinality_limit: Max new streams created per time period
+  # 100000: Prevents cardinality explosion attacks
+  cardinality_limit: 100000
+
+###############################################################################
+# CHUNK STORE CONFIGURATION
+###############################################################################
+# Controls how chunks are cached and accessed
+chunk_store_config:
+  # max_look_back_period: Limit how far back to query
+  # 0: Use retention_period instead
+  # Prevents queries for data that's been deleted
+  max_look_back_period: 0
+
+  # cache_lookups_older_than: Don't cache queries for old data
+  # 0: Cache all queries (for low-volume deployments)
+  # Set to 1h in high-volume to cache only recent queries
+  cache_lookups_older_than: 0
+
+###############################################################################
+# TABLE MANAGER CONFIGURATION
+###############################################################################
+# Manages index and chunk table lifecycle
+table_manager:
+  # retention_deletes_enabled: Enable retention deletion
+  # true: Automatically delete old data
+  # MUST match compactor.retention_enabled
+  retention_deletes_enabled: true
+
+  # retention_period: How long to keep logs
+  # 168h: 7 days retention
+  # Adjust based on:
+  #   - Disk space available
+  #   - Compliance requirements
+  #   - Query needs
+  # Common values: 168h (7d), 720h (30d), 2160h (90d)
+  retention_period: 168h
+
+###############################################################################
+# QUERY FRONTEND CONFIGURATION (Optional)
+###############################################################################
+# Caching and query splitting for better performance
+# Commented out for single-node simplicity
+# Uncomment for production deployments
+# query_range:
+#   # results_cache: Cache query results
+#   results_cache:
+#     cache:
+#       embedded_cache:
+#         enabled: true
+#         max_size_mb: 100
+#
+#   # cache_results: Enable result caching
+#   cache_results: true
+#
+#   # max_retries: Retry failed queries
+#   max_retries: 5
+#
+#   # split_queries_by_interval: Break large queries into smaller chunks
+#   split_queries_by_interval: 15m
+
+###############################################################################
+# RULER CONFIGURATION (Optional)
+###############################################################################
+# Alert rules for logs (similar to Prometheus alerts)
+# Commented out - typically use Prometheus for alerting
+# ruler:
+#   storage:
+#     type: local
+#     local:
+#       directory: /loki/rules
+#   rule_path: /loki/rules-temp
+#   alertmanager_url: http://alertmanager:9093
+#   ring:
+#     kvstore:
+#       store: inmemory
+#   enable_api: true
+
+###############################################################################
+# TROUBLESHOOTING & OPTIMIZATION
+###############################################################################
+#
+# COMMON ISSUES:
+#
+# 1. "too many outstanding requests"
+#    - Increase limits_config.max_streams_per_user
+#    - Reduce label cardinality (fewer unique label combinations)
+#
+# 2. "entry out of order"
+#    - Promtail sending logs out of timestamp order
+#    - Check Promtail configuration
+#    - Increase ingester.chunk_idle_period
+#
+# 3. "stream limit exceeded"
+#    - Too many unique label combinations
+#    - Review and reduce labels in Promtail
+#    - Increase limits_config.max_streams_per_user (temporary fix)
+#
+# 4. Slow queries
+#    - Add indexes on common label queries
+#    - Reduce query time range
+#    - Enable query frontend caching
+#    - Use more specific label matchers
+#
+# 5. High disk usage
+#    - Reduce retention_period
+#    - Compress logs better (check chunk_block_size)
+#    - Enable compaction (compactor.retention_enabled)
+#
+# PERFORMANCE TUNING:
+#
+# - Chunk size: Increase chunk_block_size for better compression
+#   - Tradeoff: More memory usage
+#   - Typical: 256KB (default) to 1MB
+#
+# - Retention: Balance disk space vs. query needs
+#   - Homelab: 7-14 days
+#   - Production: 30-90 days
+#   - Compliance: As required (years)
+#
+# - Label cardinality: Keep it LOW!
+#   - Good labels: job, instance, level, service (10-100 unique values)
+#   - Bad labels: user_id, request_id, trace_id (thousands of unique values)
+#   - Each unique label combo = new stream = index entry
+#
+# VALIDATION:
+#
+# Check configuration:
+#   docker-compose exec loki loki -verify-config -config.file=/etc/loki/loki-config.yml
+#
+# Check metrics:
+#   curl http://localhost:3100/metrics | grep loki_
+#
+# Check ready state:
+#   curl http://localhost:3100/ready
+#
+# Query logs (LogQL):
+#   {job="varlogs"} | json | level="error"
+#
+###############################################################################

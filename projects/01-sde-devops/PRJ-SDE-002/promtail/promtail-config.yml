@@ -1,0 +1,477 @@
+###############################################################################
+# Promtail Configuration
+# Log Collection and Shipping Agent for Loki
+###############################################################################
+#
+# Purpose: Collect logs from various sources and ship to Loki
+# Documentation: https://grafana.com/docs/loki/latest/clients/promtail/configuration/
+#
+# Key Concepts:
+#   - Scrape configs: Define what logs to collect
+#   - Pipeline stages: Transform logs before sending
+#   - Labels: Metadata for log organization (LOW CARDINALITY!)
+#   - Positions file: Tracks read progress (prevents duplicate logs)
+#
+# Sources Configured:
+#   - Docker container logs (JSON format)
+#   - System logs (/var/log/syslog, auth.log, etc.)
+#   - Journal logs (systemd)
+#
+###############################################################################
+
+###############################################################################
+# SERVER CONFIGURATION
+###############################################################################
+server:
+  # http_listen_port: Port for Promtail metrics endpoint
+  # Prometheus scrapes this for Promtail health metrics
+  http_listen_port: 9080
+
+  # grpc_listen_port: GRPC server port
+  # 0: Disabled (not needed for push-based Promtail)
+  grpc_listen_port: 0
+
+  # log_level: Promtail's own logging verbosity
+  # Options: debug, info, warn, error
+  log_level: info
+
+###############################################################################
+# POSITIONS CONFIGURATION
+###############################################################################
+# Tracks which logs have been read to prevent duplicates on restart
+positions:
+  # filename: File to store read positions
+  # Critical: This file must be writable and persistent
+  # Contains: File paths and byte offsets for each log file
+  # Format: YAML with timestamp and position for each file
+  filename: /tmp/positions.yaml
+
+  # sync_period: How often to update positions file
+  # 10s: Frequent updates minimize duplicate log risk on crash
+  # Tradeoff: More disk I/O vs. duplicate risk
+  sync_period: 10s
+
+###############################################################################
+# CLIENT CONFIGURATION
+###############################################################################
+# Defines where to send logs (Loki)
+clients:
+  - # url: Loki push API endpoint
+    # Format: http://loki-host:port/loki/api/v1/push
+    # Docker Compose: Use service name
+    url: http://loki:3100/loki/api/v1/push
+
+    # batchwait: Maximum time to wait before sending batch
+    # 1s: Send logs quickly for near-real-time searching
+    # Lower values: More real-time, more network overhead
+    # Higher values: Less overhead, more latency
+    batchwait: 1s
+
+    # batchsize: Maximum batch size in bytes before sending
+    # 1048576 bytes = 1MB
+    # Larger batches: Better compression, less overhead
+    # Smaller batches: Lower latency, more frequent sends
+    batchsize: 1048576
+
+    # timeout: HTTP timeout for sending to Loki
+    # 10s: Generous timeout for network latency
+    timeout: 10s
+
+    # backoff_config: Retry configuration for failed sends
+    backoff_config:
+      # min_period: Initial retry delay
+      min_period: 500ms
+
+      # max_period: Maximum retry delay (exponential backoff)
+      max_period: 5m
+
+      # max_retries: Max retry attempts before dropping logs
+      # 10: Generous retries to handle temporary Loki outages
+      # WARNING: Setting this too high can cause memory issues
+      max_retries: 10
+
+    # external_labels: Labels added to ALL logs from this Promtail
+    # Use for identifying log source in multi-site deployments
+    # KEEP LOW CARDINALITY: These labels apply to every log line
+    external_labels:
+      job: promtail
+      environment: homelab
+      host: ${HOSTNAME}
+
+###############################################################################
+# SCRAPE CONFIGURATIONS
+###############################################################################
+# Defines what logs to collect and how to process them
+scrape_configs:
+
+  ###########################################################################
+  # DOCKER CONTAINER LOGS
+  # Collect logs from all Docker containers on this host
+  ###########################################################################
+  - job_name: docker
+    # Docker service discovery
+    # Automatically discovers all containers on host
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        # refresh_interval: How often to check for new containers
+        # 5s: Quick discovery of new containers
+        refresh_interval: 5s
+
+        # filters: Only scrape specific containers (optional)
+        # Uncomment to filter by label:
+        # filters:
+        #   - name: label
+        #     values: ["logging=promtail"]
+
+    # relabel_configs: Transform discovered labels before applying
+    # Critical for low cardinality and useful labels
+    relabel_configs:
+      # Extract container name from __meta_docker_container_name
+      # Source: /container_name (Docker adds leading slash)
+      # Result: container label without slash
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'  # Remove leading slash
+        target_label: 'container'
+
+      # Add container image as label
+      # Useful for filtering logs by image
+      - source_labels: ['__meta_docker_container_image']
+        target_label: 'image'
+
+      # Add container ID (useful for correlation)
+      - source_labels: ['__meta_docker_container_id']
+        target_label: 'container_id'
+
+      # Add compose project name if available
+      # Useful for grouping containers from same stack
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'compose_project'
+
+      # Add compose service name
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'compose_service'
+
+      # Drop containers without logs (reduces noise)
+      # Uncomment to enable:
+      # - source_labels: ['__meta_docker_container_log_stream']
+      #   regex: ''
+      #   action: drop
+
+    # pipeline_stages: Process log contents before sending to Loki
+    # Parses Docker's JSON log format and extracts useful fields
+    pipeline_stages:
+      # Stage 1: Parse Docker JSON log format
+      # Docker logs are JSON with: log, stream, time
+      - json:
+          expressions:
+            # output: The actual log message
+            output: log
+            # stream: stdout or stderr
+            stream: stream
+            # timestamp: When log was written
+            timestamp: time
+
+      # Stage 2: Add stream (stdout/stderr) as label
+      # Allows filtering: {stream="stderr"}
+      - labels:
+          stream:
+
+      # Stage 3: Parse timestamp from Docker JSON
+      # Uses extracted timestamp for accurate log ordering
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+
+      # Stage 4: Set log content as output
+      # The 'output' field becomes the log line sent to Loki
+      - output:
+          source: output
+
+      # Stage 5 (Optional): Parse application logs as JSON
+      # If your application logs JSON, parse it here
+      # Uncomment and adjust for your log format:
+      # - json:
+      #     expressions:
+      #       level: level      # Extract log level
+      #       message: msg      # Extract message
+      #       caller: caller    # Extract caller
+      #
+      # - labels:
+      #     level:              # Make level a searchable label
+      #
+      # - output:
+      #     source: message     # Use message as log line
+
+      # Stage 6 (Optional): Drop debug logs to reduce volume
+      # Uncomment to drop logs matching regex:
+      # - match:
+      #     selector: '{level="debug"}'
+      #     action: drop
+
+      # Stage 7 (Optional): Multi-line log aggregation
+      # Combine stack traces, exception logs, etc.
+      # Example: Java stack traces
+      # - multiline:
+      #     firstline: '^\d{4}-\d{2}-\d{2}'  # Timestamp pattern
+      #     max_wait_time: 3s
+      #     max_lines: 100
+
+  ###########################################################################
+  # SYSTEM LOGS (/var/log)
+  # Collect various system log files
+  ###########################################################################
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/**/*.log
+
+    # pipeline_stages: Parse system logs
+    pipeline_stages:
+      # Stage 1: Parse syslog format (RFC3164/RFC5424)
+      # Extracts: timestamp, hostname, app, message
+      - regex:
+          expression: '^(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<hostname>\S+)\s+(?P<app>\S+)(\[(?P<pid>\d+)\])?:\s+(?P<message>.*)$'
+
+      # Stage 2: Add hostname and app as labels
+      - labels:
+          hostname:
+          app:
+
+      # Stage 3: Parse timestamp
+      # Syslog format: "Jan 23 12:34:56"
+      - timestamp:
+          source: timestamp
+          format: 'Jan _2 15:04:05'
+          # fallback_formats: Try these if first format fails
+          fallback_formats:
+            - '2006-01-02T15:04:05.999999Z07:00'  # RFC3339
+            - '2006-01-02 15:04:05'                # Common format
+
+      # Stage 4: Set message as output
+      - output:
+          source: message
+
+      # Stage 5 (Optional): Drop noisy logs
+      # Uncomment to filter out specific apps:
+      # - match:
+      #     selector: '{app="systemd"}'
+      #     stages:
+      #       - drop:
+      #           expression: '.*Starting Session.*'
+
+  ###########################################################################
+  # AUTH LOGS (Security-relevant logs)
+  # Separate job for authentication logs with higher priority
+  ###########################################################################
+  - job_name: auth
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: authlog
+          log_type: security
+          __path__: /var/log/auth.log
+
+    pipeline_stages:
+      # Parse auth log format (similar to syslog)
+      - regex:
+          expression: '^(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<hostname>\S+)\s+(?P<service>\S+)(\[(?P<pid>\d+)\])?:\s+(?P<message>.*)$'
+
+      - labels:
+          hostname:
+          service:
+
+      - timestamp:
+          source: timestamp
+          format: 'Jan _2 15:04:05'
+
+      # Extract additional fields from auth messages
+      - regex:
+          expression: '(?P<auth_result>Accepted|Failed|Invalid)'
+
+      - labels:
+          auth_result:
+
+      - output:
+          source: message
+
+  ###########################################################################
+  # JOURNAL LOGS (systemd)
+  # Collect logs from systemd journal
+  ###########################################################################
+  - job_name: journal
+    journal:
+      # json: Export journal logs as JSON
+      json: true
+
+      # max_age: How far back to read journal on startup
+      # 12h: Start from 12 hours ago
+      # Prevents reading entire journal history on first start
+      max_age: 12h
+
+      # path: Journal directory
+      # Default: /var/log/journal or /run/log/journal
+      path: /var/log/journal
+
+      # labels: Static labels for all journal logs
+      labels:
+        job: systemd-journal
+
+    # relabel_configs: Extract systemd-specific labels
+    relabel_configs:
+      # Extract systemd unit name
+      - source_labels: ['__journal__systemd_unit']
+        target_label: 'unit'
+
+      # Extract hostname
+      - source_labels: ['__journal__hostname']
+        target_label: 'hostname'
+
+      # Extract priority (log level)
+      - source_labels: ['__journal_priority']
+        target_label: 'priority'
+
+    pipeline_stages:
+      # Parse journal JSON
+      - json:
+          expressions:
+            message: MESSAGE
+            unit: _SYSTEMD_UNIT
+            priority: PRIORITY
+
+      # Add priority as label for filtering
+      # 0-7: emerg, alert, crit, err, warning, notice, info, debug
+      - labels:
+          priority:
+
+      # Map priority numbers to names for readability
+      - template:
+          source: priority_name
+          template: |
+            {{ if eq .priority "0" }}emerg
+            {{ else if eq .priority "1" }}alert
+            {{ else if eq .priority "2" }}crit
+            {{ else if eq .priority "3" }}err
+            {{ else if eq .priority "4" }}warning
+            {{ else if eq .priority "5" }}notice
+            {{ else if eq .priority "6" }}info
+            {{ else if eq .priority "7" }}debug
+            {{ else }}unknown{{ end }}
+
+      - labels:
+          priority_name:
+
+      - output:
+          source: message
+
+###############################################################################
+# EXAMPLE: CUSTOM APPLICATION LOGS
+###############################################################################
+# Template for adding custom application log sources
+# Uncomment and customize for your applications
+#
+# - job_name: myapp
+#   static_configs:
+#     - targets:
+#         - localhost
+#       labels:
+#         job: myapp
+#         env: production
+#         __path__: /var/log/myapp/*.log
+#
+#   pipeline_stages:
+#     # Parse JSON application logs
+#     - json:
+#         expressions:
+#           timestamp: ts
+#           level: level
+#           message: msg
+#           caller: caller
+#           trace_id: trace_id
+#
+#     # Add level and caller as labels
+#     - labels:
+#         level:
+#         caller:
+#
+#     # Parse timestamp
+#     - timestamp:
+#         source: timestamp
+#         format: RFC3339
+#
+#     # Use message as log line
+#     - output:
+#         source: message
+#
+#     # Drop trace_id label (too high cardinality)
+#     # Keep in log line for searching, not as label
+#     - labeldrop:
+#         - trace_id
+
+###############################################################################
+# TROUBLESHOOTING & OPTIMIZATION
+###############################################################################
+#
+# COMMON ISSUES:
+#
+# 1. Logs not appearing in Loki
+#    - Check Promtail logs: `docker logs monitoring-promtail`
+#    - Verify Loki is reachable: `curl http://loki:3100/ready`
+#    - Check positions file is being updated: `cat /tmp/positions.yaml`
+#    - Verify log files are readable by Promtail
+#
+# 2. "stream limit exceeded" in Loki
+#    - Too many unique label combinations
+#    - Review labels: Keep low cardinality
+#    - Remove high-cardinality labels (IDs, timestamps, etc.)
+#    - Use labeldrop to remove unnecessary labels
+#
+# 3. Out of order logs
+#    - Logs arriving with old timestamps
+#    - Check system clocks (NTP sync)
+#    - Increase Loki ingester.chunk_idle_period
+#    - Review timestamp parsing in pipeline stages
+#
+# 4. High memory usage
+#    - Too many log files being tailed
+#    - Large batch sizes
+#    - Reduce batchsize or increase batchwait
+#    - Filter out noisy logs with drop stages
+#
+# 5. Duplicate logs after restart
+#    - Positions file not persisted
+#    - Mount positions file to persistent volume
+#    - Check positions file permissions
+#
+# PERFORMANCE TUNING:
+#
+# - Batch size: Larger batches = better compression
+#   - Increase batchsize for high-volume logs
+#   - Decrease for low-latency requirements
+#
+# - Labels: CRITICAL for performance
+#   - Good: job, level, service, instance (10-100 values)
+#   - Bad: trace_id, user_id, request_id (1000s of values)
+#   - Rule: Label cardinality should be < 100 unique values
+#
+# - Pipeline stages: Order matters
+#   - Parse first, then extract labels
+#   - Drop unwanted logs early
+#   - Expensive operations (regex) last
+#
+# VALIDATION:
+#
+# Check configuration:
+#   promtail -config.file=promtail-config.yml -dry-run
+#
+# Check Promtail metrics:
+#   curl http://localhost:9080/metrics | grep promtail_
+#
+# Test pipeline:
+#   echo '{"log":"test message","stream":"stdout","time":"2024-01-01T00:00:00Z"}' | \
+#     promtail --stdin --config.file=promtail-config.yml --dry-run
+#
+###############################################################################
