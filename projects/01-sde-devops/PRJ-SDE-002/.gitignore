@@ -1,5 +1,7 @@
 # Environment files (contain secrets)
+# Allow .env.example (template) but not .env (actual secrets)
 .env
+!.env.example
 
 # Grafana data (generated at runtime)
 grafana/data/
