@@ -41,6 +41,26 @@ pytest
 aws lambda invoke --function-name ingest --payload file://events/sample.json out.json
 ```
 
+### Containerized infrastructure workflows
+
+Use the provided multi-stage image for SAM validation and packaging from consistent tooling:
+
+```bash
+docker build -f infrastructure/Dockerfile -t serverless-data-platform .
+
+# Validate the SAM template with your local AWS credentials mounted read-only
+docker run --rm \
+  -v "$(pwd)/infrastructure:/app/infrastructure" \
+  -v "$HOME/.aws:/root/.aws:ro" \
+  serverless-data-platform
+```
+
+Because the container entrypoint is `sam`, you can override the command for other workflows, for example to build or package artefacts:
+
+```bash
+docker run --rm -v "$(pwd):/app" serverless-data-platform build --use-container
+```
+
 ## Operations
 - Observability via structured JSON logs, X-Ray traces, and CloudWatch metrics.
 - Automatic retries and dead-letter queues for poison messages.

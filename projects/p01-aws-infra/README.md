@@ -52,6 +52,26 @@ make validate
 make deploy-dev
 ```
 
+### Containerized validation
+
+Build a reusable image that bundles the AWS CLI and cfn-lint for local validation or CI workflows:
+
+```bash
+docker build -f infra/Dockerfile -t aws-infra-tools .
+
+# Validate the CloudFormation templates (mount AWS credentials for live validation)
+docker run --rm \
+  -v "$(pwd)/infra:/app/infra" \
+  -v "$HOME/.aws:/root/.aws:ro" \
+  aws-infra-tools
+```
+
+The entrypoint runs `python -m src.validate_template`, which walks `/app/infra` and validates every `*.yaml`/`*.yml` template. Override the command to lint a specific template or drop into a shell for debugging:
+
+```bash
+docker run --rm -it aws-infra-tools bash
+```
+
 ## Configuration
 
 | Env Var | Purpose | Example | Required |
