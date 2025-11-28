@@ -1,0 +1,32 @@
+flowchart LR
+    subgraph Primary[Primary Region]
+        ALB[ALB + WAF]
+        Services[ECS/EKS Services]
+        PrimaryDB[Aurora Primary]
+        PrimaryS3[S3 Buckets]
+    end
+
+    subgraph Control[Control Plane]
+        DNS[Route53 Health Checks]
+        Orchestrator[SSM Automation / Failover Runbook]
+        Metrics[Telemetry & Chaos Tests]
+    end
+
+    subgraph Secondary[Secondary Region]
+        StandbyALB[Standby ALB]
+        StandbyServices[Standby Services]
+        ReplicaDB[Aurora Global/Replica]
+        ReplicaS3[S3 CRR Buckets]
+    end
+
+    DNS -->|Healthy| ALB
+    DNS -->|Failover| StandbyALB
+    ALB --> Services --> PrimaryDB
+    Services --> PrimaryS3
+    PrimaryDB -->|Global replication| ReplicaDB
+    PrimaryS3 -->|CRR| ReplicaS3
+    ReplicaS3 --> StandbyServices
+    StandbyALB --> StandbyServices --> ReplicaDB
+    Metrics --> Orchestrator --> DNS
+    Metrics --> PrimaryDB
+    Metrics --> ReplicaDB

@@ -1,0 +1,26 @@
+flowchart LR
+    subgraph Content[Source Content]
+        Markdown[Markdown / Docs]
+        Assets[Images / Diagrams]
+        Catalog[Project Metadata]
+    end
+
+    subgraph Build[Build Pipeline]
+        CI[CI Pipeline]
+        Lint[Lint & Link Check]
+        Vite[VitePress Build]
+        Search[Search Index]
+    end
+
+    subgraph Delivery[Delivery]
+        Storage[Static Hosting (S3/Blob)]
+        CDN[CDN / Edge Cache]
+        Users[Visitors]
+    end
+
+    Markdown --> CI
+    Assets --> CI
+    Catalog --> CI
+    CI --> Lint --> Vite --> Storage
+    Vite --> Search --> Storage
+    Storage --> CDN --> Users

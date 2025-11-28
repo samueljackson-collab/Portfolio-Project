@@ -1,0 +1,31 @@
+flowchart LR
+    subgraph Telemetry[Signals]
+        Logs[Logs / Traces]
+        Metrics[Metrics]
+        Incidents[Incident Tickets]
+    end
+
+    subgraph Brain[Automation Brain]
+        Detector[Anomaly Detection]
+        Policies[SLO / Policy Engine]
+        Planner[Action Planner]
+        Knowledge[Runbooks-as-Code]
+    end
+
+    subgraph Execution[Execution Layer]
+        Orchestrator[Workflow Orchestrator]
+        ChatOps[ChatOps Bot]
+        CMDB[CMDB / Approvals]
+        Remediation[Remediation Agents]
+    end
+
+    Logs --> Detector
+    Metrics --> Detector
+    Incidents --> Planner
+    Detector --> Policies --> Planner
+    Planner --> Knowledge
+    Planner --> Orchestrator
+    Orchestrator --> ChatOps
+    Orchestrator --> Remediation
+    Orchestrator --> CMDB
+    ChatOps --> CMDB

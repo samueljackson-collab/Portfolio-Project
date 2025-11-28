@@ -1,0 +1,21 @@
+flowchart LR
+    subgraph Data[Off-chain Data]
+        Feeds[Market / Portfolio Feeds]
+        Cache[Cached Snapshots]
+    end
+
+    subgraph Oracle[Oracle Node]
+        Adapter[External Adapter]
+        Signer[Response Signer]
+        Retry[Retry + SLA Monitor]
+    end
+
+    subgraph Chain[Blockchain]
+        Chainlink[Chainlink Node]
+        Contract[Consumer Smart Contract]
+    end
+
+    Feeds --> Adapter --> Signer --> Retry
+    Cache --> Adapter
+    Retry --> Chainlink --> Contract
+    Contract --> Chainlink --> Adapter

@@ -1,0 +1,32 @@
+flowchart LR
+    subgraph Client[Clients]
+        Mobile[Mobile / Web Apps]
+        Services[Internal Services]
+    end
+
+    subgraph Crypto[Hybrid Crypto Service]
+        Gateway[API Gateway]
+        PQ[Kyber KEM Service]
+        Classical[ECDH Service]
+        Combiner[Hybrid Key Combiner]
+        Session[Session Key Store]
+        Audit[Audit Log]
+    end
+
+    subgraph KMS[Key Management]
+        HSM[HSM / KMS Keys]
+        PKI[PKI / Certificates]
+    end
+
+    Mobile --> Gateway
+    Services --> Gateway
+    Gateway --> PQ
+    Gateway --> Classical
+    PQ --> Combiner
+    Classical --> Combiner
+    Combiner --> Session
+    Session --> Gateway
+    Gateway --> Audit
+    KMS --> PQ
+    KMS --> Classical
+    PKI --> Gateway

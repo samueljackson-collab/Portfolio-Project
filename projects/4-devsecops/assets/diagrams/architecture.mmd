@@ -1,0 +1,31 @@
+flowchart LR
+    subgraph Source[Developer & Repo]
+        Code[Code Repo\nApp + IaC]
+        Hooks[Pre-commit Hooks]
+    end
+
+    subgraph Security[Security Pipeline]
+        Trigger[CI Trigger\nPR Checks]
+        SAST[SAST\nSemgrep/Bandit]
+        SecretsScan[Secrets Scan\nGitleaks/TruffleHog]
+        SCA[SCA\nSnyk/Trivy]
+        DAST[DAST\nOWASP ZAP]
+        Reports[Security Reports\nSARIF]
+    end
+
+    subgraph Release[Release Gate]
+        Registry[Artifact Registry\nSBOM Stored]
+        Policy[OPA Policy Gate]
+        Deploy[Deploy Targets\nK8s/VMs]
+    end
+
+    Code -->|Push/PR| Trigger
+    Hooks -->|Local guardrails| Trigger
+    Trigger --> SAST --> SecretsScan --> SCA --> DAST
+    SCA -->|SBOM| Registry
+    DAST -->|Findings| Reports
+    SAST -->|Findings| Reports
+    SecretsScan -->|Alerts| Reports
+    Reports -->|Gate results| Policy
+    Registry -->|Signed artifacts| Policy
+    Policy -->|Allow release| Deploy

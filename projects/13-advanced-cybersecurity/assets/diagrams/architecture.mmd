@@ -1,0 +1,33 @@
+flowchart LR
+    subgraph Sources[Signal Sources]
+        SIEM[SIEM Alerts]
+        EDR[EDR Telemetry]
+        TI[Threat Intel Feeds]
+    end
+
+    subgraph SOAR[SOAR & Analytics]
+        Ingest[Alert Normalizer]
+        Enrich[Enrichment Adapters]
+        Score[Risk Scoring]
+        Playbooks[Playbook Orchestrator]
+        Cases[Ticketing / Case Mgmt]
+        Observability[Metrics & Auditing]
+    end
+
+    subgraph Response[Response Targets]
+        Network[Network Isolation]
+        Identity[Credential Rotation]
+        CMDB[Asset CMDB]
+    end
+
+    SIEM --> Ingest
+    EDR --> Ingest
+    TI --> Enrich
+    Ingest --> Enrich --> Score --> Playbooks
+    Score --> Cases
+    Playbooks --> Network
+    Playbooks --> Identity
+    Playbooks --> CMDB
+    Playbooks --> Cases
+    Playbooks --> Observability
+    Observability --> Cases

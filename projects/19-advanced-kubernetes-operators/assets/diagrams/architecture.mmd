@@ -1,0 +1,28 @@
+flowchart LR
+    subgraph Dev[Developer Workflow]
+        Repo[CRDs + Code]
+        Webhook[Admission Webhook Tests]
+    end
+
+    subgraph Control[Operator Runtime]
+        Manager[Operator Manager]
+        Reconciler[Reconciler Loop]
+        Queue[Work Queue]
+        Metrics[Metrics / Health]
+    end
+
+    subgraph Cluster[Target Cluster]
+        CRD[Custom Resources]
+        App[App Deployments]
+        Migrations[DB Migration Jobs]
+        Secrets[Secrets & Config]
+    end
+
+    Repo --> Webhook --> Manager
+    Manager --> CRD
+    CRD --> Queue --> Reconciler
+    Reconciler --> App
+    Reconciler --> Migrations
+    Reconciler --> Secrets
+    Reconciler --> Metrics
+    Metrics --> Manager

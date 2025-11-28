@@ -1,0 +1,32 @@
+flowchart LR
+  subgraph Client["Clients & Off-chain Services"]
+    ui[Web dApp / Wallet]
+    api["Backend API (Node/Express)"]
+    ci["Hardhat CI/CD + Audits"]
+  end
+
+  subgraph Oracle["Oracles & Indexers"]
+    chainlink[("Chainlink Price Feeds")]
+    indexer[("The Graph Indexer / Subgraph")]
+  end
+
+  subgraph Onchain["On-chain Smart Contracts"]
+    proxy[Upgradeable Proxy]
+    staking[Staking Vault]
+    governance["Governance + Timelock"]
+    treasury[Treasury Controller]
+  end
+
+  ui --> api --> proxy
+  ci --> proxy
+  proxy --> staking
+  proxy --> governance
+  proxy --> treasury
+  staking --> governance
+  governance --> proxy
+  governance --> treasury
+  chainlink --> staking
+  chainlink --> treasury
+  indexer --> api
+  treasury --> ui
+  staking --> ui

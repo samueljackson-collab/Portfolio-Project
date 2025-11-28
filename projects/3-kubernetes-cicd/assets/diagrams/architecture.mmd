@@ -1,0 +1,29 @@
+flowchart LR
+    subgraph Dev[Developer Workspace]
+        Repo[Source Repo\nApp + Manifests]
+        LocalTests[Local Tests]
+    end
+
+    subgraph Pipeline[CI/CD Pipeline]
+        CI[CI Build & Test]
+        Scan[Image Scan\nTrivy]
+        Registry[Artifact Registry\nGHCR/ECR]
+        Argo[ArgoCD Sync]
+    end
+
+    subgraph Clusters[Kubernetes Environments]
+        DevCluster[Dev Cluster\nSmoke Tests]
+        StageCluster[Staging Cluster\nBlue/Green]
+        ProdCluster[Prod Cluster\nProgressive Rollout]
+    end
+
+    Repo -->|Push/PR| CI
+    LocalTests -->|Feedback| CI
+    CI -->|Build image| Scan
+    Scan -->|Publish| Registry
+    Registry -->|Promote tags| Argo
+    Argo -->|Sync| DevCluster
+    DevCluster -->|Health| Argo
+    Argo -->|Promote| StageCluster
+    StageCluster -->|Canary feedback| Argo
+    Argo -->|Rollout| ProdCluster

@@ -3,6 +3,13 @@
 ## Overview
 Implements a medallion architecture on Databricks with Delta Lake, structured streaming, and dbt transformations.
 
+## Architecture
+- **Context:** Streaming and batch feeds must land in a medallion-style Delta Lake that enforces quality checks and produces curated gold datasets for BI and ML consumers.
+- **Decision:** Combine Kafka + Auto Loader ingestion with structured streaming into bronze, enforce expectations in silver, and publish gold/star schemas via Delta Live Tables and dbt, backed by a feature store.
+- **Consequences:** Provides governed, incremental data products and reusable features, but depends on consistent contract testing across layers to prevent schema drift.
+
+[Mermaid source](assets/diagrams/architecture.mmd) · Diagram: render locally from [Mermaid source](assets/diagrams/architecture.mmd) using `python tools/generate_phase1_diagrams.py` (PNG output is .gitignored).
+
 ## Workflow
 1. Bronze layer ingests raw JSON from Kafka topics.
 2. Silver layer applies cleansing and joins with dimension tables.

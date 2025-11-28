@@ -4,25 +4,11 @@
 A Retrieval-Augmented Generation (RAG) chatbot that indexes portfolio assets, executes tool-augmented workflows, and serves responses through a FastAPI service with WebSocket streaming.
 
 ## Architecture
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant FE as Web App
-  participant API as FastAPI Gateway
-  participant VS as Vector Store
-  participant LLM as Large Language Model
-  participant TOOL as Toolchain
+- **Context:** Chat and workflow users need low-latency answers grounded in portfolio knowledge with safe tool execution and observability.
+- **Decision:** Front a FastAPI gateway with rate limiting and session persistence, enrich prompts with a managed vector store, and orchestrate LLM + toolchain calls while emitting telemetry to an observability plane.
+- **Consequences:** Enables grounded, traceable responses and safe automation, but requires careful prompt/tool governance and robust vector index refresh automation.
 
-  U->>FE: Question
-  FE->>API: POST /chat
-  API->>VS: Semantic search (top-k)
-  VS-->>API: Relevant context chunks
-  API->>LLM: Prompt + context + conversation history
-  LLM->>TOOL: Structured tool calls (optional)
-  TOOL-->>LLM: Tool execution results
-  LLM-->>API: Streaming answer tokens
-  API-->>FE: Streamed response
-```
+[Mermaid source](assets/diagrams/architecture.mmd) · Diagram: render locally from [Mermaid source](assets/diagrams/architecture.mmd) using `python tools/generate_phase1_diagrams.py` (PNG output is .gitignored).
 
 ## Key Features
 - Hybrid search using dense embeddings and metadata filters

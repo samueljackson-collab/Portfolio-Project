@@ -1,0 +1,31 @@
+flowchart LR
+    subgraph Source[Source Environment]
+        SourceDB[Source DB\n(Postgres/MySQL)]
+        CDC[Debezium Connector\nChange Data Capture]
+    end
+
+    subgraph Control[Migration Control Plane]
+        Orchestrator[Migration Orchestrator\nPython]
+        DMS[AWS DMS Tasks]
+        Validation[Validation & Rollback]
+        Metrics[Metrics & Alerts\nCloudWatch]
+    end
+
+    subgraph Target[AWS Target Account]
+        TargetDB[Target DB\nAurora/RDS]
+        Cache[Cache/Search\nRedis/ES]
+        Consumers[Downstream Apps]
+    end
+
+    SourceDB -->|CDC events| CDC
+    CDC -->|Event stream| Orchestrator
+    Orchestrator -->|Launch tasks| DMS
+    DMS -->|Bulk + CDC apply| TargetDB
+    Orchestrator -->|Refresh| Cache
+    Orchestrator -->|Cutover signal| Consumers
+    TargetDB -->|Serve data| Consumers
+    Orchestrator -->|Row counts| Validation
+    Validation -->|Integrity checks| TargetDB
+    Validation -->|Rollback decision| Orchestrator
+    Orchestrator -->|Metrics| Metrics
+    DMS -->|Lag & status| Metrics

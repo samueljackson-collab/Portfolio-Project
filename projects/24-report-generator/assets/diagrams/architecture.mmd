@@ -1,0 +1,27 @@
+flowchart LR
+    subgraph Inputs[Inputs]
+        Metrics[Portfolio Metrics]
+        Sources[Project Status Data]
+        Templates[Jinja2 Templates]
+    end
+
+    subgraph Generator[Report Generator]
+        CLI[CLI / Scheduler]
+        Renderer[HTML/PDF Renderer]
+        Assets[Branding Assets]
+        Validation[Content Validation]
+    end
+
+    subgraph Delivery[Delivery]
+        Storage[Object Storage]
+        Email[Email / Chat Delivery]
+        Archive[Versioned Archive]
+    end
+
+    Metrics --> CLI
+    Sources --> CLI
+    Templates --> Renderer
+    CLI --> Renderer
+    Renderer --> Validation --> Storage
+    Storage --> Email
+    Storage --> Archive

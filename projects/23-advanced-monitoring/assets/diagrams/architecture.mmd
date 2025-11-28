@@ -1,0 +1,30 @@
+flowchart LR
+    subgraph Sources[Telemetry Sources]
+        Apps[App Services\nAKS/EKS]
+        Infra[Infrastructure\nNodes/VMs]
+        Logs[Log Streams\nApp & System]
+    end
+
+    subgraph Stack[Observability Stack]
+        Prom[Prometheus\n+ Alert Rules]
+        Loki[Loki + Promtail]
+        OTEL[OpenTelemetry Collector]
+        Grafana[Grafana Dashboards]
+    end
+
+    subgraph Notify[Notification & Escalation]
+        Alertmanager[Alertmanager Routing]
+        ChatOps[ChatOps / On-call\nSlack/PagerDuty]
+        ServiceNow[ServiceNow Tickets]
+    end
+
+    Apps -->|Metrics| Prom
+    Infra -->|Node Exporters| Prom
+    Logs -->|Log Streams| Loki
+    OTEL -->|Traces + Metrics| Prom
+    OTEL -->|Span/Log export| Loki
+    Prom -->|Alerts| Alertmanager
+    Prom -->|Dashboards| Grafana
+    Loki -->|Logs for panels| Grafana
+    Alertmanager -->|Routes| ChatOps
+    ChatOps -->|Escalate| ServiceNow
