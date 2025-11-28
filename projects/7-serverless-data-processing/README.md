@@ -35,7 +35,7 @@ digraph G {
 pip install -r requirements.txt
 
 # Run validation and transformation unit tests
-pytest
+python -m pytest projects/7-serverless-data-processing/tests
 
 # Invoke the ingestion handler with sample payload
 aws lambda invoke --function-name ingest --payload file://events/sample.json out.json

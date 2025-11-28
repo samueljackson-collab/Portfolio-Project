@@ -36,6 +36,12 @@ pip install -r requirements.txt
 uvicorn src.chatbot_service:app --reload
 ```
 
+## Testing
+```bash
+# From repository root
+python -m pytest projects/8-advanced-ai-chatbot/tests
+```
+
 ## Deployment Options
 - **Primary:** FastAPI container deployed on AWS ECS/Fargate with managed vector database (OpenSearch, Pinecone).
 - **Alternative:** Azure OpenAI integration with Cosmos DB + Functions for event-driven actions.

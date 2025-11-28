@@ -9,6 +9,24 @@ variable "aws_region" {
   }
 }
 
+variable "tfstate_bucket" {
+  description = "S3 bucket name for Terraform remote state"
+  type        = string
+  default     = "REPLACE_TFSTATE_BUCKET"
+}
+
+variable "tfstate_key" {
+  description = "S3 object key for Terraform state file"
+  type        = string
+  default     = "twisted-monk/terraform.tfstate"
+}
+
+variable "tfstate_lock_table" {
+  description = "DynamoDB table name for Terraform state locking"
+  type        = string
+  default     = "REPLACE_TFSTATE_LOCK_TABLE"
+}
+
 variable "project_tag" {
   description = "Project name tag applied to all resources"
   type        = string
