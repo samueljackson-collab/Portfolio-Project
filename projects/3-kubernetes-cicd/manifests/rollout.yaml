@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: webapp
+  namespace: apps
+spec:
+  replicas: 3
+  strategy:
+    canary:
+      steps:
+        - setWeight: 25
+        - pause: {duration: 2m}
+        - setWeight: 50
+        - pause: {duration: 5m}
+        - setWeight: 100
+      trafficRouting:
+        nginx:
+          stableService: webapp-stable
+          canaryService: webapp-canary
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/example/webapp:latest
+          ports:
+            - containerPort: 8080

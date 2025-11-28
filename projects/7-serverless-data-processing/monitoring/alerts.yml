@@ -1,0 +1,19 @@
+groups:
+  - name: serverless-pipeline
+    rules:
+      - alert: StepFunctionFailures
+        expr: increase(aws_stepfunctions_failed_total[10m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Step Functions workflow failures detected"
+          description: "Investigate recent executions and DLQ for context."
+      - alert: LambdaThrottles
+        expr: increase(aws_lambda_throttles_sum[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Lambda throttling detected"
+          description: "Scale concurrency or optimize upstream burstiness."

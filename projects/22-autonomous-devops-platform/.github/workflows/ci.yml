@@ -1,20 +1,18 @@
-name: database-migration-ci
+name: autonomous-devops-ci
 
 on:
   push:
     paths:
       - 'src/**'
       - 'tests/**'
-      - 'config/**'
       - '.github/workflows/ci.yml'
   pull_request:
 
 jobs:
-  build-test:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -22,11 +20,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r projects/2-database-migration/requirements.txt
+          pip install -r projects/22-autonomous-devops-platform/requirements.txt
           pip install pytest
       - name: Run unit tests
-        working-directory: projects/2-database-migration
+        working-directory: projects/22-autonomous-devops-platform
         run: pytest -q
-      - name: Build container image
-        working-directory: projects/2-database-migration
-        run: docker build -t database-migration:ci .

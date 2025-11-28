@@ -1,0 +1,19 @@
+groups:
+  - name: autonomous-devops
+    rules:
+      - alert: AutomationFailureSpike
+        expr: increase(automation_jobs_failed_total[5m]) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Automation jobs are failing"
+          description: "Check autonomous engine logs and disable faulty runbooks."
+      - alert: IncidentBacklogGrowing
+        expr: increase(incident_backlog_size[15m]) > 10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Incident backlog growing"
+          description: "Auto-remediation may be lagging; scale worker pools."

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debezium-connector
+  namespace: data-migrations
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debezium-connector
+  template:
+    metadata:
+      labels:
+        app: debezium-connector
+    spec:
+      containers:
+        - name: connector
+          image: quay.io/debezium/connect:2.7
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: CONFIG_STORAGE_TOPIC
+              value: connect-configs
+            - name: OFFSET_STORAGE_TOPIC
+              value: connect-offsets
+          volumeMounts:
+            - name: connector-config
+              mountPath: /kafka/configs
+      volumes:
+        - name: connector-config
+          configMap:
+            name: postgres-connector-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-connector-config
+  namespace: data-migrations
+data:
+  debezium-postgres-connector.json: |
+$(sed 's/^/    /' projects/2-database-migration/config/debezium-postgres-connector.json)

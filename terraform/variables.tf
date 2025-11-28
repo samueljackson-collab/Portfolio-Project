@@ -9,6 +9,30 @@ variable "aws_region" {
   }
 }
 
+variable "backend_bucket" {
+  description = "S3 bucket name for Terraform state"
+  type        = string
+  default     = "REPLACE_BACKEND_BUCKET"
+}
+
+variable "backend_region" {
+  description = "Region where the Terraform state bucket and lock table live"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "backend_dynamodb_table" {
+  description = "DynamoDB table used for state locking"
+  type        = string
+  default     = "REPLACE_TFSTATE_LOCK_TABLE"
+}
+
+variable "backend_prefix" {
+  description = "Prefix/key path for Terraform state object"
+  type        = string
+  default     = "twisted-monk"
+}
+
 variable "project_tag" {
   description = "Project name tag applied to all resources"
   type        = string

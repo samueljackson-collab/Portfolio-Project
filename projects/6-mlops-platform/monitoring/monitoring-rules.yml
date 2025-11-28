@@ -1,0 +1,19 @@
+groups:
+  - name: mlops-platform
+    rules:
+      - alert: ModelServingLatencyHigh
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service="mlflow-model-serving"}[5m])) > 0.75
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 latency for model serving exceeded 750ms"
+          description: "Check recent deployments or autoscale the service."
+      - alert: DriftDetectorFailures
+        expr: increase(mlops_drift_checks_failed_total[10m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Drift detection jobs are failing"
+          description: "Inspect data pipeline and retraining schedule."

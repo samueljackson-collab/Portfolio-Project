@@ -1,0 +1,5 @@
+bases:
+  - ../../base
+nameSuffix: -prod
+patchesStrategicMerge:
+  - replicas.yaml

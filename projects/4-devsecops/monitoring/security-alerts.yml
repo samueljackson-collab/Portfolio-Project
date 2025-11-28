@@ -1,0 +1,11 @@
+groups:
+  - name: devsecops-pipeline
+    rules:
+      - alert: CriticalVulnerabilityDetected
+        expr: sum(container_vulnerability_severity{severity="Critical"}) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical CVE found in latest build"
+          description: "Block promotion until vulnerabilities are resolved."
