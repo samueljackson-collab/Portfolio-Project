@@ -1,0 +1,50 @@
+service: prj-cloud-001-serverless-data-api
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    TABLE_NAME: ${self:service}-${self:provider.stage}-items
+    LOG_LEVEL: INFO
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_NAME}
+
+functions:
+  create:
+    handler: src/handlers/create.handler
+    description: Create an item in DynamoDB via API Gateway
+    events:
+      - httpApi:
+          path: /items
+          method: post
+          authorizer: none
+  read:
+    handler: src/handlers/read.handler
+    description: Read an item from DynamoDB via API Gateway
+    events:
+      - httpApi:
+          path: /items/{id}
+          method: get
+          authorizer: none
+
+resources:
+  Resources:
+    ItemsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TABLE_NAME}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
