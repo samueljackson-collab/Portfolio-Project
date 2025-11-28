@@ -2,6 +2,11 @@
 
 **Status:** 🟢 Done
 
+## Diagrams
+
+- [Observability architecture (Mermaid)](assets/diagrams/observability-architecture.mermaid)
+- [Observability architecture (PNG/Markdown export)](assets/diagrams/observability-architecture.md)
+
 ## Description
 
 Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.

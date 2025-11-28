@@ -2,6 +2,23 @@
 
 **Status:** 🟢 Done
 
+## Diagrams
+
+- [Network topology (Mermaid)](assets/diagrams/network-topology.mmd)
+- [Network topology (PNG/Markdown export)](assets/diagrams/network-topology.md)
+- [Service architecture (Mermaid)](assets/diagrams/service-architecture.mmd)
+- [Service architecture (PNG/Markdown export)](assets/diagrams/service-architecture.md)
+- [Virtualization architecture (Mermaid)](assets/diagrams/virtualization-architecture.mermaid)
+- [Virtualization architecture (PNG/Markdown export)](assets/diagrams/virtualization-architecture.md)
+- [Monitoring architecture (Mermaid)](assets/diagrams/monitoring-architecture.mmd)
+- [Monitoring architecture (PNG/Markdown export)](assets/diagrams/monitoring-architecture.md)
+- [Disaster recovery flow (Mermaid)](assets/diagrams/disaster-recovery-flow.mmd)
+- [Disaster recovery flow (PNG/Markdown export)](assets/diagrams/disaster-recovery-flow.md)
+- [Backup & recovery plan (Mermaid)](assets/diagrams/backup-recovery.mmd)
+- [Backup & recovery plan (PNG/Markdown export)](assets/diagrams/backup-recovery.md)
+- [Data flow (Mermaid)](assets/diagrams/data-flow.mmd)
+- [Data flow (PNG/Markdown export)](assets/diagrams/data-flow.md)
+
 ## Description
 
 Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
