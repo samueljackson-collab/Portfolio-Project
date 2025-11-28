@@ -59,7 +59,10 @@ Build a reusable image that bundles the AWS CLI and cfn-lint for local validatio
 ```bash
 docker build -f infra/Dockerfile -t aws-infra-tools .
 
-# Validate the CloudFormation templates (mount AWS credentials for live validation)
+# Validate the CloudFormation templates with live validation.
+# Live validation uses the AWS CloudFormation ValidateTemplate API to perform
+# server-side template checks, which requires valid AWS credentials. The
+# credentials are mounted read-only to prevent accidental modifications.
 docker run --rm \
   -v "$(pwd)/infra:/app/infra" \
   -v "$HOME/.aws:/root/.aws:ro" \
