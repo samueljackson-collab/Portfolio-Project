@@ -204,3 +204,49 @@ export const albumService = {
     return response.data
   },
 }
+
+/**
+ * Orchestration Services
+ */
+export const orchestrationService = {
+  /**
+   * List available deployment plans
+   */
+  async listPlans() {
+    const response = await apiClient.get<import('./types').OrchestrationPlan[]>(
+      '/orchestration/plans'
+    )
+    return response.data
+  },
+
+  /**
+   * Trigger a new orchestration run
+   */
+  async startRun(payload: import('./types').OrchestrationRunRequest) {
+    const response = await apiClient.post<import('./types').OrchestrationRun>(
+      '/orchestration/runs',
+      payload
+    )
+    return response.data
+  },
+
+  /**
+   * Get historical orchestration runs
+   */
+  async listRuns() {
+    const response = await apiClient.get<import('./types').OrchestrationRun[]>(
+      '/orchestration/runs'
+    )
+    return response.data
+  },
+
+  /**
+   * Get details for a specific run
+   */
+  async getRun(runId: string) {
+    const response = await apiClient.get<import('./types').OrchestrationRun>(
+      `/orchestration/runs/${runId}`
+    )
+    return response.data
+  }
+}

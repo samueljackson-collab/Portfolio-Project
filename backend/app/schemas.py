@@ -9,7 +9,7 @@ Schemas define the structure of data exchanged via API:
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, List, Literal
 from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
@@ -401,3 +401,39 @@ class CalendarMonthResponse(BaseModel):
     month: int = Field(..., description="Month (1-12)")
     dates: list[CalendarDateResponse] = Field(..., description="Dates with photos")
     total_photos: int = Field(..., description="Total photos in month")
+
+
+# ============================================================================
+# Orchestration Schemas
+# ============================================================================
+
+class OrchestrationPlan(BaseModel):
+    """Immutable description of how we deploy an environment."""
+    id: str = Field(..., description="Unique identifier for the plan")
+    name: str = Field(..., description="Human readable plan name")
+    environment: str = Field(..., description="Target environment (dev/staging/prod)")
+    description: str = Field(..., description="Purpose of the plan")
+    playbook_path: str = Field(..., description="Ansible playbook used for rollout")
+    tfvars_file: str = Field(..., description="Terraform variables file driving the plan")
+    runbook: str = Field(..., description="Runbook documenting the procedure")
+
+
+class OrchestrationRunRequest(BaseModel):
+    """Request payload for starting a deployment run."""
+    plan_id: str = Field(..., description="Plan identifier to execute")
+    parameters: Dict[str, str] = Field(default_factory=dict, description="Override variables")
+
+
+class OrchestrationRun(BaseModel):
+    """Recorded orchestration execution."""
+    id: str = Field(..., description="Run identifier")
+    plan_id: str = Field(..., description="Plan executed")
+    environment: str = Field(..., description="Environment targeted by the run")
+    status: Literal["running", "succeeded", "failed"] = Field(..., description="Run outcome")
+    requested_by: str = Field(..., description="User who requested the run")
+    parameters: Dict[str, str] = Field(default_factory=dict, description="Parameters used")
+    started_at: datetime = Field(..., description="Start timestamp")
+    finished_at: Optional[datetime] = Field(None, description="Completion timestamp")
+    logs: List[str] = Field(default_factory=list, description="Progress log entries")
+    artifacts: Dict[str, str] = Field(default_factory=dict, description="Artifact references")
+    summary: Optional[str] = Field(None, description="Short description of the changes")
