@@ -1,0 +1,11 @@
+groups:
+  - name: progressive-delivery
+    rules:
+      - alert: ArgoRolloutStuck
+        expr: argo_rollout_status_phase{phase="Degraded"} == 1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Argo Rollout degraded for more than 10 minutes"
+          description: "Check canary analysis and abort if metrics are failing."

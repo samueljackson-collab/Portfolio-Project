@@ -325,7 +325,10 @@
         "ecr:DeleteRepository",
         "ecr:DescribeRepositories"
       ],
-      "Resource": "*"
+      "Resource": [
+        "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/REPLACE_APP_REPOSITORY",
+        "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/REPLACE_INFRA_REPOSITORY"
+      ]
     }
   ]
 }

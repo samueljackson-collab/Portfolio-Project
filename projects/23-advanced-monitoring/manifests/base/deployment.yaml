@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: observability-stack
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: observability-stack
+  template:
+    metadata:
+      labels:
+        app: observability-stack
+    spec:
+      containers:
+        - name: grafana-agent
+          image: grafana/agent:v0.37.3
+          args:
+            - "--config.file=/etc/agent/agent.yaml"
+          volumeMounts:
+            - name: agent-config
+              mountPath: /etc/agent
+      volumes:
+        - name: agent-config
+          configMap:
+            name: grafana-agent-config

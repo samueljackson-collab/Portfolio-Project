@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: runbook-operator
+  namespace: automation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: runbook-operator
+  template:
+    metadata:
+      labels:
+        app: runbook-operator
+    spec:
+      serviceAccountName: runbook-operator
+      containers:
+        - name: operator
+          image: ghcr.io/example/runbook-operator:latest
+          env:
+            - name: ENGINE_ENDPOINT
+              value: http://autonomous-engine:8080/events
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: runbook-operator
+  namespace: automation

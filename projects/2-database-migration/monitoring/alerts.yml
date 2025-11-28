@@ -1,0 +1,19 @@
+groups:
+  - name: migration-platform
+    rules:
+      - alert: DebeziumHighErrorRate
+        expr: rate(debezium_connector_task_errors_total[5m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Debezium connector task errors detected"
+          description: "Investigate failing connectors before replication lag increases."
+      - alert: ReplicationLagGrowing
+        expr: increase(debezium_change_event_count[10m]) == 0
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No change events processed in 15m"
+          description: "Replication may be stalled; check source connectivity and offsets."

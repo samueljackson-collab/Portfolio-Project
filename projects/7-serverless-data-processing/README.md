@@ -25,7 +25,7 @@ digraph G {
 ```
 
 ## Deployment Variants
-- **Primary:** AWS SAM template (`infrastructure/template.yaml`) that provisions APIs, Lambdas, Step Functions, DynamoDB, and CloudWatch resources.
+- **Primary:** AWS SAM template [`infrastructure/template.yaml`](infrastructure/template.yaml) that provisions APIs, Lambdas, Step Functions, DynamoDB, and CloudWatch resources.
 - **Alternative 1:** Terraform stack with modules for cross-account deployment (see `infrastructure/terraform/`).
 - **Alternative 2:** Azure Functions + Event Hub implementation blueprint located in `docs/azure/`.
 
@@ -41,7 +41,8 @@ pytest
 aws lambda invoke --function-name ingest --payload file://events/sample.json out.json
 ```
 
-## Operations
-- Observability via structured JSON logs, X-Ray traces, and CloudWatch metrics.
-- Automatic retries and dead-letter queues for poison messages.
-- Step Functions execution map for auditing and replay.
+## Operations & Tooling
+- Application logic in [`src/lambda_pipeline.py`](src/lambda_pipeline.py) with tests in [`tests/test_lambda_pipeline.py`](tests/test_lambda_pipeline.py).
+- CI pipeline [`./.github/workflows/ci.yml`](.github/workflows/ci.yml) running pytest and linting hooks.
+- Monitoring alerts for serverless primitives in [`monitoring/alerts.yml`](monitoring/alerts.yml).
+- Deployment scripts in [`scripts/deploy_sam.sh`](scripts/deploy_sam.sh) and operational playbook in [`RUNBOOK.md`](RUNBOOK.md).

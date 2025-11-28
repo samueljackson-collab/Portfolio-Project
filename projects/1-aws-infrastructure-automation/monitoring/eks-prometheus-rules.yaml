@@ -1,0 +1,19 @@
+groups:
+  - name: eks-cluster-health
+    rules:
+      - alert: APIServerHighErrorRate
+        expr: rate(apiserver_request_total{code=~"5.."}[5m]) > 5
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "EKS API server is returning errors"
+          description: "High 5xx rate detected on EKS API server endpoints."
+      - alert: NodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="false"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node has been NotReady for more than 5 minutes"
+          description: "Investigate node readiness and drain if necessary."
