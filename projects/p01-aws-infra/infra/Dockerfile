@@ -21,5 +21,8 @@ ENV PATH="/opt/venv/bin:${PATH}"
 COPY infra infra
 COPY src src
 
+RUN useradd -m -u 1000 --system appuser
+USER appuser
+
 ENTRYPOINT ["python", "-m", "src.validate_template"]
 CMD ["infra/vpc-rds.yaml"]

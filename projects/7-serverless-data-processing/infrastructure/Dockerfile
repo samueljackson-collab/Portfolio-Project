@@ -29,5 +29,8 @@ COPY infrastructure infrastructure
 COPY src src
 COPY requirements.txt requirements.txt
 
+RUN useradd -m -u 1000 --system appuser
+USER appuser
+
 ENTRYPOINT ["sam"]
 CMD ["validate", "-t", "infrastructure/template.yaml"]
