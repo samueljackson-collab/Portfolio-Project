@@ -29,7 +29,8 @@ COPY infrastructure infrastructure
 COPY src src
 COPY requirements.txt requirements.txt
 
-RUN useradd -m -u 1000 appuser
+RUN useradd -m -u 1000 --no-log-init --shell /bin/false --system appuser \
+    && chown -R appuser:appuser /app
 USER appuser
 
 ENTRYPOINT ["sam"]
