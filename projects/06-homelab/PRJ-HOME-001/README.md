@@ -2,6 +2,13 @@
 
 **Status:** 🟢 Done
 
+## Diagrams
+
+- [Logical VLAN map (Mermaid)](assets/diagrams/logical-vlan-map.mermaid)
+- [Logical VLAN map (PNG/Markdown export)](assets/diagrams/logical-vlan-map.md)
+- [Physical topology (Mermaid)](assets/diagrams/physical-topology.mermaid)
+- [Physical topology (PNG/Markdown export)](assets/diagrams/physical-topology.md)
+
 ## Description
 
 Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
