@@ -1,0 +1,448 @@
+# Alertmanager Configuration
+# ===========================
+# Manages alert routing, grouping, deduplication, and notification delivery.
+#
+# Key Concepts:
+#   - Route: Defines how alerts are grouped and which receiver handles them
+#   - Receiver: Notification destination (email, Slack, PagerDuty, etc.)
+#   - Inhibition: Suppress certain alerts when others are firing
+#   - Silence: Temporarily mute alerts (manual or via API)
+#
+# Documentation: https://prometheus.io/docs/alerting/latest/configuration/
+# Author: Portfolio Project
+# Last Updated: 2024-11-24
+
+# Global Configuration
+# ====================
+# Default settings for all notification integrations.
+global:
+  # resolve_timeout: Time after which alert auto-resolves if not updated
+  # Default: 5m
+  # If Prometheus doesn't send update for this duration, alert marked resolved
+  # Useful for: Detecting when Prometheus crashes (alerts stop updating)
+  resolve_timeout: 5m
+
+  # SMTP configuration for email notifications
+  # Used by all email receivers unless overridden
+  smtp_from: '${ALERTMANAGER_SMTP_FROM}'
+  smtp_smarthost: '${ALERTMANAGER_SMTP_HOST}'
+  smtp_auth_username: '${ALERTMANAGER_SMTP_USERNAME}'
+  smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+  # Slack API URL (if using Slack notifications)
+  # slack_api_url: '${ALERTMANAGER_SLACK_API_URL}'
+
+  # PagerDuty API URL (if using PagerDuty)
+  # pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates
+# =========
+# Custom message templates for notifications.
+# Allows: HTML emails, formatted Slack messages, custom PagerDuty alerts
+#
+# Uncomment to use custom templates:
+# templates:
+#   - '/etc/alertmanager/templates/*.tmpl'
+
+# Route Configuration
+# ===================
+# Hierarchical routing tree determines how alerts are grouped and routed.
+#
+# Routing Logic:
+#   1. Check if alert matches route criteria (labels, matchers)
+#   2. If match and 'continue: false', stop here
+#   3. If match and 'continue: true', also check child routes
+#   4. If no match, use parent's receiver
+#
+route:
+  # Default receiver for all alerts (catch-all)
+  # Applied when no specific route matches
+  receiver: 'default-receiver'
+
+  # Grouping Configuration
+  # ----------------------
+  # Groups alerts together into single notification.
+  # Benefits: Reduces noise, provides context, prevents alert storms.
+  #
+  # group_by: Labels used to group alerts
+  # Example: group_by: ['alertname', 'cluster', 'service']
+  #   - All InstanceDown alerts from same cluster grouped together
+  #   - Sent as single notification with multiple alerts listed
+  #
+  group_by: ['alertname', 'cluster', 'service', 'severity']
+
+  # group_wait: Wait time before sending first notification for group
+  # Purpose: Collect additional alerts that belong to same group
+  # Example: Network partition causes 10 InstanceDown alerts
+  #   - Without group_wait: 10 separate notifications
+  #   - With group_wait=10s: Single notification with all 10 alerts
+  #
+  # Trade-off:
+  #   - Lower (5s): Faster notification, but may send multiple for same incident
+  #   - Higher (30s): Better grouping, but delayed initial notification
+  #
+  group_wait: 10s
+
+  # group_interval: Wait time before sending updates for existing group
+  # Purpose: Batch additional alerts added to existing group
+  # Example: Alert group already notified, new alert joins group
+  #   - Wait group_interval before sending update with new alert
+  #
+  # Prevents: Constant notifications as alerts trickle in
+  #
+  group_interval: 10s
+
+  # repeat_interval: How often to resend unresolved alert notifications
+  # Purpose: Reminder that alert still firing (hasn't resolved)
+  # Example: HighCPUUsage alert fires, notification sent
+  #   - If still firing after 12h, resend notification
+  #   - Continue every 12h until resolved
+  #
+  # Best Practice:
+  #   - Critical: 1h-4h (frequent reminders)
+  #   - Warning: 12h-24h (occasional reminders)
+  #   - Info: Never repeat (only notify once)
+  #
+  repeat_interval: 12h
+
+  # Child Routes
+  # ------------
+  # Specific routing rules for different alert types.
+  # Evaluated in order, first match wins (unless 'continue: true').
+  #
+  routes:
+    # Route 1: Critical Alerts
+    # ========================
+    # Send to pager/SMS for immediate attention.
+    # Examples: InstanceDown, DiskSpaceLowCritical, HighMemoryUsageCritical
+    #
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+
+      # Override grouping for critical alerts
+      # Group only by alertname (not by cluster/service)
+      # Rationale: Each critical alert important, don't over-group
+      group_by: ['alertname']
+
+      # Send faster for critical alerts
+      group_wait: 5s
+      group_interval: 5s
+      repeat_interval: 2h  # Remind every 2 hours if unresolved
+
+      # continue: false (default)
+      # Stop evaluating routes after this match
+      # Critical alerts only go to critical receiver
+
+    # Route 2: Warning Alerts
+    # =======================
+    # Send to email/Slack for investigation.
+    # Examples: HighCPUUsageWarning, DiskSpaceLowWarning
+    #
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_by: ['alertname', 'instance']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+
+    # Route 3: Monitoring Stack Alerts
+    # =================================
+    # Alerts about monitoring system itself (meta-monitoring).
+    # Route to monitoring team specifically.
+    #
+    - match:
+        category: monitoring
+      receiver: 'monitoring-team'
+      group_by: ['alertname']
+      group_wait: 5s
+      repeat_interval: 6h
+
+    # Route 4: Informational Alerts
+    # ==============================
+    # Low-priority alerts, notification only.
+    # Don't repeat (only notify once).
+    #
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      repeat_interval: 999h  # Effectively never repeat
+
+# Inhibition Rules
+# ================
+# Suppress (inhibit) certain alerts when other alerts are firing.
+# Purpose: Reduce noise from cascade failures.
+#
+# Use Case: Node down -> all services on that node also alert
+#   - Only care about node down (root cause)
+#   - Inhibit service alerts (consequences)
+#
+inhibit_rules:
+  # Inhibit Rule 1: Instance Down suppresses everything from that instance
+  # ----------------------------------------------------------------------
+  # Logic: If InstanceDown firing, suppress all other alerts from same instance
+  # Rationale: If host is down, all services on it will alert
+  #   - Only need to know host is down
+  #   - Service-specific alerts are noise
+  #
+  - source_match:
+      alertname: 'InstanceDown'
+    target_match_re:
+      # Suppress any alert where instance matches
+      alertname: '.*'
+    equal:
+      # Match when 'instance' label is equal between source and target
+      - 'instance'
+
+  # Inhibit Rule 2: Critical alert suppresses warning for same issue
+  # ----------------------------------------------------------------
+  # Logic: If critical CPU alert firing, suppress warning CPU alert
+  # Rationale: Already aware of problem (critical level)
+  #   - Don't need warning notification too
+  #
+  - source_match:
+      alertname: 'HighCPUUsageCritical'
+    target_match:
+      alertname: 'HighCPUUsageWarning'
+    equal:
+      - 'instance'
+
+  # Inhibit Rule 3: Critical memory alert suppresses warning
+  # ---------------------------------------------------------
+  - source_match:
+      alertname: 'HighMemoryUsageCritical'
+    target_match:
+      alertname: 'HighMemoryUsageWarning'
+    equal:
+      - 'instance'
+
+  # Inhibit Rule 4: Critical disk alert suppresses warning and predictive
+  # ---------------------------------------------------------------------
+  - source_match:
+      alertname: 'DiskSpaceLowCritical'
+    target_match_re:
+      alertname: 'DiskSpaceLowWarning|DiskWillFillSoon'
+    equal:
+      - 'instance'
+      - 'mountpoint'
+
+# Receivers
+# =========
+# Notification destinations and their configurations.
+# Each receiver can have multiple integrations (email + Slack).
+#
+receivers:
+  # Default Receiver
+  # ----------------
+  # Catch-all for alerts that don't match specific routes.
+  # Sends to general monitoring channel/email.
+  #
+  - name: 'default-receiver'
+    email_configs:
+      - to: '${ALERTMANAGER_EMAIL_TO}'
+        from: '${ALERTMANAGER_SMTP_FROM}'
+        headers:
+          Subject: '[Monitoring] Alert: {{ .GroupLabels.alertname }}'
+        # HTML template for better formatting
+        html: |
+          <h2>Alert: {{ .GroupLabels.alertname }}</h2>
+          <p><strong>Severity:</strong> {{ .CommonLabels.severity }}</p>
+          <p><strong>Summary:</strong> {{ .CommonAnnotations.summary }}</p>
+          <p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>
+          <p><strong>Firing Alerts:</strong></p>
+          <ul>
+          {{ range .Alerts }}
+            <li>{{ .Labels.instance }}: {{ .Annotations.summary }}</li>
+          {{ end }}
+          </ul>
+          <p><a href="{{ .ExternalURL }}">View in Alertmanager</a></p>
+
+    # Slack integration (optional)
+    # Uncomment and configure:
+    # slack_configs:
+    #   - channel: '#monitoring-alerts'
+    #     username: 'Alertmanager'
+    #     icon_emoji: ':bell:'
+    #     title: 'Alert: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}'
+
+  # Critical Alerts Receiver
+  # -------------------------
+  # For critical severity alerts requiring immediate attention.
+  # Should integrate with paging system (PagerDuty, OpsGenie, SMS).
+  #
+  - name: 'critical-alerts'
+    # Email with HIGH PRIORITY flag
+    email_configs:
+      - to: '${ALERTMANAGER_CRITICAL_EMAIL_TO}'
+        from: '${ALERTMANAGER_SMTP_FROM}'
+        headers:
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+          Priority: 'urgent'
+          X-Priority: '1'
+        html: |
+          <h1 style="color: red;">CRITICAL ALERT</h1>
+          <h2>{{ .GroupLabels.alertname }}</h2>
+          <p><strong>Immediate action required!</strong></p>
+          {{ range .Alerts }}
+          <div style="border: 2px solid red; padding: 10px; margin: 10px 0;">
+            <p><strong>Instance:</strong> {{ .Labels.instance }}</p>
+            <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+            <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+            <p><strong>Runbook:</strong></p>
+            <pre>{{ .Annotations.runbook }}</pre>
+          </div>
+          {{ end }}
+
+    # PagerDuty integration (uncomment to enable)
+    # Requires: PagerDuty service integration key
+    # pagerduty_configs:
+    #   - service_key: '${PAGERDUTY_SERVICE_KEY}'
+    #     description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+    #     details:
+    #       firing: '{{ .Alerts.Firing | len }}'
+    #       resolved: '{{ .Alerts.Resolved | len }}'
+    #       instance: '{{ .GroupLabels.instance }}'
+
+    # Slack with @channel mention
+    # slack_configs:
+    #   - channel: '#critical-alerts'
+    #     username: 'Alertmanager'
+    #     icon_emoji: ':rotating_light:'
+    #     title: '<!channel> CRITICAL: {{ .GroupLabels.alertname }}'
+    #     text: |
+    #       {{ range .Alerts }}
+    #       *Instance:* {{ .Labels.instance }}
+    #       *Summary:* {{ .Annotations.summary }}
+    #       {{ end }}
+    #     color: 'danger'
+
+  # Warning Alerts Receiver
+  # ------------------------
+  # For warning severity alerts needing investigation.
+  # Email or chat, but not paging.
+  #
+  - name: 'warning-alerts'
+    email_configs:
+      - to: '${ALERTMANAGER_EMAIL_TO}'
+        from: '${ALERTMANAGER_SMTP_FROM}'
+        headers:
+          Subject: '[Warning] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2 style="color: orange;">Warning Alert</h2>
+          <h3>{{ .GroupLabels.alertname }}</h3>
+          {{ range .Alerts }}
+          <div style="border: 1px solid orange; padding: 10px; margin: 10px 0;">
+            <p><strong>Instance:</strong> {{ .Labels.instance }}</p>
+            <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+            <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+          </div>
+          {{ end }}
+
+    # Slack channel for warnings
+    # slack_configs:
+    #   - channel: '#monitoring-warnings'
+    #     username: 'Alertmanager'
+    #     icon_emoji: ':warning:'
+    #     title: 'Warning: {{ .GroupLabels.alertname }}'
+    #     text: '{{ .CommonAnnotations.summary }}'
+    #     color: 'warning'
+
+  # Monitoring Team Receiver
+  # -------------------------
+  # Alerts about monitoring system itself.
+  # Route to team responsible for monitoring infrastructure.
+  #
+  - name: 'monitoring-team'
+    email_configs:
+      - to: '${ALERTMANAGER_MONITORING_TEAM_EMAIL}'
+        from: '${ALERTMANAGER_SMTP_FROM}'
+        headers:
+          Subject: '[Monitoring System] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Monitoring System Alert</h2>
+          <h3>{{ .GroupLabels.alertname }}</h3>
+          <p><strong>The monitoring system itself is experiencing issues.</strong></p>
+          {{ range .Alerts }}
+          <div style="border: 1px solid blue; padding: 10px; margin: 10px 0;">
+            <p><strong>Component:</strong> {{ .Labels.instance }}</p>
+            <p><strong>Issue:</strong> {{ .Annotations.summary }}</p>
+            <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+            <p><strong>Runbook:</strong></p>
+            <pre>{{ .Annotations.runbook }}</pre>
+          </div>
+          {{ end }}
+
+  # Info Alerts Receiver
+  # --------------------
+  # Informational alerts, low priority.
+  # Might just log or send to separate low-priority channel.
+  #
+  - name: 'info-alerts'
+    # Could use webhook to log to database instead of email
+    # webhook_configs:
+    #   - url: 'http://logging-service:8080/alerts'
+
+    # Or low-priority email
+    email_configs:
+      - to: '${ALERTMANAGER_INFO_EMAIL_TO}'
+        from: '${ALERTMANAGER_SMTP_FROM}'
+        headers:
+          Subject: '[Info] {{ .GroupLabels.alertname }}'
+
+# Advanced Configuration Examples
+# ================================
+#
+# Time-based routing (business hours vs after hours):
+# ---------------------------------------------------
+# routes:
+#   - match:
+#       severity: critical
+#     receiver: 'pagerduty-business-hours'
+#     active_time_intervals:
+#       - business_hours
+#   - match:
+#       severity: critical
+#     receiver: 'pagerduty-after-hours'
+#     active_time_intervals:
+#       - after_hours
+#
+# time_intervals:
+#   - name: business_hours
+#     time_intervals:
+#       - times:
+#           - start_time: '09:00'
+#             end_time: '17:00'
+#         weekdays: ['monday:friday']
+#
+#   - name: after_hours
+#     time_intervals:
+#       - times:
+#           - start_time: '17:00'
+#             end_time: '09:00'
+#       - weekdays: ['saturday', 'sunday']
+#
+# Webhook receiver for custom integrations:
+# -----------------------------------------
+# - name: 'custom-webhook'
+#   webhook_configs:
+#     - url: 'http://my-service:8080/alertmanager-webhook'
+#       send_resolved: true
+#       http_config:
+#         basic_auth:
+#           username: 'alertmanager'
+#           password: 'secret'
+#
+# Multiple integrations per receiver:
+# -----------------------------------
+# - name: 'multi-channel'
+#   email_configs:
+#     - to: 'team@example.com'
+#   slack_configs:
+#     - channel: '#alerts'
+#   pagerduty_configs:
+#     - service_key: 'xxx'
+#   webhook_configs:
+#     - url: 'http://logging-service/alerts'

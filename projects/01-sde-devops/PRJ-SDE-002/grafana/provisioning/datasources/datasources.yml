@@ -1,0 +1,226 @@
+# Grafana Datasource Provisioning
+# =================================
+# Automatically provisions datasources on Grafana startup.
+# Benefits: Infrastructure-as-code, consistent configuration, no manual UI setup.
+#
+# Documentation: https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources
+# Author: Portfolio Project
+# Last Updated: 2024-11-24
+
+# API Version
+# ===========
+# Datasource provisioning API version
+apiVersion: 1
+
+# Datasources
+# ===========
+# List of datasources to provision automatically.
+#
+datasources:
+  # Datasource 1: Prometheus
+  # ========================
+  # Time-series metrics database for infrastructure and application monitoring.
+  #
+  - name: Prometheus
+    # Type: Datasource plugin type
+    # Built-in types: prometheus, loki, elasticsearch, mysql, postgres, etc.
+    # Custom types: Installed plugins (grafana-cli plugins install <plugin>)
+    type: prometheus
+
+    # Access mode: How Grafana connects to datasource
+    # Options:
+    #   - proxy: Grafana backend proxies requests (secure, recommended)
+    #   - direct: Browser connects directly (requires CORS, less secure)
+    # Use proxy for: Internal datasources, security, consistent source IP
+    access: proxy
+
+    # URL: Datasource endpoint
+    # Format: protocol://hostname:port
+    # Docker: Use service name from docker-compose networks
+    # External: Use FQDN or IP address
+    url: http://prometheus:9090
+
+    # Authentication
+    # --------------
+    # Basic auth: Username/password authentication
+    # If Prometheus has auth enabled, configure here
+    # basicAuth: true
+    # basicAuthUser: admin
+    # secureJsonData:
+    #   basicAuthPassword: password
+
+    # Default datasource
+    # ------------------
+    # Mark as default for metric queries
+    # First created datasource usually default, but explicit is better
+    # Grafana uses this when:
+    #   - Creating new panels without datasource selection
+    #   - Alert rules without explicit datasource
+    isDefault: true
+
+    # Read-only mode
+    # --------------
+    # Prevents: Editing/deleting datasource via UI
+    # Recommended for: Provisioned datasources (infrastructure-as-code)
+    # Can still use datasource, just can't modify configuration
+    editable: false
+
+    # JSON Data (Datasource-Specific Configuration)
+    # ----------------------------------------------
+    # Prometheus-specific settings
+    jsonData:
+      # HTTP Method for queries
+      # GET: Good for caching, URL length limits
+      # POST: Better for long queries, no caching
+      httpMethod: POST
+
+      # Query timeout (seconds)
+      # How long to wait for Prometheus response
+      # Increase for: Slow queries, large time ranges
+      # Decrease for: Faster failure detection
+      queryTimeout: 60s
+
+      # Time interval: Default time range for panels
+      # Examples: 15s, 1m, 5m, 1h
+      # Should match: Prometheus scrape_interval
+      # Affects: Query resolution, data point density
+      timeInterval: 15s
+
+      # Custom query parameters
+      # Add to all Prometheus queries
+      # Example: max_source_resolution for downsampling
+      # customQueryParameters: "max_source_resolution=5m"
+
+      # Exemplars: Link traces to metrics
+      # Requires: Prometheus with exemplars support
+      # Use case: Click metric spike, see trace for that request
+      # exemplarTraceIdDestinations:
+      #   - name: trace_id
+      #     datasourceUid: tempo_datasource_uid
+
+  # Datasource 2: Loki
+  # ===================
+  # Log aggregation system for centralized log querying.
+  #
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+
+    # Not default (Prometheus is default for metrics)
+    # Grafana automatically selects Loki for log queries
+    isDefault: false
+
+    editable: false
+
+    # Loki-specific settings
+    jsonData:
+      # Max lines: Maximum log lines to retrieve per query
+      # Higher: More data, slower queries, potential browser hang
+      # Lower: Faster queries, may miss logs
+      # Default: 1000 (reasonable for most queries)
+      # Can be overridden per query in Explore
+      maxLines: 1000
+
+      # Timeout for queries
+      # Loki queries can be expensive (full-text search)
+      # Increase for: Large log volumes, complex queries
+      timeout: 60s
+
+      # Derived fields: Extract values from logs, link to other datasources
+      # Use case: Extract trace ID from logs, link to Tempo
+      # Example:
+      # derivedFields:
+      #   - datasourceUid: tempo_uid
+      #     matcherRegex: "trace_id=(\\w+)"
+      #     name: TraceID
+      #     url: "$${__value.raw}"
+
+# Provisioning Behavior
+# ======================
+#
+# On Startup:
+#   - Grafana reads this file
+#   - Creates/updates datasources with matching names
+#   - Existing datasources with same name are updated
+#
+# Updates:
+#   - Changes to this file applied on Grafana restart
+#   - Or via API: POST /api/admin/provisioning/datasources/reload
+#
+# Deletion:
+#   - Removing datasource from file does NOT delete from Grafana
+#   - Must be deleted via UI or API
+#   - Set deleteDatasources: [<name>] in separate provisioning file
+#
+# Conflicts:
+#   - If datasource created via UI with same name, provisioning takes precedence
+#   - Provisioned datasources have editable: false (recommended)
+#
+# Secrets Management:
+#   - Passwords, tokens in secureJsonData (encrypted in Grafana DB)
+#   - Environment variables supported: ${ENV_VAR_NAME}
+#   - Avoid hardcoding secrets, use env vars or external secret managers
+
+# Advanced Examples
+# =================
+#
+# Multiple Prometheus instances (HA, Federation):
+# ------------------------------------------------
+# - name: Prometheus-Primary
+#   type: prometheus
+#   access: proxy
+#   url: http://prometheus-01:9090
+#   isDefault: true
+#   editable: false
+#
+# - name: Prometheus-Secondary
+#   type: prometheus
+#   access: proxy
+#   url: http://prometheus-02:9090
+#   isDefault: false
+#   editable: false
+#
+# Long-term storage (Thanos, Cortex):
+# ------------------------------------
+# - name: Thanos
+#   type: prometheus
+#   access: proxy
+#   url: http://thanos-query:9090
+#   isDefault: false
+#   editable: false
+#   jsonData:
+#     timeInterval: 5m  # Downsampled data
+#
+# External datasource with authentication:
+# -----------------------------------------
+# - name: External-Prometheus
+#   type: prometheus
+#   access: proxy
+#   url: https://prometheus.external.com
+#   basicAuth: true
+#   basicAuthUser: ${PROM_USER}
+#   secureJsonData:
+#     basicAuthPassword: ${PROM_PASSWORD}
+#   jsonData:
+#     tlsAuth: true
+#     tlsAuthWithCACert: true
+#   secureJsonData:
+#     tlsCACert: ${TLS_CA_CERT}
+#     tlsClientCert: ${TLS_CLIENT_CERT}
+#     tlsClientKey: ${TLS_CLIENT_KEY}
+#
+# Tempo (Tracing):
+# ----------------
+# - name: Tempo
+#   type: tempo
+#   access: proxy
+#   url: http://tempo:3200
+#   jsonData:
+#     tracesToLogs:
+#       datasourceUid: loki_uid
+#       tags: ['job', 'instance', 'pod', 'namespace']
+#       mappedTags: [{ key: 'service.name', value: 'service' }]
+#       mapTagNamesEnabled: true
+#       spanStartTimeShift: '-1h'
+#       spanEndTimeShift: '1h'
