@@ -1,0 +1,211 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portfolio
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-backend
+  namespace: portfolio
+  labels:
+    app: portfolio-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: portfolio-backend
+  template:
+    metadata:
+      labels:
+        app: portfolio-backend
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/acme/portfolio-api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: portfolio-secrets
+                  key: database_url
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector:4318
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-backend
+  namespace: portfolio
+spec:
+  selector:
+    app: portfolio-backend
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-orchestrator
+  namespace: portfolio
+  labels:
+    app: portfolio-orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portfolio-orchestrator
+  template:
+    metadata:
+      labels:
+        app: portfolio-orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: ghcr.io/acme/portfolio-orchestrator:latest
+          ports:
+            - containerPort: 8400
+          env:
+            - name: API_BASE_URL
+              value: http://portfolio-backend
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector:4318
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8400
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-orchestrator
+  namespace: portfolio
+spec:
+  selector:
+    app: portfolio-orchestrator
+  ports:
+    - port: 8400
+      targetPort: 8400
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-frontend
+  namespace: portfolio
+  labels:
+    app: portfolio-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portfolio-frontend
+  template:
+    metadata:
+      labels:
+        app: portfolio-frontend
+    spec:
+      containers:
+        - name: console
+          image: ghcr.io/acme/portfolio-console:latest
+          ports:
+            - containerPort: 4173
+          env:
+            - name: VITE_API_URL
+              value: http://portfolio-backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-frontend
+  namespace: portfolio
+spec:
+  selector:
+    app: portfolio-frontend
+  ports:
+    - port: 80
+      targetPort: 4173
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: portfolio
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.95.0
+          args:
+            - "--config=/etc/otel-collector-config.yaml"
+          volumeMounts:
+            - name: otel-config
+              mountPath: /etc/otel-collector-config.yaml
+              subPath: otel-collector-config.yaml
+          ports:
+            - containerPort: 4318
+              name: otlp-http
+      volumes:
+        - name: otel-config
+          configMap:
+            name: otel-collector-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: portfolio
+  labels:
+    app: otel-collector
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          http:
+    processors:
+      batch: {}
+    exporters:
+      logging:
+        loglevel: info
+      otlphttp/prometheus:
+        endpoint: "http://prometheus:4318"
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [logging]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [logging]

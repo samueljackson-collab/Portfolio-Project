@@ -1,0 +1,69 @@
+version: '3.9'
+services:
+  api:
+    build:
+      context: ../backend
+    image: portfolio-api:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://portfolio:portfolio@db:5432/portfolio
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+    depends_on:
+      - db
+      - otel-collector
+
+  orchestrator:
+    image: ghcr.io/acme/portfolio-orchestrator:latest
+    ports:
+      - "8400:8400"
+    environment:
+      - API_BASE_URL=http://api:8000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+    depends_on:
+      - api
+      - otel-collector
+
+  frontend:
+    build:
+      context: ../frontend
+    image: portfolio-console:latest
+    ports:
+      - "4173:4173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - api
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=portfolio
+      - POSTGRES_PASSWORD=portfolio
+      - POSTGRES_DB=portfolio
+    ports:
+      - "5432:5432"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.95.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ../observability/otel-collector.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4318:4318"
+      - "9464:9464"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../observability/grafana-dashboard.json:/var/lib/grafana/dashboards/orchestration.json:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+
+networks:
+  default:
+    name: portfolio

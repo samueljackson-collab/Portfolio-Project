@@ -1,0 +1,14 @@
+all:
+  children:
+    orchestrator:
+      hosts:
+        orchestrator-01:
+          ansible_host: orchestrator.example.com
+    backend:
+      hosts:
+        api-01:
+          ansible_host: api.example.com
+    frontend:
+      hosts:
+        console-01:
+          ansible_host: console.example.com

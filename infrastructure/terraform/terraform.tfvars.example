@@ -27,6 +27,13 @@ project_name = "my-project"
 # Options: "dev", "staging", "production"
 environment = "production"
 
+# AWS region to deploy into
+aws_region = "us-east-1"
+
+# Network CIDR and number of AZs to spread across
+vpc_cidr = "10.20.0.0/16"
+az_count = 2
+
 # ----------------------------------------------------------------------------
 # DATABASE CREDENTIALS
 # ----------------------------------------------------------------------------
@@ -184,6 +191,14 @@ skip_final_snapshot = true
 #
 # When false, changes wait for weekly maintenance window
 apply_immediately = true
+
+# ----------------------------------------------------------------------------
+# APPLICATION CONTAINER
+# ----------------------------------------------------------------------------
+
+# Docker image to deploy on ECS/Fargate
+# Example: public.ecr.aws/aws-containers/hello-app:latest
+container_image = "ghcr.io/acme/portfolio-api:latest"
 
 # ----------------------------------------------------------------------------
 # RESOURCE TAGS
