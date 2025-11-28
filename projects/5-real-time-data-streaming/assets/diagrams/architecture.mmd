@@ -1,0 +1,30 @@
+flowchart LR
+    subgraph Producers[Producers & Ingest]
+        Apps[Domain services]
+        Gateway[API Gateway / Connectors]
+        Schemas[Schema Registry]
+    end
+
+    subgraph Stream[Streaming Platform]
+        Kafka[(Kafka Cluster)]
+        Flink[Flink Jobs
+(checkpointed state)]
+        StateStore[(RocksDB / Savepoints)]
+        Metrics[Lag & Checkpoint Metrics]
+    end
+
+    subgraph Sinks[Analytics & Storage]
+        Lake[(Data Lake - S3/Delta)]
+        OLAP[(OLAP Warehouse)]
+        Alerts[Alerting / Slack]
+    end
+
+    Apps -->|Events| Gateway -->|Validated batches| Kafka
+    Schemas --> Kafka
+    Kafka -->|Exactly-once| Flink
+    Flink -->|State| StateStore
+    Flink -->|Enriched streams| Lake
+    Flink -->|Aggregates| OLAP
+    Flink -->|Anomalies| Alerts
+    Kafka -->|Consumer lag| Metrics
+    Flink -->|Checkpoint health| Metrics

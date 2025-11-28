@@ -4,26 +4,11 @@
 This project provisions a resilient architecture with automated failover between AWS regions. It synchronizes stateful services, validates replication health, and performs controlled recovery drills.
 
 ## Architecture
-```mermaid
-graph LR
-  Primary[VPC - us-east-1]
-  Secondary[VPC - us-west-2]
-  DNS[Route53 - Latency / Failover]
-  PrimaryDB[RDS Aurora Global Cluster]
-  SecondaryDB[RDS Read Replica]
-  S3[S3 Cross-Region Replication]
-  EKSPrimary[EKS Cluster]
-  EKSSecondary[EKS Cluster]
+- **Context:** Mission-critical services must remain available during regional outages with minimal RTO/RPO and predictable failover/fallback runbooks.
+- **Decision:** Use active-passive topology with Route53 health checks, Aurora Global Database, cross-region S3 replication, and standby compute in a paired region, orchestrated by SSM automation and chaos drills.
+- **Consequences:** Provides deterministic failover but doubles some infrastructure cost and demands continuous replication health monitoring plus controlled drill cadence.
 
-  Primary --> DNS
-  Secondary --> DNS
-  Primary --> PrimaryDB
-  Primary --> S3
-  Primary --> EKSPrimary
-  PrimaryDB --> SecondaryDB
-  S3 --> Secondary
-  Secondary --> EKSSecondary
-```
+[Mermaid source](assets/diagrams/architecture.mmd) · Diagram: render locally from [Mermaid source](assets/diagrams/architecture.mmd) using `python tools/generate_phase1_diagrams.py` (PNG output is .gitignored).
 
 ## Components
 - Terraform stack that deploys networking, Aurora Global Database, Route53 health checks, and asynchronous replication.

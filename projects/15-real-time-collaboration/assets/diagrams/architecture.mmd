@@ -1,0 +1,34 @@
+flowchart LR
+  subgraph Client["Clients"]
+    browser[Web / Mobile Editors]
+  end
+
+  subgraph Edge["Edge Gateway & Auth"]
+    gateway[WebSocket Gateway]
+    auth[JWT Auth Service]
+    rate[Rate Limiter]
+  end
+
+  subgraph Collaboration["Collaboration Core"]
+    ot[Operational Transform Engine]
+    presence[(Presence & Session State)]
+    broker[(Message Bus / Queue)]
+  end
+
+  subgraph Data["Persistence & Recovery"]
+    docdb[(Document Store / Postgres)]
+    crdt[(CRDT Snapshot Store)]
+    backups[(Cold Backups)]
+  end
+
+  browser <--> gateway
+  gateway --> auth
+  auth --> gateway
+  gateway --> rate --> ot
+  ot --> presence
+  ot --> broker
+  broker --> docdb
+  docdb --> crdt
+  crdt --> gateway
+  crdt --> backups
+  presence --> gateway

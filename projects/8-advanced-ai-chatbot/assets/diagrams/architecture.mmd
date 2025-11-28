@@ -1,0 +1,32 @@
+flowchart LR
+    subgraph Client[Client & Web]
+        Browser[Web Client / SDK]
+        AuthZ[AuthN + Rate Limits]
+    end
+
+    subgraph App[Application Platform]
+        API[FastAPI Gateway]
+        Session[Conversation Store]
+        Vector[Vector DB + Embeddings]
+    end
+
+    subgraph AI[AI & Tooling]
+        LLM[LLM Endpoint]
+        Tools[Toolchain
+(Actions/Orchestration)]
+        KG[Knowledge Graph / Documents]
+        Obs[Observability & Tracing]
+    end
+
+    Browser -->|Chat / Workflows| API
+    API --> AuthZ --> API
+    API -->|Persist state| Session
+    API -->|Retrieve context| Vector
+    Vector -->|Top-k context| API
+    API -->|Prompt + context| LLM
+    LLM -->|Tool calls| Tools
+    Tools -->|Results| LLM
+    LLM -->|Grounded answer| API -->|Streamed response| Browser
+    LLM --> Obs
+    API --> Obs
+    Tools --> KG

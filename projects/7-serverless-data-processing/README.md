@@ -3,26 +3,17 @@
 ## Overview
 A fully event-driven analytics pipeline built on AWS serverless services. The solution ingests high-velocity events, enforces schema validation, performs enrichment, and generates near real-time insights without managing servers.
 
-## Architecture
-```mermaid
-digraph G {
-  rankdir=LR
-  API [label="API Gateway", shape=box]
-  S3 [label="Raw Event Bucket", shape=box]
-  LambdaIngest [label="Ingestion Lambda", shape=component]
-  StepFn [label="Step Functions Workflow", shape=folder]
-  Dynamo [label="Curated DynamoDB", shape=cylinder]
-  LambdaAnalytics [label="Analytics Lambda", shape=component]
-  QuickSight [label="QuickSight Dashboards", shape=box]
+## Phase 2 Architecture Diagram
 
-  API -> LambdaIngest
-  S3 -> LambdaIngest
-  LambdaIngest -> StepFn
-  StepFn -> Dynamo
-  StepFn -> LambdaAnalytics
-  LambdaAnalytics -> QuickSight
-}
-```
+![Serverless Data Processing – Phase 2](render locally to PNG; output is .gitignored)
+
+- **Context**: Ingested events land in a raw S3 bucket before schema validation, enrichment, and orchestration steps route
+  work across Lambdas, Step Functions, and streaming sinks.
+- **Decision**: Isolate ingress, control plane, data plane, and insights boundaries so DLQ handling, observability, and
+  analytics delivery can be governed independently.
+- **Consequences**: Failures are contained in DLQs, curated DynamoDB tables and warehouses stay consistent, and dashboards can
+  consume both real-time streams and curated stores. Keep the [Mermaid source](assets/diagrams/architecture.mmd) synchronized
+  with the exported PNG.
 
 ## Deployment Variants
 - **Primary:** AWS SAM template (`infrastructure/template.yaml`) that provisions APIs, Lambdas, Step Functions, DynamoDB, and CloudWatch resources.

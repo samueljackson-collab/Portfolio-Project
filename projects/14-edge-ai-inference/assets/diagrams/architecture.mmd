@@ -1,0 +1,27 @@
+flowchart LR
+    subgraph Edge[Edge Device]
+        Camera[Camera / Sensor]
+        Inference[ONNX Runtime Service]
+        GPU[Tensor / GPU Accelerator]
+        Cache[Local Results Cache]
+    end
+
+    subgraph Gateway[IoT Edge Runtime]
+        Router[MQTT Router]
+        OTA[OTA Update Agent]
+        Telemetry[Telemetry Uploader]
+    end
+
+    subgraph Cloud[Cloud Control Plane]
+        Registry[Model Registry]
+        CI[CI Pipeline / Tests]
+        Monitor[Monitoring + Alerts]
+    end
+
+    Camera --> Inference --> Cache
+    Inference --> GPU
+    Inference --> Router --> Telemetry
+    OTA --> Inference
+    Registry --> OTA
+    CI --> Registry
+    Telemetry --> Monitor

@@ -1,0 +1,38 @@
+flowchart LR
+  subgraph Edge["Ingress & API (Public)"]
+    api[API Gateway]
+    dlq[(DLQ / Dead Letter Queue)]
+  end
+
+  subgraph Pipeline["Workflow & Processing (Control Plane)"]
+    ingest[Ingestion Lambda]
+    schema[Schema Validation]
+    enrich[Enrichment Lambda]
+    stepfn[Step Functions Orchestration]
+  end
+
+  subgraph Storage["Storage & Analytics (Data Plane)"]
+    raw[(Raw S3 Bucket)]
+    curated[(Curated DynamoDB)]
+    warehouse[(Athena / Data Warehouse)]
+    stream[(Kinesis / Firehose Streams)]
+  end
+
+  subgraph Insights["Insights & Ops (Trusted)"]
+    analytics[Streaming Analytics Lambda]
+    dashboards[QuickSight / BI]
+    observability[(Logs / Metrics / Traces)]
+  end
+
+  api --> ingest
+  ingest --> schema --> enrich --> stepfn
+  ingest --> raw
+  stepfn --> curated
+  stepfn --> stream
+  stream --> analytics --> dashboards
+  curated --> dashboards
+  stepfn --> warehouse
+  stepfn --> dlq
+  stepfn --> observability
+  ingest --> observability
+  analytics --> observability

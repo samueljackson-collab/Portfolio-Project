@@ -58,3 +58,5 @@ temp/
 *.zip
 *.tar.gz
 *.rar
+# Generated architecture renders (Mermaid/PNG outputs are regenerated locally)
+architecture.png

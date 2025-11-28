@@ -1,0 +1,25 @@
+flowchart LR
+    subgraph Users[Quants & Analysts]
+        Notebook[Notebook / CLI]
+        Jobs[Job Submissions]
+    end
+
+    subgraph Control[Control Plane]
+        API[Job API]
+        Scheduler[Dask Scheduler]
+        Queue[Work Queue]
+        Images[Container Registry]
+    end
+
+    subgraph Compute[GPU Cluster]
+        Workers[GPU Workers]
+        Storage[Shared NVMe / S3]
+        Metrics[Prometheus]
+    end
+
+    Notebook --> API --> Scheduler --> Queue --> Workers
+    Jobs --> API
+    Workers --> Storage
+    Workers --> Metrics
+    Metrics --> Notebook
+    Images --> Workers

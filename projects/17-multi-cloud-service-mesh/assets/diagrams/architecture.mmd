@@ -1,0 +1,28 @@
+flowchart LR
+    subgraph AWS[AWS Cluster]
+        AwApp[Services (AWS)]
+        AwGw[East-West Gateway]
+    end
+
+    subgraph GCP[GKE Cluster]
+        GApp[Services (GKE)]
+        GGw[East-West Gateway]
+    end
+
+    subgraph Control[Mesh Control Plane]
+        Istiod[Istiod / Pilot]
+        Citadel[Cert Authority]
+        Consul[Consul Catalog]
+        Observability[Telemetry Stack]
+    end
+
+    AwApp <-->|mTLS| GApp
+    AwApp --> AwGw --> GGw --> GApp
+    GApp --> GGw --> AwGw --> AwApp
+    AwGw --> Istiod
+    GGw --> Istiod
+    Istiod --> Citadel --> AwApp
+    Citadel --> GApp
+    AwApp --> Observability
+    GApp --> Observability
+    Consul --> Istiod
