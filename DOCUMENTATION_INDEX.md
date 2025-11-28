@@ -87,8 +87,8 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ---
 
 ### 4. TECHNOLOGY_MATRIX.md
-**Purpose**: Quick reference and setup guide  
-**Length**: ~9,500 words  
+**Purpose**: Quick reference and setup guide
+**Length**: ~9,500 words
 **Best For**:
 - Setting up projects locally
 - Understanding dependencies
@@ -115,6 +115,21 @@ This index guides you through the comprehensive analysis of the 25-project portf
 - Setup Templates
 
 **Start Here**: If you need to run a project locally
+
+---
+
+### 5. Architecture Decision Records (adr/ADR-001 to ADR-005)
+**Purpose**: Capture the context, decision, and consequences for the master documentation factory deliverables and related governance choices.
+**Length**: Lightweight individual files
+**Best For**:
+- Tracing why documentation processes and quality controls were selected
+- Linking decisions back to the master factory deliverables snapshot
+- Guiding future process changes with historical context
+
+**Contains**:
+- ADR-001 (factory pipeline), ADR-002 (decision logs), ADR-003 (index integration), ADR-004 (quality gates), ADR-005 (governance cadence)
+
+**Start Here**: When you need authoritative decisions behind the documentation factory
 
 ---
 

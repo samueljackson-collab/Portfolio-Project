@@ -15,6 +15,7 @@ This index consolidates every high-signal document that ships with the enterpris
 | ⭐ | `IMPLEMENTATION_ANALYSIS.md` | `/` | Gap analysis, missing components, and prioritized remediation steps. |
 | ⭐ | `TECHNOLOGY_MATRIX.md` | `/` | Technology dependencies, install guides, and quick start commands. |
 | ⭐ | `DOCUMENTATION_INDEX.md` | `/` | Short-form navigation helper with metrics and file listings. |
+| ✅ | `adr/ADR-001` → `ADR-005` | `/adr` | Canonical architecture decision records for the documentation factory. |
 | ✅ | `PORTFOLIO_GAP_ANALYSIS.md` | `/` | Supplemental risk notes for partially complete tracks. |
 | ✅ | `PORTFOLIO_VALIDATION.md` | `/` | Verification checklist for each delivery stage. |
 | ✅ | `PORTFOLIO_INFRASTRUCTURE_GUIDE.md` | `/` | Hands-on provisioning guide for shared services. |
