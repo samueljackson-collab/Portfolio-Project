@@ -1,496 +1,265 @@
-# SCREENSHOT GUIDE FOR PORTFOLIO
-# ================================
-# How to capture, organize, and catalog screenshots for your portfolio
+# Screenshot & Evidence Collection Guide
 
-## OVERVIEW
+## Portfolio Evidence Capture Checklist
 
-This guide shows you exactly how to take professional screenshots of your infrastructure and use the `organize-screenshots.py` tool to automatically catalog them.
+This guide ensures every screenshot or artifact in the portfolio proves a measurable outcome. Follow the requirements for each capture so hiring teams can validate every metric you claim.
 
 ---
 
-## PART 1: TAKING SCREENSHOTS
+| Category | Priority | Evidence Name | Filename | Purpose |
+|----------|----------|---------------|----------|---------|
+| Grafana dashboards | ⭐ High | Infrastructure Overview | `grafana_infrastructure_overview_dashboard.png` | Proves real-time observability |
+| Grafana dashboards | ⭐ High | SLO Tracker | `grafana_slo_tracking_dashboard.png` | Demonstrates error-budget tracking |
+| Grafana dashboards | ⭐ High | Latency + Errors | `grafana_performance_metrics.png` | Shows performance headroom |
+| Prometheus | ◼︎ Medium | PromQL query + alerts | `prometheus_promql_query.png`, `prometheus_alert_rules.png` | Proves metrics + alerting skills |
+| Security | ⭐ High | CIS / Nmap / Fail2Ban | see filenames below | Shows zero-trust and monitoring |
+| Storage | ◼︎ Medium | FIO + DD | `storage_fio_benchmark_results.png`, `storage_dd_throughput.png` | Validates performance claims |
+| Network | ⭐ High | UniFi topology | `unifi_network_topology.png` | Visualizes segmentation |
+| Terminal health | ◼︎ Medium | ZFS + Compose | `zfs_pool_status_healthy.png`, `docker_compose_services_running.png` | Confirms runtime state |
+| Runbooks | ⭐ High | DR runbook | `disaster_recovery_runbook.pdf` | Shows operational maturity |
+| GitHub | ⭐ High | Repo overview | `github_repository_overview.png` | Demonstrates structure + cadence |
 
-### What to Screenshot
+Use this matrix to prioritize capture sessions before interviews.
 
-#### For PRJ-HOME-001 (Network Infrastructure):
-1. **UniFi Controller Dashboard**
-   - Main dashboard showing all devices
-   - Network topology view
-   - VLAN configuration page
-   - Wireless networks list
-   - Firewall rules page
-   - Client devices list
+## 1. Grafana Dashboards (High Priority)
 
-2. **pfSense Firewall**
-   - Dashboard (System > Status > Dashboard)
-   - Firewall rules (Firewall > Rules)
-   - NAT configuration
-   - Interface assignments
-   - System logs
+### Infrastructure Overview Dashboard
 
-3. **Network Diagrams**
-   - UniFi topology map (screenshot from controller)
-   - Any physical setup photos
+**Steps**
+1. Select *Last 24 hours* and ensure data is streaming (no `N/A`).
+2. Expand the dashboard (hide side nav) so all panels are visible without scrolling.
+3. Hover over the uptime table to show 99.8%+ values and the tooltip timestamp.
 
-**Recommended Tools:**
-- Browser built-in (Ctrl+Shift+S in Firefox, Cmd+Shift+4 on Mac)
-- Windows Snipping Tool
-- macOS Screenshot (Cmd+Shift+3 for full screen, Cmd+Shift+4 for selection)
+**Must include** CPU/Memory/Disk stat panels, Network I/O line graph, and Service Uptime table.
 
----
+**Filename:** `grafana_infrastructure_overview_dashboard.png`
 
-#### For PRJ-HOME-002 (Virtualization):
-1. **Proxmox Dashboard**
-   - Datacenter view (node list)
-   - Summary page for each node
-   - VM list
-   - Storage view
-   - Cluster status
+**Story to tell:** “Here’s the single pane that tracks fleet health and SLO compliance in real time.”
 
-2. **Proxmox Backup Server**
-   - Datastore overview
-   - Backup jobs list
-   - Recent backup logs
-   - Backup verification results
+### Service Health & SLO Tracking
 
-3. **TrueNAS**
-   - Dashboard
-   - Storage > Pools
-   - Sharing > NFS exports
-   - Sharing > SMB shares
-   - Snapshot list
+| Requirement | Detail |
+|-------------|--------|
+| Time range | Last 30 days |
+| Columns | Service name, uptime %, error budget remaining |
+| Rows | ≥5 services (Immich, Wiki.js, Home Assistant, Grafana, Prometheus) |
+| Styling | Green/yellow/red indicators visible |
 
-4. **Service UIs**
-   - Wiki.js homepage
-   - Home Assistant dashboard
-   - Immich photo library
-   - Nginx Proxy Manager proxy hosts list
+**Filename:** `grafana_slo_tracking_dashboard.png`
+
+**Talking point:** “I alert on burn-rate instead of noisy CPU alarms; the error-budget column makes that obvious.”
+
+### Response Time & Error Rate
+
+**Layout checklist**
+- P95 latency line chart (last 7 days) with target threshold line at 500ms.
+- HTTP error rate (%) chart stacked under latency with red threshold line at 1%.
+- Shared legend showing key services (Immich API, reverse proxy, wiki).
+
+**Filename:** `grafana_performance_metrics.png`
+
+**Narrative:** “Performance isn’t just uptime; I track latency/error trends to catch regressions before users notice.”
 
 ---
 
-#### For PRJ-SDE-002 (Observability):
-1. **Grafana Dashboards**
-   - Infrastructure overview dashboard
-   - Node exporter dashboard
-   - Container metrics dashboard
-   - Any custom dashboards
-   - Alert history panel
+## 2. Prometheus Evidence (Medium Priority)
 
-2. **Prometheus**
-   - Status > Targets page
-   - Alerts page
-   - Graph view with sample query
-   - Configuration page
+### PromQL Query Example
 
-3. **Alertmanager**
-   - Alert list
-   - Silences page
-   - Alert history
+**Command path:** `https://prometheus.home/graph`
 
-4. **Loki/Grafana Explore**
-   - Log query example
-   - Log stream visualization
+**Query to run:**
+
+```promql
+100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+```
+
+1. Paste query, hit **Execute**, and select both **Graph** and **Table** tabs.
+2. Toggle each host label so the legend reads `proxmox`, `truenas`, etc.
+3. Capture the whole viewport (URL bar optional) to show PromQL proficiency.
+
+**Filename:** `prometheus_promql_query.png`
+
+**Usage:** “Calculates real CPU usage from idle counters; demonstrates comfort with PromQL math.”
+
+### Alert Rules
+
+- Navigate to `https://prometheus.home/alerts`.
+- Filter for `severity=page` so critical alerts are shown first.
+- Ensure at least one **FIRING** or **PENDING** example is visible (e.g., `SLOBurnRateFast`), plus a **Normal** entry.
+
+**Filename:** `prometheus_alert_rules.png`
+
+**Usage:** “Shows that every alert has severity/state labels and routes to Alertmanager.”
 
 ---
 
-### Screenshot Best Practices
+## 3. Security Scans (High Priority)
 
-#### Resolution & Quality:
-```
-Minimum: 1920x1080 (Full HD)
-Recommended: 2560x1440 (2K) or higher
-Format: PNG (best quality) or JPG (if PNG too large)
-```
-
-#### What to Include:
-- ✅ Navigation bars (shows context)
-- ✅ Timestamps (proves it's your system)
-- ✅ Key metrics and data
-- ✅ Multiple views of same system
-
-#### What to Redact:
-- ❌ Real IP addresses (use browser dev tools to edit page before screenshot)
-- ❌ Real hostnames (unless they're obviously homelab)
-- ❌ Email addresses
-- ❌ API keys or tokens
-- ❌ Client names or proprietary data
-
-#### Pro Tips:
-1. **Clean up before screenshots:**
-   - Close unrelated tabs
-   - Clear notifications
-   - Maximize important panels
-
-2. **Use browser zoom:**
-   - Zoom to 90% or 80% to fit more content
-   - Or zoom to 110-125% for readability in documentation
-
-3. **Take multiple angles:**
-   - Overview screenshots
-   - Detail screenshots of specific features
-   - Before/after comparisons
-
----
-
-## PART 2: ORGANIZING SCREENSHOTS
-
-### Step 1: Collect Screenshots in One Directory
-
-Create a temporary directory for new screenshots:
-```bash
-mkdir ~/portfolio-screenshots
-```
-
-Move/copy all screenshots there:
-```bash
-mv ~/Downloads/Screenshot*.png ~/portfolio-screenshots/
-mv ~/Pictures/Screenshots/*.png ~/portfolio-screenshots/
-```
-
----
-
-### Step 2: Name Files Descriptively (Optional but Recommended)
-
-The organization tool auto-categorizes by filename, so descriptive names help:
-
-**Good Names:**
-```
-grafana-dashboard-infrastructure.png
-proxmox-cluster-summary.png
-unifi-network-topology.png
-homeassistant-dashboard.png
-prometheus-targets-healthy.png
-```
-
-**Tool Will Auto-Detect:**
-- "grafana" → dashboards category
-- "proxmox" → infrastructure category
-- "unifi" → networking category
-- "prometheus" → monitoring category
-
-**Bad Names:**
-```
-Screenshot 2024-11-06 at 3.41.23 PM.png  (No context)
-IMG_1234.png  (Generic)
-```
-
----
-
-### Step 3: Run Organization Tool
-
-Navigate to portfolio repository:
-```bash
-cd ~/Portfolio-Project
-```
-
-**Option A: Auto-Detect Project (if filename contains project ID)**
-```bash
-python3 scripts/organize-screenshots.py ~/portfolio-screenshots
-
-# Tool will look for PRJ-HOME-001, PRJ-SDE-002, etc. in filenames
-```
-
-**Option B: Specify Project Explicitly**
-```bash
-# For homelab network screenshots
-python3 scripts/organize-screenshots.py ~/portfolio-screenshots --project PRJ-HOME-001
-
-# For virtualization screenshots
-python3 scripts/organize-screenshots.py ~/portfolio-screenshots --project PRJ-HOME-002
-
-# For monitoring screenshots
-python3 scripts/organize-screenshots.py ~/portfolio-screenshots --project PRJ-SDE-002
-```
-
-**Option C: Dry Run (Preview First)**
-```bash
-# See what would happen without actually moving files
-python3 scripts/organize-screenshots.py ~/portfolio-screenshots --project PRJ-HOME-001 --dry-run
-
-# Review output, then run without --dry-run
-```
-
----
-
-### Step 4: Review Organization
-
-The tool will:
-1. ✅ Categorize screenshots automatically
-2. ✅ Rename with consistent format: `PRJ-XXX_category_NN_YYYYMMDD.png`
-3. ✅ Detect and skip duplicates
-4. ✅ Extract metadata (dimensions, file size)
-5. ✅ Generate README.md catalog
-6. ✅ Create JSON index
-
-**Check the results:**
-```bash
-# View the catalog
-cat projects/06-homelab/PRJ-HOME-001/assets/screenshots/README.md
-
-# See organized files
-ls -lh projects/06-homelab/PRJ-HOME-001/assets/screenshots/*/
-
-# Check JSON index
-cat projects/06-homelab/PRJ-HOME-001/assets/screenshots/screenshots-index.json
-```
-
----
-
-### Step 5: Commit to Git
+### OpenSCAP CIS Benchmark
 
 ```bash
-cd ~/Portfolio-Project
+sudo oscap xccdf eval \
+  --profile xccdf_org.ssgproject.content_profile_cis \
+  --report /tmp/cis-$(date +%F).html \
+  /usr/share/xml/scap/ssg-content/ssg-ubuntu2204-ds.xml | tee cis.txt
+```
 
-# Add screenshots
-git add projects/*/assets/screenshots/
+- Keep the terminal output visible showing **Score 92.3%** and category breakdown.
+- Mention the HTML report path in the screenshot to show traceability.
 
-# Commit
-git commit -m "Add infrastructure screenshots for PRJ-HOME-001"
+**Filename:** `openscap_cis_compliance_scan.png`
 
-# Push
-git push origin your-branch-name
+**Usage:** “Monthly CIS scan proves 92% compliance; HTML report available in repo.”
+
+### Nmap External Scan
+
+```bash
+nmap -Pn -sS -sU -p- my.public.ip.address
+```
+
+- Highlight the single allowed port (`51820/udp open`), annotate others as `filtered`.
+- Use `date` command beforehand so the prompt shows capture date.
+
+**Filename:** `nmap_external_security_scan.png`
+
+**Usage:** “Confirms only VPN is reachable from WAN; no admin surfaces exposed.”
+
+### Fail2Ban Status
+
+```bash
+sudo fail2ban-client status sshd
+sudo fail2ban-client status crowdsec
+```
+
+- Capture both summary lines and the list of recently banned IPs.
+- Include the terminal clock/prompt to reinforce recency.
+
+**Filename:** `fail2ban_blocked_ips.png`
+
+**Usage:** “1,200+ SSH brute-force attempts blocked this month.”
+
+---
+
+## 4. Storage Benchmarks (Medium Priority)
+
+### FIO Random IOPS Test
+
+```bash
+fio --name=randrw --rw=randrw --bs=4k --iodepth=32 --numjobs=4 \
+    --size=20G --runtime=120 --time_based --group_reporting \
+    --filename=/tank/benchmarks/fio-test.img
+```
+
+- Keep the command plus the final summary block (IOPS, BW, latency percentiles).
+- Highlight the line showing **read IOPS 12,450** and **write IOPS 9,876**.
+
+**Filename:** `storage_fio_benchmark_results.png`
+
+**Usage:** “Backs up the 24% performance headroom claim.”
+
+### DD Sequential Throughput
+
+```bash
+sudo dd if=/dev/zero of=/tank/benchmarks/dd-test.img bs=1M count=20000 oflag=direct status=progress
+sudo dd if=/tank/benchmarks/dd-test.img of=/dev/null bs=1M iflag=direct status=progress
+```
+
+- Keep the `status=progress` bar visible plus the final MB/s summary.
+- Run `date` before/after so the prompt shows capture date.
+
+**Filename:** `storage_dd_throughput.png`
+
+**Usage:** “Shows sequential throughput at ~596 MB/s read / 511 MB/s write.”
+
+---
+
+## 5. Network Topology (High Priority)
+
+### UniFi Network Map
+
+- Open UniFi → Topology → select *Show VLANs*.
+- Hover over each network to display VLAN IDs (10/20/30/40/50) and subnets.
+- Expand the sidebar that lists firewall rules so “x Rules” is visible.
+
+**Filename:** `unifi_network_topology.png`
+
+**Usage:** “Visual explanation of the 5-VLAN zero-trust layout.”
+
+---
+
+## 6. Terminal Evidence (Medium Priority)
+
+### ZFS Pool Health
+
+```bash
+sudo zpool status tank
+sudo zpool list tank
+```
+
+- Capture mirror members, scrub date, and `errors: 0` lines.
+- Optional: include `smartctl -H` snippet for each disk in the same screenshot.
+
+**Filename:** `zfs_pool_status_healthy.png`
+
+**Usage:** “Shows mirrored NVMe pool with clean checksums.”
+
+### Docker Compose Services
+
+```bash
+cd /opt/compose/services
+docker compose ps
+docker compose ls
+```
+
+- Terminal width ≥120 cols so the entire table (Name, Command, State, Ports) is readable.
+- Highlight services with dependencies (e.g., Immich API + PostgreSQL) to show multi-tier orchestration.
+
+**Filename:** `docker_compose_services_running.png`
+
+**Usage:** “Demonstrates everything is running via declarative Compose files.”
+
+---
+
+## 7. Runbooks (High Priority)
+
+### Disaster Recovery Runbook
+
+**Document layout:**
+
+| Section | Must show |
+|---------|-----------|
+| Scenario | “Primary storage failure” or similar |
+| RTO/RPO | Numeric targets (e.g., RTO 1h, RPO 15m) |
+| Procedure | Step-by-step list with numbering |
+| Verification | Command output or checklist confirming success |
+| Success Criteria | Bullet list tied to business impact |
+
+Export as PDF named `disaster_recovery_runbook.pdf` and include page numbers.
+
+---
+
+## 8. GitHub Repository Evidence (High Priority)
+```
+Requirements:
+- GitHub repo overview
+- Show folder structure (configs/, docs/, scripts/)
+- Display README preview + latest commits
+- Include Insights → Commits sparkline to highlight cadence
+Filename: github_repository_overview.png
+Usage: Confirms documentation + code hygiene
 ```
 
 ---
 
-## PART 3: EXAMPLE WORKFLOW
+## Capture Best Practices
 
-### Complete Example: Adding Grafana Screenshots
+- Set terminal to 120x40 with light theme
+- Clear old commands before capturing
+- Include date/time stamp when possible
+- Mask sensitive IPs but keep structure readable
+- Capture full context—no cropped legends
+- Store files using the filenames listed in this guide
+- Commit raw artifacts under `docs/evidence/<category>/` with README pointers so reviewers can trace claims
 
-```bash
-# 1. Take screenshots of Grafana dashboards
-# Open Grafana → Dashboard → Screenshot (name: grafana-infrastructure-overview.png)
-# Open Grafana → Another Dashboard → Screenshot (name: grafana-node-metrics.png)
-
-# 2. Collect screenshots
-mkdir ~/portfolio-screenshots/grafana
-mv ~/Downloads/grafana-*.png ~/portfolio-screenshots/grafana/
-
-# 3. Organize with tool
-cd ~/Portfolio-Project
-python3 scripts/organize-screenshots.py ~/portfolio-screenshots/grafana --project PRJ-SDE-002
-
-# Output:
-# Found 2 screenshot(s) to organize
-#
-# Processing: grafana-infrastructure-overview.png
-#   → PRJ-SDE-002/dashboards/PRJ-SDE-002_dashboards_01_20241107.png
-#      Size: 1.2 MB
-#      Dimensions: 2560x1440
-#
-# Processing: grafana-node-metrics.png
-#   → PRJ-SDE-002/dashboards/PRJ-SDE-002_dashboards_02_20241107.png
-#      Size: 1.4 MB
-#      Dimensions: 2560x1440
-#
-# ============================================================
-# ORGANIZATION SUMMARY
-# ============================================================
-# Total screenshots: 2
-# Organized: 2
-# Skipped: 0
-# Duplicates: 0
-# Errors: 0
-# ============================================================
-
-# 4. Review catalog
-cat projects/01-sde-devops/PRJ-SDE-002/assets/screenshots/README.md
-
-# 5. View on GitHub (after commit/push)
-# GitHub will show images inline in the README
-
-# 6. Commit
-git add projects/01-sde-devops/PRJ-SDE-002/assets/screenshots/
-git commit -m "Add Grafana dashboard screenshots"
-git push origin claude/review-portfolio-completeness-011CUsNpct9dDKup4KLZHtE1
-```
-
----
-
-## PART 4: CATEGORIES EXPLAINED
-
-The tool automatically categorizes based on filename keywords:
-
-| Category | Keywords | Examples |
-|----------|----------|----------|
-| **dashboards** | grafana, dashboard, metrics, graph, chart | Grafana dashboards, Kibana views |
-| **infrastructure** | proxmox, vcenter, esxi, cluster, node, vm | Hypervisor dashboards, VM lists |
-| **networking** | unifi, switch, router, topology, network, vlan, firewall, pfsense | Network topology, VLAN configs, firewall rules |
-| **monitoring** | prometheus, alert, loki, log, monitor | Prometheus targets, alert history, log queries |
-| **services** | wikijs, homeassistant, immich, service, app, application | Application UIs, service dashboards |
-| **storage** | truenas, nas, zfs, dataset, disk, storage | NAS dashboards, ZFS pools, storage stats |
-| **security** | siem, opensearch, security, threat, detection | SIEM dashboards, security logs |
-| **configuration** | config, setting, setup, preferences | Configuration screens, settings panels |
-| **deployment** | deploy, install, provision, terraform, ansible | Deployment progress, terraform output |
-| **misc** | (anything else) | Uncategorized screenshots |
-
-**Pro Tip:** Include category keywords in your filename for accurate auto-categorization.
-
----
-
-## PART 5: TROUBLESHOOTING
-
-### Problem: "Could not determine project"
-**Solution:** Use `--project` flag explicitly:
-```bash
-python3 scripts/organize-screenshots.py ~/screenshots --project PRJ-HOME-001
-```
-
-### Problem: "Duplicate detected"
-**Solution:** This is expected if you've already organized this file. The tool detects duplicates by content (MD5 hash), not filename.
-
-### Problem: "Wrong category assigned"
-**Solution:** Rename file to include category keyword before organizing:
-```bash
-mv screenshot.png grafana-dashboard-overview.png
-```
-
-### Problem: "PIL not installed" warning
-**Solution:** Install Pillow for full metadata extraction:
-```bash
-pip install Pillow
-```
-(Tool works without it, but metadata will be limited)
-
-### Problem: "Permission denied"
-**Solution:** Ensure script is executable:
-```bash
-chmod +x scripts/organize-screenshots.py
-```
-
----
-
-## PART 6: ADVANCED USAGE
-
-### Batch Processing Multiple Projects
-```bash
-# Organize screenshots for multiple projects in one go
-for project in PRJ-HOME-001 PRJ-HOME-002 PRJ-SDE-002; do
-  if [ -d ~/screenshots/$project ]; then
-    python3 scripts/organize-screenshots.py ~/screenshots/$project --project $project
-  fi
-done
-```
-
-### Custom Screenshot Directory Structure
-```bash
-# If you have screenshots already organized by project:
-~/screenshots/
-├── homelab-network/     # PRJ-HOME-001
-├── virtualization/      # PRJ-HOME-002
-└── monitoring/          # PRJ-SDE-002
-
-# Organize each:
-python3 scripts/organize-screenshots.py ~/screenshots/homelab-network --project PRJ-HOME-001
-python3 scripts/organize-screenshots.py ~/screenshots/virtualization --project PRJ-HOME-002
-python3 scripts/organize-screenshots.py ~/screenshots/monitoring --project PRJ-SDE-002
-```
-
-### Re-organizing Existing Screenshots
-```bash
-# If you need to recategorize, just re-run the tool
-# It will detect existing files as duplicates and skip them
-# To force re-organization, delete the organized files first
-```
-
----
-
-## QUICK REFERENCE CARD
-
-```bash
-# Basic usage
-cd ~/Portfolio-Project
-python3 scripts/organize-screenshots.py ~/screenshots --project PRJ-XXX-###
-
-# With dry-run (test first)
-python3 scripts/organize-screenshots.py ~/screenshots --project PRJ-XXX-### --dry-run
-
-# View help
-python3 scripts/organize-screenshots.py --help
-
-# Check results
-cat projects/PATH/TO/PROJECT/assets/screenshots/README.md
-ls -lh projects/PATH/TO/PROJECT/assets/screenshots/
-
-# Commit to git
-git add projects/*/assets/screenshots/
-git commit -m "Add screenshots for PROJECT"
-git push
-```
-
----
-
-## EXPECTED OUTPUT STRUCTURE
-
-After organizing, your project will have:
-
-```
-projects/PROJECT/assets/screenshots/
-├── dashboards/
-│   ├── PRJ-XXX_dashboards_01_20241107.png
-│   ├── PRJ-XXX_dashboards_02_20241107.png
-│   └── PRJ-XXX_dashboards_03_20241107.png
-├── infrastructure/
-│   ├── PRJ-XXX_infrastructure_01_20241107.png
-│   └── PRJ-XXX_infrastructure_02_20241107.png
-├── networking/
-│   └── PRJ-XXX_networking_01_20241107.png
-├── README.md                      # Generated catalog with previews
-└── screenshots-index.json         # Machine-readable index
-```
-
-The README.md will show:
-- Image previews (GitHub renders these automatically)
-- Original filenames
-- Metadata (size, dimensions, date)
-- Category summaries
-- Usage instructions
-
----
-
-## TIPS FOR PORTFOLIO PRESENTATION
-
-1. **Quality over Quantity:**
-   - 10-15 high-quality screenshots per project is enough
-   - Show different aspects (overview, detail, metrics, configuration)
-
-2. **Tell a Story:**
-   - Start with architecture/overview screenshots
-   - Then show detailed configurations
-   - End with monitoring/results
-
-3. **Consistency:**
-   - Use same browser/theme for all screenshots
-   - Same resolution when possible
-   - Organize as you go (don't wait until the end)
-
-4. **Documentation:**
-   - The auto-generated README is great for GitHub
-   - Reference screenshots in your project READMEs:
-     ```markdown
-     ![Infrastructure Dashboard](./assets/screenshots/dashboards/PRJ-SDE-002_dashboards_01_20241107.png)
-     ```
-
----
-
-## NEXT STEPS
-
-1. ✅ Read this guide
-2. ✅ Take screenshots of your systems
-3. ✅ Organize with the tool
-4. ✅ Review generated catalogs
-5. ✅ Commit to git
-6. ✅ View on GitHub to see inline images
-
-**Time Estimate:**
-- Taking screenshots: 30-60 minutes per project
-- Organizing with tool: 5-10 minutes per batch
-- Review and commit: 10-15 minutes
-
-**Total: 1-2 hours for comprehensive screenshot documentation**
-
----
-
-**Questions?** See `scripts/README.md` for detailed tool documentation.
-
-**Last Updated:** 2024-11-07
+*Portfolio Supporting Materials – Screenshot & Evidence Guide*
