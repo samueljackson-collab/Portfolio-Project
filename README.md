@@ -1,17 +1,19 @@
 # Hi, I'm Sam Jackson!
-**[System Development Engineer](https://github.com/samueljackson-collab)** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **Freelance Full-Stack Web Developer**
+**System Development Engineer** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **Freelance Full-Stack Web Developer**
+
+> 📢 **Transparency update (Nov 2025):** I am currently establishing my public GitHub presence. Until the profile is live, all project links below refer to planning documentation within this repository rather than external code repositories.
 
 [![CI](https://github.com/samueljackson-collab/Portfolio-Project/workflows/CI/badge.svg?branch=main)](https://github.com/samueljackson-collab/Portfolio-Project/actions/workflows/ci.yml)
 
 ***Building reliable systems, documenting clearly, and sharing what I learn. I turn ambiguous requirements into runbooks, dashboards, and repeatable processes.***
 
-**Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
+**Status key:** 🟢 Done (code + evidence published) · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation in progress · ⚠️ Evidence pending publication
 
 > **Portfolio Note:** This repository is actively being built. Projects marked 🟢 are technically complete but documentation/evidence is being prepared (📝). Projects marked 🔵 are planned roadmap items, and 🔄 indicates recovery/rebuild efforts are underway.
 
 > **Note:** Some project directories referenced below contain planning documentation and structure but are awaiting evidence/asset uploads. Check individual project READMEs for current status.
 
-> 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
+> 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md) | [Gap Remediation Blueprint](./GAP_REMEDIATION_BLUEPRINT.md)
 
 ---
 ## 🧭 Reviewer Fast Reference
@@ -77,22 +79,24 @@ System-minded engineer specializing in building, securing, and operating infrast
 - **Quality & Process:** runbooks, acceptance criteria, regression checklists, change control
 
 ---
-## 🟢 Completed Projects (📝 Documentation in Progress)
+## ⚠️ Documented-Only Projects (Evidence Pending)
+
+The initiatives below have detailed planning artifacts, but their automation, code, and configuration exports are not yet published. They remain documentation-first until the GitHub remediation work in [Gap Remediation Blueprint](./GAP_REMEDIATION_BLUEPRINT.md) is delivered.
 
 ### Homelab & Secure Network Build
-**Status:** 🟢 Complete · 📝 Docs pending
+**Status:** ⚠️ Evidence pending
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets) *(being prepared)*
+**Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets) *(to be published alongside sanitized configs)*
 
 ### Virtualization & Core Services
-**Status:** 🟢 Complete · 📝 Docs pending
+**Status:** ⚠️ Evidence pending
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets) *(being prepared)*
+**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets) *(publication scheduled post-GitHub migration)*
 
 ### Observability & Backups Stack
-**Status:** 🟢 Complete · 📝 Docs pending
+**Status:** ⚠️ Evidence pending
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
+**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets) *(to be exported from Grafana)*
 
 ---
 ## 🔄 Past Projects Requiring Recovery
@@ -150,5 +154,5 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 
 ---
 ## 🤳 Connect
-[GitHub](https://github.com/samueljackson-collab) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
-[![GitHub Profile](https://img.shields.io/badge/GitHub-Portfolio-181717?style=flat&logo=github)](https://github.com/samueljackson-collab)
+- GitHub profile: *going live with migrated repositories — link will be published here by Week 4 (see roadmap).* 
+- [LinkedIn](https://www.linkedin.com/in/sams-jackson)
