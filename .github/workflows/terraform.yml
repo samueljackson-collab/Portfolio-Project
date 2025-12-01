@@ -17,136 +17,107 @@ on:
   workflow_dispatch:
 
 env:
-  TF_VERSION: '1.5.0'
+  TF_VERSION: '1.6.6'
   AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
   TFSTATE_BUCKET: ${{ secrets.TFSTATE_BUCKET }}
+  TFSTATE_DYNAMODB_TABLE: ${{ secrets.TFSTATE_DYNAMODB_TABLE }}
   TERRAFORM_DIR: terraform
 
-# OIDC Configuration:
-# To use OIDC authentication instead of access keys:
-# 1. Create an OIDC provider in AWS IAM (see terraform/README.md)
-# 2. Create an IAM role with the trust policy from terraform/iam/github_oidc_trust_policy.json
-# 3. Attach the policy from terraform/iam/github_actions_ci_policy.json to the role
-# 4. Set the role ARN in GitHub secrets as AWS_ROLE_ARN_PLAN and AWS_ROLE_ARN_APPLY
-# 5. Uncomment the OIDC permission and role-to-assume lines below
-
 permissions:
-  id-token: write  # Required for OIDC token generation
+  id-token: write
   contents: read
   pull-requests: write
 
 jobs:
   terraform-plan:
-    name: Terraform Plan & Static Analysis
+    name: Terraform Plan & Security
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ env.TERRAFORM_DIR }}
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # OIDC Authentication (uncomment when ready)
-      # - name: Configure AWS credentials via OIDC
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN_PLAN }}
-      #     aws-region: ${{ env.AWS_REGION }}
-      #     role-session-name: GitHubActions-TerraformPlan
+      - name: Configure AWS credentials via OIDC
+        if: secrets.AWS_ROLE_ARN_PLAN != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_PLAN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-TerraformPlan
 
-      # Legacy authentication (using access keys)
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS credentials (legacy access keys)
+        if: secrets.AWS_ROLE_ARN_PLAN == ''
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Format Check
         id: fmt
         run: terraform fmt -check -recursive
-        continue-on-error: true
 
       - name: Terraform Init
         id: init
         run: |
+          EXTRA_BACKEND=""
+          if [[ -n "${TFSTATE_DYNAMODB_TABLE}" ]]; then
+            EXTRA_BACKEND="-backend-config=\"dynamodb_table=${TFSTATE_DYNAMODB_TABLE}\""
+          fi
           terraform init \
-            -backend-config="bucket=${{ env.TFSTATE_BUCKET }}" \
-            -backend-config="region=${{ env.AWS_REGION }}"
+            -backend-config="bucket=${TFSTATE_BUCKET}" \
+            -backend-config="region=${AWS_REGION}" \
+            ${EXTRA_BACKEND}
 
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
 
-      - name: Install TFLint
-        run: |
-          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-          tflint --version
-
-      - name: Run TFLint
-        id: tflint
-        run: |
-          tflint --init
-          tflint --format compact
-
-      - name: Install Checkov
-        run: |
-          pip install checkov
-          checkov --version
-
-      - name: Run Checkov
-        id: checkov
-        run: |
-          checkov -d . --quiet --compact --framework terraform
-        continue-on-error: true
+      - name: tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working-directory: ${{ env.TERRAFORM_DIR }}
 
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -out=tfplan
-        continue-on-error: true
 
       - name: Comment PR with Plan
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### TFLint 🔍\`${{ steps.tflint.outcome }}\`
-            #### Checkov 🔒\`${{ steps.checkov.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            const summary = `#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖 \`${{ steps.validate.outcome }}\`
+            #### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
 
             <details><summary>Show Plan</summary>
 
             \`\`\`terraform
-            ${{ steps.plan.outputs.stdout }}
+            ${{ steps.plan.outputs.stdout || 'Plan output available in workflow logs.' }}
             \`\`\`
 
-            </details>
-
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            </details>`
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: output
+              body: summary
             });
 
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
-
       - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tfplan
           path: ${{ env.TERRAFORM_DIR }}/tfplan
@@ -157,44 +128,49 @@ jobs:
     needs: terraform-plan
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: production  # Requires manual approval in GitHub environment settings
+    environment: production
     defaults:
       run:
         working-directory: ${{ env.TERRAFORM_DIR }}
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # OIDC Authentication (uncomment when ready)
-      # - name: Configure AWS credentials via OIDC
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN_APPLY }}
-      #     aws-region: ${{ env.AWS_REGION }}
-      #     role-session-name: GitHubActions-TerraformApply
+      - name: Configure AWS credentials via OIDC
+        if: secrets.AWS_ROLE_ARN_APPLY != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_APPLY }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-TerraformApply
 
-      # Legacy authentication (using access keys)
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS credentials (legacy access keys)
+        if: secrets.AWS_ROLE_ARN_APPLY == ''
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Init
         run: |
+          EXTRA_BACKEND=""
+          if [[ -n "${TFSTATE_DYNAMODB_TABLE}" ]]; then
+            EXTRA_BACKEND="-backend-config=\"dynamodb_table=${TFSTATE_DYNAMODB_TABLE}\""
+          fi
           terraform init \
-            -backend-config="bucket=${{ env.TFSTATE_BUCKET }}" \
-            -backend-config="region=${{ env.AWS_REGION }}"
+            -backend-config="bucket=${TFSTATE_BUCKET}" \
+            -backend-config="region=${AWS_REGION}" \
+            ${EXTRA_BACKEND}
 
       - name: Download Plan Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: tfplan
           path: ${{ env.TERRAFORM_DIR }}
@@ -204,7 +180,7 @@ jobs:
 
       - name: Comment on Success
         if: success()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

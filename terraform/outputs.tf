@@ -1,24 +1,35 @@
 output "vpc_id" {
-  description = "VPC ID"
-  value       = aws_vpc.twisted_monk.id
+  description = "ID of the VPC"
+  value       = module.vpc.vpc_id
 }
 
 output "public_subnet_ids" {
-  description = "List of public subnet IDs"
-  value       = [for s in aws_subnet.public : s.id]
+  description = "Public subnet IDs"
+  value       = module.vpc.public_subnet_ids
 }
 
 output "private_subnet_ids" {
-  description = "List of private subnet IDs"
-  value       = [for s in aws_subnet.private : s.id]
+  description = "Private subnet IDs"
+  value       = module.vpc.private_subnet_ids
+}
+
+output "assets_bucket_name" {
+  description = "S3 bucket for application assets"
+  value       = module.app.assets_bucket_name
 }
 
 output "rds_endpoint" {
-  description = "RDS instance endpoint (empty if RDS not created)"
-  value       = var.create_rds ? aws_db_instance.postgres[0].address : ""
+  description = "Endpoint of the RDS instance"
+  value       = module.app.rds_endpoint
+  sensitive   = true
 }
 
-output "assets_bucket" {
-  description = "S3 bucket used for app assets"
-  value       = aws_s3_bucket.app_assets.bucket
+output "alert_topic_arn" {
+  description = "SNS topic used for monitoring alerts"
+  value       = module.monitoring.alert_topic_arn
+}
+
+output "flow_log_id" {
+  description = "VPC flow log ID"
+  value       = module.monitoring.flow_log_id
 }

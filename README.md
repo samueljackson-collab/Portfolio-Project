@@ -33,6 +33,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 ## 📘 Guides
 
 - [Wiki.js Setup Guide](./docs/wiki-js-setup-guide.md) — Complete walkthrough to deploy, harden, and populate a Wiki.js instance for portfolio documentation.
+- [Terraform Infrastructure Stack](./terraform/README.md) — Modular VPC/app/monitoring Terraform with CI/CD, security guardrails, and diagrams in [docs/architecture](./docs/architecture/terraform-architecture.md).
 
 ## 💻 UI Components
 
