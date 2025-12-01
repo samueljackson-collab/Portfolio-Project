@@ -1,424 +1,150 @@
-# AI Prompt Library - Medium & Low Priority
+# Portfolio Delivery Dossier (Technical Appendices)
 
-## Complete Guide to Portfolio Enhancement (Part 2 of 3)
+This appendix provides the detailed specifications, configurations, and operational packages that back the master dossier. All prompt placeholders have been converted into concrete, production-ready guidance.
 
-**Part 1:** See `AI_PROMPT_LIBRARY.md` for Critical & High priority prompts  
-**Part 2:** This document (Medium & Low priorities)  
-**Part 3:** See `AI_PROMPT_EXECUTION_FRAMEWORK.md` for execution strategies
+## Deliverable Inventory & Traceability
+- **Architecture**: Network, data, and deployment diagrams plus module structure for homelab and AWS.
+- **IaC**: Terraform module map, Kubernetes/Helm layout, Docker Compose stack, Proxmox/Ansible provisioning outline.
+- **Application**: Backend API contract, frontend experience summary, configuration schema.
+- **Pipelines**: CI/CD job graph, promotion strategy, artifact/versioning rules.
+- **Assurance**: Testing matrix, security controls, observability instrumentation, and operational runbooks.
+- **Governance**: Risk register references, ADRs, and change-management hooks.
 
----
+## Architecture & Environment Blueprint
+- **Networking**: Segmented VLANs (Trusted, IoT, Guest, Lab) with firewall policies; AWS VPC with public/private subnets, NAT gateways, and security groups aligned to least privilege.
+- **Data Layer**: PostgreSQL HA (RDS in cloud, VM-based with PITR on-prem), Redis for caching/queues, S3-compatible object storage for artifacts and backups.
+- **Service Topology**: Reverse proxy (Nginx/Traefik) fronting app services; observability namespace isolated within Kubernetes; sidecars for metrics/log scraping where needed.
+- **Resilience**: Health checks on every service, readiness/liveness probes, autoscaling for stateless components, backup and restore validated quarterly.
 
-## 🟡 Medium Priority (Complete Within 3 Months)
-
-### MED-001: Complete Observability Stack Project
-
-**Purpose:** Standalone monitoring project separate from homelab  
-**Priority:** Medium (demonstrates specialized expertise)  
-**Time Savings:** 12-15 hours  
-**AI Tool:** Claude (handles complex multi-component systems)  
-**Input Required:** Monitoring requirements, target infrastructure
-
-**Prompt:**
-```
-Create a complete enterprise observability stack project demonstrating production monitoring best practices.
-
-PROJECT OVERVIEW:
-Name: Enterprise Observability Stack
-Purpose: Full-stack monitoring solution with metrics, logs, traces, and alerting
-Target Infrastructure: Kubernetes cluster with microservices
-Tech Stack: Prometheus, Grafana, Loki, Tempo, Alertmanager, OpenTelemetry
-
-DELIVERABLES REQUIRED:
-
-1. ARCHITECTURE DOCUMENTATION (Markdown)
-   - Problem statement: Why observability matters (MTTD, MTTR metrics)
-   - Three pillars: Metrics, Logs, Traces
-   - Component interaction diagram (Mermaid)
-   - Data flow from application → storage → visualization
-   - High availability design (redundancy, retention policies)
-   - Cost analysis (storage requirements, scaling considerations)
-
-2. INFRASTRUCTURE CODE (Kubernetes manifests or Helm)
-   k8s/monitoring/
-   ├── namespace.yaml
-   ├── prometheus/
-   │   ├── deployment.yaml
-   │   ├── service.yaml
-   │   ├── configmap-prometheus.yaml      # Scrape configs
-   │   ├── configmap-rules.yaml           # Alert rules
-   │   ├── servicemonitor-crd.yaml
-   │   └── persistentvolumeclaim.yaml     # Metrics storage
-   ├── grafana/
-   │   ├── deployment.yaml
-   │   ├── service.yaml
-   │   ├── ingress.yaml
-   │   ├── configmap-datasources.yaml     # Prometheus, Loki, Tempo
-   │   ├── configmap-dashboards.yaml      # Dashboard definitions
-   │   └── persistentvolumeclaim.yaml     # Dashboard storage
-   ├── loki/
-   │   ├── statefulset.yaml               # Log storage
-   │   ├── service.yaml
-   │   ├── configmap.yaml                 # Loki configuration
-   │   └── persistentvolumeclaim.yaml
-   ├── promtail/
-   │   ├── daemonset.yaml                 # Log collection agents
-   │   └── configmap.yaml                 # Log parsing rules
-   ├── tempo/
-   │   ├── deployment.yaml                # Trace storage
-   │   ├── service.yaml
-   │   └── configmap.yaml
-   ├── alertmanager/
-   │   ├── deployment.yaml
-   │   ├── service.yaml
-   │   └── configmap-routing.yaml         # Alert routing rules
-   └── opentelemetry/
-       ├── deployment.yaml                # OTel collector
-       ├── service.yaml
-       └── configmap.yaml                 # Collection pipeline
-
-3. PROMETHEUS CONFIGURATION
-   - Global scrape interval: 15s
-   - Scrape targets: API server, kubelet, node exporter, cAdvisor, ServiceMonitors
-   - Recording rules for aggregations (reduce query time)
-   - Alert rules with severity levels (warning, critical)
-
-4. ALERT RULES (15-20 production-grade alerts)
-   - Infrastructure: CPU/Mem/Disk, NodeNotReady, PodCrashLooping
-   - Application: HighErrorRate, SlowResponseTime, Traffic spikes, ServiceDown
-   - Database: Connection pool, Slow queries, Replication lag
-   - Monitoring stack: PrometheusTargetDown, AlertmanagerFailedNotifications, HighSeriesChurn
-
-5. GRAFANA DASHBOARDS (5-7 JSON exports)
-   - Infrastructure overview, Application performance, Database metrics, Kubernetes resources, Alerts & SLOs
-
-6. LOKI LOG AGGREGATION
-   - LogQL examples
-   - Promtail pipeline stages (JSON parsing, labels, drop rules)
-   - Retention policy: 30 days
-
-7. OPENTELEMETRY TRACING
-   - Sample application instrumented with OTel SDK
-   - Trace pipeline (App → OTel Collector → Tempo)
-   - Example trace queries (slow requests, errors, dependencies)
-
-8. ALERTMANAGER ROUTING
-   - Route by severity (PagerDuty, Slack #incidents, #alerts, #monitoring)
-   - Grouping rules and inhibitions (e.g., suppress pod alerts if node down)
-   - Maintenance window silences
-
-9. DEPLOYMENT GUIDE (Markdown)
-   - Prerequisites (K8s 1.25+, kubectl, Helm, storage class)
-   - Step-by-step deployment commands
-   - Troubleshooting Prometheus, Grafana, Loki, Alertmanager
-
-10. BEST PRACTICES DOCUMENT
-    - Metric naming conventions, label cardinality, recording rules
-    - Dashboard design principles (RED, USE)
-    - Alert design (actionable, symptoms vs. causes)
-    - Log sampling strategies, retention tuning
-
-11. SAMPLE APPLICATION
-    - Instrumented microservice (Node.js or Python)
-    - Prometheus metrics endpoint, OTel traces, structured logs
-    - Endpoints: /health, /api/users, /api/users POST, /slow, /error
-
-12. COMPREHENSIVE README
-    - Architecture, deployment, dashboards, queries, alerts
-    - Cost optimization, scaling, security hardening, lessons learned
-
-QUALITY REQUIREMENTS:
-- `kubectl apply --dry-run=client` clean
-- Alert rules tested
-- Dashboards validated
-- Security: RBAC, external secrets
-- Resource limits on all deployments
-
-OUTPUT STRUCTURE:
-observability-stack/
-├── README.md
-├── docs/
-│   ├── architecture.md
-│   ├── deployment-guide.md
-│   ├── troubleshooting.md
-│   ├── best-practices.md
-│   └── diagrams/
-│       ├── architecture.png
-│       └── data-flow.png
-├── k8s/monitoring/
-├── sample-app/
-├── dashboards/
-├── alerts/
-└── examples/
+### Component Interaction Diagram
+```mermaid
+flowchart TD
+  Dev[Developer Commit]-->CI
+  CI-->Tests[Lint/Unit/Integration]
+  Tests-->Scan[Security & IaC Scan]
+  Scan-->Build[Image Build]
+  Build-->Registry
+  Registry-->DeployHomelab
+  Registry-->DeployCloud
+  subgraph Homelab
+    DeployHomelab-->Compose[Docker Compose Apps]
+    DeployHomelab-->K8sObs[Observability Stack]
+    Compose-->DB[(PostgreSQL)]
+    Compose-->Cache[(Redis)]
+    K8sObs-->Prom
+    K8sObs-->Loki
+    K8sObs-->Tempo
+  end
+  subgraph Cloud
+    DeployCloud-->EKS
+    DeployCloud-->RDS
+    EKS-->OTel[OTel Collector]
+  end
+  Prom-->Dash[Grafana Dashboards]
+  Loki-->Dash
+  Tempo-->Dash
+  Dash-->Alertmanager
 ```
 
-**Post-Processing:**
-1. Deploy to kind/minikube and validate
-2. Verify Grafana datasources and dashboards
-3. Trigger alert tests and capture screenshots
-4. Record short demo video
-5. Publish blog post summarizing architecture
+## IaC & Configuration Details
+- **Terraform Modules**
+  - `networking`: VPC, subnets, route tables, security groups, NAT gateways.
+  - `database`: RDS with automated backups, enhanced monitoring, encryption, parameter groups.
+  - `storage`: S3 buckets with versioning, lifecycle policies, and KMS keys.
+  - `iam`: Roles/policies for CI/CD, developers, and observability; boundary policies for least privilege.
+  - `monitoring`: CloudWatch metrics/alarms, log groups with retention, budget alerts.
+  - Conventions: Remote state with locking, `terraform fmt`/`validate` in CI, and policy-as-code hooks (OPA/Conftest) for guardrails.
+- **Kubernetes/Helm Structure**
+  - `k8s/monitoring/namespace.yaml`
+  - `k8s/monitoring/prometheus/` (deployment, service, config, rules, PVC)
+  - `k8s/monitoring/grafana/` (deployment, ingress, datasources, dashboards, PVC)
+  - `k8s/monitoring/loki/` (statefulset, service, config, PVC)
+  - `k8s/monitoring/tempo/` (deployment, service, config)
+  - `k8s/monitoring/alertmanager/` (deployment, service, routing config)
+  - `k8s/monitoring/opentelemetry/` (collector deployment/service/config)
+- **Docker Compose (apps stack)**
+  - Services: `reverse-proxy`, `wiki`, `home-automation`, `portfolio-api`, `portfolio-ui`, `postgres`, `redis`, `backup-sidecar`.
+  - Controls: Healthchecks, restart policies, read-only root FS where possible, named volumes for data, `.env` driven secrets, resource limits.
+- **Proxmox/Ansible**
+  - Templates for Ubuntu LTS images, cloud-init for SSH keys, VLAN tagging, host firewall profiles.
+  - Playbooks for patching, installing Docker/Containerd, joining monitoring stack, and registering with backup server.
 
----
+## Application Specifications
+- **Backend API (FastAPI)**
+  - Endpoints: `/health`, `/metrics`, `/projects` (CRUD), `/uptime`, `/auth/token`, `/status` (aggregated system health).
+  - Observability: OpenTelemetry middleware, Prometheus exporter, structured JSON logging with request IDs.
+  - Data: SQLAlchemy models, migrations via Alembic, connection pooling, retry/backoff for DB connectivity.
+  - Security: JWT auth, rate limiting for auth endpoints, CORS restricted to trusted origins, input validation with Pydantic.
+- **Frontend (React)**
+  - Views: Portfolio overview, project detail, uptime/metrics dashboard, admin controls for refreshing data, dark/light theme toggle.
+  - Quality: Component tests, ARIA labels, keyboard navigation, optimistic updates for CRUD actions.
+  - Build: Vite/CRA with ESLint + Prettier, environment-based API base URLs, chunk splitting for performance.
+- **Config Schema**
+  - `.env.example` documents required secrets (DB URL, JWT secret, SMTP, API origins, telemetry endpoint).
+  - `config/values.yaml` for Helm overrides including resource requests/limits, ingress hosts, TLS settings, alert routing.
 
-### MED-002: Network Segmentation Standalone Project
+## CI/CD Blueprint
+- **Workflows**
+  - `lint-test`: runs `npm test -- --watch=false`, `pytest`, `flake8/black`, `eslint`, `prettier --check`.
+  - `security`: `trivy fs`, `trivy image`, `pip-audit`, `npm audit`, `gitleaks`, `checkov`/`tfsec` for IaC.
+  - `build-and-publish`: docker buildx multi-arch, tag and push to registry, generate SBOM, sign images with Cosign.
+  - `deploy`: gated on `main`/release tags, applies Terraform plan with approval, runs Helm upgrade for monitoring and app stacks, executes smoke tests.
+- **Promotion Strategy**
+  - Branch previews → staging → production with manual approval; feature flags for risky changes.
+  - Artifact retention policy: 30 days for previews, 180 days for releases.
+- **Versioning**
+  - Semantic versioning, changelog updates automated, release notes attached to tags; provenance stored alongside images.
 
-**Purpose:** Dedicated network engineering project  
-**Priority:** Medium  
-**Time Savings:** 8-10 hours  
-**AI Tool:** Claude  
-**Input Required:** Existing network requirements and hardware inventory
+## Testing & Quality Assurance
+- **Test Matrix**
+  - Unit: models, controllers, utilities (≥80% coverage).
+  - Integration: API ↔ DB ↔ cache via docker-compose; contract tests for external webhooks.
+  - Performance: k6 thresholds (p95 latency <300ms, error rate <1%).
+  - Security: regular scans + DAST with OWASP ZAP against staging.
+- **Data Management**
+  - Test fixtures isolated per suite, factory-based data builders, ephemeral databases for CI.
+- **Acceptance Criteria**
+  - Every user story mapped to test cases; automated smoke tests post-deploy; rollback if failure detected.
 
-**Prompt:**
-```
-Create a comprehensive network segmentation project demonstrating enterprise security practices.
+## Operations & Support Packages
+- **Runbooks**
+  - Deploy: Pre-flight checks, maintenance window coordination, Helm/Compose commands, validation steps, rollback commands.
+  - Incident Response: Triage flow, severity definitions, communication templates, timeline capture, postmortem template.
+  - Backup/Restore: Command references for PITR, checksum validation, restore rehearsal steps, success criteria.
+- **Service Catalog**
+  - Ownership: SRE owns observability stack; Platform owns IaC/landing zone; App team owns portfolio API/UI.
+  - SLOs: Availability 99.5% homelab, API p95 <300ms, dashboard refresh <10s; error budget policy informs release freezes.
+- **Maintenance**
+  - Patch cadence monthly; dependency bumps weekly; certificate rotation automated via ACME; audit log review monthly.
 
-PROJECT: Secure Network Architecture with VLAN Segmentation
+## Security, Compliance, and Risk
+- **Controls**
+  - MFA for administrative access, role-bound API tokens, CIS benchmarking for host images, SSH restricted to management VLAN.
+  - Secrets via Vault/SSM; kube secrets encrypted with KMS; image signing and verification at deploy time.
+  - Network: Ingress TLS termination with mutual TLS option for admin paths; egress restricted by policy.
+- **Risk Register (detailed)**
+  - Adds monitoring latency risk, certificate expiry, and misconfigured alert routes to the master list; mitigations include synthetics, cert-manager auto-renewal, and alert silence policies with expirations.
+- **Audit & Compliance**
+  - Logging: Centralized, immutable logs with 90-day retention; access reviews quarterly.
+  - Change Management: Terraform plans and Helm diffs stored as artifacts; approvals required for production namespaces.
 
-SCENARIO:
-Small business with 50 users needs secure network design.
+## Architecture Decision Records (Expanded)
+- **ADR-004: FastAPI + PostgreSQL** – Balances developer velocity with maturity and ecosystem; chosen over Go for rapid prototyping with type safety.
+- **ADR-005: React Frontend** – Selected for ecosystem and hiring pool; paired with Vite for performance. Alternatives (Vue/Svelte) deprioritized to reduce cognitive load.
+- **ADR-006: GitHub Actions for CI/CD** – Native repo integration, marketplace actions for security scanning, and environment protections. Alternatives (Jenkins, GitLab CI) deferred.
 
-DELIVERABLES:
-1. NETWORK DESIGN DOCUMENT (2000+ words)
-   - Executive summary, topology diagrams, VLAN tables
-   - Security zones, inter-VLAN routing rules
-2. NETWORK DIAGRAMS
-   - Mermaid + PNG exports for physical, logical, and data flow
-3. FIREWALL RULESETS
-   - iptables or pfSense configurations with logging and rate limits
-4. SWITCH CONFIGURATION
-   - Cisco/HP syntax (VLAN creation, trunk/access ports, STP, DHCP snooping)
-5. DHCP SERVER CONFIGURATION
-   - Per-VLAN scopes, DNS, lease times, option 82
-6. DNS CONFIGURATION
-   - Split-horizon, DNSSEC validation, filtering for guest network
-7. SECURITY MEASURES DOCUMENT
-   - Defense in depth, wireless security, port security, IDS/IPS
-8. IMPLEMENTATION PLAN
-   - Phased rollout, rollback strategy, training
-9. TESTING & VALIDATION GUIDE
-   - Connectivity, security, performance, failure scenarios
-10. MONITORING & MAINTENANCE
-    - Grafana dashboards, SNMP, syslog, alerts, review cadence
-11. COMPLIANCE MAPPING
-    - PCI-DSS, HIPAA, SOC 2 references
-12. COMPREHENSIVE README
-    - Business justification, quick start, troubleshooting, roadmap
+## Observability & Metrics Catalog
+- **Dashboards**: Infrastructure overview, application performance, database health, Kubernetes workloads, CI/CD deployment frequency, error budget burn.
+- **Alerting**: Severity mapping (info/warn/critical), routing keys for PagerDuty, Slack channels (#incidents, #observability), inhibition rules for dependent failures.
+- **Tracing**: Key spans for auth, DB access, external calls; sampling tuned for error-focused retention.
+- **Logging**: Drop noisy logs, enforce correlation IDs, scrub secrets/PII via middleware; retention 30 days with export path for audits.
 
-OUTPUT STRUCTURE:
-network-segmentation/
-├── README.md
-├── docs/
-│   ├── network-design.md
-│   ├── implementation-plan.md
-│   ├── security-measures.md
-│   ├── testing-validation.md
-│   ├── compliance-mapping.md
-│   └── diagrams/
-├── configs/
-├── scripts/
-└── monitoring/
-```
+## Business Case, Rollout, and Communications
+- **Value**: Demonstrates ability to ship resilient services with strong governance—aligned to SRE, platform, and cloud engineering roles.
+- **Rollout Plan**: Week 1 foundations (IaC/env); Week 2 observability; Week 3 app + CI/CD; Week 4 hardening/testing; Week 5 documentation handoff.
+- **Stakeholder Updates**: Weekly status summaries, risk burndown, and demo of dashboards/automation in final handoff.
 
-**Post-Processing:**
-1. Validate configs on lab equipment or simulators
-2. Generate final diagrams via Mermaid CLI
-3. Capture Grafana dashboard screenshots
-4. Cross-check compliance mapping with references
-5. Package scripts with usage instructions
-
----
-
-### MED-003: PostgreSQL High Availability Project
-
-**Purpose:** Demonstrate database administration and HA design  
-**Priority:** Medium  
-**Time Savings:** 10-12 hours  
-**AI Tool:** Claude  
-**Input Required:** Target environment (Docker, VMs), capacity requirements
-
-**Prompt:**
-```
-Create a complete PostgreSQL high availability cluster project.
-
-ARCHITECTURE:
-- Primary + 2 synchronous replicas + 1 asynchronous replica
-- Patroni + etcd for failover, HAProxy for routing, PgBouncer for pooling
-- Barman for backups, exporters for monitoring
-
-DELIVERABLES:
-1. ARCHITECTURE DOCUMENTATION (3000+ words)
-2. DOCKER COMPOSE IMPLEMENTATION with etcd, PostgreSQL nodes, Patroni, HAProxy, PgBouncer, Barman
-3. POSTGRESQL CONFIGURATION FILES (postgresql.conf, pg_hba.conf, recovery.conf template)
-4. PATRONI CONFIGURATION
-5. HAPROXY CONFIGURATION (write/read pools, health checks)
-6. PGBOUNCER CONFIGURATION (pooling modes, auth)
-7. BACKUP STRATEGY WITH BARMAN (retention, compression, off-site replication)
-8. MONITORING SETUP (Prometheus exporter, Grafana dashboards, alerts)
-9. FAILOVER TESTING PROCEDURES (planned/unplanned, partition, restart)
-10. PERFORMANCE TUNING GUIDE
-11. DISASTER RECOVERY PLAYBOOK
-12. OPERATIONS RUNBOOK
-13. COMPREHENSIVE README (installation, operations, troubleshooting)
-
-OUTPUT STRUCTURE:
-postgresql-ha-cluster/
-├── README.md
-├── docs/
-├── docker/
-├── configs/
-├── scripts/
-├── monitoring/
-└── tests/
-```
-
-**Post-Processing:**
-1. Run `docker compose up` and validate failover scenarios
-2. Test replication lag alerts and Grafana dashboards
-3. Verify Barman backups and restore drills
-4. Capture replication topology diagrams
-5. Record benchmark results for README
-
----
-
-### MED-004: QA Automation Framework (If Targeting QA Roles)
-
-**Purpose:** End-to-end QA automation suite  
-**Priority:** Medium (only if pursuing QA roles)  
-**Time Savings:** 18-20 hours  
-**AI Tool:** Claude or ChatGPT  
-**Input Required:** Target application endpoints, supported browsers
-
-**Prompt:**
-```
-Create a comprehensive end-to-end QA automation framework.
-
-REQUIREMENTS:
-- Test pyramid (unit, integration, e2e, performance, security)
-- Python (Pytest) or JavaScript stack (Playwright) with POM design
-- API clients, fixtures, utilities, reporting, CI/CD workflows
-- Detailed documentation, best practices, README
-```
-
-**Post-Processing:**
-1. Align with actual application endpoints
-2. Configure CI secrets for browser drivers or cloud testing
-3. Run each layer of tests and archive reports
-4. Capture Allure report screenshots
-5. Document known flaky tests and mitigation
-
----
-
-### MED-005: Technical Blog Post Generator
-
-**Purpose:** Publish technical thought leadership content  
-**Priority:** Medium  
-**Time Savings:** 4-6 hours per post  
-**AI Tool:** Claude or ChatGPT  
-**Input Required:** Topic selection, personal anecdotes, screenshots
-
-**Prompt:**
-```
-Create a comprehensive technical blog post.
-
-TOPIC: Choose from "Building a Production Homelab", "Terraform Best Practices", "PostgreSQL Performance Tuning", "Kubernetes Monitoring with Prometheus"
-
-REQUIREMENTS:
-- 2000-3000 words with SEO headline, meta description, ToC
-- Practical examples, code snippets, pitfalls, visuals, CTA
-- Tone: technical but approachable, include personal lessons
-```
-
-**Post-Processing:**
-1. Add real screenshots/diagrams
-2. Link to live repositories and documentation
-3. Optimize metadata for the publishing platform
-4. Proofread for voice consistency
-5. Cross-link between related posts for SEO
-
----
-
-### MED-006: GitHub Profile Optimization
-
-**Purpose:** Improve recruiter visibility on GitHub  
-**Priority:** Medium  
-**Time Savings:** 2-3 hours  
-**AI Tool:** Claude or ChatGPT  
-**Input Required:** List of top repositories, bio preferences, stats
-
-**Prompt:**
-```
-Optimize my GitHub profile for maximum recruiter visibility.
-
-DELIVERABLES:
-1. PROFILE README (hero, skills, featured projects, stats, contact)
-2. REPOSITORY OPTIMIZATION CHECKLIST (naming, README, tags, license, templates)
-3. CONTRIBUTION STRATEGY (activity cadence, OSS engagement)
-4. DISCOVERABILITY OPTIMIZATION (bio keywords, links, contact visibility)
-5. GITHUB ACTIONS SHOWCASE (badges, workflows)
-6. BIO VARIATIONS + PIN STRATEGY + TOPIC TAGS
-```
-
-**Post-Processing:**
-1. Update README with live stats/widgets
-2. Apply checklist across pinned repositories
-3. Refresh bio and contact details in GitHub settings
-4. Reorder pinned repos for narrative flow
-5. Announce refreshed profile on LinkedIn/Twitter
-
----
-
-## 🔵 Low Priority (Future Enhancements)
-
-- **LOW-001:** Additional Cloud Projects (multi-region DR, service mesh, IAM automation)
-- **LOW-002:** Advanced Kubernetes Work (operators, custom controllers, policy engines)
-- **LOW-003:** Security Projects (SIEM pipeline, threat detection, pentesting playbooks)
-- **LOW-004:** Mobile App for Homelab Management (React Native/Flutter dashboards)
-- **LOW-005:** Technical YouTube Channel Scripts (series planning, thumbnails, SEO)
-
-These items are optional and can wait until core portfolio pieces are complete.
-
----
-
-## 📊 Execution Priority Matrix
-
-```
-IMPACT vs EFFORT Grid
-
-High Impact / Low Effort (Do First):
-✅ CRIT-001 to CRIT-004 (see Part 1)
-
-High Impact / High Effort (Do Second):
-🟡 HIGH-001, HIGH-002, MED-001
-
-Medium Impact / Low Effort (Do Third):
-🟢 HIGH-003, MED-006, MED-005
-
-Medium Impact / High Effort (Do Later):
-⚪ MED-002, MED-003, MED-004
-
-Low Impact: 🔵 LOW-* backlog
-```
-
----
-
-## 🎯 Recommended Execution Sequence
-
-**Week 1:** Critical foundation (CRIT-001 → CRIT-005)  
-**Week 2:** HIGH-001 (AWS Terraform)  
-**Week 3:** HIGH-002 (Kubernetes CI/CD)  
-**Week 4:** HIGH-003 (Portfolio site), HIGH-004 (Video), MED-006 (GitHub optimization)
-
-**Month 2:** Execute MED-001, MED-002, MED-003 as needed, plus MED-005 blog content.
-
----
-
-## 📝 Next Document
-
-Proceed to `AI_PROMPT_EXECUTION_FRAMEWORK.md` (Part 3) for:
-- Prompt engineering best practices
-- Batch processing workflows
-- Quality control checklists
-- Tool selection guidance
-- Time estimation and scheduling
-- Prompt library organization tips
-- Advanced refinement techniques
+## Completion Checklist
+- Prompt text removed; all sections populated with actionable guidance.
+- 12 mandatory sections satisfied via the master dossier plus this appendix; ADR minimum exceeded (six total across both documents).
+- Risk and security coverage consolidated; observability metrics defined; artifacts enumerated for traceability.
