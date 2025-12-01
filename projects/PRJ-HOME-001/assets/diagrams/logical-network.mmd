@@ -1,0 +1,43 @@
+flowchart LR
+    subgraph Internet
+        WAN[Internet]
+    end
+
+    WAN --> FW[pfsense Firewall]
+
+    subgraph VLANs
+        V10[Trusted VLAN 10]
+        V20[IoT VLAN 20]
+        V30[Guest VLAN 30]
+        V40[Servers VLAN 40]
+        V50[DMZ VLAN 50]
+    end
+
+    FW --> V10
+    FW --> V20
+    FW --> V30
+    FW --> V40
+    FW --> V50
+
+    subgraph Services
+        RADIUS[RADIUS/WPA3]
+        VPN[OpenVPN Admin]
+        SYSLOG[Syslog/SIEM]
+        DNS[Unbound DNSSEC]
+    end
+
+    V10 --> RADIUS
+    V10 --> VPN
+    V40 --> SYSLOG
+    V40 --> DNS
+    V50 --> SYSLOG
+
+    V20 -.blocked.-> V10
+    V30 -.blocked.-> V10
+    V30 -.blocked.-> V40
+    V50 -.limited.-> V40
+
+    classDef trust fill:#e8f5e9,stroke:#2e7d32;
+    classDef untrust fill:#fff3e0,stroke:#f57c00;
+    class V10 trust;
+    class V20,V30,V40,V50 untrust;
