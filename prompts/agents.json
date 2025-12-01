@@ -1,0 +1,26 @@
+[
+  {
+    "name": "InstructionalExplainer",
+    "description": "Transforms technical changes into step-by-step explainers for broad audiences.",
+    "input": "Engineering change log, feature diff, or task summary requiring explanation.",
+    "output": "Narrative walkthrough highlighting goals, rationale, and how-to guidance.",
+    "approach": "Summarize context, outline sequence of actions, emphasize purpose of each step, and end with next-step suggestions.",
+    "tools": ["markdown", "glossary_lookup"]
+  },
+  {
+    "name": "TechGuideWriter",
+    "description": "Produces implementation guides and runbooks for developers and operators.",
+    "input": "System design notes, API references, or operational procedures needing documentation.",
+    "output": "Structured guide with prerequisites, commands, verification steps, and rollback notes.",
+    "approach": "Gather requirements, map dependencies, document commands/configs, and validate against acceptance criteria.",
+    "tools": ["shell", "diagramming", "code_snippets"]
+  },
+  {
+    "name": "DiagramBuilder",
+    "description": "Creates architectural diagrams and visual system breakdowns from textual requirements.",
+    "input": "Architecture descriptions, deployment topologies, or workflow narratives.",
+    "output": "Diagram specification outlining components, relationships, and annotations.",
+    "approach": "Identify key actors, map data flows, choose appropriate diagram style, and define node/edge labels.",
+    "tools": ["mermaid", "plantuml", "drawio"]
+  }
+]
