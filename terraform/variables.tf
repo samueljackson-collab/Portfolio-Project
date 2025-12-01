@@ -10,36 +10,43 @@ variable "aws_region" {
 }
 
 variable "project_tag" {
-  description = "Project name tag applied to all resources"
+  description = "Project tag applied to all resources"
   type        = string
   default     = "twisted-monk"
-
-  validation {
-    condition     = length(var.project_tag) > 0
-    error_message = "Project tag cannot be empty"
-  }
 }
 
 variable "vpc_cidr" {
-  description = "VPC CIDR block"
+  description = "CIDR block for the VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
 
 variable "public_subnet_cidrs" {
-  description = "List of public subnet CIDRs"
+  description = "List of CIDR blocks for public subnets"
   type        = list(string)
-  default     = ["10.0.1.0/24"]
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
 variable "private_subnet_cidrs" {
-  description = "List of private subnet CIDRs"
+  description = "List of CIDR blocks for private subnets"
   type        = list(string)
-  default     = ["10.0.101.0/24"]
+  default     = ["10.0.101.0/24", "10.0.102.0/24"]
+}
+
+variable "enable_nat_gateway" {
+  description = "Deploy a single shared NAT Gateway for private egress"
+  type        = bool
+  default     = true
+}
+
+variable "enable_flow_logs" {
+  description = "Enable VPC Flow Logs to CloudWatch"
+  type        = bool
+  default     = true
 }
 
 variable "create_rds" {
-  description = "Whether to create an RDS instance"
+  description = "Create a PostgreSQL RDS instance for the application"
   type        = bool
   default     = true
 }
@@ -60,6 +67,7 @@ variable "db_password" {
   description = "Database admin password (leave empty to generate)"
   type        = string
   default     = ""
+  sensitive   = true
 }
 
 variable "db_allocated_storage" {
@@ -75,19 +83,37 @@ variable "db_instance_class" {
 }
 
 variable "db_engine_version" {
-  description = "DB engine version"
+  description = "PostgreSQL engine version"
   type        = string
-  default     = "15.3"
+  default     = "15.5"
 }
 
-variable "create_eks" {
-  description = "Whether to create an EKS cluster"
+variable "db_backup_retention" {
+  description = "Backup retention period in days"
+  type        = number
+  default     = 7
+}
+
+variable "assets_bucket_name" {
+  description = "Optional override for the application assets bucket name"
+  type        = string
+  default     = ""
+}
+
+variable "monitoring_alarm_emails" {
+  description = "Email addresses subscribed to alert notifications"
+  type        = list(string)
+  default     = []
+}
+
+variable "monitoring_enable_rds_alarm" {
+  description = "Enable RDS performance alarms"
   type        = bool
-  default     = false
+  default     = true
 }
 
-variable "eks_cluster_name" {
-  description = "EKS cluster name"
-  type        = string
-  default     = "twisted-monk-eks"
+variable "log_retention_days" {
+  description = "Retention in days for CloudWatch Log Groups created by modules"
+  type        = number
+  default     = 30
 }
