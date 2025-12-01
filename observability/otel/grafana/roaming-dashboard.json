@@ -1,0 +1,25 @@
+{
+  "title": "Roaming Simulation Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Active Sessions",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum(roaming_sessions_active)" }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "type": "graph",
+      "title": "Roaming Authentication Errors",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(roaming_auth_failures[5m])" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 }
+    }
+  ]
+}

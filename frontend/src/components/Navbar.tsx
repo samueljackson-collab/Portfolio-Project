@@ -49,6 +49,14 @@ export const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
               )}
+              {isAuthenticated && (
+                <Link
+                  to="/roaming-console"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                >
+                  Roaming Ops
+                </Link>
+              )}
             </div>
           </div>
 

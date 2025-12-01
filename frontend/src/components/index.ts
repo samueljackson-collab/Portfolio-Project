@@ -5,3 +5,4 @@
 export { Navbar } from './Navbar'
 export { ProtectedRoute } from './ProtectedRoute'
 export { ContentCard } from './ContentCard'
+export { RoamingSessionTable } from './roaming/RoamingSessionTable'

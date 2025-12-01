@@ -204,3 +204,37 @@ export const albumService = {
     return response.data
   },
 }
+
+/**
+ * Roaming Services
+ */
+export const roamingService = {
+  async createSession(payload: {
+    imsi: string
+    home_network: string
+    visited_network: string
+  }) {
+    const response = await apiClient.post('/roaming/sessions', payload)
+    return response.data
+  },
+
+  async authenticate(sessionId: string) {
+    const response = await apiClient.post(`/roaming/sessions/${sessionId}/authenticate`)
+    return response.data
+  },
+
+  async activate(sessionId: string) {
+    const response = await apiClient.post(`/roaming/sessions/${sessionId}/activate`)
+    return response.data
+  },
+
+  async detach(sessionId: string) {
+    const response = await apiClient.post(`/roaming/sessions/${sessionId}/detach`)
+    return response.data
+  },
+
+  async listSessions() {
+    const response = await apiClient.get('/roaming/sessions')
+    return response.data
+  },
+}

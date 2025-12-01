@@ -1,0 +1,41 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  logging:
+    loglevel: info
+  prometheusremotewrite:
+    endpoint: http://prometheus:9090/api/v1/write
+  otlphttp:
+    endpoint: https://otel-collector.monitoring.local/v1/traces
+
+processors:
+  batch: {}
+  attributes:
+    actions:
+      - key: environment
+        value: simulation
+        action: upsert
+      - key: region
+        value: primary
+        action: upsert
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [attributes, batch]
+      exporters: [otlphttp]
+    metrics:
+      receivers: [otlp]
+      processors: [attributes, batch]
+      exporters: [prometheusremotewrite, logging]
+    logs:
+      receivers: [otlp]
+      processors: [attributes, batch]
+      exporters: [logging]

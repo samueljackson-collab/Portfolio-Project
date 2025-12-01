@@ -124,3 +124,21 @@ export interface CalendarMonthResponse {
   dates: CalendarDateResponse[]
   total_photos: number
 }
+
+export interface RoamingSession {
+  session_id: string
+  imsi: string
+  home_network: string
+  visited_network: string
+  state: 'idle' | 'attached' | 'authenticated' | 'active' | 'detached'
+  authenticated: boolean
+  activated: boolean
+  events: string[]
+  created_at: string
+  last_updated: string
+}
+
+export interface RoamingSessionList {
+  total: number
+  sessions: RoamingSession[]
+}

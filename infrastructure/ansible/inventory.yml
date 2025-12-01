@@ -1,0 +1,10 @@
+all:
+  children:
+    primary:
+      hosts:
+        primary-sim:
+          ansible_host: 10.10.10.10
+    secondary:
+      hosts:
+        secondary-sim:
+          ansible_host: 10.20.10.10

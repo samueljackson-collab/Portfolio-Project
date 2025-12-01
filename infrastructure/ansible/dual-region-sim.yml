@@ -1,0 +1,41 @@
+---
+- name: Configure roaming simulation hosts
+  hosts: primary:secondary
+  become: true
+  vars:
+    otel_config_path: /etc/otel-collector/collector.yaml
+  tasks:
+    - name: Ensure base packages present
+      ansible.builtin.package:
+        name:
+          - ca-certificates
+          - curl
+          - wget
+        state: present
+
+    - name: Create operator user
+      ansible.builtin.user:
+        name: operator
+        shell: /bin/bash
+        groups: sudo
+        append: true
+
+    - name: Deploy OpenTelemetry collector config
+      ansible.builtin.copy:
+        src: ../../observability/otel/collector-dual-region.yaml
+        dest: "{{ otel_config_path }}"
+        mode: '0644'
+
+    - name: Enable and start otelcol service
+      ansible.builtin.service:
+        name: otelcol
+        state: started
+        enabled: true
+
+    - name: Drop roaming runbook for operators
+      ansible.builtin.copy:
+        content: |
+          To restart the roaming FastAPI service: sudo systemctl restart roaming-api
+          To restart collector: sudo systemctl restart otelcol
+        dest: /etc/roaming_runbook.txt
+        mode: '0644'

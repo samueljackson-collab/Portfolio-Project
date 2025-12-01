@@ -401,3 +401,49 @@ class CalendarMonthResponse(BaseModel):
     month: int = Field(..., description="Month (1-12)")
     dates: list[CalendarDateResponse] = Field(..., description="Dates with photos")
     total_photos: int = Field(..., description="Total photos in month")
+
+# ============================================================================
+# Roaming Schemas
+# ============================================================================
+from typing import List
+from app.services.roaming import RoamingState
+
+
+class RoamingSessionCreate(BaseModel):
+    """Input for creating a roaming session."""
+
+    imsi: str = Field(..., min_length=5, description="Subscriber IMSI")
+    home_network: str = Field(..., description="Home PLMN")
+    visited_network: str = Field(..., description="Visited PLMN")
+
+
+class RoamingSessionResponse(BaseModel):
+    """Roaming session details."""
+
+    session_id: str
+    imsi: str
+    home_network: str
+    visited_network: str
+    state: RoamingState
+    authenticated: bool
+    activated: bool
+    events: List[str]
+    created_at: datetime
+    last_updated: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoamingActionResponse(BaseModel):
+    """Response wrapper for stateful actions."""
+
+    session_id: str
+    state: RoamingState
+    message: str
+
+
+class RoamingSessionListResponse(BaseModel):
+    """Collection response for roaming sessions."""
+
+    total: int
+    sessions: List[RoamingSessionResponse]
