@@ -7,6 +7,7 @@ otel_exporter_endpoint: "http://otel-collector.monitoring:4317"
 
 system_packages:
   - python3-pip
+  - python3-docker
   - docker
   - jq
 
