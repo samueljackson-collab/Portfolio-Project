@@ -61,6 +61,19 @@ services:
       - "3000:3000"
     depends_on:
       - otel-collector
+      - tempo
+    networks:
+      - app
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ../observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
     networks:
       - app
 
