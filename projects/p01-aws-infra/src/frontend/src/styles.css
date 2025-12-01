@@ -1,0 +1,27 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0b1021;
+  color: #e6eefc;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+h1 {
+  margin-bottom: 0.5rem;
+}
+
+.callout {
+  background: #132042;
+  border: 1px solid #27408b;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}

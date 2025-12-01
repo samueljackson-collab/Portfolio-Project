@@ -1,0 +1,27 @@
+{
+  "title": "PRJ-AWS-001 Service Overview",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Backend Availability",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{app='prj-aws-001-backend',status=~'2..'}[5m])) / sum(rate(http_requests_total{app='prj-aws-001-backend'}[5m]))"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Drift Detector Lag",
+      "targets": [
+        {
+          "expr": "time() - deployment_last_validation_timestamp_seconds{stack='prj-aws-001-core'}"
+        }
+      ]
+    }
+  ]
+}

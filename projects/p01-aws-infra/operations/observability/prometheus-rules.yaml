@@ -1,0 +1,20 @@
+groups:
+  - name: prj-aws-001-rules
+    interval: 30s
+    rules:
+      - alert: BackendHighErrorRate
+        expr: rate(http_requests_total{app="prj-aws-001-backend",status=~"5.."}[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend 5xx rate is elevated"
+          runbook: "https://github.com/samueljackson-collab/Portfolio-Project/blob/main/projects/p01-aws-infra/RUNBOOK.md"
+      - alert: DriftDetectorStale
+        expr: time() - max(deployment_last_validation_timestamp_seconds{stack="prj-aws-001-core"}) > 900
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Drift detection has not reported in the last 15 minutes"
+          runbook: "https://github.com/samueljackson-collab/Portfolio-Project/blob/main/projects/p01-aws-infra/RUNBOOK.md"

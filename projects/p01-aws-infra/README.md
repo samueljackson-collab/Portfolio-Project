@@ -52,6 +52,27 @@ make validate
 make deploy-dev
 ```
 
+## Application Scaffolds
+
+- **Backend (FastAPI)**: [`src/backend/main.py`](./src/backend/main.py) exposes `/health` and `/status` endpoints for environment checks.
+- **Frontend (React + Vite)**: [`src/frontend`](./src/frontend) ships a minimal view that will render drift data and backend status.
+- **Orchestrator CLI**: [`src/application/app.py`](./src/application/app.py) runs backend, frontend, or tests with a single entrypoint.
+
+### Local Runs
+
+```bash
+# Backend API (http://localhost:8000/health)
+python -m src.application.app backend
+
+# Frontend dev server (http://localhost:5173)
+python -m src.application.app frontend
+
+# Unit tests (Python + infra validators)
+python -m src.application.app test
+```
+
+Install frontend deps once with `npm install` inside `src/frontend` if you prefer manual control.
+
 ## Configuration
 
 | Env Var | Purpose | Example | Required |
@@ -69,6 +90,40 @@ aws secretsmanager create-secret \
   --name /myapp/dev/db-password \
   --secret-string "$(openssl rand -base64 32)"
 ```
+
+## Containerization & Deployments
+
+- **Dockerfiles**: [`infrastructure/Dockerfile.backend`](./infrastructure/Dockerfile.backend) and [`infrastructure/Dockerfile.frontend`](./infrastructure/Dockerfile.frontend) build production images.
+- **Helm Defaults**: [`infrastructure/helm/values.yaml`](./infrastructure/helm/values.yaml) pins image names, replica counts, and monitoring toggles.
+- **Kubernetes Manifests**: [`infrastructure/kubernetes/deployments.yaml`](./infrastructure/kubernetes/deployments.yaml) ships pre-wired Deployments/Services for both components.
+
+```bash
+# Build images
+docker build -f infrastructure/Dockerfile.backend -t prj-aws-001/backend:latest .
+docker build -f infrastructure/Dockerfile.frontend -t prj-aws-001/frontend:latest .
+
+# Apply Kubernetes manifests (assumes current kube-context is set)
+kubectl apply -f infrastructure/kubernetes/deployments.yaml
+
+# Install via Helm values
+helm upgrade --install prj-aws-001 ./infrastructure/helm -f infrastructure/helm/values.yaml
+```
+
+## CI/CD
+
+- **Pipeline**: [`.github/workflows/app-delivery.yml`](./.github/workflows/app-delivery.yml) builds/tests backend, builds frontend, and produces container images.
+- **Triggers**: Runs on pushes/PRs touching `src/` or `infrastructure/` assets.
+
+## Observability & Operations
+
+- **Prometheus Alerts**: [`operations/observability/prometheus-rules.yaml`](./operations/observability/prometheus-rules.yaml) covers backend 5xx rate and drift-detector freshness.
+- **Grafana Dashboard**: [`operations/observability/grafana-dashboard.json`](./operations/observability/grafana-dashboard.json) visualizes availability and drift lag.
+- **ADRs**: [`operations/adr/ADR-0001-platform-foundations.md`](./operations/adr/ADR-0001-platform-foundations.md) records why the scaffolds and deployment assets were added.
+
+## Security & Compliance
+
+- **Security ADR**: [`security/SECURITY_OPERATIONS_ADR.md`](./security/SECURITY_OPERATIONS_ADR.md) documents IAM, secrets handling, and endpoint exposure decisions.
+- **Least-Privilege Defaults**: Docker/Kubernetes/Helm assets expect AWS region and stack names to be injected via env vars; never embed credentials.
 
 ## Testing
 

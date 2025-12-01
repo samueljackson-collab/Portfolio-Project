@@ -1,0 +1,19 @@
+backend:
+  image: prj-aws-001/backend:latest
+  replicas: 2
+  env:
+    AWS_REGION: us-east-1
+    STACK_NAME: prj-aws-001-core
+  service:
+    port: 8000
+
+frontend:
+  image: prj-aws-001/frontend:latest
+  replicas: 2
+  service:
+    port: 80
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    scrapeInterval: 30s
