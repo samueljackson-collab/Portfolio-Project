@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrastructure Overview - Wiki.js</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .wiki-header {
+            background: #1976d2;
+            color: white;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .wiki-logo {
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-bar {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            width: 400px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .search-bar::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #fff;
+            color: #1976d2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .breadcrumb {
+            background: white;
+            padding: 12px 24px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .breadcrumb a {
+            color: #1976d2;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .main-container {
+            display: flex;
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            min-height: calc(100vh - 64px - 45px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #fafafa;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .nav-tree {
+            list-style: none;
+        }
+
+        .nav-tree li {
+            margin: 4px 0;
+        }
+
+        .nav-tree a {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .nav-tree a:hover {
+            background: #e8e8e8;
+        }
+
+        .nav-tree a.active {
+            background: #1976d2;
+            color: white;
+            font-weight: 500;
+        }
+
+        .nav-tree .folder {
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-tree .nested {
+            margin-left: 20px;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 40px 60px;
+            max-width: 900px;
+        }
+
+        .page-header {
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+
+        .page-meta {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .page-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .content h2 {
+            font-size: 24px;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        .content h3 {
+            font-size: 18px;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .content p {
+            line-height: 1.7;
+            margin-bottom: 16px;
+            color: #444;
+        }
+
+        .content ul {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        .content li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .content strong {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .info-table th,
+        .info-table td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .info-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .info-table tr:hover {
+            background: #fafafa;
+        }
+
+        .diagram-container {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+            text-align: center;
+        }
+
+        .diagram-placeholder {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .right-sidebar {
+            width: 280px;
+            background: #fafafa;
+            border-left: 1px solid #e0e0e0;
+            padding: 20px;
+        }
+
+        .toc {
+            position: sticky;
+            top: 84px;
+        }
+
+        .toc-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .toc-list {
+            list-style: none;
+            font-size: 13px;
+        }
+
+        .toc-list li {
+            margin: 8px 0;
+        }
+
+        .toc-list a {
+            color: #666;
+            text-decoration: none;
+            display: block;
+            padding: 4px 0;
+        }
+
+        .toc-list a:hover {
+            color: #1976d2;
+        }
+
+        .page-actions {
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            color: #666;
+            text-decoration: none;
+            margin-right: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            background: #f5f5f5;
+            border-color: #1976d2;
+            color: #1976d2;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 16px 0;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .page-views {
+            font-size: 12px;
+            color: #999;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wiki-header">
+        <div class="header-left">
+            <div class="wiki-logo">
+                <span>📚</span>
+                <span>Wiki.js</span>
+            </div>
+            <input type="text" class="search-bar" placeholder="Search documentation...">
+        </div>
+        <div class="user-avatar">S</div>
+    </div>
+
+    <div class="breadcrumb">
+        <a href="#">Home</a> › <a href="#">Projects</a> › <a href="#">Homelab</a> › <strong>Infrastructure Overview</strong>
+    </div>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul class="nav-tree">
+                <li class="folder">▾ Projects</li>
+                <li class="nested folder">▾ Homelab</li>
+                <li class="nested nested">
+                    <a href="#" class="active">• Infrastructure Overview</a>
+                </li>
+                <li class="nested nested">
+                    <a href="#">• Network Configuration</a>
+                </li>
+                <li class="nested nested">
+                    <a href="#">• Service Documentation</a>
+                </li>
+                <li class="nested nested folder">▾ Monitoring</li>
+                <li class="nested nested nested">
+                    <a href="#">• Grafana Setup</a>
+                </li>
+                <li class="nested nested nested">
+                    <a href="#">• Prometheus Config</a>
+                </li>
+                <li class="nested nested nested">
+                    <a href="#">• Alert Rules</a>
+                </li>
+                <li class="nested nested">
+                    <a href="#">• Backup Strategy</a>
+                </li>
+                <li class="nested folder">▸ Career Development</li>
+                <li class="nested folder">▸ Technical Learning</li>
+            </ul>
+        </aside>
+
+        <main class="content-area">
+            <div class="page-header">
+                <h1 class="page-title">Infrastructure Overview</h1>
+                <div class="page-meta">
+                    <span>📅 Last edited: November 6, 2025 by Sam Jackson</span>
+                    <span>•</span>
+                    <span>📊 234 views</span>
+                </div>
+                <div class="page-tags">
+                    <span class="tag">#infrastructure</span>
+                    <span class="tag">#homelab</span>
+                    <span class="tag">#documentation</span>
+                </div>
+            </div>
+
+            <div class="content">
+                <h2>Hardware</h2>
+
+                <h3>Proxmox Host</h3>
+                <p><strong>Dell PowerEdge R720</strong> - Primary virtualization host running Proxmox VE 8.1.4</p>
+                <ul>
+                    <li><strong>CPU:</strong> 2x Intel Xeon E5-2670 (8 cores, 16 threads each = 32 threads total)</li>
+                    <li><strong>RAM:</strong> 128GB DDR3 ECC (8x 16GB modules)</li>
+                    <li><strong>Storage:</strong> 4x 1TB Samsung 870 EVO SSD in RAID10 (2TB usable)</li>
+                    <li><strong>Network:</strong> Dual 10Gb SFP+ ports (bonded for redundancy)</li>
+                    <li><strong>Management:</strong> iDRAC 7 Enterprise for remote management</li>
+                    <li><strong>Power:</strong> Dual 750W redundant power supplies</li>
+                </ul>
+
+                <h3>TrueNAS Storage Server</h3>
+                <p><strong>Supermicro Custom Build</strong> - Dedicated network-attached storage</p>
+                <ul>
+                    <li><strong>CPU:</strong> Intel Xeon E3-1230v3 (4 cores, 8 threads)</li>
+                    <li><strong>RAM:</strong> 32GB ECC (critical for ZFS integrity)</li>
+                    <li><strong>Storage:</strong> 6x 4TB WD Red HDD in RAIDZ2 configuration (16TB usable)</li>
+                    <li><strong>Cache:</strong> 2x 120GB SSD for ZFS L2ARC</li>
+                    <li><strong>Network:</strong> Dual 1Gb Ethernet (LACP bonded)</li>
+                </ul>
+
+                <h2>Network Architecture</h2>
+                <p>The network is segmented into four VLANs for security and traffic isolation:</p>
+
+                <div class="diagram-container">
+                    <div class="diagram-placeholder">
+                        [Network Topology Diagram - VLAN Segmentation]
+                    </div>
+                </div>
+
+                <table class="info-table">
+                    <thead>
+                        <tr>
+                            <th>VLAN ID</th>
+                            <th>Name</th>
+                            <th>Subnet</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>10</td>
+                            <td>Trusted</td>
+                            <td>192.168.10.0/24</td>
+                            <td>Personal devices (laptops, phones, tablets)</td>
+                        </tr>
+                        <tr>
+                            <td>20</td>
+                            <td>IoT</td>
+                            <td>192.168.20.0/24</td>
+                            <td>Smart home devices (lights, sensors, cameras)</td>
+                        </tr>
+                        <tr>
+                            <td>30</td>
+                            <td>Guest</td>
+                            <td>192.168.30.0/24</td>
+                            <td>Guest network (isolated from internal resources)</td>
+                        </tr>
+                        <tr>
+                            <td>40</td>
+                            <td>Lab</td>
+                            <td>192.168.40.0/24</td>
+                            <td>Homelab infrastructure (VMs, storage, management)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Virtual Machines</h2>
+                <p>All VMs run on the Proxmox host with resource allocation optimized for workload:</p>
+
+                <table class="info-table">
+                    <thead>
+                        <tr>
+                            <th>VM ID</th>
+                            <th>Name</th>
+                            <th>vCPU</th>
+                            <th>RAM</th>
+                            <th>IP Address</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>100</td>
+                            <td>Wiki.js</td>
+                            <td>4</td>
+                            <td>8GB</td>
+                            <td>192.168.40.20</td>
+                            <td>Documentation & knowledge base</td>
+                        </tr>
+                        <tr>
+                            <td>101</td>
+                            <td>Home Assistant</td>
+                            <td>2</td>
+                            <td>4GB</td>
+                            <td>192.168.40.21</td>
+                            <td>Home automation hub</td>
+                        </tr>
+                        <tr>
+                            <td>102</td>
+                            <td>Immich</td>
+                            <td>4</td>
+                            <td>16GB</td>
+                            <td>192.168.40.22</td>
+                            <td>Photo backup & management</td>
+                        </tr>
+                        <tr>
+                            <td>103</td>
+                            <td>PostgreSQL</td>
+                            <td>4</td>
+                            <td>16GB</td>
+                            <td>192.168.40.23</td>
+                            <td>Centralized database server</td>
+                        </tr>
+                        <tr>
+                            <td>104</td>
+                            <td>Utility Services</td>
+                            <td>2</td>
+                            <td>4GB</td>
+                            <td>192.168.40.24</td>
+                            <td>MQTT, Zigbee2MQTT, misc services</td>
+                        </tr>
+                        <tr>
+                            <td>105</td>
+                            <td>Nginx Proxy Manager</td>
+                            <td>2</td>
+                            <td>2GB</td>
+                            <td>192.168.40.25</td>
+                            <td>Reverse proxy & SSL termination</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Service Architecture</h2>
+                <p>Services are designed with the following principles:</p>
+                <ul>
+                    <li><strong>Separation of Concerns:</strong> Each VM runs a single primary service</li>
+                    <li><strong>Centralized Database:</strong> PostgreSQL VM serves all applications</li>
+                    <li><strong>Reverse Proxy:</strong> All external traffic routes through Nginx Proxy Manager</li>
+                    <li><strong>Monitoring:</strong> Prometheus + Grafana collect metrics from all services</li>
+                    <li><strong>High Availability:</strong> Automated backups with Proxmox Backup Server</li>
+                </ul>
+
+                <h3>External Access</h3>
+                <p>Services are exposed to the internet via Cloudflare + Nginx Proxy Manager:</p>
+
+                <div class="code-block">
+Internet → Cloudflare (DNS + DDoS) → Public IP → Router (Port Forward 80/443)
+        ↓
+Nginx Proxy Manager (192.168.40.25) - SSL Termination
+        ↓
+Backend Services (Wiki.js, Home Assistant, Immich)
+                </div>
+
+                <h2>Backup Strategy</h2>
+                <p>Multiple backup layers ensure data protection:</p>
+                <ul>
+                    <li><strong>VM Backups:</strong> Proxmox Backup Server runs daily at 2:00 AM</li>
+                    <li><strong>Database Backups:</strong> PostgreSQL pg_dump runs hourly</li>
+                    <li><strong>Storage Snapshots:</strong> TrueNAS ZFS snapshots every hour (retained 7 days)</li>
+                    <li><strong>Offsite Backup:</strong> Weekly rclone sync to Backblaze B2</li>
+                </ul>
+
+                <h2>Monitoring & Observability</h2>
+                <p>Comprehensive monitoring stack provides visibility into infrastructure health:</p>
+                <ul>
+                    <li><strong>Prometheus:</strong> Metrics collection from all VMs and services</li>
+                    <li><strong>Grafana:</strong> Visualization dashboards for infrastructure metrics</li>
+                    <li><strong>Loki + Promtail:</strong> Centralized log aggregation</li>
+                    <li><strong>Alertmanager:</strong> Alerts sent to Slack and email</li>
+                </ul>
+
+                <div class="page-actions">
+                    <a href="#" class="action-btn">✏️ Edit</a>
+                    <a href="#" class="action-btn">🕒 History</a>
+                    <a href="#" class="action-btn">📤 Share</a>
+                    <a href="#" class="action-btn">🖨️ Print</a>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-sidebar">
+            <div class="toc">
+                <div class="toc-title">TABLE OF CONTENTS</div>
+                <ul class="toc-list">
+                    <li><a href="#hardware">Hardware</a></li>
+                    <li><a href="#network">Network Architecture</a></li>
+                    <li><a href="#vms">Virtual Machines</a></li>
+                    <li><a href="#services">Service Architecture</a></li>
+                    <li><a href="#backup">Backup Strategy</a></li>
+                    <li><a href="#monitoring">Monitoring & Observability</a></li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>
