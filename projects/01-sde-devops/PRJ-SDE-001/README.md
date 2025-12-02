@@ -6,6 +6,11 @@
 
 ---
 
+## Diagrams
+
+- [Database infrastructure (Mermaid)](assets/diagrams/database-infrastructure.mermaid)
+- [Database infrastructure (PNG/Markdown export)](assets/diagrams/database-infrastructure.md)
+
 ## Overview
 
 Complete production-ready infrastructure-as-code solution deploying a full application stack on AWS with:

@@ -5,6 +5,14 @@
 **Technologies:** Proxmox VE, TrueNAS, UniFi, WireGuard, Nginx Proxy Manager, Prometheus, Grafana, Loki, Immich
 **Complexity:** Expert
 
+## Diagrams
+
+- [Architecture overview](assets/diagrams/architecture-overview.mermaid)
+- [Firewall policy](assets/diagrams/firewall-policy.mermaid)
+- [Implementation timeline](assets/diagrams/implementation-timeline.mermaid)
+- [Backup strategy](assets/diagrams/backup-strategy.mermaid)
+- [Risk assessment matrix](assets/diagrams/risk-assessment-matrix.mermaid)
+
 **Owner:** Samuel Jackson
 **Sponsor:** Andrew Vongsady
 **Version:** 6.0 (Final Comprehensive)
