@@ -1,0 +1,25 @@
+{
+  "agent_name": "cicd_deployer",
+  "version": "1.4.0",
+  "description": "Automated deployment pipeline orchestrator",
+  "capabilities": [
+    "pipeline_generation",
+    "environment_management",
+    "rollback_automation",
+    "health_verification",
+    "secret_management"
+  ],
+  "deployment_targets": [
+    "kubernetes",
+    "serverless",
+    "container_registry",
+    "cloud_functions",
+    "static_hosting"
+  ],
+  "pipeline_templates": {
+    "github_actions": "templates/github/workflows/",
+    "gitlab_ci": "templates/gitlab/.gitlab-ci.yml",
+    "jenkins": "templates/jenkins/Jenkinsfile",
+    "argo_cd": "templates/argo/applications/"
+  }
+}
