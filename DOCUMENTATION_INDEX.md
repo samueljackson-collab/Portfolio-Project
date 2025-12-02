@@ -222,7 +222,7 @@ This index guides you through the comprehensive analysis of the 25-project portf
 All documents are stored in the repository root:
 
 ```
-/home/user/Portfolio-Project/
+Portfolio-Project/
 ├── DOCUMENTATION_INDEX.md (this file)
 ├── SURVEY_EXECUTIVE_SUMMARY.md
 ├── PORTFOLIO_SURVEY.md

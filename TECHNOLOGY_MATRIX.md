@@ -314,7 +314,7 @@ python src/migration_orchestrator.py
 
 ### Project 5: Data Streaming
 ```bash
-cd projects/5-real-time-data-streaming
+cd projects/5-real-time-streaming
 docker-compose up  # Kafka + Zookeeper
 pip install -r requirements.txt
 python src/process_events.py
@@ -322,7 +322,7 @@ python src/process_events.py
 
 ### Project 6: MLOps
 ```bash
-cd projects/6-mlops-platform
+cd projects/6-mlops
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 mlflow server --backend-store-uri sqlite:///mlruns.db
@@ -331,7 +331,7 @@ mlflow server --backend-store-uri sqlite:///mlruns.db
 
 ### Project 8: AI Chatbot
 ```bash
-cd projects/8-advanced-ai-chatbot
+cd projects/8-ai-chatbot
 pip install -r requirements.txt
 # Setup Pinecone API key in .env
 python -m uvicorn src.chatbot_service:app --reload
@@ -339,7 +339,7 @@ python -m uvicorn src.chatbot_service:app --reload
 
 ### Project 10: Blockchain Smart Contracts
 ```bash
-cd projects/10-blockchain-smart-contract-platform
+cd projects/10-blockchain
 npm install
 npx hardhat compile
 npx hardhat test

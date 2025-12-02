@@ -786,8 +786,8 @@ Most Common Technologies:
 
 ### Completion Levels
 
-- **Advanced (70%+)**: Projects 1, 10, 23
-- **Moderate (50-69%)**: Projects 6, 7, 8, 9, 16, 24
+- **Advanced (70%+)**: Projects 1, 10
+- **Moderate (50-69%)**: Projects 6, 7, 8, 9, 16, 23, 24
 - **Basic (40-49%)**: Projects 2, 5, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22
 - **Minimal (<40%)**: Projects 3, 4, 17, 25
 
