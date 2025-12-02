@@ -11,6 +11,11 @@
 
 ## 📋 How to Use This Document
 
+### Deliverable-First Expectation
+- Every prompt must **produce runnable artifacts on the first iteration**, not just prose.
+- Always embed the Master Factory Behavior Rules and Deliverable Startup Recipe inside the prompt text so the AI returns code, configs, sample data, and run/verify commands immediately.
+- Pair the prompt with copy/paste run steps (setup + validate) so reviewers can execute outputs without extra context.
+
 ### Prompt Structure
 Each prompt follows this format and **must ship runnable artifacts on the first iteration**:
 ```
@@ -28,6 +33,9 @@ DELIVERABLE STARTUP RECIPE: [Include the startup checklist so the first response
 PROMPT: [The actual prompt to use]
 POST-PROCESSING: [How to refine the output]
 ```
+
+### Embedding the Rules in Each Prompt
+Copy the text under **Master Factory Behavior Rules** and **Deliverable Startup Recipe** directly into the `PROMPT` field for every template so the AI cannot omit runnable artifacts, verification steps, or startup commands.
 
 ### Master Factory Behavior Rules
 - No placeholders—every artifact must be directly runnable with provided commands.
