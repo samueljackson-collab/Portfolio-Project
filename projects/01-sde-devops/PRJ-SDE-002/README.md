@@ -111,7 +111,7 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 4. **Storage**: Prometheus stores metrics locally with 30-day retention; Loki stores logs with 14-day retention.
 5. **Alerting**: Alertmanager receives alerts from Prometheus, groups/routes them to Slack channel #homelab-alerts.
 6. **Visualization**: Grafana queries Prometheus and Loki, renders dashboards on port 3000.
-7. **Backup**: PBS runs nightly at 02:00, snapshots are stored on TrueNAS NFS share at 192.168.1.10:/mnt/tank/backups.
+7. **Backup**: PBS runs nightly at 02:00, snapshots are stored on TrueNAS NFS share at <NFS_SERVER>:/mnt/<DATASTORE>/backups.
 
 ## Key Dashboards
 
