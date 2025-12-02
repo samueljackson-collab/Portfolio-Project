@@ -162,10 +162,10 @@ out_of_scope:
     - No persistence beyond engagement window
 
 emergency_contacts:
-  red_team_lead: john.redteam@company.com / +1-555-0150
-  blue_team_lead: alice.blueteam@company.com / +1-555-0151
-  ciso: ciso@company.com / +1-555-0101
-  emergency_stop: security-emergency@company.com
+  red_team_lead: [RED_TEAM_LEAD_EMAIL] / [RED_TEAM_LEAD_PHONE]
+  blue_team_lead: [BLUE_TEAM_LEAD_EMAIL] / [BLUE_TEAM_LEAD_PHONE]
+  ciso: [CISO_EMAIL] / [CISO_PHONE]
+  emergency_stop: [EMERGENCY_STOP_EMAIL]
 
 deconfliction:
   process: Prior approval required for new TTPs
@@ -1033,10 +1033,10 @@ EOF
 ```
 
 ### Emergency Contacts
-- **Red Team Lead**: john.redteam@company.com / +1-555-0150
-- **Blue Team Lead**: alice.blueteam@company.com / +1-555-0151
-- **CISO**: ciso@company.com / +1-555-0101
-- **Emergency Stop**: security-emergency@company.com
+- **Red Team Lead**: [RED_TEAM_LEAD_EMAIL] / [RED_TEAM_LEAD_PHONE]
+- **Blue Team Lead**: [BLUE_TEAM_LEAD_EMAIL] / [BLUE_TEAM_LEAD_PHONE]
+- **CISO**: [CISO_EMAIL] / [CISO_PHONE]
+- **Emergency Stop**: [EMERGENCY_STOP_EMAIL]
 
 ---
 
