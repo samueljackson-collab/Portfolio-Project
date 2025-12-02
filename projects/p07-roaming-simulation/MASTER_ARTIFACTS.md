@@ -917,29 +917,22 @@ failure) and explain how the Roaming Simulation Platform architecture responds. 
 paths, decision trees, and the rollback or feature-flag strategy that protects end users.
 
 Extended detail 7 for 7. Data Migration Runbook in Roaming Simulation Platform: this subsection
-enumerates controls, success measures, tooling decisions, and governance hooks to keep execution
-disciplined while maximizing learning velocity. It reiterates how the network roaming, mobility
-policy testing, telecom-grade simulation mission threads through architecture, delivery, operations,
-and compliance.
+## Section Template: Checklist, Narrative, and Extended Detail
 
-Checklist 7: define owner, due date, evidence artifact, and verification method. Require peer
-review, automated checks, and sign-off from risk owners. Embed this checklist into the program board
-so status is transparent and auditable.
+For each main section, use the following template:
 
-Narrative 7: describe a realistic scenario (e.g., high load, partial outage, vendor dependency
-failure) and explain how the Roaming Simulation Platform architecture responds. Include detection
-paths, decision trees, and the rollback or feature-flag strategy that protects end users.
+**Checklist {N}**: Define owner, due date, evidence artifact, and verification method. Require peer review, automated checks, and sign-off from risk owners. Embed this checklist into the program board so status is transparent and auditable.
 
-Extended detail 8 for 7. Data Migration Runbook in Roaming Simulation Platform: this subsection
-enumerates controls, success measures, tooling decisions, and governance hooks to keep execution
-disciplined while maximizing learning velocity. It reiterates how the network roaming, mobility
-policy testing, telecom-grade simulation mission threads through architecture, delivery, operations,
-and compliance.
+**Narrative {N}**: Describe a realistic scenario (e.g., high load, partial outage, vendor dependency failure) and explain how the Roaming Simulation Platform architecture responds. Include detection paths, decision trees, and the rollback or feature-flag strategy that protects end users.
 
-Checklist 8: define owner, due date, evidence artifact, and verification method. Require peer
-review, automated checks, and sign-off from risk owners. Embed this checklist into the program board
-so status is transparent and auditable.
+**Extended Detail {N}**: Enumerate controls, success measures, tooling decisions, and governance hooks to keep execution disciplined while maximizing learning velocity. Reiterate how the network roaming, mobility policy testing, telecom-grade simulation mission threads through architecture, delivery, operations, and compliance.
 
-Narrative 8: describe a realistic scenario (e.g., high load, partial outage, vendor dependency
-failure) and explain how the Roaming Simulation Platform architecture responds. Include detection
-paths, decision trees, and the rollback or feature-flag strategy that protects end users.
+### Section Details Table
+
+| Section # | Owner | Due Date | Evidence Artifact | Scenario | Unique Notes |
+|-----------|-------|----------|------------------|----------|-------------|
+| 7         | ...   | ...      | ...              | ...      | ...         |
+| 8         | ...   | ...      | ...              | ...      | ...         |
+| ...       | ...   | ...      | ...              | ...      | ...         |
+
+For each section, fill in the table above with the unique details. Reference the template for structure.
