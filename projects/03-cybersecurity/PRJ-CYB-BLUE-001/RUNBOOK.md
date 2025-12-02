@@ -71,6 +71,9 @@ curl -X GET "https://${OPENSEARCH_ENDPOINT}/security-events-*/_search" \
 curl -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-*/_search" \
   -H 'Content-Type: application/json' \
   -d '{
+aws opensearch search \
+  --index-name "guardduty-findings-*" \
+  --body '{
     "size": 0,
     "aggs": {
       "threat_types": {
@@ -83,6 +86,9 @@ curl -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-*/_search" \
 curl -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-*/_search" \
   -H 'Content-Type: application/json' \
   -d '{
+aws opensearch search \
+  --index-name "guardduty-findings-*" \
+  --body '{
     "query": {
       "bool": {
         "must": [
@@ -99,6 +105,9 @@ curl -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-*/_search" \
 curl -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-*/_search" \
   -H 'Content-Type: application/json' \
   -d '{
+aws opensearch search \
+  --index-name "guardduty-findings-*" \
+  --body '{
     "size": 0,
     "aggs": {"services": {"terms": {"field": "resource.resource_type.keyword"}}}
   }'
@@ -383,6 +392,7 @@ if [ -z "$INSTANCE_ID" ]; then
   echo "No instance found for high-severity GuardDuty finding."
   exit 1
 fi
+  }' | jq -r '.hits.hits[0]._source.resource.instanceDetails.instanceId')
 
 # Search network logs for that instance
 curl -X GET "https://${OPENSEARCH_ENDPOINT}/network-logs-*/_search" \

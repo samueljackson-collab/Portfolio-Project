@@ -971,6 +971,9 @@ terraform show > state-backup-$(date +%Y%m%d-%H%M%S).txt
 terraform destroy -var-file=environments/prod.tfvars
 # Step 5: Redeploy (will prompt for confirmation - do NOT use -auto-approve)
 terraform apply -var-file=environments/prod.tfvars
+cd /home/user/Portfolio-Project/projects/1-aws-infrastructure-automation/terraform
+terraform destroy -var-file=environments/prod.tfvars
+terraform apply -var-file=environments/prod.tfvars -auto-approve
 ```
 
 ---
