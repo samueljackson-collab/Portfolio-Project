@@ -24,7 +24,7 @@ The roaming simulation initiative delivers a carrier-grade pre-production enviro
 5. `make deploy-local` (Terraform + Helmfile renders local stack with lightweight Kafka/Postgres)
 6. `make seed-scenarios` (loads baseline attach/handover scenarios)
 7. `make e2e` (Cypress API + UI checks) and `make perf-smoke` (k6 short load)
-8. View dashboards via `kubectl port-forward svc/grafana 3000:80`
+8. View dashboards via `kubectl port-forward svc/grafana 3000:3000`
 
 ### Production / Staging Deploy
 1. Configure backend secrets via `infra/terraform.tfvars` (SIM gateway keys, Kafka SASL, Postgres creds, TLS cert ARNs).
