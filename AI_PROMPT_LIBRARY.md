@@ -12,7 +12,7 @@
 ## 📋 How to Use This Document
 
 ### Prompt Structure
-Each prompt follows this format:
+Each prompt follows this format and **must ship runnable artifacts on the first iteration**:
 ```
 PROMPT ID: [Unique identifier]
 PURPOSE: [What this generates]
@@ -21,16 +21,35 @@ TIME SAVINGS: [Hours saved vs manual creation]
 AI TOOL: [Claude/ChatGPT/Gemini - which works best]
 INPUT REQUIRED: [What you need to provide]
 OUTPUT: [What you'll receive]
+DELIVERABLES REQUIRED: [Executable code, sample data, config files, test fixtures]
+RUN INSTRUCTIONS: [Exact commands to execute and validate the output]
+MASTER FACTORY RULES: [Affirm adherence to the behavior rules listed below]
+DELIVERABLE STARTUP RECIPE: [Include the startup checklist so the first response is production-ready]
 PROMPT: [The actual prompt to use]
 POST-PROCESSING: [How to refine the output]
 ```
 
+### Master Factory Behavior Rules
+- No placeholders—every artifact must be directly runnable with provided commands.
+- Bundle minimal sample data and configuration files needed to execute the deliverable end-to-end.
+- Include deterministic defaults (versions, ports, seeds) to prevent environment drift.
+- Document verification steps (smoke test, lint, or sample query) inside the prompt output itself.
+
+### Deliverable Startup Recipe
+Add these instructions to every prompt so the first iteration is shippable:
+1. Generate code, configs, and sample data in a complete file tree.
+2. Provide ready-to-run commands (setup, run, validate) that succeed without additional context.
+3. Include any required environment variables or secrets as `.env.example` entries with safe dummy values.
+4. Supply a quickstart test (unit, curl probe, or CLI invocation) proving the deliverable executes.
+5. End with a short "Run & Verify" section summarizing the above commands.
+
 ### Workflow
 1. **Select by priority** - Start with Critical, work down
-2. **Batch similar prompts** - Do all READMEs together, all diagrams together
-3. **Quality check immediately** - Review AI output while context is fresh
-4. **Iterate if needed** - Refine prompts based on first results
-5. **Track completion** - Check off each prompt as you use it
+2. **Embed Master Factory + Startup Recipe** - Copy the rules and recipe above into each prompt so the AI ships runnable artifacts (code, sample data, run/verify commands) in the first response.
+3. **Batch similar prompts** - Do all READMEs together, all diagrams together
+4. **Quality check immediately** - Review AI output while context is fresh and execute the provided run commands to confirm deliverables work
+5. **Iterate if needed** - Refine prompts based on first results
+6. **Track completion** - Check off each prompt as you use it
 
 ---
 
