@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: p09-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: p09-api
+  template:
+    metadata:
+      labels:
+        app: p09-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/example/p09-api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: postgresql://user:pass@postgres:5432/p09
+            - name: ENABLE_AUTH
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: p09-api
+spec:
+  selector:
+    app: p09-api
+  ports:
+    - port: 80
+      targetPort: 8000

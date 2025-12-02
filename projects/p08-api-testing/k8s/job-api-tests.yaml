@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: p08-api-tests
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: newman
+          image: postman/newman:6
+          command: ["newman", "run", "collections/api.postman_collection.json", "-e", "environments/staging.postman_environment.json", "--reporters", "cli,junit"]
+          volumeMounts:
+            - name: collections
+              mountPath: /etc/newman/collections
+      volumes:
+        - name: collections
+          configMap:
+            name: p08-collections

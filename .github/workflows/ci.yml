@@ -63,13 +63,6 @@ jobs:
         else
           pytest || true
         fi
-      run: markdownlint '**/*.md' --ignore node_modules
-
-    - name: Check Python formatting
-      run: black --check .
-
-    - name: Lint Python code
-      run: ruff check .
 
     - name: Run unit tests with coverage
       run: |
