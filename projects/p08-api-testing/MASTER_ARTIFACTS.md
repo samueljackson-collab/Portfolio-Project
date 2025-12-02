@@ -98,7 +98,7 @@ Developers -> [OpenAPI Repo] -> {Mock Server, Contract Tests} -> CI -> {Gateway 
   2. Reproduce locally with `npm run pact:verify --consumer <name>`.
   3. If breaking change, add backward-compatible field and reissue contract; otherwise block release.
 - **Incident Comms:** Notify #api-incident with impact, ETA, owner, and timeline updates every 30m. Postmortem required for P1/P2 within 48h using template in `operations/postmortem.md`.
-- **Backup/Restore:** Nightly Postgres snapshots; restore via `terraform apply -target=aws_db_instance.restore` then `npm run typeorm:migrate`. Redis backup via AOF; verify cache warm-up script.
+- **Backup/Restore:** Nightly Postgres snapshots; restore via a dedicated Terraform restore workflow (avoiding `-target`) then `npm run typeorm:migrate`. Redis backup via AOF; verify cache warm-up script.
 - **Change Management:** CAB approvals stored in `operations/change-log.md`; freeze windows before holidays; feature flags used for phased enablement.
 
 ## 12. Reporting Templates
