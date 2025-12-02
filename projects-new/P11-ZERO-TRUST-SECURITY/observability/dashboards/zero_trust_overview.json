@@ -1,0 +1,28 @@
+{
+  "title": "Zero Trust Overview",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Active SVIDs",
+      "targets": [{"expr": "sum(spire_svid_ttl_seconds)"}]
+    },
+    {
+      "type": "graph",
+      "title": "OPA Decisions",
+      "targets": [
+        {"expr": "rate(opa_criteria_decision{decision=\"allow\"}[5m])", "legendFormat": "allow"},
+        {"expr": "rate(opa_criteria_decision{decision=\"deny\"}[5m])", "legendFormat": "deny"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "mTLS Handshake Errors",
+      "targets": [{"expr": "rate(envoy_tls_handshake_error_total[5m])"}]
+    },
+    {
+      "type": "table",
+      "title": "Top Talkers by SPIFFE ID",
+      "targets": [{"expr": "topk(10, rate(envoy_http_downstream_rq_total[5m]) by (spiffe_id))"}]
+    }
+  ]
+}
