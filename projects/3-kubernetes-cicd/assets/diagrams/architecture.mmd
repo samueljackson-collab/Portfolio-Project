@@ -1,0 +1,54 @@
+%% Kubernetes CI/CD Pipeline - Architecture
+flowchart LR
+    subgraph Dev[Developer Boundary]
+        DEV[Engineer]
+        REPO[GitHub Repo]
+        DEV --> REPO
+    end
+
+    subgraph CI[CI/CD Boundary]
+        ACTIONS[GitHub Actions]
+        BUILD[Build & Test]
+        SCAN[Security Scan]
+        IMAGE[Container Image]
+        ACTIONS --> BUILD --> SCAN --> IMAGE
+    end
+
+    subgraph REG[Registry]
+        REGISTRY[(Container Registry)]
+    end
+
+    subgraph CD[GitOps Control]
+        ARGO[ArgoCD]
+        POLICIES[Sync Policies]
+    end
+
+    subgraph Clusters[Runtime Clusters]
+        subgraph DEV[Dev Cluster]
+            DEVAPP[App Dev]
+        end
+        subgraph STG[Staging Cluster]
+            STGAPP[App Staging]
+        end
+        subgraph PRD[Prod Cluster]
+            PRDAPP[App Prod]
+            CANARY[Canary/Blue-Green]
+        end
+    end
+
+    REPO --> ACTIONS
+    IMAGE --> REGISTRY
+    REGISTRY --> ARGO
+    ARGO --> DEVAPP
+    DEVAPP -- Promote --> STGAPP
+    STGAPP -- Progressive Delivery --> CANARY
+    CANARY -- Roll Forward --> PRDAPP
+    ARGO --> POLICIES
+
+    classDef trust fill:#eef7ff,stroke:#345;
+    class Dev,CI,REG,CD,Clusters trust;
+
+    %% Data flows
+    ACTIONS -- Manifests --> ARGO
+    ARGO -- Health/Sync --> ACTIONS
+    DEVAPP -- Metrics/Logs --> ACTIONS

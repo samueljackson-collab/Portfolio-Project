@@ -15,3 +15,10 @@ This project provisions a production-ready AWS environment with multiple impleme
 - `scripts/` — Helper scripts for planning, deployment, validation, and teardown workflows.
 
 Each implementation aligns with the runbooks described in the Wiki.js guide so the documentation, automation, and validation steps can be exercised end-to-end.
+
+## Architecture Diagram
+
+- ![AWS infrastructure automation architecture](assets/diagrams/architecture.svg)
+- [Mermaid source](assets/diagrams/architecture.mmd)
+
+**ADR Note:** Trust boundaries separate developer tooling, CI/OIDC deployers, and the AWS account; the IaC toolchain remains interchangeable (Terraform/CDK/Pulumi) while converging on the same VPC, EKS, and RDS foundation.

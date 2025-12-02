@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" aria-labelledby="title desc">
+  <title id="title">Advanced Monitoring and Observability Architecture</title>
+  <desc id="desc">Cluster telemetry path through collectors, storage backends, dashboards, and alerting.</desc>
+  <style>
+    .boundary { fill: #eef3ff; stroke: #335; stroke-width: 2; }
+    .box { fill: #fff; stroke: #333; stroke-width: 1.5; rx: 6; ry: 6; }
+    .label { font: 14px sans-serif; fill: #111; }
+    .title { font: 16px sans-serif; font-weight: bold; fill: #111; }
+    .arrow { stroke: #444; stroke-width: 1.5; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" fill="#444">
+      <polygon points="0 0, 10 3.5, 0 7" />
+    </marker>
+  </defs>
+  <rect class="boundary" x="60" y="60" width="260" height="280" />
+  <text class="title" x="80" y="90">Cluster Boundary</text>
+  <rect class="box" x="90" y="120" width="200" height="60" />
+  <text class="label" x="120" y="155">Workloads</text>
+  <rect class="box" x="90" y="190" width="200" height="60" />
+  <text class="label" x="118" y="225">OpenTelemetry SDKs</text>
+  <rect class="box" x="90" y="260" width="200" height="60" />
+  <text class="label" x="130" y="295">Promtail DaemonSet</text>
+
+  <rect class="boundary" x="360" y="60" width="220" height="280" />
+  <text class="title" x="380" y="90">In-Cluster Collectors</text>
+  <rect class="box" x="390" y="120" width="160" height="50" />
+  <text class="label" x="425" y="150">OTel Collector</text>
+  <rect class="box" x="390" y="190" width="160" height="50" />
+  <text class="label" x="425" y="220">Prometheus</text>
+  <rect class="box" x="390" y="260" width="160" height="50" />
+  <text class="label" x="440" y="290">Alertmanager</text>
+
+  <rect class="boundary" x="640" y="60" width="220" height="280" />
+  <text class="title" x="660" y="90">Storage Backends</text>
+  <rect class="box" x="670" y="120" width="160" height="50" />
+  <text class="label" x="710" y="150">Tempo</text>
+  <rect class="box" x="670" y="190" width="160" height="50" />
+  <text class="label" x="713" y="220">Loki</text>
+  <rect class="box" x="670" y="260" width="160" height="50" />
+  <text class="label" x="700" y="290">Prometheus TSDB</text>
+
+  <rect class="boundary" x="920" y="60" width="220" height="280" />
+  <text class="title" x="940" y="90">Visualization</text>
+  <rect class="box" x="950" y="120" width="170" height="70" />
+  <text class="label" x="980" y="155">Grafana Dashboards</text>
+  <rect class="box" x="950" y="210" width="170" height="70" />
+  <text class="label" x="975" y="245">SLOs &amp; Burn Rates</text>
+
+  <text class="title" x="120" y="380">Data Flows</text>
+  <line class="arrow" x1="290" y1="150" x2="360" y2="150" />
+  <text class="label" x="260" y="135">Traces / Metrics</text>
+  <line class="arrow" x1="290" y1="220" x2="360" y2="220" />
+  <text class="label" x="262" y="205">Metrics scrape</text>
+  <line class="arrow" x1="290" y1="290" x2="360" y2="290" />
+  <text class="label" x="270" y="275">Logs</text>
+  <line class="arrow" x1="580" y1="150" x2="640" y2="150" />
+  <text class="label" x="560" y="135">OTLP</text>
+  <line class="arrow" x1="580" y1="220" x2="640" y2="220" />
+  <text class="label" x="565" y="205">Remote write</text>
+  <line class="arrow" x1="580" y1="290" x2="640" y2="290" />
+  <text class="label" x="572" y="275">Alerts / silence</text>
+  <line class="arrow" x1="860" y1="150" x2="920" y2="150" />
+  <text class="label" x="865" y="135">Dashboards</text>
+  <line class="arrow" x1="860" y1="220" x2="920" y2="220" />
+  <text class="label" x="865" y="205">Alerts to ChatOps</text>
+
+  <rect class="box" x="220" y="450" width="760" height="160" fill="#f8fff2" stroke="#4a6" />
+  <text class="title" x="240" y="480">Trust Boundaries</text>
+  <text class="label" x="240" y="505">1) Workloads &amp; log agents remain inside the cluster; 2) Collectors enforce tenant limits; 3) Storage</text>
+  <text class="label" x="240" y="525">endpoints exposed via mTLS; 4) Dashboards read-only for operators; 5) Alert fan-out limited to ChatOps and</text>
+  <text class="label" x="240" y="545">PagerDuty.</text>
+</svg>

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" aria-labelledby="title desc">
+  <title id="title">Kubernetes CI/CD Architecture</title>
+  <desc id="desc">Pipeline from developers through CI, container registry, Kubernetes clusters, and monitoring.</desc>
+  <style>
+    .boundary { fill: #eef3ff; stroke: #335; stroke-width: 2; }
+    .box { fill: #fff; stroke: #333; stroke-width: 1.5; rx: 6; ry: 6; }
+    .label { font: 14px sans-serif; fill: #111; }
+    .title { font: 16px sans-serif; font-weight: bold; fill: #111; }
+    .arrow { stroke: #444; stroke-width: 1.5; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" fill="#444">
+      <polygon points="0 0, 10 3.5, 0 7" />
+    </marker>
+  </defs>
+  <rect class="boundary" x="40" y="40" width="230" height="200" />
+  <text class="title" x="60" y="70">Developers</text>
+  <rect class="box" x="70" y="100" width="170" height="50" />
+  <text class="label" x="105" y="130">GitOps Repos</text>
+  <rect class="box" x="70" y="160" width="170" height="50" />
+  <text class="label" x="103" y="190">Dockerfiles</text>
+
+  <rect class="boundary" x="310" y="40" width="240" height="200" />
+  <text class="title" x="330" y="70">CI System</text>
+  <rect class="box" x="340" y="100" width="180" height="45" />
+  <text class="label" x="375" y="128">GitHub Actions</text>
+  <rect class="box" x="340" y="150" width="180" height="45" />
+  <text class="label" x="358" y="178">Lint / Build / Test</text>
+
+  <rect class="boundary" x="590" y="40" width="200" height="200" />
+  <text class="title" x="610" y="70">Registry</text>
+  <rect class="box" x="620" y="100" width="150" height="45" />
+  <text class="label" x="650" y="128">OCI Images</text>
+  <rect class="box" x="620" y="150" width="150" height="45" />
+  <text class="label" x="635" y="178">SBOM &amp; Signatures</text>
+
+  <rect class="boundary" x="840" y="40" width="320" height="300" />
+  <text class="title" x="860" y="70">Kubernetes Clusters</text>
+  <rect class="box" x="870" y="100" width="260" height="60" />
+  <text class="label" x="900" y="130">Staging (Kustomize)</text>
+  <rect class="box" x="870" y="170" width="260" height="60" />
+  <text class="label" x="905" y="200">Production (ArgoCD)</text>
+  <rect class="box" x="870" y="240" width="260" height="60" />
+  <text class="label" x="920" y="270">Ingress + Services</text>
+
+  <rect class="boundary" x="640" y="320" width="360" height="240" />
+  <text class="title" x="660" y="350">Monitoring</text>
+  <rect class="box" x="670" y="380" width="300" height="45" />
+  <text class="label" x="720" y="408">Prometheus / Loki / Tempo</text>
+  <rect class="box" x="670" y="430" width="300" height="45" />
+  <text class="label" x="760" y="458">Grafana Dashboards</text>
+  <rect class="box" x="670" y="480" width="300" height="45" />
+  <text class="label" x="760" y="508">Alertmanager</text>
+
+  <text class="title" x="80" y="280">Data Flows</text>
+  <line class="arrow" x1="270" y1="140" x2="310" y2="140" />
+  <text class="label" x="270" y="125">Push / PR</text>
+  <line class="arrow" x1="550" y1="140" x2="590" y2="140" />
+  <text class="label" x="515" y="125">Build &amp; Scan</text>
+  <line class="arrow" x1="790" y1="140" x2="840" y2="140" />
+  <text class="label" x="760" y="125">Deploy via GitOps</text>
+  <line class="arrow" x1="1000" y1="300" x2="1000" y2="320" />
+  <text class="label" x="1015" y="312">Logs/metrics</text>
+  <line class="arrow" x1="820" y1="420" x2="870" y2="230" />
+  <text class="label" x="780" y="380">SLO feedback</text>
+</svg>

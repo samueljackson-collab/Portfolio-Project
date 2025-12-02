@@ -1,0 +1,44 @@
+%% Database Migration Platform - Architecture
+flowchart LR
+    subgraph Src[Source Environment]
+        SRCDB[(PostgreSQL Primary)]
+        SRCAPP[Source App]
+        SRCAPP --> SRCDB
+    end
+
+    subgraph Control[Migration Control Plane]
+        ORCH[Migration Orchestrator]
+        METRICS[CloudWatch Metrics]
+        ALERTS[SNS/Email Alerts]
+        ORCH --> METRICS
+        ORCH --> ALERTS
+    end
+
+    subgraph CDC[CDC & Replication]
+        DEBEZIUM[Debezium Connector]
+        KAFKA[Kafka Connect]
+        DMS[AWS DMS Task]
+    end
+
+    subgraph Tgt[Target Environment]
+        TGTDB[(Target PostgreSQL)]
+        TGTAPP[Target App]
+        TGTAPP --> TGTDB
+    end
+
+    SRCDB -- Change Stream --> DEBEZIUM
+    DEBEZIUM -- Events --> KAFKA
+    KAFKA -- Replicated Changes --> DMS
+    DMS -- Apply Changes --> TGTDB
+    ORCH -- Control & Validation --> DEBEZIUM
+    ORCH -- Configure --> DMS
+    ORCH -- Health Checks --> TGTDB
+    ORCH -- Readiness --> SRCDB
+
+    classDef trust fill:#f3f7ff,stroke:#345;
+    class Src,CDC,Control,Tgt trust;
+
+    %% Data flow notes
+    SRCDB -- Cutover Approval --> ORCH
+    ORCH -- Rollback Path --> SRCDB
+    ORCH -- Final Sync --> TGTDB

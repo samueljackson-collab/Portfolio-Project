@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" aria-labelledby="title desc">
+  <title id="title">Database Migration Architecture</title>
+  <desc id="desc">Online migration flow with source Postgres, migration runner, cutover, and observability.</desc>
+  <style>
+    .boundary { fill: #eef3ff; stroke: #335; stroke-width: 2; }
+    .box { fill: #fff; stroke: #333; stroke-width: 1.5; rx: 6; ry: 6; }
+    .label { font: 14px sans-serif; fill: #111; }
+    .title { font: 16px sans-serif; font-weight: bold; fill: #111; }
+    .arrow { stroke: #444; stroke-width: 1.5; marker-end: url(#arrowhead); }
+    .dashed { stroke-dasharray: 6 4; }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" fill="#444">
+      <polygon points="0 0, 10 3.5, 0 7" />
+    </marker>
+  </defs>
+  <rect class="boundary" x="40" y="40" width="260" height="260" />
+  <text class="title" x="60" y="70">Source Environment</text>
+  <rect class="box" x="70" y="100" width="200" height="60" />
+  <text class="label" x="110" y="135">Legacy App</text>
+  <rect class="box" x="70" y="180" width="200" height="60" />
+  <text class="label" x="105" y="215">PostgreSQL (On-Prem)</text>
+
+  <rect class="boundary" x="340" y="40" width="260" height="260" />
+  <text class="title" x="360" y="70">Migration Runner</text>
+  <rect class="box" x="370" y="100" width="200" height="40" />
+  <text class="label" x="400" y="125">Schema Diff &amp; DDL</text>
+  <rect class="box" x="370" y="150" width="200" height="40" />
+  <text class="label" x="408" y="175">Data Pump / DMS</text>
+  <rect class="box" x="370" y="200" width="200" height="40" />
+  <text class="label" x="392" y="225">pglogical / CDC</text>
+  <rect class="box" x="370" y="250" width="200" height="40" />
+  <text class="label" x="415" y="275">Cutover Orchestrator</text>
+
+  <rect class="boundary" x="640" y="40" width="240" height="260" />
+  <text class="title" x="660" y="70">Target Cloud</text>
+  <rect class="box" x="670" y="100" width="180" height="40" />
+  <text class="label" x="690" y="125">AWS RDS Postgres</text>
+  <rect class="box" x="670" y="150" width="180" height="40" />
+  <text class="label" x="705" y="175">Proxy / App Nodes</text>
+  <rect class="box" x="670" y="200" width="180" height="40" />
+  <text class="label" x="714" y="225">Backups &amp; PITR</text>
+
+  <rect class="boundary" x="920" y="40" width="220" height="260" />
+  <text class="title" x="940" y="70">Observability</text>
+  <rect class="box" x="950" y="100" width="160" height="40" />
+  <text class="label" x="980" y="125">Grafana</text>
+  <rect class="box" x="950" y="150" width="160" height="40" />
+  <text class="label" x="978" y="175">Prometheus</text>
+  <rect class="box" x="950" y="200" width="160" height="40" />
+  <text class="label" x="986" y="225">Alertmanager</text>
+
+  <text class="title" x="80" y="340">Data Flows</text>
+  <line class="arrow" x1="270" y1="210" x2="340" y2="210" />
+  <text class="label" x="270" y="195">Logical/Full dumps</text>
+  <line class="arrow" x1="600" y1="210" x2="640" y2="210" />
+  <text class="label" x="560" y="195">CDC + DDL</text>
+  <line class="arrow" x1="820" y1="170" x2="920" y2="170" />
+  <text class="label" x="830" y="155">Metrics / Alerts</text>
+  <line class="arrow" x1="520" y1="120" x2="670" y2="120" class="dashed" />
+  <text class="label" x="540" y="105">Pilot sync</text>
+  <line class="arrow" x1="520" y1="260" x2="670" y2="260" class="dashed" />
+  <text class="label" x="535" y="245">Cutover window</text>
+
+  <rect class="box" x="200" y="420" width="280" height="120" fill="#f8fff2" stroke="#4a6" />
+  <text class="title" x="220" y="450">Guardrails</text>
+  <text class="label" x="220" y="475">- Preflight checks &amp; dry runs</text>
+  <text class="label" x="220" y="495">- Rollback scripts</text>
+  <text class="label" x="220" y="515">- Dual write feature flags</text>
+</svg>

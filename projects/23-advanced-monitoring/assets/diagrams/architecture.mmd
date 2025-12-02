@@ -1,0 +1,51 @@
+%% Advanced Monitoring & Observability - Architecture
+flowchart LR
+    subgraph Services[Portfolio Services]
+        APP1[Apps & APIs]
+        EXPORTERS[Prometheus Exporters]
+        LOGS[App Logs]
+        TRACES[Otel Instrumentation]
+        APP1 --> EXPORTERS
+        APP1 --> LOGS
+        APP1 --> TRACES
+    end
+
+    subgraph Collectors[Data Collection Boundary]
+        OTECOL[OpenTelemetry Collector]
+        PROMTAIL[Promtail]
+    end
+
+    subgraph Stack[Observability Stack]
+        PROM[Prometheus]
+        LOKI[Loki]
+        TEMPO[Tempo]
+        ALERTMGR[Alertmanager]
+        GRAFANA[Grafana]
+    end
+
+    subgraph Consumers[Consumers]
+        DASH[Dashboards]
+        ONCALL[On-call / ChatOps]
+    end
+
+    EXPORTERS --> OTECOL
+    TRACES --> OTECOL
+    LOGS --> PROMTAIL
+
+    OTECOL --> PROM
+    OTECOL --> TEMPO
+    PROMTAIL --> LOKI
+
+    PROM --> ALERTMGR
+    PROM --> GRAFANA
+    LOKI --> GRAFANA
+    TEMPO --> GRAFANA
+
+    GRAFANA --> DASH
+    ALERTMGR --> ONCALL
+
+    classDef trust fill:#eef5ff,stroke:#335;
+    class Services,Collectors,Stack,Consumers trust;
+
+    %% Data flows
+    ONCALL -- Feedback & Runbooks --> APP1
