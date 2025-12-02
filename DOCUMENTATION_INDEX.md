@@ -87,7 +87,7 @@ This index guides you through the comprehensive analysis of the 25-project portf
 ---
 
 ### 4. TECHNOLOGY_MATRIX.md
-**Purpose**: Quick reference and setup guide  
+**Purpose**: Quick reference and setup guide
 **Length**: ~9,500 words  
 **Best For**:
 - Setting up projects locally
@@ -115,6 +115,25 @@ This index guides you through the comprehensive analysis of the 25-project portf
 - Setup Templates
 
 **Start Here**: If you need to run a project locally
+
+---
+
+### 5. PORTFOLIO_MASTER_INDEX.md
+**Purpose**: Enterprise-ready index for Sections 4.1.8–11.0
+**Length**: ~50,000 words (observability, automation, evidence, roadmap)
+**Best For**:
+- Interview preparation and storytelling
+- Rebuilding detailed ADRs, SLO policies, and CI/CD flows
+- Cross-referencing projects to role requirements
+
+**Contains**:
+- Architecture decision trade-offs with rationale
+- Observability stack (Prometheus, Grafana, Loki, Alertmanager)
+- CI/CD and IaC blueprints with metrics
+- SLO-based alerting, runbooks, and MTTR evidence
+- Cross-reference tables, interview prompts, and future-roadmap sections
+
+**Start Here**: When you need a single source for deep technical proof points
 
 ---
 
