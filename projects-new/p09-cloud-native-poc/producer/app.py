@@ -16,10 +16,12 @@ def check_api_key(x_api_key: Optional[str]):
         raise HTTPException(status_code=401, detail="invalid api key")
 
 
+import os
+
 @app.on_event("startup")
 async def load_key():
     global API_KEY
-    API_KEY = None
+    API_KEY = os.getenv("API_KEY")
 
 
 @app.get("/health")
