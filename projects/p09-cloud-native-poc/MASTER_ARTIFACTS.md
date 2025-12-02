@@ -98,7 +98,7 @@ CI/CD -> build images -> ECR -> deploy to EKS
   2. Scale instance class or add read replica (if enabled) via Terraform variables.
   3. Enable/refresh query plan cache; invalidate hot cache keys.
   4. If caused by migration, roll back migration and reapply with fix.
-- **Backup/Restore:** Nightly snapshots for RDS; PITR enabled; restore via Terraform target and run migrations. S3 versioning on artifacts; periodic recovery test.
+- **Backup/Restore:** Nightly snapshots for RDS; PITR enabled; restore via a dedicated Terraform restore workflow and run migrations. S3 versioning on artifacts; periodic recovery test.
 - **Change Management:** CAB approvals with templates in `operations/change-log.md`; freeze rules during high-traffic events; feature flags for incremental rollout.
 - **Capacity & Cost:** Weekly review of node usage, autoscaling events, and CloudWatch cost explorer; scale down dev at night using schedules.
 
