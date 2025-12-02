@@ -1,0 +1,10 @@
+interval_seconds: 5
+events:
+  - imsi: "001010000000001"
+    cell_id: "berlin-1"
+    country: "DE"
+    event: attach
+  - imsi: "001010000000002"
+    cell_id: "paris-3"
+    country: "FR"
+    event: detach

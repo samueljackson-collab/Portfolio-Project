@@ -1,0 +1,40 @@
+version: '3.9'
+services:
+  kafka:
+    image: bitnami/kafka:3.5
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: roaming
+      POSTGRES_PASSWORD: roaming
+      POSTGRES_DB: roaming
+    ports:
+      - "5432:5432"
+  producer:
+    build: ./producer
+    container_name: roaming-producer
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      SCENARIO_PATH: /app/jobs/scenarios/demo.yaml
+    depends_on: [kafka]
+  consumer:
+    build: ./consumer
+    container_name: roaming-consumer
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      POSTGRES_DSN: postgres://roaming:roaming@postgres:5432/roaming?sslmode=disable
+    depends_on: [kafka, postgres]
+  anomaly-job:
+    build: ./jobs
+    entrypoint: ["python", "anomaly_scan.py"]
+    environment:
+      POSTGRES_DSN: postgres://roaming:roaming@postgres:5432/roaming?sslmode=disable
+    depends_on: [postgres]

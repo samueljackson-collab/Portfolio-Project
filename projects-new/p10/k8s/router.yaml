@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: failover-router
+  namespace: multi-region
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: router
+          image: multi-region/router:latest
+          env:
+            - name: REGION_A_URL
+              value: http://region-a.multi-region.svc.cluster.local:8100/health
+            - name: REGION_B_URL
+              value: http://region-b.multi-region.svc.cluster.local:8100/health

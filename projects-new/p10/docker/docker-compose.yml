@@ -1,0 +1,19 @@
+version: '3.9'
+services:
+  region-a:
+    build: ./consumer
+    environment:
+      REGION: a
+    ports:
+      - "8100:8100"
+  region-b:
+    build: ./consumer
+    environment:
+      REGION: b
+    ports:
+      - "8101:8100"
+  router:
+    build: ./producer
+    environment:
+      REGION_A_URL: http://region-a:8100/health
+      REGION_B_URL: http://region-b:8100/health
