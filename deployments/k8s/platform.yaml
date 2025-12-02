@@ -1,0 +1,194 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: platform
+data:
+  otel-collector.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+            cors:
+              allowed_origins: ["*"]
+    processors:
+      batch: {}
+      attributes:
+        actions:
+          - key: environment
+            value: ${OTEL_RESOURCE_ATTRIBUTES_ENVIRONMENT:-staging}
+            action: upsert
+    exporters:
+      logging:
+        loglevel: info
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+      otlphttp:
+        endpoint: ${GRAFANA_OTLP_ENDPOINT:-http://grafana-otel:4318}
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [logging, otlphttp]
+        metrics:
+          receivers: [otlp]
+          processors: [attributes, batch]
+          exporters: [prometheus, logging, otlphttp]
+        logs:
+          receivers: [otlp]
+          processors: [attributes, batch]
+          exporters: [logging, otlphttp]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-api
+  namespace: platform
+  labels:
+    app: portfolio-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: portfolio-api
+  template:
+    metadata:
+      labels:
+        app: portfolio-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/samueljackson-collab/portfolio-api:staging
+          env:
+            - name: POSTGRES_HOST
+              value: portfolio-db.platform.svc.cluster.local
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: portfolio-db-credentials
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: portfolio-db-credentials
+                  key: password
+            - name: POSTGRES_DB
+              value: portfolio
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.platform.svc.cluster.local:4317
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-api
+  namespace: platform
+spec:
+  selector:
+    app: portfolio-api
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-frontend
+  namespace: platform
+  labels:
+    app: portfolio-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portfolio-frontend
+  template:
+    metadata:
+      labels:
+        app: portfolio-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/samueljackson-collab/portfolio-frontend:staging
+          env:
+            - name: VITE_API_URL
+              value: http://portfolio-api
+          ports:
+            - containerPort: 4173
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-frontend
+  namespace: platform
+spec:
+  selector:
+    app: portfolio-frontend
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 4173
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: platform
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otelcol
+          image: otel/opentelemetry-collector-contrib:0.100.0
+          args:
+            - "--config=/etc/otel-collector.yaml"
+          volumeMounts:
+            - name: otel-config
+              mountPath: /etc/otel-collector.yaml
+              subPath: otel-collector.yaml
+      volumes:
+        - name: otel-config
+          configMap:
+            name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: platform
+spec:
+  selector:
+    app: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+    - name: prometheus
+      port: 8889
+      targetPort: 8889

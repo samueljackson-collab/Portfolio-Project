@@ -49,6 +49,22 @@ export const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
               )}
+              {isAuthenticated && (
+                <Link
+                  to="/photos"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                >
+                  Photos
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link
+                  to="/orchestration"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                >
+                  Orchestration
+                </Link>
+              )}
             </div>
           </div>
 

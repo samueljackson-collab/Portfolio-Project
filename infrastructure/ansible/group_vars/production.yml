@@ -1,0 +1,21 @@
+common_tags:
+  environment: production
+  owner: platform-team
+  compliance: soc2
+
+app_version: "latest"
+backend_image: "ghcr.io/samueljackson-collab/portfolio-api:latest"
+frontend_image: "ghcr.io/samueljackson-collab/portfolio-frontend:latest"
+backend_port: 8000
+frontend_port: 4173
+
+postgres:
+  host: prod-db.internal
+  user: app_user
+  name: portfolio
+  password: "{{ lookup('env', 'PROD_DB_PASSWORD') | default('change_me_prod', true) }}"
+
+observability:
+  grafana_url: https://grafana.platform.example.com
+  loki_url: https://logs.platform.example.com
+  otel_collector: https://otel.platform.example.com:4317

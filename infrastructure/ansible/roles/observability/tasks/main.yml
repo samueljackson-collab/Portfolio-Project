@@ -1,0 +1,31 @@
+---
+- name: Install Grafana Agent (OTel collector)
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-releases/main/distributions/otelcol-contrib.yaml
+    dest: /etc/otelcol-config-example.yaml
+    mode: '0644'
+
+- name: Drop opinionated collector pipeline
+  ansible.builtin.copy:
+    src: ../../../observability/otel-collector.yaml
+    dest: /etc/otelcol-custom.yaml
+    mode: '0644'
+
+- name: Ensure log directory exists
+  ansible.builtin.file:
+    path: /var/log/otel-collector
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Start collector via systemd
+  ansible.builtin.systemd:
+    name: otelcol-contrib
+    enabled: true
+    state: restarted
+    daemon_reload: true
+    drop_in: |
+      [Service]
+      Environment=OTEL_CONFIG_FILE=/etc/otelcol-custom.yaml
+      LogsDirectory=otel-collector

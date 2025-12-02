@@ -1,0 +1,37 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+        cors:
+          allowed_origins: ["*"]
+processors:
+  batch:
+  attributes:
+    actions:
+      - key: environment
+        value: ${OTEL_RESOURCE_ATTRIBUTES_ENVIRONMENT:-staging}
+        action: upsert
+exporters:
+  logging:
+    loglevel: info
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+  otlphttp:
+    endpoint: ${GRAFANA_OTLP_ENDPOINT:-http://grafana-otel:4318}
+    tls:
+      insecure: true
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging, otlphttp]
+    metrics:
+      receivers: [otlp]
+      processors: [attributes, batch]
+      exporters: [prometheus, logging, otlphttp]
+    logs:
+      receivers: [otlp]
+      processors: [attributes, batch]
+      exporters: [logging, otlphttp]

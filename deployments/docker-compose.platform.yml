@@ -1,0 +1,58 @@
+version: '3.9'
+services:
+  api:
+    image: ghcr.io/samueljackson-collab/portfolio-api:staging
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: portfolio
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: change_me_staging
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel:4317
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - otel
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    image: ghcr.io/samueljackson-collab/portfolio-frontend:staging
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "4173:4173"
+    depends_on:
+      - api
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: change_me_staging
+      POSTGRES_DB: portfolio
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  otel:
+    image: otel/opentelemetry-collector-contrib:0.100.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ../observability/otel-collector.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana-provisioning:/etc/grafana/provisioning
+
+volumes:
+  db_data: {}

@@ -14,11 +14,9 @@ from prometheus_fastapi_instrumentator import Instrumentator
 import logging
 import time
 
-from prometheus_fastapi_instrumentator import Instrumentator
-
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import health, auth, content, photos, backup
+from app.routers import health, auth, content, photos, backup, orchestration
 
 
 # Configure logging
@@ -162,11 +160,7 @@ app.include_router(auth.router)
 app.include_router(content.router)
 app.include_router(photos.router)
 app.include_router(backup.router)
-
-
-# Prometheus metrics instrumentation
-# Expose metrics at /metrics endpoint for Prometheus scraping
-Instrumentator().instrument(app).expose(app, endpoint="/metrics", tags=["Monitoring"])
+app.include_router(orchestration.router)
 
 
 # Root endpoint

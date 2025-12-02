@@ -1,0 +1,43 @@
+{
+  "title": "Orchestration Golden Signals",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "API Availability",
+      "id": 1,
+      "targets": [
+        {"expr": "sum(rate(http_requests_total{job='api',status=~'2..'}[5m])) / sum(rate(http_requests_total{job='api'}[5m]))"}
+      ],
+      "options": {"reduceOptions": {"calcs": ["mean"]}},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Request Duration (p95)",
+      "id": 2,
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job='api'}[5m])) by (le))"}
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Container CPU",
+      "id": 3,
+      "targets": [
+        {"expr": "sum(rate(container_cpu_usage_seconds_total{container!='',pod=~'portfolio-api.*'}[5m])) by (pod)"}
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Deployment Events",
+      "id": 4,
+      "targets": [
+        {"expr": "sum by(environment,status)(orchestration_deploy_events_total)"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+---
+- name: Create compose directory
+  ansible.builtin.file:
+    path: /opt/orchestrator
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Render docker compose file
+  ansible.builtin.copy:
+    dest: /opt/orchestrator/docker-compose.yml
+    mode: '0644'
+    content: |
+      version: '3.9'
+      services:
+        api:
+          image: "{{ backend_image }}"
+          env_file:
+            - /opt/orchestrator/.env
+          ports:
+            - "{{ backend_port }}:8000"
+          restart: unless-stopped
+        console:
+          image: "{{ frontend_image }}"
+          ports:
+            - "{{ frontend_port }}:4173"
+          environment:
+            - API_URL=http://localhost:{{ backend_port }}
+          restart: unless-stopped
+      volumes: {}
+
+- name: Write service environment file
+  ansible.builtin.copy:
+    dest: /opt/orchestrator/.env
+    mode: '0600'
+    content: |
+      POSTGRES_HOST={{ postgres.host }}
+      POSTGRES_USER={{ postgres.user }}
+      POSTGRES_DB={{ postgres.name }}
+      POSTGRES_PASSWORD={{ postgres.password }}
+
+- name: Deploy stack with docker compose
+  community.docker.docker_compose_v2:
+    project_src: /opt/orchestrator
+    state: present
+    pull: true

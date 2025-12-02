@@ -1,0 +1,12 @@
+---
+- name: Harden hosts and deploy orchestration stack
+  hosts: "{{ target | default('staging') }}"
+  become: true
+  vars:
+    users:
+      - name: deploy
+        groups: ["sudo", "docker"]
+  roles:
+    - role: common
+    - role: orchestrator
+    - role: observability

@@ -1,0 +1,21 @@
+common_tags:
+  environment: staging
+  owner: platform-team
+  compliance: dev
+
+app_version: "staging"
+backend_image: "ghcr.io/samueljackson-collab/portfolio-api:staging"
+frontend_image: "ghcr.io/samueljackson-collab/portfolio-frontend:staging"
+backend_port: 8000
+frontend_port: 4173
+
+postgres:
+  host: staging-db.internal
+  user: app_user
+  name: portfolio
+  password: "{{ lookup('env', 'STAGING_DB_PASSWORD') | default('change_me_staging', true) }}"
+
+observability:
+  grafana_url: http://grafana-otel:3000
+  loki_url: http://grafana-otel:3100
+  otel_collector: http://grafana-otel:4317
