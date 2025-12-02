@@ -243,6 +243,17 @@ Also available in supporting documentation:
     └── 25-portfolio-website/
 ```
 
+## Architecture Decision Records
+
+The `adr/` directory captures the portfolio-wide decisions that implement the Master Factory deliverables:
+- [ADR-001: Architecture Runway & Standards](adr/ADR-001-architecture-runway.md)
+- [ADR-002: CI/CD Automation & Quality Gates](adr/ADR-002-cicd-automation.md)
+- [ADR-003: Security & Compliance Baseline](adr/ADR-003-security-baseline.md)
+- [ADR-004: Observability & SLO Enforcement](adr/ADR-004-observability-slo.md)
+- [ADR-005: Documentation & Knowledge Hub](adr/ADR-005-knowledge-hub.md)
+- [ADR-006: Portfolio-Wide Delivery Metrics](adr/ADR-006-delivery-metrics.md)
+- [ADR-007: Resilience & Recovery Playbooks](adr/ADR-007-resilience-playbooks.md)
+
 ---
 
 ## Using for Website Generation (Project 25)
