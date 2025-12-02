@@ -59,7 +59,7 @@ Developers -> [OpenAPI Repo] -> {Mock Server, Contract Tests} -> CI -> {Gateway 
 ```
 
 ## 4. IaC Prompt
-> "Terraform module deploying shared VPC, EKS with managed node groups, ALB ingress, RDS Postgres, Redis (Elasticache), and IAM roles for OIDC GitHub Actions. Add security groups limiting ingress to ALB and runner CIDRs. Configure S3 bucket for artifacts with SSE-KMS, lifecycle for logs. Provision Route53 records, WAF, and external-secrets integration. Outputs: kubeconfig, gateway endpoint, DB URI, Redis endpoint, and artifact bucket." Acceptance: `terraform plan` clean; CIS AWS Foundations checks pass; tflint/checkov green; drift detection enabled.
+> "Terraform module deploying shared VPC, EKS with managed node groups, ALB ingress, RDS Postgres, Redis (ElastiCache), and IAM roles for OIDC GitHub Actions. Add security groups limiting ingress to ALB and runner CIDRs. Configure S3 bucket for artifacts with SSE-KMS, lifecycle for logs. Provision Route53 records, WAF, and external-secrets integration. Outputs: kubeconfig, gateway endpoint, DB URI, Redis endpoint, and artifact bucket." Acceptance: `terraform plan` clean; CIS AWS Foundations checks pass; tflint/checkov green; drift detection enabled.
 
 ## 5. Backend Prompt
 > "Build Node.js 20 + NestJS service exposing CRUD and search endpoints with OpenAPI decorators. Enforce request/response validation, JWT auth, RBAC scopes, and rate limiting. Add feature flag for mock adapters. Use TypeORM migrations, Winston logging, OTEL tracing, and Pact contract verification. Include health/readiness endpoints and structured error responses. Acceptance: `npm run test`, `npm run lint`, Pact broker verification green, coverage ≥85%, semgrep clean." 
