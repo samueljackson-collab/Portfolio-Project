@@ -10,7 +10,7 @@ A contract-first API testing acceleration program that hardens service quality, 
 
 ## 2. README / Deployment
 ### Prereqs
-- Docker, Node 20, Python 3.11, Java 17, Postman CLI, k6, GitHub Actions runners (hosted or self-hosted), Terraform ≥1.7, Helm ≥3.13, kubectl ≥1.29, OIDC-enabled AWS account for EKS/RDS/Redis, Vault for secrets.
+- Docker 24+, Node 20, Python 3.11, Java 17, Postman CLI, k6, GitHub Actions runners (hosted or self-hosted), Terraform ≥1.7, Helm ≥3.13, kubectl ≥1.29, OIDC-enabled AWS account for EKS/RDS/Redis, Vault for secrets.
 
 ### Local Setup
 1. `python -m venv .venv && source .venv/bin/activate`
