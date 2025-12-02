@@ -1,27 +1,22 @@
-# Prometheus Configuration - Enterprise Portfolio Demo Stack
-# Collects metrics from all demo services for portfolio showcase
+# Prometheus Configuration - PRJ-SDE-002 Demo Stack
+# Sanitized: hostnames/IPs replaced with placeholders, webhooks removed
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
     cluster: 'portfolio-demo'
-    environment: 'demo'
+    environment: 'lab'
 
-# Alert rules
 rule_files:
   - '/etc/prometheus/alerts/*.yml'
 
-# Alertmanager configuration
 alerting:
   alertmanagers:
     - static_configs:
-        - targets:
-            - alertmanager:9093
+        - targets: ['alertmanager:9093']
 
-# Scrape configurations
 scrape_configs:
-  # Prometheus self-monitoring
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
@@ -29,7 +24,6 @@ scrape_configs:
           service: 'prometheus'
           project: 'PRJ-SDE-002'
 
-  # Node Exporter - System metrics
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['node-exporter:9100']
@@ -38,7 +32,6 @@ scrape_configs:
           project: 'PRJ-SDE-002'
           instance: 'demo-host'
 
-  # cAdvisor - Container metrics
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
@@ -46,7 +39,6 @@ scrape_configs:
           service: 'cadvisor'
           project: 'PRJ-SDE-002'
 
-  # Demo API Application
   - job_name: 'demo-api'
     scrape_interval: 10s
     metrics_path: '/metrics'
@@ -54,10 +46,34 @@ scrape_configs:
       - targets: ['demo-api:5000']
         labels:
           service: 'demo-api'
-          project: 'PRJ-SDE-001'
+          project: 'PRJ-SDE-002'
           application: 'portfolio-api'
 
-  # Grafana self-monitoring
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://status.example.com/health
+        labels:
+          project: 'PRJ-SDE-002'
+          probe: 'synthetic'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: 'pbs-exporter'
+    static_configs:
+      - targets: ['pbs-exporter:9220']
+        labels:
+          service: 'pbs'
+          project: 'PRJ-SDE-002'
+
   - job_name: 'grafana'
     static_configs:
       - targets: ['grafana:3000']
@@ -65,7 +81,6 @@ scrape_configs:
           service: 'grafana'
           project: 'PRJ-SDE-002'
 
-  # Loki
   - job_name: 'loki'
     static_configs:
       - targets: ['loki:3100']
@@ -73,7 +88,6 @@ scrape_configs:
           service: 'loki'
           project: 'PRJ-SDE-002'
 
-  # Alertmanager
   - job_name: 'alertmanager'
     static_configs:
       - targets: ['alertmanager:9093']
