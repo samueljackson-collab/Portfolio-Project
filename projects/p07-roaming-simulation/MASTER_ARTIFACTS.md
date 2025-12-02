@@ -113,7 +113,7 @@ flowchart TD
   1. Trigger replay job `python scripts/reconcile.py --mode replay --from-offset <offset>`.
   2. Validate Postgres counts vs golden dataset; if drift >0, quarantine offending runs and notify Finance.
   3. Rotate Kafka consumer group to new offset after fix.
-- **Data Recovery:** Restore Postgres from latest snapshot via Terraform `apply -target=aws_db_instance.restore` and replay Kafka topics from offset `billing.topic`. Validate with checksum reports.
+- **Data Recovery:** Restore Postgres from latest snapshot via a dedicated Terraform restore workflow (avoiding `-target`) and replay Kafka topics from offset `billing.topic`. Validate with checksum reports.
 - **Deploy Freeze Procedure:** Toggle `deploy_freeze=true` in `operations/change_window.md`; require director approval; block merge via GitHub environment protection.
 - **Capacity Management:** Weekly review of MSK and node utilization; run `terraform plan` cost estimates; scale simulators with KEDA thresholds.
 - **Compliance/Privacy:** Ensure payloads sanitized; audit logs shipped to S3 with retention policy and access reviews quarterly.
