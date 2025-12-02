@@ -17,7 +17,6 @@ from datetime import datetime, date
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
     status,
     Query,
     UploadFile,
@@ -41,7 +40,13 @@ from app.schemas import (
     CalendarMonthResponse,
     CalendarDateResponse,
 )
-from app.dependencies import get_current_user
+from app.dependencies import (
+    get_current_user,
+    raise_not_found,
+    raise_bad_request,
+    raise_conflict,
+    raise_server_error,
+)
 from app.services import photo_service, location_service, storage_service
 
 router = APIRouter(
@@ -87,19 +92,12 @@ async def upload_photo(
 
     # Validate image
     if not photo_service.validate_image(file_data):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid image file. Supported formats: JPEG, PNG, GIF, WEBP",
-        )
+        raise_bad_request("Invalid image file. Supported formats: JPEG, PNG, GIF, WEBP")
 
     # Check file size against configuration
     if file_size > settings.max_photo_size_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "File size too large. Maximum "
-                f"{settings.max_photo_size_mb}MB allowed."
-            ),
+        raise_bad_request(
+            f"File size too large. Maximum {settings.max_photo_size_mb}MB allowed."
         )
 
     # Extract EXIF metadata
@@ -162,10 +160,7 @@ async def upload_photo(
                 result = await db.execute(album_query)
                 album = result.scalar_one_or_none()
                 if not album:
-                    raise HTTPException(
-                        status_code=status.HTTP_409_CONFLICT,
-                        detail="Could not create location album. Please retry.",
-                    )
+                    raise_conflict("Could not create location album. Please retry.")
 
     # Create photo record
     photo = Photo(
@@ -316,9 +311,7 @@ async def get_photo(
     photo = result.scalar_one_or_none()
 
     if not photo:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found"
-        )
+        raise_not_found("Photo")
 
     return PhotoResponse.model_validate(photo)
 
@@ -353,26 +346,19 @@ async def get_photo_file(
     photo = result.scalar_one_or_none()
 
     if not photo:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found"
-        )
+        raise_not_found("Photo")
 
     # Determine which file to serve
     file_path = photo.thumbnail_path if thumbnail else photo.file_path
 
     if not file_path:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
-        )
+        raise_not_found("File")
 
     # Read file data
     try:
         file_data = await storage_service.get_photo_data(file_path)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to read photo file",
-        )
+    except Exception:
+        raise_server_error("Failed to read photo file")
 
     # Return file with appropriate content type
     return Response(content=file_data, media_type=photo.mime_type)
@@ -404,9 +390,7 @@ async def delete_photo(
     photo = result.scalar_one_or_none()
 
     if not photo:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found"
-        )
+        raise_not_found("Photo")
 
     # Get album for count update
     album = None
@@ -457,9 +441,7 @@ async def get_calendar_month(
     """
     # Validate month
     if month < 1 or month > 12:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid month"
-        )
+        raise_bad_request("Invalid month")
 
     # Query photos for this month
     query = (

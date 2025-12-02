@@ -83,7 +83,10 @@ class DatabaseMigrationOrchestrator:
         target_config: DatabaseConfig,
         dms_replication_instance_arn: Optional[str] = None,
         max_replication_lag_seconds: int = 5,
-        validation_sample_size: int = 1000
+        validation_sample_size: int = 1000,
+        load_balancer_arn: Optional[str] = None,
+        target_group_arn: Optional[str] = None,
+        parameter_store_path: Optional[str] = None
     ):
         """
         Initialize the migration orchestrator.
@@ -94,12 +97,18 @@ class DatabaseMigrationOrchestrator:
             dms_replication_instance_arn: AWS DMS replication instance ARN
             max_replication_lag_seconds: Maximum acceptable replication lag
             validation_sample_size: Number of rows to sample for validation
+            load_balancer_arn: AWS ALB/NLB ARN for traffic switching
+            target_group_arn: AWS Target Group ARN for traffic routing
+            parameter_store_path: AWS SSM Parameter Store path for connection strings
         """
         self.source_config = source_config
         self.target_config = target_config
         self.dms_arn = dms_replication_instance_arn
         self.max_lag = max_replication_lag_seconds
         self.validation_sample_size = validation_sample_size
+        self.load_balancer_arn = load_balancer_arn
+        self.target_group_arn = target_group_arn
+        self.parameter_store_path = parameter_store_path
 
         self.phase = MigrationPhase.INIT
         self.metrics = MigrationMetrics(
@@ -112,6 +121,8 @@ class DatabaseMigrationOrchestrator:
         # AWS clients
         self.dms_client = boto3.client('dms') if dms_replication_instance_arn else None
         self.cloudwatch = boto3.client('cloudwatch')
+        self.ssm_client = boto3.client('ssm') if parameter_store_path else None
+        self.elbv2_client = boto3.client('elbv2') if load_balancer_arn else None
 
         logger.info("Migration orchestrator initialized")
 
@@ -434,10 +445,32 @@ class DatabaseMigrationOrchestrator:
             return False
 
     def _pause_application_writes(self) -> None:
-        """Pause application writes to source database"""
-        # In production, this would update load balancer or application config
-        logger.info("Application writes paused (placeholder)")
-        time.sleep(1)
+        """
+        Pause application writes to source database.
+
+        This method updates the database connection string in AWS SSM Parameter Store
+        to a read-only endpoint, effectively pausing writes from applications.
+        """
+        if self.ssm_client and self.parameter_store_path:
+            try:
+                # Update parameter store to mark database as read-only
+                self.ssm_client.put_parameter(
+                    Name=f"{self.parameter_store_path}/db_mode",
+                    Value="read-only",
+                    Type="String",
+                    Overwrite=True
+                )
+                logger.info("✓ Application writes paused via SSM Parameter Store")
+            except ClientError as e:
+                logger.error(f"Failed to update SSM parameter: {e}")
+                raise
+        else:
+            # Fallback: Log the action for manual intervention
+            logger.warning("SSM Parameter Store not configured - manual write pause required")
+            logger.info("ACTION REQUIRED: Manually pause application writes to source database")
+
+        # Brief pause to allow in-flight transactions to complete
+        time.sleep(2)
 
     def _wait_for_replication_sync(self, timeout_seconds: int = 300) -> None:
         """Wait for replication to fully sync"""
@@ -452,10 +485,49 @@ class DatabaseMigrationOrchestrator:
         raise TimeoutError("Replication sync timeout")
 
     def _switch_application_traffic(self) -> None:
-        """Switch application traffic to target database"""
-        # In production, this would update DNS, load balancer, or connection pooler
-        logger.info("Application traffic switched to target (placeholder)")
-        time.sleep(1)
+        """
+        Switch application traffic to target database.
+
+        Updates the connection string in AWS SSM Parameter Store to point
+        to the new target database, enabling applications to connect to it.
+        """
+        if self.ssm_client and self.parameter_store_path:
+            try:
+                # Build the new connection string for the target database
+                target_conn_string = (
+                    f"postgresql://{self.target_config.username}:{self.target_config.password}"
+                    f"@{self.target_config.host}:{self.target_config.port}"
+                    f"/{self.target_config.database}?sslmode={self.target_config.ssl_mode}"
+                )
+
+                # Update parameter store with new connection string
+                self.ssm_client.put_parameter(
+                    Name=f"{self.parameter_store_path}/database_url",
+                    Value=target_conn_string,
+                    Type="SecureString",
+                    Overwrite=True
+                )
+
+                # Update database mode to read-write
+                self.ssm_client.put_parameter(
+                    Name=f"{self.parameter_store_path}/db_mode",
+                    Value="read-write",
+                    Type="String",
+                    Overwrite=True
+                )
+
+                logger.info("✓ Application traffic switched to target database")
+
+            except ClientError as e:
+                logger.error(f"Failed to switch traffic via SSM: {e}")
+                raise
+        else:
+            # Fallback: Log the action for manual intervention
+            logger.warning("SSM Parameter Store not configured - manual traffic switch required")
+            logger.info(f"ACTION REQUIRED: Update connection strings to target: {self.target_config.host}:{self.target_config.port}")
+
+        # Brief pause to allow DNS/config propagation
+        time.sleep(2)
 
     def _verify_target_operations(self) -> bool:
         """Verify target database is operational"""
@@ -512,8 +584,46 @@ class DatabaseMigrationOrchestrator:
             return False
 
     def _switch_to_source(self) -> None:
-        """Switch application traffic back to source"""
-        logger.info("Traffic switched to source (placeholder)")
+        """
+        Switch application traffic back to source database (rollback).
+
+        Reverts the connection string in AWS SSM Parameter Store to point
+        back to the original source database.
+        """
+        if self.ssm_client and self.parameter_store_path:
+            try:
+                # Build the connection string for the source database
+                source_conn_string = (
+                    f"postgresql://{self.source_config.username}:{self.source_config.password}"
+                    f"@{self.source_config.host}:{self.source_config.port}"
+                    f"/{self.source_config.database}?sslmode={self.source_config.ssl_mode}"
+                )
+
+                # Update parameter store with source connection string
+                self.ssm_client.put_parameter(
+                    Name=f"{self.parameter_store_path}/database_url",
+                    Value=source_conn_string,
+                    Type="SecureString",
+                    Overwrite=True
+                )
+
+                # Update database mode to read-write
+                self.ssm_client.put_parameter(
+                    Name=f"{self.parameter_store_path}/db_mode",
+                    Value="read-write",
+                    Type="String",
+                    Overwrite=True
+                )
+
+                logger.info("✓ Traffic switched back to source database")
+
+            except ClientError as e:
+                logger.error(f"Failed to switch traffic back to source: {e}")
+                raise
+        else:
+            # Fallback: Log the action for manual intervention
+            logger.warning("SSM Parameter Store not configured - manual rollback required")
+            logger.info(f"ACTION REQUIRED: Revert connection strings to source: {self.source_config.host}:{self.source_config.port}")
 
     def _stop_replication(self) -> None:
         """Stop replication tasks"""
