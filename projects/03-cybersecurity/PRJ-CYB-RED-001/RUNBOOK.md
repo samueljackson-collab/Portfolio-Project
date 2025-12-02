@@ -121,8 +121,8 @@ engagement_id: RTO-2025-001
 engagement_type: Purple Team - Adversary Emulation
 duration: 5 days
 authorized_red_team:
-  - john.redteam@company.com
-  - jane.pentester@company.com
+  - [RED_TEAM_MEMBER_1_EMAIL]
+  - [RED_TEAM_MEMBER_2_EMAIL]
 
 in_scope:
   networks:
@@ -162,19 +162,19 @@ out_of_scope:
     - No persistence beyond engagement window
 
 emergency_contacts:
-  red_team_lead: john.redteam@company.com / +1-555-0150
-  blue_team_lead: alice.blueteam@company.com / +1-555-0151
-  ciso: ciso@company.com / +1-555-0101
-  emergency_stop: security-emergency@company.com
+  red_team_lead: [RED_TEAM_LEAD_EMAIL] / [RED_TEAM_LEAD_PHONE]
+  blue_team_lead: [BLUE_TEAM_LEAD_EMAIL] / [BLUE_TEAM_LEAD_PHONE]
+  ciso: [CISO_EMAIL] / [CISO_PHONE]
+  emergency_stop: [EMERGENCY_STOP_EMAIL]
 
 deconfliction:
   process: Prior approval required for new TTPs
   approval_time: 30 minutes
-  channels: Slack #purple-team, Email security-ops@company.com
+  channels: Slack #purple-team, Email [SECURITY_OPS_EMAIL]
 
 reporting:
   daily_updates: true
-  recipients: blue-team-lead@company.com, ciso@company.com
+  recipients: [BLUE_TEAM_LEAD_EMAIL], [CISO_EMAIL]
   final_report_due: 5 business days after engagement end
 EOF
 
@@ -182,7 +182,7 @@ EOF
 ./scripts/submit-roe-for-approval.sh \
   --engagement-id RTO-2025-001 \
   --scope engagements/RTO-2025-001/scope.yaml \
-  --approvers "ciso@company.com,blue-team-lead@company.com,legal@company.com"
+  --approvers "[CISO_EMAIL],[BLUE_TEAM_LEAD_EMAIL],[LEGAL_EMAIL]"
 
 # Wait for approval
 ./scripts/check-roe-approval-status.sh --engagement-id RTO-2025-001
@@ -600,7 +600,7 @@ EOF
 ./scripts/share-with-blue-team.sh \
   --engagement-id $ENGAGEMENT_ID \
   --documents "test-plan.md,ttp-execution-plan.yaml" \
-  --recipients blue-team-lead@company.com
+  --recipients [BLUE_TEAM_LEAD_EMAIL]
 ```
 
 #### Real-Time Collaboration
@@ -716,7 +716,7 @@ EOF
 ./scripts/send-daily-report.sh \
   --engagement-id $ENGAGEMENT_ID \
   --report engagements/$ENGAGEMENT_ID/reports/daily-$(date +%Y%m%d).md \
-  --recipients "blue-team-lead@company.com,ciso@company.com"
+  --recipients "[BLUE_TEAM_LEAD_EMAIL],[CISO_EMAIL]"
 ```
 
 ### Final Report
@@ -1033,10 +1033,10 @@ EOF
 ```
 
 ### Emergency Contacts
-- **Red Team Lead**: john.redteam@company.com / +1-555-0150
-- **Blue Team Lead**: alice.blueteam@company.com / +1-555-0151
-- **CISO**: ciso@company.com / +1-555-0101
-- **Emergency Stop**: security-emergency@company.com
+- **Red Team Lead**: [RED_TEAM_LEAD_EMAIL] / [RED_TEAM_LEAD_PHONE]
+- **Blue Team Lead**: [BLUE_TEAM_LEAD_EMAIL] / [BLUE_TEAM_LEAD_PHONE]
+- **CISO**: [CISO_EMAIL] / [CISO_PHONE]
+- **Emergency Stop**: [EMERGENCY_STOP_EMAIL]
 
 ---
 
@@ -1046,4 +1046,4 @@ EOF
 - **Owner:** Red Team / Offensive Security
 - **Review Schedule:** Quarterly or after major engagements
 - **Related Docs**: ROE Template, Purple Team Playbook, MITRE ATT&CK Navigator
-- **Feedback:** Submit via redteam@company.com
+- **Feedback:** Submit via [RED_TEAM_EMAIL]
