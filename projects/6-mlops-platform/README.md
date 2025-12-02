@@ -3,19 +3,16 @@
 ## Overview
 This project delivers an end-to-end MLOps workflow for training, evaluating, registering, and deploying machine learning models. The platform combines MLflow for experiment tracking, Optuna for automated hyperparameter tuning, and a modular deployment layer that targets Kubernetes, AWS Lambda, or Amazon SageMaker.
 
-## Architecture
-```mermaid
-diagram LR
-  data[Feature Store] --> prep[Data Preprocessing Service]
-  prep --> tune[Optuna Study]
-  tune --> train[Model Training Jobs]
-  train --> mlflow[(MLflow Tracking + Registry)]
-  mlflow --> deploy{Deployment Orchestrator}
-  deploy -->|Kubernetes| kube[Model Serving on EKS]
-  deploy -->|Lambda| lambda[AWS Lambda Inference]
-  deploy -->|SageMaker| sm[Managed Endpoint]
-  mlflow --> monitor[Monitoring + Drift Detection]
-```
+## Phase 2 Architecture Diagram
+
+![MLOps Platform – Phase 2](render locally to PNG; output is .gitignored)
+
+- **Context**: Feature and label stores feed an experimentation boundary where preprocessing, AutoML, and training jobs log
+  lineage and artifacts into MLflow before promotion.
+- **Decision**: Separate delivery and serving trust zones so CI/CD and the deployment orchestrator can promote signed model
+  versions into EKS, Lambda, or SageMaker with observability hooks per runtime.
+- **Consequences**: Drift and telemetry signals loop back into the pipeline to trigger retraining while registry promotion
+  remains auditable. Keep the [Mermaid source](assets/diagrams/architecture.mmd) synchronized with the exported PNG.
 
 ### Key Components
 - **Experiment Runner** – wraps data ingestion, preprocessing, and training with tracked artifacts.

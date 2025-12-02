@@ -1,0 +1,26 @@
+flowchart LR
+    subgraph Client[Portfolio Optimizer]
+        UI[CLI / Notebook]
+        Scheduler[Batch Job Submitter]
+    end
+
+    subgraph Orchestration[AWS Batch Control Plane]
+        Preprocess[Classical Preprocessing\nData sampling]
+        Qiskit[Qiskit Transpiler]
+        Fallback[Classical Solver\nSimulated Annealing]
+        Metrics[CloudWatch Metrics]
+    end
+
+    subgraph Quantum[Quantum Service Provider]
+        Queue[QPU Job Queue]
+        Circuit[Quantum Circuit Execution]
+        Results[Measurement Results]
+    end
+
+    UI --> Scheduler --> Preprocess --> Qiskit
+    Qiskit --> Queue --> Circuit --> Results
+    Results --> Preprocess
+    Fallback --> Results
+    Preprocess -->|Select path| Fallback
+    Results --> Metrics
+    Metrics --> UI

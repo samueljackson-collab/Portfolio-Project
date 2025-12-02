@@ -1,0 +1,32 @@
+flowchart LR
+    subgraph DevZone[Developer Workstation]
+        IaC[IaC Modules\nTerraform/CDK/Pulumi]
+        Tests[Local Validation\npytest + lint]
+        Secrets[Secrets Mgmt\nSOPS/Parameter Store]
+    end
+
+    subgraph CICD[CI/CD Control Plane]
+        Actions[GitHub Actions\nTerraform pipeline]
+        Lint[Format & Schema Checks]
+        Scan[Security Scan\ntfsec]
+        Plan[Plan & Manual Approval]
+    end
+
+    subgraph AWS[AWS Account\n(VPC/Accounts)]
+        State[S3 + DynamoDB\nRemote State]
+        Network[VPC + Subnets]
+        Compute[EKS/ECS/EC2 Targets]
+        IAM[IAM Roles & Policies]
+        Observability[CloudWatch Metrics/Logs]
+    end
+
+    IaC -->|Push IaC| Actions
+    Tests -->|Pre-commit| Actions
+    Secrets -->|Runtime Secrets| Plan
+    Actions --> Lint --> Scan --> Plan
+    Plan -->|Apply| Network
+    Plan -->|Provision| Compute
+    Plan -->|Persist state| State
+    Compute --> Observability
+    Network --> Observability
+    Observability -->|Health signals| Actions

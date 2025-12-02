@@ -15,3 +15,11 @@ This project provisions a production-ready AWS environment with multiple impleme
 - `scripts/` — Helper scripts for planning, deployment, validation, and teardown workflows.
 
 Each implementation aligns with the runbooks described in the Wiki.js guide so the documentation, automation, and validation steps can be exercised end-to-end.
+
+## Phase 1 Architecture Diagram
+
+Diagram: render locally from [Mermaid source](assets/diagrams/architecture.mmd) using `python tools/generate_phase1_diagrams.py` (PNG output is .gitignored).
+
+- **Context**: Foundation IaC patterns are split across Terraform, CDK, and Pulumi while CI/CD enforces linting, tfsec, and approval gates before applying to AWS accounts.
+- **Decision**: Isolate developer workstations, CI/CD control plane, and AWS runtime in separate trust boundaries with remote state (S3+DynamoDB) and CloudWatch feedback loops.
+- **Consequences**: Reusable pipelines catch drift and security regressions early, while state locking and telemetry keep production changes auditable. Update the [Mermaid source](assets/diagrams/architecture.mmd) alongside the PNG when evolving the deployment topology.

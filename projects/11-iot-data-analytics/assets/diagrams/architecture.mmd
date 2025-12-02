@@ -1,0 +1,29 @@
+flowchart LR
+    subgraph Edge[Edge Devices]
+        Device[IoT Devices]
+        Gateway[Edge Gateway
+(MQTT + TLS)]
+    end
+
+    subgraph Cloud[Cloud Ingestion]
+        IoT[IoT Core]
+        Twin[Device Twin]
+        Rules[Rules Engine]
+        Firehose[Kinesis Firehose]
+    end
+
+    subgraph Analytics[Analytics & Storage]
+        Lake[(S3 Data Lake)]
+        Timescale[(TimescaleDB / Postgres)]
+        ETL[Lambda ETL]
+        Grafana[Grafana + Alerts]
+    end
+
+    Device -->|Telemetry| Gateway -->|MQTT| IoT
+    IoT --> Twin
+    IoT --> Rules --> Firehose
+    Firehose -->|Parquet| Lake
+    Firehose -->|Hot path| ETL --> Timescale
+    Timescale --> Grafana
+    Lake --> Grafana
+    Grafana -->|Alerts| Twin

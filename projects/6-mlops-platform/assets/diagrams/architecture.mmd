@@ -1,0 +1,39 @@
+flowchart LR
+  subgraph Data["Data Platform (Trusted)"]
+    source[(Feature Store / Data Lake)]
+    labels[(Label Store)]
+  end
+
+  subgraph Experiment["Experimentation & Training (Restricted)"]
+    prep[Data Prep & Validation]
+    tune["AutoML / Optuna Studies"]
+    train[Training Jobs]
+    mlflow[("MLflow Tracking & Registry")]
+  end
+
+  subgraph Delivery["Model Delivery (Control Plane)"]
+    ci["CI/CD + ML Pipelines"]
+    registry[("Versioned Models")]
+    orchestrator["Deployment Orchestrator"]
+  end
+
+  subgraph Runtime["Serving Runtimes (Production)"]
+    eks["EKS Real-time Serving"]
+    lambda["Lambda Batch Inference"]
+    sm["SageMaker Endpoint"]
+    monitor[("Monitoring + Drift Detection")]
+  end
+
+  source --> prep --> tune --> train --> mlflow
+  labels --> prep
+  mlflow --> registry
+  ci --> orchestrator
+  registry --> orchestrator
+  orchestrator --> eks
+  orchestrator --> lambda
+  orchestrator --> sm
+  eks --> monitor
+  lambda --> monitor
+  sm --> monitor
+  monitor --> ci
+  mlflow --> ci

@@ -1,0 +1,36 @@
+flowchart LR
+    subgraph Ingest[Ingestion Layer]
+        Kafka[Kafka Topics]
+        Autoloader[Auto Loader]
+        Streams[Structured Streaming]
+    end
+
+    subgraph Storage[Delta Lake]
+        Bronze[Bronze Tables]
+        Silver[Silver Tables]
+        Gold[Gold / Star Schema]
+        Features[Feature Store]
+    end
+
+    subgraph Transform[Transformations]
+        Dbt[dbt Core]
+        DeltaLive[Delta Live Tables]
+        Quality[Great Expectations]
+    end
+
+    subgraph Consume[Consumption]
+        BI[BI Tools]
+        ML[ML Models]
+        Ops[Ops Dashboards]
+    end
+
+    Kafka --> Autoloader --> Bronze
+    Streams --> Bronze
+    Bronze --> Silver --> Gold
+    Silver --> DeltaLive --> Gold
+    Gold --> Dbt --> Gold
+    Gold --> Features --> ML
+    Gold --> BI
+    Gold --> Ops
+    Quality --> Bronze
+    Quality --> Silver
