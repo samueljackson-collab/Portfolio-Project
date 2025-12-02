@@ -1,29 +1,10 @@
-# Virtualization & Core Services
-
-**Status:** 🟢 Done
-
-## Description
-
-Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-
-## Links
-
-- [Evidence/Diagrams](./assets)
-- [Parent Documentation](../README.md)
-
-## Next Steps
-
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
-
-## Contact
-
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
-
----
-*Placeholder — Documentation pending*
 # PRJ-HOME-002 Assets
 
 This directory contains supporting materials for the Virtualization & Core Services project.
+
+## Links
+- [Diagrams](./diagrams/README.md)
+- [Project Overview](../README.md)
 
 ## What Goes Here
 
@@ -33,12 +14,12 @@ Architecture and design diagrams:
 - Data flow diagrams (user → proxy → services)
 - Network connectivity diagrams
 
-**Format:** PNG, SVG (with editable source files)
+**Format:** PNG, SVG, Mermaid (`.mmd`), Markdown overlays
 
 ### ⚙️ configs/
 Service configuration files:
-- Docker Compose files (Wiki.js, Home Assistant, Immich)
-- Proxmox VM/LXC configurations
+- Docker Compose bundles (Wiki.js, Home Assistant, Immich, PostgreSQL)
+- Proxmox VM/LXC definitions and backup policies
 - Nginx Proxy Manager configs (sanitized)
 - TrueNAS dataset/share configurations
 
@@ -48,10 +29,9 @@ Service configuration files:
 
 ### 📝 docs/
 Written documentation:
-- Backup strategy document
-- Service deployment runbook
-- Disaster recovery procedures
-- Restore testing results
+- Deployment and DR playbooks
+- Backup strategy and retention notes
+- Troubleshooting and lessons learned
 
 **Format:** Markdown (.md)
 
@@ -62,13 +42,7 @@ Visual evidence:
 - Backup logs/status
 - Monitoring views
 
-**Format:** PNG
-
----
-
-## Quick Upload Guide
-
-See [QUICK_START_GUIDE.md](../../../../QUICK_START_GUIDE.md) for instructions on how to upload your files to GitHub.
+**Format:** PNG (descriptions tracked in `service-screenshots.md`)
 
 ## Security Reminder
 
