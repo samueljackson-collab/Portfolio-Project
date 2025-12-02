@@ -14,6 +14,10 @@ def main():
 
     regions = [e["region"] for e in events]
     switched = regions.count(regions[0]) != len(regions)
+    if not events:
+        print("No events found in report.")
+        return
+
     avg_latency = mean([e["latency_ms"] for e in events])
 
     print(f"Switch observed: {switched}")
