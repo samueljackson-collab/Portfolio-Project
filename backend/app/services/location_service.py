@@ -9,12 +9,16 @@ from typing import Optional, Dict
 from geopy.geocoders import Nominatim
 from geopy.exc import GeopyError
 import logging
+import asyncio
+import time
 
 logger = logging.getLogger(__name__)
 
 # Initialize geocoder with a custom user agent
 # Nominatim requires a unique user agent per application
 geocoder = Nominatim(user_agent="elderphoto_portfolio_app/1.0")
+_rate_limit_lock = asyncio.Lock()
+_last_geocode_request = 0.0
 
 
 class LocationInfo:
@@ -25,6 +29,19 @@ class LocationInfo:
         self.state: Optional[str] = None
         self.country: Optional[str] = None
         self.full_address: Optional[str] = None
+
+
+async def _respect_rate_limit() -> None:
+    """Ensure we comply with Nominatim's 1 request per second policy."""
+
+    global _last_geocode_request
+
+    async with _rate_limit_lock:
+        now = time.monotonic()
+        wait_time = max(0.0, 1.0 - (now - _last_geocode_request))
+        if wait_time:
+            await asyncio.sleep(wait_time)
+        _last_geocode_request = time.monotonic()
 
 
 async def reverse_geocode(
@@ -44,9 +61,11 @@ async def reverse_geocode(
     location_info = LocationInfo()
 
     try:
-        # Query Nominatim for location details
-        # Note: Nominatim is synchronous, but we run it in the async context
-        location = geocoder.reverse(
+        await _respect_rate_limit()
+
+        # Query Nominatim for location details using a thread so we don't block the event loop
+        location = await asyncio.to_thread(
+            geocoder.reverse,
             f"{latitude}, {longitude}",
             exactly_one=True,
             language="en",

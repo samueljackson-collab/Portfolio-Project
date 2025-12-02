@@ -55,18 +55,19 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     const isActive = activeId === item.id
     const isExpanded = expanded[item.id]
     const hasChildren = item.children && item.children.length > 0
+    const indentation = { paddingLeft: `${16 + level * 16}px` }
 
     return (
       <div key={item.id} className="w-full">
         <button
           onClick={() => handleItemClick(item)}
           className={`
-            w-full flex items-center gap-3 px-4 py-3 text-left text-lg
+            w-full flex items-center gap-3 py-3 pr-4 text-left text-lg border-l-4
             transition-colors duration-150
             hover:bg-blue-50 focus:outline-none focus:bg-blue-100
-            ${isActive ? 'bg-blue-100 border-l-4 border-blue-600 font-semibold' : 'border-l-4 border-transparent'}
-            ${level > 0 ? 'pl-' + (4 + level * 4) : ''}
+            ${isActive ? 'bg-blue-100 border-blue-900 font-semibold' : 'border-transparent'}
           `}
+          style={indentation}
         >
           {/* Expand/collapse indicator */}
           {hasChildren && (

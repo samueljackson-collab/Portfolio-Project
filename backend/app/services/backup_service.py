@@ -153,7 +153,13 @@ async def copy_file_to_backup(
 
         if backup_location.remote:
             # For remote locations, use rsync over SSH
-            await sync_file_via_rsync(source_path, backup_location, relative_path)
+            rsync_ok = await sync_file_via_rsync(
+                source_path,
+                backup_location,
+                relative_path,
+            )
+            if not rsync_ok:
+                return False
         else:
             # For local locations, use async file copy
             async with aiofiles.open(source_path, "rb") as src:

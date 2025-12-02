@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import { format } from 'date-fns'
 import { photoService, albumService } from '../../api/services'
 import type { Photo, Album, PhotoUploadResponse } from '../../api/types'
 import { SidebarNav, type NavItem } from '../../components/elderly/SidebarNav'
@@ -26,7 +27,6 @@ export const PhotosPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null)
-  const [showUploadModal, setShowUploadModal] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -35,7 +35,7 @@ export const PhotosPage: React.FC = () => {
     loadAlbums()
   }, [])
 
-  const loadPhotos = async (filters?: { album_id?: string }) => {
+  const loadPhotos = async (filters?: { album_id?: string; year?: number; month?: number }) => {
     setLoading(true)
     try {
       const response = await photoService.getAll({ page_size: 100, ...filters })
@@ -57,21 +57,22 @@ export const PhotosPage: React.FC = () => {
     }
   }
 
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message)
+    window.setTimeout(() => setSuccessMessage(''), 5000)
+  }
+
   const handleUploadComplete = (response: PhotoUploadResponse) => {
-    setSuccessMessage(
+    showSuccess(
       `Photo uploaded successfully${response.album ? ` to ${response.album.name}` : ''}!`
     )
     loadPhotos()
     loadAlbums()
-    setShowUploadModal(false)
-
-    // Clear success message after 5 seconds
-    setTimeout(() => setSuccessMessage(''), 5000)
   }
 
   const handleUploadError = (error: string) => {
     setErrorMessage(error)
-    setTimeout(() => setErrorMessage(''), 5000)
+    window.setTimeout(() => setErrorMessage(''), 5000)
   }
 
   const handleViewAllPhotos = () => {
@@ -92,6 +93,17 @@ export const PhotosPage: React.FC = () => {
 
   const handleViewUpload = () => {
     setViewMode('upload')
+  }
+
+  const handleCalendarSelection = (date: Date, dayPhotos: Photo[]) => {
+    if (!dayPhotos || dayPhotos.length === 0) {
+      return
+    }
+
+    setViewMode('all')
+    setSelectedAlbumId(null)
+    loadPhotos({ year: date.getFullYear(), month: date.getMonth() + 1 })
+    showSuccess(`Showing photos from ${format(date, 'MMMM d, yyyy')}`)
   }
 
   // Build navigation items
@@ -131,6 +143,8 @@ export const PhotosPage: React.FC = () => {
     },
   ]
 
+  const activeNavId = selectedAlbumId ?? (viewMode === 'all' ? 'all-photos' : viewMode)
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar Navigation */}
@@ -143,7 +157,7 @@ export const PhotosPage: React.FC = () => {
             My Photos
           </h1>
         </div>
-        <SidebarNav items={navItems} activeId={selectedAlbumId || viewMode} />
+        <SidebarNav items={navItems} activeId={activeNavId} />
       </aside>
 
       {/* Main Content */}
@@ -201,23 +215,11 @@ export const PhotosPage: React.FC = () => {
           )}
 
           {viewMode === 'calendar' && (
-            <PhotoCalendar
-              onDateSelect={(date, photos) => {
-                console.log('Selected date:', date, 'Photos:', photos)
-                // Could show photos from that date
-              }}
-            />
+            <PhotoCalendar onDateSelect={handleCalendarSelection} />
           )}
 
           {(viewMode === 'all' || viewMode === 'album') && (
-            <PhotoGrid
-              photos={photos}
-              loading={loading}
-              onPhotoClick={(photo) => {
-                console.log('Photo clicked:', photo)
-                // Could open photo detail modal
-              }}
-            />
+            <PhotoGrid photos={photos} loading={loading} />
           )}
         </div>
       </main>

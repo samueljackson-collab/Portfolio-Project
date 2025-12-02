@@ -25,6 +25,7 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, extract
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
@@ -38,13 +39,30 @@ from app.schemas import (
     CalendarMonthResponse,
     CalendarDateResponse,
 )
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_optional_user
+from app.auth import decode_access_token
 from app.services import photo_service, location_service, storage_service
 
 router = APIRouter(
     prefix="/photos",
     tags=["Photos"],
 )
+
+
+async def _get_user_from_token(token: str, db: AsyncSession) -> Optional[User]:
+    """Return the authenticated user for a raw JWT token."""
+
+    try:
+        payload = decode_access_token(token)
+        email = payload.get("sub")
+    except Exception:
+        return None
+
+    if not email:
+        return None
+
+    result = await db.execute(select(User).where(User.email == email))
+    return result.scalar_one_or_none()
 
 
 @router.post(
@@ -141,14 +159,25 @@ async def upload_photo(
 
         # Create album if it doesn't exist
         if not album:
-            album = Album(
-                owner_id=current_user.id,
-                name=album_name,
-                type="location",
-                photo_count=0,
+            insert_stmt = (
+                insert(Album)
+                .values(
+                    owner_id=current_user.id,
+                    name=album_name,
+                    type="location",
+                    photo_count=0,
+                )
+                .on_conflict_do_nothing(index_elements=["owner_id", "name"])
+                .returning(Album.id)
             )
-            db.add(album)
-            await db.flush()  # Get album ID
+            insert_result = await db.execute(insert_stmt)
+            new_album_id = insert_result.scalar_one_or_none()
+
+            if new_album_id:
+                album = await db.get(Album, new_album_id)
+            else:
+                result = await db.execute(album_query)
+                album = result.scalar_one_or_none()
 
     # Create photo record
     photo = Photo(
@@ -172,6 +201,7 @@ async def upload_photo(
     )
 
     db.add(photo)
+    await db.flush()
 
     # Update album photo count and cover photo
     if album:
@@ -313,8 +343,14 @@ async def get_photo(
 async def get_photo_file(
     photo_id: UUID,
     thumbnail: bool = Query(False, description="Return thumbnail instead of original"),
+    token: Optional[str] = Query(
+        None,
+        description=(
+            "JWT access token for direct image embeds (falls back to Authorization header)"
+        ),
+    ),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
 ):
     """
     Download photo file.
@@ -328,9 +364,17 @@ async def get_photo_file(
     Returns:
         Photo file bytes with appropriate content type
     """
-    query = select(Photo).where(
-        and_(Photo.id == photo_id, Photo.owner_id == current_user.id)
-    )
+    user = current_user
+    if not user and token:
+        user = await _get_user_from_token(token, db)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+
+    query = select(Photo).where(and_(Photo.id == photo_id, Photo.owner_id == user.id))
     result = await db.execute(query)
     photo = result.scalar_one_or_none()
 

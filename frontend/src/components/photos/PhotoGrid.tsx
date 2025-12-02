@@ -85,7 +85,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
           onClick={() => onPhotoClick?.(photo)}
           className="
             group cursor-pointer text-left
-            focus:outline-none focus:ring-4 focus:ring-blue-500 rounded-lg
+            focus:outline-none focus:ring-4 focus:ring-blue-900 rounded-lg
             transition-transform duration-200 hover:scale-105
           "
           role="listitem"
@@ -94,7 +94,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
           {/* Photo thumbnail */}
           <div className="relative aspect-square bg-gray-200 rounded-lg overflow-hidden mb-3 shadow-md group-hover:shadow-xl transition-shadow">
             <img
-              src={photoService.getFileUrl(photo.id, true)}
+              src={photoService.getFileUrl(photo.id, { thumbnail: true })}
               alt={photo.filename}
               className="w-full h-full object-cover"
               loading="lazy"

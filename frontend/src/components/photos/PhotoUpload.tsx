@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useRef } from 'react'
+import { isAxiosError } from 'axios'
 import { photoService } from '../../api/services'
 import type { PhotoUploadResponse } from '../../api/types'
 import { LargeButton } from '../elderly/LargeButton'
@@ -29,12 +30,10 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const [uploadingFile, setUploadingFile] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFiles = async (files: FileList | null) => {
+  const handleFiles = async (files: File[] | null) => {
     if (!files || files.length === 0) return
 
-    // Process files one at a time
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
+    for (const file of files) {
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -55,8 +54,22 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         const response = await photoService.upload(file)
         onUploadComplete?.(response)
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to upload photo'
+        let errorMessage = 'Failed to upload photo'
+
+        if (isAxiosError(error)) {
+          const detail = (error.response?.data as { detail?: unknown })?.detail
+          if (typeof detail === 'string') {
+            errorMessage = detail
+          } else if (Array.isArray(detail) && detail.length > 0) {
+            const first = detail[0] as { msg?: unknown }
+            if (first?.msg && typeof first.msg === 'string') {
+              errorMessage = first.msg
+            }
+          }
+        } else if (error instanceof Error) {
+          errorMessage = error.message
+        }
+
         onUploadError?.(errorMessage)
       } finally {
         setUploading(false)
@@ -78,11 +91,13 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    handleFiles(e.dataTransfer.files)
+    void handleFiles(Array.from(e.dataTransfer.files))
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files)
+    const files = e.target.files ? Array.from(e.target.files) : null
+    void handleFiles(files)
+    e.target.value = ''
   }
 
   const handleButtonClick = () => {
@@ -110,7 +125,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         className={`
           border-4 border-dashed rounded-xl p-12
           transition-all duration-200
-          ${isDragging ? 'border-blue-600 bg-blue-50' : 'border-gray-300 bg-gray-50'}
+          ${isDragging ? 'border-blue-900 bg-blue-100' : 'border-gray-300 bg-gray-50'}
           ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
         onClick={!uploading ? handleButtonClick : undefined}
@@ -137,7 +152,13 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
               <p className="text-xl text-gray-600 mb-6 max-w-lg">
                 Drag and drop photos here, or click the button below to select files
               </p>
-              <LargeButton variant="primary" size="large" disabled={uploading}>
+              <LargeButton
+                variant="primary"
+                size="large"
+                disabled={uploading}
+                onClick={handleButtonClick}
+                type="button"
+              >
                 Choose Photos
               </LargeButton>
               <p className="text-lg text-gray-500 mt-4">

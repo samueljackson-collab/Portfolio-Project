@@ -162,9 +162,21 @@ export const photoService = {
   /**
    * Get photo file URL (for displaying image)
    */
-  getFileUrl(id: string, thumbnail = false): string {
+  getFileUrl(id: string, options?: { thumbnail?: boolean }): string {
     const baseUrl = apiClient.defaults.baseURL || ''
-    return `${baseUrl}/photos/${id}/file${thumbnail ? '?thumbnail=true' : ''}`
+    const params = new URLSearchParams()
+
+    if (options?.thumbnail) {
+      params.set('thumbnail', 'true')
+    }
+
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      params.set('token', token)
+    }
+
+    const query = params.toString()
+    return `${baseUrl}/photos/${id}/file${query ? `?${query}` : ''}`
   },
 
   /**

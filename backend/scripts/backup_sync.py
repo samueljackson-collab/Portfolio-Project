@@ -48,7 +48,7 @@ from app.services.backup_service import (
 )
 
 
-async def run_full_sync(verify: bool = False):
+async def run_full_sync(verify: bool = False, auto_confirm: bool = False):
     """
     Perform a full sync of all photos to backup locations.
 
@@ -68,11 +68,13 @@ async def run_full_sync(verify: bool = False):
         print(f"  {backup.name}: {status}")
     print()
 
-    # Confirm before proceeding
-    response = input("Proceed with full sync? (yes/no): ")
-    if response.lower() not in ["yes", "y"]:
-        print("Sync cancelled.")
-        return
+    if auto_confirm:
+        print("Auto-confirm enabled; starting full sync without prompting.")
+    else:
+        response = input("Proceed with full sync? (yes/no): ")
+        if response.lower() not in ["yes", "y"]:
+            print("Sync cancelled.")
+            return
 
     print("\nSyncing photos...")
     print("-" * 60)
@@ -91,16 +93,14 @@ async def run_full_sync(verify: bool = False):
     print()
 
     # Verify if requested
-    if verify and stats['synced'] > 0:
-        print("Running verification...")
-        # Verification would check a sample of files
-        print("Verification complete.")
+    if verify:
+        await run_verification()
 
     print(f"Finished: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
 
 
-async def run_incremental_sync():
+async def run_incremental_sync(verify: bool = False):
     """
     Perform an incremental sync (only new/modified files).
 
@@ -124,6 +124,10 @@ async def run_incremental_sync():
     print("Sync Complete!")
     print("-" * 60)
     print(f"Synced: {stats['synced']}/{stats['total']} photos")
+
+    if verify:
+        await run_verification()
+
     print(f"Finished: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
 
@@ -242,11 +246,25 @@ def main():
         help="Show backup status and exit"
     )
 
+    parser.add_argument(
+        "--yes",
+        "--assume-yes",
+        dest="assume_yes",
+        action="store_true",
+        help="Run non-interactively and auto-confirm prompts (use for cron jobs)",
+    )
+
     args = parser.parse_args()
 
     # Validate arguments
     if not any([args.full, args.incremental, args.verify_only, args.status]):
         parser.error("Must specify one of: --full, --incremental, --verify-only, or --status")
+
+    non_interactive = not sys.stdin.isatty()
+
+    if args.full and non_interactive and not args.assume_yes:
+        print("Error: --full requires --yes when run without an interactive terminal.")
+        sys.exit(2)
 
     # Run appropriate command
     try:
@@ -255,9 +273,10 @@ def main():
         elif args.verify_only:
             asyncio.run(run_verification())
         elif args.full:
-            asyncio.run(run_full_sync(verify=args.verify))
+            confirm_flag = args.assume_yes or non_interactive
+            asyncio.run(run_full_sync(verify=args.verify, auto_confirm=confirm_flag))
         elif args.incremental:
-            asyncio.run(run_incremental_sync())
+            asyncio.run(run_incremental_sync(verify=args.verify))
 
     except KeyboardInterrupt:
         print("\n\nBackup interrupted by user.")

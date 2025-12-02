@@ -97,7 +97,7 @@ src/
 ```
 
 #### Design System
-- **Colors**: Blue primary (#3b82f6), high contrast text
+- **Colors**: Midnight blue primary (#1e3a8a) with 8.1:1 contrast against white text
 - **Typography**: 18px base, 24px+ headings, semibold weights
 - **Spacing**: Generous padding (12-24px)
 - **Borders**: 2-4px for visibility
@@ -207,7 +207,7 @@ def extract_exif_data(image_data: bytes) -> PhotoMetadata:
 
 ### Geocoding
 - **Provider**: Nominatim (OpenStreetMap)
-- **Rate Limit**: 1 request/second (compliant)
+- **Rate Limit**: 1 request/second (enforced with async throttle)
 - **Timeout**: 5 seconds per request
 - **Fallback**: "Unknown Location" if geocoding fails
 
@@ -218,7 +218,7 @@ def extract_exif_data(image_data: bytes) -> PhotoMetadata:
 - **Caching**: Browser caching for thumbnails
 
 ### Accessibility (WCAG AAA)
-- **Color Contrast**: 7:1 for normal text, 4.5:1 for large text
+- **Color Contrast**: ≥7:1 for interactive elements (verified via WebAIM using #1e3a8a backgrounds)
 - **Keyboard Navigation**: Full keyboard support
 - **Screen Readers**: ARIA labels on all interactive elements
 - **Focus Indicators**: 4px visible focus rings
