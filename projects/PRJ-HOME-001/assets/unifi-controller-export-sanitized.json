@@ -1,0 +1,97 @@
+{
+  "site": {
+    "name": "HomeLab",
+    "description": "Sanitized demo export for PRJ-HOME-001",
+    "timezone": "America/Chicago"
+  },
+  "devices": [
+    {
+      "model": "UDM-Pro",
+      "ip": "192.168.10.1",
+      "firmware": "4.0.0",
+      "role": "gateway",
+      "notes": "Management UI bound to trusted admin VLAN"
+    },
+    {
+      "model": "USW-24-PoE",
+      "ip": "192.168.10.2",
+      "firmware": "6.6.68",
+      "role": "core-switch",
+      "notes": "LACP uplink to gateway; PoE budget reserved for APs"
+    },
+    {
+      "model": "U6-LR",
+      "ip": "192.168.10.20",
+      "firmware": "7.5.174",
+      "role": "access-point",
+      "notes": "Adopted with SSH disabled post-provisioning"
+    }
+  ],
+  "wlans": [
+    {
+      "name": "Home-Trusted",
+      "vlan": 20,
+      "security": "WPA2",
+      "radius": false,
+      "client_isolation": false
+    },
+    {
+      "name": "Home-IoT",
+      "vlan": 30,
+      "security": "WPA2",
+      "radius": false,
+      "client_isolation": true
+    },
+    {
+      "name": "Home-Guest",
+      "vlan": 40,
+      "security": "WPA2",
+      "radius": false,
+      "captive_portal": "LAN-isolated"
+    }
+  ],
+  "vlans": [
+    { "id": 10, "name": "Mgmt", "subnet": "192.168.10.0/24", "gateway": "192.168.10.1", "dhcp_range": "192.168.10.100-192.168.10.199" },
+    { "id": 20, "name": "Trusted", "subnet": "192.168.20.0/24", "gateway": "192.168.20.1", "dhcp_range": "192.168.20.50-192.168.20.199" },
+    { "id": 30, "name": "IoT", "subnet": "192.168.30.0/24", "gateway": "192.168.30.1", "dhcp_range": "192.168.30.50-192.168.30.199" },
+    { "id": 40, "name": "Guest", "subnet": "192.168.40.0/24", "gateway": "192.168.40.1", "dhcp_range": "192.168.40.50-192.168.40.199" }
+  ],
+  "firewall": {
+    "groups": {
+      "LAN_IOT": ["192.168.30.0/24"],
+      "LAN_TRUSTED": ["192.168.20.0/24"],
+      "LAN_GUEST": ["192.168.40.0/24"],
+      "SERVICES_DNS": ["1.1.1.1", "9.9.9.9"]
+    },
+    "rules": [
+      {
+        "name": "Drop IoT to Trusted",
+        "action": "drop",
+        "src_group": "LAN_IOT",
+        "dst_group": "LAN_TRUSTED",
+        "protocol": "any"
+      },
+      {
+        "name": "Drop IoT to Guest",
+        "action": "drop",
+        "src_group": "LAN_IOT",
+        "dst_group": "LAN_GUEST",
+        "protocol": "any"
+      },
+      {
+        "name": "Allow Trusted to LAN",
+        "action": "accept",
+        "src_group": "LAN_TRUSTED",
+        "dst": "192.168.0.0/16",
+        "protocol": "any"
+      },
+      {
+        "name": "Allow All to DNS",
+        "action": "accept",
+        "dst_group": "SERVICES_DNS",
+        "protocol": "udp",
+        "ports": [53]
+      }
+    ]
+  }
+}
