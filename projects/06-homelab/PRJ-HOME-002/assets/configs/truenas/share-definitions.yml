@@ -1,0 +1,22 @@
+# TrueNAS share definitions (sanitized)
+
+nfs_shares:
+  - name: homelab-share
+    path: /mnt/pool1/homelab-share
+    networks: ["192.168.40.0/24"]
+    maproot_user: root
+    maproot_group: wheel
+  - name: pbs-datastore
+    path: /mnt/pool1/backups/pbs
+    networks: ["192.168.40.0/24"]
+    read_only: true
+
+iscsi_targets:
+  - name: ceph-cache
+    portal: truenas.example.com
+    initiators: ["iqn.2025-01.local.proxmox:cluster"]
+    extent_size_gb: 500
+  - name: media-fast
+    portal: truenas.example.com
+    initiators: ["iqn.2025-01.local.proxmox:cluster"]
+    extent_size_gb: 2000
