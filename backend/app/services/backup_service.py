@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import List, Optional, Dict
 from datetime import datetime
 import logging
-import json
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,6 @@ They handle common tasks like:
 """
 
 from typing import Annotated, Optional
-from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession

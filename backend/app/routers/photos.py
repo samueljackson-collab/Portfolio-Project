@@ -12,8 +12,8 @@ This module provides:
 
 import asyncio
 from uuid import UUID
-from typing import Optional, List
-from datetime import datetime, date
+from typing import Optional
+from datetime import datetime
 from fastapi import (
     APIRouter,
     Depends,
@@ -26,7 +26,6 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, extract
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models import User, Photo, Album

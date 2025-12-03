@@ -74,13 +74,12 @@ async def list_content(
         query = query.where(
             or_(
                 Content.owner_id == current_user.id,
-                Content.is_published == True
+                Content.is_published
             )
         )
     else:
-        # Not authenticated: only published content regardless of flag
-        published_only = True
-        query = query.where(Content.is_published == True)
+        # Not authenticated: only published content
+        query = query.where(Content.is_published)
 
     # Apply search filter
     if search:
