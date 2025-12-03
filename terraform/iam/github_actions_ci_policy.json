@@ -15,8 +15,8 @@
         "s3:GetObjectVersion"
       ],
       "Resource": [
-        "arn:aws:s3:::${TFSTATE_BUCKET_NAME}",
-        "arn:aws:s3:::${TFSTATE_BUCKET_NAME}/*"
+        "arn:aws:s3:::REPLACE_TFSTATE_BUCKET_NAME",
+        "arn:aws:s3:::REPLACE_TFSTATE_BUCKET_NAME/*"
       ]
     },
     {
@@ -31,7 +31,7 @@
         "dynamodb:Query",
         "dynamodb:Scan"
       ],
-      "Resource": "arn:aws:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/${TFSTATE_LOCK_TABLE}"
+      "Resource": "arn:aws:dynamodb:REPLACE_AWS_REGION:REPLACE_AWS_ACCOUNT_ID:table/REPLACE_TFSTATE_LOCK_TABLE"
     },
     {
       "Sid": "KMSAccess",
@@ -48,8 +48,8 @@
       "Condition": {
         "StringEquals": {
           "kms:ViaService": [
-            "s3.${AWS_REGION}.amazonaws.com",
-            "dynamodb.${AWS_REGION}.amazonaws.com"
+            "s3.REPLACE_AWS_REGION.amazonaws.com",
+            "dynamodb.REPLACE_AWS_REGION.amazonaws.com"
           ]
         }
       }
@@ -229,7 +229,7 @@
         "iam:UntagRole"
       ],
       "Resource": [
-        "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${PROJECT_NAME}-*"
+        "arn:aws:iam::REPLACE_AWS_ACCOUNT_ID:role/REPLACE_PROJECT_NAME-*"
       ]
     },
     {
@@ -253,7 +253,7 @@
         "s3:PutEncryptionConfiguration"
       ],
       "Resource": [
-        "arn:aws:s3:::${PROJECT_NAME}-*"
+        "arn:aws:s3:::REPLACE_PROJECT_NAME-*"
       ]
     },
     {
@@ -292,7 +292,7 @@
         "secretsmanager:UpdateSecret",
         "secretsmanager:TagResource"
       ],
-      "Resource": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:${PROJECT_NAME}/*"
+      "Resource": "arn:aws:secretsmanager:REPLACE_AWS_REGION:REPLACE_AWS_ACCOUNT_ID:secret:REPLACE_PROJECT_NAME/*"
     },
     {
       "Sid": "LambdaManagement",
@@ -307,7 +307,7 @@
         "lambda:TagResource",
         "lambda:UntagResource"
       ],
-      "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:${PROJECT_NAME}-*"
+      "Resource": "arn:aws:lambda:REPLACE_AWS_REGION:REPLACE_AWS_ACCOUNT_ID:function:REPLACE_PROJECT_NAME-*"
     },
     {
       "Sid": "ECRAccess",

@@ -1,3 +1,23 @@
+variable "state_bucket" {
+  description = "S3 bucket name for Terraform remote state"
+  type        = string
+}
+
+variable "state_key" {
+  description = "Path/key for the remote state file"
+  type        = string
+}
+
+variable "state_region" {
+  description = "AWS region for remote state storage"
+  type        = string
+}
+
+variable "lock_table" {
+  description = "DynamoDB table name for state locking"
+  type        = string
+}
+
 variable "aws_region" {
   description = "AWS region for all resources"
   type        = string
