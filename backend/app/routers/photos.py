@@ -368,7 +368,7 @@ async def get_photo_file(
     # Read file data
     try:
         file_data = await storage_service.get_photo_data(file_path)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to read photo file",
