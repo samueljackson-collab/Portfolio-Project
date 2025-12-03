@@ -15,8 +15,8 @@
         "s3:GetObjectVersion"
       ],
       "Resource": [
-        "arn:aws:s3:::${TFSTATE_BUCKET_NAME}",
-        "arn:aws:s3:::${TFSTATE_BUCKET_NAME}/*"
+        "arn:aws:s3:::${TFSTATE_BUCKET_NAME:-REPLACE_TFSTATE_BUCKET_NAME}",
+        "arn:aws:s3:::${TFSTATE_BUCKET_NAME:-REPLACE_TFSTATE_BUCKET_NAME}/*"
       ]
     },
     {
@@ -31,7 +31,7 @@
         "dynamodb:Query",
         "dynamodb:Scan"
       ],
-      "Resource": "arn:aws:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/${TFSTATE_LOCK_TABLE}"
+      "Resource": "arn:aws:dynamodb:${AWS_REGION:-REPLACE_AWS_REGION}:${AWS_ACCOUNT_ID:-REPLACE_AWS_ACCOUNT_ID}:table/${TFSTATE_LOCK_TABLE:-REPLACE_TFSTATE_LOCK_TABLE}"
     },
     {
       "Sid": "KMSAccess",
@@ -48,8 +48,8 @@
       "Condition": {
         "StringEquals": {
           "kms:ViaService": [
-            "s3.${AWS_REGION}.amazonaws.com",
-            "dynamodb.${AWS_REGION}.amazonaws.com"
+            "s3.${AWS_REGION:-REPLACE_AWS_REGION}.amazonaws.com",
+            "dynamodb.${AWS_REGION:-REPLACE_AWS_REGION}.amazonaws.com"
           ]
         }
       }
