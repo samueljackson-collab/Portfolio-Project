@@ -538,7 +538,9 @@ class DatabaseMigrationOrchestrator:
                 cur.execute("INSERT INTO migration_test (test_data) VALUES ('migration_verification');")
                 cur.execute("SELECT COUNT(*) FROM migration_test;")
                 # Verify at least one row exists
-                cur.fetchone()
+                result = cur.fetchone()
+                if not result or result[0] < 1:
+                    raise Exception("Failed to verify test data in target database")
 
                 # Cleanup
                 cur.execute("DROP TABLE migration_test;")
