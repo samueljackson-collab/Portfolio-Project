@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  primary-app:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    environment:
+      - REGION=primary
+  secondary-app:
+    image: nginx:alpine
+    ports:
+      - "8081:80"
+    environment:
+      - REGION=secondary
+  dns-simulator:
+    image: python:3.11-slim
+    command: ["python", "-m", "http.server", "8053"]

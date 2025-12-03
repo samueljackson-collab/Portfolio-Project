@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  api:
+    build: ..
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data.db
+      - ENABLE_AUTH=false
+  worker:
+    build: ..
+    command: ["python", "src/worker.py"]
+    environment:
+      - DATABASE_URL=sqlite:///./data.db
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"

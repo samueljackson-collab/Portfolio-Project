@@ -152,3 +152,11 @@ python src/simulator.py --scenario international_roaming
 - [3GPP TS 29.002 - Mobile Application Part (MAP) specification](https://www.3gpp.org/DynaReport/29002.htm)
 - [GSMA Roaming Hub Testing](https://www.gsma.com/services/roaming/)
 - [ITU-T E.212 - IMSI Numbering](https://www.itu.int/rec/T-REC-E.212/)
+
+## Documentation Pack
+- Architecture: `ARCHITECTURE/README.md`
+- Testing: `TESTING/README.md`
+- Playbooks/Runbooks/SOPs: `PLAYBOOK/`, `RUNBOOKS/`, `SOP/`
+- Metrics & Alerts: `METRICS/README.md`
+- Governance: `ADRS/`, `THREAT_MODEL/`, `RISK_REGISTER/`
+- Operational code samples: `docker/`, `producer/`, `consumer/`, `jobs/`, `k8s/`

@@ -137,3 +137,11 @@ newman run collections/api-tests.json --folder "User Management"
 - [Newman Documentation](https://github.com/postmanlabs/newman)
 - [API Testing Best Practices](https://www.postman.com/api-platform/api-testing/)
 - [JSON Schema Validation](https://json-schema.org/)
+
+## Documentation Pack
+- Architecture: `ARCHITECTURE/README.md`
+- Testing & Coverage: `TESTING/README.md`
+- Playbooks/Runbooks/SOPs: `PLAYBOOK/`, `RUNBOOKS/`, `SOP/`
+- Metrics & Alerts: `METRICS/README.md`
+- Governance: `ADRS/`, `THREAT_MODEL/`, `RISK_REGISTER/`
+- Operational assets: `docker/`, `producer/`, `consumer/`, `jobs/`, `k8s/`

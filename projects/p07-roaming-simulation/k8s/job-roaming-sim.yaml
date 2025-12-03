@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: p07-roaming-sim
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: simulator
+          image: python:3.11-slim
+          command: ["python", "-m", "http.server", "8080"]
+          env:
+            - name: SIMULATION_MODE
+              value: "full"
+            - name: PROM_EXPORTER_PORT
+              value: "9107"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        - name: metrics-scraper
+          image: prom/statsd-exporter
+          ports:
+            - containerPort: 9107
+              name: metrics

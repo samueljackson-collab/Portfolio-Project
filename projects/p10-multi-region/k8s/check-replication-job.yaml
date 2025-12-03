@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: p10-replication-check
+spec:
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: replication-check
+              image: python:3.11-slim
+              command: ["python", "jobs/verify_replication.py"]
+              env:
+                - name: PRIMARY_BUCKET
+                  value: primary-bucket
+                - name: REPLICA_BUCKET
+                  value: secondary-bucket

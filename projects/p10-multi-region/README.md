@@ -111,3 +111,11 @@ make simulate-outage
 - [AWS Multi-Region Architecture](https://docs.aws.amazon.com/whitepapers/latest/real-time-communication-on-aws/multi-region-deployment.html)
 - [Route 53 Health Checks](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover.html)
 - [RDS Read Replicas](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html)
+
+## Documentation Pack
+- Architecture: `ARCHITECTURE/README.md`
+- Testing & Drill strategy: `TESTING/README.md`
+- Playbooks/Runbooks/SOPs: `PLAYBOOK/`, `RUNBOOKS/`, `SOP/`
+- Metrics & Alerts: `METRICS/README.md`
+- Governance: `ADRS/`, `THREAT_MODEL/`, `RISK_REGISTER/`
+- Operational assets: `docker/`, `producer/`, `consumer/`, `jobs/`, `k8s/`

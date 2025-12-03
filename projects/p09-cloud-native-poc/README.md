@@ -112,3 +112,11 @@ make test-docker
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [12-Factor App](https://12factor.net/)
 - [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
+
+## Documentation Pack
+- Architecture: `ARCHITECTURE/README.md`
+- Testing: `TESTING/README.md`
+- Ops references: `PLAYBOOK/`, `RUNBOOKS/`, `SOP/`
+- Metrics & Alerts: `METRICS/README.md`
+- Governance: `ADRS/`, `THREAT_MODEL/`, `RISK_REGISTER/`
+- Operational assets: `docker/`, `producer/`, `consumer/`, `jobs/`, `k8s/`
