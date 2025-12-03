@@ -1,0 +1,43 @@
+%% DevSecOps Pipeline - Architecture
+flowchart LR
+    subgraph Dev[Developer Workspace]
+        DEV[Engineer]
+        REPO[Source Repo]
+        DEV --> REPO
+    end
+
+    subgraph CI[CI Security Boundary]
+        ACTIONS[GitHub Actions]
+        SAST[Semgrep/Bandit]
+        SCA[Trivy/Snyk]
+        SECRETS[Gitleaks/TruffleHog]
+        SBOM[Syft SBOM]
+        DAST[OWASP ZAP]
+        GATES[Policy as Code]
+        ACTIONS --> SAST --> SCA --> SECRETS --> SBOM --> DAST --> GATES
+    end
+
+    subgraph Artifacts[Trusted Registry]
+        REGISTRY[(Image Registry)]
+        REPORTS[[Security Reports]]
+    end
+
+    subgraph Deploy[Deployment Boundary]
+        CLUSTER[(Kubernetes/Runtime)]
+        ADMISSION[Admission Controls]
+    end
+
+    REPO --> ACTIONS
+    GATES -- Signed Artifacts --> REGISTRY
+    SBOM --> REPORTS
+    DAST --> REPORTS
+    REGISTRY --> ADMISSION
+    ADMISSION --> CLUSTER
+
+    classDef trust fill:#f5f7ff,stroke:#345;
+    class Dev,CI,Artifacts,Deploy trust;
+
+    %% Data flows
+    ACTIONS -- SARIF --> REPORTS
+    GATES -- Gate Status --> ACTIONS
+    CLUSTER -- Runtime Scan Events --> REPORTS

@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" aria-labelledby="title desc">
+  <title id="title">AWS Infrastructure Automation Architecture</title>
+  <desc id="desc">Trust boundaries for developer tools, CI, IaC toolchains, and AWS foundations with data flows.</desc>
+  <style>
+    .boundary { fill: #eef3ff; stroke: #335; stroke-width: 2; }
+    .box { fill: #fff; stroke: #333; stroke-width: 1.5; rx: 6; ry: 6; }
+    .label { font: 14px sans-serif; fill: #111; }
+    .title { font: 16px sans-serif; font-weight: bold; fill: #111; }
+    .arrow { stroke: #444; stroke-width: 1.5; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" fill="#444">
+      <polygon points="0 0, 10 3.5, 0 7" />
+    </marker>
+  </defs>
+  <rect class="boundary" x="40" y="40" width="220" height="260" />
+  <text class="title" x="60" y="70">Developer &amp; Repo</text>
+  <rect class="box" x="70" y="100" width="170" height="60" />
+  <text class="label" x="90" y="135">Engineer Workstation</text>
+  <rect class="box" x="70" y="180" width="170" height="60" />
+  <text class="label" x="110" y="215">GitHub Repo</text>
+
+  <rect class="boundary" x="320" y="40" width="230" height="260" />
+  <text class="title" x="340" y="70">CI Pipeline</text>
+  <rect class="box" x="350" y="100" width="170" height="50" />
+  <text class="label" x="395" y="130">GitHub Actions</text>
+  <rect class="box" x="350" y="160" width="170" height="45" />
+  <text class="label" x="382" y="188">Plan &amp; Validate</text>
+  <rect class="box" x="350" y="210" width="170" height="45" />
+  <text class="label" x="384" y="238">tfsec / SCA</text>
+  <rect class="box" x="350" y="260" width="170" height="35" />
+  <text class="label" x="362" y="284">Plans &amp; Artifacts</text>
+
+  <rect class="boundary" x="600" y="40" width="240" height="260" />
+  <text class="title" x="620" y="70">IaC Toolchain</text>
+  <rect class="box" x="630" y="100" width="180" height="60" />
+  <text class="label" x="678" y="135">Terraform</text>
+  <rect class="box" x="630" y="180" width="180" height="40" />
+  <text class="label" x="685" y="206">AWS CDK</text>
+  <rect class="box" x="630" y="230" width="180" height="40" />
+  <text class="label" x="690" y="256">Pulumi</text>
+
+  <rect class="boundary" x="880" y="40" width="260" height="620" />
+  <text class="title" x="900" y="70">Secure AWS Account</text>
+  <rect class="box" x="900" y="100" width="220" height="120" />
+  <text class="label" x="940" y="130">Multi-AZ VPC</text>
+  <text class="label" x="920" y="155">Public / Private / DB subnets</text>
+  <rect class="box" x="940" y="180" width="140" height="30" />
+  <text class="label" x="970" y="200">EKS Control Plane</text>
+  <rect class="box" x="940" y="220" width="140" height="30" />
+  <text class="label" x="970" y="240">Managed Nodes</text>
+  <rect class="box" x="940" y="260" width="140" height="30" />
+  <text class="label" x="975" y="280">Application LB</text>
+  <rect class="box" x="940" y="300" width="140" height="30" />
+  <text class="label" x="980" y="320">RDS Postgres</text>
+  <rect class="box" x="940" y="340" width="140" height="30" />
+  <text class="label" x="975" y="360">Snapshots / Backup</text>
+
+  <text class="title" x="440" y="350">Data Flows</text>
+  <line class="arrow" x1="240" y1="210" x2="320" y2="210" />
+  <line class="arrow" x1="550" y1="210" x2="630" y2="210" />
+  <line class="arrow" x1="820" y1="210" x2="880" y2="210" />
+  <line class="arrow" x1="1020" y1="330" x2="1020" y2="365" />
+  <line class="arrow" x1="1020" y1="150" x2="1020" y2="175" />
+  <line class="arrow" x1="1020" y1="175" x2="1020" y2="205" />
+  <line class="arrow" x1="1020" y1="205" x2="1020" y2="235" />
+  <line class="arrow" x1="1020" y1="235" x2="1020" y2="265" />
+  <line class="arrow" x1="1020" y1="265" x2="1020" y2="295" />
+  <text class="label" x="250" y="195">Push commits</text>
+  <text class="label" x="390" y="195">OIDC deploy</text>
+  <text class="label" x="680" y="195">Plans applied</text>
+  <text class="label" x="1040" y="348" transform="rotate(90 1040 348)">Backups</text>
+
+  <circle cx="840" cy="520" r="70" fill="#f6f6ff" stroke="#335" stroke-width="2" />
+  <text class="title" x="795" y="500">Workloads</text>
+  <text class="label" x="780" y="520">Ingress via ALB</text>
+  <text class="label" x="780" y="540">Reads/Writes to RDS</text>
+</svg>

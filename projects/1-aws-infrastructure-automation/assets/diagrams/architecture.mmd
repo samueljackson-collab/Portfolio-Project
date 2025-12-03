@@ -1,0 +1,58 @@
+%% AWS Infrastructure Automation - Architecture
+flowchart LR
+    subgraph Dev[Developer & Repo]
+        DEV[Engineer Workstation]
+        GH[GitHub Repo]
+        DEV --> GH
+    end
+
+    subgraph CI[CI Pipeline]
+        ACTIONS[GitHub Actions]
+        PLAN[Plan & Validate]
+        SECURITY[tfsec/SCA]
+        ARTIFACTS[Plans, Stack Artifacts]
+        ACTIONS --> PLAN --> SECURITY --> ARTIFACTS
+    end
+
+    subgraph IaC[Infrastructure as Code Toolchain]
+        TF[Terraform Modules]
+        CDK[AWS CDK App]
+        PULUMI[Pulumi Stack]
+    end
+
+    subgraph AWS[Secure AWS Account]
+        subgraph VPC[Multi-AZ VPC]
+            PUB[Public Subnets]
+            PRIV[Private App Subnets]
+            DB[Database Subnets]
+        end
+        EKS[EKS Control Plane]
+        NODES[Managed Node Groups]
+        RDS[RDS PostgreSQL]
+        ALB[Application Load Balancer]
+        BACKUP[Snapshots/Backups]
+    end
+
+    GH --> ACTIONS
+    ARTIFACTS --> TF
+    ARTIFACTS --> CDK
+    ARTIFACTS --> PULUMI
+
+    TF --> VPC
+    CDK --> VPC
+    PULUMI --> VPC
+
+    VPC --> EKS
+    EKS --> NODES
+    NODES --> ALB
+    VPC --> RDS
+    RDS --> BACKUP
+
+    classDef trust fill:#eef,stroke:#335;
+    class Dev,CI,IaC,AWS trust;
+
+    %% Data flows
+    ACTIONS -- OIDC Deploy --> AWS
+    NODES -- Service Traffic --> ALB
+    Apps((Workloads)) --> NODES
+    Apps --> RDS
