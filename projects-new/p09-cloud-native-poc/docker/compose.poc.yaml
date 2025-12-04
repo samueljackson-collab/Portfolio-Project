@@ -1,0 +1,15 @@
+version: '3.9'
+services:
+  api:
+    build: ../
+    command: uvicorn producer.app:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+  tests:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ../:/app
+    command: python consumer/checks.py --base-url http://api:8000
+    depends_on:
+      - api

@@ -1,0 +1,20 @@
+version: '3.9'
+services:
+  primary:
+    image: nginx:alpine
+    environment:
+      - REGION=primary
+    ports:
+      - "8081:80"
+  secondary:
+    image: nginx:alpine
+    environment:
+      - REGION=secondary
+    ports:
+      - "8082:80"
+  sim:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ../:/app
+    command: python producer/failover_sim.py --output out/failover.json
