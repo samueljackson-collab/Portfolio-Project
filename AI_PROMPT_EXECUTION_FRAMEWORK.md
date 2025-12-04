@@ -6,6 +6,7 @@
 **Part 2:** `AI_PROMPT_LIBRARY_MEDIUM_LOW.md` (Medium & Low prompts)
 
 This playbook covers execution strategies, quality control, and best practices so every AI-assisted deliverable ships production-ready.
+It inherits the behavior rules in `docs/MASTER_FACTORY_PROMPT.md`, meaning **every prompt run must yield a complete, runnable deliverable** (code, config, sample data, and documentation) from the very first response.
 
 ---
 
@@ -22,11 +23,11 @@ This framework is the operational handbook for maximizing AI productivity. It ex
 
 ## 🎯 Core Execution Principles
 
-### Principle 1: Treat Prompts Like Code
-- Be explicit: context, requirements, constraints, examples
-- Show desired format and style
+### Principle 1: Treat Prompts Like Code (Deliverable-First)
+- Be explicit: context, requirements, constraints, examples, and the runnable artifact list (code/config/data/docs)
+- Show desired format and style, including directory map and entry points
 - Include negative examples (what to avoid)
-- Iterate on prompts based on output quality
+- Iterate on prompts based on output quality and whether the output can execute immediately
 
 ### Principle 2: Iterate Relentlessly
 1. Generate first draft
@@ -70,15 +71,20 @@ This framework is the operational handbook for maximizing AI productivity. It ex
 4. Apply consistent polish (tone, formatting)
 5. Commit documents together
 
-### Prompt Template Structure
+### Prompt Template Structure (runnable by default)
 ```
-Create a production-ready README for {{PROJECT_NAME}}.
+Create a production-ready README for {{PROJECT_NAME}} and ship runnable artifacts.
 
 PROJECT DETAILS:
 - Purpose: {{PURPOSE}}
 - Tech stack: {{TECH_STACK}}
 - Key metrics: {{METRICS}}
 - Target audience: {{AUDIENCE}}
+
+DELIVERABLES:
+- File map with entry points (e.g., README.md, scripts/run.sh, docs/usage.md)
+- Sample or synthetic data to execute the main path
+- Exact run instructions and validation steps
 
 [Standard instructions continue...]
 ```
@@ -101,6 +107,8 @@ terraform fmt -check && terraform validate
 yamllint k8s/**/*.yaml
 pytest
 ```
+
+For each run, verify the deliverable checklist from `docs/MASTER_FACTORY_PROMPT.md` is satisfied: runnable code with entry points, configuration and secrets guidance, sample data, documentation, and execution notes.
 
 Set up `.pre-commit-config.yaml` to run linting automatically before each commit.
 
@@ -161,7 +169,13 @@ Track usage in a spreadsheet (date, task, tool, prompt ID, time spent, quality r
 
 ---
 
-## ✅ Final Publishing Checklist
+## ✅ Final Publishing Checklist (aligned to Master Factory)
+
+**Deliverable-first**
+- [ ] Code includes runnable entry points and minimal tests where applicable
+- [ ] Configuration/env var guidance provided; secrets externalized
+- [ ] Sample/synthetic data present to execute the happy path
+- [ ] Documentation covers setup, run, and validation commands
 
 **Technical**
 - [ ] Code/commands tested
