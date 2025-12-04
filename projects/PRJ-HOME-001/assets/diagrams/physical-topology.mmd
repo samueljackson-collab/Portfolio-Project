@@ -1,0 +1,18 @@
+flowchart TD
+    ISP[[ISP ONT]] -->|WAN| PF[pfsense Firewall]
+    PF -->|TRUST (VLAN10)| SW[UniFi Switch 24 PoE]
+    PF -->|VLAN20| SW
+    PF -->|VLAN30| SW
+    PF -->|VLAN40| SW
+    PF -->|VLAN50| SW
+
+    SW -->|TRUNK (10,20,30)| AP1[U6 Pro - Office]
+    SW -->|TRUNK (10,20,30)| AP2[U6 Pro - Living]
+    SW -->|TRUNK (40)| PMX[Proxmox Cluster]
+    SW -->|TRUNK (40)| NAS[TrueNAS]
+    SW -->|TRUNK (50)| RPX[Reverse Proxy]
+
+    classDef wan fill:#ffe8e8,stroke:#cc0000;
+    classDef trusted fill:#e8f5e9,stroke:#2e7d32;
+    class PF,RPX wan;
+    class SW,AP1,AP2,PMX,NAS trusted;
