@@ -1,15 +1,26 @@
-name: CI
+name: AWS Infra Factory
 
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'projects/p01-aws-infra/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'projects/p01-aws-infra/**'
+  workflow_dispatch:
+
+env:
+  WORKDIR: projects/p01-aws-infra
+  TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+  TF_LOCK_TABLE: ${{ secrets.TF_LOCK_TABLE }}
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  CHANGE_SET_NAME: infra-${{ github.run_id }}
 
 jobs:
-  build-test:
+  lint-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,30 +32,104 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd projects/p01-aws-infra
+          cd $WORKDIR
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Lint markdown
+      - name: Lint & unit tests
         run: |
-          cd projects/p01-aws-infra
-          npm install -g markdownlint-cli || true
-          markdownlint *.md docs/**/*.md || true
+          make -C $WORKDIR lint
+          make -C $WORKDIR test-unit
 
-      - name: Validate CloudFormation templates
+      - name: Integration tests
+        run: make -C $WORKDIR test-integration
+
+  terraform-plan:
+    runs-on: ubuntu-latest
+    needs: lint-test
+    if: github.event_name != 'pull_request' && secrets.AWS_ACCESS_KEY_ID != ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init & plan
+        id: plan
         run: |
-          cd projects/p01-aws-infra
-          python src/validate_template.py || echo "⚠ AWS CLI validation skipped (credentials not available)"
-          cfn-lint infra/*.yaml
+          make -C $WORKDIR terraform-plan STATE_BUCKET=${TF_STATE_BUCKET} LOCK_TABLE=${TF_LOCK_TABLE} AWS_REGION=${AWS_REGION}
 
-      - name: Run tests
-        run: |
-          cd projects/p01-aws-infra
-          pytest -v tests/
-
-      - name: Upload test results
-        if: always()
+      - name: Upload plan artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-results
-          path: projects/p01-aws-infra/.pytest_cache/
+          name: terraform-plan
+          path: projects/p01-aws-infra/terraform/plan.out
+
+  cloudformation-changeset:
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: github.event_name != 'pull_request' && secrets.AWS_ACCESS_KEY_ID != ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create RDS change set
+        run: |
+          make -C $WORKDIR cfn-changeset STACK_NAME=${STACK_NAME:-p01-rds} AWS_REGION=${AWS_REGION} CHANGE_SET_NAME=${CHANGE_SET_NAME}
+        env:
+          STACK_NAME: ${{ secrets.CFN_STACK_NAME || 'p01-rds' }}
+
+  apply:
+    runs-on: ubuntu-latest
+    needs: cloudformation-changeset
+    if: github.event_name == 'workflow_dispatch' && secrets.AWS_ACCESS_KEY_ID != ''
+    environment:
+      name: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: projects/p01-aws-infra/terraform
+
+      - name: Terraform apply (gated)
+        run: |
+          make -C $WORKDIR terraform-apply STATE_BUCKET=${TF_STATE_BUCKET} LOCK_TABLE=${TF_LOCK_TABLE} AWS_REGION=${AWS_REGION}
+
+      - name: Execute approved change set
+        run: |
+          make -C $WORKDIR cfn-apply STACK_NAME=${STACK_NAME:-p01-rds} AWS_REGION=${AWS_REGION} CHANGE_SET_NAME=${CHANGE_SET_NAME}
+        env:
+          STACK_NAME: ${{ secrets.CFN_STACK_NAME || 'p01-rds' }}
