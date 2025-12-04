@@ -1,0 +1,259 @@
+version: '3.8'
+
+services:
+  # Source PostgreSQL database
+  source-db:
+    image: postgres:15
+    container_name: migration-source-db
+    environment:
+      POSTGRES_DB: sourcedb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # Enable logical replication for Debezium
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+      - "-c"
+      - "max_wal_senders=10"
+      - "-c"
+      - "max_replication_slots=10"
+    ports:
+      - "5432:5432"
+    volumes:
+      - source-db-data:/var/lib/postgresql/data
+      - ./init-scripts/source-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Target PostgreSQL database
+  target-db:
+    image: postgres:15
+    container_name: migration-target-db
+    environment:
+      POSTGRES_DB: targetdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - target-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Zookeeper (required for Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: migration-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Kafka broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: migration-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Debezium Connect (CDC platform)
+  debezium:
+    image: debezium/connect:2.3
+    container_name: migration-debezium
+    depends_on:
+      kafka:
+        condition: service_healthy
+      source-db:
+        condition: service_healthy
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: debezium-cluster
+      CONFIG_STORAGE_TOPIC: debezium_configs
+      OFFSET_STORAGE_TOPIC: debezium_offsets
+      STATUS_STORAGE_TOPIC: debezium_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      # Debezium tuning
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      # Logging
+      LOG_LEVEL: INFO
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - migration-network
+
+  # Kafka UI (optional - for monitoring)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: migration-kafka-ui
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: migration-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    ports:
+      - "8080:8080"
+    networks:
+      - migration-network
+
+  # Migration Orchestrator
+  migration-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: migration-orchestrator
+    depends_on:
+      source-db:
+        condition: service_healthy
+      target-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      debezium:
+        condition: service_healthy
+    environment:
+      # Database connections
+      SOURCE_DB_URL: postgresql://postgres:postgres@source-db:5432/sourcedb
+      TARGET_DB_URL: postgresql://postgres:postgres@target-db:5432/targetdb
+
+      # Kafka configuration
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_PREFIX: dbserver1
+
+      # Debezium
+      DEBEZIUM_CONNECT_URL: http://debezium:8083
+
+      # Migration settings
+      MIGRATION_STRATEGY: full-load-cdc
+      BATCH_SIZE: 5000
+      PARALLEL_WORKERS: 2
+      ENABLE_VALIDATION: "true"
+
+      # Monitoring (optional - requires AWS credentials)
+      # AWS_REGION: us-east-1
+      # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      # AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      # CLOUDWATCH_NAMESPACE: DatabaseMigration
+
+      # Logging
+      LOG_LEVEL: INFO
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./logs:/app/logs
+    command:
+      - "python"
+      - "-m"
+      - "src.migration_orchestrator"
+      - "--source-db"
+      - "postgresql://postgres:postgres@source-db:5432/sourcedb"
+      - "--target-db"
+      - "postgresql://postgres:postgres@target-db:5432/targetdb"
+      - "--strategy"
+      - "full-load-cdc"
+      - "--validate"
+    networks:
+      - migration-network
+    # Uncomment to run orchestrator in interactive mode
+    # stdin_open: true
+    # tty: true
+
+  # pgAdmin (optional - for database management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: migration-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - migration-network
+
+volumes:
+  source-db-data:
+    driver: local
+  target-db-data:
+    driver: local
+  zookeeper-data:
+    driver: local
+  zookeeper-logs:
+    driver: local
+  kafka-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+
+networks:
+  migration-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
