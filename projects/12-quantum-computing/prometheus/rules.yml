@@ -1,0 +1,55 @@
+# Alert Rules for Quantum Computing
+
+groups:
+  - name: quantum_alerts
+    interval: 60s
+    rules:
+      - alert: QubitFidelityDegraded
+        expr: qubit_fidelity_score < 0.95
+        for: 15m
+        labels:
+          severity: warning
+          component: hardware
+        annotations:
+          summary: "Qubit fidelity degraded"
+          description: "Qubit {{ $labels.qubit_id }} fidelity: {{ $value }}"
+
+      - alert: HighGateErrorRate
+        expr: quantum_gate_error_rate > 0.01
+        for: 30m
+        labels:
+          severity: warning
+          component: calibration
+        annotations:
+          summary: "High gate error rate"
+          description: "Gate {{ $labels.gate_type }} error rate: {{ $value }}"
+
+      - alert: QuantumJobQueueBacklog
+        expr: quantum_job_queue_length > 100
+        for: 1h
+        labels:
+          severity: info
+          component: scheduler
+        annotations:
+          summary: "Large quantum job queue"
+          description: "{{ $value }} jobs in queue"
+
+      - alert: DecoherenceTimeShort
+        expr: qubit_decoherence_time_microseconds < 50
+        for: 30m
+        labels:
+          severity: warning
+          component: hardware
+        annotations:
+          summary: "Short qubit decoherence time"
+          description: "Qubit {{ $labels.qubit_id }} T1: {{ $value }}μs"
+
+      - alert: CalibrationOverdue
+        expr: (time() - last_calibration_timestamp) > 86400
+        for: 1h
+        labels:
+          severity: warning
+          component: calibration
+        annotations:
+          summary: "Quantum device calibration overdue"
+          description: "Last calibration {{ $value }}s ago"

@@ -1,0 +1,61 @@
+# Prometheus Configuration for Serverless Data Processing
+# Monitors Lambda functions, Step Functions, data quality, and processing metrics
+
+global:
+  scrape_interval: 60s
+  evaluation_interval: 60s
+  external_labels:
+    project: 'serverless-data-processing'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  # CloudWatch exporter for Lambda metrics
+  - job_name: 'lambda-functions'
+    static_configs:
+      - targets: ['cloudwatch-exporter:9106']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'aws_lambda.*'
+        action: keep
+
+  # Step Functions metrics
+  - job_name: 'step-functions'
+    static_configs:
+      - targets: ['step-functions-exporter:9210']
+    scrape_interval: 30s
+
+  # S3 bucket metrics
+  - job_name: 's3-buckets'
+    static_configs:
+      - targets: ['s3-exporter:9211']
+    scrape_interval: 300s
+
+  # DynamoDB metrics
+  - job_name: 'dynamodb'
+    static_configs:
+      - targets: ['dynamodb-exporter:9212']
+
+  # SQS queue metrics
+  - job_name: 'sqs-queues'
+    static_configs:
+      - targets: ['sqs-exporter:9213']
+    scrape_interval: 30s
+
+  # Data quality checks
+  - job_name: 'data-quality'
+    static_configs:
+      - targets: ['data-quality-lambda:8080']
+    scrape_interval: 300s
+
+  # EventBridge metrics
+  - job_name: 'eventbridge'
+    static_configs:
+      - targets: ['eventbridge-exporter:9214']

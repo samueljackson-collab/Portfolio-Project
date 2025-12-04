@@ -1,0 +1,174 @@
+{
+  "dashboard": {
+    "title": "AWS Infrastructure Automation Dashboard",
+    "tags": ["aws", "infrastructure", "terraform"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "EC2 Instance Health",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(up{job=\"ec2-instances\"} == 1)",
+            "legendFormat": "Healthy Instances"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Daily AWS Cost",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_cost_daily",
+            "legendFormat": "Daily Cost ($)"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [
+          {"format": "currencyUSD", "label": "Cost"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "CPU Utilization by Instance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_ec2_cpuutilization_average",
+            "legendFormat": "{{ instance_id }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [
+          {"format": "percent", "label": "CPU %", "max": 100, "min": 0},
+          {"format": "short"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [80], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "name": "High CPU Utilization"
+        }
+      },
+      {
+        "id": 4,
+        "title": "VPC Network Traffic",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(aws_vpc_bytes_total[5m])",
+            "legendFormat": "{{ vpc_id }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yaxes": [
+          {"format": "Bps", "label": "Bytes/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "RDS Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_rds_cpuutilization_average",
+            "legendFormat": "CPU - {{ dbinstance_identifier }}"
+          },
+          {
+            "expr": "aws_rds_database_connections_average",
+            "legendFormat": "Connections - {{ dbinstance_identifier }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "yaxes": [
+          {"format": "percent", "label": "CPU %"},
+          {"format": "short", "label": "Connections"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "ALB Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_alb_target_response_time_average",
+            "legendFormat": "{{ load_balancer }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "yaxes": [
+          {"format": "s", "label": "Response Time"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "S3 Bucket Sizes",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_s3_bucket_size_bytes",
+            "legendFormat": "{{ bucket_name }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "yaxes": [
+          {"format": "bytes", "label": "Size"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Terraform Deployment Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "terraform_apply_success",
+            "legendFormat": "Last Deployment"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "value": "1", "text": "Success"},
+              {"type": "value", "value": "0", "text": "Failed"}
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

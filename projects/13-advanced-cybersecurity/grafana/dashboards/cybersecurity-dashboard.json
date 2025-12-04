@@ -1,0 +1,46 @@
+{
+  "dashboard": {
+    "title": "Advanced Cybersecurity Dashboard",
+    "tags": ["security", "threats", "ids"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "15s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Threats",
+        "type": "stat",
+        "targets": [{"expr": "sum(ids_alert_severity)", "legendFormat": "Threats"}],
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+        "fieldConfig": {"defaults": {"thresholds": {"steps": [{"value": 0, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 10, "color": "red"}]}}}
+      },
+      {
+        "id": 2,
+        "title": "Failed Auth Attempts",
+        "type": "stat",
+        "targets": [{"expr": "rate(auth_failed_attempts_total[1m])", "legendFormat": "Attempts/sec"}],
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Security Events Timeline",
+        "type": "graph",
+        "targets": [
+          {"expr": "rate(ids_alert_severity{severity=\"high\"}[5m])", "legendFormat": "High"},
+          {"expr": "rate(ids_alert_severity{severity=\"medium\"}[5m])", "legendFormat": "Medium"}
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [{"format": "short", "label": "Events/sec"}, {"format": "short"}]
+      },
+      {
+        "id": 4,
+        "title": "Network Traffic Anomalies",
+        "type": "graph",
+        "targets": [{"expr": "rate(network_bytes_total[5m])", "legendFormat": "{{ direction }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [{"format": "Bps"}, {"format": "short"}]
+      }
+    ]
+  }
+}

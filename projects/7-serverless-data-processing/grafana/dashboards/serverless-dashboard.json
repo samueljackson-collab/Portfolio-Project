@@ -1,0 +1,161 @@
+{
+  "dashboard": {
+    "title": "Serverless Data Processing Dashboard",
+    "tags": ["serverless", "lambda", "aws"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "1m",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Lambda Invocations/min",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(aws_lambda_invocations_sum[1m]) * 60)",
+            "legendFormat": "Invocations"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Lambda Error Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(aws_lambda_errors_sum) / sum(aws_lambda_invocations_sum) * 100",
+            "legendFormat": "Error %"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "SQS Messages Queued",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(aws_sqs_approximate_number_of_messages_visible_average)",
+            "legendFormat": "Messages"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Lambda Duration by Function",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_lambda_duration_average",
+            "legendFormat": "{{ function_name }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [
+          {"format": "ms", "label": "Duration"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Lambda Concurrent Executions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_lambda_concurrent_executions_maximum",
+            "legendFormat": "{{ function_name }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [
+          {"format": "short", "label": "Concurrent"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Step Function Execution Status",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(aws_stepfunctions_execution_succeeded_sum[5m])",
+            "legendFormat": "{{ state_machine }} - Success"
+          },
+          {
+            "expr": "rate(aws_stepfunctions_execution_failed_sum[5m])",
+            "legendFormat": "{{ state_machine }} - Failed"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yaxes": [
+          {"format": "short", "label": "Executions/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "SQS Queue Depth",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_sqs_approximate_number_of_messages_visible_average",
+            "legendFormat": "{{ queue_name }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "yaxes": [
+          {"format": "short", "label": "Messages"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "DynamoDB Read/Write Capacity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "aws_dynamodb_consumed_read_capacity_units_sum",
+            "legendFormat": "{{ table_name }} - Read"
+          },
+          {
+            "expr": "aws_dynamodb_consumed_write_capacity_units_sum",
+            "legendFormat": "{{ table_name }} - Write"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "yaxes": [
+          {"format": "short", "label": "Capacity Units"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Data Processing Pipeline Health",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "data_quality_failed_checks_total",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}
+      }
+    ]
+  }
+}

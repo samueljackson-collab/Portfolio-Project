@@ -1,0 +1,57 @@
+# Prometheus Configuration for Real-Time Data Streaming
+# Monitors Kafka, stream processing, data flow, and consumer lag
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: 'real-time-data-streaming'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  # Kafka brokers
+  - job_name: 'kafka'
+    static_configs:
+      - targets:
+          - 'kafka-broker-1:9308'
+          - 'kafka-broker-2:9308'
+          - 'kafka-broker-3:9308'
+
+  # Kafka consumer lag exporter
+  - job_name: 'kafka-lag'
+    static_configs:
+      - targets: ['kafka-lag-exporter:9999']
+    scrape_interval: 30s
+
+  # Kafka Connect
+  - job_name: 'kafka-connect'
+    static_configs:
+      - targets: ['kafka-connect:8083']
+
+  # Stream processing (Flink/Kafka Streams)
+  - job_name: 'stream-processor'
+    static_configs:
+      - targets: ['flink-jobmanager:9249', 'flink-taskmanager:9249']
+
+  # Schema Registry
+  - job_name: 'schema-registry'
+    static_configs:
+      - targets: ['schema-registry:8081']
+
+  # Data quality metrics
+  - job_name: 'data-quality'
+    static_configs:
+      - targets: ['data-quality-service:8090']
+
+  # ZooKeeper (if used)
+  - job_name: 'zookeeper'
+    static_configs:
+      - targets: ['zookeeper:7000']

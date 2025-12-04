@@ -1,0 +1,193 @@
+{
+  "dashboard": {
+    "title": "Blockchain Smart Contract Platform Dashboard",
+    "tags": ["blockchain", "ethereum", "smart-contracts"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "15s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Nodes",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(up{job=\"blockchain-nodes\"} == 1)",
+            "legendFormat": "Nodes"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 3, "x": 0, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "yellow"},
+                {"value": 3, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Current Block Height",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "max(blockchain_node_block)",
+            "legendFormat": "Block"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 3, "x": 3, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Pending Transactions",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "blockchain_txpool_pending",
+            "legendFormat": "Pending"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 3, "x": 6, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 5000, "color": "yellow"},
+                {"value": 10000, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Gas Price (Gwei)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "blockchain_gas_price / 1e9",
+            "legendFormat": "Gwei"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 3, "x": 9, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "decimals": 2,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 100, "color": "yellow"},
+                {"value": 300, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Transaction Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(blockchain_transactions_processed_total[5m])",
+            "legendFormat": "TPS"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [
+          {"format": "short", "label": "Transactions/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Block Production Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(blockchain_blocks_mined_total[5m])",
+            "legendFormat": "Blocks/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [
+          {"format": "short", "label": "Blocks/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Peer Count",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "blockchain_peer_count",
+            "legendFormat": "{{ instance }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yaxes": [
+          {"format": "short", "label": "Peers"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Smart Contract Executions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(smart_contract_executions_total[5m])",
+            "legendFormat": "{{ contract_address }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "yaxes": [
+          {"format": "short", "label": "Executions/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Gas Usage by Contract",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(smart_contract_gas_used_total[5m])",
+            "legendFormat": "{{ contract_address }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "yaxes": [
+          {"format": "short", "label": "Gas/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "State DB Size",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "blockchain_statedb_size_bytes",
+            "legendFormat": "{{ instance }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "yaxes": [
+          {"format": "bytes", "label": "Size"},
+          {"format": "short"}
+        ]
+      }
+    ]
+  }
+}

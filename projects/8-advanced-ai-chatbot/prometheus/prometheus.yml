@@ -1,0 +1,53 @@
+# Prometheus Configuration for Advanced AI Chatbot
+# Monitors NLP models, conversation flows, response times, and user engagement
+
+global:
+  scrape_interval: 20s
+  evaluation_interval: 20s
+  external_labels:
+    project: 'ai-chatbot'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  # Chatbot API service
+  - job_name: 'chatbot-api'
+    static_configs:
+      - targets: ['chatbot-api:8080']
+
+  # NLP model serving
+  - job_name: 'nlp-models'
+    static_configs:
+      - targets: ['nlp-service:8081']
+
+  # Conversation manager
+  - job_name: 'conversation-manager'
+    static_configs:
+      - targets: ['conversation-mgr:8082']
+
+  # Intent classifier
+  - job_name: 'intent-classifier'
+    static_configs:
+      - targets: ['intent-service:8083']
+
+  # Redis cache for sessions
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # PostgreSQL for conversation history
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # User analytics
+  - job_name: 'analytics'
+    static_configs:
+      - targets: ['analytics-service:8084']

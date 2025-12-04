@@ -1,0 +1,68 @@
+# Prometheus Configuration for AWS Infrastructure Automation
+# Monitors CloudWatch metrics, infrastructure health, and deployment status
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    project: 'aws-infrastructure-automation'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+# Load alert rules
+rule_files:
+  - 'rules.yml'
+
+# Scrape configurations
+scrape_configs:
+  # CloudWatch Exporter for AWS metrics
+  - job_name: 'cloudwatch'
+    static_configs:
+      - targets: ['cloudwatch-exporter:9106']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'aws-infrastructure'
+
+  # Node exporter for infrastructure hosts
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'node_(cpu|memory|disk|network).*'
+        action: keep
+
+  # AWS VPC Flow Logs metrics
+  - job_name: 'vpc-flow-logs'
+    static_configs:
+      - targets: ['vpc-exporter:9107']
+    scrape_interval: 60s
+
+  # Terraform/IaC deployment metrics
+  - job_name: 'terraform-state'
+    static_configs:
+      - targets: ['terraform-exporter:9108']
+    scrape_interval: 120s
+
+  # AWS Cost Explorer metrics
+  - job_name: 'aws-costs'
+    static_configs:
+      - targets: ['cost-exporter:9109']
+    scrape_interval: 3600s  # Once per hour
+
+  # EC2 instance metrics
+  - job_name: 'ec2-instances'
+    ec2_sd_configs:
+      - region: us-east-1
+        port: 9100
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_monitoring]
+        regex: enabled
+        action: keep

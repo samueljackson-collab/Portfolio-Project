@@ -1,0 +1,183 @@
+# Alert Rules for Serverless Data Processing
+# Monitors Lambda performance, Step Function workflows, and data pipeline health
+
+groups:
+  - name: lambda_alerts
+    interval: 60s
+    rules:
+      # Lambda Performance
+      - alert: LambdaHighErrorRate
+        expr: aws_lambda_errors_sum / aws_lambda_invocations_sum > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: lambda
+        annotations:
+          summary: "High error rate for Lambda {{ $labels.function_name }}"
+          description: "Error rate: {{ $value | humanizePercentage }}"
+
+      - alert: LambdaThrottling
+        expr: aws_lambda_throttles_sum > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: lambda
+        annotations:
+          summary: "Lambda function {{ $labels.function_name }} being throttled"
+          description: "{{ $value }} throttled invocations"
+
+      - alert: LambdaDurationNearTimeout
+        expr: aws_lambda_duration_average / aws_lambda_timeout > 0.9
+        for: 15m
+        labels:
+          severity: warning
+          component: lambda
+        annotations:
+          summary: "Lambda {{ $labels.function_name }} approaching timeout"
+          description: "Duration: {{ $value }}% of timeout"
+
+      - alert: LambdaConcurrentExecutionsHigh
+        expr: aws_lambda_concurrent_executions_maximum > 800
+        for: 10m
+        labels:
+          severity: warning
+          component: lambda
+        annotations:
+          summary: "High concurrent Lambda executions"
+          description: "{{ $value }} concurrent executions (account limit: 1000)"
+
+  - name: step_functions_alerts
+    interval: 60s
+    rules:
+      # Step Functions
+      - alert: StepFunctionExecutionFailed
+        expr: rate(aws_stepfunctions_execution_failed_sum[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: step-functions
+        annotations:
+          summary: "Step Function {{ $labels.state_machine }} executions failing"
+          description: "{{ $value }} failures per second"
+
+      - alert: StepFunctionExecutionTimeout
+        expr: rate(aws_stepfunctions_execution_timeout_sum[10m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: step-functions
+        annotations:
+          summary: "Step Function {{ $labels.state_machine }} executions timing out"
+          description: "{{ $value }} timeouts per second"
+
+      - alert: StepFunctionLongRunning
+        expr: aws_stepfunctions_execution_time_average > 3600000
+        for: 15m
+        labels:
+          severity: info
+          component: step-functions
+        annotations:
+          summary: "Long-running Step Function execution"
+          description: "{{ $labels.state_machine }} averaging {{ $value }}ms"
+
+  - name: storage_alerts
+    interval: 60s
+    rules:
+      # S3 and Storage
+      - alert: S3BucketSizeUnexpectedGrowth
+        expr: (aws_s3_bucket_size_bytes - aws_s3_bucket_size_bytes offset 1d) / aws_s3_bucket_size_bytes offset 1d > 0.5
+        for: 1h
+        labels:
+          severity: warning
+          component: s3
+        annotations:
+          summary: "Unexpected S3 bucket growth"
+          description: "Bucket {{ $labels.bucket_name }} grew by {{ $value | humanizePercentage }}"
+
+      - alert: S3HighRequestRate
+        expr: aws_s3_all_requests_sum > 10000
+        for: 10m
+        labels:
+          severity: info
+          component: s3
+        annotations:
+          summary: "High S3 request rate"
+          description: "{{ $value }} requests to bucket {{ $labels.bucket_name }}"
+
+      # DynamoDB
+      - alert: DynamoDBThrottling
+        expr: aws_dynamodb_user_errors_sum{error_type="ProvisionedThroughputExceededException"} > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: dynamodb
+        annotations:
+          summary: "DynamoDB table {{ $labels.table_name }} being throttled"
+          description: "{{ $value }} throttled requests"
+
+      - alert: DynamoDBHighConsumedCapacity
+        expr: aws_dynamodb_consumed_read_capacity_units_sum / aws_dynamodb_provisioned_read_capacity_units > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: dynamodb
+        annotations:
+          summary: "High read capacity usage on {{ $labels.table_name }}"
+          description: "Using {{ $value | humanizePercentage }} of provisioned capacity"
+
+  - name: queue_alerts
+    interval: 30s
+    rules:
+      # SQS
+      - alert: SQSHighMessageAge
+        expr: aws_sqs_approximate_age_of_oldest_message_maximum > 3600
+        for: 10m
+        labels:
+          severity: warning
+          component: sqs
+        annotations:
+          summary: "Old messages in SQS queue {{ $labels.queue_name }}"
+          description: "Oldest message: {{ $value }}s old"
+
+      - alert: SQSQueueBacklog
+        expr: aws_sqs_approximate_number_of_messages_visible_average > 10000
+        for: 15m
+        labels:
+          severity: warning
+          component: sqs
+        annotations:
+          summary: "Large backlog in SQS queue {{ $labels.queue_name }}"
+          description: "{{ $value }} messages in queue"
+
+      - alert: SQSDLQMessages
+        expr: aws_sqs_approximate_number_of_messages_visible_average{queue_name=~".*-dlq"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: sqs
+        annotations:
+          summary: "Messages in DLQ {{ $labels.queue_name }}"
+          description: "{{ $value }} messages in dead letter queue"
+
+  - name: data_quality_alerts
+    interval: 300s
+    rules:
+      - alert: DataQualityCheckFailed
+        expr: data_quality_failed_checks_total > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: data-quality
+        annotations:
+          summary: "Data quality checks failed"
+          description: "{{ $value }} checks failed on dataset {{ $labels.dataset }}"
+
+      - alert: DataProcessingLatency
+        expr: data_processing_latency_seconds > 300
+        for: 10m
+        labels:
+          severity: warning
+          component: processing
+        annotations:
+          summary: "High data processing latency"
+          description: "Latency: {{ $value }}s for pipeline {{ $labels.pipeline }}"

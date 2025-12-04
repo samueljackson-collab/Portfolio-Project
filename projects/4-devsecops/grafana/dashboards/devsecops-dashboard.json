@@ -1,0 +1,195 @@
+{
+  "dashboard": {
+    "title": "DevSecOps Security Dashboard",
+    "tags": ["security", "devsecops", "vulnerabilities"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Critical Vulnerabilities",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(security_vulnerabilities_total{severity=\"critical\"})",
+            "legendFormat": "Critical CVEs"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Exposed Secrets",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "secrets_exposed_total",
+            "legendFormat": "Secrets"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Policy Violations",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "opa_policy_violations_total",
+            "legendFormat": "Violations"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "orange"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Vulnerabilities by Severity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "security_vulnerabilities_total{severity=\"critical\"}",
+            "legendFormat": "Critical"
+          },
+          {
+            "expr": "security_vulnerabilities_total{severity=\"high\"}",
+            "legendFormat": "High"
+          },
+          {
+            "expr": "security_vulnerabilities_total{severity=\"medium\"}",
+            "legendFormat": "Medium"
+          },
+          {
+            "expr": "security_vulnerabilities_total{severity=\"low\"}",
+            "legendFormat": "Low"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [
+          {"format": "short", "label": "Count"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Security Events Timeline",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(falco_alerts_total[5m])",
+            "legendFormat": "{{ priority }} - {{ rule }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [
+          {"format": "short", "label": "Events/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "WAF Blocked Requests",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(waf_requests_blocked_total[5m])",
+            "legendFormat": "{{ attack_type }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yaxes": [
+          {"format": "short", "label": "Requests/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Compliance Score",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "compliance_checks_passed_total / compliance_checks_total * 100",
+            "legendFormat": "Compliance %"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 12},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 80, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Certificate Expiry",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "ssl_certificate_expiry_days",
+            "legendFormat": "{{ domain }}",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 12},
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "indexByName": {},
+              "renameByName": {
+                "domain": "Domain",
+                "Value": "Days to Expiry"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

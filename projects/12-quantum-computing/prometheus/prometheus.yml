@@ -1,0 +1,36 @@
+# Prometheus Configuration for Quantum Computing
+# Monitors quantum circuits, qubit fidelity, gate errors, and job queue
+
+global:
+  scrape_interval: 60s
+  evaluation_interval: 60s
+  external_labels:
+    project: 'quantum-computing'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'quantum-simulator'
+    static_configs:
+      - targets: ['qiskit-simulator:8090']
+
+  - job_name: 'quantum-hardware'
+    static_configs:
+      - targets: ['quantum-device-monitor:8091']
+    scrape_interval: 30s
+
+  - job_name: 'job-scheduler'
+    static_configs:
+      - targets: ['quantum-job-scheduler:8092']
+
+  - job_name: 'calibration-service'
+    static_configs:
+      - targets: ['calibration-monitor:8093']
+    scrape_interval: 300s

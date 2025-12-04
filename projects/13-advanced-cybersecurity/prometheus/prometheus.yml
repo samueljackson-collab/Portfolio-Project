@@ -1,0 +1,38 @@
+# Prometheus Configuration for Advanced Cybersecurity
+# Monitors threat detection, IDS/IPS, SIEM events, and security analytics
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: 'advanced-cybersecurity'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'ids-ips'
+    static_configs:
+      - targets: ['suricata-exporter:9240', 'snort-exporter:9241']
+
+  - job_name: 'siem'
+    static_configs:
+      - targets: ['elastic-siem:9200']
+
+  - job_name: 'threat-intelligence'
+    static_configs:
+      - targets: ['misp-exporter:9242']
+
+  - job_name: 'honeypot'
+    static_configs:
+      - targets: ['honeypot-exporter:9243']
+
+  - job_name: 'security-scanner'
+    static_configs:
+      - targets: ['nessus-exporter:9244', 'openvas-exporter:9245']

@@ -1,0 +1,143 @@
+# Alert Rules for AWS Infrastructure Automation
+# Monitors infrastructure health, cost anomalies, and resource utilization
+
+groups:
+  - name: aws_infrastructure_alerts
+    interval: 30s
+    rules:
+      # EC2 Instance Health
+      - alert: EC2InstanceDown
+        expr: up{job="ec2-instances"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: ec2
+        annotations:
+          summary: "EC2 instance {{ $labels.instance }} is down"
+          description: "EC2 instance {{ $labels.instance }} has been down for more than 5 minutes"
+
+      - alert: HighCPUUtilization
+        expr: aws_ec2_cpuutilization_average > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: ec2
+        annotations:
+          summary: "High CPU utilization on {{ $labels.instance_id }}"
+          description: "CPU utilization is {{ $value }}% on instance {{ $labels.instance_id }}"
+
+      # VPC and Network
+      - alert: VPCFlowLogsDisabled
+        expr: aws_vpc_flow_logs_enabled == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: vpc
+        annotations:
+          summary: "VPC Flow Logs disabled for {{ $labels.vpc_id }}"
+          description: "VPC Flow Logs should be enabled for security monitoring"
+
+      - alert: HighNetworkTraffic
+        expr: rate(aws_vpc_bytes_total[5m]) > 1e9  # 1GB/s
+        for: 5m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: "High network traffic in VPC {{ $labels.vpc_id }}"
+          description: "Network traffic is {{ $value | humanize }}B/s"
+
+      # Cost Monitoring
+      - alert: CostAnomalyDetected
+        expr: (aws_cost_daily - aws_cost_daily offset 1d) / aws_cost_daily offset 1d > 0.3
+        for: 1h
+        labels:
+          severity: warning
+          component: billing
+        annotations:
+          summary: "AWS cost increased by more than 30%"
+          description: "Daily AWS cost is ${{ $value }} higher than yesterday"
+
+      - alert: MonthlyBudgetExceeded
+        expr: aws_cost_monthly > aws_budget_monthly
+        for: 1h
+        labels:
+          severity: critical
+          component: billing
+        annotations:
+          summary: "Monthly AWS budget exceeded"
+          description: "Current monthly cost: ${{ $value }}, Budget: {{ $labels.budget }}"
+
+      # RDS Database
+      - alert: RDSHighCPU
+        expr: aws_rds_cpuutilization_average > 80
+        for: 15m
+        labels:
+          severity: warning
+          component: rds
+        annotations:
+          summary: "High CPU on RDS instance {{ $labels.dbinstance_identifier }}"
+          description: "RDS CPU utilization is {{ $value }}%"
+
+      - alert: RDSLowStorage
+        expr: aws_rds_free_storage_space_bytes < 5e9  # 5GB
+        for: 5m
+        labels:
+          severity: warning
+          component: rds
+        annotations:
+          summary: "Low storage on RDS instance {{ $labels.dbinstance_identifier }}"
+          description: "Only {{ $value | humanize }}B free storage remaining"
+
+      # Load Balancer
+      - alert: ALBHighResponseTime
+        expr: aws_alb_target_response_time_average > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: alb
+        annotations:
+          summary: "High response time on ALB {{ $labels.load_balancer }}"
+          description: "ALB response time is {{ $value }}s"
+
+      - alert: ALBUnhealthyTargets
+        expr: aws_alb_unhealthy_host_count_sum > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: alb
+        annotations:
+          summary: "Unhealthy targets in ALB {{ $labels.load_balancer }}"
+          description: "{{ $value }} unhealthy targets detected"
+
+      # S3 Storage
+      - alert: S3BucketSizeGrowth
+        expr: rate(aws_s3_bucket_size_bytes[1d]) > 1e11  # 100GB/day
+        for: 1h
+        labels:
+          severity: info
+          component: s3
+        annotations:
+          summary: "Rapid growth in S3 bucket {{ $labels.bucket_name }}"
+          description: "Bucket growing at {{ $value | humanize }}B/day"
+
+      # Infrastructure Deployment
+      - alert: TerraformStateUnlocked
+        expr: terraform_state_locked == 0
+        for: 30m
+        labels:
+          severity: warning
+          component: terraform
+        annotations:
+          summary: "Terraform state unlocked for extended period"
+          description: "State should be locked during deployments"
+
+      - alert: InfrastructureDeploymentFailed
+        expr: terraform_apply_success == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: terraform
+        annotations:
+          summary: "Infrastructure deployment failed"
+          description: "Last Terraform apply failed - check deployment logs"

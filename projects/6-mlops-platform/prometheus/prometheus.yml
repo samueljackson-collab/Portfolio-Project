@@ -1,0 +1,55 @@
+# Prometheus Configuration for MLOps Platform
+# Monitors model training, inference, feature stores, and ML pipelines
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    project: 'mlops-platform'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  # Model serving (TensorFlow Serving, TorchServe)
+  - job_name: 'model-serving'
+    static_configs:
+      - targets: ['tf-serving:8501', 'torchserve:8082']
+
+  # MLflow tracking server
+  - job_name: 'mlflow'
+    static_configs:
+      - targets: ['mlflow:5000']
+
+  # Feature store
+  - job_name: 'feature-store'
+    static_configs:
+      - targets: ['feast-server:6566']
+
+  # Training job metrics
+  - job_name: 'training-jobs'
+    static_configs:
+      - targets: ['kubeflow-metrics:8080']
+    scrape_interval: 60s
+
+  # Model registry
+  - job_name: 'model-registry'
+    static_configs:
+      - targets: ['model-registry:8081']
+
+  # Data validation
+  - job_name: 'data-validation'
+    static_configs:
+      - targets: ['great-expectations:5000']
+
+  # GPU metrics
+  - job_name: 'nvidia-gpu'
+    static_configs:
+      - targets: ['dcgm-exporter:9400']
+    scrape_interval: 10s

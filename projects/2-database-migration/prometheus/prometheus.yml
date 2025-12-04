@@ -1,0 +1,54 @@
+# Prometheus Configuration for Database Migration
+# Monitors migration progress, database performance, and data consistency
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: 'database-migration'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  # PostgreSQL Exporter for source database
+  - job_name: 'postgres-source'
+    static_configs:
+      - targets: ['postgres-source-exporter:9187']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: database
+        replacement: 'source'
+
+  # PostgreSQL Exporter for target database
+  - job_name: 'postgres-target'
+    static_configs:
+      - targets: ['postgres-target-exporter:9187']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: database
+        replacement: 'target'
+
+  # Migration tool metrics
+  - job_name: 'migration-service'
+    static_configs:
+      - targets: ['migration-service:8080']
+    scrape_interval: 10s
+
+  # Data validation service
+  - job_name: 'data-validator'
+    static_configs:
+      - targets: ['data-validator:8081']
+    scrape_interval: 30s
+
+  # Replication lag monitoring
+  - job_name: 'replication-monitor'
+    static_configs:
+      - targets: ['replication-monitor:9188']
+    scrape_interval: 5s

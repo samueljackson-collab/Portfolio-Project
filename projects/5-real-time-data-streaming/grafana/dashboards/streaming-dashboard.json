@@ -1,0 +1,180 @@
+{
+  "dashboard": {
+    "title": "Real-Time Data Streaming Dashboard",
+    "tags": ["kafka", "streaming", "flink"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Kafka Cluster Health",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(kafka_server_brokerstate == 3)",
+            "legendFormat": "Active Brokers"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 3, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Total Consumer Lag",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(kafka_consumer_group_lag)",
+            "legendFormat": "Messages Behind"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10000, "color": "yellow"},
+                {"value": 100000, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Messages Per Second",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(kafka_server_brokertopicmetrics_messagesinpersec[1m]))",
+            "legendFormat": "Msgs/sec"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Message Throughput by Topic",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(kafka_server_brokertopicmetrics_messagesinpersec[5m])",
+            "legendFormat": "{{ topic }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [
+          {"format": "short", "label": "Messages/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Consumer Lag by Group",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "kafka_consumer_group_lag",
+            "legendFormat": "{{ consumer_group }} - {{ topic }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [
+          {"format": "short", "label": "Messages Behind"},
+          {"format": "short"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [10000], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "10m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "name": "High Consumer Lag"
+        }
+      },
+      {
+        "id": 6,
+        "title": "Under-Replicated Partitions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "kafka_server_replicamanager_underreplicatedpartitions",
+            "legendFormat": "Broker {{ broker }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yaxes": [
+          {"format": "short", "label": "Partitions"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Stream Processing Latency",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "flink_taskmanager_job_latency_milliseconds",
+            "legendFormat": "{{ job_name }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "yaxes": [
+          {"format": "ms", "label": "Latency"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Bytes In/Out Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(kafka_server_brokertopicmetrics_bytesinpersec[5m])",
+            "legendFormat": "Bytes In - {{ topic }}"
+          },
+          {
+            "expr": "rate(kafka_server_brokertopicmetrics_bytesoutpersec[5m])",
+            "legendFormat": "Bytes Out - {{ topic }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "yaxes": [
+          {"format": "Bps", "label": "Bytes/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Kafka Connect Status",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "kafka_connect_connector_status",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}
+      }
+    ]
+  }
+}

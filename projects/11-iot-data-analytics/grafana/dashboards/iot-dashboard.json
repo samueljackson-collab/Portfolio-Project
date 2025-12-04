@@ -1,0 +1,42 @@
+{
+  "dashboard": {
+    "title": "IoT Data Analytics Dashboard",
+    "tags": ["iot", "devices", "mqtt"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Devices",
+        "type": "stat",
+        "targets": [{"expr": "count(device_last_seen_seconds < 300)", "legendFormat": "Online"}],
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Messages/sec",
+        "type": "stat",
+        "targets": [{"expr": "rate(mqtt_messages_received_total[1m])", "legendFormat": "Rate"}],
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Message Throughput",
+        "type": "graph",
+        "targets": [{"expr": "rate(mqtt_messages_received_total[5m])", "legendFormat": "{{ topic }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [{"format": "short", "label": "Messages/sec"}, {"format": "short"}]
+      },
+      {
+        "id": 4,
+        "title": "Device Health",
+        "type": "graph",
+        "targets": [{"expr": "device_health_score", "legendFormat": "{{ device_id }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [{"format": "percentunit", "min": 0, "max": 1}, {"format": "short"}]
+      }
+    ]
+  }
+}

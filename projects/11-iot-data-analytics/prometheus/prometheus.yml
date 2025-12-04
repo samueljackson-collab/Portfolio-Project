@@ -1,0 +1,38 @@
+# Prometheus Configuration for IoT Data Analytics
+# Monitors IoT devices, message ingestion, data processing, and device health
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    project: 'iot-data-analytics'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'iot-gateway'
+    static_configs:
+      - targets: ['iot-gateway:8086']
+
+  - job_name: 'mqtt-broker'
+    static_configs:
+      - targets: ['mqtt-exporter:9234']
+
+  - job_name: 'device-registry'
+    static_configs:
+      - targets: ['device-registry:8087']
+
+  - job_name: 'timeseries-db'
+    static_configs:
+      - targets: ['influxdb-exporter:9122']
+
+  - job_name: 'stream-processor'
+    static_configs:
+      - targets: ['stream-processor:8088']

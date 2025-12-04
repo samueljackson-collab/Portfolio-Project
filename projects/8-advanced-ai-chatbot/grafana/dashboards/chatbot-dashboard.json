@@ -1,0 +1,62 @@
+{
+  "dashboard": {
+    "title": "AI Chatbot Dashboard",
+    "tags": ["chatbot", "nlp", "ai"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Conversations",
+        "type": "stat",
+        "targets": [{"expr": "chatbot_active_conversations", "legendFormat": "Active"}],
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Requests/sec",
+        "type": "stat",
+        "targets": [{"expr": "rate(chatbot_requests_total[1m])", "legendFormat": "RPS"}],
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Model Confidence",
+        "type": "gauge",
+        "targets": [{"expr": "avg(chatbot_model_confidence_score)", "legendFormat": "Confidence"}],
+        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+        "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1}}
+      },
+      {
+        "id": 4,
+        "title": "Response Latency",
+        "type": "graph",
+        "targets": [{"expr": "histogram_quantile(0.95, rate(chatbot_response_duration_seconds_bucket[5m]))", "legendFormat": "P95"}],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [{"format": "s", "label": "Latency"}, {"format": "short"}]
+      },
+      {
+        "id": 5,
+        "title": "Intent Distribution",
+        "type": "graph",
+        "targets": [{"expr": "rate(intent_classification_total[5m])", "legendFormat": "{{ intent }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [{"format": "short", "label": "Rate"}, {"format": "short"}]
+      },
+      {
+        "id": 6,
+        "title": "Conversation Metrics",
+        "type": "graph",
+        "targets": [
+          {"expr": "rate(conversations_started_total[5m])", "legendFormat": "Started"},
+          {"expr": "rate(conversations_completed_total[5m])", "legendFormat": "Completed"},
+          {"expr": "rate(conversations_abandoned_total[5m])", "legendFormat": "Abandoned"}
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yaxes": [{"format": "short", "label": "Conversations/sec"}, {"format": "short"}]
+      }
+    ]
+  }
+}

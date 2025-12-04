@@ -1,0 +1,95 @@
+# Alert Rules for Multi-Region Disaster Recovery
+
+groups:
+  - name: dr_health_alerts
+    interval: 30s
+    rules:
+      - alert: HighReplicationLag
+        expr: replication_lag_seconds > 60
+        for: 5m
+        labels:
+          severity: warning
+          component: replication
+        annotations:
+          summary: "High replication lag from {{ $labels.source_region }} to {{ $labels.target_region }}"
+          description: "Lag: {{ $value }}s (RPO at risk)"
+
+      - alert: CriticalReplicationLag
+        expr: replication_lag_seconds > 300
+        for: 2m
+        labels:
+          severity: critical
+          component: replication
+        annotations:
+          summary: "Critical replication lag"
+          description: "Lag: {{ $value }}s - RPO significantly exceeded"
+
+      - alert: ReplicationBroken
+        expr: replication_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: replication
+        annotations:
+          summary: "Replication from {{ $labels.source_region }} to {{ $labels.target_region }} broken"
+          description: "Data replication has stopped"
+
+      - alert: RegionalEndpointDown
+        expr: route53_health_check_status == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: regional-health
+        annotations:
+          summary: "Regional endpoint {{ $labels.endpoint }} in {{ $labels.region }} is down"
+          description: "Automatic failover may be triggered"
+
+      - alert: CrossRegionNetworkLatencyHigh
+        expr: network_latency_milliseconds > 200
+        for: 10m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: "High cross-region latency"
+          description: "Latency {{ $labels.source_region }} -> {{ $labels.target_region }}: {{ $value }}ms"
+
+      - alert: FailoverReadinessCheckFailed
+        expr: failover_readiness_score < 0.95
+        for: 5m
+        labels:
+          severity: warning
+          component: failover
+        annotations:
+          summary: "Failover readiness degraded for {{ $labels.region }}"
+          description: "Readiness score: {{ $value | humanizePercentage }}"
+
+      - alert: BackupVerificationFailed
+        expr: backup_verification_failures_total > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: backup
+        annotations:
+          summary: "Backup verification failed"
+          description: "{{ $value }} backup verification failures in {{ $labels.region }}"
+
+      - alert: RTOObjectiveAtRisk
+        expr: estimated_rto_seconds > sla_rto_seconds
+        for: 10m
+        labels:
+          severity: warning
+          component: sla
+        annotations:
+          summary: "RTO objective at risk"
+          description: "Estimated RTO: {{ $value }}s exceeds SLA"
+
+      - alert: DataSyncOutOfDate
+        expr: (time() - last_successful_sync_timestamp) > 3600
+        for: 5m
+        labels:
+          severity: warning
+          component: sync
+        annotations:
+          summary: "Data sync overdue in {{ $labels.region }}"
+          description: "Last sync: {{ $value }}s ago"

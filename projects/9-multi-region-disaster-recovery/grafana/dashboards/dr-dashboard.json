@@ -1,0 +1,68 @@
+{
+  "dashboard": {
+    "title": "Multi-Region Disaster Recovery Dashboard",
+    "tags": ["dr", "multi-region", "failover"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Regional Health Status",
+        "type": "stat",
+        "targets": [{"expr": "count(route53_health_check_status == 1)", "legendFormat": "Healthy Regions"}],
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+        "fieldConfig": {"defaults": {"thresholds": {"steps": [{"value": 0, "color": "red"}, {"value": 2, "color": "yellow"}, {"value": 3, "color": "green"}]}}}
+      },
+      {
+        "id": 2,
+        "title": "Max Replication Lag",
+        "type": "stat",
+        "targets": [{"expr": "max(replication_lag_seconds)", "legendFormat": "Lag (s)"}],
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+        "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"steps": [{"value": 0, "color": "green"}, {"value": 60, "color": "yellow"}, {"value": 300, "color": "red"}]}}}
+      },
+      {
+        "id": 3,
+        "title": "Failover Readiness",
+        "type": "gauge",
+        "targets": [{"expr": "min(failover_readiness_score)", "legendFormat": "Score"}],
+        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+        "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1, "thresholds": {"steps": [{"value": 0, "color": "red"}, {"value": 0.9, "color": "yellow"}, {"value": 0.95, "color": "green"}]}}}
+      },
+      {
+        "id": 4,
+        "title": "Replication Lag by Region Pair",
+        "type": "graph",
+        "targets": [{"expr": "replication_lag_seconds", "legendFormat": "{{ source_region }} -> {{ target_region }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [{"format": "s", "label": "Lag"}, {"format": "short"}],
+        "alert": {"conditions": [{"evaluator": {"params": [60], "type": "gt"}, "query": {"params": ["A", "5m", "now"]}, "type": "query"}]}
+      },
+      {
+        "id": 5,
+        "title": "Cross-Region Network Latency",
+        "type": "graph",
+        "targets": [{"expr": "network_latency_milliseconds", "legendFormat": "{{ source_region }} -> {{ target_region }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [{"format": "ms", "label": "Latency"}, {"format": "short"}]
+      },
+      {
+        "id": 6,
+        "title": "Regional Traffic Distribution",
+        "type": "graph",
+        "targets": [{"expr": "rate(aws_alb_request_count_sum[5m])", "legendFormat": "{{ region }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yaxes": [{"format": "reqps", "label": "Requests/sec"}, {"format": "short"}]
+      },
+      {
+        "id": 7,
+        "title": "Backup Status",
+        "type": "table",
+        "targets": [{"expr": "last_successful_sync_timestamp", "format": "table"}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      }
+    ]
+  }
+}

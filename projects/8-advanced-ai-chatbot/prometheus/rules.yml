@@ -1,0 +1,75 @@
+# Alert Rules for Advanced AI Chatbot
+
+groups:
+  - name: chatbot_performance
+    interval: 30s
+    rules:
+      - alert: HighResponseLatency
+        expr: histogram_quantile(0.95, rate(chatbot_response_duration_seconds_bucket[5m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High chatbot response latency"
+          description: "P95 latency: {{ $value }}s"
+
+      - alert: LowModelConfidence
+        expr: avg(chatbot_model_confidence_score) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          component: nlp
+        annotations:
+          summary: "Low model confidence scores"
+          description: "Average confidence: {{ $value }}"
+
+      - alert: HighErrorRate
+        expr: rate(chatbot_errors_total[5m]) / rate(chatbot_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "High chatbot error rate"
+          description: "Error rate: {{ $value | humanizePercentage }}"
+
+      - alert: IntentClassificationFailed
+        expr: rate(intent_classification_unknown_total[10m]) / rate(intent_classification_total[10m]) > 0.3
+        for: 15m
+        labels:
+          severity: warning
+          component: intent
+        annotations:
+          summary: "High rate of unknown intents"
+          description: "{{ $value | humanizePercentage }} of intents unclassified"
+
+      - alert: ConversationDropoffHigh
+        expr: rate(conversations_abandoned_total[10m]) / rate(conversations_started_total[10m]) > 0.4
+        for: 20m
+        labels:
+          severity: info
+          component: engagement
+        annotations:
+          summary: "High conversation abandonment rate"
+          description: "{{ $value | humanizePercentage }} of conversations abandoned"
+
+      - alert: CacheHitRateLow
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) < 0.8
+        for: 15m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Low Redis cache hit rate"
+          description: "Hit rate: {{ $value | humanizePercentage }}"
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "{{ $value | humanizePercentage }} of connections in use"

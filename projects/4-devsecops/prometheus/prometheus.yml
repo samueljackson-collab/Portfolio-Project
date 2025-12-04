@@ -1,0 +1,64 @@
+# Prometheus Configuration for DevSecOps
+# Monitors security events, vulnerability scans, and compliance metrics
+
+global:
+  scrape_interval: 20s
+  evaluation_interval: 20s
+  external_labels:
+    project: 'devsecops'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  # Security scanning service
+  - job_name: 'security-scanner'
+    static_configs:
+      - targets: ['trivy-exporter:9110', 'grype-exporter:9111']
+    scrape_interval: 300s  # Every 5 minutes
+
+  # Vulnerability database
+  - job_name: 'vuln-database'
+    static_configs:
+      - targets: ['cve-exporter:9112']
+    scrape_interval: 3600s  # Hourly
+
+  # Secret scanning
+  - job_name: 'secret-scanner'
+    static_configs:
+      - targets: ['gitleaks-exporter:9113']
+    scrape_interval: 60s
+
+  # SAST/DAST tools
+  - job_name: 'sast-dast'
+    static_configs:
+      - targets: ['sonarqube-exporter:9114', 'zap-exporter:9115']
+
+  # Policy enforcement (OPA)
+  - job_name: 'policy-enforcement'
+    static_configs:
+      - targets: ['opa-exporter:9116']
+
+  # Container runtime security
+  - job_name: 'falco'
+    static_configs:
+      - targets: ['falco-exporter:9117']
+    scrape_interval: 10s
+
+  # Compliance checks
+  - job_name: 'compliance'
+    static_configs:
+      - targets: ['compliance-exporter:9118']
+    scrape_interval: 3600s
+
+  # WAF metrics
+  - job_name: 'waf'
+    static_configs:
+      - targets: ['modsecurity-exporter:9119']
+    scrape_interval: 30s

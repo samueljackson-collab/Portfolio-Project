@@ -1,0 +1,58 @@
+# Prometheus Configuration for Blockchain Smart Contract Platform
+# Monitors blockchain nodes, smart contracts, transactions, and consensus
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: 'blockchain-smart-contract'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  # Ethereum/EVM node metrics
+  - job_name: 'blockchain-nodes'
+    static_configs:
+      - targets:
+          - 'geth-node-1:6060'
+          - 'geth-node-2:6060'
+          - 'geth-node-3:6060'
+
+  # Smart contract execution metrics
+  - job_name: 'smart-contracts'
+    static_configs:
+      - targets: ['contract-monitor:9200']
+
+  # Transaction pool
+  - job_name: 'txpool'
+    static_configs:
+      - targets: ['txpool-exporter:9201']
+    scrape_interval: 10s
+
+  # Gas price oracle
+  - job_name: 'gas-oracle'
+    static_configs:
+      - targets: ['gas-oracle:9202']
+    scrape_interval: 30s
+
+  # Block explorer API
+  - job_name: 'block-explorer'
+    static_configs:
+      - targets: ['explorer-api:3000']
+
+  # Consensus metrics
+  - job_name: 'consensus'
+    static_configs:
+      - targets: ['consensus-monitor:9203']
+
+  # Validator nodes
+  - job_name: 'validators'
+    static_configs:
+      - targets: ['validator-exporter:9204']

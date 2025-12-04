@@ -1,0 +1,34 @@
+# Prometheus Configuration for Edge AI Inference
+# Monitors edge devices, model inference, network connectivity, and resource usage
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    project: 'edge-ai-inference'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'edge-devices'
+    static_configs:
+      - targets: ['edge-device-exporter:9250']
+
+  - job_name: 'edge-inference'
+    static_configs:
+      - targets: ['edge-inference-service:8095']
+
+  - job_name: 'model-sync'
+    static_configs:
+      - targets: ['model-sync-service:8096']
+
+  - job_name: 'edge-gateway'
+    static_configs:
+      - targets: ['edge-gateway:8097']

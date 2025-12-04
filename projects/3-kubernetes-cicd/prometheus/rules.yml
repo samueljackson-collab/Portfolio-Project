@@ -1,0 +1,165 @@
+# Alert Rules for Kubernetes CI/CD
+# Monitors cluster health, pod status, and deployment pipelines
+
+groups:
+  - name: kubernetes_cluster_alerts
+    interval: 30s
+    rules:
+      # Node Health
+      - alert: KubernetesNodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: node
+        annotations:
+          summary: "Kubernetes node {{ $labels.node }} not ready"
+          description: "Node {{ $labels.node }} has been in NotReady state for more than 5 minutes"
+
+      - alert: KubernetesNodeMemoryPressure
+        expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: node
+        annotations:
+          summary: "Node {{ $labels.node }} under memory pressure"
+          description: "Node {{ $labels.node }} is experiencing memory pressure"
+
+      - alert: KubernetesNodeDiskPressure
+        expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: node
+        annotations:
+          summary: "Node {{ $labels.node }} under disk pressure"
+          description: "Node {{ $labels.node }} is experiencing disk pressure"
+
+      # Pod Health
+      - alert: KubernetesPodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: pod
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+          description: "Pod has restarted {{ $value }} times in the last 15 minutes"
+
+      - alert: KubernetesPodNotReady
+        expr: kube_pod_status_phase{phase=~"Pending|Unknown|Failed"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          component: pod
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} not ready"
+          description: "Pod has been in {{ $labels.phase }} state for more than 10 minutes"
+
+      - alert: KubernetesContainerOOMKilled
+        expr: increase(kube_pod_container_status_terminated_reason{reason="OOMKilled"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: container
+        annotations:
+          summary: "Container OOMKilled in {{ $labels.namespace }}/{{ $labels.pod }}"
+          description: "Container {{ $labels.container }} was OOMKilled"
+
+      # Resource Utilization
+      - alert: KubernetesNodeCPUHigh
+        expr: (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (node)) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: node
+        annotations:
+          summary: "High CPU usage on node {{ $labels.node }}"
+          description: "CPU usage is {{ $value }}% on node {{ $labels.node }}"
+
+      - alert: KubernetesNodeMemoryHigh
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: node
+        annotations:
+          summary: "High memory usage on node {{ $labels.node }}"
+          description: "Memory usage is {{ $value }}% on node {{ $labels.node }}"
+
+      # Deployment Issues
+      - alert: KubernetesDeploymentReplicasMismatch
+        expr: kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+        for: 10m
+        labels:
+          severity: warning
+          component: deployment
+        annotations:
+          summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has mismatched replicas"
+          description: "Desired: {{ $labels.spec }}, Available: {{ $value }}"
+
+      - alert: KubernetesStatefulSetReplicasMismatch
+        expr: kube_statefulset_status_replicas_ready != kube_statefulset_status_replicas
+        for: 10m
+        labels:
+          severity: warning
+          component: statefulset
+        annotations:
+          summary: "StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has mismatched replicas"
+          description: "Not all replicas are ready"
+
+      # Persistent Volume
+      - alert: KubernetesPersistentVolumeFillingUp
+        expr: kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "PersistentVolume {{ $labels.persistentvolumeclaim }} is filling up"
+          description: "Only {{ $value }}% space remaining"
+
+  - name: cicd_pipeline_alerts
+    interval: 30s
+    rules:
+      # CI/CD Pipeline
+      - alert: PipelineFailureRate
+        expr: rate(cicd_pipeline_failed_total[10m]) / rate(cicd_pipeline_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: cicd
+        annotations:
+          summary: "High pipeline failure rate"
+          description: "{{ $value | humanizePercentage }} of pipelines are failing"
+
+      - alert: DeploymentDurationHigh
+        expr: cicd_deployment_duration_seconds > 600
+        for: 1m
+        labels:
+          severity: warning
+          component: deployment
+        annotations:
+          summary: "Deployment taking longer than expected"
+          description: "Deployment to {{ $labels.environment }} took {{ $value }}s"
+
+      - alert: ImagePullErrors
+        expr: rate(kube_pod_container_status_waiting_reason{reason="ImagePullBackOff"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: registry
+        annotations:
+          summary: "Image pull errors in {{ $labels.namespace }}"
+          description: "Pod {{ $labels.pod }} cannot pull container image"
+
+      - alert: ArgocdSyncFailed
+        expr: argocd_app_sync_status{sync_status="OutOfSync"} == 1
+        for: 10m
+        labels:
+          severity: warning
+          component: argocd
+        annotations:
+          summary: "ArgoCD app {{ $labels.app }} out of sync"
+          description: "Application has been out of sync for more than 10 minutes"

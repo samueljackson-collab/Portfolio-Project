@@ -1,0 +1,42 @@
+{
+  "dashboard": {
+    "title": "Quantum Computing Dashboard",
+    "tags": ["quantum", "qubits"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "1m",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Qubits",
+        "type": "stat",
+        "targets": [{"expr": "count(qubit_fidelity_score > 0.9)", "legendFormat": "Qubits"}],
+        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Jobs Queued",
+        "type": "stat",
+        "targets": [{"expr": "quantum_job_queue_length", "legendFormat": "Jobs"}],
+        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Qubit Fidelity",
+        "type": "graph",
+        "targets": [{"expr": "qubit_fidelity_score", "legendFormat": "Qubit {{ qubit_id }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "yaxes": [{"format": "percentunit", "min": 0.9, "max": 1}, {"format": "short"}]
+      },
+      {
+        "id": 4,
+        "title": "Gate Error Rates",
+        "type": "graph",
+        "targets": [{"expr": "quantum_gate_error_rate", "legendFormat": "{{ gate_type }}"}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "yaxes": [{"format": "percentunit"}, {"format": "short"}]
+      }
+    ]
+  }
+}

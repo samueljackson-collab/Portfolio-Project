@@ -1,0 +1,75 @@
+# Alert Rules for Advanced Cybersecurity
+
+groups:
+  - name: security_threat_alerts
+    interval: 15s
+    rules:
+      - alert: DDoSAttackDetected
+        expr: rate(network_packets_total[1m]) > 100000
+        for: 2m
+        labels:
+          severity: critical
+          component: network
+        annotations:
+          summary: "Possible DDoS attack detected"
+          description: "Packet rate: {{ $value }}/sec"
+
+      - alert: BruteForceAttackDetected
+        expr: rate(auth_failed_attempts_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: critical
+          component: auth
+        annotations:
+          summary: "Brute force attack from {{ $labels.source_ip }}"
+          description: "{{ $value }} failed attempts/sec"
+
+      - alert: MalwareDetected
+        expr: malware_detections_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: antimalware
+        annotations:
+          summary: "Malware detected"
+          description: "{{ $value }} malware samples on {{ $labels.host }}"
+
+      - alert: SuspiciousNetworkTraffic
+        expr: ids_alert_severity{severity="high"} > 0
+        for: 2m
+        labels:
+          severity: warning
+          component: ids
+        annotations:
+          summary: "High severity IDS alerts"
+          description: "{{ $value }} high severity alerts"
+
+      - alert: DataExfiltrationSuspected
+        expr: rate(network_bytes_out_total[5m]) > 1e9
+        for: 10m
+        labels:
+          severity: critical
+          component: dlp
+        annotations:
+          summary: "Possible data exfiltration"
+          description: "{{ $value | humanize }}B/sec outbound"
+
+      - alert: UnauthorizedPortScan
+        expr: portscan_attempts_total > 50
+        for: 5m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: "Port scan detected from {{ $labels.source_ip }}"
+          description: "{{ $value }} ports scanned"
+
+      - alert: SecurityPatchOverdue
+        expr: (time() - last_security_patch_timestamp) > 604800
+        for: 1h
+        labels:
+          severity: warning
+          component: patch-management
+        annotations:
+          summary: "Security patches overdue on {{ $labels.host }}"
+          description: "Last patched {{ $value }}s ago"

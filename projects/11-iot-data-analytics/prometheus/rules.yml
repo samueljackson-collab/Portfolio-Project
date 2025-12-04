@@ -1,0 +1,45 @@
+# Alert Rules for IoT Data Analytics
+
+groups:
+  - name: iot_alerts
+    interval: 30s
+    rules:
+      - alert: DeviceOffline
+        expr: device_last_seen_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: device
+        annotations:
+          summary: "IoT device {{ $labels.device_id }} offline"
+          description: "Last seen {{ $value }}s ago"
+
+      - alert: HighMessageDropRate
+        expr: rate(mqtt_messages_dropped_total[5m]) / rate(mqtt_messages_received_total[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: mqtt
+        annotations:
+          summary: "High MQTT message drop rate"
+          description: "{{ $value | humanizePercentage }} messages dropped"
+
+      - alert: DeviceDataAnomalies
+        expr: device_data_anomaly_score > 0.8
+        for: 15m
+        labels:
+          severity: info
+          component: analytics
+        annotations:
+          summary: "Anomalies detected from device {{ $labels.device_id }}"
+          description: "Anomaly score: {{ $value }}"
+
+      - alert: TimeseriesDBHighCardinality
+        expr: influxdb_series_count > 1000000
+        for: 1h
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High cardinality in time series database"
+          description: "{{ $value }} series in database {{ $labels.database }}"

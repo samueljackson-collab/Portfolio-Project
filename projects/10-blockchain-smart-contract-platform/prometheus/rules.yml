@@ -1,0 +1,193 @@
+# Alert Rules for Blockchain Smart Contract Platform
+# Monitors node health, transaction processing, and smart contract execution
+
+groups:
+  - name: blockchain_node_alerts
+    interval: 30s
+    rules:
+      # Node Health
+      - alert: BlockchainNodeDown
+        expr: up{job="blockchain-nodes"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: node
+        annotations:
+          summary: "Blockchain node {{ $labels.instance }} is down"
+          description: "Node has been unreachable for more than 2 minutes"
+
+      - alert: NodeNotSyncing
+        expr: blockchain_node_syncing == 1
+        for: 30m
+        labels:
+          severity: warning
+          component: node
+        annotations:
+          summary: "Node {{ $labels.instance }} stuck syncing"
+          description: "Node has been in syncing state for more than 30 minutes"
+
+      - alert: NodeBehindChain
+        expr: (blockchain_latest_block - blockchain_node_block) > 10
+        for: 10m
+        labels:
+          severity: warning
+          component: node
+        annotations:
+          summary: "Node {{ $labels.instance }} behind chain"
+          description: "Node is {{ $value }} blocks behind"
+
+      - alert: LowPeerCount
+        expr: blockchain_peer_count < 3
+        for: 10m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: "Low peer count on node {{ $labels.instance }}"
+          description: "Only {{ $value }} peers connected"
+
+      # Transaction Processing
+      - alert: HighTransactionPoolSize
+        expr: blockchain_txpool_pending > 10000
+        for: 15m
+        labels:
+          severity: warning
+          component: txpool
+        annotations:
+          summary: "High number of pending transactions"
+          description: "{{ $value }} transactions pending in pool"
+
+      - alert: TransactionProcessingStalled
+        expr: rate(blockchain_transactions_processed_total[5m]) == 0 and blockchain_txpool_pending > 0
+        for: 10m
+        labels:
+          severity: critical
+          component: transactions
+        annotations:
+          summary: "Transaction processing has stalled"
+          description: "No transactions processed while {{ $value }} pending"
+
+      - alert: HighTransactionFailureRate
+        expr: rate(blockchain_transactions_failed_total[5m]) / rate(blockchain_transactions_total[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: transactions
+        annotations:
+          summary: "High transaction failure rate"
+          description: "{{ $value | humanizePercentage }} of transactions failing"
+
+      # Gas and Fees
+      - alert: GasPriceSpike
+        expr: (blockchain_gas_price - blockchain_gas_price offset 1h) / blockchain_gas_price offset 1h > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: gas
+        annotations:
+          summary: "Gas price spike detected"
+          description: "Gas price increased by {{ $value | humanizePercentage }}"
+
+      - alert: ExtremeGasPrice
+        expr: blockchain_gas_price > 500e9  # 500 Gwei
+        for: 10m
+        labels:
+          severity: info
+          component: gas
+        annotations:
+          summary: "Extremely high gas prices"
+          description: "Current gas price: {{ $value }} wei"
+
+      # Smart Contracts
+      - alert: SmartContractExecutionFailures
+        expr: rate(smart_contract_execution_failed_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: smart-contract
+        annotations:
+          summary: "Smart contract execution failures"
+          description: "{{ $value }} failures/sec for contract {{ $labels.contract_address }}"
+
+      - alert: HighContractGasUsage
+        expr: smart_contract_gas_used > 8000000  # Near block gas limit
+        for: 5m
+        labels:
+          severity: info
+          component: smart-contract
+        annotations:
+          summary: "High gas usage for contract execution"
+          description: "Contract {{ $labels.contract_address }} using {{ $value }} gas"
+
+      - alert: ContractReentrancyDetected
+        expr: smart_contract_reentrancy_attempts_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Reentrancy attack detected"
+          description: "Detected on contract {{ $labels.contract_address }}"
+
+      # Block Production
+      - alert: LowBlockProductionRate
+        expr: rate(blockchain_blocks_mined_total[10m]) < 0.15  # Less than 1 block per ~7 seconds
+        for: 15m
+        labels:
+          severity: warning
+          component: consensus
+        annotations:
+          summary: "Low block production rate"
+          description: "Only {{ $value }} blocks/sec being produced"
+
+      - alert: EmptyBlocks
+        expr: rate(blockchain_empty_blocks_total[10m]) / rate(blockchain_blocks_mined_total[10m]) > 0.3
+        for: 20m
+        labels:
+          severity: info
+          component: consensus
+        annotations:
+          summary: "High rate of empty blocks"
+          description: "{{ $value | humanizePercentage }} of blocks are empty"
+
+      # Validator Performance (PoS)
+      - alert: ValidatorMissedBlocks
+        expr: rate(validator_missed_blocks_total[1h]) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: validator
+        annotations:
+          summary: "Validator {{ $labels.validator }} missing blocks"
+          description: "Missing {{ $value | humanizePercentage }} of blocks"
+
+      - alert: ValidatorSlashingRisk
+        expr: validator_attestation_miss_rate > 0.1
+        for: 30m
+        labels:
+          severity: critical
+          component: validator
+        annotations:
+          summary: "Validator {{ $labels.validator }} at risk of slashing"
+          description: "Missing {{ $value | humanizePercentage }} of attestations"
+
+      # Storage and State
+      - alert: StateDBSizeGrowthHigh
+        expr: rate(blockchain_statedb_size_bytes[1d]) > 10e9  # 10GB/day
+        for: 1h
+        labels:
+          severity: info
+          component: storage
+        annotations:
+          summary: "Rapid state DB growth"
+          description: "State DB growing at {{ $value | humanize1024 }}B/day"
+
+      - alert: OrphanedBlocksHigh
+        expr: rate(blockchain_orphaned_blocks_total[1h]) > 0.01
+        for: 30m
+        labels:
+          severity: warning
+          component: consensus
+        annotations:
+          summary: "High rate of orphaned blocks"
+          description: "{{ $value }} orphaned blocks per second"
