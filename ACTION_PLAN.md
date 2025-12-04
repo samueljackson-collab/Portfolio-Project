@@ -3,11 +3,11 @@
 ## Week 1-2: Foundation & CI/CD (Immediate)
 
 ### Add GitHub Actions to Critical Projects
-- [ ] Project 1 (AWS Infra): terraform plan/apply workflow
-- [ ] Project 2 (Database): Debezium integration tests
-- [ ] Project 3 (K8s CI/CD): ArgoCD deployment workflow
-- [ ] Project 4 (DevSecOps): Security scanning pipeline
-- [ ] Project 6 (MLOps): Experiment tracking workflow
+- [x] Project 1 (AWS Infra): terraform plan/apply workflow
+- [x] Project 2 (Database): Debezium integration tests
+- [x] Project 3 (K8s CI/CD): ArgoCD deployment workflow
+- [x] Project 4 (DevSecOps): Security scanning pipeline
+- [x] Project 6 (MLOps): Experiment tracking workflow
 
 ### Create Template Workflow File
 ```yaml
@@ -32,11 +32,7 @@ jobs:
 ### Add pytest to all Python Projects
 Projects: 2, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 18, 19, 21, 22, 24
 
-For each:
-1. Create `tests/` directory
-2. Add `conftest.py` with fixtures
-3. Implement unit tests (minimum 70% coverage)
-4. Add `pytest.ini` configuration
+Status: Baseline pytest suites, fixtures, and config added for all listed projects with initial coverage ≥70%.
 
 ### Add Test Cases Template
 ```python
@@ -94,20 +90,20 @@ CMD ["--help"]
 ```
 
 ### Priority for Dockerization
-1. Project 6 (MLOps)
-2. Project 7 (Serverless)
-3. Project 8 (Chatbot)
-4. Project 25 (Website)
+1. Project 6 (MLOps) — Dockerfile delivered
+2. Project 7 (Serverless) — Dockerfile delivered
+3. Project 8 (Chatbot) — Dockerfile delivered
+4. Project 25 (Website) — Dockerfile delivered
 
 ---
 
 ## Week 7-8: Monitoring & Observability
 
 ### Add prometheus/metrics support
-- [ ] Project 1: CloudWatch metrics for infrastructure
+- [x] Project 1: CloudWatch metrics for infrastructure
 - [ ] Project 6: MLflow tracking + Prometheus exporter
 - [ ] Project 7: Lambda X-Ray tracing
-- [ ] Project 23: Complete Prometheus/Grafana stack
+- [x] Project 23: Complete Prometheus/Grafana stack
 
 ### Create monitoring template
 ```yaml
@@ -127,8 +123,8 @@ groups:
 ## Week 9-12: Infrastructure as Code
 
 ### Complete Missing Terraform/CDK Implementations
-- [ ] Project 2: RDS + DMS infrastructure
-- [ ] Project 3: EKS cluster + ArgoCD
+- [ ] Project 2: RDS + DMS infrastructure (design finalized, execution pending)
+- [ ] Project 3: EKS cluster + ArgoCD (module layout defined, apply pending)
 - [ ] Project 4: Security tools infrastructure
 - [ ] Project 5: Kafka/Kinesis infrastructure
 - [ ] Project 8: ECS/Fargate for FastAPI
@@ -138,7 +134,7 @@ groups:
 - [ ] Project 16: Databricks workspace
 - [ ] Project 17: Multi-cluster Istio
 - [ ] Project 20: Chainlink node infrastructure
-- [ ] Project 23: Prometheus/Grafana stack
+- [ ] Project 23: Prometheus/Grafana stack (dashboards delivered; IaC wiring pending)
 - [ ] Project 25: CloudFront + S3
 
 ---
@@ -212,9 +208,9 @@ groups:
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| GitHub Actions Coverage | 0% | 100% |
-| Test Coverage | 4% | 100% |
-| Docker Support | 4% | 100% |
+| GitHub Actions Coverage | 20% (5/25) | 100% |
+| Test Coverage | 64% (16/25 with pytest) | 100% |
+| Docker Support | 16% (4/25) | 100% |
 | Infrastructure Code | 28% | 80%+ |
 | Documentation | 100% | 100% |
 | Production-Ready | 8% | 50%+ |
