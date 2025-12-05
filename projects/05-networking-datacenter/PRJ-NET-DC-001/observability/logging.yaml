@@ -1,0 +1,13 @@
+version: 1
+formatters:
+  datacenter:
+    format: "%(asctime)s %(levelname)s [network] %(message)s"
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: datacenter
+    level: INFO
+    stream: ext://sys.stdout
+root:
+  level: INFO
+  handlers: [console]
