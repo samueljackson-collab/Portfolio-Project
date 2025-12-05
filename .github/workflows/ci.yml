@@ -1,28 +1,169 @@
-name: CI
+name: Production Deployment Pipeline
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  security-events: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_TAG: ${{ github.sha }}
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+  AWS_REGION: us-west-2
 
 jobs:
-  validate:
+  quality:
+    name: Quality Gates
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}/migration-orchestrator
-      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          npm ci
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Prettier
+        run: npx prettier --check .
+
+      - name: ESLint
+        run: npx eslint . --max-warnings=0
+
+      - name: NPM Audit
+        run: npm audit --audit-level=high
+
+      - name: Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/ci
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-sarif
+          path: trivy-results.sarif
+
+      - name: Tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          soft_fail: false
+          working_directory: terraform
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.53.0
+
+      - name: Run tflint
+        working-directory: terraform
+        run: |
+          tflint --init
+          tflint --recursive
+
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+
+      - name: Install backend dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run backend unit tests
+        run: |
+          pytest backend --cov=backend --cov-report=xml --cov-report=term --maxfail=1 --durations=10 --cov-fail-under=80
+
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: coverage.xml
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend unit tests
+        working-directory: frontend
+        run: npm run test -- --coverage
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit
     services:
       postgres:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
+          POSTGRES_DB: app
         ports:
           - 5432:5432
         options: >-
@@ -30,108 +171,227 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        npm install -g markdownlint-cli
+      - name: Install backend dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Validate Markdown
-      run: |
-        markdownlint '**/*.md' --ignore node_modules || true
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/app
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          pytest backend/tests -m integration --cov=backend --cov-append --cov-report=xml --cov-report=term --maxfail=1 --durations=10 --cov-fail-under=80
 
-    - name: Check Python formatting
-      run: black --check . || true
+      - name: Upload integration coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-coverage
+          path: coverage.xml
 
-    - name: Lint Python code
-      run: ruff check . || true
+  e2e:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: integration
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Run tests
-      run: |
-        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-          pytest
-        else
-          pytest || true
-        fi
-      run: markdownlint '**/*.md' --ignore node_modules
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-    - name: Check Python formatting
-      run: black --check .
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
 
-    - name: Lint Python code
-      run: ruff check .
+      - name: Install Playwright
+        working-directory: frontend
+        run: npx playwright install --with-deps
 
-    - name: Run unit tests with coverage
-      run: |
-        if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" != "refs/heads/main" ]]; then
-          echo "Running unit tests in diagnostics mode for non-main push"
-          pytest \
-            --cov=projects/2-database-migration/src \
-            --cov-report=xml \
-            --cov-report=term \
-            -m "not integration" \
-            --maxfail=1 \
-            --durations=10 || true
-        else
-          pytest \
-            --cov=projects/2-database-migration/src \
-            --cov-report=xml \
-            --cov-report=term \
-            -m "not integration" \
-            --maxfail=1 \
-            --durations=10
-        fi
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
 
-    - name: Run PostgreSQL integration tests
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_SOURCE_DB: migration_source
-        POSTGRES_TARGET_DB: migration_target
-      run: |
-        if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" != "refs/heads/main" ]]; then
-          echo "Running integration tests in diagnostics mode for non-main push"
-          pytest tests/integration -m integration --maxfail=1 --durations=10 || true
-        else
-          pytest tests/integration -m integration --maxfail=1 --durations=10
-        fi
+      - name: Run Playwright tests
+        working-directory: frontend
+        run: npm run test:e2e -- --reporter=html --output=playwright-report
 
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: coverage.xml
+      - name: Upload e2e report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+  build_and_push:
+    name: Build and Publish Container
+    runs-on: ubuntu-latest
+    needs: e2e
+    steps:
+      - uses: actions/checkout@v4
 
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Build and push migration orchestrator image
-      uses: docker/build-push-action@v5
-      with:
-        context: projects/2-database-migration
-        file: projects/2-database-migration/Dockerfile
-        push: ${{ github.event_name == 'push' }}
-        tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    needs: e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0.17.6
+        with:
+          path: .
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  deploy_staging:
+    name: Deploy to Staging (EKS via Helm)
+    runs-on: ubuntu-latest
+    needs: [build_and_push, sbom]
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_STAGING_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ secrets.AWS_STAGING_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - name: Helm upgrade
+        run: |
+          helm upgrade --install portfolio charts/portfolio \
+            --namespace staging \
+            --create-namespace \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ env.DOCKER_TAG }} \
+            --values charts/portfolio/values.staging.yaml
+
+  k6:
+    name: Performance Test (k6)
+    runs-on: ubuntu-latest
+    needs: deploy_staging
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      - name: Run k6 tests
+        env:
+          BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+        run: |
+          mkdir -p perf-results
+          k6 run tests/perf/k6.js --out json=perf-results/k6.json
+
+      - name: Upload k6 report
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-report
+          path: perf-results
+
+  deploy_prod:
+    name: Deploy to Production (EKS via Helm)
+    runs-on: ubuntu-latest
+    needs: k6
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_PROD_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ secrets.AWS_PROD_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - name: Helm upgrade
+        run: |
+          helm upgrade --install portfolio charts/portfolio \
+            --namespace production \
+            --create-namespace \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ env.DOCKER_TAG }} \
+            --values charts/portfolio/values.prod.yaml
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [quality, unit, integration, e2e]
+    if: always()
+    steps:
+      - name: Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+        run: |
+          payload='{"text": "Production Deployment Pipeline completed with status: '${STATUS}'."}'
+          curl -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
+        continue-on-error: true
+
+      - name: Teams notification
+        if: env.TEAMS_WEBHOOK_URL != ''
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+        run: |
+          payload='{"text": "Production Deployment Pipeline completed with status: '${STATUS}'."}'
+          curl -X POST -H 'Content-type: application/json' --data "$payload" "$TEAMS_WEBHOOK_URL"
+        continue-on-error: true
