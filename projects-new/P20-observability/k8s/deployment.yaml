@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: observability-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: observability-worker
+  template:
+    metadata:
+      labels:
+        app: observability-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: worker
+          image: ghcr.io/example/observability:latest
+          command: ["python", "consumer/worker.py"]
+          volumeMounts:
+            - name: artifacts
+              mountPath: /app/artifacts
+          securityContext:
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: artifacts
+          emptyDir: {}
