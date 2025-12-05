@@ -1,0 +1,68 @@
+# Prometheus Configuration for Real-Time Collaboration Platform
+# Monitors WebSocket connections, message latency, user sessions, and operational document performance
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'real-time-collaboration'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load alert rules
+rule_files:
+  - 'rules.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Application servers
+  - job_name: 'collaboration-app'
+    static_configs:
+      - targets:
+          - 'app-server-1:8080'
+          - 'app-server-2:8080'
+          - 'app-server-3:8080'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # WebSocket gateway
+  - job_name: 'websocket-gateway'
+    static_configs:
+      - targets:
+          - 'ws-gateway-1:9090'
+          - 'ws-gateway-2:9090'
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # CRDT synchronization service
+  - job_name: 'crdt-sync'
+    static_configs:
+      - targets:
+          - 'crdt-sync:8081'
+    metrics_path: '/metrics'
+
+  # Redis cache
+  - job_name: 'redis'
+    static_configs:
+      - targets:
+          - 'redis-exporter:9121'
+
+  # PostgreSQL database
+  - job_name: 'postgres'
+    static_configs:
+      - targets:
+          - 'postgres-exporter:9187'
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets:
+          - 'node-exporter-1:9100'
+          - 'node-exporter-2:9100'
+          - 'node-exporter-3:9100'

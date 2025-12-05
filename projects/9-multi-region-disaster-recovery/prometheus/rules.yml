@@ -1,0 +1,95 @@
+# Alert Rules for Multi-region Disaster Recovery
+
+groups:
+  - name: disaster_recovery_alerts
+    interval: 30s
+    rules:
+      - alert: PrimaryRegionDown
+        expr: up{job="primary-region"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: region
+        annotations:
+          summary: "Primary region is down"
+          description: "Initiate failover to secondary region"
+
+      - alert: ReplicationLagHigh
+        expr: rds_replication_lag_seconds > 300
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "High replication lag between regions"
+          description: "Replication lag is {{ $value }}s, RPO at risk"
+
+      - alert: S3CrossRegionReplicationFailed
+        expr: s3_replication_failed_objects > 0
+        for: 10m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "S3 cross-region replication failures"
+          description: "{{ $value }} objects failed to replicate"
+
+      - alert: Route53HealthCheckFailed
+        expr: route53_health_check_status == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: dns
+        annotations:
+          summary: "Route53 health check failed for {{ $labels.endpoint }}"
+          description: "DNS failover may be triggered"
+
+      - alert: BackupVerificationFailed
+        expr: backup_verification_status{status="failed"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          component: backup
+        annotations:
+          summary: "Backup verification failed for {{ $labels.backup_id }}"
+          description: "Backup integrity check failed"
+
+      - alert: RPOExceeded
+        expr: dr_recovery_point_objective_seconds > 3600
+        for: 5m
+        labels:
+          severity: critical
+          component: dr
+        annotations:
+          summary: "Recovery Point Objective exceeded"
+          description: "Current RPO: {{ $value }}s, Target: 3600s"
+
+      - alert: RTOExceeded
+        expr: dr_recovery_time_objective_seconds > 1800
+        for: 1m
+        labels:
+          severity: critical
+          component: dr
+        annotations:
+          summary: "Recovery Time Objective exceeded during failover"
+          description: "Current RTO: {{ $value }}s, Target: 1800s"
+
+      - alert: FailoverTestOverdue
+        expr: time() - dr_last_failover_test_timestamp > 2592000
+        for: 1h
+        labels:
+          severity: warning
+          component: dr
+        annotations:
+          summary: "Failover test overdue"
+          description: "Last test was {{ $value | humanizeDuration }} ago"
+
+      - alert: DataSyncInconsistency
+        expr: dr_data_consistency_check_failures > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: dr
+        annotations:
+          summary: "Data inconsistency detected between regions"
+          description: "{{ $value }} consistency check failures"

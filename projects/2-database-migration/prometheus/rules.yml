@@ -1,0 +1,55 @@
+# Alert Rules for Database Migration
+
+groups:
+  - name: database_migration_alerts
+    interval: 30s
+    rules:
+      - alert: MigrationJobFailed
+        expr: migration_job_status{status="failed"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: migration
+        annotations:
+          summary: "Migration job {{ $labels.job_name }} failed"
+          description: "Migration job has failed. Check logs immediately."
+
+      - alert: HighDatabaseReplicationLag
+        expr: pg_replication_lag_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High replication lag on {{ $labels.instance }}"
+          description: "Replication lag is {{ $value }} seconds"
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: pgbouncer_pools_cl_waiting > 10
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool exhausted"
+          description: "{{ $value }} clients waiting for connections"
+
+      - alert: MigrationDataMismatch
+        expr: migration_data_integrity_check_failures > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: data-integrity
+        annotations:
+          summary: "Data integrity check failed"
+          description: "{{ $value }} records failed integrity validation"
+
+      - alert: DatabaseHighCPU
+        expr: rate(pg_stat_database_tup_inserted[5m]) + rate(pg_stat_database_tup_updated[5m]) > 10000
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High database write activity"
+          description: "Database experiencing high write load"

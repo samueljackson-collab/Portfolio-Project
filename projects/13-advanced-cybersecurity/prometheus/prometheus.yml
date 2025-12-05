@@ -1,0 +1,62 @@
+# Prometheus Configuration for Advanced Cybersecurity
+# Monitors SIEM, IDS/IPS, threat detection, security events
+
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+  external_labels:
+    cluster: 'cybersecurity'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Snort IDS/IPS
+  - job_name: 'snort'
+    static_configs:
+      - targets: ['snort-exporter:9116']
+
+  # Suricata IDS
+  - job_name: 'suricata'
+    static_configs:
+      - targets: ['suricata-exporter:9917']
+
+  # OSSEC HIDS
+  - job_name: 'ossec'
+    static_configs:
+      - targets: ['ossec-exporter:9118']
+
+  # WAF (ModSecurity)
+  - job_name: 'modsecurity'
+    static_configs:
+      - targets: ['modsecurity-exporter:9119']
+
+  # Threat intelligence feed
+  - job_name: 'threat-intel'
+    static_configs:
+      - targets: ['threat-intel:8080']
+
+  # SIEM aggregator
+  - job_name: 'siem'
+    static_configs:
+      - targets: ['siem:9200']
+
+  # Security event processor
+  - job_name: 'event-processor'
+    static_configs:
+      - targets: ['processor:9091']
+
+  # Honeypot metrics
+  - job_name: 'honeypot'
+    static_configs:
+      - targets: ['honeypot:9092']

@@ -1,0 +1,51 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run tests
+        run: |
+          echo "Running tests for 25-portfolio-website"
+          # Add your test commands here
+
+      - name: Run linters
+        run: |
+          echo "Running linters"
+          # Add your linter commands here
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          echo "Building 25-portfolio-website"
+          # Add your build commands here
+
+      - name: Run security scan
+        run: |
+          echo "Running security scan"
+          # Add security scanning here
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying 25-portfolio-website"
+          # Add deployment commands here

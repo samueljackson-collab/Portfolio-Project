@@ -1,0 +1,65 @@
+# Alert Rules for Blockchain Smart Contract Platform
+
+groups:
+  - name: blockchain_alerts
+    interval: 30s
+    rules:
+      - alert: BlockchainNodeNotSyncing
+        expr: geth_chain_head_block < (geth_chain_head_block offset 5m)
+        for: 10m
+        labels:
+          severity: critical
+          component: blockchain
+        annotations:
+          summary: "Blockchain node is not syncing"
+          description: "Node is stuck at block {{ $value }}"
+
+      - alert: HighGasPrice
+        expr: geth_tx_pool_basefee > 100000000000
+        for: 15m
+        labels:
+          severity: warning
+          component: blockchain
+        annotations:
+          summary: "High gas price detected"
+          description: "Base fee is {{ $value }} wei"
+
+      - alert: SmartContractExecutionFailed
+        expr: rate(contract_execution_failures_total[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          component: smart-contract
+        annotations:
+          summary: "High smart contract execution failure rate"
+          description: "Failure rate: {{ $value }}/s"
+
+      - alert: PeerCountLow
+        expr: geth_p2p_peers < 10
+        for: 10m
+        labels:
+          severity: warning
+          component: networking
+        annotations:
+          summary: "Low peer count"
+          description: "Only {{ $value }} peers connected"
+
+      - alert: BlockProcessingDelay
+        expr: (time() - geth_chain_head_header_timestamp) > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: blockchain
+        annotations:
+          summary: "Block processing delay detected"
+          description: "{{ $value }}s behind current time"
+
+      - alert: IPFSStorageFull
+        expr: (ipfs_repo_size_bytes / ipfs_repo_size_max_bytes) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "IPFS storage almost full"
+          description: "{{ $value | humanizePercentage }} full"

@@ -1,0 +1,75 @@
+# Alert Rules for Serverless Data Processing
+
+groups:
+  - name: serverless_alerts
+    interval: 30s
+    rules:
+      - alert: LambdaHighErrorRate
+        expr: rate(aws_lambda_errors_sum[5m]) / rate(aws_lambda_invocations_sum[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          component: lambda
+        annotations:
+          summary: "High error rate for Lambda function {{ $labels.function_name }}"
+          description: "Error rate is {{ $value | humanizePercentage }}"
+
+      - alert: LambdaHighDuration
+        expr: aws_lambda_duration_average > 25000
+        for: 10m
+        labels:
+          severity: warning
+          component: lambda
+        annotations:
+          summary: "High duration for Lambda {{ $labels.function_name }}"
+          description: "Average duration is {{ $value }}ms"
+
+      - alert: LambdaConcurrentExecutionsHigh
+        expr: aws_lambda_concurrent_executions_maximum > 900
+        for: 5m
+        labels:
+          severity: warning
+          component: lambda
+        annotations:
+          summary: "High concurrent executions approaching limit"
+          description: "Current: {{ $value }} (limit: 1000)"
+
+      - alert: APIGatewayHighLatency
+        expr: aws_apigateway_latency_average > 2000
+        for: 10m
+        labels:
+          severity: warning
+          component: api-gateway
+        annotations:
+          summary: "High API Gateway latency for {{ $labels.api_name }}"
+          description: "Average latency is {{ $value }}ms"
+
+      - alert: StepFunctionExecutionFailed
+        expr: rate(aws_stepfunctions_executions_failed[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: step-functions
+        annotations:
+          summary: "Step Function {{ $labels.state_machine_name }} executions failing"
+          description: "Failed executions rate: {{ $value }}"
+
+      - alert: DynamoDBThrottledRequests
+        expr: rate(aws_dynamodb_user_errors_sum{error="ThrottlingError"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: dynamodb
+        annotations:
+          summary: "DynamoDB table {{ $labels.table_name }} is being throttled"
+          description: "Throttled requests: {{ $value }}/s"
+
+      - alert: S3BucketHighRequestRate
+        expr: rate(aws_s3_all_requests_sum[5m]) > 1000
+        for: 10m
+        labels:
+          severity: info
+          component: s3
+        annotations:
+          summary: "High S3 request rate for {{ $labels.bucket_name }}"
+          description: "Request rate: {{ $value }}/s"

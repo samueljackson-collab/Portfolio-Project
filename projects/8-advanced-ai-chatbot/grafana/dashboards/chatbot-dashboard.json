@@ -1,0 +1,123 @@
+{
+  "dashboard": {
+    "title": "AI Chatbot Dashboard",
+    "tags": ["ai", "chatbot", "nlp"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Message Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(chatbot_messages_total[5m])",
+            "legendFormat": "Messages/sec",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Response Time Distribution",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "chatbot_response_time_seconds{quantile=\"0.50\"}",
+            "legendFormat": "P50",
+            "refId": "A"
+          },
+          {
+            "expr": "chatbot_response_time_seconds{quantile=\"0.95\"}",
+            "legendFormat": "P95",
+            "refId": "B"
+          },
+          {
+            "expr": "chatbot_response_time_seconds{quantile=\"0.99\"}",
+            "legendFormat": "P99",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Intent Classification Accuracy",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "avg(chatbot_intent_confidence)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "steps": [
+                {"value": null, "color": "red"},
+                {"value": 0.6, "color": "yellow"},
+                {"value": 0.8, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Active Conversations",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 8},
+        "targets": [
+          {
+            "expr": "chatbot_active_conversations",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "User Sentiment Over Time",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "avg_over_time(chatbot_user_sentiment_score[5m])",
+            "legendFormat": "Average Sentiment",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": -1,
+            "max": 1
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Top Intents",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "targets": [
+          {
+            "expr": "topk(10, sum by (intent) (rate(chatbot_intent_detected_total[1h])))",
+            "legendFormat": "{{intent}}",
+            "refId": "A"
+          }
+        ]
+      }
+    ]
+  }
+}
