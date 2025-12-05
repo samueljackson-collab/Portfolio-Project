@@ -1,0 +1,307 @@
+{
+  "name": "Twisted Monk Suite - Inventory & Lead Time Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "trigger-inventory-check"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/v1/inventory/all",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Get All Inventory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "id": "get-inventory"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.status}}",
+              "operation": "equals",
+              "value2": "critical_stock"
+            }
+          ]
+        }
+      },
+      "name": "Filter Critical Stock",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "id": "filter-critical"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SLACK_WEBHOOK_URL}}",
+        "options": {},
+        "bodyParametersJson": "={\n  \"text\": \"🚨 CRITICAL STOCK ALERT\",\n  \"blocks\": [\n    {\n      \"type\": \"header\",\n      \"text\": {\n        \"type\": \"plain_text\",\n        \"text\": \"🚨 Critical Stock Alert\"\n      }\n    },\n    {\n      \"type\": \"section\",\n      \"fields\": [\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Product:*\\n{{$json.product_id}}\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Available:*\\n{{$json.available}}\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Reserved:*\\n{{$json.reserved}}\"\n        },\n        {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Incoming:*\\n{{$json.incoming}}\"\n        }\n      ]\n    },\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Status:* {{$json.status}}\"\n      }\n    },\n    {\n      \"type\": \"actions\",\n      \"elements\": [\n        {\n          \"type\": \"button\",\n          \"text\": {\n            \"type\": \"plain_text\",\n            \"text\": \"Reorder Now\"\n          },\n          \"url\": \"{{$env.ADMIN_URL}}/products/{{$json.product_id}}\",\n          \"style\": \"danger\"\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "name": "Send Slack Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 200],
+      "id": "slack-alert"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.EMAIL_FROM}}",
+        "toEmail": "={{$env.EMAIL_TO}}",
+        "subject": "=🚨 Critical Stock Alert: {{$json.product_id}}",
+        "emailType": "html",
+        "message": "=<html>\n<body style=\"font-family: Arial, sans-serif;\">\n  <h2 style=\"color: #dc2626;\">Critical Stock Alert</h2>\n  <p>The following product has reached critical stock levels:</p>\n  \n  <table style=\"border-collapse: collapse; width: 100%; margin: 20px 0;\">\n    <tr style=\"background-color: #f3f4f6;\">\n      <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Product ID</strong></td>\n      <td style=\"padding: 10px; border: 1px solid #ddd;\">{{$json.product_id}}</td>\n    </tr>\n    <tr>\n      <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Available Stock</strong></td>\n      <td style=\"padding: 10px; border: 1px solid #ddd; color: #dc2626; font-weight: bold;\">{{$json.available}}</td>\n    </tr>\n    <tr style=\"background-color: #f3f4f6;\">\n      <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Reserved Stock</strong></td>\n      <td style=\"padding: 10px; border: 1px solid #ddd;\">{{$json.reserved}}</td>\n    </tr>\n    <tr>\n      <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Incoming Stock</strong></td>\n      <td style=\"padding: 10px; border: 1px solid #ddd;\">{{$json.incoming}}</td>\n    </tr>\n    <tr style=\"background-color: #f3f4f6;\">\n      <td style=\"padding: 10px; border: 1px solid #ddd;\"><strong>Status</strong></td>\n      <td style=\"padding: 10px; border: 1px solid #ddd;\">{{$json.status}}</td>\n    </tr>\n  </table>\n  \n  <p><a href=\"{{$env.ADMIN_URL}}/products/{{$json.product_id}}\" \n        style=\"background-color: #dc2626; color: white; padding: 10px 20px; \n               text-decoration: none; border-radius: 5px; display: inline-block;\">\n    Reorder Now\n  </a></p>\n  \n  <p style=\"color: #666; font-size: 12px; margin-top: 30px;\">\n    This is an automated alert from Twisted Monk Suite Inventory Monitor\n  </p>\n</body>\n</html>",
+        "options": {}
+      },
+      "name": "Send Email Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [850, 400],
+      "id": "email-alert"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/v1/lead-time",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "supplier_id",
+              "value": "={{$json.supplier_id}}"
+            },
+            {
+              "name": "product_id",
+              "value": "={{$json.product_id}}"
+            },
+            {
+              "name": "quantity",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Calculate Lead Time",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300],
+      "id": "calculate-lead-time"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": "={{$env.AIRTABLE_BASE_ID}}",
+        "table": "Inventory Alerts",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "product_id": "={{$json.product_id}}",
+            "alert_type": "critical_stock",
+            "available_stock": "={{$json.available}}",
+            "lead_time_days": "={{$json.estimated_days}}",
+            "alert_timestamp": "={{$now}}"
+          }
+        },
+        "options": {}
+      },
+      "name": "Log to Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "id": "log-airtable"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "name": "Weekly Report Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 600],
+      "id": "weekly-trigger"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/api/v1/reports/weekly",
+        "options": {}
+      },
+      "name": "Generate Weekly Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 600],
+      "id": "weekly-report"
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{$env.EMAIL_FROM}}",
+        "toEmail": "={{$env.EMAIL_TO}}",
+        "subject": "=📊 Weekly Inventory Report - {{$now.format('YYYY-MM-DD')}}",
+        "emailType": "html",
+        "message": "=<html>\n<body style=\"font-family: Arial, sans-serif;\">\n  <h1 style=\"color: #1f2937;\">Weekly Inventory Report</h1>\n  <p>Summary of inventory status for the week ending {{$now.format('YYYY-MM-DD')}}:</p>\n  \n  <div style=\"background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;\">\n    <h3>Key Metrics</h3>\n    <ul>\n      <li><strong>Total Products:</strong> {{$json.total_products}}</li>\n      <li><strong>Low Stock Items:</strong> {{$json.low_stock_count}}</li>\n      <li><strong>Critical Stock Items:</strong> {{$json.critical_stock_count}}</li>\n      <li><strong>Out of Stock Items:</strong> {{$json.out_of_stock_count}}</li>\n    </ul>\n  </div>\n  \n  <p>For detailed analysis, please visit the <a href=\"{{$env.ADMIN_URL}}/reports\">admin dashboard</a>.</p>\n  \n  <p style=\"color: #666; font-size: 12px; margin-top: 30px;\">\n    Automated report from Twisted Monk Suite\n  </p>\n</body>\n</html>",
+        "options": {}
+      },
+      "name": "Send Weekly Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [650, 600],
+      "id": "weekly-email"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.status}}",
+              "operation": "equals",
+              "value2": "low_stock"
+            }
+          ]
+        }
+      },
+      "name": "Filter Low Stock",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 450],
+      "id": "filter-low-stock"
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SLACK_WEBHOOK_URL}}",
+        "options": {},
+        "bodyParametersJson": "={\n  \"text\": \"⚠️ Low Stock Warning: {{$json.product_id}}\",\n  \"blocks\": [\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"⚠️ *Low Stock Warning*\\n\\nProduct {{$json.product_id}} is running low.\\nAvailable: *{{$json.available}}* units\"\n      }\n    }\n  ]\n}"
+      },
+      "name": "Send Low Stock Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 500],
+      "id": "slack-low-stock"
+    }
+  ],
+  "connections": {
+    "Schedule Every 5 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get All Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Inventory": {
+      "main": [
+        [
+          {
+            "node": "Filter Critical Stock",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Low Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Critical Stock": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Calculate Lead Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Lead Time": {
+      "main": [
+        [
+          {
+            "node": "Log to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Report Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Weekly Report": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Low Stock": {
+      "main": [
+        [
+          {
+            "node": "Send Low Stock Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 2,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
