@@ -1,0 +1,185 @@
+# Alert Rules for Real-Time Collaboration Platform
+# Monitors WebSocket health, message delivery, CRDT conflicts, and user experience metrics
+
+groups:
+  - name: real_time_collaboration_alerts
+    interval: 30s
+    rules:
+      # WebSocket Connection Health
+      - alert: HighWebSocketConnectionFailures
+        expr: rate(websocket_connection_failures_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          component: websocket
+        annotations:
+          summary: "High WebSocket connection failure rate"
+          description: "WebSocket connection failure rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      - alert: TooManyActiveConnections
+        expr: websocket_active_connections > 10000
+        for: 5m
+        labels:
+          severity: warning
+          component: websocket
+        annotations:
+          summary: "Too many active WebSocket connections"
+          description: "Active WebSocket connections: {{ $value }}"
+
+      # Message Delivery and Latency
+      - alert: HighMessageLatency
+        expr: histogram_quantile(0.95, rate(message_delivery_latency_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: messaging
+        annotations:
+          summary: "High message delivery latency"
+          description: "95th percentile message latency is {{ $value }}s"
+
+      - alert: MessageDeliveryFailures
+        expr: rate(message_delivery_failures_total[5m]) > 0.01
+        for: 3m
+        labels:
+          severity: critical
+          component: messaging
+        annotations:
+          summary: "Message delivery failures detected"
+          description: "Message failure rate: {{ $value | humanizePercentage }}"
+
+      # CRDT Synchronization
+      - alert: HighCRDTConflictRate
+        expr: rate(crdt_conflicts_total[10m]) > 10
+        for: 5m
+        labels:
+          severity: info
+          component: crdt
+        annotations:
+          summary: "High CRDT conflict rate"
+          description: "CRDT conflict rate: {{ $value }} conflicts/sec"
+
+      - alert: CRDTSyncLag
+        expr: crdt_sync_lag_seconds > 5
+        for: 3m
+        labels:
+          severity: warning
+          component: crdt
+        annotations:
+          summary: "CRDT synchronization lag detected"
+          description: "CRDT sync lag on {{ $labels.instance }}: {{ $value }}s"
+
+      # Operational Transform
+      - alert: OperationalTransformFailures
+        expr: rate(ot_transform_failures_total[5m]) > 0.001
+        for: 3m
+        labels:
+          severity: critical
+          component: ot
+        annotations:
+          summary: "Operational transform failures"
+          description: "OT failure rate: {{ $value | humanizePercentage }}"
+
+      # Document Session Management
+      - alert: HighDocumentSessionCount
+        expr: active_document_sessions > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: sessions
+        annotations:
+          summary: "High number of active document sessions"
+          description: "Active document sessions: {{ $value }}"
+
+      - alert: SessionCleanupBacklog
+        expr: session_cleanup_backlog > 500
+        for: 10m
+        labels:
+          severity: warning
+          component: sessions
+        annotations:
+          summary: "Session cleanup backlog growing"
+          description: "Session cleanup backlog: {{ $value }} sessions"
+
+      # Database Performance
+      - alert: HighDatabaseQueryLatency
+        expr: histogram_quantile(0.95, rate(postgres_query_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High database query latency"
+          description: "95th percentile query latency: {{ $value }}s"
+
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: postgres_connection_pool_usage > 0.9
+        for: 3m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Connection pool usage: {{ $value | humanizePercentage }}"
+
+      # Redis Cache
+      - alert: HighCacheMissRate
+        expr: rate(redis_cache_misses_total[5m]) / rate(redis_cache_requests_total[5m]) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "High cache miss rate"
+          description: "Cache miss rate: {{ $value | humanizePercentage }}"
+
+      - alert: RedisMemoryUsageHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis memory usage: {{ $value | humanizePercentage }}"
+
+      # User Experience Metrics
+      - alert: HighUserDisconnectionRate
+        expr: rate(user_disconnections_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: user-experience
+        annotations:
+          summary: "High user disconnection rate"
+          description: "User disconnection rate: {{ $value }}/sec"
+
+      - alert: SlowCollaborativeEditing
+        expr: histogram_quantile(0.95, rate(collaborative_edit_latency_seconds_bucket[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          component: user-experience
+        annotations:
+          summary: "Slow collaborative editing experience"
+          description: "95th percentile edit latency: {{ $value }}s"
+
+      # System Resources
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage: {{ $value | humanizePercentage }}"
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / node_memory_MemTotal_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage: {{ $value | humanizePercentage }}"
