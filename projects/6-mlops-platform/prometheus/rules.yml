@@ -1,13 +1,11 @@
 # Alert Rules for MLOps Platform
-# Monitors model performance, training health, and inference metrics
 
 groups:
-  - name: model_serving_alerts
+  - name: mlops_alerts
     interval: 30s
     rules:
-      # Inference Performance
-      - alert: HighInferenceLatency
-        expr: histogram_quantile(0.95, rate(model_inference_duration_seconds_bucket[5m])) > 1
+      - alert: ModelInferenceLatencyHigh
+        expr: model_inference_latency_seconds{quantile="0.95"} > 1
         for: 10m
         labels:
           severity: warning
@@ -16,168 +14,52 @@ groups:
           summary: "High inference latency for model {{ $labels.model_name }}"
           description: "P95 latency is {{ $value }}s"
 
-      - alert: LowModelThroughput
-        expr: rate(model_inference_requests_total[5m]) < 10
-        for: 15m
-        labels:
-          severity: info
-          component: inference
-        annotations:
-          summary: "Low inference throughput"
-          description: "Only {{ $value }} requests/sec for model {{ $labels.model_name }}"
-
-      - alert: ModelInferenceErrors
-        expr: rate(model_inference_errors_total[5m]) > 0.01
-        for: 5m
-        labels:
-          severity: warning
-          component: inference
-        annotations:
-          summary: "High model inference error rate"
-          description: "{{ $value }} errors/sec for model {{ $labels.model_name }}"
-
-      # Model Accuracy and Drift
-      - alert: ModelAccuracyDegraded
-        expr: model_accuracy_score < 0.85
+      - alert: ModelAccuracyDrift
+        expr: (model_current_accuracy - model_baseline_accuracy) < -0.05
         for: 30m
         labels:
           severity: warning
-          component: model-quality
+          component: monitoring
         annotations:
-          summary: "Model accuracy below threshold"
-          description: "Model {{ $labels.model_name }} accuracy: {{ $value }}"
+          summary: "Model accuracy drift detected for {{ $labels.model_name }}"
+          description: "Accuracy dropped by {{ $value }}"
 
-      - alert: DataDriftDetected
-        expr: data_drift_score > 0.3
-        for: 1h
-        labels:
-          severity: warning
-          component: data-drift
-        annotations:
-          summary: "Data drift detected"
-          description: "Drift score: {{ $value }} for feature set {{ $labels.feature_set }}"
-
-      - alert: ConceptDriftDetected
-        expr: concept_drift_score > 0.25
-        for: 2h
-        labels:
-          severity: warning
-          component: model-drift
-        annotations:
-          summary: "Concept drift detected in model {{ $labels.model_name }}"
-          description: "Model may need retraining, drift score: {{ $value }}"
-
-      # Training Jobs
       - alert: TrainingJobFailed
-        expr: training_job_status{status="failed"} == 1
+        expr: ml_training_job_status{status="failed"} == 1
         for: 1m
         labels:
-          severity: critical
+          severity: warning
           component: training
         annotations:
           summary: "Training job {{ $labels.job_name }} failed"
-          description: "Check training logs for errors"
+          description: "Check training logs"
 
-      - alert: TrainingJobStalled
-        expr: time() - training_job_last_update_timestamp > 3600 and training_job_status{status="running"} == 1
-        for: 5m
-        labels:
-          severity: warning
-          component: training
-        annotations:
-          summary: "Training job {{ $labels.job_name }} appears stalled"
-          description: "No updates for more than 1 hour"
-
-      - alert: LowTrainingMetric
-        expr: training_loss > 1.0
-        for: 30m
-        labels:
-          severity: info
-          component: training
-        annotations:
-          summary: "Training loss not converging"
-          description: "Loss: {{ $value }} for job {{ $labels.job_name }}"
-
-      # GPU Utilization
-      - alert: LowGPUUtilization
-        expr: avg(DCGM_FI_DEV_GPU_UTIL) < 30 and training_job_status{status="running"} == 1
+      - alert: GPUUtilizationLow
+        expr: DCGM_FI_DEV_GPU_UTIL < 30
         for: 30m
         labels:
           severity: info
           component: gpu
         annotations:
-          summary: "Low GPU utilization during training"
-          description: "GPU utilization: {{ $value }}% - possible bottleneck"
+          summary: "Low GPU utilization on {{ $labels.gpu }}"
+          description: "GPU utilization is {{ $value }}%"
 
-      - alert: GPUMemoryHigh
-        expr: DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_FREE > 0.9
-        for: 10m
-        labels:
-          severity: warning
-          component: gpu
-        annotations:
-          summary: "High GPU memory usage"
-          description: "GPU {{ $labels.gpu }} memory at {{ $value | humanizePercentage }}"
-
-      - alert: GPUTemperatureHigh
-        expr: DCGM_FI_DEV_GPU_TEMP > 85
+      - alert: ModelPredictionErrors
+        expr: rate(model_prediction_errors_total[5m]) > 0.01
         for: 5m
         labels:
-          severity: warning
-          component: gpu
+          severity: critical
+          component: inference
         annotations:
-          summary: "GPU temperature high"
-          description: "GPU {{ $labels.gpu }} temperature: {{ $value }}°C"
+          summary: "High prediction error rate for {{ $labels.model_name }}"
+          description: "Error rate: {{ $value }}"
 
-      # Feature Store
-      - alert: FeatureStoreLatency
-        expr: histogram_quantile(0.95, rate(feature_store_retrieval_duration_seconds_bucket[5m])) > 0.5
+      - alert: FeatureStoreLatencyHigh
+        expr: feature_store_latency_seconds{quantile="0.95"} > 0.5
         for: 10m
         labels:
           severity: warning
           component: feature-store
         annotations:
           summary: "High feature store latency"
-          description: "P95 retrieval latency: {{ $value }}s"
-
-      - alert: MissingFeatures
-        expr: feature_store_missing_features_total > 0
-        for: 5m
-        labels:
-          severity: warning
-          component: feature-store
-        annotations:
-          summary: "Missing features detected"
-          description: "{{ $value }} missing feature requests"
-
-      # Model Registry
-      - alert: ModelVersionMismatch
-        expr: model_registry_version != model_deployed_version
-        for: 15m
-        labels:
-          severity: info
-          component: model-registry
-        annotations:
-          summary: "Model version mismatch"
-          description: "Registry version {{ $labels.registry_version }} != deployed {{ $labels.deployed_version }}"
-
-      # Data Quality
-      - alert: DataValidationFailed
-        expr: data_validation_failures_total > 0
-        for: 5m
-        labels:
-          severity: warning
-          component: data-quality
-        annotations:
-          summary: "Data validation failures"
-          description: "{{ $value }} validation failures on dataset {{ $labels.dataset }}"
-
-      - alert: OutlierDetected
-        expr: rate(data_outliers_detected_total[5m]) > 0.05
-        for: 10m
-        labels:
-          severity: info
-          component: data-quality
-        annotations:
-          summary: "High rate of data outliers"
-          description: "{{ $value | humanizePercentage }} of data points are outliers"
+          description: "P95 latency is {{ $value }}s"

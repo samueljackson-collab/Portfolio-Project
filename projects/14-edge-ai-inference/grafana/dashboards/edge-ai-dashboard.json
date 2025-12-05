@@ -3,42 +3,117 @@
     "title": "Edge AI Inference Dashboard",
     "tags": ["edge", "ai", "inference"],
     "timezone": "browser",
-    "schemaVersion": 16,
+    "schemaVersion": 38,
     "version": 1,
     "refresh": "30s",
     "panels": [
       {
         "id": 1,
-        "title": "Online Edge Devices",
+        "title": "Active Edge Nodes",
         "type": "stat",
-        "targets": [{"expr": "count(edge_device_online == 1)", "legendFormat": "Online"}],
-        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "count(up{job=\"edge-nodes\"} == 1)",
+            "refId": "A"
+          }
+        ]
       },
       {
         "id": 2,
-        "title": "Total Inferences/sec",
-        "type": "stat",
-        "targets": [{"expr": "sum(rate(edge_inference_total[1m]))", "legendFormat": "RPS"}],
-        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}
+        "title": "Inference Throughput",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "rate(edge_inference_requests_total[1m])",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ]
       },
       {
         "id": 3,
-        "title": "Inference Latency by Device",
-        "type": "graph",
-        "targets": [{"expr": "histogram_quantile(0.95, rate(edge_inference_duration_seconds_bucket[5m]))", "legendFormat": "{{ device_id }}"}],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-        "yaxes": [{"format": "s", "label": "Latency"}, {"format": "short"}]
+        "title": "Inference Latency (P95)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "edge_inference_latency_ms{quantile=\"0.95\"}",
+            "legendFormat": "{{model_name}} - {{instance}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms"
+          }
+        }
       },
       {
         "id": 4,
-        "title": "Edge Device Resource Usage",
-        "type": "graph",
+        "title": "Model Performance by Edge Node",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
         "targets": [
-          {"expr": "edge_device_cpu_usage_percent", "legendFormat": "{{ device_id }} - CPU"},
-          {"expr": "(1 - edge_device_memory_available_bytes / edge_device_memory_total_bytes) * 100", "legendFormat": "{{ device_id }} - Memory"}
+          {
+            "expr": "edge_model_accuracy",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Edge Device Resource Usage",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "edge_cpu_usage_percent",
+            "legendFormat": "CPU - {{device_id}}",
+            "refId": "A"
+          },
+          {
+            "expr": "(edge_memory_used_bytes / edge_memory_total_bytes) * 100",
+            "legendFormat": "Memory - {{device_id}}",
+            "refId": "B"
+          }
         ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-        "yaxes": [{"format": "percent", "max": 100, "min": 0}, {"format": "short"}]
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Inference Error Rate",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "rate(edge_inference_errors_total[5m]) / rate(edge_inference_requests_total[5m]) * 100",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 10,
+            "thresholds": {
+              "steps": [
+                {"value": null, "color": "green"},
+                {"value": 2, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
       }
     ]
   }

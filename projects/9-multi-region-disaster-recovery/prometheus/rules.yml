@@ -1,95 +1,95 @@
-# Alert Rules for Multi-Region Disaster Recovery
+# Alert Rules for Multi-region Disaster Recovery
 
 groups:
-  - name: dr_health_alerts
+  - name: disaster_recovery_alerts
     interval: 30s
     rules:
-      - alert: HighReplicationLag
-        expr: replication_lag_seconds > 60
+      - alert: PrimaryRegionDown
+        expr: up{job="primary-region"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: region
+        annotations:
+          summary: "Primary region is down"
+          description: "Initiate failover to secondary region"
+
+      - alert: ReplicationLagHigh
+        expr: rds_replication_lag_seconds > 300
         for: 5m
         labels:
-          severity: warning
-          component: replication
-        annotations:
-          summary: "High replication lag from {{ $labels.source_region }} to {{ $labels.target_region }}"
-          description: "Lag: {{ $value }}s (RPO at risk)"
-
-      - alert: CriticalReplicationLag
-        expr: replication_lag_seconds > 300
-        for: 2m
-        labels:
           severity: critical
-          component: replication
+          component: database
         annotations:
-          summary: "Critical replication lag"
-          description: "Lag: {{ $value }}s - RPO significantly exceeded"
+          summary: "High replication lag between regions"
+          description: "Replication lag is {{ $value }}s, RPO at risk"
 
-      - alert: ReplicationBroken
-        expr: replication_status == 0
-        for: 1m
-        labels:
-          severity: critical
-          component: replication
-        annotations:
-          summary: "Replication from {{ $labels.source_region }} to {{ $labels.target_region }} broken"
-          description: "Data replication has stopped"
-
-      - alert: RegionalEndpointDown
-        expr: route53_health_check_status == 0
-        for: 2m
-        labels:
-          severity: critical
-          component: regional-health
-        annotations:
-          summary: "Regional endpoint {{ $labels.endpoint }} in {{ $labels.region }} is down"
-          description: "Automatic failover may be triggered"
-
-      - alert: CrossRegionNetworkLatencyHigh
-        expr: network_latency_milliseconds > 200
+      - alert: S3CrossRegionReplicationFailed
+        expr: s3_replication_failed_objects > 0
         for: 10m
         labels:
           severity: warning
-          component: network
+          component: storage
         annotations:
-          summary: "High cross-region latency"
-          description: "Latency {{ $labels.source_region }} -> {{ $labels.target_region }}: {{ $value }}ms"
+          summary: "S3 cross-region replication failures"
+          description: "{{ $value }} objects failed to replicate"
 
-      - alert: FailoverReadinessCheckFailed
-        expr: failover_readiness_score < 0.95
-        for: 5m
+      - alert: Route53HealthCheckFailed
+        expr: route53_health_check_status == 0
+        for: 3m
         labels:
-          severity: warning
-          component: failover
+          severity: critical
+          component: dns
         annotations:
-          summary: "Failover readiness degraded for {{ $labels.region }}"
-          description: "Readiness score: {{ $value | humanizePercentage }}"
+          summary: "Route53 health check failed for {{ $labels.endpoint }}"
+          description: "DNS failover may be triggered"
 
       - alert: BackupVerificationFailed
-        expr: backup_verification_failures_total > 0
-        for: 5m
+        expr: backup_verification_status{status="failed"} == 1
+        for: 1m
         labels:
           severity: critical
           component: backup
         annotations:
-          summary: "Backup verification failed"
-          description: "{{ $value }} backup verification failures in {{ $labels.region }}"
+          summary: "Backup verification failed for {{ $labels.backup_id }}"
+          description: "Backup integrity check failed"
 
-      - alert: RTOObjectiveAtRisk
-        expr: estimated_rto_seconds > sla_rto_seconds
-        for: 10m
-        labels:
-          severity: warning
-          component: sla
-        annotations:
-          summary: "RTO objective at risk"
-          description: "Estimated RTO: {{ $value }}s exceeds SLA"
-
-      - alert: DataSyncOutOfDate
-        expr: (time() - last_successful_sync_timestamp) > 3600
+      - alert: RPOExceeded
+        expr: dr_recovery_point_objective_seconds > 3600
         for: 5m
         labels:
-          severity: warning
-          component: sync
+          severity: critical
+          component: dr
         annotations:
-          summary: "Data sync overdue in {{ $labels.region }}"
-          description: "Last sync: {{ $value }}s ago"
+          summary: "Recovery Point Objective exceeded"
+          description: "Current RPO: {{ $value }}s, Target: 3600s"
+
+      - alert: RTOExceeded
+        expr: dr_recovery_time_objective_seconds > 1800
+        for: 1m
+        labels:
+          severity: critical
+          component: dr
+        annotations:
+          summary: "Recovery Time Objective exceeded during failover"
+          description: "Current RTO: {{ $value }}s, Target: 1800s"
+
+      - alert: FailoverTestOverdue
+        expr: time() - dr_last_failover_test_timestamp > 2592000
+        for: 1h
+        labels:
+          severity: warning
+          component: dr
+        annotations:
+          summary: "Failover test overdue"
+          description: "Last test was {{ $value | humanizeDuration }} ago"
+
+      - alert: DataSyncInconsistency
+        expr: dr_data_consistency_check_failures > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: dr
+        annotations:
+          summary: "Data inconsistency detected between regions"
+          description: "{{ $value }} consistency check failures"

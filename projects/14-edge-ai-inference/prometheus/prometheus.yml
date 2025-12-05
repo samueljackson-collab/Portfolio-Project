@@ -1,11 +1,11 @@
 # Prometheus Configuration for Edge AI Inference
-# Monitors edge devices, model inference, network connectivity, and resource usage
+# Monitors edge devices, ML inference, model performance
 
 global:
-  scrape_interval: 30s
-  evaluation_interval: 30s
+  scrape_interval: 15s
+  evaluation_interval: 15s
   external_labels:
-    project: 'edge-ai-inference'
+    cluster: 'edge-ai'
     environment: 'production'
 
 alerting:
@@ -17,18 +17,39 @@ rule_files:
   - 'rules.yml'
 
 scrape_configs:
-  - job_name: 'edge-devices'
+  - job_name: 'prometheus'
     static_configs:
-      - targets: ['edge-device-exporter:9250']
+      - targets: ['localhost:9090']
 
-  - job_name: 'edge-inference'
+  # Edge inference nodes
+  - job_name: 'edge-nodes'
     static_configs:
-      - targets: ['edge-inference-service:8095']
+      - targets: 
+        - 'edge-node-1:9090'
+        - 'edge-node-2:9090'
+        - 'edge-node-3:9090'
 
+  # TensorFlow Lite inference service
+  - job_name: 'tflite-inference'
+    static_configs:
+      - targets: ['tflite:8080']
+
+  # ONNX Runtime
+  - job_name: 'onnx-runtime'
+    static_configs:
+      - targets: ['onnx:8001']
+
+  # Model sync service
   - job_name: 'model-sync'
     static_configs:
-      - targets: ['model-sync-service:8096']
+      - targets: ['model-sync:9091']
 
+  # Edge gateway
   - job_name: 'edge-gateway'
     static_configs:
-      - targets: ['edge-gateway:8097']
+      - targets: ['gateway:8082']
+
+  # NVIDIA Jetson metrics
+  - job_name: 'jetson'
+    static_configs:
+      - targets: ['jetson-exporter:9400']

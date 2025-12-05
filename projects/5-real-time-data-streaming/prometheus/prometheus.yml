@@ -1,11 +1,11 @@
-# Prometheus Configuration for Real-Time Data Streaming
-# Monitors Kafka, stream processing, data flow, and consumer lag
+# Prometheus Configuration for Real-time Data Streaming
+# Monitors Kafka, Flink, stream processing jobs
 
 global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+  scrape_interval: 10s
+  evaluation_interval: 10s
   external_labels:
-    project: 'real-time-data-streaming'
+    cluster: 'streaming'
     environment: 'production'
 
 alerting:
@@ -17,27 +17,22 @@ rule_files:
   - 'rules.yml'
 
 scrape_configs:
-  # Kafka brokers
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Kafka metrics
   - job_name: 'kafka'
     static_configs:
-      - targets:
-          - 'kafka-broker-1:9308'
-          - 'kafka-broker-2:9308'
-          - 'kafka-broker-3:9308'
+      - targets: ['kafka-exporter:9308']
 
-  # Kafka consumer lag exporter
+  # Kafka lag exporter
   - job_name: 'kafka-lag'
     static_configs:
       - targets: ['kafka-lag-exporter:9999']
-    scrape_interval: 30s
 
-  # Kafka Connect
-  - job_name: 'kafka-connect'
-    static_configs:
-      - targets: ['kafka-connect:8083']
-
-  # Stream processing (Flink/Kafka Streams)
-  - job_name: 'stream-processor'
+  # Apache Flink
+  - job_name: 'flink'
     static_configs:
       - targets: ['flink-jobmanager:9249', 'flink-taskmanager:9249']
 
@@ -45,13 +40,9 @@ scrape_configs:
   - job_name: 'schema-registry'
     static_configs:
       - targets: ['schema-registry:8081']
+    metrics_path: '/metrics'
 
-  # Data quality metrics
-  - job_name: 'data-quality'
+  # Stream processors
+  - job_name: 'stream-processors'
     static_configs:
-      - targets: ['data-quality-service:8090']
-
-  # ZooKeeper (if used)
-  - job_name: 'zookeeper'
-    static_configs:
-      - targets: ['zookeeper:7000']
+      - targets: ['processor:8080']

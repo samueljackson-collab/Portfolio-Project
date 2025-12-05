@@ -1,75 +1,75 @@
 # Alert Rules for Advanced AI Chatbot
 
 groups:
-  - name: chatbot_performance
+  - name: chatbot_alerts
     interval: 30s
     rules:
-      - alert: HighResponseLatency
-        expr: histogram_quantile(0.95, rate(chatbot_response_duration_seconds_bucket[5m])) > 2
+      - alert: HighChatbotResponseTime
+        expr: chatbot_response_time_seconds{quantile="0.95"} > 3
         for: 10m
         labels:
           severity: warning
           component: api
         annotations:
-          summary: "High chatbot response latency"
-          description: "P95 latency: {{ $value }}s"
+          summary: "High chatbot response time"
+          description: "P95 response time is {{ $value }}s"
 
-      - alert: LowModelConfidence
-        expr: avg(chatbot_model_confidence_score) < 0.7
+      - alert: LowIntentConfidence
+        expr: avg_over_time(chatbot_intent_confidence[5m]) < 0.6
         for: 15m
         labels:
           severity: warning
           component: nlp
         annotations:
-          summary: "Low model confidence scores"
-          description: "Average confidence: {{ $value }}"
+          summary: "Low average intent confidence"
+          description: "Average confidence is {{ $value }}"
 
-      - alert: HighErrorRate
-        expr: rate(chatbot_errors_total[5m]) / rate(chatbot_requests_total[5m]) > 0.05
+      - alert: HighConversationDropRate
+        expr: rate(chatbot_conversations_dropped_total[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          component: conversation
+        annotations:
+          summary: "High conversation drop rate"
+          description: "Drop rate: {{ $value }}/s"
+
+      - alert: NLPModelInferenceError
+        expr: rate(nlp_inference_errors_total[5m]) > 0.01
         for: 5m
         labels:
           severity: critical
-          component: api
+          component: nlp
         annotations:
-          summary: "High chatbot error rate"
-          description: "Error rate: {{ $value | humanizePercentage }}"
+          summary: "NLP model inference errors detected"
+          description: "Error rate: {{ $value }}/s"
 
-      - alert: IntentClassificationFailed
-        expr: rate(intent_classification_unknown_total[10m]) / rate(intent_classification_total[10m]) > 0.3
+      - alert: ActiveWebSocketConnectionsHigh
+        expr: websocket_active_connections > 10000
+        for: 10m
+        labels:
+          severity: warning
+          component: websocket
+        annotations:
+          summary: "High number of active WebSocket connections"
+          description: "Current connections: {{ $value }}"
+
+      - alert: ChatbotFallbackRateHigh
+        expr: rate(chatbot_fallback_responses_total[5m]) / rate(chatbot_messages_total[5m]) > 0.3
         for: 15m
         labels:
           severity: warning
-          component: intent
+          component: conversation
         annotations:
-          summary: "High rate of unknown intents"
-          description: "{{ $value | humanizePercentage }} of intents unclassified"
+          summary: "High fallback response rate"
+          description: "{{ $value | humanizePercentage }} of responses are fallbacks"
 
-      - alert: ConversationDropoffHigh
-        expr: rate(conversations_abandoned_total[10m]) / rate(conversations_started_total[10m]) > 0.4
+      - alert: UserSentimentNegative
+        expr: avg_over_time(chatbot_user_sentiment_score[10m]) < -0.3
         for: 20m
         labels:
           severity: info
-          component: engagement
+          component: analytics
         annotations:
-          summary: "High conversation abandonment rate"
-          description: "{{ $value | humanizePercentage }} of conversations abandoned"
-
-      - alert: CacheHitRateLow
-        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) < 0.8
-        for: 15m
-        labels:
-          severity: warning
-          component: cache
-        annotations:
-          summary: "Low Redis cache hit rate"
-          description: "Hit rate: {{ $value | humanizePercentage }}"
-
-      - alert: DatabaseConnectionPoolExhausted
-        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.9
-        for: 5m
-        labels:
-          severity: critical
-          component: database
-        annotations:
-          summary: "Database connection pool near exhaustion"
-          description: "{{ $value | humanizePercentage }} of connections in use"
+          summary: "Negative user sentiment detected"
+          description: "Average sentiment score: {{ $value }}"

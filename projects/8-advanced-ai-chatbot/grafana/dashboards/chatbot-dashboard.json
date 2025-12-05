@@ -1,61 +1,122 @@
 {
   "dashboard": {
     "title": "AI Chatbot Dashboard",
-    "tags": ["chatbot", "nlp", "ai"],
+    "tags": ["ai", "chatbot", "nlp"],
     "timezone": "browser",
-    "schemaVersion": 16,
+    "schemaVersion": 38,
     "version": 1,
     "refresh": "30s",
     "panels": [
       {
         "id": 1,
-        "title": "Active Conversations",
-        "type": "stat",
-        "targets": [{"expr": "chatbot_active_conversations", "legendFormat": "Active"}],
-        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}
+        "title": "Message Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(chatbot_messages_total[5m])",
+            "legendFormat": "Messages/sec",
+            "refId": "A"
+          }
+        ]
       },
       {
         "id": 2,
-        "title": "Requests/sec",
-        "type": "stat",
-        "targets": [{"expr": "rate(chatbot_requests_total[1m])", "legendFormat": "RPS"}],
-        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}
+        "title": "Response Time Distribution",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "chatbot_response_time_seconds{quantile=\"0.50\"}",
+            "legendFormat": "P50",
+            "refId": "A"
+          },
+          {
+            "expr": "chatbot_response_time_seconds{quantile=\"0.95\"}",
+            "legendFormat": "P95",
+            "refId": "B"
+          },
+          {
+            "expr": "chatbot_response_time_seconds{quantile=\"0.99\"}",
+            "legendFormat": "P99",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
       },
       {
         "id": 3,
-        "title": "Model Confidence",
+        "title": "Intent Classification Accuracy",
         "type": "gauge",
-        "targets": [{"expr": "avg(chatbot_model_confidence_score)", "legendFormat": "Confidence"}],
-        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
-        "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1}}
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "avg(chatbot_intent_confidence)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "steps": [
+                {"value": null, "color": "red"},
+                {"value": 0.6, "color": "yellow"},
+                {"value": 0.8, "color": "green"}
+              ]
+            }
+          }
+        }
       },
       {
         "id": 4,
-        "title": "Response Latency",
-        "type": "graph",
-        "targets": [{"expr": "histogram_quantile(0.95, rate(chatbot_response_duration_seconds_bucket[5m]))", "legendFormat": "P95"}],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-        "yaxes": [{"format": "s", "label": "Latency"}, {"format": "short"}]
+        "title": "Active Conversations",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 8},
+        "targets": [
+          {
+            "expr": "chatbot_active_conversations",
+            "refId": "A"
+          }
+        ]
       },
       {
         "id": 5,
-        "title": "Intent Distribution",
-        "type": "graph",
-        "targets": [{"expr": "rate(intent_classification_total[5m])", "legendFormat": "{{ intent }}"}],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-        "yaxes": [{"format": "short", "label": "Rate"}, {"format": "short"}]
+        "title": "User Sentiment Over Time",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "avg_over_time(chatbot_user_sentiment_score[5m])",
+            "legendFormat": "Average Sentiment",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": -1,
+            "max": 1
+          }
+        }
       },
       {
         "id": 6,
-        "title": "Conversation Metrics",
-        "type": "graph",
+        "title": "Top Intents",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
         "targets": [
-          {"expr": "rate(conversations_started_total[5m])", "legendFormat": "Started"},
-          {"expr": "rate(conversations_completed_total[5m])", "legendFormat": "Completed"},
-          {"expr": "rate(conversations_abandoned_total[5m])", "legendFormat": "Abandoned"}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
-        "yaxes": [{"format": "short", "label": "Conversations/sec"}, {"format": "short"}]
+          {
+            "expr": "topk(10, sum by (intent) (rate(chatbot_intent_detected_total[1h])))",
+            "legendFormat": "{{intent}}",
+            "refId": "A"
+          }
+        ]
       }
     ]
   }

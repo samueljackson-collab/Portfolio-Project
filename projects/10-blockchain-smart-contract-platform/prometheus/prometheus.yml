@@ -1,11 +1,11 @@
 # Prometheus Configuration for Blockchain Smart Contract Platform
-# Monitors blockchain nodes, smart contracts, transactions, and consensus
+# Monitors blockchain nodes, smart contract execution, gas usage
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    project: 'blockchain-smart-contract'
+    cluster: 'blockchain'
     environment: 'production'
 
 alerting:
@@ -17,42 +17,33 @@ rule_files:
   - 'rules.yml'
 
 scrape_configs:
-  # Ethereum/EVM node metrics
-  - job_name: 'blockchain-nodes'
+  - job_name: 'prometheus'
     static_configs:
-      - targets:
-          - 'geth-node-1:6060'
-          - 'geth-node-2:6060'
-          - 'geth-node-3:6060'
+      - targets: ['localhost:9090']
 
-  # Smart contract execution metrics
-  - job_name: 'smart-contracts'
+  # Ethereum node metrics
+  - job_name: 'geth'
     static_configs:
-      - targets: ['contract-monitor:9200']
+      - targets: ['geth:6060']
+    metrics_path: '/debug/metrics/prometheus'
 
-  # Transaction pool
-  - job_name: 'txpool'
+  # Smart contract monitoring
+  - job_name: 'contract-monitor'
     static_configs:
-      - targets: ['txpool-exporter:9201']
-    scrape_interval: 10s
+      - targets: ['contract-monitor:8080']
 
-  # Gas price oracle
-  - job_name: 'gas-oracle'
+  # IPFS node metrics
+  - job_name: 'ipfs'
     static_configs:
-      - targets: ['gas-oracle:9202']
-    scrape_interval: 30s
+      - targets: ['ipfs:5001']
+    metrics_path: '/debug/metrics/prometheus'
 
-  # Block explorer API
-  - job_name: 'block-explorer'
+  # Web3 gateway
+  - job_name: 'web3-gateway'
     static_configs:
-      - targets: ['explorer-api:3000']
+      - targets: ['web3-gateway:8545']
 
-  # Consensus metrics
-  - job_name: 'consensus'
+  # Blockchain indexer
+  - job_name: 'blockchain-indexer'
     static_configs:
-      - targets: ['consensus-monitor:9203']
-
-  # Validator nodes
-  - job_name: 'validators'
-    static_configs:
-      - targets: ['validator-exporter:9204']
+      - targets: ['indexer:9091']

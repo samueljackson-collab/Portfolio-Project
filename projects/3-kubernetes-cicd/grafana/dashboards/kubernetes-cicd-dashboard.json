@@ -1,9 +1,9 @@
 {
   "dashboard": {
     "title": "Kubernetes CI/CD Dashboard",
-    "tags": ["kubernetes", "cicd", "deployment"],
+    "tags": ["kubernetes", "cicd", "argocd", "jenkins"],
     "timezone": "browser",
-    "schemaVersion": 16,
+    "schemaVersion": 38,
     "version": 1,
     "refresh": "30s",
     "panels": [
@@ -11,171 +11,66 @@
         "id": 1,
         "title": "Cluster Status",
         "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
         "targets": [
           {
-            "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"} == 1)",
-            "legendFormat": "Ready Nodes"
+            "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
+            "legendFormat": "Ready Nodes",
+            "refId": "A"
           }
-        ],
-        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
-        "fieldConfig": {
-          "defaults": {
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 1, "color": "green"}
-              ]
-            }
-          }
-        }
+        ]
       },
       {
         "id": 2,
         "title": "Pod Status",
-        "type": "stat",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 4},
         "targets": [
           {
-            "expr": "count(kube_pod_status_phase{phase=\"Running\"} == 1)",
-            "legendFormat": "Running Pods"
+            "expr": "count by (phase) (kube_pod_status_phase)",
+            "legendFormat": "{{phase}}",
+            "refId": "A"
           }
-        ],
-        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
-        "fieldConfig": {
-          "defaults": {
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 1, "color": "green"}
-              ]
-            }
-          }
-        }
+        ]
       },
       {
         "id": 3,
-        "title": "Pipeline Success Rate",
-        "type": "stat",
+        "title": "CI/CD Pipeline Success Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 8, "y": 4},
         "targets": [
           {
-            "expr": "rate(cicd_pipeline_success_total[1h]) / rate(cicd_pipeline_total[1h]) * 100",
-            "legendFormat": "Success Rate"
+            "expr": "rate(jenkins_job_success_total[5m]) / rate(jenkins_job_total[5m]) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "A"
           }
-        ],
-        "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
-        "fieldConfig": {
-          "defaults": {
-            "unit": "percent",
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 80, "color": "yellow"},
-                {"value": 95, "color": "green"}
-              ]
-            }
-          }
-        }
+        ]
       },
       {
         "id": 4,
-        "title": "CPU Usage by Node",
-        "type": "graph",
+        "title": "Pod CPU Usage",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
         "targets": [
           {
-            "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) by (node)) * 100",
-            "legendFormat": "{{ node }}"
+            "expr": "sum(rate(container_cpu_usage_seconds_total[5m])) by (pod)",
+            "legendFormat": "{{pod}}",
+            "refId": "A"
           }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-        "yaxes": [
-          {"format": "percent", "label": "CPU %", "max": 100, "min": 0},
-          {"format": "short"}
         ]
       },
       {
         "id": 5,
-        "title": "Memory Usage by Node",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-            "legendFormat": "{{ node }}"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-        "yaxes": [
-          {"format": "percent", "label": "Memory %", "max": 100, "min": 0},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 6,
-        "title": "Pod Restarts",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(kube_pod_container_status_restarts_total[5m])",
-            "legendFormat": "{{ namespace }}/{{ pod }}"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
-        "yaxes": [
-          {"format": "short", "label": "Restarts/sec"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 7,
-        "title": "Network I/O",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(container_network_receive_bytes_total[5m])",
-            "legendFormat": "{{ pod }} - RX"
-          },
-          {
-            "expr": "rate(container_network_transmit_bytes_total[5m])",
-            "legendFormat": "{{ pod }} - TX"
-          }
-        ],
+        "title": "ArgoCD Applications Status",
+        "type": "table",
         "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
-        "yaxes": [
-          {"format": "Bps", "label": "Bytes/sec"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 8,
-        "title": "Deployment Duration",
-        "type": "graph",
         "targets": [
           {
-            "expr": "cicd_deployment_duration_seconds",
-            "legendFormat": "{{ environment }}"
+            "expr": "argocd_app_info",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
           }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
-        "yaxes": [
-          {"format": "s", "label": "Duration"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 9,
-        "title": "Container Resource Usage",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "sum(rate(container_cpu_usage_seconds_total[5m])) by (pod)",
-            "legendFormat": "{{ pod }} - CPU"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
-        "yaxes": [
-          {"format": "short", "label": "CPU Cores"},
-          {"format": "short"}
         ]
       }
     ]

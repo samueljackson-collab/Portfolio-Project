@@ -1,11 +1,11 @@
 # Prometheus Configuration for Serverless Data Processing
-# Monitors Lambda functions, Step Functions, data quality, and processing metrics
+# Monitors Lambda functions, Step Functions, API Gateway
 
 global:
-  scrape_interval: 60s
-  evaluation_interval: 60s
+  scrape_interval: 30s
+  evaluation_interval: 30s
   external_labels:
-    project: 'serverless-data-processing'
+    cluster: 'serverless'
     environment: 'production'
 
 alerting:
@@ -17,45 +17,46 @@ rule_files:
   - 'rules.yml'
 
 scrape_configs:
-  # CloudWatch exporter for Lambda metrics
-  - job_name: 'lambda-functions'
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # AWS Lambda via CloudWatch Exporter
+  - job_name: 'aws-lambda'
     static_configs:
       - targets: ['cloudwatch-exporter:9106']
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: 'aws_lambda.*'
-        action: keep
+    params:
+      module: [lambda]
 
-  # Step Functions metrics
+  # API Gateway metrics
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['cloudwatch-exporter:9106']
+    params:
+      module: [api_gateway]
+
+  # Step Functions
   - job_name: 'step-functions'
     static_configs:
-      - targets: ['step-functions-exporter:9210']
-    scrape_interval: 30s
-
-  # S3 bucket metrics
-  - job_name: 's3-buckets'
-    static_configs:
-      - targets: ['s3-exporter:9211']
-    scrape_interval: 300s
+      - targets: ['cloudwatch-exporter:9106']
+    params:
+      module: [step_functions]
 
   # DynamoDB metrics
   - job_name: 'dynamodb'
     static_configs:
-      - targets: ['dynamodb-exporter:9212']
+      - targets: ['cloudwatch-exporter:9106']
+    params:
+      module: [dynamodb]
 
-  # SQS queue metrics
-  - job_name: 'sqs-queues'
+  # S3 metrics
+  - job_name: 's3'
     static_configs:
-      - targets: ['sqs-exporter:9213']
-    scrape_interval: 30s
+      - targets: ['cloudwatch-exporter:9106']
+    params:
+      module: [s3]
 
-  # Data quality checks
-  - job_name: 'data-quality'
+  # Custom application metrics from Lambda
+  - job_name: 'lambda-app-metrics'
     static_configs:
-      - targets: ['data-quality-lambda:8080']
-    scrape_interval: 300s
-
-  # EventBridge metrics
-  - job_name: 'eventbridge'
-    static_configs:
-      - targets: ['eventbridge-exporter:9214']
+      - targets: ['lambda-extension:9090']

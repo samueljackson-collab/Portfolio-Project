@@ -1,174 +1,87 @@
 {
   "dashboard": {
     "title": "Database Migration Dashboard",
-    "tags": ["database", "migration", "postgresql"],
+    "tags": ["database", "migration", "postgresql", "mysql"],
     "timezone": "browser",
-    "schemaVersion": 16,
+    "schemaVersion": 38,
     "version": 1,
     "refresh": "10s",
     "panels": [
       {
         "id": 1,
         "title": "Migration Progress",
-        "type": "graph",
+        "type": "gauge",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 0},
         "targets": [
           {
-            "expr": "migration_records_migrated_total",
-            "legendFormat": "Records Migrated"
-          },
-          {
-            "expr": "migration_total_records",
-            "legendFormat": "Total Records"
+            "expr": "(migration_records_migrated / migration_total_records) * 100",
+            "refId": "A"
           }
         ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-        "yaxes": [
-          {"format": "short", "label": "Records"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 2,
-        "title": "Migration Rate",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(migration_records_migrated_total[1m])",
-            "legendFormat": "Records/sec"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-        "yaxes": [
-          {"format": "short", "label": "Records/sec"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 3,
-        "title": "Replication Lag",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "pg_replication_lag_seconds",
-            "legendFormat": "{{ database }}"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
-        "yaxes": [
-          {"format": "s", "label": "Lag (seconds)"},
-          {"format": "short"}
-        ],
-        "alert": {
-          "conditions": [
-            {
-              "evaluator": {"params": [30], "type": "gt"},
-              "operator": {"type": "and"},
-              "query": {"params": ["A", "5m", "now"]},
-              "reducer": {"params": [], "type": "avg"},
-              "type": "query"
-            }
-          ],
-          "name": "High Replication Lag"
-        }
-      },
-      {
-        "id": 4,
-        "title": "Database Connections",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "pg_stat_database_numbackends",
-            "legendFormat": "{{ database }} - Active"
-          },
-          {
-            "expr": "pg_settings_max_connections",
-            "legendFormat": "Max Connections"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
-        "yaxes": [
-          {"format": "short", "label": "Connections"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 5,
-        "title": "Query Performance",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(pg_stat_database_tup_fetched[5m])",
-            "legendFormat": "{{ database }} - Rows Fetched"
-          },
-          {
-            "expr": "rate(pg_stat_database_tup_inserted[5m])",
-            "legendFormat": "{{ database }} - Rows Inserted"
-          },
-          {
-            "expr": "rate(pg_stat_database_tup_updated[5m])",
-            "legendFormat": "{{ database }} - Rows Updated"
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-        "yaxes": [
-          {"format": "short", "label": "Rows/sec"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 6,
-        "title": "Data Validation Status",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "data_validation_mismatch_count",
-            "legendFormat": "Mismatches"
-          }
-        ],
-        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 16},
         "fieldConfig": {
           "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
             "thresholds": {
               "mode": "absolute",
               "steps": [
-                {"value": 0, "color": "green"},
-                {"value": 1, "color": "red"}
+                {"value": null, "color": "red"},
+                {"value": 50, "color": "yellow"},
+                {"value": 90, "color": "green"}
               ]
             }
           }
         }
       },
       {
-        "id": 7,
-        "title": "Migration Errors",
-        "type": "graph",
+        "id": 2,
+        "title": "Records Migrated Over Time",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
         "targets": [
           {
-            "expr": "rate(migration_errors_total[5m])",
-            "legendFormat": "Errors/sec"
+            "expr": "rate(migration_records_migrated[5m])",
+            "legendFormat": "Records/sec",
+            "refId": "A"
           }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
-        "yaxes": [
-          {"format": "short", "label": "Errors/sec"},
-          {"format": "short"}
         ]
       },
       {
-        "id": 8,
-        "title": "Database Size",
-        "type": "graph",
+        "id": 3,
+        "title": "Database Connections",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
         "targets": [
           {
-            "expr": "pg_database_size_bytes",
-            "legendFormat": "{{ database }}"
+            "expr": "pg_stat_database_numbackends",
+            "legendFormat": "PostgreSQL - {{datname}}",
+            "refId": "A"
+          },
+          {
+            "expr": "mysql_global_status_threads_connected",
+            "legendFormat": "MySQL",
+            "refId": "B"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Replication Lag",
+        "type": "timeseries",
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "pg_replication_lag_seconds",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
           }
         ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
-        "yaxes": [
-          {"format": "bytes", "label": "Size"},
-          {"format": "short"}
-        ]
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
       }
     ]
   }

@@ -1,20 +1,48 @@
-# Alert Rules for Real-Time Data Streaming
-# Monitors stream health, consumer lag, and data quality
+# Alert Rules for Real-time Data Streaming
 
 groups:
-  - name: kafka_alerts
+  - name: streaming_alerts
     interval: 30s
     rules:
-      # Kafka Broker Health
+      - alert: KafkaConsumerLagHigh
+        expr: kafka_consumergroup_lag > 10000
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+        annotations:
+          summary: "High consumer lag for {{ $labels.consumergroup }}"
+          description: "Consumer lag is {{ $value }} messages"
+
       - alert: KafkaBrokerDown
-        expr: kafka_server_brokerstate < 3
+        expr: kafka_brokers < 3
         for: 2m
         labels:
           severity: critical
           component: kafka
         annotations:
-          summary: "Kafka broker {{ $labels.broker }} is down"
-          description: "Broker state: {{ $value }} (3 = running)"
+          summary: "Kafka broker count is low"
+          description: "Only {{ $value }} brokers available"
+
+      - alert: FlinkJobFailed
+        expr: flink_jobmanager_job_uptime_seconds == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: flink
+        annotations:
+          summary: "Flink job {{ $labels.job_name }} failed"
+          description: "Job is not running"
+
+      - alert: StreamProcessingLatencyHigh
+        expr: stream_processing_latency_seconds > 30
+        for: 10m
+        labels:
+          severity: warning
+          component: processing
+        annotations:
+          summary: "High stream processing latency"
+          description: "Latency is {{ $value }}s"
 
       - alert: KafkaUnderReplicatedPartitions
         expr: kafka_server_replicamanager_underreplicatedpartitions > 0
@@ -23,184 +51,5 @@ groups:
           severity: warning
           component: kafka
         annotations:
-          summary: "Under-replicated partitions detected"
-          description: "{{ $value }} partitions are under-replicated on broker {{ $labels.broker }}"
-
-      - alert: KafkaOfflinePartitions
-        expr: kafka_controller_kafkacontroller_offlinepartitionscount > 0
-        for: 2m
-        labels:
-          severity: critical
-          component: kafka
-        annotations:
-          summary: "Offline partitions detected"
-          description: "{{ $value }} partitions are offline"
-
-      # Consumer Lag
-      - alert: HighConsumerLag
-        expr: kafka_consumer_group_lag > 10000
-        for: 10m
-        labels:
-          severity: warning
-          component: consumer
-        annotations:
-          summary: "High consumer lag for group {{ $labels.consumer_group }}"
-          description: "Lag is {{ $value }} messages on topic {{ $labels.topic }}"
-
-      - alert: CriticalConsumerLag
-        expr: kafka_consumer_group_lag > 100000
-        for: 5m
-        labels:
-          severity: critical
-          component: consumer
-        annotations:
-          summary: "Critical consumer lag"
-          description: "Lag is {{ $value }} messages for {{ $labels.consumer_group }}"
-
-      - alert: ConsumerGroupNotConsuming
-        expr: rate(kafka_consumer_group_lag[5m]) >= 0 and kafka_consumer_group_lag > 1000
-        for: 10m
-        labels:
-          severity: warning
-          component: consumer
-        annotations:
-          summary: "Consumer group {{ $labels.consumer_group }} not making progress"
-          description: "Lag not decreasing on topic {{ $labels.topic }}"
-
-      # Throughput and Performance
-      - alert: LowMessageInRate
-        expr: rate(kafka_server_brokertopicmetrics_messagesinpersec[5m]) < 100
-        for: 15m
-        labels:
-          severity: warning
-          component: throughput
-        annotations:
-          summary: "Low message ingestion rate"
-          description: "Only {{ $value }} messages/sec on {{ $labels.topic }}"
-
-      - alert: HighProducerLatency
-        expr: kafka_producer_request_latency_avg > 1000
-        for: 5m
-        labels:
-          severity: warning
-          component: producer
-        annotations:
-          summary: "High producer latency"
-          description: "Producer latency is {{ $value }}ms for {{ $labels.client_id }}"
-
-      - alert: HighConsumerLatency
-        expr: kafka_consumer_fetch_latency_avg > 1000
-        for: 5m
-        labels:
-          severity: warning
-          component: consumer
-        annotations:
-          summary: "High consumer fetch latency"
-          description: "Consumer latency is {{ $value }}ms"
-
-      # Disk and Storage
-      - alert: KafkaDiskUsageHigh
-        expr: kafka_log_log_size / kafka_disk_total_space > 0.8
-        for: 10m
-        labels:
-          severity: warning
-          component: storage
-        annotations:
-          summary: "High disk usage on broker {{ $labels.broker }}"
-          description: "Disk usage at {{ $value | humanizePercentage }}"
-
-  - name: stream_processing_alerts
-    interval: 30s
-    rules:
-      # Flink/Stream Processing
-      - alert: StreamJobFailed
-        expr: flink_jobmanager_job_uptime_seconds == 0
-        for: 2m
-        labels:
-          severity: critical
-          component: flink
-        annotations:
-          summary: "Stream processing job {{ $labels.job_name }} failed"
-          description: "Job has been down for more than 2 minutes"
-
-      - alert: HighStreamProcessingLatency
-        expr: flink_taskmanager_job_latency_milliseconds > 5000
-        for: 5m
-        labels:
-          severity: warning
-          component: flink
-        annotations:
-          summary: "High stream processing latency"
-          description: "Processing latency is {{ $value }}ms for job {{ $labels.job_name }}"
-
-      - alert: StreamProcessingBackpressure
-        expr: flink_taskmanager_job_backpressure > 0.5
-        for: 10m
-        labels:
-          severity: warning
-          component: flink
-        annotations:
-          summary: "Stream processing experiencing backpressure"
-          description: "Backpressure level: {{ $value | humanizePercentage }}"
-
-      - alert: HighCheckpointFailureRate
-        expr: rate(flink_jobmanager_job_checkpoint_failed[5m]) > 0.1
-        for: 5m
-        labels:
-          severity: warning
-          component: flink
-        annotations:
-          summary: "High checkpoint failure rate"
-          description: "{{ $value }} checkpoints/sec failing for job {{ $labels.job_name }}"
-
-      # Data Quality
-      - alert: DataQualityCheckFailed
-        expr: data_quality_check_failures_total > 0
-        for: 5m
-        labels:
-          severity: warning
-          component: data-quality
-        annotations:
-          summary: "Data quality checks failing"
-          description: "{{ $value }} quality checks failed on stream {{ $labels.stream }}"
-
-      - alert: SchemaValidationErrors
-        expr: rate(schema_validation_errors_total[5m]) > 1
-        for: 5m
-        labels:
-          severity: warning
-          component: schema
-        annotations:
-          summary: "Schema validation errors detected"
-          description: "{{ $value }} validation errors/sec on topic {{ $labels.topic }}"
-
-      - alert: DuplicateMessagesDetected
-        expr: rate(duplicate_messages_total[5m]) > 10
-        for: 5m
-        labels:
-          severity: warning
-          component: data-quality
-        annotations:
-          summary: "High rate of duplicate messages"
-          description: "{{ $value }} duplicates/sec detected"
-
-      # Kafka Connect
-      - alert: KafkaConnectorFailed
-        expr: kafka_connect_connector_status{state="FAILED"} == 1
-        for: 2m
-        labels:
-          severity: critical
-          component: kafka-connect
-        annotations:
-          summary: "Kafka connector {{ $labels.connector }} failed"
-          description: "Connector is in FAILED state"
-
-      - alert: KafkaConnectorTaskFailed
-        expr: kafka_connect_connector_task_status{state="FAILED"} == 1
-        for: 2m
-        labels:
-          severity: warning
-          component: kafka-connect
-        annotations:
-          summary: "Kafka connector task failed"
-          description: "Task {{ $labels.task }} of connector {{ $labels.connector }} failed"
+          summary: "Kafka has under-replicated partitions"
+          description: "{{ $value }} partitions are under-replicated"

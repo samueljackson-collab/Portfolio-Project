@@ -1,131 +1,55 @@
 # Alert Rules for Database Migration
-# Monitors migration health, replication lag, and data consistency
 
 groups:
   - name: database_migration_alerts
-    interval: 15s
+    interval: 30s
     rules:
-      # Migration Progress
-      - alert: MigrationStalled
-        expr: rate(migration_records_migrated_total[5m]) == 0 and migration_in_progress == 1
-        for: 10m
+      - alert: MigrationJobFailed
+        expr: migration_job_status{status="failed"} > 0
+        for: 1m
         labels:
           severity: critical
           component: migration
         annotations:
-          summary: "Database migration has stalled"
-          description: "No records migrated in the last 10 minutes while migration is in progress"
+          summary: "Migration job {{ $labels.job_name }} failed"
+          description: "Migration job has failed. Check logs immediately."
 
-      - alert: MigrationErrorRate
-        expr: rate(migration_errors_total[5m]) > 10
-        for: 5m
-        labels:
-          severity: warning
-          component: migration
-        annotations:
-          summary: "High migration error rate"
-          description: "Migration error rate is {{ $value }} errors/sec"
-
-      # Replication Lag
-      - alert: HighReplicationLag
-        expr: pg_replication_lag_seconds > 30
-        for: 5m
-        labels:
-          severity: warning
-          component: replication
-        annotations:
-          summary: "High replication lag detected"
-          description: "Replication lag is {{ $value }}s on {{ $labels.database }}"
-
-      - alert: CriticalReplicationLag
+      - alert: HighDatabaseReplicationLag
         expr: pg_replication_lag_seconds > 300
-        for: 2m
+        for: 5m
         labels:
-          severity: critical
-          component: replication
+          severity: warning
+          component: database
         annotations:
-          summary: "Critical replication lag"
-          description: "Replication lag is {{ $value }}s - data may be significantly out of sync"
+          summary: "High replication lag on {{ $labels.instance }}"
+          description: "Replication lag is {{ $value }} seconds"
 
-      # Database Performance
       - alert: DatabaseConnectionPoolExhausted
-        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.9
-        for: 5m
-        labels:
-          severity: critical
-          component: database
-        annotations:
-          summary: "Database connection pool near exhaustion"
-          description: "{{ $value | humanizePercentage }} of connections in use on {{ $labels.database }}"
-
-      - alert: SlowQueryDetected
-        expr: pg_slow_queries_total > 100
-        for: 5m
-        labels:
-          severity: warning
-          component: database
-        annotations:
-          summary: "High number of slow queries"
-          description: "{{ $value }} slow queries detected on {{ $labels.database }}"
-
-      - alert: DeadlocksDetected
-        expr: rate(pg_stat_database_deadlocks[5m]) > 0
+        expr: pgbouncer_pools_cl_waiting > 10
         for: 2m
         labels:
-          severity: warning
-          component: database
-        annotations:
-          summary: "Database deadlocks detected"
-          description: "{{ $value }} deadlocks/sec on {{ $labels.database }}"
-
-      # Data Consistency
-      - alert: DataValidationFailure
-        expr: data_validation_mismatch_count > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: validation
-        annotations:
-          summary: "Data validation failures detected"
-          description: "{{ $value }} records have mismatches between source and target"
-
-      - alert: ChecksumMismatch
-        expr: data_checksum_failures_total > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: validation
-        annotations:
-          summary: "Data checksum mismatches detected"
-          description: "{{ $value }} checksum failures - data integrity compromised"
-
-      # Database Health
-      - alert: DatabaseDown
-        expr: pg_up == 0
-        for: 1m
-        labels:
           severity: critical
           component: database
         annotations:
-          summary: "Database {{ $labels.database }} is down"
-          description: "Cannot connect to {{ $labels.database }} database"
+          summary: "Database connection pool exhausted"
+          description: "{{ $value }} clients waiting for connections"
 
-      - alert: HighDiskUsage
-        expr: pg_database_size_bytes / pg_disk_total_bytes > 0.85
+      - alert: MigrationDataMismatch
+        expr: migration_data_integrity_check_failures > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: data-integrity
+        annotations:
+          summary: "Data integrity check failed"
+          description: "{{ $value }} records failed integrity validation"
+
+      - alert: DatabaseHighCPU
+        expr: rate(pg_stat_database_tup_inserted[5m]) + rate(pg_stat_database_tup_updated[5m]) > 10000
         for: 10m
         labels:
           severity: warning
-          component: storage
+          component: database
         annotations:
-          summary: "High disk usage on {{ $labels.database }}"
-          description: "Disk usage is {{ $value | humanizePercentage }}"
-
-      - alert: TableBloat
-        expr: pg_table_bloat_ratio > 0.3
-        for: 1h
-        labels:
-          severity: info
-          component: maintenance
-        annotations:
-          summary: "Table bloat detected"
-          description: "Table {{ $labels.table }} has {{ $value | humanizePercentage }} bloat"
+          summary: "High database write activity"
+          description: "Database experiencing high write load"

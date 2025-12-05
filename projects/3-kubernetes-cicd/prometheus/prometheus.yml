@@ -1,11 +1,11 @@
 # Prometheus Configuration for Kubernetes CI/CD
-# Monitors Kubernetes clusters, deployments, and CI/CD pipelines
+# Monitors K8s clusters, pods, deployments, and CI/CD pipelines
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    project: 'kubernetes-cicd'
+    cluster: 'k8s-cicd'
     environment: 'production'
 
 alerting:
@@ -17,6 +17,10 @@ rule_files:
   - 'rules.yml'
 
 scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
   # Kubernetes API Server
   - job_name: 'kubernetes-apiservers'
     kubernetes_sd_configs:
@@ -30,19 +34,15 @@ scrape_configs:
         action: keep
         regex: default;kubernetes;https
 
-  # Kubernetes Nodes
+  # Kubernetes nodes
   - job_name: 'kubernetes-nodes'
     kubernetes_sd_configs:
       - role: node
-    scheme: https
-    tls_config:
-      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
     relabel_configs:
-      - action: labelmap
-        regex: __meta_kubernetes_node_label_(.+)
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
 
-  # Kubernetes Pods
+  # Kubernetes pods
   - job_name: 'kubernetes-pods'
     kubernetes_sd_configs:
       - role: pod
@@ -59,40 +59,19 @@ scrape_configs:
         regex: ([^:]+)(?::\d+)?;(\d+)
         replacement: $1:$2
         target_label: __address__
-      - action: labelmap
-        regex: __meta_kubernetes_pod_label_(.+)
-      - source_labels: [__meta_kubernetes_namespace]
-        action: replace
-        target_label: kubernetes_namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        action: replace
-        target_label: kubernetes_pod_name
 
-  # cAdvisor for container metrics
-  - job_name: 'kubernetes-cadvisor'
-    kubernetes_sd_configs:
-      - role: node
-    scheme: https
-    tls_config:
-      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-    relabel_configs:
-      - action: labelmap
-        regex: __meta_kubernetes_node_label_(.+)
-      - target_label: __address__
-        replacement: kubernetes.default.svc:443
-      - source_labels: [__meta_kubernetes_node_name]
-        regex: (.+)
-        target_label: __metrics_path__
-        replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
-
-  # CI/CD Pipeline Metrics
-  - job_name: 'cicd-pipeline'
+  # ArgoCD metrics
+  - job_name: 'argocd'
     static_configs:
-      - targets: ['jenkins:8080', 'argocd-metrics:8082']
-    scrape_interval: 30s
+      - targets: ['argocd-metrics:8082']
 
-  # Container Registry
-  - job_name: 'container-registry'
+  # Jenkins metrics
+  - job_name: 'jenkins'
     static_configs:
-      - targets: ['registry:5001']
+      - targets: ['jenkins:8080']
+    metrics_path: '/prometheus'
+
+  # GitLab CI/CD metrics
+  - job_name: 'gitlab-ci'
+    static_configs:
+      - targets: ['gitlab:9090']

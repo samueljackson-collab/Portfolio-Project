@@ -5,41 +5,71 @@ groups:
     interval: 30s
     rules:
       - alert: DeviceOffline
-        expr: device_last_seen_seconds > 300
+        expr: iot_device_last_seen_seconds > 300
         for: 5m
         labels:
           severity: warning
-          component: device
+          component: devices
         annotations:
-          summary: "IoT device {{ $labels.device_id }} offline"
+          summary: "IoT device {{ $labels.device_id }} is offline"
           description: "Last seen {{ $value }}s ago"
 
-      - alert: HighMessageDropRate
-        expr: rate(mqtt_messages_dropped_total[5m]) / rate(mqtt_messages_received_total[5m]) > 0.05
+      - alert: HighDeviceTemperature
+        expr: iot_device_temperature_celsius > 80
         for: 10m
+        labels:
+          severity: critical
+          component: devices
+        annotations:
+          summary: "High temperature on device {{ $labels.device_id }}"
+          description: "Temperature: {{ $value }}°C"
+
+      - alert: MQTTBrokerConnectionsHigh
+        expr: mqtt_broker_connections > 10000
+        for: 15m
         labels:
           severity: warning
           component: mqtt
         annotations:
-          summary: "High MQTT message drop rate"
-          description: "{{ $value | humanizePercentage }} messages dropped"
+          summary: "High number of MQTT connections"
+          description: "{{ $value }} active connections"
 
-      - alert: DeviceDataAnomalies
-        expr: device_data_anomaly_score > 0.8
-        for: 15m
+      - alert: DataIngestionRateLow
+        expr: rate(iot_data_points_ingested_total[5m]) < 100
+        for: 10m
         labels:
-          severity: info
-          component: analytics
+          severity: warning
+          component: ingestion
         annotations:
-          summary: "Anomalies detected from device {{ $labels.device_id }}"
-          description: "Anomaly score: {{ $value }}"
+          summary: "Low data ingestion rate"
+          description: "Only {{ $value }} data points/sec"
 
-      - alert: TimeseriesDBHighCardinality
-        expr: influxdb_series_count > 1000000
+      - alert: EdgeNodeUnreachable
+        expr: up{job="edge-nodes"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: edge
+        annotations:
+          summary: "Edge node {{ $labels.instance }} is unreachable"
+          description: "Edge processing may be impacted"
+
+      - alert: DeviceBatteryLow
+        expr: iot_device_battery_percent < 20
         for: 1h
         labels:
           severity: warning
-          component: database
+          component: devices
         annotations:
-          summary: "High cardinality in time series database"
-          description: "{{ $value }} series in database {{ $labels.database }}"
+          summary: "Low battery on device {{ $labels.device_id }}"
+          description: "Battery level: {{ $value }}%"
+
+      - alert: DataAnomalyDetected
+        expr: iot_anomaly_score > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: analytics
+        annotations:
+          summary: "Data anomaly detected for {{ $labels.device_id }}"
+          description: "Anomaly score: {{ $value }}"

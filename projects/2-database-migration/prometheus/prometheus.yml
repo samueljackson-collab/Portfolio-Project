@@ -1,11 +1,11 @@
-# Prometheus Configuration for Database Migration
-# Monitors migration progress, database performance, and data consistency
+# Prometheus Configuration for Database Migration Project
+# Monitors PostgreSQL, MySQL, migration jobs, and data integrity
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    project: 'database-migration'
+    cluster: 'database-migration'
     environment: 'production'
 
 alerting:
@@ -17,38 +17,40 @@ rule_files:
   - 'rules.yml'
 
 scrape_configs:
-  # PostgreSQL Exporter for source database
-  - job_name: 'postgres-source'
+  - job_name: 'prometheus'
     static_configs:
-      - targets: ['postgres-source-exporter:9187']
+      - targets: ['localhost:9090']
+
+  # PostgreSQL Exporter
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
     relabel_configs:
       - source_labels: [__address__]
-        target_label: database
-        replacement: 'source'
+        target_label: instance
+        replacement: 'postgresql-primary'
 
-  # PostgreSQL Exporter for target database
-  - job_name: 'postgres-target'
+  # MySQL Exporter
+  - job_name: 'mysql'
     static_configs:
-      - targets: ['postgres-target-exporter:9187']
+      - targets: ['mysql-exporter:9104']
     relabel_configs:
       - source_labels: [__address__]
-        target_label: database
-        replacement: 'target'
+        target_label: instance
+        replacement: 'mysql-source'
 
-  # Migration tool metrics
-  - job_name: 'migration-service'
+  # Migration Worker metrics
+  - job_name: 'migration-workers'
     static_configs:
-      - targets: ['migration-service:8080']
-    scrape_interval: 10s
+      - targets: ['migration-worker:8080']
+    metrics_path: '/metrics'
 
-  # Data validation service
-  - job_name: 'data-validator'
+  # Database Connection Pool metrics
+  - job_name: 'pgbouncer'
     static_configs:
-      - targets: ['data-validator:8081']
-    scrape_interval: 30s
+      - targets: ['pgbouncer-exporter:9127']
 
-  # Replication lag monitoring
-  - job_name: 'replication-monitor'
+  # Redis for migration state
+  - job_name: 'redis'
     static_configs:
-      - targets: ['replication-monitor:9188']
-    scrape_interval: 5s
+      - targets: ['redis-exporter:9121']

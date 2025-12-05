@@ -1,143 +1,134 @@
-# Alert Rules for AWS Infrastructure Automation
-# Monitors infrastructure health, cost anomalies, and resource utilization
+# Prometheus Alert Rules for AWS Infrastructure Automation
 
 groups:
   - name: aws_infrastructure_alerts
     interval: 30s
     rules:
-      # EC2 Instance Health
+      # EC2 instance down
       - alert: EC2InstanceDown
         expr: up{job="ec2-instances"} == 0
         for: 5m
         labels:
           severity: critical
-          component: ec2
+          component: compute
         annotations:
-          summary: "EC2 instance {{ $labels.instance }} is down"
-          description: "EC2 instance {{ $labels.instance }} has been down for more than 5 minutes"
+          summary: "EC2 instance {{ $labels.instance_name }} is down"
+          description: "EC2 instance {{ $labels.instance_id }} in {{ $labels.availability_zone }} has been down for more than 5 minutes."
 
-      - alert: HighCPUUtilization
-        expr: aws_ec2_cpuutilization_average > 80
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
         for: 10m
         labels:
           severity: warning
-          component: ec2
+          component: compute
         annotations:
-          summary: "High CPU utilization on {{ $labels.instance_id }}"
-          description: "CPU utilization is {{ $value }}% on instance {{ $labels.instance_id }}"
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 10 minutes. Current value: {{ $value }}%"
 
-      # VPC and Network
-      - alert: VPCFlowLogsDisabled
-        expr: aws_vpc_flow_logs_enabled == 0
-        for: 5m
-        labels:
-          severity: critical
-          component: vpc
-        annotations:
-          summary: "VPC Flow Logs disabled for {{ $labels.vpc_id }}"
-          description: "VPC Flow Logs should be enabled for security monitoring"
-
-      - alert: HighNetworkTraffic
-        expr: rate(aws_vpc_bytes_total[5m]) > 1e9  # 1GB/s
-        for: 5m
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
         labels:
           severity: warning
-          component: network
+          component: memory
         annotations:
-          summary: "High network traffic in VPC {{ $labels.vpc_id }}"
-          description: "Network traffic is {{ $value | humanize }}B/s"
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85%. Current value: {{ $value }}%"
 
-      # Cost Monitoring
-      - alert: CostAnomalyDetected
-        expr: (aws_cost_daily - aws_cost_daily offset 1d) / aws_cost_daily offset 1d > 0.3
-        for: 1h
-        labels:
-          severity: warning
-          component: billing
-        annotations:
-          summary: "AWS cost increased by more than 30%"
-          description: "Daily AWS cost is ${{ $value }} higher than yesterday"
-
-      - alert: MonthlyBudgetExceeded
-        expr: aws_cost_monthly > aws_budget_monthly
-        for: 1h
-        labels:
-          severity: critical
-          component: billing
-        annotations:
-          summary: "Monthly AWS budget exceeded"
-          description: "Current monthly cost: ${{ $value }}, Budget: {{ $labels.budget }}"
-
-      # RDS Database
-      - alert: RDSHighCPU
-        expr: aws_rds_cpuutilization_average > 80
-        for: 15m
-        labels:
-          severity: warning
-          component: rds
-        annotations:
-          summary: "High CPU on RDS instance {{ $labels.dbinstance_identifier }}"
-          description: "RDS CPU utilization is {{ $value }}%"
-
-      - alert: RDSLowStorage
-        expr: aws_rds_free_storage_space_bytes < 5e9  # 5GB
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 15
         for: 5m
         labels:
           severity: warning
-          component: rds
+          component: storage
         annotations:
-          summary: "Low storage on RDS instance {{ $labels.dbinstance_identifier }}"
-          description: "Only {{ $value | humanize }}B free storage remaining"
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} has less than 15% space available. Current: {{ $value }}%"
 
-      # Load Balancer
-      - alert: ALBHighResponseTime
-        expr: aws_alb_target_response_time_average > 1
-        for: 5m
-        labels:
-          severity: warning
-          component: alb
-        annotations:
-          summary: "High response time on ALB {{ $labels.load_balancer }}"
-          description: "ALB response time is {{ $value }}s"
-
-      - alert: ALBUnhealthyTargets
-        expr: aws_alb_unhealthy_host_count_sum > 0
-        for: 5m
-        labels:
-          severity: critical
-          component: alb
-        annotations:
-          summary: "Unhealthy targets in ALB {{ $labels.load_balancer }}"
-          description: "{{ $value }} unhealthy targets detected"
-
-      # S3 Storage
-      - alert: S3BucketSizeGrowth
-        expr: rate(aws_s3_bucket_size_bytes[1d]) > 1e11  # 100GB/day
-        for: 1h
-        labels:
-          severity: info
-          component: s3
-        annotations:
-          summary: "Rapid growth in S3 bucket {{ $labels.bucket_name }}"
-          description: "Bucket growing at {{ $value | humanize }}B/day"
-
-      # Infrastructure Deployment
-      - alert: TerraformStateUnlocked
-        expr: terraform_state_locked == 0
-        for: 30m
-        labels:
-          severity: warning
-          component: terraform
-        annotations:
-          summary: "Terraform state unlocked for extended period"
-          description: "State should be locked during deployments"
-
-      - alert: InfrastructureDeploymentFailed
-        expr: terraform_apply_success == 0
+      # Terraform state drift detected
+      - alert: TerraformStateDrift
+        expr: terraform_state_drift_count > 0
         for: 1m
         labels:
-          severity: critical
-          component: terraform
+          severity: warning
+          component: infrastructure
         annotations:
-          summary: "Infrastructure deployment failed"
-          description: "Last Terraform apply failed - check deployment logs"
+          summary: "Terraform state drift detected"
+          description: "{{ $value }} resources have drifted from the Terraform state. Review and apply changes."
+
+      # ELB unhealthy targets
+      - alert: ELBUnhealthyTargets
+        expr: aws_elb_un_healthy_host_count_average > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: loadbalancer
+        annotations:
+          summary: "Unhealthy targets in ELB {{ $labels.load_balancer_name }}"
+          description: "{{ $value }} unhealthy targets detected for more than 5 minutes."
+
+      # API endpoint down
+      - alert: APIEndpointDown
+        expr: probe_success{job="blackbox"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "API endpoint {{ $labels.instance }} is down"
+          description: "Health check failed for {{ $labels.instance }} for more than 3 minutes."
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5%. Current rate: {{ $value }}"
+
+      # AWS service quota approaching limit
+      - alert: AWSServiceQuotaHigh
+        expr: aws_service_quota_usage_percentage > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: quota
+        annotations:
+          summary: "AWS service quota {{ $labels.quota_name }} approaching limit"
+          description: "Service quota is at {{ $value }}% of the limit."
+
+      # CloudWatch API errors
+      - alert: CloudWatchAPIErrors
+        expr: rate(aws_cloudwatch_api_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "CloudWatch API errors detected"
+          description: "CloudWatch API error rate: {{ $value }} errors/sec"
+
+  - name: aws_infrastructure_capacity
+    interval: 1m
+    rules:
+      # EC2 instance count
+      - record: aws_ec2_instance_count
+        expr: count(up{job="ec2-instances"})
+
+      # Total CPU usage across all instances
+      - record: aws_total_cpu_usage_percent
+        expr: avg(100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100))
+
+      # Total memory usage across all instances
+      - record: aws_total_memory_usage_percent
+        expr: avg((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)
+
+      # Terraform resources under management
+      - record: terraform_managed_resources_total
+        expr: sum(terraform_resource_count)

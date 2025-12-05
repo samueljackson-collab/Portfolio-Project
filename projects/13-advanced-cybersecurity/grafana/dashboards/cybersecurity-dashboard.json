@@ -1,45 +1,130 @@
 {
   "dashboard": {
     "title": "Advanced Cybersecurity Dashboard",
-    "tags": ["security", "threats", "ids"],
+    "tags": ["security", "ids", "siem"],
     "timezone": "browser",
-    "schemaVersion": 16,
+    "schemaVersion": 38,
     "version": 1,
-    "refresh": "15s",
+    "refresh": "10s",
     "panels": [
       {
         "id": 1,
-        "title": "Active Threats",
-        "type": "stat",
-        "targets": [{"expr": "sum(ids_alert_severity)", "legendFormat": "Threats"}],
-        "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
-        "fieldConfig": {"defaults": {"thresholds": {"steps": [{"value": 0, "color": "green"}, {"value": 1, "color": "yellow"}, {"value": 10, "color": "red"}]}}}
+        "title": "Security Event Rate by Severity",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(security_events_total[1m])",
+            "legendFormat": "{{severity}}",
+            "refId": "A"
+          }
+        ]
       },
       {
         "id": 2,
-        "title": "Failed Auth Attempts",
-        "type": "stat",
-        "targets": [{"expr": "rate(auth_failed_attempts_total[1m])", "legendFormat": "Attempts/sec"}],
-        "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}
+        "title": "IDS Alert Distribution",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "sum by (alert_type) (rate(ids_alerts_total[1h]))",
+            "legendFormat": "{{alert_type}}",
+            "refId": "A"
+          }
+        ]
       },
       {
         "id": 3,
-        "title": "Security Events Timeline",
-        "type": "graph",
+        "title": "Failed Login Attempts",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
         "targets": [
-          {"expr": "rate(ids_alert_severity{severity=\"high\"}[5m])", "legendFormat": "High"},
-          {"expr": "rate(ids_alert_severity{severity=\"medium\"}[5m])", "legendFormat": "Medium"}
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-        "yaxes": [{"format": "short", "label": "Events/sec"}, {"format": "short"}]
+          {
+            "expr": "rate(security_failed_login_attempts[1m])",
+            "legendFormat": "{{source_ip}}",
+            "refId": "A"
+          }
+        ]
       },
       {
         "id": 4,
-        "title": "Network Traffic Anomalies",
-        "type": "graph",
-        "targets": [{"expr": "rate(network_bytes_total[5m])", "legendFormat": "{{ direction }}"}],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-        "yaxes": [{"format": "Bps"}, {"format": "short"}]
+        "title": "Network Traffic Analysis",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(network_packets_total[1m])",
+            "legendFormat": "Packets/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "network_traffic_anomaly_score",
+            "legendFormat": "Anomaly Score",
+            "refId": "B"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Active Threats",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "sum(security_active_threats)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                {"value": null, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Blocked IPs",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 16},
+        "targets": [
+          {
+            "expr": "security_blocked_ips_total",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Top Attack Sources",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "topk(20, sum by (source_ip, attack_type) (rate(security_attacks_total[1h])))",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "WAF Blocks Over Time",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "targets": [
+          {
+            "expr": "rate(waf_requests_blocked_total[5m])",
+            "legendFormat": "{{rule_id}}",
+            "refId": "A"
+          }
+        ]
       }
     ]
   }

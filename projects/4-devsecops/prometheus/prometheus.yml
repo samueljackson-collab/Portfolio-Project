@@ -1,11 +1,11 @@
-# Prometheus Configuration for DevSecOps
-# Monitors security events, vulnerability scans, and compliance metrics
+# Prometheus Configuration for DevSecOps Pipeline
+# Monitors security scans, vulnerability assessments, and compliance
 
 global:
-  scrape_interval: 20s
-  evaluation_interval: 20s
+  scrape_interval: 15s
+  evaluation_interval: 15s
   external_labels:
-    project: 'devsecops'
+    cluster: 'devsecops'
     environment: 'production'
 
 alerting:
@@ -17,48 +17,40 @@ rule_files:
   - 'rules.yml'
 
 scrape_configs:
-  # Security scanning service
-  - job_name: 'security-scanner'
+  - job_name: 'prometheus'
     static_configs:
-      - targets: ['trivy-exporter:9110', 'grype-exporter:9111']
-    scrape_interval: 300s  # Every 5 minutes
+      - targets: ['localhost:9090']
 
-  # Vulnerability database
-  - job_name: 'vuln-database'
+  # SonarQube metrics
+  - job_name: 'sonarqube'
     static_configs:
-      - targets: ['cve-exporter:9112']
-    scrape_interval: 3600s  # Hourly
+      - targets: ['sonarqube-exporter:9000']
 
-  # Secret scanning
-  - job_name: 'secret-scanner'
+  # Trivy vulnerability scanner
+  - job_name: 'trivy'
     static_configs:
-      - targets: ['gitleaks-exporter:9113']
-    scrape_interval: 60s
+      - targets: ['trivy-exporter:9115']
 
-  # SAST/DAST tools
-  - job_name: 'sast-dast'
+  # OWASP Dependency Check
+  - job_name: 'dependency-check'
     static_configs:
-      - targets: ['sonarqube-exporter:9114', 'zap-exporter:9115']
+      - targets: ['dependency-check:9091']
 
-  # Policy enforcement (OPA)
-  - job_name: 'policy-enforcement'
+  # Vault secrets management
+  - job_name: 'vault'
     static_configs:
-      - targets: ['opa-exporter:9116']
+      - targets: ['vault:8200']
+    metrics_path: '/v1/sys/metrics'
+    params:
+      format: ['prometheus']
 
-  # Container runtime security
+  # Falco security monitoring
   - job_name: 'falco'
     static_configs:
-      - targets: ['falco-exporter:9117']
-    scrape_interval: 10s
+      - targets: ['falco-exporter:9376']
 
-  # Compliance checks
-  - job_name: 'compliance'
+  # Security pipeline metrics
+  - job_name: 'security-pipeline'
     static_configs:
-      - targets: ['compliance-exporter:9118']
-    scrape_interval: 3600s
-
-  # WAF metrics
-  - job_name: 'waf'
-    static_configs:
-      - targets: ['modsecurity-exporter:9119']
-    scrape_interval: 30s
+      - targets: ['security-api:8080']
+    metrics_path: '/metrics'

@@ -1,11 +1,11 @@
 # Prometheus Configuration for MLOps Platform
-# Monitors model training, inference, feature stores, and ML pipelines
+# Monitors ML models, training jobs, inference endpoints
 
 global:
-  scrape_interval: 30s
-  evaluation_interval: 30s
+  scrape_interval: 15s
+  evaluation_interval: 15s
   external_labels:
-    project: 'mlops-platform'
+    cluster: 'mlops'
     environment: 'production'
 
 alerting:
@@ -17,39 +17,38 @@ rule_files:
   - 'rules.yml'
 
 scrape_configs:
-  # Model serving (TensorFlow Serving, TorchServe)
-  - job_name: 'model-serving'
+  - job_name: 'prometheus'
     static_configs:
-      - targets: ['tf-serving:8501', 'torchserve:8082']
+      - targets: ['localhost:9090']
 
   # MLflow tracking server
   - job_name: 'mlflow'
     static_configs:
       - targets: ['mlflow:5000']
+    metrics_path: '/metrics'
+
+  # Model serving endpoints (TensorFlow Serving)
+  - job_name: 'tf-serving'
+    static_configs:
+      - targets: ['tf-serving:8501']
+
+  # Kubeflow pipelines
+  - job_name: 'kubeflow'
+    static_configs:
+      - targets: ['kubeflow:8888']
 
   # Feature store
   - job_name: 'feature-store'
     static_configs:
-      - targets: ['feast-server:6566']
+      - targets: ['feast:6566']
 
-  # Training job metrics
-  - job_name: 'training-jobs'
+  # Model monitoring
+  - job_name: 'model-monitor'
     static_configs:
-      - targets: ['kubeflow-metrics:8080']
-    scrape_interval: 60s
-
-  # Model registry
-  - job_name: 'model-registry'
-    static_configs:
-      - targets: ['model-registry:8081']
-
-  # Data validation
-  - job_name: 'data-validation'
-    static_configs:
-      - targets: ['great-expectations:5000']
+      - targets: ['model-monitor:9090']
+    metrics_path: '/metrics'
 
   # GPU metrics
-  - job_name: 'nvidia-gpu'
+  - job_name: 'dcgm-exporter'
     static_configs:
       - targets: ['dcgm-exporter:9400']
-    scrape_interval: 10s

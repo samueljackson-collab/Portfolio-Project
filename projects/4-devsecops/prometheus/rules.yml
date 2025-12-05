@@ -1,183 +1,65 @@
 # Alert Rules for DevSecOps
-# Monitors security vulnerabilities, compliance violations, and threat detection
 
 groups:
-  - name: security_alerts
+  - name: devsecops_alerts
     interval: 30s
     rules:
-      # Vulnerability Detection
       - alert: CriticalVulnerabilityDetected
-        expr: security_vulnerabilities_total{severity="critical"} > 0
+        expr: trivy_vulnerabilities{severity="CRITICAL"} > 0
         for: 1m
         labels:
           severity: critical
-          component: vulnerability
+          component: security
         annotations:
-          summary: "Critical vulnerabilities detected"
-          description: "{{ $value }} critical vulnerabilities found in {{ $labels.image }}"
+          summary: "Critical vulnerabilities detected in {{ $labels.image }}"
+          description: "{{ $value }} critical vulnerabilities found"
 
-      - alert: HighVulnerabilityCount
-        expr: security_vulnerabilities_total{severity="high"} > 10
+      - alert: SonarQubeQualityGateFailed
+        expr: sonarqube_quality_gate_status{status="ERROR"} == 1
+        for: 1m
+        labels:
+          severity: warning
+          component: code-quality
+        annotations:
+          summary: "SonarQube quality gate failed for {{ $labels.project }}"
+          description: "Code quality check failed"
+
+      - alert: VaultSealedStatus
+        expr: vault_core_unsealed == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Vault is sealed"
+          description: "Vault needs to be unsealed immediately"
+
+      - alert: HighSecurityAlertRate
+        expr: rate(falco_alerts_total[5m]) > 10
         for: 5m
         labels:
           severity: warning
-          component: vulnerability
+          component: runtime-security
         annotations:
-          summary: "High number of vulnerabilities"
-          description: "{{ $value }} high severity vulnerabilities in {{ $labels.image }}"
+          summary: "High rate of security alerts"
+          description: "{{ $value }} security alerts per second"
 
-      - alert: VulnerabilityScanFailed
-        expr: security_scan_failures_total > 0
-        for: 5m
-        labels:
-          severity: warning
-          component: scanner
-        annotations:
-          summary: "Vulnerability scan failed"
-          description: "Failed to scan {{ $labels.target }}"
-
-      # Secret Exposure
-      - alert: SecretExposed
-        expr: secrets_exposed_total > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: secrets
-        annotations:
-          summary: "Secrets exposed in code"
-          description: "{{ $value }} secrets detected in {{ $labels.repository }}"
-
-      - alert: HardcodedCredentials
-        expr: hardcoded_credentials_total > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: secrets
-        annotations:
-          summary: "Hardcoded credentials detected"
-          description: "Found {{ $value }} hardcoded credentials in {{ $labels.file }}"
-
-      # Policy Violations
-      - alert: PolicyViolation
-        expr: opa_policy_violations_total > 0
-        for: 2m
-        labels:
-          severity: warning
-          component: policy
-        annotations:
-          summary: "Policy violations detected"
-          description: "{{ $value }} policy violations in {{ $labels.namespace }}"
-
-      - alert: UnauthorizedImageDeployment
-        expr: unauthorized_image_deployments_total > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: policy
-        annotations:
-          summary: "Unauthorized container image deployed"
-          description: "Image {{ $labels.image }} is not from approved registry"
-
-      # Runtime Security
-      - alert: SuspiciousProcessActivity
-        expr: rate(falco_alerts_total{priority="Critical"}[5m]) > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: runtime
-        annotations:
-          summary: "Suspicious process activity detected"
-          description: "Falco detected critical security event: {{ $labels.rule }}"
-
-      - alert: UnauthorizedNetworkConnection
-        expr: falco_network_connections_blocked_total > 0
-        for: 5m
-        labels:
-          severity: warning
-          component: network
-        annotations:
-          summary: "Unauthorized network connections blocked"
-          description: "{{ $value }} unauthorized connections from {{ $labels.pod }}"
-
-      - alert: PrivilegeEscalationAttempt
-        expr: privilege_escalation_attempts_total > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: runtime
-        annotations:
-          summary: "Privilege escalation attempt detected"
-          description: "Detected in pod {{ $labels.pod }} in namespace {{ $labels.namespace }}"
-
-      # Compliance
-      - alert: ComplianceCheckFailed
-        expr: compliance_checks_passed_total / compliance_checks_total < 0.95
-        for: 10m
-        labels:
-          severity: warning
-          component: compliance
-        annotations:
-          summary: "Compliance checks falling below threshold"
-          description: "Only {{ $value | humanizePercentage }} of checks passing"
-
-      - alert: CISBenchmarkFailure
-        expr: cis_benchmark_score < 80
-        for: 5m
-        labels:
-          severity: warning
-          component: compliance
-        annotations:
-          summary: "CIS Benchmark score below threshold"
-          description: "CIS score: {{ $value }} for {{ $labels.target }}"
-
-      # WAF and Attack Detection
-      - alert: WAFBlockRateHigh
-        expr: rate(waf_requests_blocked_total[5m]) > 10
-        for: 5m
-        labels:
-          severity: warning
-          component: waf
-        annotations:
-          summary: "High rate of WAF blocks"
-          description: "Blocking {{ $value }} requests/sec - possible attack"
-
-      - alert: SQLInjectionAttempt
-        expr: waf_attacks_total{attack_type="sqli"} > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: waf
-        annotations:
-          summary: "SQL injection attempts detected"
-          description: "{{ $value }} SQL injection attempts from {{ $labels.source_ip }}"
-
-      - alert: XSSAttempt
-        expr: waf_attacks_total{attack_type="xss"} > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: waf
-        annotations:
-          summary: "XSS attempts detected"
-          description: "{{ $value }} XSS attempts blocked"
-
-      # Certificate Monitoring
-      - alert: CertificateExpiringSoon
-        expr: ssl_certificate_expiry_days < 30
+      - alert: OutdatedDependencies
+        expr: dependency_check_outdated_count > 20
         for: 1h
         labels:
           severity: warning
-          component: certificates
+          component: dependencies
         annotations:
-          summary: "SSL certificate expiring soon"
-          description: "Certificate for {{ $labels.domain }} expires in {{ $value }} days"
+          summary: "{{ $value }} outdated dependencies detected"
+          description: "Review and update dependencies"
 
-      - alert: CertificateExpired
-        expr: ssl_certificate_expiry_days < 0
-        for: 1m
+      - alert: SecurityScanTimeout
+        expr: security_scan_duration_seconds > 1800
+        for: 5m
         labels:
-          severity: critical
-          component: certificates
+          severity: warning
+          component: scanning
         annotations:
-          summary: "SSL certificate expired"
-          description: "Certificate for {{ $labels.domain }} has expired"
+          summary: "Security scan taking too long"
+          description: "Scan duration: {{ $value }}s"

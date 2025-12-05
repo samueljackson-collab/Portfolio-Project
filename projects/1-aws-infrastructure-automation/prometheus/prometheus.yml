@@ -1,11 +1,11 @@
 # Prometheus Configuration for AWS Infrastructure Automation
-# Monitors CloudWatch metrics, infrastructure health, and deployment status
+# Monitors Terraform state changes, AWS resources, and infrastructure health
 
 global:
-  scrape_interval: 30s
-  evaluation_interval: 30s
+  scrape_interval: 15s
+  evaluation_interval: 15s
   external_labels:
-    project: 'aws-infrastructure-automation'
+    cluster: 'aws-infra-automation'
     environment: 'production'
 
 # Alertmanager configuration
@@ -13,56 +13,92 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-            - 'alertmanager:9093'
+          - alertmanager:9093
 
-# Load alert rules
+# Load rules files
 rule_files:
   - 'rules.yml'
 
 # Scrape configurations
 scrape_configs:
-  # CloudWatch Exporter for AWS metrics
-  - job_name: 'cloudwatch'
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # AWS CloudWatch Exporter - monitors AWS resources
+  - job_name: 'aws-cloudwatch'
     static_configs:
       - targets: ['cloudwatch-exporter:9106']
     relabel_configs:
       - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
         target_label: instance
-        replacement: 'aws-infrastructure'
+      - target_label: __address__
+        replacement: cloudwatch-exporter:9106
 
-  # Node exporter for infrastructure hosts
-  - job_name: 'node'
-    static_configs:
-      - targets: ['node-exporter:9100']
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: 'node_(cpu|memory|disk|network).*'
-        action: keep
-
-  # AWS VPC Flow Logs metrics
-  - job_name: 'vpc-flow-logs'
-    static_configs:
-      - targets: ['vpc-exporter:9107']
-    scrape_interval: 60s
-
-  # Terraform/IaC deployment metrics
+  # Terraform state metrics
   - job_name: 'terraform-state'
     static_configs:
-      - targets: ['terraform-exporter:9108']
-    scrape_interval: 120s
+      - targets: ['terraform-exporter:9101']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'terraform_.*'
+        action: keep
 
-  # AWS Cost Explorer metrics
-  - job_name: 'aws-costs'
-    static_configs:
-      - targets: ['cost-exporter:9109']
-    scrape_interval: 3600s  # Once per hour
-
-  # EC2 instance metrics
+  # AWS EC2 instances
   - job_name: 'ec2-instances'
     ec2_sd_configs:
       - region: us-east-1
         port: 9100
+        filters:
+          - name: tag:Monitoring
+            values: ['enabled']
     relabel_configs:
-      - source_labels: [__meta_ec2_tag_monitoring]
-        regex: enabled
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance_name
+      - source_labels: [__meta_ec2_instance_id]
+        target_label: instance_id
+      - source_labels: [__meta_ec2_availability_zone]
+        target_label: availability_zone
+
+  # Node Exporter for infrastructure nodes
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+        - 'node-exporter:9100'
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'node_.*'
         action: keep
+
+  # AWS ELB metrics
+  - job_name: 'aws-elb'
+    static_configs:
+      - targets: ['cloudwatch-exporter:9106']
+    params:
+      module: [elb]
+
+  # Infrastructure API health checks
+  - job_name: 'infra-api'
+    static_configs:
+      - targets: ['api:8080']
+    metrics_path: '/metrics'
+
+  # Blackbox exporter for endpoint monitoring
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://api.example.com/health
+        - https://web.example.com/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
