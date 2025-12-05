@@ -374,7 +374,7 @@ I'm Sam Jackson, a System Development Engineer passionate about infrastructure a
 🔗 CONNECT:
 • LinkedIn: https://www.linkedin.com/in/sams-jackson
 • GitHub: https://github.com/samueljackson-collab
-• Portfolio: [Your portfolio URL]
+• Portfolio: https://samjackson.dev/portfolio
 
 #Terraform #AWS #RDS #InfrastructureAsCode #DevOps #CloudComputing #PostgreSQL
 ```
