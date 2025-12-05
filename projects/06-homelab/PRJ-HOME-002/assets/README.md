@@ -20,6 +20,11 @@ This is a placeholder README. Documentation and evidence will be added as the pr
 For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
 
 ---
+## Code Generation Prompts
+- [x] Asset catalog scaffold produced from the [Evidence and assets prompt](../../../../AI_PROMPT_LIBRARY.md#evidence--assets-catalog).
+- [x] Upload/validation checklist aligned to the [Prompt Execution Framework workflow](../../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
+
+---
 *Placeholder — Documentation pending*
 # PRJ-HOME-002 Assets
 
