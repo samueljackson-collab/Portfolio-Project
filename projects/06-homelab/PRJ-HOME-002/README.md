@@ -1,31 +1,9 @@
-# Virtualization & Core Services
-
-**Status:** 🟢 Done
-
-## Description
-
-Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-
-## Links
-
-- [Parent Documentation](../../../README.md)
-
-## Next Steps
-
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
-
-## Contact
-
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
-
----
-*Placeholder — Documentation pending*
 # PRJ-HOME-002: Virtualization & Core Services
 
-**Status:** ✅ Completed  
-**Category:** Homelab & Virtualization  
-**Technologies:** Proxmox VE, Ceph, TrueNAS, Ansible, Terraform, FreeIPA, Nginx  
-**Complexity:** Advanced  
+**Status:** ✅ Completed
+**Category:** Homelab & Virtualization
+**Technologies:** Proxmox VE, Ceph, TrueNAS, Ansible, Terraform, FreeIPA, Nginx
+**Complexity:** Advanced
 
 ---
 
@@ -34,6 +12,11 @@ For questions about this project, please reach out via [GitHub](https://github.c
 Production-grade virtualization platform featuring a 3-node Proxmox cluster with high availability, distributed Ceph storage, comprehensive core services, and automated infrastructure management. Demonstrates enterprise virtualization skills, infrastructure-as-code practices, and complete operational readiness.
 
 This project showcases advanced systems administration, automation, disaster recovery planning, and production service deployment in a homelab environment.
+
+## Resources
+- [Parent Documentation](../../../README.md)
+- [Assets (diagrams, configs, logs)](./assets/)
+- [Deployment & DR Docs](./assets/docs/)
 
 ## Architecture Highlights
 
