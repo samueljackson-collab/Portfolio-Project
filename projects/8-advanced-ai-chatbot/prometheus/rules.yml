@@ -1,0 +1,75 @@
+# Alert Rules for Advanced AI Chatbot
+
+groups:
+  - name: chatbot_alerts
+    interval: 30s
+    rules:
+      - alert: HighChatbotResponseTime
+        expr: chatbot_response_time_seconds{quantile="0.95"} > 3
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High chatbot response time"
+          description: "P95 response time is {{ $value }}s"
+
+      - alert: LowIntentConfidence
+        expr: avg_over_time(chatbot_intent_confidence[5m]) < 0.6
+        for: 15m
+        labels:
+          severity: warning
+          component: nlp
+        annotations:
+          summary: "Low average intent confidence"
+          description: "Average confidence is {{ $value }}"
+
+      - alert: HighConversationDropRate
+        expr: rate(chatbot_conversations_dropped_total[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          component: conversation
+        annotations:
+          summary: "High conversation drop rate"
+          description: "Drop rate: {{ $value }}/s"
+
+      - alert: NLPModelInferenceError
+        expr: rate(nlp_inference_errors_total[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: nlp
+        annotations:
+          summary: "NLP model inference errors detected"
+          description: "Error rate: {{ $value }}/s"
+
+      - alert: ActiveWebSocketConnectionsHigh
+        expr: websocket_active_connections > 10000
+        for: 10m
+        labels:
+          severity: warning
+          component: websocket
+        annotations:
+          summary: "High number of active WebSocket connections"
+          description: "Current connections: {{ $value }}"
+
+      - alert: ChatbotFallbackRateHigh
+        expr: rate(chatbot_fallback_responses_total[5m]) / rate(chatbot_messages_total[5m]) > 0.3
+        for: 15m
+        labels:
+          severity: warning
+          component: conversation
+        annotations:
+          summary: "High fallback response rate"
+          description: "{{ $value | humanizePercentage }} of responses are fallbacks"
+
+      - alert: UserSentimentNegative
+        expr: avg_over_time(chatbot_user_sentiment_score[10m]) < -0.3
+        for: 20m
+        labels:
+          severity: info
+          component: analytics
+        annotations:
+          summary: "Negative user sentiment detected"
+          description: "Average sentiment score: {{ $value }}"

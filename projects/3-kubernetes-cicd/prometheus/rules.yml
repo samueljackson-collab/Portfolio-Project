@@ -1,0 +1,65 @@
+# Alert Rules for Kubernetes CI/CD
+
+groups:
+  - name: kubernetes_cicd_alerts
+    interval: 30s
+    rules:
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: kubernetes
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+          description: "Pod has restarted {{ $value }} times in the last 15 minutes"
+
+      - alert: DeploymentReplicasMismatch
+        expr: kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+        for: 10m
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has mismatched replicas"
+          description: "Desired: {{ $labels.spec_replicas }}, Available: {{ $value }}"
+
+      - alert: PipelineFailed
+        expr: jenkins_job_last_build_result_ordinal{result="FAILURE"} == 1
+        for: 1m
+        labels:
+          severity: warning
+          component: cicd
+        annotations:
+          summary: "Jenkins job {{ $labels.job }} failed"
+          description: "Last build result was FAILURE"
+
+      - alert: HighPodMemoryUsage
+        expr: (sum(container_memory_working_set_bytes) by (pod) / sum(container_spec_memory_limit_bytes) by (pod)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "Pod {{ $labels.pod }} has high memory usage"
+          description: "Memory usage is above 90%"
+
+      - alert: ArgoCDSyncFailed
+        expr: argocd_app_sync_status{sync_status!="Synced"} == 1
+        for: 10m
+        labels:
+          severity: warning
+          component: gitops
+        annotations:
+          summary: "ArgoCD app {{ $labels.name }} is not synced"
+          description: "Application sync status: {{ $labels.sync_status }}"
+
+      - alert: KubernetesNodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: kubernetes
+        annotations:
+          summary: "Kubernetes node {{ $labels.node }} is not ready"
+          description: "Node has been in NotReady state for more than 5 minutes"
