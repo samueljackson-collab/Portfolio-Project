@@ -21,7 +21,7 @@ For questions about this project, please reach out via [GitHub](https://github.c
 ---
 ## Code Generation Prompts
 - [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-baseline).
-- [x] Recovery checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
+- [x] Recovery checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#workflow).
 
 ---
 *Placeholder — Documentation pending*
