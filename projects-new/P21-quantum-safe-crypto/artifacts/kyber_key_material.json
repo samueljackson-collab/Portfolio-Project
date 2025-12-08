@@ -1,0 +1,7 @@
+{
+  "algorithm": "kyber-mock",
+  "keypair": {
+    "public_key": "a09ff5dd65366d365edcb7ea633511fe",
+    "private_key": "6bc73a4da22c6f406764d6a2384a7b58b5fe5220c91e8e40862047cd64363cd2"
+  }
+}
