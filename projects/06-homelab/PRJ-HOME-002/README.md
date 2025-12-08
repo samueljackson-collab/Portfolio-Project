@@ -204,6 +204,7 @@ Creates production-ready VM template (ID 9000) with:
 - [`storage.cfg`](assets/proxmox/storage.cfg) - Multi-tier storage configuration
 - [`network-interfaces`](assets/proxmox/network-interfaces) - VLAN-aware networking with bonding
 - [`backup-config.json`](assets/proxmox/backup-config.json) - Comprehensive backup strategy
+- [`vm-inventory.md`](assets/proxmox/vm-inventory.md) - Sanitized VM list with HA groups and storage tiers
 - [`vm-templates/`](assets/proxmox/vm-templates/) - Automated template creation
 
 ### Core Services Configuration
@@ -212,6 +213,11 @@ Creates production-ready VM template (ID 9000) with:
 - [`ntp/`](assets/services/ntp/) - Time synchronization server
 - [`nginx/`](assets/services/nginx/) - Reverse proxy and SSL termination
 - [`rsyslog/`](assets/services/rsyslog/) - Centralized logging
+- [`nginx-proxy-manager`](assets/configs/nginx-proxy-manager/proxy-hosts.yml) - Sanitized reverse-proxy entries
+
+### Storage Layout
+- [`dataset-layout.md`](assets/configs/truenas/dataset-layout.md) - TrueNAS dataset purposes and retention
+- [`share-definitions.yml`](assets/configs/truenas/share-definitions.yml) - NFS/iSCSI target definitions
 
 ### Automation
 - [`ansible/playbooks/`](assets/automation/ansible/playbooks/) - 5 playbooks for infrastructure management
@@ -221,6 +227,19 @@ Creates production-ready VM template (ID 9000) with:
 ### Disaster Recovery
 - [`disaster-recovery-plan.md`](assets/recovery/disaster-recovery-plan.md) - Comprehensive DR plan with RTO/RPO
 - [`recovery-procedures/`](assets/recovery/recovery-procedures/) - Step-by-step recovery guides
+- [`disaster-recovery.md`](assets/docs/disaster-recovery.md) - Executable scenarios for node, storage, and site recovery
+
+### Documentation & Operations
+- [`deployment.md`](assets/docs/deployment.md) - End-to-end deployment sequence across Proxmox, TrueNAS, and services
+- [`troubleshooting.md`](assets/docs/troubleshooting.md) - Common failure domains and fixes
+- [`lessons-learned.md`](assets/docs/lessons-learned.md) - Operational insights captured post-deployment
+- [`backup-strategy.md`](assets/docs/backup-strategy.md) - Cadence, verification, and responsibilities
+- [`logging-and-retention.md`](assets/docs/logging-and-retention.md) - Centralized logging and retention policy
+- [`backup-job-log.md`](assets/logs/backup-job-log.md) - Sanitized PBS job history and verification results
+
+### Visuals & Evidence
+- [`service-screenshots.md`](assets/screenshots/service-screenshots.md) - Descriptions of captured Proxmox/NPM/TrueNAS views
+- [`reverse-proxy-dataflow.mmd`](assets/diagrams/reverse-proxy-dataflow.mmd) - TLS ingress and backend flow for core services
 
 ### Demo & Visualizations
 - [`demo/home-assistant-dashboard.html`](demo/home-assistant-dashboard.html) - Interactive Home Assistant dashboard mockup
