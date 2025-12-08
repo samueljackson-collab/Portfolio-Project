@@ -66,6 +66,9 @@ System-minded engineer specializing in building, securing, and operating infrast
 - [Project 24: Portfolio Report Generator](./projects/24-report-generator) — Automated report templating with Jinja2.
 - [Project 25: Portfolio Website & Documentation Hub](./projects/25-portfolio-website) — VitePress-powered portal aggregating all documentation and guides.
 
+### 🧪 Incubating Packs
+- [Cloud-Native PoC Operational Pack](./projects-new/p09-cloud-native-poc/README.md) — new deployment validation/rollback SOP and a scheduled health probe CronJob for the PoC service.
+
 ---
 ## 🛠️ Core Skills
 - **Systems & Infra:** Linux/Windows, networking, VLANs, VPN, UniFi, NAS, Active Directory
