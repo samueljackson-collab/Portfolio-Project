@@ -1,0 +1,248 @@
+groups:
+  - name: infrastructure
+    interval: 30s
+    rules:
+      # Node/Host Alerts
+      - alert: NodeDown
+        expr: up{job="node-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Node {{ $labels.instance }} is down"
+          description: "Node exporter on {{ $labels.instance }} has been down for more than 5 minutes."
+
+      - alert: NodeHighCPU
+        expr: (100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 15m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% (current: {{ $value }}%)"
+
+      - alert: NodeHighMemory
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% (current: {{ $value }}%)"
+
+      - alert: NodeDiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} has less than 15% free space (current: {{ $value }}%)"
+
+      - alert: NodeDiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes) * 100 < 5
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} has less than 5% free space (current: {{ $value }}%)"
+
+  - name: kubernetes
+    interval: 30s
+    rules:
+      # Kubernetes Cluster Alerts
+      - alert: KubernetesPodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has restarted {{ $value }} times in the last 15 minutes."
+
+      - alert: KubernetesPodNotReady
+        expr: sum by (namespace, pod) (kube_pod_status_phase{phase!~"Running|Succeeded"}) > 0
+        for: 10m
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} not ready"
+          description: "Pod has been in non-ready state for more than 10 minutes."
+
+      - alert: KubernetesDeploymentReplicasMismatch
+        expr: kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+        for: 10m
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} replicas mismatch"
+          description: "Deployment replicas do not match desired count."
+
+      - alert: KubernetesNodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: kubernetes
+        annotations:
+          summary: "Kubernetes node {{ $labels.node }} not ready"
+          description: "Node has been unready for more than 5 minutes."
+
+      - alert: KubernetesPodOOMKilled
+        expr: kube_pod_container_status_terminated_reason{reason="OOMKilled"} == 1
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "Container OOM killed in {{ $labels.namespace }}/{{ $labels.pod }}"
+          description: "Container {{ $labels.container }} was killed due to out of memory."
+
+  - name: applications
+    interval: 30s
+    rules:
+      # Application Performance Alerts
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "High error rate on {{ $labels.app }}"
+          description: "Error rate is above 5% (current: {{ $value | humanizePercentage }})"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, app)) > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "High latency on {{ $labels.app }}"
+          description: "P95 latency is above 1 second (current: {{ $value }}s)"
+
+      - alert: APIHighResponseTime
+        expr: avg(rate(http_request_duration_seconds_sum[5m])) by (app) / avg(rate(http_request_duration_seconds_count[5m])) by (app) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "API response time high for {{ $labels.app }}"
+          description: "Average response time is {{ $value }}s"
+
+  - name: databases
+    interval: 30s
+    rules:
+      # PostgreSQL Alerts
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL {{ $labels.instance }} is down"
+          description: "PostgreSQL instance has been down for more than 1 minute."
+
+      - alert: PostgreSQLHighConnections
+        expr: (sum(pg_stat_database_numbackends) / pg_settings_max_connections) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "PostgreSQL high connections"
+          description: "PostgreSQL is using {{ $value }}% of max connections."
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_statements_mean_time_seconds[5m]) > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "Average query time is {{ $value }}s"
+
+      - alert: PostgreSQLReplicationLag
+        expr: pg_replication_lag > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "PostgreSQL replication lag high"
+          description: "Replication lag is {{ $value }} seconds."
+
+  - name: slo
+    interval: 30s
+    rules:
+      # Service Level Objectives
+      - alert: SLOBurnRateCritical
+        expr: |
+          (
+            (1 - (sum(rate(http_requests_total{status!~"5.."}[1h])) by (app) / sum(rate(http_requests_total[1h])) by (app)))
+            / (1 - 0.999)
+          ) > 14.4
+        labels:
+          severity: critical
+          component: slo
+        annotations:
+          summary: "Critical SLO burn rate for {{ $labels.app }}"
+          description: "Error budget is burning at {{ $value }}x the acceptable rate."
+
+      - alert: SLOBurnRateWarning
+        expr: |
+          (
+            (1 - (sum(rate(http_requests_total{status!~"5.."}[6h])) by (app) / sum(rate(http_requests_total[6h])) by (app)))
+            / (1 - 0.999)
+          ) > 6
+        labels:
+          severity: warning
+          component: slo
+        annotations:
+          summary: "Warning SLO burn rate for {{ $labels.app }}"
+          description: "Error budget is burning at {{ $value }}x the acceptable rate."
+
+  - name: custom
+    interval: 30s
+    rules:
+      # Custom application metrics
+      - alert: QueueBacklog
+        expr: queue_depth > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Queue {{ $labels.queue }} has backlog"
+          description: "Queue depth is {{ $value }} messages."
+
+      - alert: CacheHitRateLow
+        expr: rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) < 0.8
+        for: 15m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Cache hit rate low for {{ $labels.app }}"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}."
+
+      - alert: BatchJobFailed
+        expr: batch_job_status{status="failed"} == 1
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Batch job {{ $labels.job }} failed"
+          description: "Job {{ $labels.job }} has failed."
