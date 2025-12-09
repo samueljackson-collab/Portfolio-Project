@@ -1,0 +1,429 @@
+# Promtail Configuration
+# =======================
+# Log collection agent that discovers, parses, labels, and ships logs to Loki.
+#
+# Architecture:
+#   - Discovery: Find log files to tail (static, kubernetes, docker)
+#   - Parsing: Extract structured data from logs
+#   - Labeling: Add labels for filtering/querying
+#   - Shipping: Batch and push to Loki
+#
+# Documentation: https://grafana.com/docs/loki/latest/clients/promtail/configuration/
+# Author: Portfolio Project
+# Last Updated: 2024-11-24
+
+# Server Configuration
+# ====================
+# HTTP server for health checks and metrics.
+server:
+  # HTTP listen port
+  # Endpoints:
+  #   - /ready: Health check (returns 200 when ready)
+  #   - /metrics: Prometheus metrics about Promtail itself
+  http_listen_port: 9080
+
+  # gRPC port: Disabled (not needed for push mode)
+  grpc_listen_port: 0
+
+  # Logging
+  log_level: info
+
+# Positions Configuration
+# =======================
+# Tracks read position in each log file (like bookmarks).
+# Purpose: Resume from last position after restart, avoid re-reading logs.
+#
+# Format: YAML file with filename -> byte offset mapping
+# Example:
+#   /var/log/nginx/access.log: 123456789
+#   /var/log/app.log: 987654321
+#
+positions:
+  filename: /tmp/positions.yml
+
+  # Sync interval: How often to write positions to disk
+  # Lower: More frequent writes, less chance of duplicate logs on crash
+  # Higher: Less I/O, but may re-read logs after crash
+  # Default: 10s (good balance)
+  sync_period: 10s
+
+# Loki Client Configuration
+# ==========================
+# Where and how to send logs to Loki.
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+    # Batching configuration
+    # ----------------------
+    # Promtail batches logs before sending to reduce HTTP requests.
+
+    # batchwait: Maximum time to wait before sending batch
+    # Lower: More real-time logs, more HTTP requests
+    # Higher: Better batching, higher latency
+    # Default: 1s (good for most use cases)
+    batchwait: 1s
+
+    # batchsize: Maximum batch size in bytes
+    # When reached: Send immediately (don't wait for batchwait)
+    # Default: 102400 (100KB)
+    # Increase for: High log volume (reduces HTTP overhead)
+    # Decrease for: More real-time delivery
+    batchsize: 102400  # 100KB
+
+    # Retry configuration
+    # -------------------
+    # What to do when Loki is unavailable or returns errors.
+
+    # backoff_config: Exponential backoff for retries
+    #   min_period: Initial wait time (100ms)
+    #   max_period: Maximum wait time (10s)
+    #   max_retries: Number of retries before giving up (10)
+    backoff_config:
+      min_period: 100ms
+      max_period: 10s
+      max_retries: 10
+
+    # timeout: HTTP request timeout
+    # Should be: > batchwait to avoid timeout during normal batching
+    timeout: 10s
+
+    # Tenant ID (for multi-tenant Loki)
+    # Single-tenant: Omit or comment out
+    # tenant_id: my-tenant-id
+
+    # External labels: Added to all log streams from this Promtail
+    # Use for: Identifying log source, environment, datacenter
+    # Example: hostname, cluster, region
+    #
+    # external_labels:
+    #   cluster: homelab
+    #   hostname: ${HOSTNAME}
+
+# Scrape Configurations
+# =====================
+# Defines which logs to collect and how to parse them.
+# Each scrape_config is a separate log collection pipeline.
+#
+scrape_configs:
+  # Scrape Config 1: Docker Container Logs
+  # =======================================
+  # Collects logs from all Docker containers on the host.
+  #
+  # Discovery: Reads JSON logs from /var/lib/docker/containers/*/*-json.log
+  # Format: Docker JSON logging driver format
+  # Example line:
+  #   {"log":"2024-01-01T00:00:00Z INFO Starting application\n","stream":"stdout","time":"2024-01-01T00:00:00.123456Z"}
+  #
+  - job_name: docker
+
+    # Static discovery: Manually specify log file paths
+    # Alternative: docker_sd_config for dynamic discovery
+    static_configs:
+      - targets:
+          - localhost  # Promtail runs on same host as containers
+        labels:
+          # Base labels applied to all logs from this job
+          job: docker
+          host: ${HOSTNAME:-localhost}
+          __path__: /var/lib/docker/containers/*/*-json.log
+
+    # Pipeline Stages
+    # ---------------
+    # Sequential processing steps: parse, extract, label, format.
+    # Each stage transforms log entry before next stage.
+    #
+    # Stage execution order matters!
+    # Common pattern: json -> labels -> timestamp -> output
+    #
+    pipeline_stages:
+      # Stage 1: JSON Parsing
+      # ----------------------
+      # Parse Docker JSON log format into structured fields.
+      # Extracts: log (message), stream (stdout/stderr), time (timestamp)
+      #
+      - json:
+          expressions:
+            # Extract log message
+            output: log
+
+            # Extract stream (stdout or stderr)
+            stream: stream
+
+            # Extract timestamp
+            timestamp: time
+
+      # Stage 2: Label Extraction
+      # --------------------------
+      # Create labels from log file path and parsed fields.
+      # Labels used for: Querying, filtering, grouping in Grafana.
+      #
+      # IMPORTANT: Keep label cardinality low!
+      # Bad: container_id as label (too many unique values)
+      # Good: container_name as label (limited, meaningful)
+      #
+      - regex:
+          # Extract container ID from file path
+          # Path: /var/lib/docker/containers/<container-id>/<container-id>-json.log
+          # Expression: .*/([0-9a-f]{64})/[0-9a-f]{64}-json\.log
+          expression: '^/var/lib/docker/containers/(?P<container_id>[0-9a-f]{64})/[0-9a-f]{64}-json\.log$'
+          source: filename
+
+      # Stage 3: Docker Metadata Labels
+      # --------------------------------
+      # Add labels from Docker container metadata.
+      # Queries Docker API to get: container name, image, labels.
+      #
+      - docker:
+          # container_id: Field containing container ID (from previous regex stage)
+          # Promtail queries Docker socket with this ID
+          # Returns: container name, image, compose project, labels
+          #
+          # Extracted labels (if present):
+          #   - container_name: Docker container name
+          #   - container_image: Docker image name
+          #   - compose_project: Docker Compose project name
+          #   - compose_service: Docker Compose service name
+          #
+          # Access Docker socket: Requires /var/run/docker.sock mount
+          host: unix:///var/run/docker.sock
+
+      # Stage 4: Stream Label
+      # ----------------------
+      # Label logs as stdout or stderr.
+      # Useful for: Filtering error logs (stderr) vs info logs (stdout).
+      #
+      - labels:
+          # Add stream as label (stdout or stderr)
+          stream: stream
+
+      # Stage 5: Timestamp Parsing
+      # ---------------------------
+      # Parse timestamp from log and use as entry time.
+      # Format: RFC3339Nano (Docker default)
+      #
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+
+      # Stage 6: Output Formatting
+      # ---------------------------
+      # Set final log message (what appears in Grafana).
+      # Use 'output' field extracted from JSON.
+      #
+      - output:
+          source: output
+
+      # Stage 7: Multiline Handling (Optional)
+      # ----------------------------------------
+      # Combine multi-line logs (stack traces, JSON) into single entry.
+      # Useful for: Exception stack traces, formatted JSON output.
+      #
+      # Uncomment if needed:
+      # - multiline:
+      #     # First line pattern: Regex matching start of new log entry
+      #     # Example: Timestamp pattern for app logs
+      #     firstline: '^\d{4}-\d{2}-\d{2}'
+      #
+      #     # Max wait: How long to wait for continuation lines
+      #     max_wait_time: 3s
+      #
+      #     # Max lines: Maximum lines to combine
+      #     max_lines: 128
+
+  # Scrape Config 2: System Logs (Syslog)
+  # ======================================
+  # Collects system logs from /var/log/syslog.
+  # Contains: Kernel messages, system services, auth logs.
+  #
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          host: ${HOSTNAME:-localhost}
+          __path__: /var/log/syslog
+
+    pipeline_stages:
+      # Syslog format parsing
+      # Standard syslog format:
+      # Jan 1 00:00:00 hostname process[pid]: message
+      #
+      - regex:
+          expression: '^(?P<timestamp>\w+ \d+ \d+:\d+:\d+) (?P<hostname>\S+) (?P<process>\S+?)(\[(?P<pid>\d+)\])?: (?P<message>.*)$'
+
+      # Extract labels from parsed fields
+      - labels:
+          process: process
+          hostname: hostname
+
+      # Parse timestamp
+      # Format: Jan 1 00:00:00 (syslog format)
+      - timestamp:
+          source: timestamp
+          format: Jan _2 15:04:05
+          # Year not included in syslog timestamp, assume current year
+          location: Local
+
+      # Use message as output
+      - output:
+          source: message
+
+  # Scrape Config 3: Auth Logs
+  # ===========================
+  # Collects authentication logs (SSH, sudo, login attempts).
+  # Security-critical: Monitor for unauthorized access attempts.
+  #
+  - job_name: auth
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: auth
+          host: ${HOSTNAME:-localhost}
+          __path__: /var/log/auth.log
+
+    pipeline_stages:
+      # Similar parsing to syslog
+      - regex:
+          expression: '^(?P<timestamp>\w+ \d+ \d+:\d+:\d+) (?P<hostname>\S+) (?P<process>\S+?)(\[(?P<pid>\d+)\])?: (?P<message>.*)$'
+
+      # Label auth events
+      - labels:
+          process: process
+          hostname: hostname
+
+      - timestamp:
+          source: timestamp
+          format: Jan _2 15:04:05
+          location: Local
+
+      - output:
+          source: message
+
+  # Scrape Config 4: Nginx Access Logs (Optional)
+  # ==============================================
+  # Example: Parse structured Nginx access logs.
+  # Useful if running Nginx as reverse proxy.
+  #
+  # Uncomment if needed:
+  #
+  # - job_name: nginx_access
+  #   static_configs:
+  #     - targets:
+  #         - localhost
+  #       labels:
+  #         job: nginx
+  #         type: access
+  #         __path__: /var/log/nginx/access.log
+  #
+  #   pipeline_stages:
+  #     # Parse Nginx combined log format
+  #     # Format: $remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent"
+  #     - regex:
+  #         expression: '^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<timestamp>[^\]]+)\] "(?P<method>\S+) (?P<path>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<bytes>\d+) "(?P<referer>[^"]*)" "(?P<user_agent>[^"]*)"$'
+  #
+  #     # Extract labels for useful filtering
+  #     - labels:
+  #         status: status
+  #         method: method
+  #
+  #     # Parse timestamp
+  #     - timestamp:
+  #         source: timestamp
+  #         format: 02/Jan/2006:15:04:05 -0700
+  #
+  #     # Keep original log line as output
+  #     - output:
+  #         source: message
+
+# Advanced Configuration Examples
+# ================================
+#
+# Dynamic Service Discovery (Kubernetes)
+# ---------------------------------------
+# Automatically discover pods and scrape their logs.
+#
+# scrape_configs:
+#   - job_name: kubernetes-pods
+#     kubernetes_sd_configs:
+#       - role: pod
+#
+#     relabel_configs:
+#       # Only scrape pods with annotation: prometheus.io/scrape: "true"
+#       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+#         action: keep
+#         regex: true
+#
+#       # Get namespace as label
+#       - source_labels: [__meta_kubernetes_namespace]
+#         target_label: namespace
+#
+#       # Get pod name as label
+#       - source_labels: [__meta_kubernetes_pod_name]
+#         target_label: pod
+#
+#       # Get container name as label
+#       - source_labels: [__meta_kubernetes_pod_container_name]
+#         target_label: container
+#
+# Custom Metric Extraction
+# -------------------------
+# Extract numeric values from logs and expose as metrics.
+#
+# pipeline_stages:
+#   - regex:
+#       expression: 'request_duration=(?P<duration>\d+)ms'
+#
+#   - metrics:
+#       # Counter: Total requests
+#       request_total:
+#         type: Counter
+#         description: "Total HTTP requests"
+#         source: message
+#         config:
+#           action: inc
+#
+#       # Histogram: Request duration
+#       request_duration_seconds:
+#         type: Histogram
+#         description: "Request duration in seconds"
+#         source: duration
+#         config:
+#           buckets: [0.1, 0.5, 1, 2, 5, 10]
+#
+# Label Dropping (Reduce Cardinality)
+# ------------------------------------
+# Drop high-cardinality labels to prevent performance issues.
+#
+# pipeline_stages:
+#   - labeldrop:
+#       - container_id  # Drop container ID (too many unique values)
+#       - path          # Drop file path (high cardinality)
+#
+# Label Allow (Keep Only Specific Labels)
+# ----------------------------------------
+# Keep only certain labels, drop everything else.
+#
+# pipeline_stages:
+#   - labelallow:
+#       - job
+#       - container_name
+#       - stream
+#
+# Conditional Processing (Match Stage)
+# -------------------------------------
+# Apply pipeline stages only if condition matches.
+#
+# pipeline_stages:
+#   - match:
+#       selector: '{job="app"} |= "ERROR"'
+#       stages:
+#         - labels:
+#             level: error
+#
+#   - match:
+#       selector: '{job="app"} |= "WARN"'
+#       stages:
+#         - labels:
+#             level: warning

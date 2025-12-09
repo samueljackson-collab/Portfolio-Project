@@ -1,0 +1,38 @@
+# Environment files with secrets
+# ===============================
+.env
+.env.local
+.env.*.local
+
+# Data directories (persistent volumes)
+# ======================================
+data/
+backups/
+!assets/backups/
+*.tar.gz
+
+# Logs
+# ====
+*.log
+deployment.log
+
+# Promtail positions file
+# =======================
+promtail/positions.yml
+
+# Temporary files
+# ===============
+.DS_Store
+*~
+*.swp
+*.swo
+
+# IDE files
+# =========
+.vscode/
+.idea/
+*.iml
+
+# OS files
+# ========
+Thumbs.db

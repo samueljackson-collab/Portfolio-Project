@@ -565,6 +565,11 @@ gh run view <run-id> --log | grep -E "error|fatal|failed"
 
 - name: Install ChromeDriver
   run: |
+    # Use the new JSON endpoints to find the correct ChromeDriver URL for the latest stable version.
+    CHROMEDRIVER_URL=$(curl -s https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux64") | .url')
+    wget -q "$CHROMEDRIVER_URL" -O chromedriver-linux64.zip
+    unzip chromedriver-linux64.zip
+    sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
     CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
     CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION%.*}")
     wget -q "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"

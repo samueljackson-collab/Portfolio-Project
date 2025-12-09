@@ -1,0 +1,56 @@
+# Prometheus Configuration for DevSecOps Pipeline
+# Monitors security scans, vulnerability assessments, and compliance
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'devsecops'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # SonarQube metrics
+  - job_name: 'sonarqube'
+    static_configs:
+      - targets: ['sonarqube-exporter:9000']
+
+  # Trivy vulnerability scanner
+  - job_name: 'trivy'
+    static_configs:
+      - targets: ['trivy-exporter:9115']
+
+  # OWASP Dependency Check
+  - job_name: 'dependency-check'
+    static_configs:
+      - targets: ['dependency-check:9091']
+
+  # Vault secrets management
+  - job_name: 'vault'
+    static_configs:
+      - targets: ['vault:8200']
+    metrics_path: '/v1/sys/metrics'
+    params:
+      format: ['prometheus']
+
+  # Falco security monitoring
+  - job_name: 'falco'
+    static_configs:
+      - targets: ['falco-exporter:9376']
+
+  # Security pipeline metrics
+  - job_name: 'security-pipeline'
+    static_configs:
+      - targets: ['security-api:8080']
+    metrics_path: '/metrics'

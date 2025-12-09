@@ -11,7 +11,7 @@ This module provides:
 
 from uuid import UUID
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 
@@ -23,7 +23,12 @@ from app.schemas import (
     ContentResponse,
     ContentListResponse
 )
-from app.dependencies import get_current_user, get_optional_user
+from app.dependencies import (
+    get_current_user,
+    get_optional_user,
+    raise_not_found,
+    check_ownership,
+)
 
 
 router = APIRouter(
@@ -69,13 +74,12 @@ async def list_content(
         query = query.where(
             or_(
                 Content.owner_id == current_user.id,
-                Content.is_published == True
+                Content.is_published
             )
         )
     else:
-        # Not authenticated: only published content regardless of flag
-        published_only = True
-        query = query.where(Content.is_published == True)
+        # Not authenticated: only published content
+        query = query.where(Content.is_published)
 
     # Apply search filter
     if search:
@@ -146,18 +150,12 @@ async def get_content(
     content = result.scalar_one_or_none()
 
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
+        raise_not_found("Content")
 
     # Check authorization
     if not content.is_published:
         if not current_user or content.owner_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Content not found"
-            )
+            raise_not_found("Content")
 
     return content
 
@@ -231,17 +229,10 @@ async def update_content(
     content = result.scalar_one_or_none()
 
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
+        raise_not_found("Content")
 
     # Check ownership
-    if content.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this content"
-        )
+    check_ownership(content, current_user, "update this content")
 
     # Update fields that were provided
     update_data = content_data.model_dump(exclude_unset=True)
@@ -283,17 +274,10 @@ async def delete_content(
     content = result.scalar_one_or_none()
 
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
+        raise_not_found("Content")
 
     # Check ownership
-    if content.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this content"
-        )
+    check_ownership(content, current_user, "delete this content")
 
     await db.delete(content)
     await db.commit()

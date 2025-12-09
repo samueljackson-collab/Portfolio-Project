@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roaming-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: roaming-producer
+  template:
+    metadata:
+      labels:
+        app: roaming-producer
+    spec:
+      containers:
+        - name: producer
+          image: roaming-sim:latest
+          command: ["python", "producer/main.py", "--profile", "urban", "--events", "500"]
+          ports:
+            - containerPort: 50051
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roaming-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: roaming-consumer
+  template:
+    metadata:
+      labels:
+        app: roaming-consumer
+    spec:
+      containers:
+        - name: consumer
+          image: roaming-sim:latest
+          command: ["python", "consumer/main.py", "--ingest-file", "out/events.jsonl"]
+          ports:
+            - containerPort: 9200
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: roaming-metrics
+spec:
+  selector:
+    app: roaming-consumer
+  ports:
+    - name: http
+      port: 9200
+      targetPort: 9200

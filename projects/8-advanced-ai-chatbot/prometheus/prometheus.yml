@@ -1,0 +1,54 @@
+# Prometheus Configuration for Advanced AI Chatbot
+# Monitors NLP models, conversation flow, user interactions
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'ai-chatbot'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Chatbot API
+  - job_name: 'chatbot-api'
+    static_configs:
+      - targets: ['chatbot-api:8000']
+    metrics_path: '/metrics'
+
+  # NLP model inference service
+  - job_name: 'nlp-inference'
+    static_configs:
+      - targets: ['nlp-service:8501']
+
+  # Rasa conversation engine
+  - job_name: 'rasa'
+    static_configs:
+      - targets: ['rasa:5005']
+    metrics_path: '/metrics'
+
+  # Redis for session management
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Intent classification metrics
+  - job_name: 'intent-classifier'
+    static_configs:
+      - targets: ['intent-classifier:9090']
+
+  # WebSocket server metrics
+  - job_name: 'websocket-server'
+    static_configs:
+      - targets: ['ws-server:9091']

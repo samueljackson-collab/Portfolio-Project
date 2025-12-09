@@ -1,0 +1,29 @@
+---
+- name: Deploy portfolio orchestration stack
+  hosts: "{{ target | default('dev') }}"
+  become: true
+  vars:
+    deployment_channel: "{{ lookup('env', 'DEPLOYMENT_CHANNEL') | default('manual') }}"
+  roles:
+    - role: orchestration
+      tags:
+        - deploy
+
+- name: Run post-deployment verification
+  hosts: "{{ target | default('dev') }}"
+  become: true
+  tasks:
+    - name: Check application health endpoint
+      uri:
+        url: "{{ healthcheck_endpoint }}"
+        status_code: 200
+      register: health_response
+      retries: 5
+      delay: 5
+      until: health_response.status == 200
+
+    - name: Emit deployment summary
+      debug:
+        msg: >-
+          Deployment complete for {{ inventory_hostname }} using channel
+          {{ deployment_channel }}. Health: {{ health_response.status }}.
