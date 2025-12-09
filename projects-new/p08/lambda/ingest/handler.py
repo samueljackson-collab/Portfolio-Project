@@ -68,12 +68,13 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise ValueError(error_msg)
 
         # Generate unique execution ID for idempotency tracking
-        execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{datetime.utcnow().isoformat()}"
+        now_iso = datetime.utcnow().isoformat()
+        execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
         # Check idempotency: If file already processed, skip (S3 eventual consistency protection)
         try:
             existing_item = metadata_table.get_item(
-                Key={'execution_id': execution_id}
+                Key={'execution_id': execution_id, 'timestamp': now_iso}
             )
             if 'Item' in existing_item and existing_item['Item'].get('status') == 'completed':
                 logger.warning(f"File already processed: {execution_id}, skipping duplicate")
