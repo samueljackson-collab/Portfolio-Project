@@ -1,0 +1,10 @@
+version: '3.9'
+services:
+  mock-api:
+    build: ./consumer
+    ports:
+      - "8080:8080"
+  test-runner:
+    build: ./producer
+    depends_on: [mock-api]
+    command: ["pytest", "tests"]

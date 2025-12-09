@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: region-a
+  namespace: multi-region
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: region-a
+  template:
+    metadata:
+      labels:
+        app: region-a
+    spec:
+      containers:
+        - name: region
+          image: multi-region/consumer:latest
+          env:
+            - name: REGION
+              value: a
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: region-b
+  namespace: multi-region
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: region-b
+  template:
+    metadata:
+      labels:
+        app: region-b
+    spec:
+      containers:
+        - name: region
+          image: multi-region/consumer:latest
+          env:
+            - name: REGION
+              value: b
