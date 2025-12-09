@@ -76,11 +76,16 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Raises:
         ValidationError: If schema validation fails (caught and routed to DLQ)
     """
-    execution_id = event['execution_id']
-    timestamp = event['timestamp']  # Range key from ingest Lambda
-    bucket = event['bucket']
-    key = event['key']
-    version_id = event.get('version_id')
+    # Extract required fields from event
+    try:
+        execution_id = event['execution_id']
+        timestamp = event['timestamp']  # Range key from ingest Lambda
+        bucket = event['bucket']
+        key = event['key']
+        version_id = event.get('version_id')
+    except KeyError as e:
+        logger.error(f"Missing required field in event: {e}")
+        raise ValueError(f"Invalid event structure: missing {e}")
 
     logger.info(f"Validating file: s3://{bucket}/{key} (execution_id: {execution_id})")
 
@@ -163,7 +168,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Validation failed with unexpected error: {e}", exc_info=True)
-        update_metadata_status(execution_id, timestamp, 'validation_failed', str(e))
+        # Only update metadata if we successfully extracted execution_id and timestamp
+        try:
+            update_metadata_status(execution_id, timestamp, 'validation_failed', str(e))
+        except NameError:
+            # execution_id or timestamp not defined, skip metadata update
+            logger.warning("Cannot update metadata status: execution_id or timestamp not available")
         raise
 
 
