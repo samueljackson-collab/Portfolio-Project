@@ -68,13 +68,15 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise ValueError(error_msg)
 
         # Generate unique execution ID for idempotency tracking
-        now_iso = datetime.utcnow().isoformat()
+        now_utc = datetime.utcnow()
+        now_iso = now_utc.isoformat()
+        now_timestamp_ms = int(now_utc.timestamp() * 1000)  # milliseconds since epoch
         execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
         # Check idempotency: If file already processed, skip (S3 eventual consistency protection)
         try:
             existing_item = metadata_table.get_item(
-                Key={'execution_id': execution_id, 'timestamp': now_iso}
+                Key={'execution_id': execution_id, 'timestamp': now_timestamp_ms}
             )
             if 'Item' in existing_item and existing_item['Item'].get('status') == 'completed':
                 logger.warning(f"File already processed: {execution_id}, skipping duplicate")
@@ -102,9 +104,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise
 
         # Write metadata to DynamoDB (initial status: ingested)
-        timestamp = datetime.utcnow().isoformat()
         metadata_item = {
             'execution_id': execution_id,
+            'timestamp': now_timestamp_ms,  # Required: part of composite primary key
             'bucket': bucket,
             'key': key,
             'version_id': version_id,
@@ -112,8 +114,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'content_type': content_type,
             'last_modified': last_modified,
             'status': 'ingested',
-            'ingestion_timestamp': timestamp,
-            'ttl': int(datetime.utcnow().timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
+            'ingestion_timestamp': now_iso,
+            'ttl': int(now_utc.timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
         }
 
         try:
@@ -133,16 +135,16 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'size_bytes': size_bytes,
             'content_type': content_type,
             'duplicate': False,
-            'timestamp': timestamp
+            'timestamp': now_iso
         }
 
     except Exception as e:
         logger.error(f"Ingest failed: {e}", exc_info=True)
-        # Update DynamoDB with error status if execution_id exists
-        if 'execution_id' in locals():
+        # Update DynamoDB with error status if execution_id and timestamp exist
+        if 'execution_id' in locals() and 'now_timestamp_ms' in locals():
             try:
                 metadata_table.update_item(
-                    Key={'execution_id': execution_id},
+                    Key={'execution_id': execution_id, 'timestamp': now_timestamp_ms},
                     UpdateExpression='SET #status = :status, error_message = :error',
                     ExpressionAttributeNames={'#status': 'status'},
                     ExpressionAttributeValues={
