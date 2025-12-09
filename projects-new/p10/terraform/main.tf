@@ -63,11 +63,38 @@ resource "aws_s3_bucket_versioning" "silver" {
   }
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "silver" {
+  bucket = aws_s3_bucket.silver.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.datalake.arn
+    }
+  }
+}
+
 resource "aws_s3_bucket" "gold" {
   bucket = "${var.project_name}-gold"
   tags = {
     Project = "P10"
     Zone    = "Gold"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "gold" {
+  bucket = aws_s3_bucket.gold.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "gold" {
+  bucket = aws_s3_bucket.gold.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.datalake.arn
+    }
   }
 }
 
