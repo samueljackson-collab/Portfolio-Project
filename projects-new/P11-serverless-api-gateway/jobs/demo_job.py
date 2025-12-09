@@ -15,14 +15,14 @@ def enrich_payload(raw_path: Path) -> Path:
 
 
 def test_enrich_roundtrip():
-    tmp = Path("/tmp/demo_raw.json")
-    tmp.write_text(json.dumps({"hello": "world"}))
-    enriched = enrich_payload(tmp)
-    assert enriched.exists()
-    data = json.loads(enriched.read_text())
-    assert "checksum" in data
-    tmp.unlink()
-    enriched.unlink()
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir) / "demo_raw.json"
+        tmp.write_text(json.dumps({"hello": "world"}))
+        enriched = enrich_payload(tmp)
+        assert enriched.exists()
+        data = json.loads(enriched.read_text())
+        assert "checksum" in data
 
 
 if __name__ == "__main__":
