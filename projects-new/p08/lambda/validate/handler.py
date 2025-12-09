@@ -76,6 +76,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Raises:
         ValidationError: If schema validation fails (caught and routed to DLQ)
     """
+    execution_id = None
+    timestamp = None
+    
     # Extract required fields from event
     try:
         execution_id = event['execution_id']
@@ -169,10 +172,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Validation failed with unexpected error: {e}", exc_info=True)
         # Only update metadata if we successfully extracted execution_id and timestamp
-        try:
+        if execution_id is not None and timestamp is not None:
             update_metadata_status(execution_id, timestamp, 'validation_failed', str(e))
-        except NameError:
-            # execution_id or timestamp not defined, skip metadata update
+        else:
             logger.warning("Cannot update metadata status: execution_id or timestamp not available")
         raise
 
