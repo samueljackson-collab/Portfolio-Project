@@ -140,8 +140,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Ingest failed: {e}", exc_info=True)
-        # Update DynamoDB with error status if execution_id exists
-        if 'execution_id' in locals():
+        # Update DynamoDB with error status if execution_id and timestamp exist
+        if 'execution_id' in locals() and 'now_timestamp_ms' in locals():
             try:
                 metadata_table.update_item(
                     Key={'execution_id': execution_id, 'timestamp': now_timestamp_ms},
