@@ -43,6 +43,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Raises:
         Exception: If S3 read or DynamoDB write fails after retries
     """
+    execution_id = None
+    timestamp_numeric = None
+    
     try:
         # Parse S3 event (handle both direct S3 event and Step Functions wrapper)
         if 'detail' in event:  # EventBridge S3 event
@@ -151,7 +154,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Ingest failed: {e}", exc_info=True)
         # Update DynamoDB with error status if execution_id and timestamp exist
-        if 'execution_id' in locals() and 'timestamp_numeric' in locals():
+        if execution_id is not None and timestamp_numeric is not None:
             try:
                 metadata_table.update_item(
                     Key={'execution_id': execution_id, 'timestamp': timestamp_numeric},
