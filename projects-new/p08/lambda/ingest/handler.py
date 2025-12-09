@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 import boto3
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
 # Configure logging
@@ -42,6 +43,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Raises:
         Exception: If S3 read or DynamoDB write fails after retries
     """
+    execution_id = None
+    timestamp_numeric = None
+    
     try:
         # Parse S3 event (handle both direct S3 event and Step Functions wrapper)
         if 'detail' in event:  # EventBridge S3 event
@@ -68,20 +72,30 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise ValueError(error_msg)
 
         # Generate unique execution ID for idempotency tracking
-        now_iso = datetime.utcnow().isoformat()
-        execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
+        # Note: execution_id is deterministic based on S3 object, not including timestamp
+        # so we can detect duplicate processing attempts
+        execution_id = f"{bucket}/{key}/{version_id or 'no-version'}"
+        
+        # Generate timestamp for range key
+        now = datetime.utcnow()
+        timestamp_numeric = int(now.timestamp() * 1000)  # Milliseconds since epoch
 
-        # Check idempotency: If file already processed, skip (S3 eventual consistency protection)
+        # Check idempotency: Query for existing items with this execution_id
+        # If any are in 'completed' status, skip processing
         try:
-            existing_item = metadata_table.get_item(
-                Key={'execution_id': execution_id, 'timestamp': now_iso}
+            response = metadata_table.query(
+                KeyConditionExpression=Key('execution_id').eq(execution_id),
+                Limit=1,
+                ScanIndexForward=False  # Get most recent first
             )
-            if 'Item' in existing_item and existing_item['Item'].get('status') == 'completed':
+            if response['Items'] and response['Items'][0].get('status') == 'completed':
+                existing_item = response['Items'][0]
                 logger.warning(f"File already processed: {execution_id}, skipping duplicate")
                 return {
                     'statusCode': 200,
                     'duplicate': True,
                     'execution_id': execution_id,
+                    'timestamp': existing_item['timestamp'],
                     'message': 'Duplicate file, skipped processing'
                 }
         except ClientError as e:
@@ -102,9 +116,10 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise
 
         # Write metadata to DynamoDB (initial status: ingested)
-        timestamp = datetime.utcnow().isoformat()
+        timestamp_iso = now.isoformat()
         metadata_item = {
             'execution_id': execution_id,
+            'timestamp': timestamp_numeric,  # Range key (Number)
             'bucket': bucket,
             'key': key,
             'version_id': version_id,
@@ -112,8 +127,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'content_type': content_type,
             'last_modified': last_modified,
             'status': 'ingested',
-            'ingestion_timestamp': timestamp,
-            'ttl': int(datetime.utcnow().timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
+            'ingestion_timestamp': timestamp_iso,
+            'ttl': int(now.timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
         }
 
         try:
@@ -133,16 +148,16 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'size_bytes': size_bytes,
             'content_type': content_type,
             'duplicate': False,
-            'timestamp': timestamp
+            'timestamp': timestamp_numeric
         }
 
     except Exception as e:
         logger.error(f"Ingest failed: {e}", exc_info=True)
-        # Update DynamoDB with error status if execution_id exists
-        if 'execution_id' in locals():
+        # Update DynamoDB with error status if execution_id and timestamp exist
+        if execution_id is not None and timestamp_numeric is not None:
             try:
                 metadata_table.update_item(
-                    Key={'execution_id': execution_id},
+                    Key={'execution_id': execution_id, 'timestamp': timestamp_numeric},
                     UpdateExpression='SET #status = :status, error_message = :error',
                     ExpressionAttributeNames={'#status': 'status'},
                     ExpressionAttributeValues={

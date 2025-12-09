@@ -76,10 +76,19 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Raises:
         ValidationError: If schema validation fails (caught and routed to DLQ)
     """
-    execution_id = event['execution_id']
-    bucket = event['bucket']
-    key = event['key']
-    version_id = event.get('version_id')
+    execution_id = None
+    timestamp = None
+    
+    # Extract required fields from event
+    try:
+        execution_id = event['execution_id']
+        timestamp = event['timestamp']  # Range key from ingest Lambda
+        bucket = event['bucket']
+        key = event['key']
+        version_id = event.get('version_id')
+    except KeyError as e:
+        logger.error(f"Missing required field in event: {e}")
+        raise ValueError(f"Invalid event structure: missing {e}")
 
     logger.info(f"Validating file: s3://{bucket}/{key} (execution_id: {execution_id})")
 
@@ -107,7 +116,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             error_msg = f"Invalid JSON: {e}"
             logger.error(error_msg)
             send_to_dlq(event, error_msg, "JSONDecodeError")
-            update_metadata_status(execution_id, 'validation_failed', error_msg)
+            update_metadata_status(execution_id, timestamp, 'validation_failed', error_msg)
             raise ValidationError(error_msg)
 
         # Validate against schema
@@ -118,7 +127,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             error_msg = f"Schema validation failed: {e.message} at path {list(e.path)}"
             logger.error(error_msg)
             send_to_dlq(event, error_msg, "SchemaValidationError")
-            update_metadata_status(execution_id, 'validation_failed', error_msg)
+            update_metadata_status(execution_id, timestamp, 'validation_failed', error_msg)
             raise ValidationError(error_msg)
 
         # Additional business rule validations
@@ -141,11 +150,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             error_msg = "; ".join(validation_errors)
             logger.error(f"Business rule validation failed: {error_msg}")
             send_to_dlq(event, error_msg, "BusinessRuleViolation")
-            update_metadata_status(execution_id, 'validation_failed', error_msg)
+            update_metadata_status(execution_id, timestamp, 'validation_failed', error_msg)
             raise ValidationError(error_msg)
 
         # Update DynamoDB: validation succeeded
-        update_metadata_status(execution_id, 'validated', None)
+        update_metadata_status(execution_id, timestamp, 'validated', None)
 
         # Return payload for next state (transform)
         return {
@@ -162,7 +171,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Validation failed with unexpected error: {e}", exc_info=True)
-        update_metadata_status(execution_id, 'validation_failed', str(e))
+        # Only update metadata if we successfully extracted execution_id and timestamp
+        if execution_id is not None and timestamp is not None:
+            update_metadata_status(execution_id, timestamp, 'validation_failed', str(e))
+        else:
+            logger.warning("Cannot update metadata status: execution_id or timestamp not available")
         raise
 
 
@@ -220,12 +233,13 @@ def send_to_dlq(event: Dict[str, Any], error_message: str, error_type: str) -> N
         # Don't raise - DLQ failure shouldn't block error handling
 
 
-def update_metadata_status(execution_id: str, status: str, error_message: Optional[str]) -> None:
+def update_metadata_status(execution_id: str, timestamp: int, status: str, error_message: Optional[str]) -> None:
     """
     Update DynamoDB metadata table with validation status.
 
     Args:
-        execution_id: Unique execution identifier
+        execution_id: Unique execution identifier (hash key)
+        timestamp: Timestamp in milliseconds since epoch (range key)
         status: New status (validated, validation_failed)
         error_message: Error description if failed
     """
@@ -241,7 +255,7 @@ def update_metadata_status(execution_id: str, status: str, error_message: Option
             expression_values[':error'] = error_message
 
         metadata_table.update_item(
-            Key={'execution_id': execution_id},
+            Key={'execution_id': execution_id, 'timestamp': timestamp},
             UpdateExpression=update_expression,
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues=expression_values
