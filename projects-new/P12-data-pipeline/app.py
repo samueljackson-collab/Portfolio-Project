@@ -20,7 +20,7 @@ def load(dataset: str) -> str:
 
 def run_dag() -> list[str]:
     steps = []
-    steps.append(f"[{datetime.utcnow().isoformat()}Z] Starting DAG run")
+    steps.append(f"[{datetime.utcnow().isoformat() + 'Z'}] Starting DAG run")
     raw = extract()
     steps.append(f"extract -> {raw}")
     cleaned = transform(raw)
