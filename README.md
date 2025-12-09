@@ -33,6 +33,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 ## 📘 Guides
 
 - [Wiki.js Setup Guide](./docs/wiki-js-setup-guide.md) — Complete walkthrough to deploy, harden, and populate a Wiki.js instance for portfolio documentation.
+- [Portfolio Architecture Diagrams – Part 2](./docs/PORTFOLIO_ARCHITECTURE_DIAGRAMS_PART2.md) — Four homelab diagrams (migration roadmap, data flow, topology, AWS mapping) with supporting materials for interviews.
 
 ## 💻 UI Components
 
