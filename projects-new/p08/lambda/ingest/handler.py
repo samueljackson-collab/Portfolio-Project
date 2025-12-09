@@ -42,6 +42,10 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Raises:
         Exception: If S3 read or DynamoDB write fails after retries
     """
+    # Initialize variables for error handling
+    execution_id = None
+    timestamp_unix = None
+    
     try:
         # Parse S3 event (handle both direct S3 event and Step Functions wrapper)
         if 'detail' in event:  # EventBridge S3 event
@@ -72,22 +76,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         timestamp_unix = int(datetime.utcnow().timestamp() * 1000)  # Milliseconds since epoch
         execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
-        # Check idempotency: If file already processed, skip (S3 eventual consistency protection)
-        try:
-            existing_item = metadata_table.get_item(
-                Key={'execution_id': execution_id, 'timestamp': timestamp_unix}
-            )
-            if 'Item' in existing_item and existing_item['Item'].get('status') == 'completed':
-                logger.warning(f"File already processed: {execution_id}, skipping duplicate")
-                return {
-                    'statusCode': 200,
-                    'duplicate': True,
-                    'execution_id': execution_id,
-                    'message': 'Duplicate file, skipped processing'
-                }
-        except ClientError as e:
-            if e.response['Error']['Code'] != 'ResourceNotFoundException':
-                raise
+        # NOTE: Idempotency check removed. The current design includes timestamp in execution_id,
+        # making each invocation unique. A proper idempotency mechanism would require:
+        # 1. Using bucket/key/version_id as the execution_id (without timestamp)
+        # 2. Using DynamoDB conditional writes or a GSI for duplicate detection
+        # This is beyond the scope of the current fix and should be addressed separately.
 
         # Read S3 object metadata (but not full content yet - validate first)
         try:
@@ -141,8 +134,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Ingest failed: {e}", exc_info=True)
-        # Update DynamoDB with error status if execution_id exists
-        if 'execution_id' in locals() and 'timestamp_unix' in locals():
+        # Update DynamoDB with error status if possible
+        if execution_id and timestamp_unix:
             try:
                 metadata_table.update_item(
                     Key={'execution_id': execution_id, 'timestamp': timestamp_unix},
