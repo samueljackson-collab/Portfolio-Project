@@ -4,7 +4,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import os
 from typing import Optional
-import jwt
 
 from .retrieval import hybrid_search, rerank
 from .generation import generate_response, stream_response
