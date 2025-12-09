@@ -20,6 +20,7 @@ This index consolidates every high-signal document that ships with the enterpris
 | ✅ | `PORTFOLIO_INFRASTRUCTURE_GUIDE.md` | `/` | Hands-on provisioning guide for shared services. |
 | 🔁 | `PR_DESCRIPTION_DOCS_HUB.md` | `/` | PR template that enumerates required documents and testing expectations. |
 | 🔁 | `DOCUMENTATION_INDEX.md` → `## Navigation Guide` | `/` | Lightweight instructions for locating survey, matrix, and analysis artifacts. |
+| ✅ | `adr/` (ADR-001 → ADR-007) | `/adr` | Architecture decision records implementing Master Factory deliverables. |
 
 ---
 
