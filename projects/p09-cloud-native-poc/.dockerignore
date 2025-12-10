@@ -1,0 +1,24 @@
+# Ignore local environment and build artifacts
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache
+htmlcov
+coverage.xml
+*.log
+*.sqlite
+
+# VCS and editor settings
+.git
+.gitignore
+*.swp
+.idea
+.vscode
+
+# Dependency caches
+node_modules
+*.egg-info
+build
+dist
