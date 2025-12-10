@@ -2,9 +2,15 @@
 
 ## Complete Guide to Portfolio Enhancement (Part 2 of 3)
 
-**Part 1:** See `AI_PROMPT_LIBRARY.md` for Critical & High priority prompts  
-**Part 2:** This document (Medium & Low priorities)  
+**Part 1:** See `AI_PROMPT_LIBRARY.md` for Critical & High priority prompts
+**Part 2:** This document (Medium & Low priorities)
 **Part 3:** See `AI_PROMPT_EXECUTION_FRAMEWORK.md` for execution strategies
+
+### Master Factory Alignment (Required for Every Prompt Here)
+- **Ship runnable assets:** Every output must include a runnable asset pack (code, configs, sample data, docs) that can be executed or previewed without additional authoring.
+- **Follow the startup recipe:** Use the Master Factory startup recipe to bootstrap, package, and validate deliverables so they launch cleanly. See the quick link to the recipe in `AI_PROMPT_EXECUTION_FRAMEWORK.md` and mirror its steps when drafting prompts.
+- **Close with the checklist:** Before marking a prompt done, run through `PROJECT_COMPLETION_CHECKLIST.md` to verify environments, documentation, and QA gates are covered.
+- **Embed links in prompts:** Each prompt below explicitly references the startup recipe and checklist to keep Medium/Low workstreams aligned with the Master Factory rules.
 
 ---
 
@@ -21,6 +27,10 @@
 **Prompt:**
 ```
 Create a complete enterprise observability stack project demonstrating production monitoring best practices.
+
+Master Factory delivery guardrails:
+- Provide a runnable asset pack (code, configs, sample data, docs) that can be executed per the Master Factory startup recipe in `AI_PROMPT_EXECUTION_FRAMEWORK.md`.
+- Include a quickstart and verification notes aligned to `PROJECT_COMPLETION_CHECKLIST.md` to confirm the stack launches cleanly.
 
 PROJECT OVERVIEW:
 Name: Enterprise Observability Stack
@@ -172,6 +182,10 @@ observability-stack/
 ```
 Create a comprehensive network segmentation project demonstrating enterprise security practices.
 
+Master Factory delivery guardrails:
+- Ship runnable configs, scripts, sample data, and docs that can be applied directly using the startup recipe steps in `AI_PROMPT_EXECUTION_FRAMEWORK.md`.
+- Add quickstart validation steps tied to `PROJECT_COMPLETION_CHECKLIST.md` so the lab build passes smoke checks.
+
 PROJECT: Secure Network Architecture with VLAN Segmentation
 
 SCENARIO:
@@ -240,6 +254,10 @@ network-segmentation/
 ```
 Create a complete PostgreSQL high availability cluster project.
 
+Master Factory delivery guardrails:
+- Deliver runnable assets (compose files, configs, seed data, docs) that follow the startup recipe steps in `AI_PROMPT_EXECUTION_FRAMEWORK.md`.
+- Embed smoke-test commands and checklist references from `PROJECT_COMPLETION_CHECKLIST.md` to prove the cluster spins up and fails over cleanly.
+
 ARCHITECTURE:
 - Primary + 2 synchronous replicas + 1 asynchronous replica
 - Patroni + etcd for failover, HAProxy for routing, PgBouncer for pooling
@@ -292,6 +310,10 @@ postgresql-ha-cluster/
 ```
 Create a comprehensive end-to-end QA automation framework.
 
+Master Factory delivery guardrails:
+- Provide runnable automation assets (framework code, configs, sample data, docs) wired to the startup recipe in `AI_PROMPT_EXECUTION_FRAMEWORK.md`.
+- Include quickstart/run instructions and QA checkpoints that map to `PROJECT_COMPLETION_CHECKLIST.md`.
+
 REQUIREMENTS:
 - Test pyramid (unit, integration, e2e, performance, security)
 - Python (Pytest) or JavaScript stack (Playwright) with POM design
@@ -319,6 +341,10 @@ REQUIREMENTS:
 **Prompt:**
 ```
 Create a comprehensive technical blog post.
+
+Master Factory delivery guardrails:
+- Bundle runnable/supporting assets (code snippets in repos, config examples, draft images, docs) with links to the startup recipe flow in `AI_PROMPT_EXECUTION_FRAMEWORK.md`.
+- Add a publication-ready checklist reference to `PROJECT_COMPLETION_CHECKLIST.md` so SEO, QA, and linking steps are verifiable.
 
 TOPIC: Choose from "Building a Production Homelab", "Terraform Best Practices", "PostgreSQL Performance Tuning", "Kubernetes Monitoring with Prometheus"
 
@@ -349,6 +375,10 @@ REQUIREMENTS:
 ```
 Optimize my GitHub profile for maximum recruiter visibility.
 
+Master Factory delivery guardrails:
+- Provide runnable asset updates (profile README, workflow configs, data-driven badges) with a quickstart aligned to the startup recipe in `AI_PROMPT_EXECUTION_FRAMEWORK.md`.
+- Include a closing validation checklist tied to `PROJECT_COMPLETION_CHECKLIST.md` to confirm links, badges, and workflows work as shipped.
+
 DELIVERABLES:
 1. PROFILE README (hero, skills, featured projects, stats, contact)
 2. REPOSITORY OPTIMIZATION CHECKLIST (naming, README, tags, license, templates)
@@ -368,6 +398,8 @@ DELIVERABLES:
 ---
 
 ## 🔵 Low Priority (Future Enhancements)
+
+Apply the same Master Factory delivery rules here—ship runnable code/config/data/docs bundles, follow the startup recipe for set-up, and close each effort with `PROJECT_COMPLETION_CHECKLIST.md`.
 
 - **LOW-001:** Additional Cloud Projects (multi-region DR, service mesh, IAM automation)
 - **LOW-002:** Advanced Kubernetes Work (operators, custom controllers, policy engines)
