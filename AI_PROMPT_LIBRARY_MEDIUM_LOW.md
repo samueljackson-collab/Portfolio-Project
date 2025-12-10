@@ -2,9 +2,21 @@
 
 ## Complete Guide to Portfolio Enhancement (Part 2 of 3)
 
-**Part 1:** See `AI_PROMPT_LIBRARY.md` for Critical & High priority prompts  
-**Part 2:** This document (Medium & Low priorities)  
+**Part 1:** See `AI_PROMPT_LIBRARY.md` for Critical & High priority prompts
+**Part 2:** This document (Medium & Low priorities)
 **Part 3:** See `AI_PROMPT_EXECUTION_FRAMEWORK.md` for execution strategies
+
+All prompts must follow `docs/MASTER_FACTORY_PROMPT.md` behavior rules: produce full, runnable deliverables (code, config, sample data, docs) from the first response. Include run commands, entry points, and validation steps in every output.
+
+### Deliverable-First Prompt Template
+```
+PROMPT ID: [Unique identifier]
+PURPOSE: [What this generates]
+DELIVERABLES: [Code/config/data/docs emitted in the response]
+RUN INSTRUCTIONS: [Commands to run and validate]
+PROMPT: [The actual prompt text]
+POST-PROCESSING: [How to polish and test]
+```
 
 ---
 
