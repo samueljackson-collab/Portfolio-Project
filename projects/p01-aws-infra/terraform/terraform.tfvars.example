@@ -1,0 +1,23 @@
+# Copy this file to terraform.tfvars and fill in your values
+# Never commit terraform.tfvars to version control!
+
+aws_region  = "us-east-1"
+environment = "dev"
+
+# VPC Configuration
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["us-east-1a", "us-east-1b", "us-east-1c"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+private_subnet_cidrs = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+# NAT Gateway Configuration
+enable_nat_gateway = true
+single_nat_gateway = true  # Set to false for production (one NAT per AZ)
+
+# RDS Configuration
+db_name                 = "myappdb"
+db_instance_class       = "db.t3.micro"
+db_master_username      = "admin"
+db_master_password      = "CHANGE_ME_USE_AWS_SECRETS_MANAGER"  # Use AWS Secrets Manager in production
+multi_az                = true
+backup_retention_period = 7
