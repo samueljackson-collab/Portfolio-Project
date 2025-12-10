@@ -1,17 +1,23 @@
-'use strict';
+import { handler as createHandler } from '../../src/handlers/create.js';
 
-const { handler } = require('../../src/handlers/create');
+const mockSend = jest.fn().mockResolvedValue({});
+jest.mock('@aws-sdk/client-dynamodb', () => ({
+  DynamoDBClient: jest.fn(() => ({ send: mockSend })),
+  PutItemCommand: jest.fn((input) => ({ input })),
+}));
+
+jest.mock('uuid', () => ({ v4: () => 'test-id' }));
 
 describe('create handler', () => {
-  it('returns 201 with item payload', async () => {
-    const event = { body: JSON.stringify({ name: 'test' }), requestContext: { requestId: 'abc-123' } };
-    const result = await handler(event);
+  beforeEach(() => {
+    mockSend.mockClear();
+  });
 
-    expect(result.statusCode).toBe(201);
-    const body = JSON.parse(result.body);
-    expect(body.message).toBe('Item created');
-    expect(body.item.id).toBeDefined();
-    expect(body.item.name).toBe('test');
-    expect(body.item.persisted).toBe(true);
+  it('creates an item and returns 201', async () => {
+    const response = await createHandler({ body: JSON.stringify({ payload: 'hello' }) });
+
+    expect(response.statusCode).toBe(201);
+    expect(JSON.parse(response.body)).toMatchObject({ id: 'test-id', message: 'Item created' });
+    expect(mockSend).toHaveBeenCalledTimes(1);
   });
 });

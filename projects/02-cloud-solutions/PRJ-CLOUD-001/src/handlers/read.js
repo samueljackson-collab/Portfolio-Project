@@ -1,33 +1,42 @@
-'use strict';
+import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
 
-const log = (level, message, context = {}) => {
-  console.log(JSON.stringify({ level, message, ...context }));
-};
+const dynamo = new DynamoDBClient({});
+const TABLE_NAME = process.env.TABLE_NAME;
 
-const response = (statusCode, body) => ({
-  statusCode,
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(body),
-});
+export const handler = async (event) => {
+  try {
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Missing id parameter' }) };
+    }
 
-module.exports.handler = async (event) => {
-  log('INFO', 'Received read request', { requestId: event?.requestContext?.requestId });
+    const result = await dynamo.send(
+      new GetItemCommand({
+        TableName: TABLE_NAME,
+        Key: { id: { S: id } },
+        ConsistentRead: true,
+      })
+    );
 
-  const id = event?.pathParameters?.id;
-  if (!id) {
-    log('WARN', 'Missing path parameter: id');
-    return response(400, { message: 'Item id is required' });
+    if (!result.Item) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Item not found' }) };
+    }
+
+    const item = {
+      id: result.Item.id.S,
+      payload: result.Item.payload?.S,
+      createdAt: result.Item.createdAt?.S,
+    };
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify(item),
+    };
+  } catch (error) {
+    console.error('Read handler error', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to read item' }),
+    };
   }
-
-  // Placeholder for DynamoDB getItem call; returning mock data for portfolio purposes.
-  const item = {
-    id,
-    name: 'example',
-    createdAt: '2024-01-01T00:00:00.000Z',
-    metadata: { source: 'mock' },
-  };
-
-  log('DEBUG', 'Retrieved item', { item });
-
-  return response(200, { message: 'Item retrieved', item });
 };

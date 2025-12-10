@@ -1,14 +1,16 @@
-service: prj-cloud-001-serverless-data-api
+service: prj-cloud-001-crud-api
 frameworkVersion: '3'
+
+plugins:
+  - serverless-offline
 
 provider:
   name: aws
   runtime: nodejs18.x
-  region: us-east-1
   stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
   environment:
     TABLE_NAME: ${self:service}-${self:provider.stage}-items
-    LOG_LEVEL: INFO
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -20,20 +22,20 @@ provider:
 functions:
   create:
     handler: src/handlers/create.handler
-    description: Create an item in DynamoDB via API Gateway
+    description: Create an item in DynamoDB via HTTP POST.
     events:
       - httpApi:
           path: /items
           method: post
-          authorizer: none
+          payload: '2.0'
   read:
     handler: src/handlers/read.handler
-    description: Read an item from DynamoDB via API Gateway
+    description: Retrieve an item from DynamoDB via HTTP GET.
     events:
       - httpApi:
           path: /items/{id}
           method: get
-          authorizer: none
+          payload: '2.0'
 
 resources:
   Resources:

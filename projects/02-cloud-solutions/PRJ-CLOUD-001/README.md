@@ -1,40 +1,29 @@
-# Serverless Data API (PRJ-CLOUD-001)
+# Serverless CRUD API (PRJ-CLOUD-001)
 
-**Status:** 🟢 Planned
+This project introduces a lightweight serverless CRUD API backed by Amazon DynamoDB. It demonstrates how to combine the Serverless Framework, AWS Lambda, and DynamoDB to deliver a quick-start cloud solution for portfolio examples.
 
-## Overview
+## Architecture Overview
+- **API Gateway (HTTP API)** fronts Lambda functions that handle create and read operations.
+- **AWS Lambda** functions live in `src/handlers` and encapsulate business logic.
+- **DynamoDB** stores items keyed by a unique identifier.
+- **Infrastructure-as-Code** uses `serverless.yml` to define the service, provider configuration, functions, IAM permissions, and DynamoDB resources.
 
-This project delivers a small AWS serverless REST API that demonstrates cloud solution patterns, including IAM least privilege, environment-specific configuration, and automated deployments. It uses the Serverless Framework to orchestrate Lambda functions, API Gateway routing, and DynamoDB data persistence while keeping all infrastructure as code.
+## Getting Started
+1. Install the Serverless Framework and dependencies.
+2. Set the `AWS_PROFILE` environment variable or rely on your default credentials.
+3. Deploy the stack: `serverless deploy --stage dev`.
+4. Use the printed HTTP endpoints to create and read records.
 
-## Architecture
+## Project Structure
+- `serverless.yml` — Service, provider, function definitions, and DynamoDB table resource.
+- `src/handlers/create.js` — Lambda handler that writes an item to DynamoDB.
+- `src/handlers/read.js` — Lambda handler that retrieves an item by ID.
+- `tests/unit` — Optional Jest tests validating handler shape and basic behavior.
 
-- **API Gateway** exposes `POST /items` and `GET /items/{id}` routes.
-- **AWS Lambda** handlers perform create and read operations.
-- **DynamoDB** stores item records with strong consistency options for reads.
-- **CloudWatch Logs** capture structured JSON logs for observability.
-- **Serverless Framework** manages packaging, deployment, and environment variables.
+## Expected Keywords Checklist
+- **Service Definition**: `service`, `frameworkVersion`, and `plugins` entries exist.
+- **Provider Settings**: includes `name`, `runtime`, `region`, `stage`, `environment`, and `iamRoleStatements`.
+- **Functions**: `create` and `read` functions expose `handler`, `events`, and request/response configuration.
+- **DynamoDB Integration**: resources include a DynamoDB table with `BillingMode`, `AttributeDefinitions`, `KeySchema`, and a table name that matches handler environment variables.
 
-## Deployment
-
-1. Install the Serverless Framework CLI and authenticate with AWS using an IAM role that supports CloudFormation deployments.
-2. Configure the `AWS_PROFILE` or environment-based credentials for the target account.
-3. Run `npm install` to install runtime and dev dependencies for the handlers and tests.
-4. Deploy the stack with `serverless deploy --stage dev` or `sls deploy --stage prod`.
-5. Validate endpoints with `curl` or a REST client, ensuring HTTP 201 on creation and 200 on reads.
-
-## Local Development
-
-- Use `npm run lint` to check for code quality issues.
-- Run `npm test` to execute the unit tests under `tests/unit`.
-- Leverage `sls invoke local -f create` to exercise the Lambda handler with local payloads.
-- Update the `serverless.yml` file to add new resources (e.g., DLQ, alarms) following AWS best practices.
-
-## Future Enhancements
-
-- Add request validation with API Gateway models and Lambda Powertools for observability.
-- Implement CI/CD via GitHub Actions to lint, test, and deploy on merge.
-- Introduce fine-grained IAM policies for DynamoDB access per stage.
-
-## Contact
-
-For questions, reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
+Ensure you review and adjust configuration values (regions, stages, and naming) before deployment.
