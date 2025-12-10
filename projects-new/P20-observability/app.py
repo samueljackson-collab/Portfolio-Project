@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 ARTIFACT = Path("artifacts/telemetry_bundle.json")
 ARTIFACT.parent.mkdir(exist_ok=True)
@@ -9,7 +9,7 @@ ARTIFACT.parent.mkdir(exist_ok=True)
 
 def collect_telemetry() -> dict:
     return {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "metrics": {"latency_ms": 42, "throughput_rps": 128},
         "logs": ["service started", "handled request", "exported metrics"],
         "traces": ["trace-abc123"],
