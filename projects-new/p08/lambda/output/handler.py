@@ -23,7 +23,7 @@ def lambda_handler(event, context):
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'COMPLETED',
-                ':time': datetime.now(timezone.utc).isoformat()
+                ':time': datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             }
         )
 

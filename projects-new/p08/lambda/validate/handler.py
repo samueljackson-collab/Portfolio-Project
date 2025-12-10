@@ -154,7 +154,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'schema_name': schema_name,
             'schema_version': schema.get('$id', 'unknown'),
             'record_count': 1,  # For batch processing, count records
-            'validation_timestamp': datetime.now(timezone.utc).isoformat()
+            'validation_timestamp': datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }
 
     except ValidationError:
@@ -202,7 +202,7 @@ def send_to_dlq(event: Dict[str, Any], error_message: str, error_type: str) -> N
             'key': event['key'],
             'error_type': error_type,
             'error_message': error_message,
-            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             'original_event': event
         }
 
@@ -233,7 +233,7 @@ def update_metadata_status(execution_id: str, status: str, error_message: Option
         update_expression = 'SET #status = :status, validation_timestamp = :timestamp'
         expression_values = {
             ':status': status,
-            ':timestamp': datetime.now(timezone.utc).isoformat()
+            ':timestamp': datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }
 
         if error_message:

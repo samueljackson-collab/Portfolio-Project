@@ -20,7 +20,7 @@ def lambda_handler(event, context):
             Key={'execution_id': execution_id, 'timestamp': event['timestamp']},
             UpdateExpression='SET #status = :status, transform_start = :start',
             ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={':status': 'TRANSFORMING', ':start': datetime.now(timezone.utc).isoformat()}
+            ExpressionAttributeValues={':status': 'TRANSFORMING', ':start': datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
         )
 
         # Download from S3
@@ -36,7 +36,7 @@ def lambda_handler(event, context):
             values = line.split(',')
             record = dict(zip(headers, values))
             # Add enrichment
-            record['processed_timestamp'] = datetime.now(timezone.utc).isoformat()
+            record['processed_timestamp'] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             record['processing_id'] = execution_id
             records.append(record)
 
@@ -60,7 +60,7 @@ def lambda_handler(event, context):
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'TRANSFORMED',
-                ':end': datetime.now(timezone.utc).isoformat(),
+                ':end': datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 ':key': output_key,
                 ':count': len(records)
             }
