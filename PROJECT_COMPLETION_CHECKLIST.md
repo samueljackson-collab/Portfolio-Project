@@ -4,6 +4,14 @@ Use this checklist to track completion status for each project in your portfolio
 
 ---
 
+## Scaffold Coverage (Infrastructure, Code, CI, Observability)
+
+- [x] PRJ-CLOUD-001 (Cloud Architecture) has IaC module, src placeholder, Dockerfile, CI workflow, observability configs, and smoke tests.
+- [x] PRJ-CLOUD-001 (Cloud Solutions) has IaC module, src placeholder, Dockerfile, CI workflow, observability configs, and smoke tests.
+- [x] PRJ-NET-DC-001 (Networking & Datacenter) has IaC module, src placeholder, Dockerfile, CI workflow, observability configs, and smoke tests.
+
+---
+
 ## PRJ-HOME-001: Homelab & Secure Network Build
 
 **Status:** 🟢 Complete (📝 Documentation Pending)

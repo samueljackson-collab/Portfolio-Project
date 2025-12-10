@@ -1,0 +1,33 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+positions:
+  filename: /var/lib/promtail/positions.yaml
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    tenant_id: prj-sde-002
+scrape_configs:
+  - job_name: system-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          host: demo-host
+          __path__: /var/log/*.log
+  - job_name: application-logs
+    pipeline_stages:
+      - docker: {}
+      - match:
+          selector: '{app="demo-api"}'
+          stages:
+            - regex:
+                expression: 'level=(?P<level>[A-Z]+)'
+            - labels:
+                severity: level
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: containers
+          app: demo-api
+          __path__: /var/lib/docker/containers/*/*-json.log

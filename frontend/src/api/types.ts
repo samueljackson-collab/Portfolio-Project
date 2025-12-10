@@ -124,3 +124,32 @@ export interface CalendarMonthResponse {
   dates: CalendarDateResponse[]
   total_photos: number
 }
+
+export interface OrchestrationPlan {
+  id: string
+  name: string
+  environment: string
+  description: string
+  playbook_path: string
+  tfvars_file: string
+  runbook: string
+}
+
+export interface OrchestrationRunRequest {
+  plan_id: string
+  parameters?: Record<string, string>
+}
+
+export interface OrchestrationRun {
+  id: string
+  plan_id: string
+  environment: string
+  status: 'running' | 'succeeded' | 'failed'
+  requested_by: string
+  parameters: Record<string, string>
+  started_at: string
+  finished_at: string | null
+  logs: string[]
+  artifacts: Record<string, string>
+  summary?: string
+}
