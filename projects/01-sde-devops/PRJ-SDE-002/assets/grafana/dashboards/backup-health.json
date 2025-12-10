@@ -39,7 +39,7 @@
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
-          "expr": "pbs_datastore_used_bytes{datastore=\"pbs-demo\"} / pbs_datastore_total_bytes{datastore=\"pbs-demo\"}",
+          "expr": "pbs_datastore_used_bytes{datastore=\"$datastore\"} / pbs_datastore_total_bytes{datastore=\"$datastore\"}",
           "refId": "A"
         }
       ],
