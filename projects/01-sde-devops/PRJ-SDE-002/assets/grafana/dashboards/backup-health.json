@@ -88,7 +88,7 @@
       "datasource": {"type": "prometheus", "uid": "prometheus"},
       "targets": [
         {
-          "expr": "predict_linear(pbs_datastore_used_bytes{datastore=\"pbs-demo\"}[2h], 12 * 3600) / pbs_datastore_total_bytes{datastore=\"pbs-demo\"}",
+          "expr": "predict_linear(pbs_datastore_used_bytes{datastore=\"$datastore\"}[2h], 12 * 3600) / pbs_datastore_total_bytes{datastore=\"$datastore\"}",
           "refId": "A"
         }
       ],
