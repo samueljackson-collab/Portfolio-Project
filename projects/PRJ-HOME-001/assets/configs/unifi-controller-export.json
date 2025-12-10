@@ -1,0 +1,69 @@
+{
+  "site_name": "Homelab",
+  "exported_at": "2025-03-15T12:00:00Z",
+  "devices": [
+    {
+      "model": "USW-24-POE",
+      "name": "core-switch",
+      "mac": "00:00:00:00:00:01",
+      "uplink_profile": "TRUSTED-TRUNK"
+    },
+    {
+      "model": "U6-Pro",
+      "name": "ap-office",
+      "mac": "00:00:00:00:00:11",
+      "uplink_profile": "AP-TRUNK"
+    },
+    {
+      "model": "U6-Pro",
+      "name": "ap-living",
+      "mac": "00:00:00:00:00:12",
+      "uplink_profile": "AP-TRUNK"
+    }
+  ],
+  "networks": [
+    { "name": "Mgmt", "vlan": 10, "subnet": "192.168.1.0/24", "dhcp_mode": "none" },
+    { "name": "IoT", "vlan": 20, "subnet": "192.168.20.0/24", "dhcp_mode": "none" },
+    { "name": "Guest", "vlan": 30, "subnet": "192.168.30.0/24", "dhcp_mode": "none", "captive_portal": true },
+    { "name": "Servers", "vlan": 40, "subnet": "192.168.40.0/24", "dhcp_mode": "none" },
+    { "name": "DMZ", "vlan": 50, "subnet": "192.168.50.0/24", "dhcp_mode": "none" }
+  ],
+  "wireless_networks": [
+    {
+      "ssid": "Homelab-Secure",
+      "auth": "wpa3-enterprise",
+      "vlan": 10,
+      "radius": { "host": "192.168.1.10", "secret": "REDACTED", "acct_port": 1813, "auth_port": 1812 },
+      "band_steering": true,
+      "fast_roaming": true
+    },
+    {
+      "ssid": "Homelab-IoT",
+      "auth": "wpa2-psk",
+      "passphrase": "REDACTED-psk",
+      "vlan": 20,
+      "isolation": true,
+      "schedule": "06:00-23:00"
+    },
+    {
+      "ssid": "Homelab-Guest",
+      "auth": "open",
+      "captive_portal": "https://guest-portal.example.local",
+      "vlan": 30,
+      "rate_limit_down_mbps": 20,
+      "rate_limit_up_mbps": 5
+    }
+  ],
+  "port_profiles": [
+    { "name": "TRUSTED-TRUNK", "native_vlan": 10, "tagged_vlans": [20, 30, 40, 50] },
+    { "name": "AP-TRUNK", "native_vlan": 10, "tagged_vlans": [20, 30] },
+    { "name": "SERVER-TRUNK", "native_vlan": 40, "tagged_vlans": [10, 20, 30, 50] },
+    { "name": "WAN", "native_vlan": null, "tagged_vlans": [] }
+  ],
+  "controller": {
+    "hostname": "unifi.lab.local",
+    "ui_access_cidrs": ["192.168.1.0/24", "10.8.0.0/24"],
+    "mfa_required": true,
+    "remote_access": false
+  }
+}
