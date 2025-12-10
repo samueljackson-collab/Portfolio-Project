@@ -3,7 +3,6 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import os
-from typing import Optional
 import jwt
 
 from .retrieval import hybrid_search, rerank
