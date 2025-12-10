@@ -2,7 +2,7 @@
 import json
 import os
 import boto3
-from datetime import datetime
+from datetime import datetime, timezone
 
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
@@ -23,7 +23,7 @@ def lambda_handler(event, context):
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'COMPLETED',
-                ':time': datetime.utcnow().isoformat()
+                ':time': datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             }
         )
 

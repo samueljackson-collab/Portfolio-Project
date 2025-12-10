@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import boto3
@@ -68,7 +68,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise ValueError(error_msg)
 
         # Generate unique execution ID for idempotency tracking
-        now_iso = datetime.utcnow().isoformat()
+        now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
         # Check idempotency: If file already processed, skip (S3 eventual consistency protection)
@@ -102,7 +102,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise
 
         # Write metadata to DynamoDB (initial status: ingested)
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         metadata_item = {
             'execution_id': execution_id,
             'bucket': bucket,
@@ -113,7 +113,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'last_modified': last_modified,
             'status': 'ingested',
             'ingestion_timestamp': timestamp,
-            'ttl': int(datetime.utcnow().timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
+            'ttl': int(datetime.now(timezone.utc).timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
         }
 
         try:
