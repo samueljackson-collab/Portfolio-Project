@@ -98,7 +98,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise
 
         # Write metadata to DynamoDB (initial status: ingested)
-        timestamp_iso = datetime.utcnow().isoformat()
+        timestamp_iso = datetime.now(timezone.utc).isoformat()
         metadata_item = {
             'execution_id': execution_id,
             'timestamp': timestamp_unix,  # RANGE key (numeric)
@@ -110,7 +110,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'last_modified': last_modified,
             'status': 'ingested',
             'ingestion_timestamp': timestamp_iso,
-            'ttl': int(datetime.utcnow().timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
+            'ttl': int(datetime.now(timezone.utc).timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
         }
 
         try:
