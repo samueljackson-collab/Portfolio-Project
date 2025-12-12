@@ -72,8 +72,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise ValueError(error_msg)
 
         # Generate unique execution ID for idempotency tracking
-        now_iso = datetime.now(timezone.utc).isoformat()
-        timestamp_unix = int(datetime.now(timezone.utc).timestamp() * 1000)  # Milliseconds since epoch
+        now_utc = datetime.now(timezone.utc)
+        now_iso = now_utc.isoformat()
+        timestamp_unix = int(now_utc.timestamp() * 1000)  # Milliseconds since epoch
         execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
         # NOTE: Idempotency check removed. The current design includes both an ISO timestamp (now_iso)
