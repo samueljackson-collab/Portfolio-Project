@@ -110,8 +110,8 @@ export default function App() {
         <div className="card">
           <h2>Create Target</h2>
           <form onSubmit={submitTarget}>
-            <label>Name</label>
-            <input value={targetForm.name} onChange={(e) => setTargetForm({ ...targetForm, name: e.target.value })} required />
+            <label htmlFor="target-name">Name</label>
+            <input id="target-name" value={targetForm.name} onChange={(e) => setTargetForm({ ...targetForm, name: e.target.value })} required />
             <label>Description</label>
             <textarea
               value={targetForm.description}
