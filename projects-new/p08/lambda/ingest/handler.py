@@ -76,10 +76,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         timestamp_unix = int(datetime.utcnow().timestamp() * 1000)  # Milliseconds since epoch
         execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
-        # NOTE: Idempotency check removed. The current design includes timestamp in execution_id,
-        # making each invocation unique. A proper idempotency mechanism would require:
-        # 1. Using bucket/key/version_id as the execution_id (without timestamp)
-        # 2. Using DynamoDB conditional writes or a GSI for duplicate detection
+        # NOTE: Idempotency check removed. The current design includes both an ISO timestamp (now_iso)
+        # in the execution_id string and a numeric timestamp (timestamp_unix) as the DynamoDB RANGE key.
+        # This means each invocation is unique, even for the same S3 object, making idempotency checking complex.
+        # A proper idempotency mechanism would require:
+        #   1. Using bucket/key/version_id as the execution_id (without timestamp)
+        #   2. Using DynamoDB conditional writes or a GSI for duplicate detection
         # This is beyond the scope of the current fix and should be addressed separately.
 
         # Read S3 object metadata (but not full content yet - validate first)
