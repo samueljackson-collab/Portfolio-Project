@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import boto3
@@ -72,8 +72,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise ValueError(error_msg)
 
         # Generate unique execution ID for idempotency tracking
-        now_iso = datetime.utcnow().isoformat()
-        timestamp_unix = int(datetime.utcnow().timestamp() * 1000)  # Milliseconds since epoch
+        now_iso = datetime.now(timezone.utc).isoformat()
+        timestamp_unix = int(datetime.now(timezone.utc).timestamp() * 1000)  # Milliseconds since epoch
         execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
         # NOTE: Idempotency check removed. The current design includes both an ISO timestamp (now_iso)
@@ -98,7 +98,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise
 
         # Write metadata to DynamoDB (initial status: ingested)
-        timestamp_iso = datetime.utcnow().isoformat()
+        timestamp_iso = datetime.now(timezone.utc).isoformat()
         metadata_item = {
             'execution_id': execution_id,
             'timestamp': timestamp_unix,  # RANGE key (numeric)
@@ -110,7 +110,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'last_modified': last_modified,
             'status': 'ingested',
             'ingestion_timestamp': timestamp_iso,
-            'ttl': int(datetime.utcnow().timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
+            'ttl': int(datetime.now(timezone.utc).timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
         }
 
         try:
