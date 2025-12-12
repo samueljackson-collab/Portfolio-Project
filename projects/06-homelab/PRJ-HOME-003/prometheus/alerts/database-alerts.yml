@@ -1,0 +1,35 @@
+# Database alert rules
+# Keywords: PostgresDown, SlowQueries, ReplicationLag
+
+groups:
+  - name: database-alerts
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "PostgreSQL exporter cannot reach the database"
+          description: "The postgres_exporter is reporting pg_up == 0 for target {{ $labels.instance }}."
+
+      - alert: SlowQueries
+        expr: rate(pg_stat_user_tables_seq_scan[5m]) > 50
+        for: 10m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "High sequential scan rate on {{ $labels.instance }}"
+          description: "Sequential scans per second are higher than expected, indicating missing indexes."
+
+      - alert: ReplicationLag
+        expr: pg_replication_lag_seconds > 30
+        for: 3m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "Replication lag on {{ $labels.instance }}"
+          description: "Standby replication delay exceeds 30 seconds."
