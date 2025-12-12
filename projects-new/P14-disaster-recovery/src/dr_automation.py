@@ -112,7 +112,7 @@ class DRAutomation:
 
         try:
             response = self.rds_dr.copy_db_snapshot(
-                SourceDBSnapshotIdentifier=f"arn:aws:rds:{self.primary_region}:*:snapshot:{snapshot_id}",
+                SourceDBSnapshotIdentifier=f"arn:aws:rds:{self.primary_region}:{boto3.client('sts').get_caller_identity()['Account']}:snapshot:{snapshot_id}",
                 TargetDBSnapshotIdentifier=dr_snapshot_id,
                 SourceRegion=self.primary_region
             )
