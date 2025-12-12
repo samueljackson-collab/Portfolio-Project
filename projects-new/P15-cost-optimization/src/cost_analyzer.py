@@ -156,7 +156,7 @@ class CostAnalyzer:
                 )
 
                 if metrics['Datapoints']:
-                    avg_cpu = sum(d['Average'] for d in metrics['Datapoints']) / len(metrics['Datapoints'])
+                    avg_cpu = sum(d['Average'] for d in metrics['Datapoints']) / len(metrics['Datapoints']) if metrics['Datapoints'] else 0
                     if avg_cpu < 10:  # Less than 10% CPU usage
                         idle_resources['underutilized_rds'].append({
                             'id': db['DBInstanceIdentifier'],
