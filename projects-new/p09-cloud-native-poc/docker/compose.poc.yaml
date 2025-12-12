@@ -1,15 +1,89 @@
 version: '3.9'
+
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: poc-postgres
+    environment:
+      POSTGRES_DB: pocdb
+      POSTGRES_USER: pocuser
+      POSTGRES_PASSWORD: pocpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pocuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - poc-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: poc-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - poc-network
+
+  # FastAPI Application
   api:
-    build: ../
-    command: uvicorn producer.app:app --host 0.0.0.0 --port 8000
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: poc-api
+    environment:
+      DATABASE_URL: postgresql://pocuser:pocpass@postgres:5432/pocdb
+      REDIS_URL: redis://redis:6379/0
+      API_KEY: ${API_KEY:-test-key-123}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
       - "8000:8000"
-  tests:
-    image: python:3.11-slim
-    working_dir: /app
-    volumes:
-      - ../:/app
-    command: python consumer/checks.py --base-url http://api:8000
     depends_on:
-      - api
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - poc-network
+    restart: unless-stopped
+    # Override CMD for local development if needed
+    # command: uvicorn producer.app:app --host 0.0.0.0 --port 8000 --reload
+
+  # Integration Tests
+  tests:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: poc-tests
+    environment:
+      BASE_URL: http://api:8000
+      API_KEY: ${API_KEY:-test-key-123}
+    working_dir: /app
+    command: pytest tests/ -v --tb=short
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - poc-network
+    profiles:
+      - test
+
+networks:
+  poc-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

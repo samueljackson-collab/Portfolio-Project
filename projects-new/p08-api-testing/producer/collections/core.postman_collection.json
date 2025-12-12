@@ -1,20 +1,504 @@
 {
-  "info": {"name": "Core API", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
+  "info": {
+    "name": "Core API Testing Collection",
+    "description": "Comprehensive API testing collection with CRUD operations, authentication, error handling, and data validation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
   "item": [
     {
-      "name": "Auth Token",
-      "request": {
-        "method": "POST",
-        "header": [{"key": "Content-Type", "value": "application/json"}],
-        "url": "{{baseUrl}}/auth/token",
-        "body": {"mode": "raw", "raw": "{\"client_id\":\"{{client_id}}\",\"client_secret\":\"{{client_secret}}\"}"}
-      },
-      "event": [{"listen": "test", "script": {"exec": ["pm.test('status is 200', function(){ pm.response.to.have.status(200); });"]}}]
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get Auth Token",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/auth/token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"client_id\":\"{{client_id}}\",\"client_secret\":\"{{client_secret}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Authentication returns 200', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains access token', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('access_token');",
+                  "});",
+                  "",
+                  "pm.test('Token has bearer type', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.token_type).to.equal('Bearer');",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('authToken', jsonData.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth with Invalid Credentials",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/auth/token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"client_id\":\"invalid\",\"client_secret\":\"wrong\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid credentials returns 401', function() {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Error message is present', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     },
     {
-      "name": "Orders",
-      "request": {"method": "GET", "url": "{{baseUrl}}/orders?page=2&pageSize=5"},
-      "event": [{"listen": "test", "script": {"exec": ["pm.test('has items', function(){ pm.expect(pm.response.json().items.length).to.eql(5); });"]}}]
+      "name": "Orders - CRUD Operations",
+      "item": [
+        {
+          "name": "List All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders?page={{page}}&pageSize={{pageSize}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"],
+              "query": [
+                {"key": "page", "value": "{{page}}"},
+                {"key": "pageSize", "value": "{{pageSize}}"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('List orders returns 200', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has correct structure', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('items');",
+                  "  pm.expect(jsonData).to.have.property('total');",
+                  "  pm.expect(jsonData).to.have.property('page');",
+                  "});",
+                  "",
+                  "pm.test('Items array is valid', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.items).to.be.an('array');",
+                  "  if (jsonData.items.length > 0) {",
+                  "    pm.expect(jsonData.items[0]).to.have.property('id');",
+                  "    pm.expect(jsonData.items[0]).to.have.property('status');",
+                  "  }",
+                  "});",
+                  "",
+                  "pm.test('Page size matches request', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.items.length).to.be.at.most(parseInt(pm.environment.get('pageSize')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders/{{orderId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get order returns 200', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Order has required fields', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('id');",
+                  "  pm.expect(jsonData).to.have.property('status');",
+                  "  pm.expect(jsonData).to.have.property('items');",
+                  "  pm.expect(jsonData).to.have.property('total');",
+                  "});",
+                  "",
+                  "pm.test('Order ID matches request', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.id).to.equal(pm.environment.get('orderId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"customer_id\":\"{{customerId}}\",\"items\":[{\"product_id\":\"PROD001\",\"quantity\":2,\"price\":29.99}],\"shipping_address\":{\"street\":\"123 Main St\",\"city\":\"Springfield\",\"state\":\"IL\",\"zip\":\"62701\"}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create order returns 201', function() {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Order created with ID', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('id');",
+                  "  pm.expect(jsonData.id).to.be.a('string');",
+                  "  pm.environment.set('orderId', jsonData.id);",
+                  "});",
+                  "",
+                  "pm.test('Order status is pending', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.status).to.equal('pending');",
+                  "});",
+                  "",
+                  "pm.test('Order contains submitted items', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.items).to.be.an('array');",
+                  "  pm.expect(jsonData.items.length).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/orders/{{orderId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"confirmed\",\"items\":[{\"product_id\":\"PROD001\",\"quantity\":2,\"price\":29.99},{\"product_id\":\"PROD002\",\"quantity\":1,\"price\":49.99}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Update order returns 200', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Order status updated', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.status).to.equal('confirmed');",
+                  "});",
+                  "",
+                  "pm.test('Updated items are reflected', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.items.length).to.equal(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Order",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/orders/{{orderId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Delete order returns 204 or 200', function() {",
+                  "  pm.expect([200, 204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/products?category={{category}}&limit={{pageSize}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('List products returns 200', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains product array', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('products');",
+                  "  pm.expect(jsonData.products).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/products/PROD001"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get product returns 200', function() {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Product has required fields', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('id');",
+                  "  pm.expect(jsonData).to.have.property('name');",
+                  "  pm.expect(jsonData).to.have.property('price');",
+                  "  pm.expect(jsonData.price).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Conditions",
+      "item": [
+        {
+          "name": "Not Found - Missing Resource",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders/invalid-order-id-12345"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing resource returns 404', function() {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Error response is valid', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bad Request - Invalid Payload",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"invalid_field\":\"value\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid payload returns 400', function() {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error message describes validation issue', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('error');",
+                  "  pm.expect(jsonData.error).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthorized - Missing Token",
+          "request": {
+            "method": "GET",
+            "auth": {"type": "noauth"},
+            "url": "{{baseUrl}}/orders"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Missing auth returns 401', function() {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Server Error Handling",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": "{{baseUrl}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"customer_id\":null,\"items\":[]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Server handles errors gracefully', function() {",
+                  "  pm.expect([400, 422, 500]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Error response has standard format', function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Data Validation",
+      "item": [
+        {
+          "name": "Validate Response Format",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders/{{orderId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response is valid JSON', function() {",
+                  "  pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Content-Type is application/json', function() {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "pm.test('Response time is acceptable', function() {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Data Types",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders?page={{page}}&pageSize={{pageSize}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "pm.test('Total is a number', function() {",
+                  "  pm.expect(jsonData.total).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test('Page is a number', function() {",
+                  "  pm.expect(jsonData.page).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test('Items is an array', function() {",
+                  "  pm.expect(jsonData.items).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each item has valid structure', function() {",
+                  "  jsonData.items.forEach(function(item) {",
+                  "    pm.expect(item.id).to.be.a('string');",
+                  "    pm.expect(item.status).to.be.a('string');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
