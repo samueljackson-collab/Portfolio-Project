@@ -7,7 +7,7 @@ from typing import Dict, Any
 logger = logging.getLogger(__name__)
 
 # Retrieve allowed API keys from environment variable
-ALLOWED_API_KEYS = os.environ.get("ALLOWED_API_KEYS", "dev-key-12345,prod-key-67890").split(",")
+ALLOWED_API_KEYS = os.environ.get("ALLOWED_API_KEYS", "").split(",")
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict:
