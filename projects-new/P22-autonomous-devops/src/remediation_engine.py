@@ -20,8 +20,8 @@ class RemediationEngine:
         result = self.query_prometheus(query)
         incidents: List[Dict] = []
 
-        if result.get("status") == "success" and "data" in result and "result" in result.get("data", {}):
-            for item in result["data"]["result"]:
+        if result.get("status") == "success" and isinstance(result.get("data"), dict):
+            for item in result["data"].get("result") or []:
                 incidents.append(extract_fn(item, incident_type, threshold))
 
         return incidents
