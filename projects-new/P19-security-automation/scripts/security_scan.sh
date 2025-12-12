@@ -9,7 +9,7 @@ echo ""
 # SAST - Static Application Security Testing with Bandit
 echo "[1/3] Running SAST with Bandit..."
 if command -v bandit &> /dev/null; then
-    bandit -r . -f json -o bandit-report.json || true
+    bandit -r . -f json -o bandit-report.json
     echo "✓ SAST scan completed. Report: bandit-report.json"
 else
     echo "⚠ Bandit not installed. Install: pip install bandit"
