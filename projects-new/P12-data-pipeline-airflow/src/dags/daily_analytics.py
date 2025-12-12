@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 default_args = {
     "owner": "analytics",
     "depends_on_past": False,
-    "email": ["analytics@example.com"],
+    "email": Variable.get("analytics_notification_email", deserialize_json=True, default_var=["analytics@example.com"]),
     "email_on_failure": True,
     "email_on_retry": False,
     "retries": 1,
