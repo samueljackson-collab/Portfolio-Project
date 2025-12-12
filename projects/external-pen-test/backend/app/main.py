@@ -18,7 +18,7 @@ except Exception:
 
 app = FastAPI(title="External Pen Test API")
 
-origins = os.getenv("CORS_ALLOW", "*").split(",")
+origins = os.getenv("CORS_ALLOW", "").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
