@@ -1,0 +1,53 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch: {}
+  attributes:
+    actions:
+      - action: insert
+        key: loki.attribute.labels
+        value: service.name, service.namespace
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: otel
+    const_labels:
+      environment: production
+  jaeger:
+    endpoint: jaeger-collector:14250
+    tls:
+      insecure: true
+  otlp:
+    endpoint: otel-backend:4317
+    tls:
+      insecure: true
+  logging:
+    loglevel: debug
+    sampling_initial: 5
+    sampling_thereafter: 200
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      job: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger, otlp, logging]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, otlp, logging]
+    logs:
+      receivers: [otlp]
+      processors: [attributes, batch]
+      exporters: [loki, otlp, logging]
