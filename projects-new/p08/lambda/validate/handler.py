@@ -77,6 +77,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         ValidationError: If schema validation fails (caught and routed to DLQ)
     """
     execution_id = event['execution_id']
+    timestamp = event['timestamp']  # Numeric timestamp from ingest Lambda
     bucket = event['bucket']
     key = event['key']
     version_id = event.get('version_id')
@@ -107,7 +108,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             error_msg = f"Invalid JSON: {e}"
             logger.error(error_msg)
             send_to_dlq(event, error_msg, "JSONDecodeError")
-            update_metadata_status(execution_id, 'validation_failed', error_msg)
+            update_metadata_status(execution_id, timestamp, 'validation_failed', error_msg)
             raise ValidationError(error_msg)
 
         # Validate against schema
@@ -118,7 +119,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             error_msg = f"Schema validation failed: {e.message} at path {list(e.path)}"
             logger.error(error_msg)
             send_to_dlq(event, error_msg, "SchemaValidationError")
-            update_metadata_status(execution_id, 'validation_failed', error_msg)
+            update_metadata_status(execution_id, timestamp, 'validation_failed', error_msg)
             raise ValidationError(error_msg)
 
         # Additional business rule validations
@@ -141,11 +142,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             error_msg = "; ".join(validation_errors)
             logger.error(f"Business rule validation failed: {error_msg}")
             send_to_dlq(event, error_msg, "BusinessRuleViolation")
-            update_metadata_status(execution_id, 'validation_failed', error_msg)
+            update_metadata_status(execution_id, timestamp, 'validation_failed', error_msg)
             raise ValidationError(error_msg)
 
         # Update DynamoDB: validation succeeded
-        update_metadata_status(execution_id, 'validated', None)
+        update_metadata_status(execution_id, timestamp, 'validated', None)
 
         # Return payload for next state (transform)
         return {
@@ -162,7 +163,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Validation failed with unexpected error: {e}", exc_info=True)
-        update_metadata_status(execution_id, 'validation_failed', str(e))
+        update_metadata_status(execution_id, timestamp, 'validation_failed', str(e))
         raise
 
 
@@ -220,20 +221,21 @@ def send_to_dlq(event: Dict[str, Any], error_message: str, error_type: str) -> N
         # Don't raise - DLQ failure shouldn't block error handling
 
 
-def update_metadata_status(execution_id: str, status: str, error_message: Optional[str]) -> None:
+def update_metadata_status(execution_id: str, timestamp: int, status: str, error_message: Optional[str]) -> None:
     """
     Update DynamoDB metadata table with validation status.
 
     Args:
         execution_id: Unique execution identifier
+        timestamp: Numeric timestamp (RANGE key)
         status: New status (validated, validation_failed)
         error_message: Error description if failed
     """
     try:
-        update_expression = 'SET #status = :status, validation_timestamp = :timestamp'
+        update_expression = 'SET #status = :status, validation_timestamp = :validation_timestamp'
         expression_values = {
             ':status': status,
-            ':timestamp': datetime.utcnow().isoformat()
+            ':validation_timestamp': datetime.utcnow().isoformat()
         }
 
         if error_message:
@@ -241,7 +243,7 @@ def update_metadata_status(execution_id: str, status: str, error_message: Option
             expression_values[':error'] = error_message
 
         metadata_table.update_item(
-            Key={'execution_id': execution_id},
+            Key={'execution_id': execution_id, 'timestamp': timestamp},
             UpdateExpression=update_expression,
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues=expression_values
