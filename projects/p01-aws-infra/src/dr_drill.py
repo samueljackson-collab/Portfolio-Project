@@ -4,7 +4,7 @@ from typing import Tuple
 
 def window_bounds(duration_minutes: int) -> Tuple[datetime, datetime]:
     """Return (start_time, end_time) for a drill window using safe arithmetic."""
-    end_time = datetime.utcnow()
+    end_time = datetime.now(timezone.utc)
     start_time = end_time - timedelta(minutes=duration_minutes)
     return start_time, end_time
 
