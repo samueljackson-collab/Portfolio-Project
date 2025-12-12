@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import boto3
@@ -72,8 +72,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             raise ValueError(error_msg)
 
         # Generate unique execution ID for idempotency tracking
-        now_iso = datetime.utcnow().isoformat()
-        timestamp_unix = int(datetime.utcnow().timestamp() * 1000)  # Milliseconds since epoch
+        now_iso = datetime.now(timezone.utc).isoformat()
+        timestamp_unix = int(datetime.now(timezone.utc).timestamp() * 1000)  # Milliseconds since epoch
         execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
         # NOTE: Idempotency check removed. The current design includes both an ISO timestamp (now_iso)
