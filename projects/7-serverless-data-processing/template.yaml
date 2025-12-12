@@ -1,0 +1,259 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Data Processing Platform
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.11
+    MemorySize: 512
+    Environment:
+      Variables:
+        LOG_LEVEL: INFO
+        ENVIRONMENT: !Ref Environment
+    Tracing: Active
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - production
+
+Resources:
+  # S3 Bucket for processed data
+  ProcessedDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-processed-data-${Environment}'
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldData
+            Status: Enabled
+            ExpirationInDays: 90
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # SQS Queue for incoming events
+  EventQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-events-${Environment}'
+      VisibilityTimeout: 180
+      MessageRetentionPeriod: 1209600  # 14 days
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 3
+
+  # Dead Letter Queue
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-dlq-${Environment}'
+      MessageRetentionPeriod: 1209600  # 14 days
+
+  # DynamoDB table for metrics
+  MetricsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-metrics-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: metric_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: metric_id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: ttl
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  # SNS Topic for notifications
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${AWS::StackName}-notifications-${Environment}'
+      DisplayName: Event Processing Notifications
+
+  # Lambda Function - Event Processor
+  EventProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-event-processor-${Environment}'
+      CodeUri: functions/
+      Handler: event_processor.lambda_handler
+      Description: Process events from various sources
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: !Ref ProcessedDataBucket
+          DLQ_URL: !Ref DeadLetterQueue
+          METRICS_TABLE: !Ref MetricsTable
+          NOTIFICATION_TOPIC: !Ref NotificationTopic
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref ProcessedDataBucket
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt DeadLetterQueue.QueueName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MetricsTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NotificationTopic.TopicName
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt EventQueue.Arn
+            BatchSize: 10
+            Enabled: true
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref SourceDataBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: incoming/
+
+  # Source S3 Bucket
+  SourceDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-source-data-${Environment}'
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt EventProcessorFunction.Arn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: incoming/
+
+  # Permission for S3 to invoke Lambda
+  S3InvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref EventProcessorFunction
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !GetAtt SourceDataBucket.Arn
+
+  # Lambda Function - Data Aggregator
+  DataAggregatorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-data-aggregator-${Environment}'
+      CodeUri: functions/
+      Handler: aggregator.lambda_handler
+      Description: Aggregate processed events
+      Environment:
+        Variables:
+          PROCESSED_BUCKET: !Ref ProcessedDataBucket
+          METRICS_TABLE: !Ref MetricsTable
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref ProcessedDataBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MetricsTable
+      Events:
+        ScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+            Enabled: true
+
+  # CloudWatch Log Group
+  EventProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${EventProcessorFunction}'
+      RetentionInDays: 7
+
+  DataAggregatorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${DataAggregatorFunction}'
+      RetentionInDays: 7
+
+  # CloudWatch Alarms
+  EventProcessorErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${AWS::StackName}-processor-errors-${Environment}'
+      AlarmDescription: Alert on event processor errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref EventProcessorFunction
+      AlarmActions:
+        - !Ref NotificationTopic
+
+  DLQDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${AWS::StackName}-dlq-depth-${Environment}'
+      AlarmDescription: Alert when DLQ has messages
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt DeadLetterQueue.QueueName
+      AlarmActions:
+        - !Ref NotificationTopic
+
+Outputs:
+  EventQueueUrl:
+    Description: URL of the event queue
+    Value: !Ref EventQueue
+    Export:
+      Name: !Sub '${AWS::StackName}-EventQueueUrl'
+
+  ProcessedDataBucketName:
+    Description: Name of the processed data bucket
+    Value: !Ref ProcessedDataBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ProcessedDataBucket'
+
+  EventProcessorFunctionArn:
+    Description: ARN of the event processor function
+    Value: !GetAtt EventProcessorFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-EventProcessorArn'
+
+  MetricsTableName:
+    Description: Name of the metrics table
+    Value: !Ref MetricsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-MetricsTable'
+
+  NotificationTopicArn:
+    Description: ARN of the notification topic
+    Value: !Ref NotificationTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-NotificationTopic'

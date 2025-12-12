@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    hostname: mosquitto
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - iot-network
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    hostname: timescaledb
+    container_name: timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: iot
+      POSTGRES_PASSWORD: iot_password
+      POSTGRES_DB: iot_analytics
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - iot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  iot-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iot-processor
+    depends_on:
+      mosquitto:
+        condition: service_started
+      timescaledb:
+        condition: service_healthy
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: 1883
+      MQTT_TOPIC: portfolio/telemetry
+      POSTGRES_HOST: timescaledb
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: iot_analytics
+      POSTGRES_USER: iot
+      POSTGRES_PASSWORD: iot_password
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped
+    networks:
+      - iot-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    hostname: prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules.yml:/etc/prometheus/rules.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - iot-network
+
+  grafana:
+    image: grafana/grafana:latest
+    hostname: grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - timescaledb
+    restart: unless-stopped
+    networks:
+      - iot-network
+
+  device-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulator
+    container_name: device-simulator
+    depends_on:
+      - mosquitto
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: 1883
+      MQTT_TOPIC: portfolio/telemetry
+      DEVICE_COUNT: 20
+      INTERVAL: 5
+    restart: unless-stopped
+    networks:
+      - iot-network
+
+volumes:
+  timescale-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  iot-network:
+    name: iot-network
+    driver: bridge
