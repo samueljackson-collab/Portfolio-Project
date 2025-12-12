@@ -59,7 +59,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     import jwt
 
     try:
-        payload = jwt.decode(token, os.getenv("SECRET_KEY", "supersecretkey"), algorithms=["HS256"])
+        payload = jwt.decode(token, os.environ["SECRET_KEY"], algorithms=["HS256"])
         username: str = payload.get("sub")
         if username is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
