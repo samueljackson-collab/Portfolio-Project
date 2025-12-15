@@ -11,6 +11,7 @@ from pydantic import BaseModel, HttpUrl
 
 from .scanner import scan_page
 
+# WARNING: Generate a secure SECRET_KEY for production using: python -c "import secrets; print(secrets.token_urlsafe(32))"
 SECRET_KEY = os.environ.get("SECRET_KEY", "demo-secret-key-for-dev-only")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 60

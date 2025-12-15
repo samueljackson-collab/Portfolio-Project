@@ -6,9 +6,9 @@ services:
       - "8000:8000"
     environment:
       - UVICORN_WORKERS=1
-      - DATABASE_HOST=changeme
-      - DATABASE_USER=changeme
-      - DATABASE_PASSWORD=changeme
+      - DATABASE_HOST=${DATABASE_HOST:-localhost}
+      - DATABASE_USER=${DATABASE_USER:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-changeme}
   frontend:
     build: ./frontend
     environment:

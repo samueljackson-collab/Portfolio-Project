@@ -108,6 +108,7 @@ resource "aws_ecs_task_definition" "backend" {
           { name = "DATABASE_HOST", value = aws_db_instance.assessment.address },
           { name = "DATABASE_USER", value = var.db_username }
         ],
+        # WARNING: Plaintext password fallback is for development only. Use Secrets Manager in production.
         var.db_password_secret_arn == "" ? [{ name = "DATABASE_PASSWORD", value = var.db_password }] : []
       )
       secrets = var.db_password_secret_arn != "" ? [
