@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 
 ARTIFACT = Path("artifacts/pipeline_run.txt")
 ARTIFACT.parent.mkdir(exist_ok=True)

@@ -12,7 +12,7 @@ Output: Transformed records with common schema
 import base64
 import json
 import logging
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 from typing import Dict, List, Any
 
 # Configure logging

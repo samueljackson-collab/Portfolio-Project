@@ -9,7 +9,7 @@ from flask import Flask, jsonify, request
 import os
 import socket
 import time
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 
@@ -53,7 +53,6 @@ def home():
         'hostname': hostname,
         'pod_name': os.getenv('POD_NAME', hostname),
         'namespace': os.getenv('POD_NAMESPACE', 'default'),
-        'timestamp': datetime.now(timezone.utc).isoformat()
     }), 200
 
 

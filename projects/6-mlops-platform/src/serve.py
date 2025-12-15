@@ -15,7 +15,7 @@ from typing import List, Dict, Optional, Any
 import mlflow
 import pandas as pd
 import numpy as np
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 import logging
 import os
 

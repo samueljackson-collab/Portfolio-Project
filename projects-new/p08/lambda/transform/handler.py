@@ -2,7 +2,7 @@
 import json
 import os
 import boto3
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')

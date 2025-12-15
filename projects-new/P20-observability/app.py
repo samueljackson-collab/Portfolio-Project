@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import json
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 
 ARTIFACT = Path("artifacts/telemetry_bundle.json")
 ARTIFACT.parent.mkdir(exist_ok=True)

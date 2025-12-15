@@ -14,7 +14,7 @@ from scipy import stats
 from typing import Dict, List, Optional, Tuple
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

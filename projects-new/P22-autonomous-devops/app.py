@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 ARTIFACT = Path("artifacts/self_heal.log")

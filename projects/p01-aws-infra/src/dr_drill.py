@@ -18,7 +18,7 @@ import boto3
 import time
 import json
 import sys
-from datetime import datetime, timezone, timezone
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from botocore.exceptions import ClientError
 
