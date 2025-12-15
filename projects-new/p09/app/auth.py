@@ -1,6 +1,6 @@
 """Authentication and authorization module."""
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 import jwt
 from fastapi import HTTPException, Header
@@ -13,11 +13,11 @@ def create_access_token(user_id: str, expires_delta: Optional[timedelta] = None)
     if expires_delta is None:
         expires_delta = timedelta(hours=24)
 
-    expire = datetime.utcnow() + expires_delta
+    expire = datetime.now(timezone.utc) + expires_delta
     to_encode = {
         "sub": user_id,
         "exp": expire,
-        "iat": datetime.utcnow()
+        "iat": datetime.now(timezone.utc)
     }
 
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)

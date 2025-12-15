@@ -6,7 +6,7 @@ workspaces, Ansible playbooks, and runbooks) and tracks requests for
 transparency.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 from typing import Dict, List, Optional
 from uuid import uuid4
 
@@ -78,7 +78,7 @@ class OrchestrationService:
             )
 
         run_id = str(uuid4())
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
         logs: List[str] = [
             f"[{started_at.isoformat()}] Validated tfvars: {plan['tfvars_file']}",
             "Running terraform fmt && validate",
@@ -96,7 +96,7 @@ class OrchestrationService:
             "requested_by": requested_by,
             "parameters": parameters or {},
             "started_at": started_at,
-            "finished_at": datetime.utcnow(),
+            "finished_at": datetime.now(timezone.utc),
             "logs": logs,
             "artifacts": {
                 "tfvars": plan["tfvars_file"],

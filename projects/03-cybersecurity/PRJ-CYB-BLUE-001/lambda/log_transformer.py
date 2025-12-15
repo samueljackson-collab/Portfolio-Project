@@ -12,7 +12,7 @@ Output: Transformed records with common schema
 import base64
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 from typing import Dict, List, Any
 
 # Configure logging
@@ -114,7 +114,7 @@ def transform_guardduty(log_entry: Dict[str, Any]) -> Dict[str, Any]:
     detail = log_entry.get('detail', {})
 
     transformed = {
-        '@timestamp': log_entry.get('time', datetime.utcnow().isoformat()),
+        '@timestamp': log_entry.get('time', datetime.now(timezone.utc).isoformat()),
         'log_source': 'guardduty',
         'event_type': 'security_finding',
         'account_id': log_entry.get('account', 'unknown'),
@@ -159,7 +159,7 @@ def transform_cloudtrail(log_entry: Dict[str, Any]) -> Dict[str, Any]:
         Normalized CloudTrail event
     """
     transformed = {
-        '@timestamp': log_entry.get('eventTime', datetime.utcnow().isoformat()),
+        '@timestamp': log_entry.get('eventTime', datetime.now(timezone.utc).isoformat()),
         'log_source': 'cloudtrail',
         'event_type': 'api_call',
         'account_id': log_entry.get('recipientAccountId', 'unknown'),
@@ -260,7 +260,7 @@ def transform_vpc_flow_log(log_entry: Dict[str, Any]) -> Dict[str, Any]:
 def add_common_fields(log_entry: Dict[str, Any], source: str) -> Dict[str, Any]:
     """Add common fields to unknown log format."""
     return {
-        '@timestamp': datetime.utcnow().isoformat(),
+        '@timestamp': datetime.now(timezone.utc).isoformat(),
         'log_source': source,
         'event_type': 'unknown',
         'severity': 'info',
@@ -372,7 +372,7 @@ def convert_flow_log_timestamp(unix_timestamp: Any) -> str:
         timestamp = int(unix_timestamp)
         return datetime.utcfromtimestamp(timestamp).isoformat()
     except (ValueError, TypeError):
-        return datetime.utcnow().isoformat()
+        return datetime.now(timezone.utc).isoformat()
 
 
 def map_protocol_number(protocol_num: Any) -> str:

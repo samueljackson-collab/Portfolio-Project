@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 
 ARTIFACT = Path("artifacts/pipeline_run.txt")
 ARTIFACT.parent.mkdir(exist_ok=True)
@@ -12,7 +12,7 @@ STEPS = ["checkout", "build", "unit_test", "docker_push", "kubectl_apply"]
 def run_pipeline() -> list[str]:
     log: list[str] = []
     for step in STEPS:
-        log.append(f"{datetime.utcnow().isoformat()}Z {step} succeeded")
+        log.append(f"{datetime.now(timezone.utc).isoformat()}Z {step} succeeded")
     log.append("pipeline status: green")
     return log
 

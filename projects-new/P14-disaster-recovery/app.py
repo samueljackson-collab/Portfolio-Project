@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 from pathlib import Path
 
 ARTIFACT = Path("artifacts/dr_runbook.txt")
@@ -7,7 +7,7 @@ ARTIFACT.parent.mkdir(exist_ok=True)
 
 
 def take_backup() -> str:
-    return f"backup-{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.tar.gz"
+    return f"backup-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.tar.gz"
 
 
 def restore(backup_name: str) -> str:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 
 ARTIFACT = Path("artifacts/ha_healthcheck.txt")
 ARTIFACT.parent.mkdir(exist_ok=True)
@@ -18,7 +18,7 @@ class Node:
 
 def simulate_failover(primary: Node, replica: Node) -> list[str]:
     log: list[str] = []
-    log.append(f"[{datetime.utcnow().isoformat()}Z] Checking primary: {primary.heartbeat()}")
+    log.append(f"[{datetime.now(timezone.utc).isoformat()}Z] Checking primary: {primary.heartbeat()}")
     if primary.healthy:
         log.append("Traffic remains on primary")
     else:

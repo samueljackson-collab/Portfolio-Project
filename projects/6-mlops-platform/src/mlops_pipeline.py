@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
@@ -112,7 +112,7 @@ class ExperimentRunner:
             mlflow.sklearn.log_model(best_model, artifact_path="model")
 
             registered = mlflow.register_model(f"runs:/{run.info.run_id}/model", config.name)
-            self.client.set_model_version_tag(registered.name, registered.version, "registered_at", datetime.utcnow().isoformat())
+            self.client.set_model_version_tag(registered.name, registered.version, "registered_at", datetime.now(timezone.utc).isoformat())
             return registered.name
 
     def promote_model(self, name: str, stage: str) -> None:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 from pathlib import Path
 import json
 
@@ -10,7 +10,7 @@ ARTIFACT.parent.mkdir(exist_ok=True)
 def lambda_handler(event: dict) -> dict:
     message = f"Hello {event.get('user', 'guest')} from Lambda"
     audit = {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
         "input": event,
         "response": message,
     }

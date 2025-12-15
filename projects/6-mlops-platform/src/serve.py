@@ -15,7 +15,7 @@ from typing import List, Dict, Optional, Any
 import mlflow
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 import logging
 import os
 
@@ -96,7 +96,7 @@ def load_model(model_name: str, version: Optional[str] = None):
         loaded_models[model_name] = {
             'model': model,
             'version': version_str,
-            'loaded_at': datetime.utcnow().isoformat()
+            'loaded_at': datetime.now(timezone.utc).isoformat()
         }
 
         logger.info(f"Loaded model: {model_name} version {version_str}")
@@ -197,7 +197,7 @@ async def predict(request: PredictionRequest, background_tasks: BackgroundTasks)
             model_version=version,
             model_name=model_name,
             prediction_time_ms=round(prediction_time_ms, 2),
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
 
     except Exception as e:

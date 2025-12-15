@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone, timezone
 from pathlib import Path
 
 ARTIFACT = Path("artifacts/self_heal.log")
@@ -22,8 +22,8 @@ def orchestrate():
     issue = detect_issue()
     action = remediate(issue)
     return [
-        f"{datetime.utcnow().isoformat()}Z detected: {issue}",
-        f"{datetime.utcnow().isoformat()}Z action: {action}",
+        f"{datetime.now(timezone.utc).isoformat()}Z detected: {issue}",
+        f"{datetime.now(timezone.utc).isoformat()}Z action: {action}",
         "closed-loop: success",
     ]
 
