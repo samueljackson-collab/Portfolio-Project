@@ -20,5 +20,9 @@ docker compose -f docker/compose.poc.yaml up --build
 
 K8s:
 ```bash
-kubectl apply -f k8s/base.yaml --dry-run=client
+# Create secrets first (see k8s/SECRETS.md for details)
+./k8s/setup-k8s-auth.sh
+
+# Then apply base configuration
+kubectl apply -k k8s/
 ```

@@ -4,4 +4,5 @@ namespace: poc-api
 
 resources:
   - base.yaml
-  - secret.yaml
+  # Secrets should be created separately using kubectl or a secret management tool
+  # See SECRETS.md for instructions
