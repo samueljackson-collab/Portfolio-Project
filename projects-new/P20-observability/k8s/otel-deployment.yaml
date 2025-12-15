@@ -35,8 +35,10 @@ data:
           insecure: true
       otlp:
         endpoint: otel-backend:4317
-        tls:
-          insecure: true
+        # NOTE: The 'insecure: true' setting disables TLS verification and should NOT be used in production.
+        #       Configure proper TLS certificates for production environments.
+        # tls:
+        #   insecure: true
       logging:
         loglevel: debug
         sampling_initial: 5
