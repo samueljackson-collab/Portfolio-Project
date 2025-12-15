@@ -27,6 +27,8 @@ exporters:
   otlp:
     endpoint: otel-backend:4317
     tls:
+      # WARNING: 'insecure: true' disables TLS verification and is for development only.
+      # In production, configure proper TLS certificates and remove this setting.
       insecure: true
   logging:
     loglevel: debug
