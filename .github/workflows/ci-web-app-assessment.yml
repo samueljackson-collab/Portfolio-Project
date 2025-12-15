@@ -13,8 +13,6 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     defaults:
       run:
         working-directory: projects/web-app-assessment/backend
@@ -26,12 +24,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run tests
-        run: PYTHONPATH=. pytest
+        run: pytest
 
   frontend:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     defaults:
       run:
         working-directory: projects/web-app-assessment/frontend
