@@ -121,7 +121,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 @app.post("/login", response_model=Token)
 def login(login_request: LoginRequest) -> Token:
-    if not (login_request.username == "admin" and login_request.password == "password"):
+    if not (secrets.compare_digest(login_request.username, "admin") and secrets.compare_digest(login_request.password, "password")):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token = create_token(login_request.username)
     return Token(access_token=token)
