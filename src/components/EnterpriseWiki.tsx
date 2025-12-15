@@ -21,23 +21,59 @@ const classNames = (
   ...classes: Array<string | false | null | undefined>
 ): string => classes.filter(Boolean).join(' ');
 
+const getStatusStyles = (status: WeekPlan['status'], theme: RoleTheme) => {
+  const statusMap: Record<
+    NonNullable<WeekPlan['status']>,
+    { label: string; className: string }
+  > = {
+    planned: {
+      label: 'Planned',
+      className: 'bg-slate-700 text-slate-200 border border-slate-600',
+    },
+    'in-progress': {
+      label: 'In Progress',
+      className: classNames(theme.accentBg, 'text-white'),
+    },
+    completed: {
+      label: 'Completed',
+      className: classNames(theme.accentBg, 'text-white ring-2 ring-offset-2 ring-offset-slate-800'),
+    },
+  };
+
+  return status ? statusMap[status] : undefined;
+};
+
 // WeekDetail keeps the weekly curriculum rendering focused and predictable.
 const WeekDetail: React.FC<{
   week: WeekPlan;
   theme: RoleTheme;
-}> = ({ week, theme }) => (
-  <div className="bg-slate-800 rounded-xl p-6 shadow-xl">
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h3 className="text-2xl font-bold text-white">
-          Week {week.number}: {week.title}
-        </h3>
-        <p className="text-slate-400 mt-1">Duration: 5-7 days</p>
+}> = ({ week, theme }) => {
+  const statusStyles =
+    getStatusStyles(week.status, theme) ?? {
+      label: 'Status Pending',
+      className: 'bg-slate-700 text-slate-200 border border-slate-600',
+    };
+
+  return (
+    <div className="bg-slate-800 rounded-xl p-6 shadow-xl">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-2xl font-bold text-white">
+            Week {week.number}: {week.title}
+          </h3>
+          <p className="text-slate-400 mt-1">
+            Duration: {week.duration ?? 'Timeline not specified'}
+          </p>
+        </div>
+        <div
+          className={classNames(
+            'px-4 py-2 rounded-lg font-semibold transition-colors',
+            statusStyles.className,
+          )}
+        >
+          <span>{statusStyles.label}</span>
+        </div>
       </div>
-      <div className={classNames('px-4 py-2 rounded-lg', theme.accentBg)}>
-        <span className="text-white font-semibold">In Progress</span>
-      </div>
-    </div>
 
     <div className="grid md:grid-cols-2 gap-6">
       <div>
@@ -98,7 +134,8 @@ const WeekDetail: React.FC<{
       </button>
     </div>
   </div>
-);
+  );
+};
 
 // The main component stitches metadata and curriculum content together for the
 // interactive role selector view.
