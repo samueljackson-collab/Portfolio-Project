@@ -5,7 +5,7 @@ import json
 import time
 import random
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 from kafka import KafkaProducer
@@ -70,7 +70,7 @@ class EventProducer:
             True if successful, False otherwise
         """
         event = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'event_type': event_type,
             'user_id': user_id,
             'data': data,

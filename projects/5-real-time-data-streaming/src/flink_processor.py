@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Tuple
 
 from pyflink.datastream import StreamExecutionEnvironment, TimeCharacteristic
@@ -131,7 +131,7 @@ class FlinkEventProcessor:
             total += 1
 
         result = {
-            'window_end': datetime.utcnow().isoformat(),
+            'window_end': datetime.now(timezone.utc).isoformat(),
             'total_events': total,
             'by_type': event_counts
         }
@@ -169,7 +169,7 @@ class FlinkEventProcessor:
         avg_purchase = total_revenue / purchase_count if purchase_count > 0 else 0
 
         result = {
-            'window_end': datetime.utcnow().isoformat(),
+            'window_end': datetime.now(timezone.utc).isoformat(),
             'metric_type': 'revenue',
             'total_revenue': round(total_revenue, 2),
             'purchase_count': purchase_count,
@@ -282,7 +282,7 @@ class FlinkEventProcessor:
             .apply(
                 lambda user_id, window, events: json.dumps({
                     'user_id': user_id,
-                    'window_end': datetime.utcnow().isoformat(),
+                    'window_end': datetime.now(timezone.utc).isoformat(),
                     'event_count': len(list(events)),
                     'event_types': list(set(e[1] for e in events))
                 }),
