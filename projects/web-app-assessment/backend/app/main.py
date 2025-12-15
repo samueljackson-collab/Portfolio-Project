@@ -9,7 +9,7 @@ from pydantic import BaseModel, HttpUrl
 
 from .scanner import scan_page, ScanFinding
 
-SECRET_KEY = "demo-secret-key"
+SECRET_KEY = os.environ.get("SECRET_KEY", "demo-secret-key-for-dev-only")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 60
 
