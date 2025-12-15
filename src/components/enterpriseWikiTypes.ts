@@ -16,6 +16,15 @@ export type RoleTheme = {
   selectedButton: string;
 };
 
+export type ResourceLink = {
+  key: 'codeExamples' | 'liveDemos' | 'bestPractices';
+  title: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  iconColor: string;
+};
+
 export type WeekPlan = {
   number: number;
   title: string;

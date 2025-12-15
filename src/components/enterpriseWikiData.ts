@@ -15,6 +15,7 @@ import type {
   RoleDefinition,
   RoleKey,
   RoleTheme,
+  ResourceLink,
 } from './enterpriseWikiTypes';
 import { roleContent } from './__private__/enterpriseWikiContent';
 
@@ -80,6 +81,33 @@ export const enterpriseWikiIcons = {
   FileText,
   Shield,
 } as const;
+
+export const resourceCards: ResourceLink[] = [
+  {
+    key: 'codeExamples',
+    title: 'Code Examples',
+    description: 'Full implementation samples',
+    href: 'https://github.com/vercel/next.js/tree/canary/examples',
+    icon: Code,
+    iconColor: 'text-blue-500',
+  },
+  {
+    key: 'liveDemos',
+    title: 'Live Demos',
+    description: 'Interactive tutorials',
+    href: 'https://stackblitz.com/@vercel',
+    icon: Activity,
+    iconColor: 'text-green-500',
+  },
+  {
+    key: 'bestPractices',
+    title: 'Best Practices',
+    description: 'Industry standards',
+    href: 'https://web.dev/learn/#best-practices',
+    icon: Shield,
+    iconColor: 'text-purple-500',
+  },
+];
 
 export { roleContent };
 export * from './enterpriseWikiTypes';
