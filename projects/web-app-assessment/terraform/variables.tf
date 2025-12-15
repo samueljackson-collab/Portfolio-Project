@@ -41,3 +41,15 @@ variable "backend_allowed_cidrs" {
   type        = list(string)
   default     = ["10.0.0.0/16"]
 }
+
+variable "db_password_secret_arn" {
+  description = "ARN of the AWS Secrets Manager secret containing the database password"
+  type        = string
+  default     = ""
+}
+
+variable "skip_final_snapshot" {
+  description = "Whether to skip final snapshot on RDS deletion (true for dev/test, false for prod)"
+  type        = bool
+  default     = true
+}
