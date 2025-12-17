@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+import os
+import secrets
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
@@ -7,8 +9,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel, HttpUrl
 
-from .scanner import scan_page, ScanFinding
+from .scanner import scan_page
 
+# WARNING: Generate a secure SECRET_KEY for production using: python -c "import secrets; print(secrets.token_urlsafe(32))"
 SECRET_KEY = os.environ.get("SECRET_KEY", "demo-secret-key-for-dev-only")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 60
@@ -102,7 +105,7 @@ findings: List[VulnerabilityFinding] = []
 # Auth helpers
 
 def create_token(username: str) -> str:
-    expiration = datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    expiration = datetime.now(timezone.utc) + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     payload = {"sub": username, "exp": expiration}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -139,7 +142,7 @@ def list_endpoints(user: str = Depends(get_current_user)) -> List[Endpoint]:  # 
 
 @app.post("/endpoints", response_model=Endpoint, status_code=status.HTTP_201_CREATED)
 def add_endpoint(endpoint: EndpointCreate, user: str = Depends(get_current_user)) -> Endpoint:
-    new_id = max([e.id for e in endpoints] + [0]) + 1
+    new_id = max((e.id for e in endpoints), default=0) + 1
     created = Endpoint(id=new_id, **endpoint.model_dump())
     endpoints.append(created)
     return created
@@ -154,7 +157,7 @@ def list_pages(user: str = Depends(get_current_user)) -> List[Page]:  # pragma: 
 def add_page(page: PageCreate, user: str = Depends(get_current_user)) -> Page:
     if not any(e.id == page.endpoint_id for e in endpoints):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Endpoint not found")
-    new_id = max([p.id for p in pages] + [0]) + 1
+    new_id = max((p.id for p in pages), default=0) + 1
     created = Page(id=new_id, last_scanned=None, **page.model_dump())
     pages.append(created)
     return created
@@ -169,8 +172,8 @@ def list_findings(user: str = Depends(get_current_user)) -> List[VulnerabilityFi
 def add_finding(finding: FindingCreate, user: str = Depends(get_current_user)) -> VulnerabilityFinding:
     if not any(p.id == finding.page_id for p in pages):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
-    new_id = max([f.id for f in findings] + [0]) + 1
-    created = VulnerabilityFinding(id=new_id, created_at=datetime.utcnow(), **finding.model_dump())
+    new_id = max((f.id for f in findings), default=0) + 1
+    created = VulnerabilityFinding(id=new_id, created_at=datetime.now(timezone.utc), **finding.model_dump())
     findings.append(created)
     return created
 
@@ -180,15 +183,15 @@ def scan_page_handler(payload: ScanRequest, user: str = Depends(get_current_user
     if not any(e.id == payload.endpoint_id for e in endpoints):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Endpoint not found")
 
-    page_id = max([p.id for p in pages] + [0]) + 1
-    page = Page(id=page_id, endpoint_id=payload.endpoint_id, url=payload.url, last_scanned=datetime.utcnow())
+    page_id = max((p.id for p in pages), default=0) + 1
+    page = Page(id=page_id, endpoint_id=payload.endpoint_id, url=payload.url, last_scanned=datetime.now(timezone.utc))
     pages.append(page)
 
     findings_payload = scan_page(payload.url)
     response_findings: List[VulnerabilityFinding] = []
 
     for finding in findings_payload:
-        new_id = max([f.id for f in findings] + [0]) + 1
+        new_id = max((f.id for f in findings), default=0) + 1
         created = VulnerabilityFinding(
             id=new_id,
             endpoint_id=payload.endpoint_id,
@@ -197,7 +200,7 @@ def scan_page_handler(payload: ScanRequest, user: str = Depends(get_current_user
             severity=finding.severity,
             description=finding.description,
             rule=finding.rule,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         findings.append(created)
         response_findings.append(created)
