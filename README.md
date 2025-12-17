@@ -12,6 +12,8 @@
 > **Note:** Some project directories referenced below contain planning documentation and structure but are awaiting evidence/asset uploads. Check individual project READMEs for current status.
 
 > 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
+>
+> 🧭 **Need orientation?** Follow the [Documentation Navigation Guide](./DOCUMENTATION_INDEX.md#navigation-guide) to see how every major report connects and where to jump in next.
 
 ---
 ## 🧭 Reviewer Fast Reference
