@@ -9,10 +9,12 @@ This document provides a complete summary of the test suite generated for the Po
 ### 1. Bash Scripts (3 scripts, 5 test files total)
 
 #### A. verify-pbs-backups.sh (291 lines)
+
 **Location:** `projects/01-sde-devops/PRJ-SDE-002/assets/scripts/verify-pbs-backups.sh`
 **Test File:** `tests/scripts/test_verify_pbs_backups.py`
 
 **Test Coverage:**
+
 - ✅ Script existence and executability
 - ✅ Help flag and usage display
 - ✅ Invalid flag error handling
@@ -37,6 +39,7 @@ This document provides a complete summary of the test suite generated for the Po
 - ✅ API failure handling
 
 **Key Features Tested:**
+
 - Argument parsing and validation
 - Environment variable requirements
 - API interaction patterns
@@ -45,10 +48,12 @@ This document provides a complete summary of the test suite generated for the Po
 - Error handling and recovery
 
 #### B. dr-drill.sh (215 lines)
+
 **Location:** `projects/p01-aws-infra/scripts/dr-drill.sh`
 **Test File:** `tests/scripts/test_dr_drill.py`
 
 **Test Coverage:**
+
 - ✅ Script existence and executability
 - ✅ Help flag display
 - ✅ No command usage display
@@ -66,6 +71,7 @@ This document provides a complete summary of the test suite generated for the Po
 - ✅ Logging output with timestamps
 
 **Key Features Tested:**
+
 - Command-line argument parsing
 - Environment variable precedence
 - Terraform integration
@@ -73,10 +79,12 @@ This document provides a complete summary of the test suite generated for the Po
 - Logging and error reporting
 
 #### C. fix_unicode_arrows.sh (38 lines)
+
 **Location:** `scripts/fix_unicode_arrows.sh`
 **Test File:** `tests/scripts/test_fix_unicode_arrows.py`
 
 **Test Coverage:**
+
 - ✅ Script existence and executability
 - ✅ Script runs without errors on valid files
 - ✅ Replaces -\u003e with ->
@@ -96,6 +104,7 @@ This document provides a complete summary of the test suite generated for the Po
 - ✅ Displays completion message
 
 **Key Features Tested:**
+
 - Unicode/HTML entity replacement
 - Backup and restore mechanisms
 - Python syntax validation
@@ -105,6 +114,7 @@ This document provides a complete summary of the test suite generated for the Po
 ### 2. Configuration Files
 
 #### A. YAML Configurations
+
 **Test File:** `tests/config/test_yaml_configs.py`
 
 **Files Covered:**
@@ -149,6 +159,7 @@ This document provides a complete summary of the test suite generated for the Po
    - ✅ Spec with source/destination
 
 #### B. JSON Configurations
+
 **Test File:** `tests/config/test_json_configs.py`
 
 **Files Covered:**
@@ -188,11 +199,13 @@ This document provides a complete summary of the test suite generated for the Po
 ## Test Execution
 
 ### Running All Tests
+
 ```bash
 python -m pytest tests/ -v
 ```
 
 ### Running Specific Test Categories
+
 ```bash
 # Script tests only
 python -m pytest tests/scripts/ -v
@@ -211,5 +224,6 @@ python -m pytest tests/config/test_json_configs.py -v
 ```
 
 ### Test Output Example
+
 ```bash
 ```

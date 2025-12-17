@@ -3,6 +3,7 @@
 This directory contains Terraform templates & scripts to deploy infrastructure.
 
 Quick start:
+
 1. Install dependencies: Terraform, AWS CLI (or provider CLI).
 2. Bootstrap remote state:
    ./scripts/bootstrap_remote_state.sh <tfstate-bucket> <dynamodb-table> <region>
@@ -12,6 +13,7 @@ Quick start:
 5. Use GitHub Actions to run plan & apply (configure secrets: AWS_REGION, TFSTATE_BUCKET, AWS_ROLE_ARN_PLAN, AWS_ROLE_ARN_APPLY).
 
 Security:
+
 - Use OIDC where possible: configure GitHub Action OIDC and an IAM role for the GitHub repo.
 - Never commit secrets into the repo. Use GitHub Secrets or Vault.
 - Ensure the S3 state bucket has versioning & SSE enabled.
@@ -194,20 +196,24 @@ To verify your OIDC setup:
 ### Troubleshooting
 
 **"Not authorized to perform sts:AssumeRoleWithWebIdentity"**
+
 - Verify the trust policy has the correct AWS account ID and repository name
 - Ensure the OIDC provider thumbprint is correct
 - Check that the branch/tag matches the condition in the trust policy
 
 **"Access Denied" during Terraform operations**
+
 - Review the IAM policy attached to the role
 - Check CloudTrail logs for specific denied actions
 - Ensure S3 bucket and DynamoDB table names are correct in the policy
 
 **Apply job doesn't wait for approval**
+
 - Verify the environment name in the workflow matches the environment in GitHub settings
 - Ensure environment protection rules are configured with required reviewers
 
 Testing & quality:
+
 - terraform fmt -recursive
 - terraform validate
 - tflint
@@ -215,5 +221,6 @@ Testing & quality:
 - terratest (Go) for integration tests
 
 Notes:
+
 - The bootstrap script creates S3 and DynamoDB for Terraform remote state. Run it once with an admin account.
 - The provided main.tf is an example. Replace/add modules for VPC, EKS, RDS, etc. per your architecture.
