@@ -103,20 +103,11 @@ resource "aws_ecs_task_definition" "backend" {
           protocol      = "tcp"
         }
       ]
-      environment = concat(
-        [
-          { name = "DATABASE_HOST", value = aws_db_instance.assessment.address },
-          { name = "DATABASE_USER", value = var.db_username }
-        ],
-        # WARNING: Plaintext password fallback is for development only. Use Secrets Manager in production.
-        var.db_password_secret_arn == "" ? [{ name = "DATABASE_PASSWORD", value = var.db_password }] : []
-      )
-      secrets = var.db_password_secret_arn != "" ? [
-        {
-          name      = "DATABASE_PASSWORD"
-          valueFrom = var.db_password_secret_arn
-        }
-      ] : []
+      environment = [
+        { name = "DATABASE_HOST", value = aws_db_instance.assessment.address },
+        { name = "DATABASE_USER", value = var.db_username },
+        { name = "DATABASE_PASSWORD", value = var.db_password }
+      ]
     }
   ])
 }
@@ -131,30 +122,12 @@ resource "aws_ecs_service" "backend" {
   network_configuration {
     subnets         = data.aws_subnets.default.ids
     security_groups = [aws_security_group.backend.id]
-    assign_public_ip = true
+    assign_public_ip = false
   }
 }
 
 resource "aws_s3_bucket" "frontend_bucket" {
   bucket = "${var.bucket_prefix}-${data.aws_caller_identity.current.account_id}"
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
-  bucket = aws_s3_bucket.frontend_bucket.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "frontend" {
-  bucket                  = aws_s3_bucket.frontend_bucket.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_ownership_controls" "frontend" {
@@ -194,7 +167,12 @@ resource "aws_cloudfront_distribution" "frontend" {
     allowed_methods = ["GET", "HEAD"]
     cached_methods  = ["GET", "HEAD"]
 
-    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6" # AWS Managed-CachingOptimized
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
   }
 
   restrictions {

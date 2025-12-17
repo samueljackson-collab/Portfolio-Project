@@ -19,6 +19,14 @@ export function LoginForm({ onAuthenticated, onError, error }: { onAuthenticated
     } catch (err: any) {
       onError(err.message || 'Login failed')
     }
+export function LoginForm({ onAuthenticated, error }: { onAuthenticated: (token: string) => void; error?: string }) {
+  const [username, setUsername] = useState('admin')
+  const [password, setPassword] = useState('password')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const { access_token } = await login(username, password)
+    onAuthenticated(access_token)
   }
 
   return (
@@ -183,6 +191,7 @@ export default function App() {
     </>
   ) : (
     <LoginForm onAuthenticated={handleLogin} onError={handleLoginError} error={error ?? undefined} />
+    <LoginForm onAuthenticated={handleLogin} error={error ?? undefined} />
   )
 
   return <div className="layout">{content}</div>

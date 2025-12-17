@@ -1,5 +1,6 @@
 from typing import List, Dict
 from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 
 class ScanFinding(BaseModel):
