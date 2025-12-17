@@ -25,8 +25,11 @@ const classNames = (
 const WeekDetail: React.FC<{
   week: WeekPlan;
   theme: RoleTheme;
-}> = ({ week, theme }) => (
-  <div className="bg-slate-800 rounded-xl p-6 shadow-xl">
+  guideAnchorId: string;
+  resourcesAnchorId: string;
+  roleTitle: string;
+}> = ({ week, theme, guideAnchorId, resourcesAnchorId, roleTitle }) => (
+  <div className="bg-slate-800 rounded-xl p-6 shadow-xl" id={guideAnchorId}>
     <div className="flex items-center justify-between mb-6">
       <div>
         <h3 className="text-2xl font-bold text-white">
@@ -83,19 +86,28 @@ const WeekDetail: React.FC<{
       </div>
     </div>
 
-    <div className="mt-6 pt-6 border-t border-slate-700 flex gap-4">
-      <button
+    <div
+      className="mt-6 pt-6 border-t border-slate-700 flex gap-4"
+      id={resourcesAnchorId}
+    >
+      <a
+        href={`#${guideAnchorId}`}
         className={classNames(
-          'flex-1 py-3 px-6 text-white rounded-lg font-semibold transition-colors',
+          'flex-1 py-3 px-6 text-white rounded-lg font-semibold transition-colors text-center',
           theme.accentBg,
           theme.accentHoverBg,
         )}
+        aria-label={`View the detailed guide for ${roleTitle} week ${week.number}: ${week.title}`}
       >
         View Detailed Guide
-      </button>
-      <button className="py-3 px-6 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 transition-colors">
+      </a>
+      <a
+        href={`#${resourcesAnchorId}`}
+        className="py-3 px-6 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 transition-colors text-center"
+        aria-label={`Open the resource collection for ${roleTitle} week ${week.number}: ${week.title}`}
+      >
         Access Resources
-      </button>
+      </a>
     </div>
   </div>
 );
@@ -116,6 +128,25 @@ const EnterpriseWiki: React.FC = () => {
     [currentContent.weeks, selectedWeek],
   );
   const RoleIcon = currentRole.icon;
+
+  const createWeekSlug = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+
+  const weekSlug = useMemo(
+    () => createWeekSlug(`week-${activeWeek.number}-${activeWeek.title}`),
+    [activeWeek.number, activeWeek.title],
+  );
+
+  const createAnchorId = (suffix: string) => `${weekSlug}-${suffix}`;
+
+  const guideAnchorId = createAnchorId('guide');
+  const resourcesAnchorId = createAnchorId('resources');
+  const codeExamplesAnchorId = createAnchorId('code-examples');
+  const liveDemosAnchorId = createAnchorId('live-demos');
+  const bestPracticesAnchorId = createAnchorId('best-practices');
 
   // Protect against rounding overshooting 100% when the last week is active.
   const progressPercentage = useMemo(
@@ -263,24 +294,47 @@ const EnterpriseWiki: React.FC = () => {
             </div>
 
             {/* Always render at least one week so the layout stays consistent. */}
-            {activeWeek && <WeekDetail week={activeWeek} theme={currentTheme} />}
+            {activeWeek && (
+              <WeekDetail
+                week={activeWeek}
+                theme={currentTheme}
+                guideAnchorId={guideAnchorId}
+                resourcesAnchorId={resourcesAnchorId}
+                roleTitle={currentRole.title}
+              />
+            )}
 
             <div className="grid md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
+              <a
+                href={`#${codeExamplesAnchorId}`}
+                id={codeExamplesAnchorId}
+                className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
+                aria-label={`Browse code examples for ${currentRole.title} week ${activeWeek.number}`}
+              >
                 <Code className="w-8 h-8 text-blue-500 mb-2" />
                 <h4 className="font-semibold text-white">Code Examples</h4>
                 <p className="text-sm text-slate-400">Full implementation samples</p>
-              </div>
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
+              </a>
+              <a
+                href={`#${liveDemosAnchorId}`}
+                id={liveDemosAnchorId}
+                className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
+                aria-label={`Open live demos for ${currentRole.title} week ${activeWeek.number}`}
+              >
                 <Activity className="w-8 h-8 text-green-500 mb-2" />
                 <h4 className="font-semibold text-white">Live Demos</h4>
                 <p className="text-sm text-slate-400">Interactive tutorials</p>
-              </div>
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
+              </a>
+              <a
+                href={`#${bestPracticesAnchorId}`}
+                id={bestPracticesAnchorId}
+                className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
+                aria-label={`Review best practices for ${currentRole.title} week ${activeWeek.number}`}
+              >
                 <Shield className="w-8 h-8 text-purple-500 mb-2" />
                 <h4 className="font-semibold text-white">Best Practices</h4>
                 <p className="text-sm text-slate-400">Industry standards</p>
-              </div>
+              </a>
             </div>
           </div>
         </div>
