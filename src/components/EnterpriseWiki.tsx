@@ -25,11 +25,11 @@ const classNames = (
 const WeekDetail: React.FC<{
   week: WeekPlan;
   theme: RoleTheme;
-  guideUrl: string;
-  resourcesUrl: string;
+  guideAnchorId: string;
+  resourcesAnchorId: string;
   roleTitle: string;
-}> = ({ week, theme, guideUrl, resourcesUrl, roleTitle }) => (
-  <div className="bg-slate-800 rounded-xl p-6 shadow-xl">
+}> = ({ week, theme, guideAnchorId, resourcesAnchorId, roleTitle }) => (
+  <div className="bg-slate-800 rounded-xl p-6 shadow-xl" id={guideAnchorId}>
     <div className="flex items-center justify-between mb-6">
       <div>
         <h3 className="text-2xl font-bold text-white">
@@ -86,9 +86,12 @@ const WeekDetail: React.FC<{
       </div>
     </div>
 
-    <div className="mt-6 pt-6 border-t border-slate-700 flex gap-4">
+    <div
+      className="mt-6 pt-6 border-t border-slate-700 flex gap-4"
+      id={resourcesAnchorId}
+    >
       <a
-        href={guideUrl}
+        href={`#${guideAnchorId}`}
         className={classNames(
           'flex-1 py-3 px-6 text-white rounded-lg font-semibold transition-colors text-center',
           theme.accentBg,
@@ -99,7 +102,7 @@ const WeekDetail: React.FC<{
         View Detailed Guide
       </a>
       <a
-        href={resourcesUrl}
+        href={`#${resourcesAnchorId}`}
         className="py-3 px-6 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 transition-colors text-center"
         aria-label={`Open the resource collection for ${roleTitle} week ${week.number}: ${week.title}`}
       >
@@ -137,13 +140,13 @@ const EnterpriseWiki: React.FC = () => {
     [activeWeek.number, activeWeek.title],
   );
 
-  const baseWeekPath = useMemo(
-    () => `/wiki/${selectedRole}/${weekSlug}`,
-    [selectedRole, weekSlug],
-  );
+  const createAnchorId = (suffix: string) => `${weekSlug}-${suffix}`;
 
-  const guideUrl = `${baseWeekPath}/guide`;
-  const resourcesUrl = `${baseWeekPath}/resources`;
+  const guideAnchorId = createAnchorId('guide');
+  const resourcesAnchorId = createAnchorId('resources');
+  const codeExamplesAnchorId = createAnchorId('code-examples');
+  const liveDemosAnchorId = createAnchorId('live-demos');
+  const bestPracticesAnchorId = createAnchorId('best-practices');
 
   // Protect against rounding overshooting 100% when the last week is active.
   const progressPercentage = useMemo(
@@ -295,15 +298,16 @@ const EnterpriseWiki: React.FC = () => {
               <WeekDetail
                 week={activeWeek}
                 theme={currentTheme}
-                guideUrl={guideUrl}
-                resourcesUrl={resourcesUrl}
+                guideAnchorId={guideAnchorId}
+                resourcesAnchorId={resourcesAnchorId}
                 roleTitle={currentRole.title}
               />
             )}
 
             <div className="grid md:grid-cols-3 gap-4 mt-6">
               <a
-                href={`${baseWeekPath}/code-examples`}
+                href={`#${codeExamplesAnchorId}`}
+                id={codeExamplesAnchorId}
                 className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
                 aria-label={`Browse code examples for ${currentRole.title} week ${activeWeek.number}`}
               >
@@ -312,7 +316,8 @@ const EnterpriseWiki: React.FC = () => {
                 <p className="text-sm text-slate-400">Full implementation samples</p>
               </a>
               <a
-                href={`${baseWeekPath}/live-demos`}
+                href={`#${liveDemosAnchorId}`}
+                id={liveDemosAnchorId}
                 className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
                 aria-label={`Open live demos for ${currentRole.title} week ${activeWeek.number}`}
               >
@@ -321,7 +326,8 @@ const EnterpriseWiki: React.FC = () => {
                 <p className="text-sm text-slate-400">Interactive tutorials</p>
               </a>
               <a
-                href={`${baseWeekPath}/best-practices`}
+                href={`#${bestPracticesAnchorId}`}
+                id={bestPracticesAnchorId}
                 className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
                 aria-label={`Review best practices for ${currentRole.title} week ${activeWeek.number}`}
               >
