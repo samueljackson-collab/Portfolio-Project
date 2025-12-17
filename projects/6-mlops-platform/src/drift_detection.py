@@ -14,7 +14,7 @@ from scipy import stats
 from typing import Dict, List, Optional, Tuple
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -284,7 +284,7 @@ class DriftDetector:
 
         # Create detailed report
         report = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'summary': {
                 'total_features': total_features,
                 'drifted_features': len(drifted_features),

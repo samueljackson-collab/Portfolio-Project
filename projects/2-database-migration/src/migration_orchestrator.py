@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -60,7 +60,7 @@ class MigrationMetrics:
 
     def get_duration(self) -> timedelta:
         """Calculate total migration duration"""
-        end = self.end_time or datetime.utcnow()
+        end = self.end_time or datetime.now(timezone.utc)
         return end - self.start_time
 
 
@@ -114,7 +114,7 @@ class DatabaseMigrationOrchestrator:
             replication_lag_seconds=0.0,
             rows_migrated=0,
             errors_count=0,
-            start_time=datetime.utcnow()
+            start_time=datetime.now(timezone.utc)
         )
 
         # AWS clients
@@ -197,7 +197,7 @@ class DatabaseMigrationOrchestrator:
 
         # Create replication task
         response = self.dms_client.create_replication_task(
-            ReplicationTaskIdentifier=f'migration-{datetime.utcnow().strftime("%Y%m%d%H%M")}',
+            ReplicationTaskIdentifier=f'migration-{datetime.now(timezone.utc).strftime("%Y%m%d%H%M")}',
             SourceEndpointArn=self._create_dms_endpoint(self.source_config, 'source'),
             TargetEndpointArn=self._create_dms_endpoint(self.target_config, 'target'),
             ReplicationInstanceArn=self.dms_arn,
@@ -399,7 +399,7 @@ class DatabaseMigrationOrchestrator:
         logger.info("=" * 60)
         self.phase = MigrationPhase.CUTOVER
 
-        cutover_start = datetime.utcnow()
+        cutover_start = datetime.now(timezone.utc)
 
         try:
             # 1. Stop replication writes
@@ -424,7 +424,7 @@ class DatabaseMigrationOrchestrator:
             if not self._verify_target_operations():
                 raise Exception("Target database verification failed")
 
-            cutover_end = datetime.utcnow()
+            cutover_end = datetime.now(timezone.utc)
             self.metrics.downtime_seconds = (cutover_end - cutover_start).total_seconds()
 
             logger.info("=" * 60)
@@ -432,7 +432,7 @@ class DatabaseMigrationOrchestrator:
             logger.info("=" * 60)
 
             self.phase = MigrationPhase.COMPLETE
-            self.metrics.end_time = datetime.utcnow()
+            self.metrics.end_time = datetime.now(timezone.utc)
 
             return True
 
