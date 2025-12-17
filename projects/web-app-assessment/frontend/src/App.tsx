@@ -7,6 +7,18 @@ interface GroupedFinding {
   pages: Record<number, { page: Page; findings: Finding[] }>
 }
 
+export function LoginForm({ onAuthenticated, onError, error }: { onAuthenticated: (token: string) => void; onError: (error: string) => void; error?: string }) {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const { access_token } = await login(username, password)
+      onAuthenticated(access_token)
+    } catch (err: any) {
+      onError(err.message || 'Login failed')
+    }
 export function LoginForm({ onAuthenticated, error }: { onAuthenticated: (token: string) => void; error?: string }) {
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('password')
@@ -143,6 +155,10 @@ export default function App() {
     setError(null)
   }
 
+  const handleLoginError = (errorMessage: string) => {
+    setError(errorMessage)
+  }
+
   const handleScan = async (endpointId: number, url: string) => {
     if (!token) return
     try {
@@ -174,6 +190,7 @@ export default function App() {
       {endpoints.length === 0 ? <p>No endpoints loaded yet.</p> : <FindingsList grouped={groupedFindings} />}
     </>
   ) : (
+    <LoginForm onAuthenticated={handleLogin} onError={handleLoginError} error={error ?? undefined} />
     <LoginForm onAuthenticated={handleLogin} error={error ?? undefined} />
   )
 

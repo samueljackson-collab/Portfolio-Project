@@ -70,10 +70,12 @@ resource "aws_db_instance" "assessment" {
   instance_class          = "db.t3.micro"
   username                = var.db_username
   password                = var.db_password
-  skip_final_snapshot     = true
+  skip_final_snapshot     = var.skip_final_snapshot
   publicly_accessible     = false
   db_subnet_group_name    = aws_db_subnet_group.db_subnets.name
   vpc_security_group_ids  = [aws_security_group.backend.id]
+  backup_retention_period = 7
+  storage_encrypted       = true
 }
 
 resource "aws_ecs_cluster" "backend" {
