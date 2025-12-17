@@ -60,13 +60,20 @@ describe('FindingsList', () => {
   it('groups findings by endpoint and page', () => {
     render(
       <FindingsList
-        grouped={sampleEndpoints.map((endpoint) => ({
-          endpoint,
-          pages: {
-            1: { page: samplePages[0], findings: sampleFindings },
-            2: { page: samplePages[1], findings: [] }
+        grouped={[
+          {
+            endpoint: sampleEndpoints[0],
+            pages: {
+              1: { page: samplePages[0], findings: sampleFindings }
+            }
+          },
+          {
+            endpoint: sampleEndpoints[1],
+            pages: {
+              2: { page: samplePages[1], findings: [] }
+            }
           }
-        }))}
+        ]}
       />
     )
 
