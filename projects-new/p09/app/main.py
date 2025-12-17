@@ -1,5 +1,5 @@
 """FastAPI application for RAG chatbot."""
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import os
