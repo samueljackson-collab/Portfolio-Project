@@ -3,12 +3,14 @@ import {
   enterpriseWikiIcons,
   roleContent,
   roleThemes,
+  resourceCards,
   roles,
 } from './enterpriseWikiData';
 import type {
   RoleDefinition,
   RoleKey,
   RoleTheme,
+  ResourceLink,
   WeekPlan,
 } from './enterpriseWikiData';
 
@@ -266,21 +268,28 @@ const EnterpriseWiki: React.FC = () => {
             {activeWeek && <WeekDetail week={activeWeek} theme={currentTheme} />}
 
             <div className="grid md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
-                <Code className="w-8 h-8 text-blue-500 mb-2" />
-                <h4 className="font-semibold text-white">Code Examples</h4>
-                <p className="text-sm text-slate-400">Full implementation samples</p>
-              </div>
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
-                <Activity className="w-8 h-8 text-green-500 mb-2" />
-                <h4 className="font-semibold text-white">Live Demos</h4>
-                <p className="text-sm text-slate-400">Interactive tutorials</p>
-              </div>
-              <div className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer">
-                <Shield className="w-8 h-8 text-purple-500 mb-2" />
-                <h4 className="font-semibold text-white">Best Practices</h4>
-                <p className="text-sm text-slate-400">Industry standards</p>
-              </div>
+              {resourceCards.map((resource: ResourceLink) => {
+                const Icon = resource.icon;
+                return (
+                  <button
+                    key={resource.key}
+                    type="button"
+                    onClick={() =>
+                      window.open(resource.href, '_blank', 'noreferrer noopener')
+                    }
+                    className="group bg-slate-800 rounded-xl p-4 text-left transition transform hover:-translate-y-0.5 hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-400 focus-visible:ring-offset-slate-900"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <Icon className={classNames('w-8 h-8', resource.iconColor)} />
+                      <span className="text-xs font-semibold text-blue-200 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition">
+                        Open
+                      </span>
+                    </div>
+                    <h4 className="font-semibold text-white">{resource.title}</h4>
+                    <p className="text-sm text-slate-400">{resource.description}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
