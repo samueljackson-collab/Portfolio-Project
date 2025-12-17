@@ -54,12 +54,30 @@ class FlinkEventProcessor:
         # Enable checkpointing for fault tolerance
         self.env.enable_checkpointing(checkpoint_interval)
 
+        # Configure RocksDB state backend for large state
+        from pyflink.datastream.state_backend import RocksDBStateBackend
+        from pyflink.datastream.checkpoint_config import CheckpointingMode
+
+        # Set RocksDB as state backend
+        state_backend = RocksDBStateBackend(
+            "file:///tmp/flink-checkpoints",
+            enable_incremental_checkpointing=True
+        )
+        self.env.set_state_backend(state_backend)
+
+        # Configure checkpoint settings
+        checkpoint_config = self.env.get_checkpoint_config()
+        checkpoint_config.set_checkpointing_mode(CheckpointingMode.EXACTLY_ONCE)
+        checkpoint_config.set_min_pause_between_checkpoints(5000)
+        checkpoint_config.set_checkpoint_timeout(600000)
+        checkpoint_config.set_max_concurrent_checkpoints(1)
+
         # Set parallelism
         self.env.set_parallelism(2)
 
         logger.info(
             f"Flink processor initialized: input={input_topic}, "
-            f"output={output_topic}"
+            f"output={output_topic}, state_backend=RocksDB"
         )
 
     def setup_kafka_source(self) -> KafkaSource:
