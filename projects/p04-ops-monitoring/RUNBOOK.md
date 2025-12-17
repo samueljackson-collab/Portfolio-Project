@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the Prometheus/Grafana monitoring stack. This runbook covers monitoring infrastructure management, alert handling, dashboard maintenance, and troubleshooting procedures for production observability platform.
+Production operations runbook for the Prometheus/Grafana monitoring stack. This runbook covers
+monitoring infrastructure management, alert handling, dashboard maintenance, and troubleshooting
+procedures for production observability platform.
 
 **System Components:**
 

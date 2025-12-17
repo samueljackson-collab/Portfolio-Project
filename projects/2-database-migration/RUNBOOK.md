@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for Project 2 Database Migration Platform. This runbook covers zero-downtime PostgreSQL database migrations using Debezium CDC (Change Data Capture), migration orchestration, cutover procedures, validation, and rollback operations.
+Production operations runbook for Project 2 Database Migration Platform. This runbook covers zero-
+downtime PostgreSQL database migrations using Debezium CDC (Change Data Capture), migration
+orchestration, cutover procedures, validation, and rollback operations.
 
 **System Components:**
 
@@ -362,28 +364,28 @@ python src/migration_orchestrator.py validate --migration-id migration-20251110
 
 #### Severity Classification
 
-**P0: Critical Migration Failure**
+### P0: Critical Migration Failure
 
 - Data loss detected
 - Debezium connector failed during cutover
 - Cutover failed, applications down
 - Significant data inconsistency (>1% mismatch)
 
-**P1: Degraded Migration**
+### P1: Degraded Migration
 
 - High replication lag (>60 seconds)
 - Connector restarting frequently
 - Schema mismatch detected
 - Performance degradation on target
 
-**P2: Warning State**
+### P2: Warning State
 
 - Moderate replication lag (5-60 seconds)
 - Connector task restarted once
 - Minor data validation warnings
 - Kafka disk usage high
 
-**P3: Informational**
+### P3: Informational
 
 - Slow query on source database
 - Kafka consumer lag increasing slowly

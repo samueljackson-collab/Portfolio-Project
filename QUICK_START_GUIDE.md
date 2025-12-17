@@ -17,7 +17,6 @@ projects/08-web-data/PRJ-WEB-001/assets/  ← Code samples, diagrams
 professional/resume/                      ← Resume PDFs
 ```
 
-
 📖 **Detailed breakdown:** See `MISSING_DOCUMENTS_ANALYSIS.md`
 
 ---

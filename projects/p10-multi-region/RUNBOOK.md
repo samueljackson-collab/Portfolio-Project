@@ -568,26 +568,26 @@ aws elbv2 describe-target-health \
 
 #### Severity Classification
 
-**P0: Primary Region Complete Outage**
+### P0: Primary Region Complete Outage
 - Primary region completely unavailable
 - All health checks failing in primary
 - No healthy targets in primary ALB
 - Critical: Execute immediate failover
 
-**P1: Partial Primary Region Degradation**
+### P1: Partial Primary Region Degradation
 - > 50% of targets unhealthy
 - High error rate in primary
 - RDS experiencing issues
 - Health checks intermittent
 - Prepare for failover
 
-**P2: Secondary Region Issues**
+### P2: Secondary Region Issues
 - Secondary region degraded
 - RDS replication lag high
 - S3 replication delayed
 - DR capability at risk
 
-**P3: Single Component Failure**
+### P3: Single Component Failure
 - Single instance unhealthy
 - Individual health check failing
 - Minor replication delays

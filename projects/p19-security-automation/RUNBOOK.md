@@ -2,7 +2,10 @@
 
 ## Overview
 
-Production operations runbook for automated cloud security compliance and vulnerability management. This runbook covers CIS benchmark compliance, vulnerability scanning, security posture assessment, automated remediation, and incident response for cloud security operations.
+Production operations runbook for automated cloud security compliance
+and vulnerability management. This runbook covers CIS benchmark compliance,
+vulnerability scanning, security posture assessment, automated remediation,
+and incident response for cloud security operations.
 
 **System Components:**
 
@@ -424,7 +427,7 @@ aws cloudtrail lookup-events \
 
 #### Severity Classification
 
-**P0: Critical Security Issue**
+### P0: Critical Security Issue
 
 - Critical vulnerability with active exploits
 - Public S3 bucket with PII/sensitive data
@@ -432,7 +435,7 @@ aws cloudtrail lookup-events \
 - Complete encryption failure
 - Public database with no authentication
 
-**P1: High Security Risk**
+### P1: High Security Risk
 
 - High-severity vulnerability
 - CIS compliance score < 70%
@@ -440,7 +443,7 @@ aws cloudtrail lookup-events \
 - Disabled CloudTrail logging
 - Security group allowing 0.0.0.0/0 to sensitive ports
 
-**P2: Medium Security Risk**
+### P2: Medium Security Risk
 
 - Medium-severity vulnerability
 - CIS check failures (non-critical)
@@ -448,7 +451,7 @@ aws cloudtrail lookup-events \
 - Missing encryption on non-critical data
 - Flow logs disabled
 
-**P3: Low Security Risk**
+### P3: Low Security Risk
 
 - Low-severity vulnerability
 - CIS informational findings

@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the Playwright end-to-end testing framework. This runbook covers test execution, CI/CD pipeline management, test maintenance, visual regression testing, and troubleshooting procedures for automated web application testing.
+Production operations runbook for the Playwright end-to-end testing framework. This runbook covers
+test execution, CI/CD pipeline management, test maintenance, visual regression testing, and
+troubleshooting procedures for automated web application testing.
 
 **System Components:**
 
@@ -282,27 +284,27 @@ cat playwright-report/results.json | jq '.suites[].specs[] | select(.ok == false
 
 #### Severity Classification
 
-**P0: Complete Test Failure**
+### P0: Complete Test Failure
 
 - All tests failing (100% failure rate)
 - CI pipeline completely broken
 - Application completely down
 
-**P1: Critical Flow Failure**
+### P1: Critical Flow Failure
 
 - Login tests failing
 - Checkout flow broken
 - Authentication issues
 - > 50% test failure rate
 
-**P2: Partial Test Failure**
+### P2: Partial Test Failure
 
 - Single feature broken
 - Flaky test rate > 10%
 - Visual regression issues
 - 10-50% test failure rate
 
-**P3: Minor Issues**
+### P3: Minor Issues
 
 - Individual test failing
 - Performance degradation

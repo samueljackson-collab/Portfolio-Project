@@ -2,7 +2,9 @@
 
 ## Overview
 
-Build a comprehensive monitoring and automation system using Prometheus, Grafana, Alertmanager, and automated remediation scripts. Demonstrates SRE practices, golden signals monitoring, SLO tracking, and intelligent alerting for production environments.
+Build a comprehensive monitoring and automation system using Prometheus, Grafana, Alertmanager, and
+automated remediation scripts. Demonstrates SRE practices, golden signals monitoring, SLO tracking,
+and intelligent alerting for production environments.
 
 ## Key Outcomes
 
@@ -45,7 +47,7 @@ flowchart TB
     style Prom fill:#FF6F00
     style Grafana fill:#F46800
     style Alert fill:#E53935
-```
+```text
 
 ## Quickstart
 
@@ -53,7 +55,7 @@ flowchart TB
 make setup
 make run
 # Access Grafana at http://localhost:3000 (admin/admin)
-```
+```text
 
 ## Configuration
 
@@ -75,7 +77,7 @@ make test-alerts
 
 # Run integration tests
 make test
-```
+```text
 
 ## Operations
 
@@ -117,21 +119,21 @@ This section contains AI-assisted code generation prompts that can help you recr
 
 #### 1. Prometheus Rules
 
-```
+```text
 Create Prometheus alerting rules for application health, including error rate thresholds, latency percentiles, and service availability with appropriate severity levels
-```
+```text
 
 #### 2. Grafana Dashboard
 
-```
+```text
 Generate a Grafana dashboard JSON for microservices monitoring with panels for request rate, error rate, latency distribution, and resource utilization
-```
+```text
 
 #### 3. Log Aggregation
 
-```
+```text
 Write a Fluentd configuration that collects logs from multiple sources, parses JSON logs, enriches with Kubernetes metadata, and forwards to Elasticsearch
-```
+```text
 
 ### How to Use These Prompts
 

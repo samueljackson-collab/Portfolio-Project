@@ -610,14 +610,14 @@ wp db query "SELECT COUNT(*) FROM wp_posts WHERE post_type='shop_order' AND post
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 
 - Site completely unreachable (500/502/503 errors)
 - Database server down
 - Payment processing completely broken
 - Data corruption detected
 
-**P1: Major Degradation**
+### P1: Major Degradation
 
 - Site very slow (> 5s page load)
 - Checkout process failing
@@ -625,7 +625,7 @@ wp db query "SELECT COUNT(*) FROM wp_posts WHERE post_type='shop_order' AND post
 - High error rate (>10%)
 - Email notifications not sending
 
-**P2: Moderate Issues**
+### P2: Moderate Issues
 
 - Individual page errors
 - Cache performance degraded
@@ -633,7 +633,7 @@ wp db query "SELECT COUNT(*) FROM wp_posts WHERE post_type='shop_order' AND post
 - Payment gateway intermittent issues
 - CDN issues affecting static assets
 
-**P3: Minor Issues**
+### P3: Minor Issues
 
 - Single order failure
 - Image upload issues

@@ -322,25 +322,25 @@ gh run list --workflow=newman-tests.yml --json status,conclusion
 
 #### Severity Classification
 
-**P0: Complete API Failure**
+### P0: Complete API Failure
 - All tests failing (100%)
 - API unreachable (ECONNREFUSED)
 - Authentication completely broken
 - Production API down
 
-**P1: Critical Endpoint Failure**
+### P1: Critical Endpoint Failure
 - Login endpoint failing
 - Core business API broken
 - > 50% test failure rate
 - Production data inconsistency
 
-**P2: Partial Failure**
+### P2: Partial Failure
 - Single endpoint failing
 - Schema validation failures
 - Performance degradation
 - 10-50% test failure rate
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Single test failing
 - Non-critical endpoint issue
 - Minor schema mismatch

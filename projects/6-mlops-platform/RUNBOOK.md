@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the MLOps Platform. This runbook covers MLflow operations, model training workflows, hyperparameter optimization, model deployment procedures, monitoring, and troubleshooting for ML pipelines.
+Production operations runbook for the MLOps Platform. This runbook covers MLflow operations, model
+training workflows, hyperparameter optimization, model deployment procedures, monitoring, and
+troubleshooting for ML pipelines.
 
 **System Components:**
 
@@ -373,27 +375,27 @@ ls -lt reports/drift-*.json | head -5
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 
 - MLflow tracking server down (cannot log experiments)
 - All model serving pods down (no inference available)
 - Critical data pipeline failure (no training data)
 
-**P1: Degraded Service**
+### P1: Degraded Service
 
 - Model serving pods < 50% capacity
 - Training job success rate < 50%
 - High inference latency (p95 > 500ms)
 - Significant data drift detected
 
-**P2: Warning State**
+### P2: Warning State
 
 - Individual training job failures
 - Moderate drift detected
 - Increased inference latency (p95 > 200ms)
 - Hyperparameter tuning timeouts
 
-**P3: Informational**
+### P3: Informational
 
 - Single experiment failure
 - Minor drift detected

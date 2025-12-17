@@ -2,7 +2,10 @@
 
 ## Overview
 
-Production operations runbook for full-stack observability platform. This runbook covers Prometheus metrics collection, Grafana dashboard management, Loki log aggregation, alerting configuration, and incident response for observability operations.
+Production operations runbook for full-stack observability platform.
+This runbook covers Prometheus metrics collection, Grafana dashboard
+management, Loki log aggregation, alerting configuration, and incident
+response for observability operations.
 
 **System Components:**
 
@@ -545,28 +548,28 @@ df -h /var/lib/prometheus /var/lib/grafana /var/lib/loki
 
 #### Severity Classification
 
-**P0: Complete Observability Loss**
+### P0: Complete Observability Loss
 
 - Prometheus completely down
 - All metrics collection stopped
 - Grafana inaccessible
 - Cannot determine system health
 
-**P1: Partial Observability Loss**
+### P1: Partial Observability Loss
 
 - Loki down (no log aggregation)
 - Grafana down (no visualization)
 - Alertmanager down (no alert delivery)
 - >50% of scrape targets failing
 
-**P2: Degraded Observability**
+### P2: Degraded Observability
 
 - High query latency
 - Some scrape targets down
 - Alert delivery delays
 - Disk space approaching limit
 
-**P3: Minor Issues**
+### P3: Minor Issues
 
 - Single scrape target down
 - Non-critical dashboard errors

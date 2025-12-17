@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the P13 High-Availability Web Application platform. This runbook covers load balancer management, application instance operations, database replication, health monitoring, incident response, and troubleshooting for the NGINX-based HA architecture.
+Production operations runbook for the P13 High-Availability Web Application platform. This runbook
+covers load balancer management, application instance operations, database replication, health
+monitoring, incident response, and troubleshooting for the NGINX-based HA architecture.
 
 **System Components:**
 
@@ -532,27 +534,27 @@ docker-compose exec db-replica psql -U postgres -c "SELECT pg_is_in_recovery();"
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 
 - All application instances down
 - Load balancer down
 - Primary database down (writes failing)
 
-**P1: Degraded Service**
+### P1: Degraded Service
 
 - 2 of 3 app instances down (reduced capacity)
 - Replication lag > 60 seconds
 - Error rate > 5%
 - Primary database issues (reads from replica OK)
 
-**P2: Warning State**
+### P2: Warning State
 
 - Single app instance down
 - Replication lag > 10 seconds
 - Elevated error rate (1-5%)
 - High resource usage
 
-**P3: Informational**
+### P3: Informational
 
 - Minor performance degradation
 - Single instance restart

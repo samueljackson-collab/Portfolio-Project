@@ -339,24 +339,24 @@ pytest tests/ --tb=no -q
 
 #### Severity Classification
 
-**P0: Simulation System Down**
+### P0: Simulation System Down
 - HLR/HSS database unreachable
 - State machine completely broken
 - All tests failing (100%)
 
-**P1: Critical Functionality Broken**
+### P1: Critical Functionality Broken
 - Authentication failures > 50%
 - Location updates failing
 - State transitions not working
 - Critical test scenarios failing
 
-**P2: Degraded Performance**
+### P2: Degraded Performance
 - High latency (> 200ms)
 - Some test scenarios failing (10-30%)
 - State machine slow
 - Missing roaming agreements
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual subscriber stuck
 - Single test scenario failing
 - Logging issues

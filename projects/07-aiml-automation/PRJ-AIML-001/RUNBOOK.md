@@ -349,25 +349,25 @@ curl -w "\n%{http_code}\n" http://localhost:8080/health
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 - API service unreachable
 - All workers down
 - Database/Redis unavailable
 - Zero documents being generated
 
-**P1: Degraded Service**
+### P1: Degraded Service
 - < 50% workers operational
 - Generation time > 60 seconds
 - Success rate < 90%
 - Queue backing up (>200 items)
 
-**P2: Warning State**
+### P2: Warning State
 - Individual worker failures
 - Template rendering errors
 - Elevated error rate (5-10%)
 - Cache performance degradation
 
-**P3: Informational**
+### P3: Informational
 - Single document generation failure
 - Template cache miss
 - Minor performance degradation

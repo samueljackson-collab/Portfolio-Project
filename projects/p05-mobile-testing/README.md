@@ -2,7 +2,9 @@
 
 ## Overview
 
-Comprehensive manual testing approach for mobile applications (iOS/Android) covering functional, usability, compatibility, and regression testing. Demonstrates test planning, charter-based exploratory testing, defect reporting, and device matrix management for quality assurance roles.
+Comprehensive manual testing approach for mobile applications (iOS/Android) covering functional,
+usability, compatibility, and regression testing. Demonstrates test planning, charter-based
+exploratory testing, defect reporting, and device matrix management for quality assurance roles.
 
 ## Key Outcomes
 
@@ -43,7 +45,7 @@ flowchart LR
 
     style Manual fill:#4CAF50
     style Defects fill:#E53935
-```
+```text
 
 ## Quickstart
 
@@ -56,7 +58,7 @@ cat config/device-matrix.csv
 
 # Review sample test cases
 cat test-cases/login-flow.md
-```
+```text
 
 ## Configuration
 
@@ -135,21 +137,21 @@ This section contains AI-assisted code generation prompts that can help you recr
 
 #### 1. End-to-End Tests
 
-```
+```text
 Create Playwright tests for a login flow, including form validation, authentication error handling, and successful redirect to dashboard
-```
+```text
 
 #### 2. API Tests
 
-```
+```text
 Generate pytest-based API tests that verify REST endpoints for CRUD operations, including request/response validation, error cases, and authentication
-```
+```text
 
 #### 3. Performance Tests
 
-```
+```text
 Write a Locust load test that simulates 100 concurrent users performing read/write operations, measures response times, and identifies bottlenecks
-```
+```text
 
 ### How to Use These Prompts
 

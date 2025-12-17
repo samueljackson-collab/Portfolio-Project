@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the Serverless Data Processing Platform. This runbook covers AWS Lambda operations, Step Functions workflows, API Gateway management, DynamoDB operations, and troubleshooting for event-driven analytics pipelines.
+Production operations runbook for the Serverless Data Processing Platform. This runbook covers AWS
+Lambda operations, Step Functions workflows, API Gateway management, DynamoDB operations, and
+troubleshooting for event-driven analytics pipelines.
 
 **System Components:**
 
@@ -49,7 +51,7 @@ aws cloudwatch get-dashboard --dashboard-name "ServerlessDataPipeline"
 
 # Access via Console:
 # https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=ServerlessDataPipeline
-```
+```text
 
 #### X-Ray Service Map
 
@@ -59,7 +61,7 @@ aws xray get-service-graph --start-time $(date -u -d '1 hour ago' +%s) --end-tim
 
 # Access via Console:
 # https://console.aws.amazon.com/xray/home?region=us-east-1#/service-map
-```
+```text
 
 #### Step Functions Dashboard
 
@@ -72,7 +74,7 @@ aws stepfunctions list-executions \
 # Check execution status summary
 aws stepfunctions describe-state-machine \
   --state-machine-arn arn:aws:states:us-east-1:123456789:stateMachine:DataProcessing
-```
+```text
 
 ### Alerts
 
@@ -109,7 +111,7 @@ aws stepfunctions list-executions \
   --state-machine-arn arn:aws:states:us-east-1:123456789:stateMachine:DataProcessing \
   --status-filter FAILED \
   --max-results 10
-```
+```text
 
 ---
 
@@ -156,7 +158,7 @@ PROD_URL=$(aws cloudformation describe-stacks \
   --output text)
 
 curl -X POST $PROD_URL/ingest -d @../test/sample_event.json
-```
+```text
 
 #### Configure API Gateway Throttling
 
@@ -178,7 +180,7 @@ aws apigateway update-stage \
 
 # Verify settings
 aws apigateway get-stage --rest-api-id xyz789 --stage-name prod
-```
+```text
 
 ### Lambda Function Operations
 
@@ -209,7 +211,7 @@ aws lambda invoke \
 
 # 5. Check output
 cat output.json
-```
+```text
 
 #### Configure Lambda Concurrency
 
@@ -228,7 +230,7 @@ aws lambda put-provisioned-concurrency-config \
 # Check current concurrency
 aws lambda get-function-concurrency \
   --function-name ingestion-lambda
-```
+```text
 
 #### View Lambda Logs
 
@@ -253,7 +255,7 @@ aws logs filter-log-events \
 aws logs filter-log-events \
   --log-group-name /aws/lambda/ingestion-lambda \
   --filter-pattern "REQUEST_ID_HERE"
-```
+```text
 
 ### Step Functions Management
 
@@ -281,7 +283,7 @@ while true; do
   [[ "$STATUS" == "SUCCEEDED" || "$STATUS" == "FAILED" ]] && break
   sleep 5
 done
-```
+```text
 
 #### View Execution History
 
@@ -301,7 +303,7 @@ aws stepfunctions get-execution-history \
 aws stepfunctions describe-execution \
   --execution-arn $EXECUTION_ARN \
   --query 'output' --output text | jq .
-```
+```text
 
 #### Stop Running Execution
 
@@ -314,7 +316,7 @@ aws stepfunctions stop-execution \
 
 # Verify stopped
 aws stepfunctions describe-execution --execution-arn $EXECUTION_ARN
-```
+```text
 
 ### DynamoDB Operations
 
@@ -341,7 +343,7 @@ aws dynamodb scan \
   --table-name CuratedEvents \
   --filter-expression "amount > :amt" \
   --expression-attribute-values '{":amt":{"N":"1000"}}'
-```
+```text
 
 #### Update Table Capacity
 
@@ -364,7 +366,7 @@ aws application-autoscaling register-scalable-target \
   --scalable-dimension dynamodb:table:WriteCapacityUnits \
   --min-capacity 5 \
   --max-capacity 100
-```
+```text
 
 #### Backup and Restore
 
@@ -386,7 +388,7 @@ aws dynamodb restore-table-from-backup \
 aws dynamodb update-continuous-backups \
   --table-name CuratedEvents \
   --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true
-```
+```text
 
 ### Dead Letter Queue Management
 
@@ -408,7 +410,7 @@ aws sqs receive-message \
 aws sqs receive-message \
   --queue-url https://sqs.us-east-1.amazonaws.com/123456789/processing-dlq \
   --max-number-of-messages 10 > dlq_messages.json
-```
+```text
 
 #### Replay DLQ Messages
 
@@ -449,7 +451,7 @@ EOF
 
 chmod +x scripts/replay_dlq.sh
 ./scripts/replay_dlq.sh
-```
+```text
 
 ---
 
@@ -490,34 +492,34 @@ aws cloudwatch get-metric-statistics \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 300 \
   --statistics Sum
-```
+```text
 
 ### Triage
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 
 - API Gateway returning 5xx errors > 50%
 - All Lambda functions failing
 - Step Functions completely unable to execute
 - DynamoDB table unavailable
 
-**P1: Degraded Service**
+### P1: Degraded Service
 
 - Lambda error rate > 10%
 - API Gateway 5xx errors > 5%
 - Step Functions failure rate > 20%
 - DynamoDB throttling affecting > 50% requests
 
-**P2: Warning State**
+### P2: Warning State
 
 - Lambda throttling detected
 - DLQ message count increasing
 - Elevated latency (p95 > 1s)
 - DynamoDB capacity approaching limits
 
-**P3: Informational**
+### P3: Informational
 
 - Occasional Lambda cold starts
 - Minor latency increase
@@ -553,7 +555,7 @@ aws lambda update-alias \
 aws apigateway flush-stage-cache \
   --rest-api-id xyz789 \
   --stage-name prod
-```
+```text
 
 **Investigation (2-10 minutes):**
 
@@ -574,7 +576,7 @@ aws logs start-query \
   --start-time $(date -u -d '10 minutes ago' +%s) \
   --end-time $(date -u +%s) \
   --query-string 'fields @timestamp, @message | filter @message like /ERROR/ | limit 20'
-```
+```text
 
 **Mitigation:**
 
@@ -592,7 +594,7 @@ aws apigateway update-stage \
 
 # Option 3: Route traffic to backup region (if available)
 # Update Route53 health check to fail over
-```
+```text
 
 #### P0: All Lambda Functions Failing
 
@@ -621,7 +623,7 @@ aws lambda get-account-settings
 
 # 5. Rollback all functions if recent deployment
 ./scripts/rollback_all_lambdas.sh
-```
+```text
 
 **Investigation:**
 
@@ -642,7 +644,7 @@ aws lambda get-function --function-name ingestion-lambda \
 aws lambda get-function-configuration \
   --function-name ingestion-lambda \
   --query 'Environment'
-```
+```text
 
 #### P1: Step Functions High Failure Rate
 
@@ -669,7 +671,7 @@ aws stepfunctions get-execution-history \
 for exec in $(aws stepfunctions list-executions --status-filter FAILED --query 'executions[*].executionArn' --output text); do
   aws stepfunctions describe-execution --execution-arn $exec --query 'cause'
 done
-```
+```text
 
 **Mitigation:**
 
@@ -690,7 +692,7 @@ done
 aws stepfunctions update-state-machine \
   --state-machine-arn arn:aws:states:us-east-1:123456789:stateMachine:DataProcessing \
   --definition file://state_machine_fixed.json
-```
+```text
 
 #### P1: DLQ Message Count High
 
@@ -712,7 +714,7 @@ cat sample_dlq.json | jq -r '.Messages[].Body' | jq -s 'group_by(.eventType) | m
 
 # Check for poison message
 cat sample_dlq.json | jq -r '.Messages[0].Body' | jq .
-```
+```text
 
 **Mitigation:**
 
@@ -735,7 +737,7 @@ aws s3 cp poison_messages.json s3://analysis-bucket/dlq/$(date +%Y%m%d)/
 # Purge queue
 aws sqs purge-queue \
   --queue-url https://sqs.us-east-1.amazonaws.com/123456789/processing-dlq
-```
+```text
 
 ### Post-Incident
 
@@ -779,7 +781,7 @@ aws cloudwatch get-metric-statistics \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 300 \
   --statistics Sum > incidents/metrics-$(date +%Y%m%d-%H%M).json
-```
+```text
 
 ---
 
@@ -794,7 +796,7 @@ aws cloudwatch get-metric-statistics \
 ```bash
 $ aws logs tail /aws/lambda/transformation-lambda --since 5m
 Task timed out after 30.00 seconds
-```
+```text
 
 **Diagnosis:**
 
@@ -813,7 +815,7 @@ aws cloudwatch get-metric-statistics \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 3600 \
   --statistics Average,Maximum
-```
+```text
 
 **Solution:**
 
@@ -827,7 +829,7 @@ aws lambda update-function-configuration \
 # - Reduce batch size
 # - Add pagination for large datasets
 # - Move heavy processing to Step Functions
-```
+```text
 
 ---
 
@@ -837,7 +839,7 @@ aws lambda update-function-configuration \
 
 ```bash
 ProvisionedThroughputExceededException: Rate of requests exceeds the allowed throughput
-```
+```text
 
 **Diagnosis:**
 
@@ -855,7 +857,7 @@ aws cloudwatch get-metric-statistics \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 300 \
   --statistics Sum
-```
+```text
 
 **Solution:**
 
@@ -879,7 +881,7 @@ aws application-autoscaling put-scaling-policy \
   --policy-type TargetTrackingScaling \
   --target-tracking-scaling-policy-configuration \
     'PredefinedMetricSpecification={PredefinedMetricType=DynamoDBWriteCapacityUtilization},TargetValue=70.0'
-```
+```text
 
 ---
 
@@ -887,9 +889,9 @@ aws application-autoscaling put-scaling-policy \
 
 **Symptoms:**
 
-```
+```text
 Access-Control-Allow-Origin header missing
-```
+```text
 
 **Diagnosis:**
 
@@ -904,7 +906,7 @@ aws apigateway get-method \
   --rest-api-id xyz789 \
   --resource-id abc123 \
   --http-method OPTIONS
-```
+```text
 
 **Solution:**
 
@@ -919,7 +921,7 @@ EOF
 
 # Redeploy
 sam deploy
-```
+```text
 
 ---
 
@@ -951,7 +953,7 @@ aws sqs get-queue-attributes \
 
 # Review QuickSight dashboards
 echo "Review dashboards at: https://quicksight.aws.amazon.com/"
-```
+```text
 
 ### Weekly Tasks
 
@@ -977,7 +979,7 @@ done
 aws dynamodb create-backup \
   --table-name CuratedEvents \
   --backup-name weekly-backup-$(date +%Y%m%d)
-```
+```text
 
 ### Monthly Tasks
 
@@ -997,7 +999,7 @@ python scripts/archive_old_data.py --older-than 90
 # Update this runbook with lessons learned
 git pull
 # Review and update procedures
-```
+```text
 
 ---
 
@@ -1044,7 +1046,7 @@ echo "Backup completed at $(date)"
 EOF
 
 chmod +x scripts/daily_backup.sh
-```
+```text
 
 ### Disaster Recovery Procedures
 
@@ -1079,7 +1081,7 @@ curl -X POST $API_URL/ingest -d '{"test": true}'
 
 # 4. Monitor for issues
 watch -n 5 './scripts/health_check.sh'
-```
+```text
 
 ---
 
@@ -1108,7 +1110,7 @@ aws sqs get-queue-attributes --queue-url <url> --attribute-names ApproximateNumb
 
 # Rollback Lambda
 aws lambda update-alias --function-name ingestion-lambda --name prod --function-version <prev>
-```
+```text
 
 ### Emergency Response
 
@@ -1124,7 +1126,7 @@ aws lambda update-alias --function-name ingestion-lambda --name prod --function-
 
 # P1: DynamoDB throttling
 aws dynamodb update-table --table-name CuratedEvents --billing-mode PAY_PER_REQUEST
-```
+```text
 
 ---
 

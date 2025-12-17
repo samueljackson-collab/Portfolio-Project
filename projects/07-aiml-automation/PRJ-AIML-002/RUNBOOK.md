@@ -580,14 +580,14 @@ tail -20 /var/log/tab-organizer/ml-metrics.log | grep ERROR
 
 #### Severity Classification
 
-**P0: Critical Failure**
+### P0: Critical Failure
 
 - App crashes on startup (all platforms)
 - ML model completely unavailable
 - Data loss or corruption
 - Firebase authentication failure (users locked out)
 
-**P1: Major Degradation**
+### P1: Major Degradation
 
 - Classification accuracy < 50%
 - Sync service completely down
@@ -595,7 +595,7 @@ tail -20 /var/log/tab-organizer/ml-metrics.log | grep ERROR
 - Battery drain > 10%/hour
 - Memory leak causing OOM
 
-**P2: Moderate Issues**
+### P2: Moderate Issues
 
 - Sync conflicts accumulating
 - Individual platform issues
@@ -603,7 +603,7 @@ tail -20 /var/log/tab-organizer/ml-metrics.log | grep ERROR
 - Elevated error rate (5-10%)
 - UI glitches
 
-**P3: Minor Issues**
+### P3: Minor Issues
 
 - Single classification error
 - Temporary sync delay

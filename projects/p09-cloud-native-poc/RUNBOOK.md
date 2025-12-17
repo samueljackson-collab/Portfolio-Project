@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the FastAPI cloud-native application. This runbook covers container operations, database management, API monitoring, incident response, and troubleshooting procedures for the Dockerized FastAPI application with SQLite backend.
+Production operations runbook for the FastAPI cloud-native application. This runbook covers
+container operations, database management, API monitoring, incident response, and troubleshooting
+procedures for the Dockerized FastAPI application with SQLite backend.
 
 **System Components:**
 
@@ -419,28 +421,28 @@ curl http://localhost:8000/api/items
 
 #### Severity Classification
 
-**P0: Application Down**
+### P0: Application Down
 
 - Container stopped/crashed
 - Health check returning 500
 - Database corrupted
 - All API requests failing
 
-**P1: Degraded Service**
+### P1: Degraded Service
 
 - Error rate > 5%
 - Response time > 1 second
 - Some API endpoints failing
 - Database locked
 
-**P2: Performance Issues**
+### P2: Performance Issues
 
 - Response time 500ms-1s
 - Memory usage > 90%
 - Slow database queries
 - Error rate 1-5%
 
-**P3: Minor Issues**
+### P3: Minor Issues
 
 - Individual request failures
 - Warning logs

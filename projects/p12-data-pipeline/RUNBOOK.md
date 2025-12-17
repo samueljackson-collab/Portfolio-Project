@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the P12 Apache Airflow data pipeline platform. This runbook covers DAG management, task execution, scheduler operations, incident response, and troubleshooting for the Airflow-based ETL workflows.
+Production operations runbook for the P12 Apache Airflow data pipeline platform. This runbook covers
+DAG management, task execution, scheduler operations, incident response, and troubleshooting for the
+Airflow-based ETL workflows.
 
 **System Components:**
 
@@ -539,28 +541,28 @@ WHERE state='running' AND start_date < NOW() - INTERVAL '1 hour';
 
 #### Severity Classification
 
-**P0: Critical Pipeline Failure**
+### P0: Critical Pipeline Failure
 
 - Scheduler not running
 - Database connection failed
 - Critical SLA-bound DAG failed
 - All DAG runs failing
 
-**P1: Degraded Service**
+### P1: Degraded Service
 
 - Individual DAG failing repeatedly
 - Tasks exceeding retry limits
 - Executor queue backed up
 - Slow task execution impacting downstream
 
-**P2: Warning State**
+### P2: Warning State
 
 - DAG parse errors
 - Individual task failures (with retries remaining)
 - Task duration warnings
 - High retry rates
 
-**P3: Informational**
+### P3: Informational
 
 - Single task failure (recovered)
 - DAG run delays

@@ -459,27 +459,27 @@ Get-Service -Name NTDS, DNS, KDC | Where-Object {$_.Status -ne 'Running'}
 
 #### Severity Classification
 
-**P0: Critical Domain Failure**
+### P0: Critical Domain Failure
 - All domain controllers down
 - Forest-wide authentication failure
 - Schema master failure during schema changes
 - Complete AD replication failure
 
-**P1: Major Service Degradation**
+### P1: Major Service Degradation
 - Single DC down (multi-DC environment)
 - FSMO role holder failure
 - Site-wide authentication issues
 - DNS service failure
 - Replication failure > 1 hour
 
-**P2: Service Impact**
+### P2: Service Impact
 - GPO application failures
 - Single OU authentication issues
 - Replication latency 15-60 minutes
 - Automation failures
 - Non-critical service failures
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Single user account issues
 - GPO compliance warnings
 - Low disk space warnings

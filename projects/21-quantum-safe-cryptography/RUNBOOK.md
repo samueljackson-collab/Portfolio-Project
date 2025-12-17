@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the Quantum-Safe Cryptography service. This runbook covers hybrid key exchange operations, cryptographic key management, KEM (Key Encapsulation Mechanism) operations, and incident response for quantum-resistant cryptography systems.
+Production operations runbook for the Quantum-Safe Cryptography service. This runbook covers hybrid
+key exchange operations, cryptographic key management, KEM (Key Encapsulation Mechanism) operations,
+and incident response for quantum-resistant cryptography systems.
 
 **System Components:**
 
@@ -383,7 +385,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 
 #### Severity Classification
 
-**P0: Critical Security Incident**
+### P0: Critical Security Incident
 
 - Cryptographic validation failure
 - Key corruption or compromise
@@ -391,7 +393,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 - Security audit failures
 - Known vulnerability detected
 
-**P1: Service Degradation**
+### P1: Service Degradation
 
 - High error rate (>1%)
 - Severe performance degradation (>500ms latency)
@@ -399,7 +401,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 - Memory leaks causing OOM
 - Partial service unavailability
 
-**P2: Warning State**
+### P2: Warning State
 
 - Elevated error rate (0.1-1%)
 - Moderate performance degradation (100-500ms)
@@ -407,7 +409,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 - High resource usage (>80%)
 - Non-critical validation warnings
 
-**P3: Informational**
+### P3: Informational
 
 - Occasional errors (<0.1%)
 - Minor performance variations

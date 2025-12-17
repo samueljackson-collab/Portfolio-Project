@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the P11 Serverless API platform. This runbook covers Lambda function management, API Gateway operations, DynamoDB administration, incident response, and troubleshooting for the AWS SAM-based serverless architecture.
+Production operations runbook for the P11 Serverless API platform. This runbook covers Lambda
+function management, API Gateway operations, DynamoDB administration, incident response, and
+troubleshooting for the AWS SAM-based serverless architecture.
 
 **System Components:**
 
@@ -54,7 +56,7 @@ aws cloudwatch get-metric-statistics \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 300 \
   --statistics Sum
-```
+```text
 
 #### Lambda Function Dashboard
 
@@ -91,7 +93,7 @@ aws cloudwatch get-metric-statistics \
 
 # List all Lambda functions in stack
 aws lambda list-functions --query 'Functions[?starts_with(FunctionName, `serverless-api`)].FunctionName' --output table
-```
+```text
 
 #### DynamoDB Dashboard
 
@@ -111,7 +113,7 @@ aws dynamodb describe-table --table-name items-table --query 'Table.TableStatus'
 
 # Check item count
 aws dynamodb describe-table --table-name items-table --query 'Table.ItemCount'
-```
+```text
 
 ### Alerts
 
@@ -143,7 +145,7 @@ aws xray get-trace-summaries \
   --start-time $(date -u -d '1 hour ago' +%s) \
   --end-time $(date -u +%s) \
   --filter-expression 'error = true OR fault = true'
-```
+```text
 
 ---
 
@@ -173,7 +175,7 @@ aws cloudformation describe-stacks \
   --stack-name serverless-api-dev \
   --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
   --output text
-```
+```text
 
 #### Deploy to Production
 
@@ -208,7 +210,7 @@ aws cloudformation execute-change-set \
 # 5. Monitor deployment
 aws cloudformation wait stack-update-complete \
   --stack-name serverless-api-prod
-```
+```text
 
 #### Rollback Deployment
 
@@ -223,7 +225,7 @@ aws cloudformation wait stack-delete-complete --stack-name serverless-api-prod
 # Redeploy from previous commit/tag
 git checkout v1.2.0
 make deploy-prod
-```
+```text
 
 ### Lambda Function Management
 
@@ -244,7 +246,7 @@ aws lambda wait function-updated \
 # Verify new code is active
 aws lambda get-function --function-name CreateItemFunction \
   --query 'Configuration.LastUpdateStatus'
-```
+```text
 
 #### Invoke Function Locally
 
@@ -263,7 +265,7 @@ sam local start-api \
 curl -X POST http://localhost:3000/items \
   -H "Content-Type: application/json" \
   -d '{"name":"test","value":"123"}'
-```
+```text
 
 #### View Lambda Logs
 
@@ -282,7 +284,7 @@ aws logs filter-log-events \
 
 # Get last 100 log events
 aws logs tail /aws/lambda/CreateItemFunction --format short | head -100
-```
+```text
 
 #### Configure Function Settings
 
@@ -307,7 +309,7 @@ aws lambda put-provisioned-concurrency-config \
   --function-name CreateItemFunction \
   --qualifier $LATEST \
   --provisioned-concurrent-executions 5
-```
+```text
 
 ### API Gateway Operations
 
@@ -343,7 +345,7 @@ curl -X PUT "${API_URL}/items/item-id" \
 # Delete item
 curl -X DELETE "${API_URL}/items/item-id" \
   -H "Authorization: Bearer ${JWT_TOKEN}"
-```
+```text
 
 #### Enable/Disable API Caching
 
@@ -360,7 +362,7 @@ aws apigateway update-stage \
 aws apigateway flush-stage-cache \
   --rest-api-id <api-id> \
   --stage-name dev
-```
+```text
 
 #### Update API Throttling
 
@@ -372,7 +374,7 @@ aws apigateway update-stage \
   --patch-operations \
     op=replace,path=/throttle/rateLimit,value=1000 \
     op=replace,path=/throttle/burstLimit,value=2000
-```
+```text
 
 ### DynamoDB Operations
 
@@ -399,7 +401,7 @@ aws dynamodb scan \
 aws dynamodb scan \
   --table-name items-table \
   --select COUNT
-```
+```text
 
 #### Backup and Restore
 
@@ -416,7 +418,7 @@ aws dynamodb list-backups --table-name items-table
 aws dynamodb restore-table-from-backup \
   --target-table-name items-table-restored \
   --backup-arn <backup-arn>
-```
+```text
 
 #### Enable Point-in-Time Recovery
 
@@ -431,7 +433,7 @@ aws dynamodb restore-table-to-point-in-time \
   --source-table-name items-table \
   --target-table-name items-table-restored \
   --restore-date-time "2025-11-09T12:00:00Z"
-```
+```text
 
 #### Update Table Capacity
 
@@ -457,7 +459,7 @@ aws application-autoscaling put-scaling-policy \
   --policy-type TargetTrackingScaling \
   --target-tracking-scaling-policy-configuration \
     'PredefinedMetricSpecification={PredefinedMetricType=DynamoDBReadCapacityUtilization},TargetValue=70.0'
-```
+```text
 
 ---
 
@@ -490,34 +492,34 @@ aws logs filter-log-events \
 aws cloudformation describe-stacks \
   --stack-name serverless-api-prod \
   --query 'Stacks[0].StackStatus'
-```
+```text
 
 ### Triage
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 
 - API Gateway returning 5XX errors > 5%
 - Lambda functions out of memory (OOM)
 - DynamoDB table unavailable
 - Authentication service down
 
-**P1: Degraded Service**
+### P1: Degraded Service
 
 - Lambda error rate > 1%
 - API response time > 2 seconds (p95)
 - DynamoDB throttling errors
 - Cold start latency > 3 seconds
 
-**P2: Warning State**
+### P2: Warning State
 
 - Lambda execution time increasing
 - DynamoDB capacity approaching limits
 - Occasional authentication failures
 - Minor API Gateway errors (4XX)
 
-**P3: Informational**
+### P3: Informational
 
 - Lambda logs showing warnings
 - API usage trending upward
@@ -550,7 +552,7 @@ aws lambda update-function-configuration \
 aws lambda get-function-configuration \
   --function-name CreateItemFunction \
   --query 'MemorySize'
-```
+```text
 
 **Investigation (5-30 minutes):**
 
@@ -573,7 +575,7 @@ aws xray get-trace-summaries \
   --start-time $(date -u -d '1 hour ago' +%s) \
   --end-time $(date -u +%s) \
   --filter-expression 'service("CreateItemFunction")'
-```
+```text
 
 **Root Cause & Prevention:**
 
@@ -619,7 +621,7 @@ aws cloudformation describe-stack-events \
 
 # 4. Emergency rollback if recent deployment
 aws cloudformation cancel-update-stack --stack-name serverless-api-prod
-```
+```text
 
 **Investigation (5-30 minutes):**
 
@@ -645,7 +647,7 @@ aws cloudwatch get-metric-statistics \
 curl -X GET "${API_URL}/items" \
   -H "Authorization: Bearer ${TEST_TOKEN}" \
   -v
-```
+```text
 
 ---
 
@@ -678,7 +680,7 @@ aws dynamodb update-table \
 aws dynamodb update-table \
   --table-name items-table \
   --billing-mode PAY_PER_REQUEST
-```
+```text
 
 **Investigation (5-30 minutes):**
 
@@ -698,7 +700,7 @@ aws cloudwatch get-metric-statistics \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 60 \
   --statistics Sum,Maximum
-```
+```text
 
 **Prevention:**
 
@@ -729,7 +731,7 @@ aws logs filter-log-events \
   --log-group-name /aws/lambda/CreateItemFunction \
   --start-time $(($(date +%s) - 3600))000 \
   --filter-pattern "REPORT" | grep -i "init duration"
-```
+```text
 
 **Mitigation:**
 
@@ -749,7 +751,7 @@ zip -g function.zip lambda_function.py
 
 # Option 3: Use Lambda SnapStart (for Java)
 # Or implement warming strategy with EventBridge
-```
+```text
 
 ---
 
@@ -782,7 +784,7 @@ aws cloudwatch get-metric-statistics \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 300 \
   --statistics Maximum,Average
-```
+```text
 
 #### API Gateway Debugging
 
@@ -808,7 +810,7 @@ aws apigateway update-stage \
   --patch-operations \
     op=replace,path=/accessLogSettings/destinationArn,value=arn:aws:logs:us-east-1:ACCOUNT:log-group:/aws/apigateway/serverless-api \
     op=replace,path=/accessLogSettings/format,value='$context.requestId'
-```
+```text
 
 #### DynamoDB Debugging
 
@@ -828,7 +830,7 @@ aws dynamodb describe-table \
 
 # Export table data (for debugging)
 aws dynamodb scan --table-name items-table > table-export.json
-```
+```text
 
 ### Common Issues & Solutions
 
@@ -839,7 +841,7 @@ aws dynamodb scan --table-name items-table > table-export.json
 ```bash
 $ curl -X POST ${API_URL}/items
 {"message": "Internal server error"}
-```
+```text
 
 **Diagnosis:**
 
@@ -854,7 +856,7 @@ aws lambda get-function --function-name CreateItemFunction \
 # Check role policies
 aws iam list-attached-role-policies --role-name LambdaExecutionRole
 aws iam list-role-policies --role-name LambdaExecutionRole
-```
+```text
 
 **Solution:**
 
@@ -867,7 +869,7 @@ aws iam list-role-policies --role-name LambdaExecutionRole
 
 # Redeploy stack
 make deploy-dev
-```
+```text
 
 ---
 
@@ -875,10 +877,10 @@ make deploy-dev
 
 **Symptoms:**
 
-```
+```text
 Access to fetch at 'https://api.example.com/items' from origin 'https://app.example.com'
 has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present.
-```
+```text
 
 **Diagnosis:**
 
@@ -894,7 +896,7 @@ aws apigateway get-method \
   --rest-api-id <api-id> \
   --resource-id <resource-id> \
   --http-method OPTIONS
-```
+```text
 
 **Solution:**
 
@@ -919,7 +921,7 @@ aws apigateway get-method \
 
 # Redeploy
 make deploy-dev
-```
+```text
 
 ---
 
@@ -930,7 +932,7 @@ make deploy-dev
 ```bash
 $ curl -X GET ${API_URL}/items/test-id
 {"message": "Item not found"}
-```
+```text
 
 **Diagnosis:**
 
@@ -945,7 +947,7 @@ aws dynamodb scan --table-name items-table --max-items 10
 
 # Check Lambda logs for query errors
 aws logs tail /aws/lambda/ReadItemFunction --since 10m
-```
+```text
 
 **Solution:**
 
@@ -957,7 +959,7 @@ aws dynamodb describe-table \
 
 # Update Lambda function to use correct key format
 # Redeploy function
-```
+```text
 
 ---
 
@@ -985,7 +987,7 @@ aws dynamodb create-backup \
 
 # Schedule daily backups via Lambda/EventBridge
 # See scripts/backup-dynamodb.py
-```
+```text
 
 **Code and Configuration Backups:**
 
@@ -1005,7 +1007,7 @@ aws apigateway get-export \
   --stage-name prod \
   --export-type swagger \
   backup/api-swagger-$(date +%Y%m%d).json
-```
+```text
 
 ### Disaster Recovery Procedures
 
@@ -1053,7 +1055,7 @@ API_URL=$(aws cloudformation describe-stacks \
 
 curl -s "${API_URL}/health"
 curl -X GET "${API_URL}/items" -H "Authorization: Bearer ${JWT_TOKEN}"
-```
+```text
 
 #### DynamoDB Data Loss
 
@@ -1086,7 +1088,7 @@ aws dynamodb scan --table-name items-table-restored --select COUNT
 
 # 6. Verify application functionality
 make test-api
-```
+```text
 
 ### DR Drill Procedure
 
@@ -1126,7 +1128,7 @@ echo "Target RTO: 900 seconds (15 minutes)" | tee -a dr-drill-log.txt
 echo "Actual recovery time: $RECOVERY_TIME seconds" | tee -a dr-drill-log.txt
 
 # 10. Update runbook with lessons learned
-```
+```text
 
 ---
 
@@ -1163,7 +1165,7 @@ aws cloudwatch get-metric-statistics \
 # Check DynamoDB capacity
 aws dynamodb describe-table --table-name items-table \
   --query 'Table.[ProvisionedThroughput,TableStatus]'
-```
+```text
 
 #### Weekly Tasks
 
@@ -1198,7 +1200,7 @@ aws cloudwatch get-metric-statistics \
 
 # Check for unused Lambda functions
 aws lambda list-functions --query 'Functions[?LastModified<`2025-01-01`].FunctionName'
-```
+```text
 
 #### Monthly Tasks
 
@@ -1232,7 +1234,7 @@ aws ce get-cost-and-usage \
   --filter file://filter.json
 
 # Update runbook documentation
-```
+```text
 
 ### Upgrade Procedures
 
@@ -1258,7 +1260,7 @@ make deploy-prod
 
 # 6. Monitor for issues
 aws logs tail /aws/lambda/CreateItemFunction --follow
-```
+```text
 
 #### Update Dependencies
 
@@ -1279,7 +1281,7 @@ make test-api
 
 # 5. Deploy to production
 make deploy-prod
-```
+```text
 
 ---
 
@@ -1343,7 +1345,7 @@ aws cloudformation cancel-update-stack --stack-name serverless-api-prod
 
 # Create DynamoDB backup
 aws dynamodb create-backup --table-name items-table --backup-name backup-$(date +%Y%m%d)
-```
+```text
 
 ### Emergency Response
 
@@ -1359,7 +1361,7 @@ aws dynamodb update-table --table-name items-table --billing-mode PAY_PER_REQUES
 
 # P1: Cold start issues - Enable provisioned concurrency
 aws lambda put-provisioned-concurrency-config --function-name CreateItemFunction --provisioned-concurrent-executions 5
-```
+```text
 
 ---
 

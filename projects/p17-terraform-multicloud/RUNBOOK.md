@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for multi-cloud infrastructure deployment using Terraform. This runbook covers infrastructure provisioning, state management, workspace operations, and incident response for AWS and Azure cloud environments.
+Production operations runbook for multi-cloud infrastructure deployment using Terraform. This
+runbook covers infrastructure provisioning, state management, workspace operations, and incident
+response for AWS and Azure cloud environments.
 
 **System Components:**
 
@@ -470,28 +472,28 @@ terraform plan -detailed-exitcode
 
 #### Severity Classification
 
-**P0: Critical Infrastructure Failure**
+### P0: Critical Infrastructure Failure
 
 - State file corrupted or lost
 - Accidental terraform destroy in production
 - State lock corrupted preventing all operations
 - Multi-cloud cascading failure
 
-**P1: Deployment Failure**
+### P1: Deployment Failure
 
 - Terraform apply failed with errors
 - Resource creation failed
 - Provider authentication failure
 - State lock held indefinitely
 
-**P2: Configuration Drift**
+### P2: Configuration Drift
 
 - Unmanaged changes detected in production
 - Terraform plan shows unexpected changes
 - State backup failed
 - Provider version mismatch
 
-**P3: Operational Warnings**
+### P3: Operational Warnings
 
 - Deprecated resource usage warnings
 - Provider deprecation notices

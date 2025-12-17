@@ -2,7 +2,9 @@
 
 ## Overview
 
-Production operations runbook for the Advanced AI Chatbot with Retrieval-Augmented Generation (RAG). This runbook covers FastAPI service operations, vector store management, LLM integration, tool orchestration, and troubleshooting for the chatbot service.
+Production operations runbook for the Advanced AI Chatbot with Retrieval-Augmented Generation (RAG).
+This runbook covers FastAPI service operations, vector store management, LLM integration, tool
+orchestration, and troubleshooting for the chatbot service.
 
 **System Components:**
 
@@ -50,7 +52,7 @@ docker ps | grep chatbot-service
 aws ecs describe-services \
   --cluster chatbot-cluster \
   --services chatbot-service
-```
+```text
 
 #### Vector Store Dashboard
 
@@ -64,7 +66,7 @@ curl -XGET "https://search-domain.us-east-1.es.amazonaws.com/knowledge-base/_sta
 # For Pinecone:
 curl -X GET "https://api.pinecone.io/indexes/knowledge-base/describe" \
   -H "Api-Key: $PINECONE_API_KEY"
-```
+```text
 
 #### LLM Usage Dashboard
 
@@ -78,7 +80,7 @@ python scripts/analyze_token_usage.py --days 7
 
 # Check rate limits
 python scripts/check_rate_limits.py
-```
+```text
 
 ### Alerts
 
@@ -108,7 +110,7 @@ fi
 
 # Check response times
 python scripts/check_latency.py --threshold 3000  # 3 seconds
-```
+```text
 
 ---
 
@@ -132,7 +134,7 @@ uvicorn src.chatbot_service:app --host 0.0.0.0 --port 8000 --reload
 
 # 4. Verify startup
 curl http://localhost:8000/health
-```
+```text
 
 #### Deploy to ECS
 
@@ -163,7 +165,7 @@ aws ecs wait services-stable \
 # 6. Verify deployment
 TASK_ARN=$(aws ecs list-tasks --cluster chatbot-cluster --service chatbot-service --query 'taskArns[0]' --output text)
 aws ecs describe-tasks --cluster chatbot-cluster --tasks $TASK_ARN
-```
+```text
 
 #### Scale Service
 
@@ -190,7 +192,7 @@ aws application-autoscaling put-scaling-policy \
   --policy-type TargetTrackingScaling \
   --target-tracking-scaling-policy-configuration \
     'PredefinedMetricSpecification={PredefinedMetricType=ECSServiceAverageCPUUtilization},TargetValue=70.0'
-```
+```text
 
 ### Vector Store Operations
 
@@ -216,7 +218,7 @@ python scripts/index_documents.py \
 
 # 4. Verify indexing
 python scripts/verify_index.py --index knowledge-base
-```
+```text
 
 #### Update Index
 
@@ -244,7 +246,7 @@ curl -XPOST "https://search-domain/_aliases" -H 'Content-Type: application/json'
     {"add": {"index": "knowledge-base-v2", "alias": "knowledge-base"}}
   ]
 }'
-```
+```text
 
 #### Query Vector Store
 
@@ -266,7 +268,7 @@ python scripts/test_search.py \
 python scripts/benchmark_search.py \
   --queries test/queries.txt \
   --iterations 100
-```
+```text
 
 ### LLM Integration Management
 
@@ -291,7 +293,7 @@ python scripts/test_llm.py \
   --provider local \
   --model llama-2-7b \
   --prompt "Hello, how are you?"
-```
+```text
 
 #### Switch LLM Provider
 
@@ -315,7 +317,7 @@ aws ecs update-service \
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "What provider are you using?", "conversation_id": "test"}'
-```
+```text
 
 #### Monitor LLM Usage
 
@@ -335,7 +337,7 @@ python scripts/check_rate_limits.py
 
 # Set usage alerts
 python scripts/set_usage_alert.py --threshold 1000000 --email ops@example.com
-```
+```text
 
 ### Tool Orchestration
 
@@ -371,7 +373,7 @@ python scripts/test_tool.py \
 
 # Restart service to load new tool
 kubectl rollout restart deployment/chatbot-service -n chatbot
-```
+```text
 
 #### Monitor Tool Execution
 
@@ -391,7 +393,7 @@ python scripts/tool_metrics.py --days 7
 #   Success: 98.5%
 #   Failures: 1.5%
 #   Avg duration: 0.8s
-```
+```text
 
 ### Memory and Conversation Management
 
@@ -409,7 +411,7 @@ python scripts/export_conversation.py \
 
 # List active conversations
 python scripts/list_conversations.py --status active --limit 20
-```
+```text
 
 #### Clear Old Conversations
 
@@ -422,7 +424,7 @@ python scripts/delete_conversations.py --status archived --older-than 90
 
 # Verify cleanup
 python scripts/conversation_stats.py
-```
+```text
 
 ---
 
@@ -456,34 +458,34 @@ aws ecs describe-services --cluster chatbot-cluster --services chatbot-service
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello", "conversation_id": "test"}'
-```
+```text
 
 ### Triage
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 
 - FastAPI service completely down
 - Vector store unreachable
 - All LLM requests failing
 - Database connection failure
 
-**P1: Degraded Service**
+### P1: Degraded Service
 
 - High error rate (> 10%)
 - Response latency > 10 seconds
 - LLM API partially failing
 - Tool execution failures > 20%
 
-**P2: Warning State**
+### P2: Warning State
 
 - Elevated latency (> 5 seconds)
 - Some tool failures
 - Memory usage high
 - Occasional LLM timeouts
 
-**P3: Informational**
+### P3: Informational
 
 - Single conversation failure
 - Minor latency increase
@@ -521,7 +523,7 @@ aws ecs update-service \
 # 4. Verify restart
 sleep 10
 curl http://localhost:8000/health
-```
+```text
 
 **Investigation (2-10 minutes):**
 
@@ -541,7 +543,7 @@ docker exec chatbot-service env | grep -E "OPENAI|VECTOR_STORE"
 
 # Check recent deployments
 git log --oneline --since="1 day ago"
-```
+```text
 
 **Mitigation:**
 
@@ -558,7 +560,7 @@ docker run -d -p 8000:8000 chatbot-service:v1.1
 # If configuration issue, fix and redeploy
 vim .env
 docker-compose up -d --build
-```
+```text
 
 #### P0: Vector Store Unreachable
 
@@ -583,7 +585,7 @@ echo $VECTOR_STORE_API_KEY | head -c 20
 # 4. Enable fallback mode (if available)
 export ENABLE_FALLBACK_SEARCH=true
 kubectl set env deployment/chatbot-service ENABLE_FALLBACK_SEARCH=true -n chatbot
-```
+```text
 
 **Investigation:**
 
@@ -599,7 +601,7 @@ aws ec2 describe-security-groups --group-ids sg-...
 
 # Review access policies
 aws opensearch describe-domain --domain-name chatbot-search --query 'DomainStatus.AccessPolicies'
-```
+```text
 
 **Mitigation:**
 
@@ -627,7 +629,7 @@ aws opensearch update-domain-config \
 # If complete failure, failover to backup
 export VECTOR_STORE_URL="https://backup-search-domain.us-west-2.es.amazonaws.com"
 kubectl set env deployment/chatbot-service VECTOR_STORE_URL=$VECTOR_STORE_URL -n chatbot
-```
+```text
 
 #### P1: High LLM Error Rate
 
@@ -651,7 +653,7 @@ curl https://api.openai.com/v1/chat/completions \
     "model": "gpt-4",
     "messages": [{"role": "user", "content": "Hello"}]
   }'
-```
+```text
 
 **Mitigation:**
 
@@ -675,7 +677,7 @@ kubectl set env deployment/chatbot-service LLM_RATE_LIMIT=10 -n chatbot
 
 # Option 4: Enable request queuing
 python scripts/enable_request_queue.py --max-queue-size 1000
-```
+```text
 
 #### P1: High Response Latency
 
@@ -702,7 +704,7 @@ python scripts/benchmark_llm.py --iterations 50
 docker stats chatbot-service
 # or
 aws ecs describe-tasks --cluster chatbot-cluster --tasks $TASK_ARN
-```
+```text
 
 **Mitigation:**
 
@@ -727,7 +729,7 @@ kubectl set env deployment/chatbot-service \
   ENABLE_RESPONSE_CACHE=true \
   CACHE_TTL=3600 \
   -n chatbot
-```
+```text
 
 ### Post-Incident
 
@@ -767,7 +769,7 @@ python scripts/generate_incident_report.py \
   --start "2025-11-10T15:00:00" \
   --end "2025-11-10T15:35:00" \
   > incidents/metrics-$(date +%Y%m%d-%H%M).html
-```
+```text
 
 ---
 
@@ -779,9 +781,9 @@ python scripts/generate_incident_report.py \
 
 **Symptoms:**
 
-```
+```text
 Error: This model's maximum context length is 8192 tokens
-```
+```text
 
 **Diagnosis:**
 
@@ -797,7 +799,7 @@ python scripts/analyze_context_size.py --conversation-id "abc123"
 #   Conversation history: 3000
 #   Retrieved context: 5500
 #   Current query: 500
-```
+```text
 
 **Solution:**
 
@@ -816,7 +818,7 @@ python scripts/enable_sliding_window.py --window-size 10
 # Or use a model with larger context
 export LLM_MODEL="gpt-4-32k"
 kubectl set env deployment/chatbot-service LLM_MODEL=gpt-4-32k -n chatbot
-```
+```text
 
 ---
 
@@ -840,7 +842,7 @@ python scripts/evaluate_search.py --test-queries test/queries.json
 
 # Analyze embeddings
 python scripts/analyze_embeddings.py --sample-size 100
-```
+```text
 
 **Solution:**
 
@@ -859,7 +861,7 @@ python scripts/add_metadata_filters.py --config filters.yaml
 
 # Option 4: Implement hybrid search
 python scripts/enable_hybrid_search.py --bm25-weight 0.3 --vector-weight 0.7
-```
+```text
 
 ---
 
@@ -880,7 +882,7 @@ python scripts/get_token_usage.py --date $(date +%Y-%m-%d)
 
 # Check conversation metrics
 python scripts/conversation_metrics.py --date $(date +%Y-%m-%d)
-```
+```text
 
 ### Weekly Tasks
 
@@ -896,7 +898,7 @@ python scripts/incremental_index_update.py --source data/knowledge_base/
 
 # Review and optimize prompts
 python scripts/analyze_prompts.py --days 7
-```
+```text
 
 ### Monthly Tasks
 
@@ -915,7 +917,7 @@ python scripts/migrate_to_new_embedding_model.py
 
 # Review cost and optimize
 python scripts/cost_analysis.py --month $(date +%Y-%m)
-```
+```text
 
 ---
 
@@ -953,7 +955,7 @@ echo "Backup completed at $(date)"
 EOF
 
 chmod +x scripts/daily_backup.sh
-```
+```text
 
 ### Disaster Recovery Procedures
 
@@ -974,7 +976,7 @@ curl -XPOST "https://search-domain/_snapshot/daily/snapshot_latest/_restore"
 # 4. Verify recovery
 curl http://localhost:8000/health
 python scripts/smoke_test.py
-```
+```text
 
 ---
 
@@ -1000,7 +1002,7 @@ tail -f logs/chatbot.log
 
 # Deploy to ECS
 docker build -t chatbot:v1 . && docker push <ecr>/chatbot:v1 && aws ecs update-service --force-new-deployment
-```
+```text
 
 ### Emergency Response
 
@@ -1016,7 +1018,7 @@ export LLM_PROVIDER=azure && kubectl set env deployment/chatbot-service LLM_PROV
 
 # P1: High latency
 aws ecs update-service --cluster chatbot-cluster --service chatbot-service --desired-count 5
-```
+```text
 
 ---
 
