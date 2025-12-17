@@ -24,23 +24,59 @@ resource "aws_vpc" "twisted_monk" {
 
 data "aws_availability_zones" "available" {}
 
+locals {
+  public_subnet_configs = {
+    for idx, cidr in var.public_subnet_cidrs :
+    idx => {
+      cidr = cidr
+      az   = try(data.aws_availability_zones.available.names[idx], null)
+    }
+  }
+
+  private_subnet_configs = {
+    for idx, cidr in var.private_subnet_cidrs :
+    idx => {
+      cidr = cidr
+      az   = try(data.aws_availability_zones.available.names[idx], null)
+    }
+  }
+}
+
 # Public subnets
 resource "aws_subnet" "public" {
-  for_each = toset(var.public_subnet_cidrs)
+  for_each = local.public_subnet_configs
+
   vpc_id            = aws_vpc.twisted_monk.id
-  cidr_block        = each.value
-  availability_zone = data.aws_availability_zones.available.names[0]
+  cidr_block        = each.value.cidr
+  availability_zone = each.value.az
   map_public_ip_on_launch = true
+
+  lifecycle {
+    precondition {
+      condition     = length(compact(values(local.public_subnet_configs)[*].az)) == length(var.public_subnet_cidrs)
+      error_message = "Not enough availability zones supplied to place all public subnets."
+    }
+  }
+
   tags = merge(local.common_tags, { Name = "${var.project_tag}-public-${each.key}" })
 }
 
 # Private subnets
 resource "aws_subnet" "private" {
-  for_each = toset(var.private_subnet_cidrs)
+  for_each = local.private_subnet_configs
+
   vpc_id            = aws_vpc.twisted_monk.id
-  cidr_block        = each.value
-  availability_zone = data.aws_availability_zones.available.names[0]
+  cidr_block        = each.value.cidr
+  availability_zone = each.value.az
   map_public_ip_on_launch = false
+
+  lifecycle {
+    precondition {
+      condition     = length(compact(values(local.private_subnet_configs)[*].az)) == length(var.private_subnet_cidrs)
+      error_message = "Not enough availability zones supplied to place all private subnets."
+    }
+  }
+
   tags = merge(local.common_tags, { Name = "${var.project_tag}-private-${each.key}" })
 }
 
