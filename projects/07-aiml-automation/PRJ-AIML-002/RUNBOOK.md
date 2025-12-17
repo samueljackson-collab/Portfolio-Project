@@ -5,6 +5,7 @@
 Production operations runbook for the Cross-Platform AI Tab Organization App - an AI/ML-powered application that automatically groups and manages browser tabs across Android, Windows, and macOS platforms. Compatible with Chrome, Firefox, and Edge browsers.
 
 **System Components:**
+
 - Flutter cross-platform application (Android/Windows/macOS)
 - Browser extensions (Chrome/Firefox/Edge)
 - Native messaging host (Dart/Node.js bridge)
@@ -36,6 +37,7 @@ Production operations runbook for the Cross-Platform AI Tab Organization App - a
 ### Dashboards
 
 #### Application Health Dashboard
+
 ```bash
 # Check Flutter app status (desktop)
 ps aux | grep flutter | grep -v grep
@@ -54,6 +56,7 @@ journalctl -u tab-organizer-sync -n 50
 ```
 
 #### ML Model Performance Dashboard
+
 ```bash
 # Check model inference metrics
 cat /var/log/tab-organizer/ml-metrics.log | tail -50
@@ -72,6 +75,7 @@ cat /tmp/tab-organizer/inference-queue.json | jq '.queue_depth'
 ```
 
 #### Sync Service Dashboard
+
 ```bash
 # Check Firebase connection
 curl -X GET "https://tab-organizer.firebaseio.com/.json?auth=$FIREBASE_TOKEN"
@@ -89,6 +93,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 ```
 
 #### Resource Usage Dashboard
+
 ```bash
 # Check memory usage
 ps aux | grep -E "flutter|tab-organizer" | awk '{sum+=$6} END {print sum/1024 " MB"}'
@@ -160,6 +165,7 @@ BATTERY=$(adb shell dumpsys battery | grep level | awk '{print $2}')
 #### Start Application
 
 **Desktop (Windows/macOS/Linux):**
+
 ```bash
 # Start Flutter app
 cd /opt/tab-organizer/flutter-app
@@ -178,6 +184,7 @@ tail -f /var/log/tab-organizer/app.log
 ```
 
 **Android:**
+
 ```bash
 # Install via ADB
 adb install /path/to/tab-organizer.apk
@@ -193,6 +200,7 @@ adb logcat | grep TabOrganizer
 ```
 
 #### Stop Application
+
 ```bash
 # Stop Flutter app
 pkill -f "flutter.*tab-organizer"
@@ -209,6 +217,7 @@ ps aux | grep -E "flutter|tab-organizer"
 ```
 
 #### Restart Application
+
 ```bash
 # Desktop restart
 systemctl restart tab-organizer-sync
@@ -227,6 +236,7 @@ adb shell am start -n com.taborganizer.app/.MainActivity
 #### Install Browser Extensions
 
 **Chrome:**
+
 ```bash
 # Development mode
 # 1. Open chrome://extensions
@@ -239,6 +249,7 @@ adb shell am start -n com.taborganizer.app/.MainActivity
 ```
 
 **Firefox:**
+
 ```bash
 # Development mode
 # 1. Navigate to about:debugging#/runtime/this-firefox
@@ -250,6 +261,7 @@ adb shell am start -n com.taborganizer.app/.MainActivity
 ```
 
 **Edge:**
+
 ```bash
 # Development mode
 # 1. Navigate to edge://extensions
@@ -259,6 +271,7 @@ adb shell am start -n com.taborganizer.app/.MainActivity
 ```
 
 #### Update Browser Extensions
+
 ```bash
 # Update extension code
 cd /opt/tab-organizer/browser-extensions
@@ -274,6 +287,7 @@ git pull origin main
 ```
 
 #### Troubleshoot Extension Issues
+
 ```bash
 # Check extension logs (Chrome)
 # 1. Navigate to chrome://extensions
@@ -294,6 +308,7 @@ cat /opt/tab-organizer/browser-extensions/chrome-extension/manifest.json | jq '.
 ### ML Model Operations
 
 #### Load ML Model
+
 ```bash
 # Check model file exists
 ls -lh ~/.local/share/tab-organizer/models/classifier.tflite
@@ -315,6 +330,7 @@ tail -f /var/log/tab-organizer/app.log | grep "Model loaded"
 ```
 
 #### Update ML Model
+
 ```bash
 # Backup current model
 cp ~/.local/share/tab-organizer/models/classifier.tflite \
@@ -340,6 +356,7 @@ grep "Model version" /var/log/tab-organizer/app.log | tail -1
 ```
 
 #### Rollback ML Model
+
 ```bash
 # List available backups
 ls -lh ~/.local/share/tab-organizer/models/backup/
@@ -358,6 +375,7 @@ grep "Model loaded" /var/log/tab-organizer/app.log | tail -1
 ```
 
 #### Retrain Model
+
 ```bash
 # Collect training data
 cd /opt/tab-organizer/ai-model
@@ -388,6 +406,7 @@ systemctl restart tab-organizer-sync
 ### Sync Service Operations
 
 #### Check Sync Status
+
 ```bash
 # View sync service status
 systemctl status tab-organizer-sync
@@ -407,6 +426,7 @@ tail -50 /var/log/tab-organizer/sync.log
 ```
 
 #### Force Sync
+
 ```bash
 # Trigger manual sync
 curl -X POST http://localhost:8765/api/sync/trigger
@@ -419,6 +439,7 @@ tail -f /var/log/tab-organizer/sync.log
 ```
 
 #### Resolve Sync Conflicts
+
 ```bash
 # List conflicts
 sqlite3 ~/.local/share/tab-organizer/local.db \
@@ -443,6 +464,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 ```
 
 #### Reset Sync State
+
 ```bash
 # ⚠️ CAUTION: This clears sync metadata and resyncs from cloud
 
@@ -464,6 +486,7 @@ tail -f /var/log/tab-organizer/sync.log
 ### Data Management
 
 #### Backup User Data
+
 ```bash
 # Backup local database
 cp ~/.local/share/tab-organizer/local.db \
@@ -484,6 +507,7 @@ sqlite3 ~/backups/tab-organizer/local-$(date +%Y%m%d).db "SELECT COUNT(*) FROM t
 ```
 
 #### Restore User Data
+
 ```bash
 # Restore local database
 cp ~/backups/tab-organizer/local-20250101.db \
@@ -503,6 +527,7 @@ systemctl restart tab-organizer-sync
 ```
 
 #### Clear Cache
+
 ```bash
 # Clear tab thumbnails cache
 rm -rf ~/.cache/tab-organizer/thumbnails/*
@@ -525,6 +550,7 @@ systemctl restart tab-organizer-sync
 ### Detection
 
 **Automated Detection:**
+
 - App crash reports (sentry.io or similar)
 - ML model inference failures
 - Sync service health check failures
@@ -532,6 +558,7 @@ systemctl restart tab-organizer-sync
 - Memory usage threshold alerts
 
 **Manual Detection:**
+
 ```bash
 # Check app is running
 pgrep -f "flutter.*tab-organizer" || echo "App not running"
@@ -554,12 +581,14 @@ tail -20 /var/log/tab-organizer/ml-metrics.log | grep ERROR
 #### Severity Classification
 
 **P0: Critical Failure**
+
 - App crashes on startup (all platforms)
 - ML model completely unavailable
 - Data loss or corruption
 - Firebase authentication failure (users locked out)
 
 **P1: Major Degradation**
+
 - Classification accuracy < 50%
 - Sync service completely down
 - Browser extension unresponsive
@@ -567,6 +596,7 @@ tail -20 /var/log/tab-organizer/ml-metrics.log | grep ERROR
 - Memory leak causing OOM
 
 **P2: Moderate Issues**
+
 - Sync conflicts accumulating
 - Individual platform issues
 - Extension slow but functional
@@ -574,6 +604,7 @@ tail -20 /var/log/tab-organizer/ml-metrics.log | grep ERROR
 - UI glitches
 
 **P3: Minor Issues**
+
 - Single classification error
 - Temporary sync delay
 - Cache miss
@@ -584,6 +615,7 @@ tail -20 /var/log/tab-organizer/ml-metrics.log | grep ERROR
 #### P0: App Crashes on Startup
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Check crash logs
 tail -100 /var/log/tab-organizer/app.log
@@ -602,6 +634,7 @@ fi
 ```
 
 **Investigation (2-10 minutes):**
+
 ```bash
 # Check system resources
 df -h ~/.local/share/tab-organizer/
@@ -620,6 +653,7 @@ ps aux | grep -E "flutter|tab-organizer"
 ```
 
 **Mitigation:**
+
 ```bash
 # Option 1: Restore from backup
 cp ~/backups/tab-organizer/local-latest.db ~/.local/share/tab-organizer/local.db
@@ -643,6 +677,7 @@ cd /opt/tab-organizer/flutter-app && flutter run --release -d linux
 #### P1: ML Model Classification Failures
 
 **Investigation:**
+
 ```bash
 # Check model file
 ls -lh ~/.local/share/tab-organizer/models/classifier.tflite
@@ -674,6 +709,7 @@ EOF
 ```
 
 **Mitigation:**
+
 ```bash
 # Rollback to previous working model
 cp ~/.local/share/tab-organizer/models/backup/classifier-stable.tflite \
@@ -694,6 +730,7 @@ systemctl restart tab-organizer-sync
 #### P1: Sync Service Down
 
 **Investigation:**
+
 ```bash
 # Check sync service status
 systemctl status tab-organizer-sync
@@ -710,6 +747,7 @@ cat ~/.config/tab-organizer/firebase-credentials.json | jq .
 ```
 
 **Mitigation:**
+
 ```bash
 # Restart sync service
 systemctl restart tab-organizer-sync
@@ -731,6 +769,7 @@ tail -f /var/log/tab-organizer/sync.log
 #### P2: Memory Leak / High Memory Usage
 
 **Investigation:**
+
 ```bash
 # Check current memory usage
 ps aux | grep "tab-organizer" | awk '{print $6/1024 " MB - " $11}'
@@ -750,6 +789,7 @@ du -sh ~/.cache/tab-organizer/
 ```
 
 **Mitigation:**
+
 ```bash
 # Clear caches
 rm -rf ~/.cache/tab-organizer/thumbnails/*
@@ -775,6 +815,7 @@ watch -n 5 'ps aux | grep tab-organizer'
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > ~/incidents/tab-organizer/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -816,6 +857,7 @@ echo "$(date +%Y-%m-%d),P1,20,ml-model" >> ~/incidents/tab-organizer/incident-lo
 ### Essential Troubleshooting Commands
 
 #### App Issues
+
 ```bash
 # Check app status
 pgrep -f "tab-organizer" || echo "App not running"
@@ -838,6 +880,7 @@ cat ~/.config/tab-organizer/preferences.json | jq .
 ```
 
 #### ML Model Issues
+
 ```bash
 # Test model inference
 python3 /opt/tab-organizer/ai-model/scripts/test_inference.py \
@@ -858,6 +901,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 ```
 
 #### Browser Extension Issues
+
 ```bash
 # Check native messaging host
 ps aux | grep native-host
@@ -874,6 +918,7 @@ cat /opt/tab-organizer/browser-extensions/chrome-extension/manifest.json | jq .
 ```
 
 #### Sync Issues
+
 ```bash
 # Check sync queue
 sqlite3 ~/.local/share/tab-organizer/local.db \
@@ -895,11 +940,13 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 #### Issue: "Classification accuracy degraded"
 
 **Symptoms:**
+
 - User reports incorrect categorization
 - Accuracy metrics below 80%
 - Frequent user corrections
 
 **Diagnosis:**
+
 ```bash
 # Check recent accuracy
 sqlite3 ~/.local/share/tab-organizer/local.db \
@@ -917,6 +964,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 ```
 
 **Solution:**
+
 ```bash
 # Retrain model with user corrections
 cd /opt/tab-organizer/ai-model
@@ -939,11 +987,13 @@ systemctl restart tab-organizer-sync
 #### Issue: "Browser extension not communicating"
 
 **Symptoms:**
+
 - Extension shows "disconnected" status
 - Tabs not syncing to app
 - Native messaging errors
 
 **Diagnosis:**
+
 ```bash
 # Check native host is running
 ps aux | grep native-host
@@ -959,6 +1009,7 @@ echo '{"action": "ping"}' | /opt/tab-organizer/native-host/tab-organizer-host
 ```
 
 **Solution:**
+
 ```bash
 # Restart native host
 systemctl restart tab-organizer-native-host
@@ -979,11 +1030,13 @@ tail -f /var/log/tab-organizer/native-host.log
 #### Issue: "Sync conflicts accumulating"
 
 **Symptoms:**
+
 - Multiple unresolved conflicts
 - Data inconsistency across devices
 - Sync queue backing up
 
 **Diagnosis:**
+
 ```bash
 # Count conflicts
 sqlite3 ~/.local/share/tab-organizer/local.db \
@@ -999,6 +1052,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 ```
 
 **Solution:**
+
 ```bash
 # Resolve all conflicts with merge strategy
 /opt/tab-organizer/bin/tab-organizer-cli sync resolve-all --strategy merge
@@ -1027,6 +1081,7 @@ systemctl restart tab-organizer-sync
 ### Backup Strategy
 
 **Automated Backups:**
+
 ```bash
 # Create backup script
 cat > /opt/tab-organizer/scripts/backup.sh << 'EOF'
@@ -1059,6 +1114,7 @@ chmod +x /opt/tab-organizer/scripts/backup.sh
 ```
 
 **Cloud Backup:**
+
 ```bash
 # Firebase/Firestore automatically backs up synced data
 # Verify cloud backup status
@@ -1072,6 +1128,7 @@ curl -X GET "https://tab-organizer.firebaseio.com/.json?auth=$FIREBASE_TOKEN" | 
 ### Disaster Recovery Procedures
 
 #### Complete Data Recovery
+
 ```bash
 # 1. Restore local database
 cp ~/backups/tab-organizer/local-latest.db \
@@ -1097,6 +1154,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db "SELECT COUNT(*) FROM tabs;"
 ```
 
 #### Recovery from Cloud
+
 ```bash
 # If local data lost, restore from Firebase
 /opt/tab-organizer/bin/tab-organizer-cli cloud-restore
@@ -1116,6 +1174,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 ### Routine Maintenance
 
 #### Daily Tasks
+
 ```bash
 # Check app health
 systemctl status tab-organizer-sync
@@ -1133,6 +1192,7 @@ ps aux | grep tab-organizer | awk '{print $6/1024 " MB"}'
 ```
 
 #### Weekly Tasks
+
 ```bash
 # Review classification accuracy
 sqlite3 ~/.local/share/tab-organizer/local.db \
@@ -1154,6 +1214,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 ```
 
 #### Monthly Tasks
+
 ```bash
 # Update app dependencies
 cd /opt/tab-organizer/flutter-app
@@ -1178,6 +1239,7 @@ ls -lh ~/backups/tab-organizer/ | head -10
 ## Operational Best Practices
 
 ### Pre-Deployment Checklist
+
 - [ ] All tests passing (`flutter test`)
 - [ ] ML model validated
 - [ ] Browser extensions tested on all browsers
@@ -1187,6 +1249,7 @@ ls -lh ~/backups/tab-organizer/ | head -10
 - [ ] Firebase credentials valid
 
 ### Post-Deployment Checklist
+
 - [ ] App launches successfully
 - [ ] Classification working correctly
 - [ ] Browser extension connected
@@ -1200,6 +1263,7 @@ ls -lh ~/backups/tab-organizer/ | head -10
 ## Quick Reference Card
 
 ### Most Common Operations
+
 ```bash
 # Check app status
 systemctl status tab-organizer-sync
@@ -1224,6 +1288,7 @@ sqlite3 ~/.local/share/tab-organizer/local.db \
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: App crashed
 cp ~/backups/tab-organizer/local-latest.db ~/.local/share/tab-organizer/local.db
@@ -1242,6 +1307,7 @@ tail -f /var/log/tab-organizer/sync.log
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** AI/ML Automation Team

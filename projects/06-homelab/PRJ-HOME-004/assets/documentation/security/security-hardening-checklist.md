@@ -11,6 +11,7 @@
 ### Operating System (Debian/Ubuntu)
 
 #### Account Security
+
 - [ ] Root login disabled via SSH (`PermitRootLogin no`)
 - [ ] Password authentication disabled (`PasswordAuthentication no`)
 - [ ] SSH key-only authentication enforced
@@ -23,11 +24,13 @@
 - [ ] sudoers file regularly audited
 
 #### Network Security
+
 - [ ] Firewall enabled (UFW/iptables)
 - [ ] Default deny policy for incoming traffic
 - [ ] Only required ports opened
 - [ ] IPv6 disabled if not in use
 - [ ] Network parameter hardening in sysctl:
+
   ```bash
   net.ipv4.conf.all.send_redirects = 0
   net.ipv4.conf.all.accept_redirects = 0
@@ -36,10 +39,12 @@
   net.ipv4.icmp_ignore_bogus_error_responses = 1
   net.ipv4.tcp_syncookies = 1
   ```
+
 - [ ] IP forwarding disabled (unless required for routing)
 - [ ] Packet filtering configured (netfilter)
 
 #### Filesystem Security
+
 - [ ] Separate partitions for /tmp, /var, /var/log
 - [ ] noexec, nodev, nosuid options on /tmp
 - [ ] File integrity monitoring enabled (AIDE/Tripwire)
@@ -48,6 +53,7 @@
 - [ ] Filesystem encryption enabled for sensitive data (LUKS)
 
 #### Service Hardening
+
 - [ ] Unnecessary services disabled
 - [ ] Services run with minimal privileges
 - [ ] Service-specific user accounts (no shared accounts)
@@ -57,6 +63,7 @@
 - [ ] Unused packages removed
 
 #### Logging and Auditing
+
 - [ ] auditd installed and configured
 - [ ] All authentication events logged
 - [ ] Privilege escalation logged
@@ -72,22 +79,26 @@
 ### Docker Containers
 
 #### Container Security
+
 - [ ] Containers run as non-root user
 - [ ] Read-only root filesystem where possible
 - [ ] No privileged containers (unless absolutely necessary)
 - [ ] Resource limits set (CPU, memory)
 - [ ] Security options enabled:
+
   ```yaml
   security_opt:
     - no-new-privileges:true
     - apparmor=docker-default
     - seccomp=/path/to/seccomp/profile.json
   ```
+
 - [ ] Capabilities dropped (drop: ALL, add only needed)
 - [ ] Host filesystem mounts minimized
 - [ ] Docker socket not mounted in containers
 
 #### Image Security
+
 - [ ] Images from trusted registries only
 - [ ] Image signatures verified
 - [ ] Vulnerability scanning enabled (Trivy/Clair)
@@ -97,6 +108,7 @@
 - [ ] Latest tag avoided (use specific versions)
 
 #### Docker Daemon
+
 - [ ] Docker daemon configured with TLS
 - [ ] User namespace remapping enabled
 - [ ] Live restore enabled
@@ -107,10 +119,12 @@
 ### Web Applications
 
 #### Nginx Proxy Manager
+
 - [ ] Strong SSL/TLS configuration (TLS 1.2+ only)
 - [ ] Perfect Forward Secrecy enabled
 - [ ] HSTS header enabled (max-age=31536000)
 - [ ] Security headers configured:
+
   ```nginx
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
@@ -119,6 +133,7 @@
   Permissions-Policy: geolocation=(), microphone=(), camera=()
   Content-Security-Policy: default-src 'self'
   ```
+
 - [ ] Rate limiting configured
 - [ ] Request size limits enforced
 - [ ] Directory listing disabled
@@ -126,6 +141,7 @@
 - [ ] Failed authentication attempts logged
 
 #### Immich Photo Service
+
 - [ ] Multi-factor authentication enabled
 - [ ] Strong password policy enforced
 - [ ] Session timeout configured (30 minutes)
@@ -138,6 +154,7 @@
 ### Database Security
 
 #### PostgreSQL
+
 - [ ] Authentication via password files or vault
 - [ ] SSL/TLS encryption for connections
 - [ ] Least privilege access (application-specific users)
@@ -153,6 +170,7 @@
 ## Network Hardening
 
 ### VLAN Segmentation
+
 - [ ] Management VLAN isolated from user traffic
 - [ ] Default-deny firewall policy between VLANs
 - [ ] Explicit allow rules documented
@@ -160,6 +178,7 @@
 - [ ] No direct internet access from management VLAN
 
 ### Firewall Configuration
+
 - [ ] Default deny for all traffic
 - [ ] Explicit allow rules only for required services
 - [ ] WAN to LAN traffic blocked (except established)
@@ -170,6 +189,7 @@
 - [ ] IDS/IPS enabled (Suricata/Snort)
 
 ### VPN Hardening
+
 - [ ] Strong cryptography (ChaCha20-Poly1305 or AES-256-GCM)
 - [ ] Pre-shared keys in use
 - [ ] Regular key rotation (quarterly)
@@ -184,6 +204,7 @@
 ## Access Control
 
 ### Authentication
+
 - [ ] Multi-factor authentication (MFA) on all admin interfaces
 - [ ] Passkey/FIDO2 support enabled where possible
 - [ ] Password manager required for all users
@@ -191,6 +212,7 @@
 - [ ] SSO/LDAP integration for centralized auth (future)
 
 ### Authorization
+
 - [ ] Role-based access control (RBAC) implemented
 - [ ] Principle of least privilege enforced
 - [ ] Regular access reviews (quarterly)
@@ -199,6 +221,7 @@
 - [ ] Service accounts have minimal permissions
 
 ### Credential Management
+
 - [ ] Passwords stored in encrypted vault (Bitwarden/Vaultwarden)
 - [ ] SSH keys protected with passphrase
 - [ ] API keys rotated regularly
@@ -211,6 +234,7 @@
 ## Monitoring and Detection
 
 ### Security Monitoring
+
 - [ ] Failed authentication attempts monitored
 - [ ] Unusual network traffic detected
 - [ ] File integrity changes alerted
@@ -221,6 +245,7 @@
 - [ ] Anomaly detection configured
 
 ### Vulnerability Management
+
 - [ ] Automated vulnerability scanning (weekly)
 - [ ] Patch management process defined
 - [ ] Critical patches applied within 72 hours
@@ -229,6 +254,7 @@
 - [ ] Penetration testing (annual)
 
 ### Incident Detection
+
 - [ ] SIEM or log aggregation configured (Loki)
 - [ ] Security alerts go to dedicated channel
 - [ ] Alert thresholds tuned (low false positive rate)
@@ -241,6 +267,7 @@
 ## Data Protection
 
 ### Encryption
+
 - [ ] Data encrypted at rest (ZFS encryption or LUKS)
 - [ ] Data encrypted in transit (TLS 1.2+)
 - [ ] Backup encryption enabled
@@ -249,6 +276,7 @@
 - [ ] Key rotation schedule defined
 
 ### Backup Security
+
 - [ ] Backups stored offline (air-gapped)
 - [ ] Backup integrity verification
 - [ ] Backup encryption enabled
@@ -257,6 +285,7 @@
 - [ ] Immutable backups (ransomware protection)
 
 ### Data Minimization
+
 - [ ] PII identified and minimized
 - [ ] Data retention policy enforced
 - [ ] Old logs automatically purged
@@ -269,6 +298,7 @@
 ## Compliance and Auditing
 
 ### Security Audits
+
 - [ ] Quarterly security configuration review
 - [ ] Annual penetration testing
 - [ ] CIS benchmark scanning
@@ -276,6 +306,7 @@
 - [ ] Security findings tracked and remediated
 
 ### Documentation
+
 - [ ] Network topology diagram current
 - [ ] Asset inventory maintained
 - [ ] Service dependencies documented
@@ -285,6 +316,7 @@
 - [ ] Security policies documented
 
 ### Change Management
+
 - [ ] Security review for all changes
 - [ ] Change approval process enforced
 - [ ] Rollback plans documented
@@ -296,6 +328,7 @@
 ## Physical Security
 
 ### Hardware
+
 - [ ] Server room access restricted
 - [ ] Physical access logged
 - [ ] Console access disabled when not needed
@@ -304,6 +337,7 @@
 - [ ] Secure boot enabled (if supported)
 
 ### Media
+
 - [ ] Backup media encrypted
 - [ ] Backup media stored securely
 - [ ] Old drives securely wiped before disposal
@@ -374,24 +408,28 @@ echo "Compliance check complete. Review output above."
 ## Remediation Priorities
 
 ### Critical (Fix within 24 hours)
+
 - Remote root access enabled
 - No firewall configured
 - Default passwords in use
 - No backup configured
 
 ### High (Fix within 1 week)
+
 - Missing security patches
 - Weak SSH configuration
 - No audit logging
 - Unencrypted backups
 
 ### Medium (Fix within 1 month)
+
 - Non-compliant file permissions
 - Missing security headers
 - No MFA on admin accounts
 - Outdated software versions
 
 ### Low (Fix as time permits)
+
 - Documentation gaps
 - Non-critical hardening items
 - Nice-to-have security features

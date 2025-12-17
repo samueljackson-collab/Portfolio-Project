@@ -41,11 +41,13 @@ This foundation enables Phase 2: developing an elder-friendly, accessibility-fir
 5. **Network:** See [IP Allocation Table](assets/documentation/network/ip-allocation-table.md) for network layout
 
 **For Operators:**
+
 - [Daily Operations](assets/documentation/runbooks/daily-operations.md) - Your morning routine
 - [Incident Response](assets/documentation/runbooks/incident-response.md) - When things go wrong
 - [Disaster Recovery](assets/documentation/runbooks/disaster-recovery.md) - Emergency procedures
 
 **For Implementers:**
+
 - [Implementation Timeline](#8-implementation-timeline--milestones) - Project phases and milestones
 - [Bill of Materials](#7-bill-of-materials--budget) - Required hardware and budget
 - [Configuration Files](assets/configs/) - All service configurations
@@ -500,21 +502,25 @@ gantt
 ### 8.3 Phase Breakdown
 
 #### Phase 1: Foundation (October 20 – November 9, 2025)
+
 - Planning & bill of materials approval
 - Hardware refurbishment and thermal testing
 - Network VLAN implementation and validation
 
 #### Phase 2: Core Platform (November 10 – December 1, 2025)
+
 - Proxmox VE installation and clustering
 - TrueNAS storage configuration with ZFS
 - Core services deployment (proxy, VPN, monitoring)
 
 #### Phase 3: Resilience & Services (December 1 – 22, 2025)
+
 - Full monitoring stack with Prometheus/Grafana/Loki
 - Camera system integration with privacy controls
 - Multi-site replication setup and validation
 
 #### Phase 4: Validation & Handover (December 22, 2025 – January 5, 2026)
+
 - Disaster recovery rehearsal and timing
 - Family service validation with usability testing
 - Final demo, documentation review, and sponsor sign-off
@@ -560,18 +566,21 @@ quadrantChart
 #### High-Priority Risks
 
 **1. Data Loss (Low Probability, High Impact)**
+
 - **Prevention:** Implement 3-2-1 backup strategy from day one
 - **Detection:** Automated backup verification with alerts
 - **Response:** Documented restore procedures tested monthly
 - **Proof:** Backup logs, checksum validations, restore test results
 
 **2. SSD Failure (Medium Probability, High Impact)**
+
 - **Prevention:** ZFS mirroring ensures no single point of failure
 - **Detection:** SMART monitoring with predictive failure alerts
 - **Response:** Hot spare available; documented replacement procedure
 - **Proof:** SMART reports, mirror status monitoring
 
 **3. VPN Misconfiguration (Medium Probability, High Impact)**
+
 - **Prevention:** Peer-scoped VPN configuration; documented procedures
 - **Detection:** Regular external port scans; firewall log review
 - **Response:** Automated firewall deny rules; immediate alerts
@@ -725,18 +734,21 @@ The following metrics will be tracked in Grafana and reported monthly:
 ### 13.3 Implementation Checklist
 
 **Pre-Implementation:**
+
 - [ ] Pre-implementation backups completed and verified
 - [ ] Change window coordinated with all stakeholders
 - [ ] Rollout procedure validated in test environment
 - [ ] Rollback plan documented and ready to execute
 
 **During Implementation:**
+
 - [ ] Change window notification sent to users
 - [ ] Implementation steps executed per procedure
 - [ ] Real-time monitoring of system health
 - [ ] Documentation updated with actual changes
 
 **Post-Implementation:**
+
 - [ ] Post-implementation verification tests passed
 - [ ] System performance within expected parameters
 - [ ] No new errors or alerts generated
@@ -782,6 +794,7 @@ The following metrics will be tracked in Grafana and reported monthly:
 ### 13.5 Monitoring & Alerting Rules
 
 **Infrastructure Alerts:**
+
 - Node down (severity: critical)
 - CPU usage > 90% for 10 minutes (severity: warning)
 - Memory usage > 85% for 10 minutes (severity: warning)
@@ -790,18 +803,21 @@ The following metrics will be tracked in Grafana and reported monthly:
 - Temperature > 75°C (severity: critical)
 
 **Network & Proxy Alerts:**
+
 - 5xx error rate > 0.5% over 5 minutes (severity: warning)
 - 4xx spike > 3x baseline (severity: info)
 - TLS certificate expiring in < 7 days (severity: warning)
 - TLS certificate expiring in < 3 days (severity: critical)
 
 **Application Alerts:**
+
 - Immich P95 latency > 3s for 10 minutes (severity: warning)
 - Database connection errors (severity: critical)
 - Backup job failed (severity: critical)
 - Replication lag > 1 hour (severity: warning)
 
 **Security Alerts:**
+
 - VPN brute force attempts detected (severity: warning)
 - Firewall deny rule triggered > 100 times in 5 minutes (severity: info)
 - Unauthorized admin access attempt (severity: critical)
@@ -844,22 +860,27 @@ homelab-configs/
 Located in [assets/configs/](assets/configs/):
 
 **Proxmox Configuration:**
+
 - [Network interfaces configuration](assets/configs/proxmox/interfaces.conf) - VLAN and bridge setup
 - [Backup schedule configuration](assets/configs/proxmox/backup-schedule.conf) - Automated backup jobs
 
 **TrueNAS Configuration:**
+
 - [ZFS dataset creation script](assets/configs/truenas/zfs-datasets.sh) - Storage layout
 - [Snapshot and scrub tasks](assets/configs/truenas/snapshot-tasks.json) - Automated maintenance
 
 **Networking Configuration:**
+
 - [WireGuard VPN server configuration](assets/configs/networking/wireguard-server.conf) - Secure remote access
 - [UniFi firewall rules](assets/configs/networking/unifi-firewall-rules.json) - Network security policies
 
 **Service Configuration:**
+
 - [Immich Docker Compose](assets/configs/services/docker-compose-immich.yml) - Photo service stack
 - [Monitoring Docker Compose](assets/configs/services/docker-compose-monitoring.yml) - Observability stack
 
 **Monitoring Configuration:**
+
 - [Prometheus configuration](assets/configs/monitoring/prometheus.yml) - Metrics collection
 - [Alerting rules](assets/configs/monitoring/alerting-rules.yml) - Alert definitions and thresholds
 
@@ -868,20 +889,24 @@ Located in [assets/configs/](assets/configs/):
 Located in [assets/documentation/](assets/documentation/):
 
 **Operational Runbooks:**
+
 - [Daily Operations](assets/documentation/runbooks/daily-operations.md) - Daily health checks and maintenance
 - [Weekly Maintenance](assets/documentation/runbooks/weekly-maintenance.md) - Scheduled system updates and reviews
 - [Incident Response](assets/documentation/runbooks/incident-response.md) - Structured incident handling procedures
 - [Disaster Recovery](assets/documentation/runbooks/disaster-recovery.md) - Complete DR procedures with RTO/RPO targets
 
 **Security Documentation:**
+
 - [Security Hardening Checklist](assets/documentation/security/security-hardening-checklist.md) - CIS compliance checklist
 
 **Network Documentation:**
+
 - [IP Allocation Table](assets/documentation/network/ip-allocation-table.md) - Complete network inventory
 
 ### Evidence
 
 Located in [assets/evidence/](assets/evidence/):
+
 - Performance benchmark results
 - Security scan reports
 - Backup verification logs

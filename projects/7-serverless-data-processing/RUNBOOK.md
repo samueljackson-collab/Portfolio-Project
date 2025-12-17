@@ -5,6 +5,7 @@
 Production operations runbook for the Serverless Data Processing Platform. This runbook covers AWS Lambda operations, Step Functions workflows, API Gateway management, DynamoDB operations, and troubleshooting for event-driven analytics pipelines.
 
 **System Components:**
+
 - API Gateway (event ingestion endpoints)
 - AWS Lambda Functions (ingestion, validation, transformation, analytics)
 - Step Functions (orchestration workflows)
@@ -35,6 +36,7 @@ Production operations runbook for the Serverless Data Processing Platform. This 
 ### Dashboards
 
 #### CloudWatch Dashboard
+
 ```bash
 # View Lambda metrics
 aws cloudwatch get-dashboard --dashboard-name "ServerlessDataPipeline"
@@ -50,6 +52,7 @@ aws cloudwatch get-dashboard --dashboard-name "ServerlessDataPipeline"
 ```
 
 #### X-Ray Service Map
+
 ```bash
 # View distributed trace map
 aws xray get-service-graph --start-time $(date -u -d '1 hour ago' +%s) --end-time $(date -u +%s)
@@ -59,6 +62,7 @@ aws xray get-service-graph --start-time $(date -u -d '1 hour ago' +%s) --end-tim
 ```
 
 #### Step Functions Dashboard
+
 ```bash
 # List recent executions
 aws stepfunctions list-executions \
@@ -114,6 +118,7 @@ aws stepfunctions list-executions \
 ### API Gateway Management
 
 #### Deploy New API Version
+
 ```bash
 # 1. Validate SAM template
 cd infrastructure
@@ -154,6 +159,7 @@ curl -X POST $PROD_URL/ingest -d @../test/sample_event.json
 ```
 
 #### Configure API Gateway Throttling
+
 ```bash
 # Set usage plan limits
 aws apigateway update-usage-plan \
@@ -177,6 +183,7 @@ aws apigateway get-stage --rest-api-id xyz789 --stage-name prod
 ### Lambda Function Operations
 
 #### Update Lambda Function Code
+
 ```bash
 # 1. Build deployment package
 cd functions/ingestion
@@ -205,6 +212,7 @@ cat output.json
 ```
 
 #### Configure Lambda Concurrency
+
 ```bash
 # Set reserved concurrency (guaranteed capacity)
 aws lambda put-function-concurrency \
@@ -223,6 +231,7 @@ aws lambda get-function-concurrency \
 ```
 
 #### View Lambda Logs
+
 ```bash
 # Get recent log streams
 aws logs describe-log-streams \
@@ -249,6 +258,7 @@ aws logs filter-log-events \
 ### Step Functions Management
 
 #### Start Workflow Execution
+
 ```bash
 # Start execution with input
 aws stepfunctions start-execution \
@@ -274,6 +284,7 @@ done
 ```
 
 #### View Execution History
+
 ```bash
 # Get execution history
 aws stepfunctions get-execution-history \
@@ -293,6 +304,7 @@ aws stepfunctions describe-execution \
 ```
 
 #### Stop Running Execution
+
 ```bash
 # Stop execution (emergency)
 aws stepfunctions stop-execution \
@@ -307,6 +319,7 @@ aws stepfunctions describe-execution --execution-arn $EXECUTION_ARN
 ### DynamoDB Operations
 
 #### Query Data
+
 ```bash
 # Query by partition key
 aws dynamodb query \
@@ -331,6 +344,7 @@ aws dynamodb scan \
 ```
 
 #### Update Table Capacity
+
 ```bash
 # Switch to on-demand (auto-scaling)
 aws dynamodb update-table \
@@ -353,6 +367,7 @@ aws application-autoscaling register-scalable-target \
 ```
 
 #### Backup and Restore
+
 ```bash
 # Create on-demand backup
 aws dynamodb create-backup \
@@ -376,6 +391,7 @@ aws dynamodb update-continuous-backups \
 ### Dead Letter Queue Management
 
 #### Check DLQ Messages
+
 ```bash
 # Get queue depth
 aws sqs get-queue-attributes \
@@ -395,6 +411,7 @@ aws sqs receive-message \
 ```
 
 #### Replay DLQ Messages
+
 ```bash
 # Script to replay messages
 cat > scripts/replay_dlq.sh << 'EOF'
@@ -441,6 +458,7 @@ chmod +x scripts/replay_dlq.sh
 ### Detection
 
 **Automated Detection:**
+
 - CloudWatch alarms for Lambda errors, throttles
 - API Gateway 4xx/5xx error rate alarms
 - Step Functions execution failure alarms
@@ -448,6 +466,7 @@ chmod +x scripts/replay_dlq.sh
 - DLQ depth alarms
 
 **Manual Detection:**
+
 ```bash
 # Check overall system health
 ./scripts/health_check.sh
@@ -478,24 +497,28 @@ aws cloudwatch get-metric-statistics \
 #### Severity Classification
 
 **P0: Complete Outage**
+
 - API Gateway returning 5xx errors > 50%
 - All Lambda functions failing
 - Step Functions completely unable to execute
 - DynamoDB table unavailable
 
 **P1: Degraded Service**
+
 - Lambda error rate > 10%
 - API Gateway 5xx errors > 5%
 - Step Functions failure rate > 20%
 - DynamoDB throttling affecting > 50% requests
 
 **P2: Warning State**
+
 - Lambda throttling detected
 - DLQ message count increasing
 - Elevated latency (p95 > 1s)
 - DynamoDB capacity approaching limits
 
 **P3: Informational**
+
 - Occasional Lambda cold starts
 - Minor latency increase
 - DLQ contains < 10 messages
@@ -505,6 +528,7 @@ aws cloudwatch get-metric-statistics \
 #### P0: API Gateway 5xx Errors
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Check API Gateway status
 aws apigateway get-rest-apis
@@ -532,6 +556,7 @@ aws apigateway flush-stage-cache \
 ```
 
 **Investigation (2-10 minutes):**
+
 ```bash
 # Check X-Ray traces
 aws xray get-trace-summaries \
@@ -552,6 +577,7 @@ aws logs start-query \
 ```
 
 **Mitigation:**
+
 ```bash
 # Option 1: Scale up Lambda concurrency
 aws lambda put-function-concurrency \
@@ -571,6 +597,7 @@ aws apigateway update-stage \
 #### P0: All Lambda Functions Failing
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check Lambda service health
 aws health describe-events --filter eventTypeCategories=issue,accountSpecific
@@ -597,6 +624,7 @@ aws lambda get-account-settings
 ```
 
 **Investigation:**
+
 ```bash
 # Check for permission issues
 aws lambda get-function --function-name ingestion-lambda \
@@ -619,6 +647,7 @@ aws lambda get-function-configuration \
 #### P1: Step Functions High Failure Rate
 
 **Investigation:**
+
 ```bash
 # List recent failed executions
 aws stepfunctions list-executions \
@@ -643,6 +672,7 @@ done
 ```
 
 **Mitigation:**
+
 ```bash
 # If Lambda function issue, fix and retry
 # Update Lambda function
@@ -665,6 +695,7 @@ aws stepfunctions update-state-machine \
 #### P1: DLQ Message Count High
 
 **Investigation:**
+
 ```bash
 # Get DLQ depth
 aws sqs get-queue-attributes \
@@ -684,6 +715,7 @@ cat sample_dlq.json | jq -r '.Messages[0].Body' | jq .
 ```
 
 **Mitigation:**
+
 ```bash
 # Option 1: Fix issue and replay all
 # Fix the Lambda function
@@ -708,6 +740,7 @@ aws sqs purge-queue \
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -757,12 +790,14 @@ aws cloudwatch get-metric-statistics \
 #### Issue: Lambda Timeout
 
 **Symptoms:**
+
 ```bash
 $ aws logs tail /aws/lambda/transformation-lambda --since 5m
 Task timed out after 30.00 seconds
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check function timeout setting
 aws lambda get-function-configuration \
@@ -781,6 +816,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 **Solution:**
+
 ```bash
 # Increase timeout (max 15 minutes)
 aws lambda update-function-configuration \
@@ -798,11 +834,13 @@ aws lambda update-function-configuration \
 #### Issue: DynamoDB Throttling
 
 **Symptoms:**
+
 ```bash
 ProvisionedThroughputExceededException: Rate of requests exceeds the allowed throughput
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check consumed capacity
 aws dynamodb describe-table --table-name CuratedEvents \
@@ -820,6 +858,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 **Solution:**
+
 ```bash
 # Option 1: Switch to on-demand
 aws dynamodb update-table \
@@ -847,11 +886,13 @@ aws application-autoscaling put-scaling-policy \
 #### Issue: API Gateway CORS Errors
 
 **Symptoms:**
+
 ```
 Access-Control-Allow-Origin header missing
 ```
 
 **Diagnosis:**
+
 ```bash
 # Test OPTIONS request
 curl -X OPTIONS $API_URL/ingest \
@@ -866,6 +907,7 @@ aws apigateway get-method \
 ```
 
 **Solution:**
+
 ```bash
 # Update SAM template
 cat >> infrastructure/template.yaml << 'EOF'
@@ -1009,6 +1051,7 @@ chmod +x scripts/daily_backup.sh
 #### Complete Stack Loss
 
 **Recovery Steps (15-20 minutes):**
+
 ```bash
 # 1. Redeploy from IaC
 cd infrastructure
@@ -1086,6 +1129,7 @@ aws dynamodb update-table --table-name CuratedEvents --billing-mode PAY_PER_REQU
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Data Engineering Team

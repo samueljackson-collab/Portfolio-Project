@@ -1,9 +1,11 @@
 # P04 — Operational Monitoring & Automation
 
 ## Overview
+
 Build a comprehensive monitoring and automation system using Prometheus, Grafana, Alertmanager, and automated remediation scripts. Demonstrates SRE practices, golden signals monitoring, SLO tracking, and intelligent alerting for production environments.
 
 ## Key Outcomes
+
 - [x] Prometheus monitoring stack (metrics collection + storage)
 - [x] Grafana dashboards for golden signals (latency, traffic, errors, saturation)
 - [x] Alertmanager integration with PagerDuty/Slack
@@ -11,6 +13,7 @@ Build a comprehensive monitoring and automation system using Prometheus, Grafana
 - [x] SLO/SLI tracking and burn rate alerts
 
 ## Architecture
+
 - **Components**: Prometheus, Grafana, Alertmanager, Node Exporter, cAdvisor
 - **Trust boundaries**: Monitoring network (scrape endpoints on private network)
 - **Dependencies**: Docker Compose, Python 3.9+, Ansible (optional)
@@ -77,11 +80,13 @@ make test
 ## Operations
 
 ### Dashboards
+
 - **System Overview**: CPU, memory, disk, network across all nodes
 - **Golden Signals**: Request latency (p50/p95/p99), error rate, throughput, saturation
 - **SLO Dashboard**: Error budget, burn rate, SLO compliance %
 
 ### Alerts (P0/P1/P2)
+
 - **P0**: Service down, error rate >5%, SLO burn rate critical
 - **P1**: High latency (p95 >500ms), disk >85%, memory >90%
 - **P2**: Certificate expiring in <7 days, backup failure
@@ -104,7 +109,6 @@ make test
 - [Grafana Best Practices](https://grafana.com/docs/grafana/latest/best-practices/)
 - [RUNBOOK](./RUNBOOK.md) | [PLAYBOOK](./PLAYBOOK.md)
 
-
 ## Code Generation Prompts
 
 This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
@@ -112,16 +116,19 @@ This section contains AI-assisted code generation prompts that can help you recr
 ### Observability Setup
 
 #### 1. Prometheus Rules
+
 ```
 Create Prometheus alerting rules for application health, including error rate thresholds, latency percentiles, and service availability with appropriate severity levels
 ```
 
 #### 2. Grafana Dashboard
+
 ```
 Generate a Grafana dashboard JSON for microservices monitoring with panels for request rate, error rate, latency distribution, and resource utilization
 ```
 
 #### 3. Log Aggregation
+
 ```
 Write a Fluentd configuration that collects logs from multiple sources, parses JSON logs, enriches with Kubernetes metadata, and forwards to Elasticsearch
 ```
@@ -145,4 +152,3 @@ Write a Fluentd configuration that collects logs from multiple sources, parses J
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

@@ -5,6 +5,7 @@
 Production operations runbook for the P11 Serverless API platform. This runbook covers Lambda function management, API Gateway operations, DynamoDB administration, incident response, and troubleshooting for the AWS SAM-based serverless architecture.
 
 **System Components:**
+
 - AWS SAM (Serverless Application Model) for Infrastructure as Code
 - AWS Lambda functions (Python runtime)
 - API Gateway REST API with CORS and authentication
@@ -32,6 +33,7 @@ Production operations runbook for the P11 Serverless API platform. This runbook 
 ### Dashboards
 
 #### API Gateway Dashboard
+
 ```bash
 # Check API Gateway metrics via CLI
 aws cloudwatch get-metric-statistics \
@@ -55,6 +57,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 #### Lambda Function Dashboard
+
 ```bash
 # Check Lambda function invocations
 aws cloudwatch get-metric-statistics \
@@ -91,6 +94,7 @@ aws lambda list-functions --query 'Functions[?starts_with(FunctionName, `serverl
 ```
 
 #### DynamoDB Dashboard
+
 ```bash
 # Check DynamoDB metrics
 aws cloudwatch get-metric-statistics \
@@ -148,6 +152,7 @@ aws xray get-trace-summaries \
 ### Stack Deployment
 
 #### Deploy to Development
+
 ```bash
 # 1. Validate SAM template
 aws cloudformation validate-template --template-body file://template.yaml
@@ -171,6 +176,7 @@ aws cloudformation describe-stacks \
 ```
 
 #### Deploy to Production
+
 ```bash
 # Production deployments require approval and change management
 
@@ -205,6 +211,7 @@ aws cloudformation wait stack-update-complete \
 ```
 
 #### Rollback Deployment
+
 ```bash
 # Quick rollback to previous stack version
 aws cloudformation cancel-update-stack --stack-name serverless-api-prod
@@ -221,6 +228,7 @@ make deploy-prod
 ### Lambda Function Management
 
 #### Update Function Code
+
 ```bash
 # Update single function without full SAM deploy
 cd functions/create_item
@@ -239,6 +247,7 @@ aws lambda get-function --function-name CreateItemFunction \
 ```
 
 #### Invoke Function Locally
+
 ```bash
 # Test function locally with SAM
 sam local invoke CreateItemFunction \
@@ -257,6 +266,7 @@ curl -X POST http://localhost:3000/items \
 ```
 
 #### View Lambda Logs
+
 ```bash
 # Tail logs in real-time
 aws logs tail /aws/lambda/CreateItemFunction --follow
@@ -275,6 +285,7 @@ aws logs tail /aws/lambda/CreateItemFunction --format short | head -100
 ```
 
 #### Configure Function Settings
+
 ```bash
 # Update memory allocation (affects CPU allocation)
 aws lambda update-function-configuration \
@@ -301,6 +312,7 @@ aws lambda put-provisioned-concurrency-config \
 ### API Gateway Operations
 
 #### Test API Endpoints
+
 ```bash
 # Get API endpoint URL
 API_URL=$(aws cloudformation describe-stacks \
@@ -334,6 +346,7 @@ curl -X DELETE "${API_URL}/items/item-id" \
 ```
 
 #### Enable/Disable API Caching
+
 ```bash
 # Enable caching on stage
 aws apigateway update-stage \
@@ -350,6 +363,7 @@ aws apigateway flush-stage-cache \
 ```
 
 #### Update API Throttling
+
 ```bash
 # Set throttling limits
 aws apigateway update-stage \
@@ -363,6 +377,7 @@ aws apigateway update-stage \
 ### DynamoDB Operations
 
 #### Query and Scan Table
+
 ```bash
 # Get item by ID
 aws dynamodb get-item \
@@ -387,6 +402,7 @@ aws dynamodb scan \
 ```
 
 #### Backup and Restore
+
 ```bash
 # Create on-demand backup
 aws dynamodb create-backup \
@@ -403,6 +419,7 @@ aws dynamodb restore-table-from-backup \
 ```
 
 #### Enable Point-in-Time Recovery
+
 ```bash
 # Enable PITR (allows restore to any point in last 35 days)
 aws dynamodb update-continuous-backups \
@@ -417,6 +434,7 @@ aws dynamodb restore-table-to-point-in-time \
 ```
 
 #### Update Table Capacity
+
 ```bash
 # Update provisioned capacity
 aws dynamodb update-table \
@@ -448,11 +466,13 @@ aws application-autoscaling put-scaling-policy \
 ### Detection
 
 **Automated Detection:**
+
 - CloudWatch Alarms for Lambda errors, API Gateway 5XX errors
 - X-Ray traces showing faults and errors
 - DynamoDB throttling alarms
 
 **Manual Detection:**
+
 ```bash
 # Check recent Lambda errors
 aws logs filter-log-events \
@@ -477,24 +497,28 @@ aws cloudformation describe-stacks \
 #### Severity Classification
 
 **P0: Complete Outage**
+
 - API Gateway returning 5XX errors > 5%
 - Lambda functions out of memory (OOM)
 - DynamoDB table unavailable
 - Authentication service down
 
 **P1: Degraded Service**
+
 - Lambda error rate > 1%
 - API response time > 2 seconds (p95)
 - DynamoDB throttling errors
 - Cold start latency > 3 seconds
 
 **P2: Warning State**
+
 - Lambda execution time increasing
 - DynamoDB capacity approaching limits
 - Occasional authentication failures
 - Minor API Gateway errors (4XX)
 
 **P3: Informational**
+
 - Lambda logs showing warnings
 - API usage trending upward
 - Cost anomalies
@@ -504,6 +528,7 @@ aws cloudformation describe-stacks \
 #### P0: Lambda Functions Out of Memory
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check current memory configuration
 aws lambda get-function-configuration \
@@ -528,6 +553,7 @@ aws lambda get-function-configuration \
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Analyze memory usage patterns
 aws cloudwatch get-metric-statistics \
@@ -550,6 +576,7 @@ aws xray get-trace-summaries \
 ```
 
 **Root Cause & Prevention:**
+
 - Profile code to identify memory-intensive operations
 - Optimize data structures and object lifecycle
 - Consider breaking large functions into smaller ones
@@ -560,6 +587,7 @@ aws xray get-trace-summaries \
 #### P0: API Gateway 5XX Error Rate Spike
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check API Gateway errors
 aws cloudwatch get-metric-statistics \
@@ -594,6 +622,7 @@ aws cloudformation cancel-update-stack --stack-name serverless-api-prod
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Check Lambda logs for errors
 for func in CreateItemFunction ReadItemFunction UpdateItemFunction DeleteItemFunction; do
@@ -623,6 +652,7 @@ curl -X GET "${API_URL}/items" \
 #### P1: DynamoDB Throttling Errors
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check throttling metrics
 aws cloudwatch get-metric-statistics \
@@ -651,6 +681,7 @@ aws dynamodb update-table \
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Analyze access patterns
 aws logs filter-log-events \
@@ -670,6 +701,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 **Prevention:**
+
 - Enable auto-scaling for adaptive capacity
 - Review access patterns and consider GSIs
 - Implement exponential backoff in Lambda functions
@@ -680,6 +712,7 @@ aws cloudwatch get-metric-statistics \
 #### P1: Lambda Cold Start Latency Spike
 
 **Investigation:**
+
 ```bash
 # Check initialization duration
 aws cloudwatch get-metric-statistics \
@@ -699,6 +732,7 @@ aws logs filter-log-events \
 ```
 
 **Mitigation:**
+
 ```bash
 # Option 1: Enable provisioned concurrency
 aws lambda put-provisioned-concurrency-config \
@@ -724,6 +758,7 @@ zip -g function.zip lambda_function.py
 ### Essential Troubleshooting Commands
 
 #### Lambda Debugging
+
 ```bash
 # Get function configuration
 aws lambda get-function-configuration --function-name CreateItemFunction
@@ -750,6 +785,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 #### API Gateway Debugging
+
 ```bash
 # Get API details
 aws apigateway get-rest-apis
@@ -775,6 +811,7 @@ aws apigateway update-stage \
 ```
 
 #### DynamoDB Debugging
+
 ```bash
 # Check table status and metrics
 aws dynamodb describe-table --table-name items-table
@@ -798,12 +835,14 @@ aws dynamodb scan --table-name items-table > table-export.json
 #### Issue: "Lambda function execution role missing permissions"
 
 **Symptoms:**
+
 ```bash
 $ curl -X POST ${API_URL}/items
 {"message": "Internal server error"}
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check Lambda logs
 aws logs tail /aws/lambda/CreateItemFunction --since 10m | grep -i "accessdenied\|unauthorized"
@@ -818,6 +857,7 @@ aws iam list-role-policies --role-name LambdaExecutionRole
 ```
 
 **Solution:**
+
 ```bash
 # Add missing DynamoDB permissions to SAM template
 # In template.yaml:
@@ -834,12 +874,14 @@ make deploy-dev
 #### Issue: "API Gateway CORS errors"
 
 **Symptoms:**
+
 ```
 Access to fetch at 'https://api.example.com/items' from origin 'https://app.example.com'
 has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present.
 ```
 
 **Diagnosis:**
+
 ```bash
 # Test OPTIONS preflight request
 curl -X OPTIONS ${API_URL}/items \
@@ -855,6 +897,7 @@ aws apigateway get-method \
 ```
 
 **Solution:**
+
 ```bash
 # Update Lambda response to include CORS headers
 # In Lambda function:
@@ -883,12 +926,14 @@ make deploy-dev
 #### Issue: "DynamoDB item not found"
 
 **Symptoms:**
+
 ```bash
 $ curl -X GET ${API_URL}/items/test-id
 {"message": "Item not found"}
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check if item exists in table
 aws dynamodb get-item \
@@ -903,6 +948,7 @@ aws logs tail /aws/lambda/ReadItemFunction --since 10m
 ```
 
 **Solution:**
+
 ```bash
 # Verify key schema matches
 aws dynamodb describe-table \
@@ -925,6 +971,7 @@ aws dynamodb describe-table \
 ### Backup Strategy
 
 **DynamoDB Backups:**
+
 ```bash
 # Enable Point-in-Time Recovery (automated continuous backups)
 aws dynamodb update-continuous-backups \
@@ -941,6 +988,7 @@ aws dynamodb create-backup \
 ```
 
 **Code and Configuration Backups:**
+
 ```bash
 # SAM template and Lambda code in Git
 git tag -a v1.0.0 -m "Production release v1.0.0"
@@ -964,6 +1012,7 @@ aws apigateway get-export \
 #### Complete Stack Loss
 
 **Recovery Steps (15-20 minutes):**
+
 ```bash
 # 1. Verify disaster scope
 aws cloudformation describe-stacks --stack-name serverless-api-prod
@@ -1009,6 +1058,7 @@ curl -X GET "${API_URL}/items" -H "Authorization: Bearer ${JWT_TOKEN}"
 #### DynamoDB Data Loss
 
 **Recovery Steps (5-10 minutes):**
+
 ```bash
 # 1. Stop all writes to table
 # Update Lambda functions to return read-only mode
@@ -1041,6 +1091,7 @@ make test-api
 ### DR Drill Procedure
 
 **Quarterly DR Drill (1 hour):**
+
 ```bash
 # 1. Document current state
 aws cloudformation describe-stacks --stack-name serverless-api-prod > dr-drill-before.json
@@ -1084,6 +1135,7 @@ echo "Actual recovery time: $RECOVERY_TIME seconds" | tee -a dr-drill-log.txt
 ### Routine Maintenance
 
 #### Daily Tasks
+
 ```bash
 # Check Lambda error rates
 for func in CreateItemFunction ReadItemFunction UpdateItemFunction DeleteItemFunction; do
@@ -1114,6 +1166,7 @@ aws dynamodb describe-table --table-name items-table \
 ```
 
 #### Weekly Tasks
+
 ```bash
 # Review CloudWatch Logs Insights queries
 # Top errors:
@@ -1148,6 +1201,7 @@ aws lambda list-functions --query 'Functions[?LastModified<`2025-01-01`].Functio
 ```
 
 #### Monthly Tasks
+
 ```bash
 # Review and rotate IAM credentials
 # Review Lambda function permissions
@@ -1183,6 +1237,7 @@ aws ce get-cost-and-usage \
 ### Upgrade Procedures
 
 #### Update Lambda Runtime
+
 ```bash
 # 1. Test new runtime locally
 sam local invoke CreateItemFunction --event events/create-item.json
@@ -1206,6 +1261,7 @@ aws logs tail /aws/lambda/CreateItemFunction --follow
 ```
 
 #### Update Dependencies
+
 ```bash
 # 1. Update requirements.txt
 cd functions/create_item
@@ -1230,6 +1286,7 @@ make deploy-prod
 ## Operational Best Practices
 
 ### Pre-Deployment Checklist
+
 - [ ] Code reviewed and approved
 - [ ] Unit tests passing (`pytest tests/`)
 - [ ] SAM template validated (`aws cloudformation validate-template`)
@@ -1239,6 +1296,7 @@ make deploy-prod
 - [ ] Monitoring and alerts verified
 
 ### Post-Deployment Checklist
+
 - [ ] Stack deployment completed successfully
 - [ ] All Lambda functions in Active state
 - [ ] API endpoints responding correctly
@@ -1248,6 +1306,7 @@ make deploy-prod
 - [ ] Monitor for 30 minutes
 
 ### Standard Change Window
+
 - **Time:** Tuesday/Thursday, 10:00 AM - 12:00 PM ET
 - **Approval:** Required for production changes
 - **Blackout:** Avoid Friday deployments, holidays, peak traffic periods
@@ -1265,6 +1324,7 @@ make deploy-prod
 ## Quick Reference
 
 ### Common Commands
+
 ```bash
 # Check stack status
 aws cloudformation describe-stacks --stack-name serverless-api-prod
@@ -1286,6 +1346,7 @@ aws dynamodb create-backup --table-name items-table --backup-name backup-$(date 
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: Lambda OOM - Increase memory
 aws lambda update-function-configuration --function-name CreateItemFunction --memory-size 1024
@@ -1303,6 +1364,7 @@ aws lambda put-provisioned-concurrency-config --function-name CreateItemFunction
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Platform Engineering Team

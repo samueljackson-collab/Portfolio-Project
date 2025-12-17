@@ -5,6 +5,7 @@
 Production operations runbook for full-stack observability platform. This runbook covers Prometheus metrics collection, Grafana dashboard management, Loki log aggregation, alerting configuration, and incident response for observability operations.
 
 **System Components:**
+
 - Prometheus (metrics collection and storage)
 - Grafana (visualization and dashboards)
 - Loki (log aggregation and querying)
@@ -34,6 +35,7 @@ Production operations runbook for full-stack observability platform. This runboo
 ### Dashboards
 
 #### Observability Stack Health
+
 ```bash
 # Check Prometheus status
 curl http://localhost:9090/-/healthy
@@ -53,6 +55,7 @@ make status
 ```
 
 #### Metrics Dashboard
+
 ```bash
 # Query current metrics
 curl -s 'http://localhost:9090/api/v1/query?query=up' | jq .
@@ -68,6 +71,7 @@ curl -s http://localhost:9090/api/v1/status/tsdb | jq .
 ```
 
 #### Log Dashboard
+
 ```bash
 # Query recent logs
 curl -G -s 'http://localhost:3100/loki/api/v1/query_range' \
@@ -132,6 +136,7 @@ fi
 ### Prometheus Operations
 
 #### Start/Stop Prometheus
+
 ```bash
 # Start observability stack
 make run
@@ -150,6 +155,7 @@ curl http://localhost:9090/-/healthy
 ```
 
 #### Configure Prometheus
+
 ```bash
 # Edit Prometheus configuration
 vim prometheus/prometheus.yml
@@ -168,6 +174,7 @@ curl http://localhost:9090/api/v1/status/config | jq '.data.yaml' | head -20
 ```
 
 #### Manage Scrape Targets
+
 ```bash
 # Add new scrape target
 cat >> prometheus/prometheus.yml << 'EOF'
@@ -191,6 +198,7 @@ curl -s http://localhost:9090/api/v1/targets | \
 ```
 
 #### Query Metrics
+
 ```bash
 # Query current values
 make query-metrics QUERY='up'
@@ -216,6 +224,7 @@ curl -s 'http://localhost:9090/api/v1/query?query=up' | \
 ### Grafana Operations
 
 #### Access Grafana
+
 ```bash
 # Start Grafana
 make run
@@ -232,6 +241,7 @@ docker-compose logs -f grafana
 ```
 
 #### Manage Dashboards
+
 ```bash
 # Import dashboard from file
 curl -X POST http://admin:admin@localhost:3000/api/dashboards/db \
@@ -253,6 +263,7 @@ curl -X DELETE http://admin:admin@localhost:3000/api/dashboards/uid/$DASHBOARD_U
 ```
 
 #### Configure Data Sources
+
 ```bash
 # Add Prometheus data source
 cat > datasource-prometheus.json << 'EOF'
@@ -288,6 +299,7 @@ curl -s http://admin:admin@localhost:3000/api/datasources | jq .
 ```
 
 #### Manage Users and Permissions
+
 ```bash
 # Create user
 curl -X POST http://admin:admin@localhost:3000/api/admin/users \
@@ -312,6 +324,7 @@ curl -X POST http://admin:admin@localhost:3000/api/teams \
 ### Loki Operations
 
 #### Configure Loki
+
 ```bash
 # Edit Loki configuration
 vim loki/loki-config.yaml
@@ -327,6 +340,7 @@ docker-compose logs -f loki
 ```
 
 #### Query Logs
+
 ```bash
 # Query logs with LogQL
 curl -G 'http://localhost:3100/loki/api/v1/query_range' \
@@ -352,6 +366,7 @@ curl -G 'http://localhost:3100/loki/api/v1/query' \
 ```
 
 #### Manage Log Retention
+
 ```bash
 # Check current retention
 curl -s http://localhost:3100/config | jq '.limits_config.retention_period'
@@ -370,6 +385,7 @@ docker-compose exec loki loki -config.file=/etc/loki/local-config.yaml -target=c
 ### Alertmanager Operations
 
 #### Configure Alerts
+
 ```bash
 # Edit alert rules
 vim prometheus/alerts.yml
@@ -388,6 +404,7 @@ curl -s http://localhost:9090/api/v1/rules | jq '.data.groups[].rules[] | select
 ```
 
 #### Configure Alertmanager
+
 ```bash
 # Edit Alertmanager configuration
 vim alertmanager/alertmanager.yml
@@ -409,6 +426,7 @@ amtool silence query
 ```
 
 #### Test Alerts
+
 ```bash
 # Send test alert
 curl -X POST http://localhost:9093/api/v1/alerts \
@@ -434,6 +452,7 @@ amtool config routes test --config.file=alertmanager/alertmanager.yml \
 ### Exporter Management
 
 #### Deploy Node Exporter
+
 ```bash
 # Add to docker-compose.yml
 cat >> docker-compose.yml << 'EOF'
@@ -460,6 +479,7 @@ curl -s http://localhost:9100/metrics | head -20
 ```
 
 #### Custom Application Instrumentation
+
 ```bash
 # Example: Instrument Python application
 cat > app.py << 'EOF'
@@ -495,6 +515,7 @@ EOF
 ### Detection
 
 **Automated Detection:**
+
 - Prometheus health check failures
 - Alertmanager notifications
 - Grafana dashboard alerts
@@ -502,6 +523,7 @@ EOF
 - Disk space alerts
 
 **Manual Detection:**
+
 ```bash
 # Check all services
 make status
@@ -524,24 +546,28 @@ df -h /var/lib/prometheus /var/lib/grafana /var/lib/loki
 #### Severity Classification
 
 **P0: Complete Observability Loss**
+
 - Prometheus completely down
 - All metrics collection stopped
 - Grafana inaccessible
 - Cannot determine system health
 
 **P1: Partial Observability Loss**
+
 - Loki down (no log aggregation)
 - Grafana down (no visualization)
 - Alertmanager down (no alert delivery)
 - >50% of scrape targets failing
 
 **P2: Degraded Observability**
+
 - High query latency
 - Some scrape targets down
 - Alert delivery delays
 - Disk space approaching limit
 
 **P3: Minor Issues**
+
 - Single scrape target down
 - Non-critical dashboard errors
 - Slow dashboard loads
@@ -551,6 +577,7 @@ df -h /var/lib/prometheus /var/lib/grafana /var/lib/loki
 #### P0: Prometheus Down
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check Prometheus status
 docker-compose ps prometheus
@@ -570,6 +597,7 @@ promtool check config prometheus/prometheus.yml
 ```
 
 **Investigation (5-20 minutes):**
+
 ```bash
 # Check system resources
 docker stats prometheus
@@ -588,6 +616,7 @@ docker-compose exec prometheus promtool tsdb analyze /prometheus
 ```
 
 **Recovery:**
+
 ```bash
 # If configuration error, fix and reload
 vim prometheus/prometheus.yml
@@ -612,6 +641,7 @@ curl -s 'http://localhost:9090/api/v1/query?query=up' | jq .
 #### P0: All Metrics Collection Stopped
 
 **Immediate Actions (0-10 minutes):**
+
 ```bash
 # 1. Check if Prometheus is running
 curl http://localhost:9090/-/healthy
@@ -632,6 +662,7 @@ git log -1 --oneline prometheus/prometheus.yml
 ```
 
 **Investigation:**
+
 ```bash
 # Test connectivity to exporters
 docker-compose exec prometheus wget -O- http://node-exporter:9100/metrics | head
@@ -647,6 +678,7 @@ iptables -L -n | grep 9100
 ```
 
 **Remediation:**
+
 ```bash
 # If network issue, recreate network
 docker-compose down
@@ -666,6 +698,7 @@ watch -n 5 'curl -s http://localhost:9090/api/v1/targets | jq ".data.activeTarge
 #### P1: Grafana Down
 
 **Investigation:**
+
 ```bash
 # Check Grafana status
 docker-compose ps grafana
@@ -679,6 +712,7 @@ docker-compose exec grafana cat /var/lib/grafana/grafana.db
 ```
 
 **Remediation:**
+
 ```bash
 # Restart Grafana
 docker-compose restart grafana
@@ -696,6 +730,7 @@ curl http://localhost:3000/api/health
 #### P1: Loki Ingestion Stopped
 
 **Investigation:**
+
 ```bash
 # Check Loki status
 curl http://localhost:3100/ready
@@ -711,6 +746,7 @@ df -h /var/lib/loki
 ```
 
 **Remediation:**
+
 ```bash
 # Restart Loki
 docker-compose restart loki
@@ -726,6 +762,7 @@ watch -n 5 'curl -s http://localhost:3100/metrics | grep loki_distributor_lines_
 #### P2: High Query Latency
 
 **Investigation:**
+
 ```bash
 # Check Prometheus query performance
 curl -s 'http://localhost:9090/api/v1/query?query=prometheus_engine_query_duration_seconds' | jq .
@@ -741,6 +778,7 @@ docker-compose logs prometheus | grep "query took"
 ```
 
 **Remediation:**
+
 ```bash
 # Increase Prometheus resources
 # Edit docker-compose.yml
@@ -765,6 +803,7 @@ docker-compose restart prometheus
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/observability-incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -817,12 +856,14 @@ curl -X POST http://localhost:9090/-/reload
 #### Issue: Prometheus Out of Memory
 
 **Symptoms:**
+
 ```bash
 $ docker-compose logs prometheus
 Error: OOMKilled
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check memory usage
 docker stats prometheus
@@ -835,6 +876,7 @@ curl -s 'http://localhost:9090/api/v1/query?query=prometheus_tsdb_head_series' |
 ```
 
 **Solution:**
+
 ```bash
 # Increase memory limit
 vim docker-compose.yml
@@ -861,10 +903,12 @@ docker-compose restart prometheus
 #### Issue: Grafana Dashboard Not Loading
 
 **Symptoms:**
+
 - Dashboard shows "No data"
 - Panels not rendering
 
 **Diagnosis:**
+
 ```bash
 # Check data source health
 curl -s http://admin:admin@localhost:3000/api/datasources | \
@@ -878,6 +922,7 @@ curl -s 'http://localhost:9090/api/v1/query?query=up' | jq .
 ```
 
 **Solution:**
+
 ```bash
 # Fix data source URL
 curl -X PUT http://admin:admin@localhost:3000/api/datasources/1 \
@@ -896,10 +941,12 @@ curl -s 'http://localhost:9090/api/v1/query?query=up' | jq .
 #### Issue: Metrics Not Being Scraped
 
 **Symptoms:**
+
 - Target shows as "down" in Prometheus
 - No metrics from specific exporter
 
 **Diagnosis:**
+
 ```bash
 # Check target status
 curl -s http://localhost:9090/api/v1/targets | \
@@ -914,6 +961,7 @@ docker-compose exec prometheus wget -O- http://node-exporter:9100/metrics
 ```
 
 **Solution:**
+
 ```bash
 # Verify exporter is running
 docker-compose ps node-exporter
@@ -936,12 +984,14 @@ curl -s http://localhost:9090/api/v1/targets | \
 #### Issue: Loki Query Timeout
 
 **Symptoms:**
+
 ```bash
 $ curl 'http://localhost:3100/loki/api/v1/query_range?query={job="varlogs"}'
 Error: context deadline exceeded
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check Loki status
 curl http://localhost:3100/ready
@@ -955,6 +1005,7 @@ docker stats loki
 ```
 
 **Solution:**
+
 ```bash
 # Increase query timeout
 vim loki/loki-config.yaml
@@ -982,6 +1033,7 @@ docker-compose restart loki
 ### Backup Strategy
 
 **Prometheus Data Backup:**
+
 ```bash
 # Take Prometheus snapshot
 curl -X POST http://localhost:9090/api/v1/admin/tsdb/snapshot
@@ -1004,6 +1056,7 @@ chmod +x /etc/cron.hourly/prometheus-backup
 ```
 
 **Grafana Backup:**
+
 ```bash
 # Backup Grafana database
 docker-compose exec grafana cp /var/lib/grafana/grafana.db /backups/grafana-$(date +%Y%m%d).db
@@ -1020,6 +1073,7 @@ aws s3 cp grafana-backup-*.tar.gz s3://observability-backups/grafana/
 ```
 
 **Configuration Backup:**
+
 ```bash
 # Backup all configurations
 tar czf observability-config-$(date +%Y%m%d).tar.gz \
@@ -1036,6 +1090,7 @@ git push
 #### Complete Stack Loss
 
 **Recovery Steps (15-30 minutes):**
+
 ```bash
 # 1. Restore configurations
 git clone https://github.com/org/observability-stack.git
@@ -1068,6 +1123,7 @@ curl -s 'http://localhost:9090/api/v1/query?query=up' | jq .
 ### DR Drill Procedure
 
 **Monthly DR Drill (45 minutes):**
+
 ```bash
 # 1. Document current state
 docker-compose ps > dr-drill-before.txt
@@ -1099,6 +1155,7 @@ echo "DR Recovery Time: $RECOVERY_TIME seconds" | tee dr-drill-$(date +%Y%m%d).l
 ## Maintenance Procedures
 
 ### Daily Tasks
+
 ```bash
 # Check stack health
 make status
@@ -1114,6 +1171,7 @@ curl -s http://localhost:9093/api/v2/alerts | jq '.[] | select(.status.state=="a
 ```
 
 ### Weekly Tasks
+
 ```bash
 # Review dashboard performance
 # Check slow queries in Grafana
@@ -1130,6 +1188,7 @@ docker-compose up -d node-exporter
 ```
 
 ### Monthly Tasks
+
 ```bash
 # Update Prometheus, Grafana, Loki
 docker-compose pull
@@ -1150,6 +1209,7 @@ docker-compose up -d
 ## Quick Reference
 
 ### Most Common Operations
+
 ```bash
 # Start stack
 make run
@@ -1174,6 +1234,7 @@ make stop
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: Prometheus down
 docker-compose restart prometheus
@@ -1195,6 +1256,7 @@ docker-compose restart prometheus
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Platform Engineering Team

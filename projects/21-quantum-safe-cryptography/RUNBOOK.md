@@ -5,6 +5,7 @@
 Production operations runbook for the Quantum-Safe Cryptography service. This runbook covers hybrid key exchange operations, cryptographic key management, KEM (Key Encapsulation Mechanism) operations, and incident response for quantum-resistant cryptography systems.
 
 **System Components:**
+
 - Kyber KEM (quantum-resistant key encapsulation)
 - Classical ECDH (Elliptic Curve Diffie-Hellman)
 - Hybrid key exchange service
@@ -33,6 +34,7 @@ Production operations runbook for the Quantum-Safe Cryptography service. This ru
 ### Dashboards
 
 #### Service Health Dashboard
+
 ```bash
 # Check service status
 systemctl status quantum-crypto.service
@@ -48,6 +50,7 @@ top -p $(pgrep -f key_exchange.py)
 ```
 
 #### Cryptographic Operations Dashboard
+
 ```bash
 # Test key exchange endpoint
 curl -X POST http://localhost:8000/api/key-exchange \
@@ -62,6 +65,7 @@ python -c "from src.key_exchange import run_self_tests; run_self_tests()"
 ```
 
 #### Key Rotation Dashboard
+
 ```bash
 # Check current key age
 python -c "from src.key_exchange import get_key_age; print(f'Key age: {get_key_age()} hours')"
@@ -121,6 +125,7 @@ fi
 ### Service Management
 
 #### Start/Stop Service
+
 ```bash
 # Start service
 sudo systemctl start quantum-crypto.service
@@ -142,6 +147,7 @@ sudo journalctl -u quantum-crypto.service -f
 ```
 
 #### Manual Service Startup
+
 ```bash
 # Activate Python virtual environment
 cd /opt/quantum-crypto
@@ -161,6 +167,7 @@ nohup python src/key_exchange.py > /var/log/quantum-crypto/service.log 2>&1 &
 ```
 
 #### Service Configuration
+
 ```bash
 # Edit service configuration
 sudo vim /etc/systemd/system/quantum-crypto.service
@@ -194,6 +201,7 @@ sudo systemctl restart quantum-crypto.service
 ### Key Management
 
 #### Generate New Key Pairs
+
 ```bash
 # Generate Kyber key pair
 python -c "from src.key_exchange import generate_kyber_keypair; generate_kyber_keypair()"
@@ -209,6 +217,7 @@ ls -lh /var/lib/quantum-crypto/keys/
 ```
 
 #### Key Rotation
+
 ```bash
 # Manual key rotation
 python -c "from src.key_exchange import rotate_keys; rotate_keys()"
@@ -225,6 +234,7 @@ python -c "from src.key_exchange import get_key_age; print(f'New key age: {get_k
 ```
 
 #### Backup Keys
+
 ```bash
 # Backup current keys
 mkdir -p /backup/quantum-crypto/keys/$(date +%Y%m%d)
@@ -244,6 +254,7 @@ aws s3 cp /backup/quantum-crypto/keys-$(date +%Y%m%d).tar.gz.gpg \
 ```
 
 #### Restore Keys
+
 ```bash
 # Stop service
 sudo systemctl stop quantum-crypto.service
@@ -267,6 +278,7 @@ sudo systemctl start quantum-crypto.service
 ### Cryptographic Operations
 
 #### Test Key Exchange
+
 ```bash
 # Full key exchange test
 python -c "
@@ -294,6 +306,7 @@ print(f'Hybrid exchange test: {\"PASS\" if result else \"FAIL\"}')"
 ```
 
 #### Validate Cryptographic Integrity
+
 ```bash
 # Run self-tests
 python -c "from src.key_exchange import run_self_tests; run_self_tests()"
@@ -309,6 +322,7 @@ python -c "from src.key_exchange import validate_key_strength; validate_key_stre
 ```
 
 #### Performance Testing
+
 ```bash
 # Benchmark key exchange operations
 python -c "
@@ -339,6 +353,7 @@ ab -n 1000 -c 10 http://localhost:8000/api/key-exchange
 ### Detection
 
 **Automated Detection:**
+
 - Service health check failures
 - Cryptographic validation failures
 - High error rates in logs
@@ -346,6 +361,7 @@ ab -n 1000 -c 10 http://localhost:8000/api/key-exchange
 - Memory leak detection
 
 **Manual Detection:**
+
 ```bash
 # Check service health
 systemctl status quantum-crypto.service
@@ -368,6 +384,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 #### Severity Classification
 
 **P0: Critical Security Incident**
+
 - Cryptographic validation failure
 - Key corruption or compromise
 - Service completely down
@@ -375,6 +392,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 - Known vulnerability detected
 
 **P1: Service Degradation**
+
 - High error rate (>1%)
 - Severe performance degradation (>500ms latency)
 - Key rotation failures
@@ -382,6 +400,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 - Partial service unavailability
 
 **P2: Warning State**
+
 - Elevated error rate (0.1-1%)
 - Moderate performance degradation (100-500ms)
 - Old keys (>7 days)
@@ -389,6 +408,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 - Non-critical validation warnings
 
 **P3: Informational**
+
 - Occasional errors (<0.1%)
 - Minor performance variations
 - Routine maintenance needed
@@ -399,6 +419,7 @@ ps aux | grep key_exchange.py | awk '{print $6}'
 #### P0: Cryptographic Validation Failure
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. STOP THE SERVICE IMMEDIATELY
 sudo systemctl stop quantum-crypto.service
@@ -418,6 +439,7 @@ mv /var/lib/quantum-crypto/keys/* /var/lib/quantum-crypto/quarantine/$(date +%Y%
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Analyze corrupted keys
 python scripts/analyze-keys.py /var/lib/quantum-crypto/quarantine/$(date +%Y%m%d)*
@@ -436,6 +458,7 @@ grep -i "unauthorized\|intrusion" /var/log/auth.log
 ```
 
 **Recovery:**
+
 ```bash
 # Restore keys from last known good backup
 LAST_BACKUP=$(ls -t /backup/quantum-crypto/keys/ | head -1)
@@ -469,6 +492,7 @@ EOF
 #### P0: Service Down
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Check service status
 systemctl status quantum-crypto.service
@@ -485,6 +509,7 @@ journalctl -u quantum-crypto.service -n 100 --no-pager
 ```
 
 **Investigation (2-10 minutes):**
+
 ```bash
 # Check for Python errors
 journalctl -u quantum-crypto.service | grep -i "traceback\|exception"
@@ -507,6 +532,7 @@ free -h
 ```
 
 **Recovery:**
+
 ```bash
 # Fix dependency issues
 cd /opt/quantum-crypto
@@ -532,6 +558,7 @@ curl http://localhost:8000/health
 #### P1: High Error Rate
 
 **Investigation:**
+
 ```bash
 # Analyze error patterns
 journalctl -u quantum-crypto.service --since "1 hour ago" | \
@@ -549,6 +576,7 @@ netstat -s | grep -i error
 ```
 
 **Remediation:**
+
 ```bash
 # If input validation issues, check API clients
 # Review recent API changes
@@ -569,6 +597,7 @@ watch -n 5 'journalctl -u quantum-crypto.service --since "5 minutes ago" | grep 
 #### P1: Key Rotation Failed
 
 **Investigation:**
+
 ```bash
 # Check rotation logs
 journalctl -u quantum-crypto.service | grep -i "rotation"
@@ -584,6 +613,7 @@ python -c "from src.key_exchange import generate_kyber_keypair; generate_kyber_k
 ```
 
 **Manual Rotation:**
+
 ```bash
 # Stop service
 sudo systemctl stop quantum-crypto.service
@@ -609,6 +639,7 @@ python -c "from src.key_exchange import get_key_age; print(f'Key age: {get_key_a
 #### P2: High Latency
 
 **Investigation:**
+
 ```bash
 # Profile key exchange operations
 python -c "
@@ -628,6 +659,7 @@ cat /proc/$(pgrep -f key_exchange.py)/status | grep -i vm
 ```
 
 **Optimization:**
+
 ```bash
 # Restart service to clear memory
 sudo systemctl restart quantum-crypto.service
@@ -646,6 +678,7 @@ sudo systemctl restart quantum-crypto.service
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > /var/log/quantum-crypto/incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -696,12 +729,14 @@ python -c "from src.key_exchange import security_audit; security_audit()"
 #### Issue: "ImportError: No module named 'pqcrypto'"
 
 **Symptoms:**
+
 ```bash
 $ python src/key_exchange.py
 ImportError: No module named 'pqcrypto'
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check Python environment
 which python
@@ -715,6 +750,7 @@ echo $VIRTUAL_ENV
 ```
 
 **Solution:**
+
 ```bash
 # Activate virtual environment
 cd /opt/quantum-crypto
@@ -739,11 +775,13 @@ pip install -r requirements.txt
 #### Issue: "KeyError: Key file not found"
 
 **Symptoms:**
+
 ```bash
 KeyError: '/var/lib/quantum-crypto/keys/kyber_private.key'
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check key files
 ls -la /var/lib/quantum-crypto/keys/
@@ -756,6 +794,7 @@ id quantum-crypto
 ```
 
 **Solution:**
+
 ```bash
 # Generate missing keys
 python -c "from src.key_exchange import generate_hybrid_keypair; generate_hybrid_keypair()"
@@ -777,11 +816,13 @@ ls -la /var/lib/quantum-crypto/keys/
 #### Issue: High Memory Usage
 
 **Symptoms:**
+
 - Service consuming >1GB RAM
 - OOMKiller terminating process
 - Slow performance
 
 **Diagnosis:**
+
 ```bash
 # Check memory usage
 ps aux | grep key_exchange.py
@@ -794,6 +835,7 @@ watch -n 5 'ps aux | grep key_exchange'
 ```
 
 **Solution:**
+
 ```bash
 # Restart service
 sudo systemctl restart quantum-crypto.service
@@ -816,12 +858,14 @@ sudo systemctl restart quantum-crypto.service
 #### Issue: Cryptographic Test Failures
 
 **Symptoms:**
+
 ```bash
 $ python -c "from src.key_exchange import run_self_tests; run_self_tests()"
 AssertionError: Decryption failed
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check algorithm compatibility
 python -c "from src.key_exchange import verify_algorithm_params; verify_algorithm_params()"
@@ -834,6 +878,7 @@ python -c "from src.key_exchange import verify_keys; verify_keys()"
 ```
 
 **Solution:**
+
 ```bash
 # Update cryptographic libraries
 pip install --upgrade pqcrypto cryptography
@@ -861,6 +906,7 @@ sudo systemctl start quantum-crypto.service
 ### Backup Strategy
 
 **Automated Key Backups:**
+
 ```bash
 # Hourly backup cron job
 cat > /etc/cron.hourly/quantum-crypto-backup << 'EOF'
@@ -881,6 +927,7 @@ ls -lh /backup/quantum-crypto/keys/
 ```
 
 **Offsite Backup:**
+
 ```bash
 # Daily offsite backup
 cat > /etc/cron.daily/quantum-crypto-offsite << 'EOF'
@@ -898,6 +945,7 @@ chmod +x /etc/cron.daily/quantum-crypto-offsite
 ```
 
 **Configuration Backup:**
+
 ```bash
 # Backup service configuration
 git add src/ requirements.txt scripts/
@@ -910,6 +958,7 @@ git push origin main
 #### Complete Service Loss
 
 **Recovery Steps (10-15 minutes):**
+
 ```bash
 # 1. Restore code from Git
 cd /opt
@@ -943,6 +992,7 @@ python -c "from src.key_exchange import run_self_tests; run_self_tests()"
 #### Key Compromise
 
 **Emergency Response:**
+
 ```bash
 # 1. IMMEDIATELY stop service
 sudo systemctl stop quantum-crypto.service
@@ -973,6 +1023,7 @@ echo "Key rotation completed at $(date)" | mail -s "URGENT: Crypto key rotation"
 ## Maintenance Procedures
 
 ### Daily Tasks
+
 ```bash
 # Check service health
 systemctl status quantum-crypto.service
@@ -991,6 +1042,7 @@ df -h /var/lib/quantum-crypto
 ```
 
 ### Weekly Tasks
+
 ```bash
 # Review logs for anomalies
 journalctl -u quantum-crypto.service --since "7 days ago" | less
@@ -1011,6 +1063,7 @@ ls -lh /backup/quantum-crypto/keys/ | tail -10
 ```
 
 ### Monthly Tasks
+
 ```bash
 # Rotate keys
 python -c "from src.key_exchange import rotate_keys; rotate_keys()"
@@ -1035,6 +1088,7 @@ git pull
 ## Quick Reference
 
 ### Most Common Operations
+
 ```bash
 # Check service status
 systemctl status quantum-crypto.service
@@ -1059,6 +1113,7 @@ python -c "from src.key_exchange import run_self_tests; run_self_tests()"
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: Cryptographic failure
 sudo systemctl stop quantum-crypto.service
@@ -1082,6 +1137,7 @@ sudo systemctl start quantum-crypto.service
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Security Engineering Team

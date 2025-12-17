@@ -5,6 +5,7 @@
 Production operations runbook for the Advanced AI Chatbot with Retrieval-Augmented Generation (RAG). This runbook covers FastAPI service operations, vector store management, LLM integration, tool orchestration, and troubleshooting for the chatbot service.
 
 **System Components:**
+
 - FastAPI Gateway (REST API + WebSocket streaming)
 - Vector Store (OpenSearch/Pinecone for semantic search)
 - Large Language Model (OpenAI/Azure OpenAI/local inference)
@@ -35,6 +36,7 @@ Production operations runbook for the Advanced AI Chatbot with Retrieval-Augment
 ### Dashboards
 
 #### FastAPI Service Dashboard
+
 ```bash
 # Check service health
 curl -f http://localhost:8000/health || echo "Service down"
@@ -51,6 +53,7 @@ aws ecs describe-services \
 ```
 
 #### Vector Store Dashboard
+
 ```bash
 # Check OpenSearch cluster health
 curl -XGET "https://search-domain.us-east-1.es.amazonaws.com/_cluster/health?pretty"
@@ -64,6 +67,7 @@ curl -X GET "https://api.pinecone.io/indexes/knowledge-base/describe" \
 ```
 
 #### LLM Usage Dashboard
+
 ```bash
 # Check OpenAI API usage
 curl https://api.openai.com/v1/dashboard/billing/usage \
@@ -113,6 +117,7 @@ python scripts/check_latency.py --threshold 3000  # 3 seconds
 ### FastAPI Service Management
 
 #### Start Service Locally
+
 ```bash
 # 1. Activate virtual environment
 source .venv/bin/activate
@@ -130,6 +135,7 @@ curl http://localhost:8000/health
 ```
 
 #### Deploy to ECS
+
 ```bash
 # 1. Build Docker image
 docker build -t chatbot-service:v1.0 -f Dockerfile .
@@ -160,6 +166,7 @@ aws ecs describe-tasks --cluster chatbot-cluster --tasks $TASK_ARN
 ```
 
 #### Scale Service
+
 ```bash
 # Scale ECS service
 aws ecs update-service \
@@ -188,6 +195,7 @@ aws application-autoscaling put-scaling-policy \
 ### Vector Store Operations
 
 #### Index Documents
+
 ```bash
 # 1. Prepare documents
 python scripts/prepare_documents.py \
@@ -211,6 +219,7 @@ python scripts/verify_index.py --index knowledge-base
 ```
 
 #### Update Index
+
 ```bash
 # Add new documents
 python scripts/add_documents.py \
@@ -238,6 +247,7 @@ curl -XPOST "https://search-domain/_aliases" -H 'Content-Type: application/json'
 ```
 
 #### Query Vector Store
+
 ```bash
 # Test semantic search
 python scripts/test_search.py \
@@ -261,6 +271,7 @@ python scripts/benchmark_search.py \
 ### LLM Integration Management
 
 #### Test LLM Connection
+
 ```bash
 # Test OpenAI API
 python scripts/test_llm.py \
@@ -283,6 +294,7 @@ python scripts/test_llm.py \
 ```
 
 #### Switch LLM Provider
+
 ```bash
 # Update environment variables
 export LLM_PROVIDER="azure"
@@ -306,6 +318,7 @@ curl -X POST http://localhost:8000/chat \
 ```
 
 #### Monitor LLM Usage
+
 ```bash
 # Check token usage
 python scripts/get_token_usage.py --date $(date +%Y-%m-%d)
@@ -327,6 +340,7 @@ python scripts/set_usage_alert.py --threshold 1000000 --email ops@example.com
 ### Tool Orchestration
 
 #### Register New Tool
+
 ```bash
 # Create tool definition
 cat > tools/deploy_tool.py << 'EOF'
@@ -360,6 +374,7 @@ kubectl rollout restart deployment/chatbot-service -n chatbot
 ```
 
 #### Monitor Tool Execution
+
 ```bash
 # View tool execution logs
 python scripts/view_tool_logs.py --last 100
@@ -381,6 +396,7 @@ python scripts/tool_metrics.py --days 7
 ### Memory and Conversation Management
 
 #### View Conversation History
+
 ```bash
 # Get conversation
 python scripts/get_conversation.py --conversation-id "abc123"
@@ -396,6 +412,7 @@ python scripts/list_conversations.py --status active --limit 20
 ```
 
 #### Clear Old Conversations
+
 ```bash
 # Archive conversations older than 30 days
 python scripts/archive_conversations.py --older-than 30
@@ -414,6 +431,7 @@ python scripts/conversation_stats.py
 ### Detection
 
 **Automated Detection:**
+
 - Health check failures
 - High error rates in logs
 - Elevated response latency
@@ -421,6 +439,7 @@ python scripts/conversation_stats.py
 - Vector store connectivity issues
 
 **Manual Detection:**
+
 ```bash
 # Check service health
 curl http://localhost:8000/health
@@ -444,24 +463,28 @@ curl -X POST http://localhost:8000/chat \
 #### Severity Classification
 
 **P0: Complete Outage**
+
 - FastAPI service completely down
 - Vector store unreachable
 - All LLM requests failing
 - Database connection failure
 
 **P1: Degraded Service**
+
 - High error rate (> 10%)
 - Response latency > 10 seconds
 - LLM API partially failing
 - Tool execution failures > 20%
 
 **P2: Warning State**
+
 - Elevated latency (> 5 seconds)
 - Some tool failures
 - Memory usage high
 - Occasional LLM timeouts
 
 **P3: Informational**
+
 - Single conversation failure
 - Minor latency increase
 - Low context relevance score
@@ -471,6 +494,7 @@ curl -X POST http://localhost:8000/chat \
 #### P0: FastAPI Service Down
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Check if process is running
 ps aux | grep uvicorn
@@ -500,6 +524,7 @@ curl http://localhost:8000/health
 ```
 
 **Investigation (2-10 minutes):**
+
 ```bash
 # Check for OOM kills
 dmesg | grep -i "out of memory"
@@ -519,6 +544,7 @@ git log --oneline --since="1 day ago"
 ```
 
 **Mitigation:**
+
 ```bash
 # If OOM, increase memory
 # Update task definition (ECS)
@@ -537,6 +563,7 @@ docker-compose up -d --build
 #### P0: Vector Store Unreachable
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check vector store connectivity
 curl -XGET "https://search-domain.us-east-1.es.amazonaws.com/_cluster/health"
@@ -559,6 +586,7 @@ kubectl set env deployment/chatbot-service ENABLE_FALLBACK_SEARCH=true -n chatbo
 ```
 
 **Investigation:**
+
 ```bash
 # Check OpenSearch cluster status
 aws opensearch describe-domain --domain-name chatbot-search
@@ -574,6 +602,7 @@ aws opensearch describe-domain --domain-name chatbot-search --query 'DomainStatu
 ```
 
 **Mitigation:**
+
 ```bash
 # If cluster unhealthy, restart
 aws opensearch reboot-domain --domain-name chatbot-search
@@ -603,6 +632,7 @@ kubectl set env deployment/chatbot-service VECTOR_STORE_URL=$VECTOR_STORE_URL -n
 #### P1: High LLM Error Rate
 
 **Investigation:**
+
 ```bash
 # Check OpenAI API status
 curl https://status.openai.com/api/v2/status.json
@@ -624,6 +654,7 @@ curl https://api.openai.com/v1/chat/completions \
 ```
 
 **Mitigation:**
+
 ```bash
 # Option 1: Implement retry with exponential backoff
 export LLM_MAX_RETRIES=3
@@ -649,6 +680,7 @@ python scripts/enable_request_queue.py --max-queue-size 1000
 #### P1: High Response Latency
 
 **Investigation:**
+
 ```bash
 # Profile request
 python scripts/profile_request.py --query "How do I deploy a model?"
@@ -673,6 +705,7 @@ aws ecs describe-tasks --cluster chatbot-cluster --tasks $TASK_ARN
 ```
 
 **Mitigation:**
+
 ```bash
 # If vector search slow, optimize queries
 python scripts/optimize_search_params.py
@@ -699,6 +732,7 @@ kubectl set env deployment/chatbot-service \
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -744,11 +778,13 @@ python scripts/generate_incident_report.py \
 #### Issue: "Context Length Exceeded"
 
 **Symptoms:**
+
 ```
 Error: This model's maximum context length is 8192 tokens
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check context size
 python scripts/analyze_context_size.py --conversation-id "abc123"
@@ -764,6 +800,7 @@ python scripts/analyze_context_size.py --conversation-id "abc123"
 ```
 
 **Solution:**
+
 ```bash
 # Reduce context window
 export MAX_CONTEXT_LENGTH=4000
@@ -786,10 +823,12 @@ kubectl set env deployment/chatbot-service LLM_MODEL=gpt-4-32k -n chatbot
 #### Issue: Low Context Relevance
 
 **Symptoms:**
+
 - Chatbot provides irrelevant answers
 - Users report poor response quality
 
 **Diagnosis:**
+
 ```bash
 # Evaluate search quality
 python scripts/evaluate_search.py --test-queries test/queries.json
@@ -804,6 +843,7 @@ python scripts/analyze_embeddings.py --sample-size 100
 ```
 
 **Solution:**
+
 ```bash
 # Option 1: Retune search parameters
 python scripts/tune_search_params.py \
@@ -918,6 +958,7 @@ chmod +x scripts/daily_backup.sh
 ### Disaster Recovery Procedures
 
 **Complete Service Loss (30 minutes):**
+
 ```bash
 # 1. Redeploy service
 docker-compose up -d
@@ -980,6 +1021,7 @@ aws ecs update-service --cluster chatbot-cluster --service chatbot-service --des
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** AI Platform Team

@@ -5,6 +5,7 @@
 Production operations runbook for automated cloud security compliance and vulnerability management. This runbook covers CIS benchmark compliance, vulnerability scanning, security posture assessment, automated remediation, and incident response for cloud security operations.
 
 **System Components:**
+
 - CIS AWS Foundations Benchmark scanner
 - Vulnerability scanning engine
 - Security configuration auditor
@@ -35,6 +36,7 @@ Production operations runbook for automated cloud security compliance and vulner
 ### Dashboards
 
 #### Security Compliance Dashboard
+
 ```bash
 # Run full CIS benchmark scan
 make scan-cis
@@ -53,6 +55,7 @@ make scan-cis
 ```
 
 #### Vulnerability Dashboard
+
 ```bash
 # Run vulnerability scan
 make scan-all
@@ -71,6 +74,7 @@ make generate-report
 ```
 
 #### Security Posture Dashboard
+
 ```bash
 # Overall security posture score
 ./scripts/security-posture-score.sh
@@ -137,6 +141,7 @@ fi
 ### CIS Benchmark Scanning
 
 #### Run Full CIS Scan
+
 ```bash
 # Initialize scanner
 make setup
@@ -155,6 +160,7 @@ xdg-open reports/cis-report-*.html
 ```
 
 #### Run Specific CIS Sections
+
 ```bash
 # Scan IAM section only
 ./scripts/scan-cis.sh --section=1_Identity_and_Access_Management
@@ -170,6 +176,7 @@ xdg-open reports/cis-report-*.html
 ```
 
 #### Review Failed Checks
+
 ```bash
 # List all failed checks
 ./scripts/list-failed-checks.sh
@@ -187,6 +194,7 @@ xdg-open reports/cis-report-*.html
 ### Vulnerability Scanning
 
 #### Run Vulnerability Scans
+
 ```bash
 # Scan all resources
 make scan-all
@@ -204,6 +212,7 @@ make scan-all
 ```
 
 #### Analyze Vulnerabilities
+
 ```bash
 # List all vulnerabilities
 ./scripts/list-vulnerabilities.sh
@@ -223,6 +232,7 @@ make scan-all
 ```
 
 #### Track Vulnerability Remediation
+
 ```bash
 # Show remediation status
 ./scripts/remediation-status.sh
@@ -240,6 +250,7 @@ make scan-all
 ### Security Configuration Audit
 
 #### IAM Security Audit
+
 ```bash
 # Analyze IAM configuration
 ./scripts/audit-iam.sh
@@ -258,6 +269,7 @@ make scan-all
 ```
 
 #### Network Security Audit
+
 ```bash
 # Audit security groups
 ./scripts/audit-security-groups.sh
@@ -276,6 +288,7 @@ make scan-all
 ```
 
 #### Encryption Audit
+
 ```bash
 # Check S3 encryption
 ./scripts/check-s3-encryption.sh
@@ -293,6 +306,7 @@ make scan-all
 ### Automated Remediation
 
 #### Enable Auto-Remediation
+
 ```bash
 # Configure auto-remediation
 export AUTO_REMEDIATE=true
@@ -308,6 +322,7 @@ export REMEDIATION_LEVEL=medium
 ```
 
 #### Manual Remediation
+
 ```bash
 # Remediate specific check
 ./scripts/remediate.sh --check-id=1.3
@@ -323,6 +338,7 @@ export REMEDIATION_LEVEL=medium
 ```
 
 #### Verify Remediation
+
 ```bash
 # Re-run checks after remediation
 ./scripts/verify-remediation.sh --check-id=1.3
@@ -338,6 +354,7 @@ diff reports/cis-scan-before.json reports/cis-scan-after.json | \
 ### Compliance Reporting
 
 #### Generate Reports
+
 ```bash
 # Generate full compliance report
 make generate-report
@@ -358,6 +375,7 @@ make generate-report
 ```
 
 #### Schedule Automated Reports
+
 ```bash
 # Configure daily reports
 ./scripts/schedule-report.sh --frequency=daily --recipients=security@example.com
@@ -376,6 +394,7 @@ make generate-report
 ### Detection
 
 **Automated Detection:**
+
 - Critical vulnerability discovered
 - CIS compliance failure detected
 - Public resource exposure alerts
@@ -384,6 +403,7 @@ make generate-report
 - Encryption violations
 
 **Manual Detection:**
+
 ```bash
 # Check for security incidents
 ./scripts/check-security-incidents.sh
@@ -405,6 +425,7 @@ aws cloudtrail lookup-events \
 #### Severity Classification
 
 **P0: Critical Security Issue**
+
 - Critical vulnerability with active exploits
 - Public S3 bucket with PII/sensitive data
 - Root account compromise indicators
@@ -412,6 +433,7 @@ aws cloudtrail lookup-events \
 - Public database with no authentication
 
 **P1: High Security Risk**
+
 - High-severity vulnerability
 - CIS compliance score < 70%
 - Overly permissive IAM policy in production
@@ -419,6 +441,7 @@ aws cloudtrail lookup-events \
 - Security group allowing 0.0.0.0/0 to sensitive ports
 
 **P2: Medium Security Risk**
+
 - Medium-severity vulnerability
 - CIS check failures (non-critical)
 - Unused IAM credentials > 90 days
@@ -426,6 +449,7 @@ aws cloudtrail lookup-events \
 - Flow logs disabled
 
 **P3: Low Security Risk**
+
 - Low-severity vulnerability
 - CIS informational findings
 - Suboptimal configurations
@@ -437,6 +461,7 @@ aws cloudtrail lookup-events \
 #### P0: Critical Vulnerability with Active Exploits
 
 **Immediate Actions (0-15 minutes):**
+
 ```bash
 # 1. Identify affected resources
 ./scripts/find-vulnerable-resources.sh --cve-id=CVE-2024-CRITICAL
@@ -461,6 +486,7 @@ done
 ```
 
 **Investigation (15-60 minutes):**
+
 ```bash
 # Check for exploitation indicators
 ./scripts/check-exploitation-indicators.sh --cve-id=CVE-2024-CRITICAL
@@ -476,6 +502,7 @@ done
 ```
 
 **Remediation (1-4 hours):**
+
 ```bash
 # Apply emergency patch
 ./scripts/emergency-patch.sh --cve-id=CVE-2024-CRITICAL
@@ -496,6 +523,7 @@ done
 #### P0: Public S3 Bucket with Sensitive Data
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Identify bucket
 BUCKET_NAME=$(./scripts/find-public-buckets.sh | head -1)
@@ -518,6 +546,7 @@ aws s3api get-public-access-block --bucket $BUCKET_NAME
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Check S3 access logs
 aws s3api get-bucket-logging --bucket $BUCKET_NAME
@@ -535,6 +564,7 @@ aws cloudtrail lookup-events \
 ```
 
 **Remediation:**
+
 ```bash
 # Enable S3 access logging if not enabled
 aws s3api put-bucket-logging \
@@ -556,6 +586,7 @@ aws s3api put-bucket-encryption \
 #### P1: CIS Compliance Score Below Threshold
 
 **Investigation:**
+
 ```bash
 # Generate detailed compliance report
 ./scripts/compliance-report.sh --detailed
@@ -571,6 +602,7 @@ aws s3api put-bucket-encryption \
 ```
 
 **Remediation:**
+
 ```bash
 # Prioritize critical checks
 ./scripts/prioritize-remediation.sh --output=remediation-plan.txt
@@ -596,6 +628,7 @@ make scan-cis
 #### P2: Overly Permissive IAM Policy
 
 **Investigation:**
+
 ```bash
 # Identify permissive policies
 ./scripts/find-permissive-policies.sh
@@ -614,6 +647,7 @@ aws iam list-entities-for-policy --policy-arn $POLICY_ARN
 ```
 
 **Remediation:**
+
 ```bash
 # Create restricted version
 ./scripts/create-restricted-policy.sh --policy-arn=$POLICY_ARN --output=restricted-policy.json
@@ -637,6 +671,7 @@ aws iam create-policy-version \
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/incident-$(date +%Y%m%d-%H%M).md << EOF
@@ -688,11 +723,13 @@ make scan-all
 #### Issue: False Positive Vulnerability
 
 **Symptoms:**
+
 - Scanner reports vulnerability but resource is not actually affected
 - CVE doesn't apply to this configuration
 - Vulnerability already mitigated
 
 **Diagnosis:**
+
 ```bash
 # Review finding details
 ./scripts/show-finding-details.sh --finding-id=VULN-001
@@ -705,6 +742,7 @@ make scan-all
 ```
 
 **Solution:**
+
 ```bash
 # Mark as false positive
 ./scripts/mark-false-positive.sh --finding-id=VULN-001 --reason="Not applicable to this configuration"
@@ -721,12 +759,14 @@ make scan-all
 #### Issue: Scan Timeout or Failure
 
 **Symptoms:**
+
 ```bash
 $ make scan-cis
 Error: Scan timeout after 30 minutes
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check scanner logs
 tail -100 logs/scanner.log
@@ -739,6 +779,7 @@ aws service-quotas list-service-quotas --service-code cloudwatch | grep RateLimi
 ```
 
 **Solution:**
+
 ```bash
 # Increase timeout
 export SCAN_TIMEOUT=3600  # 1 hour
@@ -757,11 +798,13 @@ export SCAN_TIMEOUT=3600  # 1 hour
 #### Issue: Auto-Remediation Failed
 
 **Symptoms:**
+
 - Remediation script completed but check still fails
 - Error during remediation execution
 - Resource in inconsistent state
 
 **Diagnosis:**
+
 ```bash
 # Check remediation logs
 cat logs/remediation-$(date +%Y%m%d).log | grep ERROR
@@ -774,6 +817,7 @@ cat logs/remediation-$(date +%Y%m%d).log | grep ERROR
 ```
 
 **Solution:**
+
 ```bash
 # Manual remediation
 ./scripts/show-remediation.sh --check-id=1.3
@@ -792,11 +836,13 @@ cat logs/remediation-$(date +%Y%m%d).log | grep ERROR
 #### Issue: High False Positive Rate
 
 **Symptoms:**
+
 - Many findings marked as false positives
 - Scanner reporting issues that don't apply
 - Excessive alert fatigue
 
 **Solution:**
+
 ```bash
 # Tune scanner sensitivity
 ./scripts/tune-scanner.sh --reduce-false-positives
@@ -823,6 +869,7 @@ cat logs/remediation-$(date +%Y%m%d).log | grep ERROR
 ### Backup Strategy
 
 **Compliance Data Backups:**
+
 ```bash
 # Backup scan results
 cp -r reports/ backups/reports-$(date +%Y%m%d)/
@@ -839,6 +886,7 @@ aws s3 ls s3://security-automation-backups/ --recursive | tail -20
 ```
 
 **Scanner Configuration Backups:**
+
 ```bash
 # Export scanner configuration
 ./scripts/export-scanner-config.sh > scanner-config-$(date +%Y%m%d).json
@@ -857,6 +905,7 @@ git push
 #### Scanner System Failure
 
 **Recovery Steps (30-60 minutes):**
+
 ```bash
 # 1. Restore from backup
 aws s3 sync s3://security-automation-backups/latest/ ./
@@ -881,6 +930,7 @@ make scan-cis
 #### Compliance Data Loss
 
 **Recovery Steps (15-30 minutes):**
+
 ```bash
 # 1. Restore reports from backup
 aws s3 cp s3://security-automation-backups/latest/reports.tar.gz .
@@ -902,6 +952,7 @@ make generate-report
 ## Maintenance Procedures
 
 ### Daily Tasks
+
 ```bash
 # Run automated security scans
 make scan-cis
@@ -920,6 +971,7 @@ make scan-cis
 ```
 
 ### Weekly Tasks
+
 ```bash
 # Full vulnerability scan
 make scan-all
@@ -938,6 +990,7 @@ make scan-all
 ```
 
 ### Monthly Tasks
+
 ```bash
 # Comprehensive security audit
 ./scripts/full-security-audit.sh
@@ -956,6 +1009,7 @@ make scan-all
 ```
 
 ### Quarterly Tasks
+
 ```bash
 # Major scanner updates
 ./scripts/update-scanner.sh --major
@@ -975,6 +1029,7 @@ make update-runbook
 ## Operational Best Practices
 
 ### Pre-Deployment Checklist
+
 - [ ] Scanner configuration validated
 - [ ] Baseline exceptions documented
 - [ ] Auto-remediation tested in non-prod
@@ -983,6 +1038,7 @@ make update-runbook
 - [ ] Integration tested
 
 ### Security Scanning Best Practices
+
 - **Scan frequency:** Daily for CIS, continuous for vulnerabilities
 - **Remediation SLA:** 4 hours for critical, 48 hours for high
 - **False positive review:** Weekly minimum
@@ -995,6 +1051,7 @@ make update-runbook
 ## Quick Reference
 
 ### Most Common Operations
+
 ```bash
 # Run CIS scan
 make scan-cis
@@ -1019,6 +1076,7 @@ make generate-report
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: Critical vulnerability
 ./scripts/find-vulnerable-resources.sh --cve-id=<CVE>
@@ -1036,6 +1094,7 @@ make scan-cis
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Security Engineering Team
