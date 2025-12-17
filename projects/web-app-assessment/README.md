@@ -13,10 +13,23 @@ A simulated assessment platform with a FastAPI backend, React dashboard, infrast
 ## Backend
 
 - Base URL: `http://localhost:8000`
-- Auth: `POST /login` with `admin/password` for demo tokens (Authorization: `Bearer <token>` on protected routes).
+- Auth: `POST /login` with credentials (default `admin/password` for local development - configure via environment variables for production).
 - CRUD routes: `/endpoints`, `/pages`, `/findings` (GET/POST for demo storage).
 - Scan route: `POST /scan-page` with `{ "endpoint_id": <id>, "url": "http://..." }`.
 - Health check: `/health`.
+
+### Environment Variables
+
+The backend supports the following environment variables:
+
+- `AUTH_USERNAME` - Username for authentication (default: `admin` for local development)
+- `AUTH_PASSWORD` - Password for authentication (default: `password` for local development)
+- `SECRET_KEY` - JWT signing key (default: `demo-secret-key-for-dev-only` for local development)
+- `DATABASE_HOST` - Database host (default: `localhost`)
+- `DATABASE_USER` - Database user (default: `postgres`)
+- `DATABASE_PASSWORD` - Database password (default: `changeme`)
+
+**Security Note:** Always set strong values for `AUTH_USERNAME`, `AUTH_PASSWORD`, and `SECRET_KEY` in production environments. Never use the default values in production.
 
 The scan engine lives in `app/scanner.py` and returns simulated findings for predictable patterns (plain HTTP, `debug` flags, `id=` parameters, and `token=` query strings). Pages are added to the in-memory store when scanned, and findings are attached to that page entry.
 
@@ -81,12 +94,12 @@ The workflow (`.github/workflows/ci-web-app-assessment.yml`) installs dependenci
 
 ## Example usage
 
-1. Login via the frontend with `admin/password`.
+1. Login via the frontend with the configured credentials (default: `admin/password` for local development).
 2. Select an endpoint (API or UI) and submit a URL such as `http://example.com/app?id=1&debug=true`.
 3. The dashboard refreshes with the scanned page and simulated findings showing severity, rule, and timestamp grouped under the endpoint.
 
 ## Limitations
 
 - Data stores are in-memory for demo purposes (no persistence without external backing services).
-- JWT secret and credentials are static; replace them before production use.
+- JWT secret and credentials use default values for local development; configure them via environment variables for production use.
 - The scan is intentionally simplified to deterministic string checks and does not replace a real DAST engine.

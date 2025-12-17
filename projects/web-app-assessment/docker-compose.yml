@@ -9,6 +9,9 @@ services:
       - DATABASE_HOST=${DATABASE_HOST:-localhost}
       - DATABASE_USER=${DATABASE_USER:-postgres}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD:-changeme}
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-password}
+      - SECRET_KEY=${SECRET_KEY:-demo-secret-key-for-dev-only}
   frontend:
     build: ./frontend
     environment:
