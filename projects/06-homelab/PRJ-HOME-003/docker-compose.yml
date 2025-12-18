@@ -73,7 +73,7 @@ services:
     container_name: homelab-postgres-exporter
     restart: unless-stopped
     environment:
-      - DATA_SOURCE_NAME=postgresql://exporter:exporter@postgres:5432/postgres?sslmode=disable
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/postgres?sslmode=require
     ports:
       - "9187:9187"
 
