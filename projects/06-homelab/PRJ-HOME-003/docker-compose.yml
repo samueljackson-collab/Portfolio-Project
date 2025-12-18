@@ -59,7 +59,8 @@ services:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: homelab-cadvisor
     restart: unless-stopped
-    privileged: true
+    cap_add:
+      - SYS_PTRACE
     ports:
       - "8080:8080"
     volumes:
