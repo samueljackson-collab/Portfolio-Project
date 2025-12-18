@@ -82,7 +82,7 @@ async def add_incident_event(
         type=payload.type,
         details=payload.details,
         sequence=sequence,
-        timestamp=payload.timestamp or (incident.created_at + (datetime.utcnow() - incident.created_at)),
+        timestamp=payload.timestamp or datetime.utcnow(),
     )
     db.add(event)
     await db.flush()
