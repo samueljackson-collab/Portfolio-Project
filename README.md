@@ -134,34 +134,34 @@ System-minded engineer specializing in building, securing, and operating infrast
   - Links: [Blueprint](./projects/12-quantum-computing)
 - **Project 13: Advanced Cybersecurity Platform**
   - Plan: SOAR pipeline with enrichment adapters, detections, and response playbooks.
-  - Links: [Blueprint](./projects/13-advanced-cybersecurity)
+  - Evidence: [Blueprint](./projects/13-advanced-cybersecurity)
 - **Project 14: Edge AI Inference Platform**
   - Plan: ONNX Runtime service for Jetson-class deployments with perf tuning and telemetry.
-  - Links: [Blueprint](./projects/14-edge-ai-inference)
+  - Evidence: [Blueprint](./projects/14-edge-ai-inference)
 - **Project 16: Advanced Data Lake & Analytics**
   - Plan: Medallion architecture, Delta Lake transformations, and data quality checks.
-  - Links: [Blueprint](./projects/16-advanced-data-lake)
+  - Evidence: [Blueprint](./projects/16-advanced-data-lake)
 - **Project 17: Multi-Cloud Service Mesh**
   - Plan: Istio multi-cluster blueprint with mTLS, policy controls, and failover scenarios.
-  - Links: [Blueprint](./projects/17-multi-cloud-service-mesh)
+  - Evidence: [Blueprint](./projects/17-multi-cloud-service-mesh)
 - **Project 18: GPU-Accelerated Computing**
   - Plan: CuPy-powered Monte Carlo workloads and orchestration patterns.
-  - Links: [Blueprint](./projects/18-gpu-accelerated-computing)
+  - Evidence: [Blueprint](./projects/18-gpu-accelerated-computing)
 - **Project 19: Advanced Kubernetes Operators**
   - Plan: Kopf-based operator managing portfolio lifecycle automation.
-  - Links: [Blueprint](./projects/19-advanced-kubernetes-operators)
+  - Evidence: [Blueprint](./projects/19-advanced-kubernetes-operators)
 - **Project 20: Blockchain Oracle Service**
   - Plan: Chainlink adapters plus consumer contracts with monitoring hooks.
-  - Links: [Blueprint](./projects/20-blockchain-oracle-service)
+  - Evidence: [Blueprint](./projects/20-blockchain-oracle-service)
 - **Project 21: Quantum-Safe Cryptography**
   - Plan: Hybrid Kyber + ECDH key exchange prototype with interoperability tests.
-  - Links: [Blueprint](./projects/21-quantum-safe-cryptography)
+  - Evidence: [Blueprint](./projects/21-quantum-safe-cryptography)
 - **Project 22: Autonomous DevOps Platform**
   - Plan: Event-driven remediation flows, runbooks-as-code, and policy-driven automation.
-  - Links: [Blueprint](./projects/22-autonomous-devops-platform)
+  - Evidence: [Blueprint](./projects/22-autonomous-devops-platform)
 - **Project 24: Portfolio Report Generator**
   - Plan: Jinja2-driven document factory with CLI/CI hooks for batch publishing and evidence packaging.
-  - Links: [Blueprint](./projects/24-report-generator)
+  - Evidence: [Blueprint](./projects/24-report-generator)
 
 ---
 ## 🛠️ Core Skills
