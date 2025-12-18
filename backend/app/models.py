@@ -632,7 +632,7 @@ class SocCase(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     playbook = relationship("SocPlaybook", back_populates="cases")
-    alerts = relationship("SocAlert", back_populates="case", cascade="all, delete-orphan", lazy="selectin")
+    alerts = relationship("SocAlert", back_populates="case", cascade="all", lazy="selectin")
 
 
 class SocAlert(Base):
