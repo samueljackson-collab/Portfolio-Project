@@ -8,7 +8,17 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context'
 import { Navbar, ProtectedRoute } from './components'
-import { Home, Login, Register, Dashboard, HomeAssistant, EnterprisePortfolio } from './pages'
+import {
+  Home,
+  Login,
+  Register,
+  Dashboard,
+  HomeAssistant,
+  EnterprisePortfolio,
+  PhotosPage,
+  OrchestrationConsole,
+  SecuritySimulators
+} from './pages'
 
 const App: React.FC = () => {
   return (
@@ -38,6 +48,22 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <PhotosPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/operations"
+              element={
+                <ProtectedRoute>
+                  <OrchestrationConsole />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/security-simulators"
+              element={
+                <ProtectedRoute>
+                  <SecuritySimulators />
                 </ProtectedRoute>
               }
             />

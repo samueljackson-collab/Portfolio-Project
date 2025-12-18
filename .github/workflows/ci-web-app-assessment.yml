@@ -1,0 +1,46 @@
+name: Web App Assessment CI
+
+on:
+  push:
+    paths:
+      - 'projects/web-app-assessment/**'
+      - '.github/workflows/ci-web-app-assessment.yml'
+  pull_request:
+    paths:
+      - 'projects/web-app-assessment/**'
+      - '.github/workflows/ci-web-app-assessment.yml'
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/web-app-assessment/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/web-app-assessment/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm run test
+      - name: Build
+        run: npm run build

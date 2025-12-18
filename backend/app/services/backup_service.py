@@ -20,7 +20,6 @@ from pathlib import Path
 from typing import List, Optional, Dict
 from datetime import datetime
 import logging
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -51,12 +50,54 @@ class BackupLocation:
             return False
 
         if self.remote:
-            # For remote locations, we'll check via SSH ping
-            # This is a placeholder - actual implementation would use paramiko
-            return True  # Assume accessible for now
+            # For remote locations, check SSH connectivity
+            return self._check_ssh_connectivity()
         else:
             # For local locations, check if path exists
             return Path(self.path).exists()
+
+    def _check_ssh_connectivity(self) -> bool:
+        """
+        Check if remote SSH host is reachable.
+
+        Uses a simple SSH connection test with timeout.
+
+        Returns:
+            True if SSH host is reachable, False otherwise
+        """
+        import subprocess
+
+        if not self.ssh_host or not self.ssh_user:
+            logger.warning(f"SSH credentials not configured for {self.name}")
+            return False
+
+        try:
+            # Use ssh with a short timeout to check connectivity
+            # -o BatchMode=yes prevents password prompts
+            # -o ConnectTimeout=5 sets a 5-second connection timeout
+            # -o StrictHostKeyChecking=no avoids host key prompts
+            result = subprocess.run(
+                [
+                    "ssh",
+                    "-o", "BatchMode=yes",
+                    "-o", "ConnectTimeout=5",
+                    "-o", "StrictHostKeyChecking=no",
+                    f"{self.ssh_user}@{self.ssh_host}",
+                    "echo", "OK"
+                ],
+                capture_output=True,
+                timeout=10
+            )
+            return result.returncode == 0 and b"OK" in result.stdout
+        except subprocess.TimeoutExpired:
+            logger.warning(f"SSH connection to {self.ssh_host} timed out")
+            return False
+        except FileNotFoundError:
+            logger.warning("SSH command not found, cannot check remote connectivity")
+            return False
+        except Exception as e:
+            logger.warning(f"SSH connectivity check failed for {self.name}: {e}")
+            return False
 
     def get_full_path(self, relative_path: str) -> Path:
         """Get full path for a file in this backup location."""

@@ -9,7 +9,7 @@ Schemas define the structure of data exchanged via API:
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, List, Literal
 from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
@@ -65,15 +65,6 @@ class UserCreate(UserBase):
         """Validate password strength."""
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters")
-
-        if not any(c.isupper() for c in v):
-            raise ValueError("Password must contain at least one uppercase letter")
-
-        if not any(c.islower() for c in v):
-            raise ValueError("Password must contain at least one lowercase letter")
-
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must contain at least one digit")
 
         return v
 
@@ -245,13 +236,17 @@ class HealthResponse(BaseModel):
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="API version")
     database: str = Field(..., description="Database connection status")
+    service: str = Field(..., description="Service name")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Health check timestamp")
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "status": "healthy",
                 "version": "1.0.0",
-                "database": "connected"
+                "database": "connected",
+                "service": "Portfolio API",
+                "timestamp": "2024-01-01T00:00:00Z"
             }
         }
     )
@@ -401,3 +396,319 @@ class CalendarMonthResponse(BaseModel):
     month: int = Field(..., description="Month (1-12)")
     dates: list[CalendarDateResponse] = Field(..., description="Dates with photos")
     total_photos: int = Field(..., description="Total photos in month")
+
+
+# ============================================================================
+# Orchestration Schemas
+# ============================================================================
+
+class OrchestrationPlan(BaseModel):
+    """Immutable description of how we deploy an environment."""
+    id: str = Field(..., description="Unique identifier for the plan")
+    name: str = Field(..., description="Human readable plan name")
+    environment: str = Field(..., description="Target environment (dev/staging/prod)")
+    description: str = Field(..., description="Purpose of the plan")
+    playbook_path: str = Field(..., description="Ansible playbook used for rollout")
+    tfvars_file: str = Field(..., description="Terraform variables file driving the plan")
+    runbook: str = Field(..., description="Runbook documenting the procedure")
+
+
+class OrchestrationRunRequest(BaseModel):
+    """Request payload for starting a deployment run."""
+    plan_id: str = Field(..., description="Plan identifier to execute")
+    parameters: Dict[str, str] = Field(default_factory=dict, description="Override variables")
+
+
+class OrchestrationRun(BaseModel):
+    """Recorded orchestration execution."""
+    id: str = Field(..., description="Run identifier")
+    plan_id: str = Field(..., description="Plan executed")
+    environment: str = Field(..., description="Environment targeted by the run")
+    status: Literal["running", "succeeded", "failed"] = Field(..., description="Run outcome")
+    requested_by: str = Field(..., description="User who requested the run")
+    parameters: Dict[str, str] = Field(default_factory=dict, description="Parameters used")
+    started_at: datetime = Field(..., description="Start timestamp")
+    finished_at: Optional[datetime] = Field(None, description="Completion timestamp")
+    logs: List[str] = Field(default_factory=list, description="Progress log entries")
+    artifacts: Dict[str, str] = Field(default_factory=dict, description="Artifact references")
+    summary: Optional[str] = Field(None, description="Short description of the changes")
+
+
+# ============================================================================
+# Project 5 - Full-Scope Red Team Operation Simulator
+# ============================================================================
+
+
+class OperationCreate(BaseModel):
+    name: str = Field(..., description="Campaign name")
+    objective: Optional[str] = Field(None, description="Primary objective for the operation")
+    start_date: Optional[datetime] = Field(None, description="Start timestamp; defaults to now")
+    stealth_factor: float = Field(0.6, ge=0, le=1, description="Probability of staying covert")
+
+
+class OperationEventCreate(BaseModel):
+    timestamp: Optional[datetime] = Field(None, description="Event timestamp; defaults to sequence day")
+    description: str = Field(..., description="Action performed")
+    category: str = Field(..., description="Action category (e.g., lateral movement)")
+    detected: bool = Field(False, description="Whether blue team detected the action")
+    day: Optional[int] = Field(None, description="Day in campaign; defaults to next day")
+    detection_confidence: float = Field(0.5, ge=0, le=1, description="How noisy the event was")
+
+
+class OperationEventResponse(OperationEventCreate):
+    id: UUID
+    operation_id: UUID
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OperationResponse(OperationCreate):
+    id: UUID
+    days_elapsed: int
+    undetected_streak: int
+    first_detection_at: Optional[datetime]
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    events: list[OperationEventResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================================
+# Project 6 - Ransomware Incident Response & Recovery
+# ============================================================================
+
+
+class IncidentCreate(BaseModel):
+    name: str = Field(..., description="Incident display name")
+    severity: str = Field("high", description="Business impact")
+
+
+class IncidentEventCreate(BaseModel):
+    type: str = Field(..., description="Lifecycle stage")
+    details: str = Field(..., description="Narrative for the event")
+    timestamp: Optional[datetime] = Field(None, description="When the event occurred")
+
+
+class IncidentEventResponse(IncidentEventCreate):
+    id: UUID
+    incident_id: UUID
+    sequence: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IncidentResponse(BaseModel):
+    id: UUID
+    name: str
+    status: str
+    severity: str
+    created_at: datetime
+    resolved_at: Optional[datetime]
+    events: list[IncidentEventResponse] = []
+    warning: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================================
+# Project 7 - SOC Implementation Portal
+# ============================================================================
+
+
+class SocAlertCreate(BaseModel):
+    title: str
+    description: str
+    severity: str = Field("medium", description="Alert severity level")
+    source: str = Field("sensor", description="Alert origin")
+    status: str = Field("open", description="Alert triage status")
+    case_id: Optional[UUID] = None
+
+
+class SocAlertResponse(SocAlertCreate):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SocCaseCreate(BaseModel):
+    title: str
+    assigned_to: Optional[str] = None
+    playbook_id: Optional[UUID] = None
+    alert_ids: list[UUID] = Field(default_factory=list, description="Alerts to associate")
+
+
+class SocCaseUpdate(BaseModel):
+    status: Optional[str] = None
+    assigned_to: Optional[str] = None
+    playbook_id: Optional[UUID] = None
+
+
+class SocCaseResponse(BaseModel):
+    id: UUID
+    title: str
+    status: str
+    assigned_to: Optional[str]
+    playbook_id: Optional[UUID]
+    created_at: datetime
+    updated_at: datetime
+    alerts: list[SocAlertResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SocPlaybookResponse(BaseModel):
+    id: UUID
+    name: str
+    description: Optional[str]
+    steps: Optional[list[str]]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================================
+# Project 8 - Threat Hunting Program Management
+# ============================================================================
+
+
+class HypothesisCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    status: str = Field("open", description="Current hypothesis state")
+
+
+class HypothesisResponse(HypothesisCreate):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FindingCreate(BaseModel):
+    severity: str = Field("medium", description="Impact level")
+    details: str
+    status: str = Field("new", description="Investigation status")
+
+
+class FindingResponse(FindingCreate):
+    id: UUID
+    hypothesis_id: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DetectionRuleCreate(BaseModel):
+    name: str
+    query: str
+    status: str = Field("Draft", description="Lifecycle status")
+    source_finding_id: Optional[UUID] = None
+
+
+class DetectionRuleResponse(DetectionRuleCreate):
+    id: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================================
+# Project 9 - Advanced Malware Analysis & Reverse Engineering
+# ============================================================================
+
+
+class MalwareSampleCreate(BaseModel):
+    name: str
+    file_hash: str
+    sample_type: str = Field("unknown", description="File type or platform")
+    family: Optional[str] = None
+
+
+class MalwareSampleResponse(MalwareSampleCreate):
+    id: UUID
+    status: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AnalysisReportResponse(BaseModel):
+    id: UUID
+    sample_id: UUID
+    static_analysis: str
+    dynamic_analysis: str
+    iocs: Optional[list[str]]
+    yara_rule: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MalwareDetailResponse(BaseModel):
+    sample: MalwareSampleResponse
+    report: Optional[AnalysisReportResponse]
+
+
+# ============================================================================
+# Project 10 - Enterprise EDR Platform Simulation
+# ============================================================================
+
+
+class EndpointCreate(BaseModel):
+    hostname: str
+    operating_system: str
+    agent_version: str
+
+
+class EndpointResponse(EndpointCreate):
+    id: UUID
+    last_checkin: datetime
+    online: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EndpointCheckin(BaseModel):
+    agent_version: Optional[str] = None
+    note: Optional[str] = None
+
+
+class EndpointPolicyResponse(BaseModel):
+    id: UUID
+    name: str
+    description: Optional[str]
+    enabled: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EndpointPolicyUpdate(BaseModel):
+    enabled: bool
+
+
+class EndpointAlertCreate(BaseModel):
+    endpoint_id: Optional[UUID] = None
+    severity: str = Field("medium", description="Alert severity")
+    description: str
+    status: str = Field("open", description="Alert status")
+
+
+class EndpointAlertResponse(EndpointAlertCreate):
+    id: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DeploymentSummary(BaseModel):
+    total_endpoints: int
+    online: int
+    outdated_agents: int
+    coverage: float
+    active_policies: int

@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: poc-api
+  namespace: poc-api
+  labels:
+    app: poc-api
+  annotations:
+    description: "FastAPI POC application service"
+spec:
+  type: ClusterIP
+  selector:
+    app: poc-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: poc-api-headless
+  namespace: poc-api
+  labels:
+    app: poc-api
+spec:
+  clusterIP: None
+  selector:
+    app: poc-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+      protocol: TCP
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: poc-api
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: poc-api
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP

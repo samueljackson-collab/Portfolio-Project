@@ -19,6 +19,11 @@ This is a placeholder README. Documentation and evidence will be added as the pr
 For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
 
 ---
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-baseline).
+- [x] Virtualization evidence checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
+
+---
 *Placeholder — Documentation pending*
 # PRJ-HOME-002: Virtualization & Core Services
 

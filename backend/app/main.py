@@ -4,21 +4,33 @@ Main FastAPI application factory.
 This module creates and configures the FastAPI application instance.
 """
 
+import logging
+import time
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.exc import SQLAlchemyError
-from prometheus_fastapi_instrumentator import Instrumentator
-import logging
-import time
-
-from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import health, auth, content, photos, backup
+from app.routers import (
+    health,
+    auth,
+    content,
+    photos,
+    backup,
+    orchestration,
+    red_team,
+    ransomware,
+    soc,
+    threat_hunting,
+    malware,
+    edr,
+)
 
 
 # Configure logging
@@ -114,12 +126,20 @@ async def validation_exception_handler(
     exc: RequestValidationError
 ):
     """Handle Pydantic validation errors."""
-    logger.warning(f"Validation error: {exc.errors()}")
+    raw_errors = exc.errors()
+    logger.warning(f"Validation error: {raw_errors}")
+
+    sanitized_errors = []
+    for err in raw_errors:
+        ctx = err.get("ctx")
+        if ctx and isinstance(ctx.get("error"), Exception):
+            ctx["error"] = str(ctx["error"])
+        sanitized_errors.append(err)
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "detail": exc.errors(),
+            "detail": sanitized_errors,
         }
     )
 
@@ -162,11 +182,13 @@ app.include_router(auth.router)
 app.include_router(content.router)
 app.include_router(photos.router)
 app.include_router(backup.router)
-
-
-# Prometheus metrics instrumentation
-# Expose metrics at /metrics endpoint for Prometheus scraping
-Instrumentator().instrument(app).expose(app, endpoint="/metrics", tags=["Monitoring"])
+app.include_router(orchestration.router)
+app.include_router(red_team.router)
+app.include_router(ransomware.router)
+app.include_router(soc.router)
+app.include_router(threat_hunting.router)
+app.include_router(malware.router)
+app.include_router(edr.router)
 
 
 # Root endpoint
@@ -188,7 +210,8 @@ async def root() -> dict:
             "content": "/content (CRUD operations)",
             "photos": "/photos (photo upload and management)",
             "backup": "/backup (backup status and management)",
-            "health": "/health (status check)"
+            "health": "/health (status check)",
+            "orchestration": "/orchestration (plans, runs)",
         }
     }
 

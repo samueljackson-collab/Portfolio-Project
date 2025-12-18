@@ -1,0 +1,19 @@
+{
+  "httpMethod": "POST",
+  "path": "/items",
+  "resource": "/items",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer dev-key-12345"
+  },
+  "body": "{\"name\": \"Sample Item\", \"description\": \"A sample item for testing\", \"price\": 29.99}",
+  "requestContext": {
+    "requestId": "test-create-123",
+    "accountId": "123456789012",
+    "stage": "dev",
+    "httpMethod": "POST",
+    "path": "/items"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null
+}

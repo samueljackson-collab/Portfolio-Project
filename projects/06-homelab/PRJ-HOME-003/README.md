@@ -1210,3 +1210,9 @@ contacts:
 ---
 
 *This document is maintained as a living operational guide and is updated based on operational experience and lessons learned from incidents.*
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#crit-002-homelab-project-complete-readme).
+- [x] Lab expansion checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#final-publishing-checklist).
+
+---
+*Placeholder — Documentation pending*

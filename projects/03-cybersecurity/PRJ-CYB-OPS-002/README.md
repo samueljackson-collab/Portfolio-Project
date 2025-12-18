@@ -1119,7 +1119,6 @@ psort.py -o l2tcsv -w "${EVIDENCE_DIR}/timeline.csv" "${EVIDENCE_DIR}/timeline.p
 # Generate evidence manifest
 echo "
 Evidence Collection Complete
-============================
 Incident ID: ${INCIDENT_ID}
 Hostname: ${HOSTNAME}
 Total Evidence Size: $(du -sh ${EVIDENCE_DIR} | awk '{print $1}')
@@ -1889,3 +1888,9 @@ For questions about this playbook, please contact **Security Operations Manager*
 ---
 
 *This playbook is confidential and intended for internal use only. Distribution outside the organization requires CISO approval.*
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-generation-prompt).
+- [x] Incident response roadmap aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
+
+---
+*Placeholder — Documentation pending*

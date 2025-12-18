@@ -1,0 +1,406 @@
+# Loki Configuration
+# ===================
+# Log aggregation system with Prometheus-like label-based indexing.
+#
+# Architecture (Monolithic Mode):
+#   - All components (distributor, ingester, querier) run in single process
+#   - Suitable for: Small-medium deployments (<50GB logs/day)
+#   - Scale-out: Split into microservices when needed
+#
+# Storage Model:
+#   - Chunks: Compressed log blocks (typically 1MB)
+#   - Index: BoltDB for label queries
+#   - Filesystem: Local storage (single-node) or object storage (multi-node)
+#
+# Documentation: https://grafana.com/docs/loki/latest/configuration/
+# Author: Portfolio Project
+# Last Updated: 2024-11-24
+
+# Authentication (Disabled for single-tenant)
+# ============================================
+# Multi-tenancy: Disabled (auth_enabled: false)
+# Single-tenant mode: All logs stored without tenant ID
+# Enable for multi-tenant: Set to true, add X-Scope-OrgID header to requests
+auth_enabled: false
+
+# Server Configuration
+# ====================
+# HTTP and gRPC server settings.
+server:
+  # HTTP listen port for queries and ingestion
+  # Endpoints:
+  #   - /loki/api/v1/push (Promtail pushes logs here)
+  #   - /loki/api/v1/query (Grafana queries logs)
+  #   - /loki/api/v1/query_range (Range queries)
+  #   - /loki/api/v1/labels (Label discovery)
+  #   - /ready (Health check)
+  http_listen_port: 3100
+
+  # gRPC listen port for internal communication
+  # Used for: Ingester-querier communication in microservices mode
+  # Single-node: Can disable by setting to 0
+  grpc_listen_port: 9096
+
+  # HTTP server timeouts
+  # Adjust if: Large queries timeout, slow log ingestion
+  http_server_read_timeout: 30s
+  http_server_write_timeout: 30s
+
+  # Logging level (debug, info, warn, error)
+  log_level: info
+
+# Ingester Configuration
+# ======================
+# Component that receives logs, batches them into chunks, and flushes to storage.
+#
+# Chunk Lifecycle:
+#   1. Logs arrive via /loki/api/v1/push
+#   2. Buffered in memory until chunk_idle_period or max_chunk_age
+#   3. Chunk compressed (gzip) and flushed to storage
+#   4. Index entries written for label queries
+#
+ingester:
+  # Lifecycler: Manages ingester registration and health
+  # (Used in distributed mode for ingester discovery)
+  lifecycler:
+    # Ring: Distributed hash ring for ingester coordination
+    # Single-node: Still required but simplified config
+    ring:
+      # Key-value store for ring membership
+      # Options: consul, etcd, memberlist, inmemory
+      # Single-node: inmemory (no external dependencies)
+      kvstore:
+        store: inmemory
+
+      # Replication factor: How many ingesters receive each log stream
+      # Single-node: Set to 1 (no replication)
+      # Multi-node: Set to 3 (HA)
+      replication_factor: 1
+
+    # Final sleep: Wait before shutting down (allows chunk flush)
+    # Prevents data loss during graceful shutdown
+    final_sleep: 10s
+
+  # Chunk configuration: When and how to create chunks
+  chunk_idle_period: 3m        # Flush chunk if no writes for 3 minutes
+  max_chunk_age: 1h           # Flush chunk after 1 hour regardless of activity
+  chunk_target_size: 1048576  # Target chunk size (1MB) before compression
+
+  # Chunk encoding: Compression algorithm
+  # Options: none, gzip (default), lz4, snappy
+  # gzip: Best compression ratio (~10:1), slower
+  # lz4: Faster compression, lower ratio (~5:1)
+  # Trade-off: Storage vs CPU
+  chunk_encoding: gzip
+
+  # Retain period: How long to keep chunks in memory after flush
+  # Allows: Recent log queries served from memory (fast)
+  # Increase for: Better query performance on recent logs
+  # Decrease for: Lower memory usage
+  chunk_retain_period: 30s
+
+  # Max transfer retries: Chunk transfer attempts before failure
+  max_transfer_retries: 0  # Single-node: no transfers needed
+
+# Schema Configuration
+# ====================
+# Defines storage schema version and index/chunk storage backends.
+#
+# IMPORTANT: Schema changes require data migration, plan carefully.
+#
+# Schema Evolution:
+#   - v11: BoltDB + filesystem (good for single-node)
+#   - v12: BoltDB shipper (recommended single-node)
+#   - v13: TSDB (future, better performance)
+#
+schema_config:
+  configs:
+    # Schema definition (can have multiple for migrations)
+    - from: 2024-01-01  # Effective date (YYYY-MM-DD)
+
+      # Store: Storage backend for index
+      # Options: boltdb, boltdb-shipper, cassandra, bigtable
+      # boltdb-shipper: Recommended for single-node
+      #   - Writes to local BoltDB
+      #   - Periodically uploads to object storage (if configured)
+      #   - Allows scale-out later without migration
+      store: boltdb-shipper
+
+      # Object store: Where chunks are stored
+      # Options: filesystem, s3, gcs, azure, swift
+      # filesystem: Good for single-node, local disk
+      # s3/gcs: Required for multi-node, better durability
+      object_store: filesystem
+
+      # Schema version: v11, v12, v13
+      # v11: Original BoltDB schema
+      # v12: Improved compaction and retention
+      schema: v12
+
+      # Index configuration
+      index:
+        # Prefix for index tables
+        # Useful for: Multi-tenant setups, namespace separation
+        prefix: index_
+
+        # Period: How often to create new index table
+        # 24h: Daily index tables (default)
+        # 168h: Weekly (reduces index count, simpler management)
+        # Trade-off: More tables = better retention management
+        period: 24h
+
+# Storage Configuration
+# =====================
+# Configures where and how chunks and indexes are stored.
+storage_config:
+  # BoltDB shipper configuration
+  # BoltDB: Embedded key-value database for index storage
+  # Shipper: Periodically uploads BoltDB files to object storage
+  boltdb_shipper:
+    # Active index directory: Where currently active BoltDB files are written
+    # Loki writes here actively during ingestion
+    active_index_directory: /loki/boltdb-shipper-active
+
+    # Cache directory: Downloaded index files from object storage
+    # Loki downloads older index files here for queries
+    cache_location: /loki/boltdb-shipper-cache
+
+    # Cache TTL: How long to keep downloaded index files
+    # Longer TTL: Fewer re-downloads, more disk usage
+    # Shorter TTL: Less disk usage, more network traffic
+    cache_ttl: 24h
+
+    # Shared store: Path for index backups (if using filesystem object_store)
+    # Loki uploads BoltDB files here periodically
+    # For filesystem: Local directory
+    # For s3/gcs: S3 bucket name
+    shared_store: filesystem
+
+  # Filesystem configuration (for chunks)
+  # Only used when object_store: filesystem
+  filesystem:
+    # Directory: Where chunk files are stored
+    # Structure: /loki/chunks/<tenant>/<table>/<hash>/<chunk>
+    # Growth: Depends on log volume and retention
+    directory: /loki/chunks
+
+  # Alternative: S3 configuration (for production multi-node)
+  # Uncomment to use S3 instead of filesystem:
+  #
+  # aws:
+  #   s3: s3://us-east-1/my-loki-bucket
+  #   s3forcepathstyle: true
+  #   bucketnames: my-loki-bucket
+  #   region: us-east-1
+  #   access_key_id: ${AWS_ACCESS_KEY_ID}
+  #   secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+  #   insecure: false
+  #   sse_encryption: true
+
+# Compactor Configuration
+# =======================
+# Compactor: Background process that compacts and deletes old index files.
+# Purpose: Manage retention, optimize index storage, delete expired data.
+#
+# Enabled: Only for boltdb-shipper store
+compactor:
+  # Working directory for compaction operations
+  working_directory: /loki/compactor
+
+  # Shared store: Same as boltdb_shipper.shared_store
+  # Must match for compactor to find index files
+  shared_store: filesystem
+
+  # Compaction interval: How often to run compaction
+  # Default: 10m (checks every 10 minutes for work)
+  # Lower: More frequent compaction, higher CPU usage
+  # Higher: Less frequent, may delay retention enforcement
+  compaction_interval: 10m
+
+  # Retention: Enable automatic data deletion based on age
+  # CRITICAL: Ensure backups before enabling
+  retention_enabled: true
+
+  # Retention delete delay: Wait time before deleting expired data
+  # Safety measure: Allows recovery if retention configured incorrectly
+  # Expired data marked for deletion but kept for this duration
+  retention_delete_delay: 2h
+
+  # Delete request: Allow manual deletion of log streams
+  # Enables: DELETE /loki/api/v1/delete endpoint
+  # Use case: GDPR compliance, PII removal
+  retention_delete_worker_count: 150
+
+# Limits Configuration
+# ====================
+# Resource limits per tenant (or global if single-tenant).
+# Purpose: Prevent resource exhaustion, enforce fair usage.
+#
+# IMPORTANT: Adjust based on your log volume and infrastructure.
+#
+limits_config:
+  # Ingestion rate limits
+  # ---------------------
+
+  # ingestion_rate_mb: Maximum MB/s per tenant
+  # Exceeding: 429 Too Many Requests error
+  # Default: 4MB/s (sufficient for typical homelab)
+  # Increase if: High log volume (>4MB/s), frequent 429 errors
+  ingestion_rate_mb: 4
+
+  # ingestion_burst_size_mb: Burst allowance (buffer)
+  # Allows: Temporary spikes above ingestion_rate_mb
+  # Example: Burst to 6MB/s briefly, then throttle if sustained
+  # Default: 6MB (1.5x ingestion_rate_mb)
+  ingestion_burst_size_mb: 6
+
+  # Per-stream rate limit: Maximum rate per unique label set
+  # Prevents: Single noisy stream consuming all quota
+  # Default: 3MB (usually sufficient per stream)
+  per_stream_rate_limit: 3MB
+
+  # Burst size per stream
+  per_stream_rate_limit_burst: 15MB
+
+  # Cardinality limits
+  # ------------------
+  # Cardinality: Number of unique label combinations
+  # High cardinality = many unique streams = high memory/CPU usage
+  #
+  # max_streams_per_user: Total unique streams per tenant
+  # CRITICAL: Loki's primary resource constraint
+  # Default: 10000 (sufficient for homelab)
+  # WARNING: 100K+ streams = significant resource usage
+  #
+  # Best practice: Keep streams <10K via label design
+  #   - Don't use high-cardinality labels (user IDs, request IDs)
+  #   - Do use low-cardinality labels (service, environment, level)
+  max_streams_per_user: 10000
+
+  # max_global_streams_per_user: Global stream limit (all ingesters)
+  # Single-node: Same as max_streams_per_user
+  max_global_streams_per_user: 10000
+
+  # Query limits
+  # ------------
+
+  # max_query_lookback: Maximum time range for queries
+  # Prevents: Expensive queries over entire retention period
+  # Default: 720h (30 days)
+  # Should match: Retention period or less
+  max_query_lookback: 720h
+
+  # max_query_length: Maximum time span for single query
+  # Prevents: Queries like "last 90 days" on 365-day retention
+  # Default: 721h (slightly more than lookback)
+  max_query_length: 721h
+
+  # max_query_series: Maximum series returned by query
+  # Prevents: OOM from queries returning millions of streams
+  # Default: 1000 (conservative)
+  # Increase if: Legitimate queries need more series
+  max_query_series: 1000
+
+  # max_entries_limit_per_query: Maximum log lines per query
+  # Prevents: Queries returning GBs of logs, crashing Grafana
+  # Default: 5000 (reasonable for UI display)
+  # Increase for: Batch processing, log exports
+  max_entries_limit_per_query: 5000
+
+  # Retention settings
+  # ------------------
+
+  # retention_period: How long to keep logs before deletion
+  # Default: 744h (31 days)
+  # Adjust based on: Storage capacity, compliance requirements
+  # Compactor deletes logs older than this
+  retention_period: 168h  # 7 days
+
+  # Rejection settings
+  # ------------------
+
+  # reject_old_samples: Reject logs older than certain threshold
+  # Prevents: Backfilling old logs (can mess up retention/compaction)
+  # Production: Enable to prevent clock skew issues
+  reject_old_samples: true
+
+  # reject_old_samples_max_age: How old is "too old"
+  # Logs older than this are rejected (HTTP 400)
+  # Default: 168h (7 days, matches retention)
+  # Should be: ≥ retention_period
+  reject_old_samples_max_age: 168h
+
+  # creation_grace_period: Allow future timestamps up to this amount
+  # Accommodates: Minor clock skew between Promtail and Loki
+  # Default: 10m (allows timestamps up to 10 min in future)
+  creation_grace_period: 10m
+
+# Chunk Store Configuration
+# ==========================
+# How chunks are cached and queried.
+chunk_store_config:
+  # Max look back period: How far back to query
+  # Should match: limits_config.max_query_lookback
+  max_look_back_period: 720h
+
+  # Chunk cache: In-memory cache for recently accessed chunks
+  # Improves: Query performance on frequently accessed logs
+  #
+  # chunk_cache_config:
+  #   embedded_cache:
+  #     enabled: true
+  #     max_size_mb: 100  # 100MB cache
+  #     ttl: 1h
+
+# Table Manager Configuration
+# ============================
+# Manages index and chunk table lifecycle.
+# Applies retention policies and deletes old tables.
+table_manager:
+  # Retention deletes: Enable automatic deletion of old tables
+  # Works with: compactor.retention_enabled
+  retention_deletes_enabled: true
+
+  # Retention period: Must match limits_config.retention_period
+  retention_period: 168h
+
+# Query Frontend Configuration (Optional)
+# ========================================
+# Query frontend: Splits large queries into smaller chunks, caches results.
+# Benefits: Improved query performance, reduced querier load.
+# Requirement: Additional service in distributed mode
+#
+# For single-node: Can be enabled but limited benefit
+#
+# query_range:
+#   # Split queries into smaller time ranges
+#   split_queries_by_interval: 15m
+#
+#   # Cache query results
+#   results_cache:
+#     cache:
+#       embedded_cache:
+#         enabled: true
+#         max_size_mb: 100
+#         ttl: 24h
+#
+#   # Align queries to step boundaries (better cache hit rate)
+#   align_queries_with_step: true
+
+# Ruler Configuration (Optional)
+# ===============================
+# Loki Ruler: Evaluate LogQL expressions periodically, generate alerts.
+# Similar to: Prometheus alerting rules but for logs
+# Use case: Alert on log patterns (error rates, specific messages)
+#
+# ruler:
+#   storage:
+#     type: local
+#     local:
+#       directory: /loki/rules
+#   rule_path: /loki/rules-temp
+#   alertmanager_url: http://alertmanager:9093
+#   ring:
+#     kvstore:
+#       store: inmemory
+#   enable_api: true

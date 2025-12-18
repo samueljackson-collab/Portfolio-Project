@@ -877,3 +877,9 @@ This project is licensed under the MIT License - see the [LICENSE](../../../LICE
 ---
 
 *Last Updated: 2025-11-24 | Status: Complete | Maintained: Active*
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#crit-002-homelab-project-complete-readme).
+- [x] Roadmap and evidence checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#final-publishing-checklist).
+
+---
+*Placeholder — Documentation pending*

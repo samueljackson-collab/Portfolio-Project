@@ -10,6 +10,7 @@ This module handles:
 
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -88,7 +89,7 @@ async def register(
     description="Authenticate user and receive JWT token"
 )
 async def login(
-    credentials: UserLogin,
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ) -> Token:
     """
@@ -111,13 +112,11 @@ async def login(
     )
 
     # Look up user
-    result = await db.execute(
-        select(User).where(User.email == credentials.email)
-    )
+    result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
 
     # User not found or password incorrect
-    if not user or not verify_password(credentials.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise credentials_exception
 
     # Check if account is active
