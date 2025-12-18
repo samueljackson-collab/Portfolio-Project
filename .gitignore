@@ -28,6 +28,9 @@ node_modules/
 
 # Tests
 coverage/
+htmlcov/
+.coverage
+*.db
 __pycache__/
 *.pyc
 *.pyo
