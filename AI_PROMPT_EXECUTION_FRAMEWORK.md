@@ -5,7 +5,7 @@
 **Part 1:** `AI_PROMPT_LIBRARY.md` (Critical & High prompts)  
 **Part 2:** `AI_PROMPT_LIBRARY_MEDIUM_LOW.md` (Medium & Low prompts)
 
-This playbook covers execution strategies, quality control, and best practices so every AI-assisted deliverable ships production-ready.
+This playbook covers execution strategies, quality control, and best practices so every AI-assisted deliverable ships production-ready, with **complete, runnable deliverables** as the default definition of success.
 
 ---
 
@@ -21,6 +21,8 @@ This framework is the operational handbook for maximizing AI productivity. It ex
 ---
 
 ## 🎯 Core Execution Principles
+
+**Default success criterion:** Every task produces a complete, runnable deliverable with a clear startup recipe (directory map, entry points, sample data, and run command).
 
 ### Principle 1: Treat Prompts Like Code
 - Be explicit: context, requirements, constraints, examples
@@ -39,6 +41,11 @@ This framework is the operational handbook for maximizing AI productivity. It ex
 - AI handles ~70% (drafting); human reviews ~30%
 - Always verify technical accuracy, personalization, and formatting
 - Never publish without testing code, checking links, and proofreading
+
+### Principle 4: Design for Runnable Delivery
+- Define the startup recipe before drafting (directory map, primary entry points, sample data, and run command)
+- Keep instructions adjacent to code so handoffs stay frictionless
+- Require smoke tests to prove the deliverable runs as documented
 
 ---
 
@@ -68,7 +75,8 @@ This framework is the operational handbook for maximizing AI productivity. It ex
 2. Generate drafts for 3-5 projects sequentially
 3. Review all drafts in one sitting
 4. Apply consistent polish (tone, formatting)
-5. Commit documents together
+5. Add the startup recipe (directory map, entry points, sample data, run command)
+6. Commit documents together
 
 ### Prompt Template Structure
 ```
@@ -89,7 +97,7 @@ PROJECT DETAILS:
 
 ### Three-Pass Review
 1. **Technical Accuracy** – test commands, verify versions, validate links
-2. **Completeness & Consistency** – ensure every prompt requirement is met, no placeholders remain
+2. **Completeness & Consistency** – ensure every prompt requirement is met, no placeholders remain, and the startup recipe is present
 3. **Polish & Professionalism** – grammar, tone, formatting, metrics
 
 ### Automated Checks
@@ -103,6 +111,24 @@ pytest
 ```
 
 Set up `.pre-commit-config.yaml` to run linting automatically before each commit.
+
+---
+
+## 🚀 Startup Recipe & Deliverable Checklist
+
+Every deliverable should include a concise startup recipe that proves it runs end-to-end:
+- **Directory map:** Show top-level folders, config locations, and where to place secrets
+- **Entry points:** Identify commands (e.g., `main.py`, `npm start`, `docker compose up`) and any service URLs
+- **Sample data:** Provide fixtures, example `.env` values, or seed scripts to unblock first run
+- **Run command:** Single copy-paste command with prerequisites noted (tool versions, ports)
+
+Deliverable readiness checklist (attach to prompts and reviews):
+- [ ] Startup recipe documented next to the deliverable
+- [ ] Commands executed successfully in a clean environment
+- [ ] Inputs/outputs captured (screenshots, logs, or test artifacts)
+- [ ] Rollback/cleanup notes recorded when applicable
+
+Treat missing startup details as blockers—no deliverable is “done” until it is runnable by another teammate.
 
 ---
 
@@ -167,6 +193,7 @@ Track usage in a spreadsheet (date, task, tool, prompt ID, time spent, quality r
 - [ ] Code/commands tested
 - [ ] Links verified
 - [ ] Versions current
+- [ ] Startup recipe (directory map, entry points, sample data, run command) included and validated
 
 **Content**
 - [ ] All sections complete
