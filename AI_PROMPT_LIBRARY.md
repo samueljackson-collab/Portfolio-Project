@@ -11,8 +11,10 @@
 
 ## 📋 How to Use This Document
 
-### Prompt Structure
-Each prompt follows this format:
+All prompts in this library must comply with the behavior rules in `docs/MASTER_FACTORY_PROMPT.md`: ship **complete, runnable deliverables** starting with the first response. Every request should produce code, configuration, sample data, and usage notes—not just prompt drafts.
+
+### Prompt Structure (deliverable-first)
+Each prompt follows this format and is expected to emit runnable assets:
 ```
 PROMPT ID: [Unique identifier]
 PURPOSE: [What this generates]
@@ -20,17 +22,19 @@ PRIORITY: [Critical/High/Medium/Low]
 TIME SAVINGS: [Hours saved vs manual creation]
 AI TOOL: [Claude/ChatGPT/Gemini - which works best]
 INPUT REQUIRED: [What you need to provide]
+DELIVERABLES: [Code/config/data/docs expected in the response]
+RUN INSTRUCTIONS: [Exact commands or steps to execute the deliverable]
 OUTPUT: [What you'll receive]
 PROMPT: [The actual prompt to use]
-POST-PROCESSING: [How to refine the output]
+POST-PROCESSING: [How to refine the output and validate it]
 ```
 
 ### Workflow
 1. **Select by priority** - Start with Critical, work down
 2. **Batch similar prompts** - Do all READMEs together, all diagrams together
 3. **Quality check immediately** - Review AI output while context is fresh
-4. **Iterate if needed** - Refine prompts based on first results
-5. **Track completion** - Check off each prompt as you use it
+4. **Iterate if needed** - Refine prompts based on first results and keep the outputs runnable
+5. **Track completion** - Check off each prompt as you use it, confirming the deliverable checklist from `docs/MASTER_FACTORY_PROMPT.md`
 
 ---
 
