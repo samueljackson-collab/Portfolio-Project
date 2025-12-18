@@ -155,3 +155,21 @@ pip install -r requirements.txt
 
 These tests are designed to run in CI/CD pipelines and provide rapid feedback on code quality and correctness.
 Tests require pytest>=7.2.0 and pyyaml (already in requirements.txt)
+
+## Integration tests
+
+- `tests/integration/terratest_modules_test.go` contains Terratest suites that provision the VPC, ECS application, and database modules. Tests are protected by the `integration` build tag and require `RUN_TERRATEST=true` plus AWS credentials to run. Execute them with:
+
+```bash
+cd tests/integration
+go test -tags integration -v
+```
+
+## Validation tests
+
+- `tests/validation/` adds Terraform validation and policy-as-code checks (tfsec, Checkov). You can run them directly via pytest or through the helper script:
+
+```bash
+python -m pytest tests/validation -q
+bash terraform/scripts/validate.sh
+```
