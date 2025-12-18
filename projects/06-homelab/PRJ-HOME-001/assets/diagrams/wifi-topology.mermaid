@@ -1,0 +1,31 @@
+graph TD
+  internet((Internet))
+  gw[UDM Pro \n Gateway]
+  switch24[USW-24-PoE \n Core Switch]
+  ap1[AP-Living \n UAP-AC-Pro]
+  ap2[AP-Office \n UAP-AC-Pro]
+  ap3[AP-Bedroom \n UAP-AC-Pro]
+
+  internet --- gw
+  gw --- switch24
+  switch24 --- ap1
+  switch24 --- ap2
+  switch24 --- ap3
+
+  subgraph Coverage Zones
+    ap1 --- living[Living / Kitchen]
+    ap1 --- patio[Patio]
+    ap2 --- office[Office / Lab]
+    ap2 --- hallway[Hallway]
+    ap3 --- bedrooms[Bedroom Wing]
+  end
+
+  classDef trusted fill:#b3e5fc,stroke:#0277bd,stroke-width:2px;
+  classDef guest fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px;
+  classDef iot fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px;
+
+  class living trusted;
+  class patio guest;
+  class office trusted;
+  class hallway iot;
+  class bedrooms trusted;
