@@ -90,7 +90,7 @@ System-minded engineer specializing in building, securing, and operating infrast
   - Evidence: [Blueprint](./projects/4-devsecops) · [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-4-devsecops-pipeline-✅)
 - **Project 23: Advanced Monitoring & Observability**
   - What it is: Monitoring stack for metrics, logs, and tracing across services.
-  - What’s done: Automated Prometheus/Grafana/Loki/Otel deployment, dashboard linting, alert rule checks, health verification.
+  - What’s done: Automated Prometheus/Grafana/Loki/OTel deployment, dashboard linting, alert rule checks, health verification.
   - Evidence: [Blueprint](./projects/23-advanced-monitoring) · [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-23-advanced-monitoring--observability-✅)
 
 **🟠 In Progress**
