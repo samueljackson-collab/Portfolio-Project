@@ -19,12 +19,3 @@ datasources:
     url: http://alertmanager:9093
     isDefault: false
     editable: true
-
-  - name: Loki
-    type: loki
-    access: proxy
-    orgId: 1
-    url: http://loki:3100
-    editable: true
-    jsonData:
-      maxLines: 1000
