@@ -25,9 +25,9 @@ from app.config import settings
 
 # Password hashing context using bcrypt
 pwd_context = CryptContext(
-    schemes=["bcrypt"],
+    schemes=["pbkdf2_sha256"],
     deprecated="auto",
-    bcrypt__rounds=12
+    pbkdf2_sha256__default_rounds=200000
 )
 
 

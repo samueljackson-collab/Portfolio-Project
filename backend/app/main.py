@@ -17,7 +17,20 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import health, auth, content, photos, backup, orchestration
+from app.routers import (
+    health,
+    auth,
+    content,
+    photos,
+    backup,
+    orchestration,
+    red_team,
+    ransomware,
+    soc,
+    threat_hunting,
+    malware,
+    edr,
+)
 
 
 # Configure logging
@@ -113,12 +126,20 @@ async def validation_exception_handler(
     exc: RequestValidationError
 ):
     """Handle Pydantic validation errors."""
-    logger.warning(f"Validation error: {exc.errors()}")
+    raw_errors = exc.errors()
+    logger.warning(f"Validation error: {raw_errors}")
+
+    sanitized_errors = []
+    for err in raw_errors:
+        ctx = err.get("ctx")
+        if ctx and isinstance(ctx.get("error"), Exception):
+            ctx["error"] = str(ctx["error"])
+        sanitized_errors.append(err)
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "detail": exc.errors(),
+            "detail": sanitized_errors,
         }
     )
 
@@ -162,6 +183,12 @@ app.include_router(content.router)
 app.include_router(photos.router)
 app.include_router(backup.router)
 app.include_router(orchestration.router)
+app.include_router(red_team.router)
+app.include_router(ransomware.router)
+app.include_router(soc.router)
+app.include_router(threat_hunting.router)
+app.include_router(malware.router)
+app.include_router(edr.router)
 
 
 # Root endpoint

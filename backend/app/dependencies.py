@@ -45,7 +45,7 @@ def raise_forbidden(action: str = "perform this action") -> None:
     """
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail=f"Not authorized to {action}"
+        detail=f"Permission denied to {action}"
     )
 
 
@@ -107,7 +107,8 @@ def check_ownership(resource, current_user: User, action: str = "access this res
 # Security scheme for Swagger UI
 security = HTTPBearer(
     scheme_name="Bearer Token",
-    description="JWT access token from login endpoint"
+    description="JWT access token from login endpoint",
+    auto_error=False
 )
 
 
@@ -146,9 +147,12 @@ async def get_current_user(
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if credentials is None:
+        raise credentials_exception
 
     try:
         # Extract token from credentials

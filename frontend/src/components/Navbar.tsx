@@ -61,6 +61,12 @@ export const Navbar: React.FC = () => {
                   >
                     Operations
                   </Link>
+                  <Link
+                    to="/security-simulators"
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                  >
+                    Security Sims
+                  </Link>
                 </>
               )}
             </div>
