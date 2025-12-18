@@ -251,6 +251,7 @@ resource "aws_s3_bucket_public_access_block" "artifacts" {
         newid: "{{ vm_id }}"
         storage: "{{ storage_pool }}"
         full: yes
+      no_log: true
 
     - name: Configure VM resources
       community.general.proxmox_kvm:
@@ -264,6 +265,7 @@ resource "aws_s3_bucket_public_access_block" "artifacts" {
         net:
           net0: "virtio,bridge={{ vlan_bridge }},tag={{ vlan_id }}"
         update: yes
+      no_log: true
 
     - name: Start VM
       community.general.proxmox_kvm:
@@ -273,6 +275,7 @@ resource "aws_s3_bucket_public_access_block" "artifacts" {
         node: "{{ proxmox_node }}"
         vmid: "{{ vm_id }}"
         state: started
+      no_log: true
 ```
 
 ### Kubernetes Manifests
@@ -309,6 +312,21 @@ grafana:
   persistence:
     enabled: true
     size: 10Gi
+  # Secrets are injected via External Secrets Operator (backed by AWS Secrets Manager) with rotation every 30 days.
+  # Example:
+  # apiVersion: external-secrets.io/v1beta1
+  # kind: SecretStore
+  # metadata:
+  #   name: grafana-secret-store
+  # spec:
+  #   provider:
+  #     aws:
+  #       service: SecretsManager
+  #       region: us-west-2
+  #       auth:
+  #         jwt:
+  #           serviceAccountRef:
+  #             name: external-secrets-sa
 
   datasources:
     datasources.yaml:
@@ -741,9 +759,9 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_USER=portfolio
-      - POSTGRES_PASSWORD=portfolio
-      - POSTGRES_DB=portfolio
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -795,7 +813,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
     networks:
       - portfolio-net
 
@@ -996,6 +1014,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          kubectl cluster-info
+
       - name: Deploy to Kubernetes
         run: |
           # Update image tag in Kubernetes manifest
@@ -1152,6 +1177,7 @@ def test_create_project(project_data):
 
 ```python
 # tests/integration/test_database.py
+import os
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -1160,7 +1186,7 @@ from models import Base, Project
 @pytest.fixture(scope="module")
 def test_db():
     """Create test database"""
-    engine = create_engine("postgresql://test:test@localhost:5432/test_db")
+    engine = create_engine(os.getenv("TEST_DATABASE_URL", "postgresql://test:test@localhost:5432/test_db"))
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine)
     yield SessionLocal()
@@ -1454,6 +1480,13 @@ FROM pg_database;"
 # Restore from backup
 proxmox-backup-client restore vm/103/2024-11-24T02:00:00Z \
   --repository backup@pbs@192.168.40.15:datastore
+
+# Validate restored artifacts before production promotion
+clamscan -r "${RESTORE_PATH:-/mnt/restore}" || true
+sha256sum -c "${RESTORE_PATH:-/mnt/restore}/backup-checksums.txt"
+kubectl -n staging rollout status deployment/portfolio-api
+kubectl -n staging exec deploy/portfolio-api -- curl -f http://localhost:8000/health
+echo "Restore validated in staging; proceed to production only after signatures and health checks pass."
 ```
 
 #### Nginx Proxy Manager Issues
@@ -1641,6 +1674,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 import secrets
 import hashlib
+from app.config import settings
 
 security = HTTPBearer()
 
@@ -2175,6 +2209,7 @@ rate({job="portfolio-api"} |= "database connection failed" [5m]) > 0.1
 
 ```python
 # backend/tracing.py
+import os
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
@@ -2185,7 +2220,8 @@ from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 def setup_tracing(app):
     """Configure OpenTelemetry tracing"""
     provider = TracerProvider()
-    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://tempo:4317"))
+    otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://tempo:4317")
+    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=otlp_endpoint))
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
 

@@ -379,9 +379,11 @@ jobs:
           path: cypress/screenshots
 
       - name: Run security scan (OWASP ZAP)
+        env:
+          TARGET_URL: ${{ secrets.STAGING_URL }}
         run: |
           docker run -t owasp/zap2docker-stable zap-baseline.py \
-            -t https://staging.example.com/login \
+            -t ${TARGET_URL}/login \
             -r zap_report.html
 
       - name: Upload ZAP report
@@ -550,6 +552,7 @@ Current rate limiting allows 10 login attempts per minute per IP. Industry best 
 - [ ] 95%+ of test cases executed
 - [ ] 90%+ pass rate achieved
 - [ ] All Critical/High defects resolved
+- [ ] DEF-001 remediated (rate limiting = 5 attempts/min); owner: Backend Team; due: 2025-01-15; TC-F-011 retested before release
 - [ ] Security scan passes (no High/Critical vulns)
 - [ ] Performance benchmarks met (p95 < 1s)
 - [ ] Accessibility audit passes (WCAG 2.1 AA)

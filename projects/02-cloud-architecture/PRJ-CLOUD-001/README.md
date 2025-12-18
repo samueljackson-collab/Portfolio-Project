@@ -240,6 +240,16 @@ terraform/
     └── scp-region-restriction.json
 ```
 
+#### Prerequisites & Bootstrap
+
+- **Remote state backend (S3):** `org-terraform-state-<account-id>` bucket with versioning + default encryption; keys follow `landing-zone/<env>/organizations.tfstate`; owned by platform team; nightly backups retained 90 days.
+- **State locking (DynamoDB):** `terraform-locks` table (partition key `LockID`) with least-privilege access for automation role; platform team owns lifecycle/permissions.
+- **Bootstrap IAM (chicken-egg):**
+  1. One-time bootstrap admin user with Organizations + IAM perms, MFA enforced.
+  2. Generate short-lived access keys, store in AWS Secrets Manager under `bootstrap/terraform/org-admin`; rotate/disable after first successful apply.
+  3. First apply runs locally to create service roles, S3 backend, DynamoDB lock table, and delegated admin accounts; then migrate state to remote backend.
+- **CI/CD usage:** Pipelines assume-role into `TerraformExecutionRole` via OIDC; secrets (backend bucket names, assume-role ARN) stored in Secrets Manager; all plans/applies run with least-privilege policies scoped to Organizations + baseline accounts; `terraform init` uses `-backend-config` pointing to the S3/DynamoDB resources created in bootstrap.
+
 #### Core Terraform Module
 
 ```hcl
@@ -332,6 +342,13 @@ resource "aws_organizations_account" "network" {
   }
 }
 ```
+
+#### RDS Sizing Guidance (Landing Zone Shared Services)
+
+- **Instance classes:** Small (<10 accounts): `db.t3.medium` (2 vCPU, 4GB). Medium (10–50): `db.t3.large` (2 vCPU, 8GB). Large (50+ accounts/aggregated logging): `db.r5.large` (2 vCPU, 16GB) or larger for sustained throughput.
+- **Storage/IOPS:** Use GP3 with baseline 3,000 IOPS, scale to workload; enable autoscaling storage thresholds and set alarms for `FreeStorageSpace`.
+- **Monitoring:** Enable Enhanced Monitoring + Performance Insights; create CloudWatch alarms for CPU >70%, memory swap usage, disk queue depth, and max connections; forward to Ops.
+- **Resilience/scale:** Default Multi-AZ; add read replicas for reporting; document promotion procedure (promote replica, update endpoints, re-create replica post-failback); vertical resize allowed during maintenance windows with planned parameter group updates.
 
 #### Service Control Policies (SCPs)
 

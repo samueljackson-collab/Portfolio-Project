@@ -118,7 +118,7 @@ pvesh get /cluster/backup --output-format json-pretty | jq '.[] | {vmid, volid, 
 # 4. Check Grafana alerts
 echo ""
 echo "4. Active Alerts:"
-curl -s http://192.168.40.30:3000/api/alerts | jq '.[] | {name, state, value}'
+curl -s http://${GRAFANA_HOST:-192.168.40.30}:3000/api/alerts | jq '.[] | {name, state, value}'
 
 # 5. Check disk space
 echo ""
@@ -403,9 +403,14 @@ ORDER BY pg_relation_size(indexrelid) DESC
 LIMIT 10;
 "
 
-# Vacuum and analyze
-sudo -u postgres psql -d wikijs -c "VACUUM ANALYZE;"
-sudo -u postgres psql -d immich -c "VACUUM ANALYZE;"
+# Vacuum and analyze (continue on failure, report status)
+for db in wikijs immich; do
+  if sudo -u postgres psql -d "$db" -c "VACUUM ANALYZE;"; then
+    echo "Vacuum succeeded for $db"
+  else
+    echo "Vacuum failed for $db - review logs" >&2
+  fi
+done
 ```
 
 ---
@@ -420,7 +425,7 @@ ssh root@192.168.40.25
 docker exec -it nginx-proxy-manager bash -c "ls -la /data/letsencrypt-acme-challenge/.well-known/acme-challenge/"
 
 # Force certificate renewal
-docker exec -it nginx-proxy-manager bash -c "certbot renew --force-renewal"
+docker exec -it nginx-proxy-manager bash -c "certbot renew --quiet"  # use --force-renewal only with explicit approval for emergency cases
 
 # Check certificate expiration
 for domain in wiki.homelab.local ha.homelab.local immich.homelab.local; do
@@ -622,22 +627,33 @@ docker logs loki --tail 100 -f
 
 echo "=== Weekly Maintenance Starting ==="
 date
+ssh_opts="-o ConnectTimeout=10 -o StrictHostKeyChecking=no"
+snapshot_tag="pre-maint-$(date +%Y%m%d)"
 
 # 1. Update all VMs
 for vmid in 100 101 102 103 104 105; do
+    echo "Creating snapshot ${snapshot_tag} for VM ${vmid}..."
+    qm snapshot "${vmid}" "${snapshot_tag}" --description "Weekly maintenance rollback"
+
     echo "Updating VM ${vmid}..."
-    ssh root@192.168.40.$((vmid-80)) "apt update && apt upgrade -y"
+    timeout 900 ssh ${ssh_opts} root@192.168.40.$((vmid-80)) "apt update && apt upgrade -y" || echo "Update timed out for VM ${vmid}" >&2
 done
 
 # 2. Restart VMs to apply kernel updates (if needed)
 for vmid in 100 101 102 103 104 105; do
-    needs_reboot=$(ssh root@192.168.40.$((vmid-80)) "[ -f /var/run/reboot-required ] && echo yes || echo no")
+    needs_reboot=$(ssh ${ssh_opts} root@192.168.40.$((vmid-80)) "[ -f /var/run/reboot-required ] && echo yes || echo no")
     if [ "$needs_reboot" == "yes" ]; then
         echo "VM ${vmid} requires reboot. Restarting..."
         qm shutdown ${vmid}
         sleep 30
         qm start ${vmid}
         sleep 60
+
+        # Health check
+        if ! ssh ${ssh_opts} root@192.168.40.$((vmid-80)) "systemctl is-system-running --wait"; then
+            echo "Health check failed for VM ${vmid}, initiating rollback..." >&2
+            qm rollback "${vmid}" "${snapshot_tag}"
+        fi
     fi
 done
 
