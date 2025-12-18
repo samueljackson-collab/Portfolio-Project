@@ -379,18 +379,24 @@ log "EDR isolation complete"
 
 # 5. Disable AD account
 log "Disabling associated AD accounts..."
-AD_USERS=$(ldapsearch -x -H ldap://dc.corp.local -b "dc=corp,dc=local" \
+LDAP_URI="${LDAP_URI:-ldaps://dc.corp.local}"
+LDAP_PASS_FILE=$(mktemp)
+chmod 600 "${LDAP_PASS_FILE}"
+printf "%s" "${LDAP_PASS}" > "${LDAP_PASS_FILE}"
+
+AD_USERS=$(ldapsearch -x -H "${LDAP_URI}" -ZZ -D "cn=admin,dc=corp,dc=local" -y "${LDAP_PASS_FILE}" -b "dc=corp,dc=local" \
     "(userWorkstations=*${HOSTNAME}*)" sAMAccountName | grep "sAMAccountName:" | awk '{print $2}')
 
 for USER in ${AD_USERS}; do
     log "Disabling account: ${USER}"
-    ldapmodify -x -H ldap://dc.corp.local -D "cn=admin,dc=corp,dc=local" -w "${LDAP_PASS}" << LDIF
+    ldapmodify -x -H "${LDAP_URI}" -ZZ -D "cn=admin,dc=corp,dc=local" -y "${LDAP_PASS_FILE}" << LDIF
 dn: cn=${USER},ou=Users,dc=corp,dc=local
 changetype: modify
 replace: userAccountControl
 userAccountControl: 514
 LDIF
 done
+rm -f "${LDAP_PASS_FILE}"
 
 # 6. Revoke AWS session tokens (if cloud instance)
 if aws ec2 describe-instances --filters "Name=tag:Name,Values=${HOSTNAME}" | grep -q InstanceId; then
@@ -858,8 +864,9 @@ echo "Waiting for EDR alert (should trigger within 60 seconds)..."
 sleep 60
 
 # Query SIEM for alert
-ALERT_COUNT=$(curl -s http://siem.corp.local:8089/services/search/jobs/export \
-    -u admin:${SIEM_PASS} -d search="search index=edr ransomware earliest=-5m" | grep -c "alert")
+ALERT_COUNT=$(curl -s https://siem.corp.local:8089/services/search/jobs/export \
+    --cacert "${SIEM_CACERT}" \
+    -u "${SIEM_USER}:${SIEM_PASS}" -d search="search index=edr ransomware earliest=-5m" | grep -c "alert")
 
 if [ "$ALERT_COUNT" -gt 0 ]; then
     echo "✓ Test PASSED: Ransomware detection triggered"
@@ -877,8 +884,9 @@ vssadmin delete shadows /all /quiet 2>/dev/null || echo "Shadow copy deletion bl
 bcdedit /set {default} recoveryenabled No 2>/dev/null || echo "Recovery disable blocked (expected)"
 
 sleep 30
-ALERT_COUNT=$(curl -s http://siem.corp.local:8089/services/search/jobs/export \
-    -u admin:${SIEM_PASS} -d search="search index=edr shadow_copy earliest=-2m" | grep -c "alert")
+ALERT_COUNT=$(curl -s https://siem.corp.local:8089/services/search/jobs/export \
+    --cacert "${SIEM_CACERT}" \
+    -u "${SIEM_USER}:${SIEM_PASS}" -d search="search index=edr shadow_copy earliest=-2m" | grep -c "alert")
 
 if [ "$ALERT_COUNT" -gt 0 ]; then
     echo "✓ Test PASSED: Backup tampering detected"
@@ -1038,15 +1046,28 @@ lessons_learned:
 INCIDENT_ID=$1
 HOSTNAME=$2
 EVIDENCE_DIR="/forensics/incidents/${INCIDENT_ID}/${HOSTNAME}"
+LEGAL_COUNSEL=${LEGAL_COUNSEL:?}
+FORENSIC_LEAD=${FORENSIC_LEAD:?}
+FORENSIC_CERT_ID=${FORENSIC_CERT_ID:?}
+CHAIN_WITNESS=${CHAIN_WITNESS:?}
+AUTH_EXAMINER=${AUTH_EXAMINER:-$(whoami)}
+THIRD_PARTY_LAB=${THIRD_PARTY_LAB:-"Accredited Forensic Lab"}
+WORM_DEST=${WORM_DEST:-"/mnt/worm-drive/${INCIDENT_ID}/${HOSTNAME}"}
 
 mkdir -p "${EVIDENCE_DIR}"
 
-# Chain of custody log
+# Chain of custody log (pre-collection approvals and legal hold)
 cat > "${EVIDENCE_DIR}/chain_of_custody.txt" << EOF
 Incident ID: ${INCIDENT_ID}
 Hostname: ${HOSTNAME}
 Collection Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-Collected By: $(whoami)
+Legal Hold Initiated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+Legal Counsel Approval: ${LEGAL_COUNSEL}
+Forensic Team Lead Approval: ${FORENSIC_LEAD}
+Witness: ${CHAIN_WITNESS}
+Authorized Examiner: ${AUTH_EXAMINER} (Cert ID: ${FORENSIC_CERT_ID})
+Collection Authorized: yes
+Collected By: ${AUTH_EXAMINER}
 Collection Tool: Bash script collect_evidence.sh v2.1
 
 Evidence Items:
@@ -1094,8 +1115,9 @@ PYTHON
 
 # 4. SIEM logs export
 echo "[4/7] Exporting SIEM logs..." | tee -a "${EVIDENCE_DIR}/chain_of_custody.txt"
-curl -s http://siem.corp.local:8089/services/search/jobs/export \
-    -u admin:${SIEM_PASS} \
+curl -s https://siem.corp.local:8089/services/search/jobs/export \
+    --cacert "${SIEM_CACERT}" \
+    -u "${SIEM_USER}:${SIEM_PASS}" \
     -d search="search index=* host=${HOSTNAME} earliest=-7d | fields _time, _raw" \
     -d output_mode=json > "${EVIDENCE_DIR}/siem_logs.json"
 
@@ -1135,6 +1157,16 @@ Next Steps:
 3. Retain for 7 years per data retention policy
 4. Provide to law enforcement if prosecution desired
 " | tee "${EVIDENCE_DIR}/MANIFEST.txt"
+
+# Post-collection integrity controls
+chmod -R 750 "${EVIDENCE_DIR}"
+gpg --output "${EVIDENCE_DIR}/MANIFEST.txt.sig" --clearsign "${EVIDENCE_DIR}/MANIFEST.txt"
+echo "WORM Storage Destination: ${WORM_DEST}" | tee -a "${EVIDENCE_DIR}/chain_of_custody.txt"
+echo "Transfer Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" | tee -a "${EVIDENCE_DIR}/chain_of_custody.txt"
+echo "Recipient: Legal Custodian" | tee -a "${EVIDENCE_DIR}/chain_of_custody.txt"
+echo "Third-Party Validation: ${THIRD_PARTY_LAB} scheduled for pickup" | tee -a "${EVIDENCE_DIR}/chain_of_custody.txt"
+
+echo "Chain transfer log recorded; send sealed copy to ${THIRD_PARTY_LAB} and capture receipt/verification upon arrival." | tee -a "${EVIDENCE_DIR}/chain_of_custody.txt"
 
 echo "Evidence collection complete. See: ${EVIDENCE_DIR}"
 ```
