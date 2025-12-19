@@ -333,7 +333,7 @@ run_tests() {
     }
 
     print_info "Installing test dependencies..."
-    pip install pytest pytest-cov 2>/dev/null || print_info "Pytest already installed"
+    pip install pytest==7.4.3 pytest-cov==4.1.0 2>/dev/null || print_info "Pytest already installed"
 
     # Create simple test file
     print_info "Creating test suite..."
