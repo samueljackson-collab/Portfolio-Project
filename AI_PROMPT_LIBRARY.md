@@ -2,10 +2,12 @@
 
 ## Complete Guide to Using AI for GitHub Portfolio Enhancement
 
-**Purpose:** Actionable AI prompts to generate every missing component  
-**Target:** github.com/samueljackson-collab/Portfolio-Project  
-**Status:** 35% of work remaining can be AI-generated  
+**Purpose:** Actionable AI prompts to generate every missing component
+**Target:** github.com/samueljackson-collab/Portfolio-Project
+**Status:** 35% of work remaining can be AI-generated
 **Estimated Time Savings:** 80-100 hours with AI assistance
+
+> **New:** Red Team portfolio prompts (External Infra PT, Internal PT, Web App Assessment, Social Engineering Campaign) are available in `AI_PROMPT_LIBRARY_RED_TEAM.md` for quick copy/paste generation.
 
 ---
 
