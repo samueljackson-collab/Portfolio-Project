@@ -256,22 +256,25 @@ class WikiJSPublisher:
         return stats
 
     @staticmethod
-    def _parse_front_matter(content: str) -> Dict:
-        """Extract YAML front matter as a dict if present"""
+    @staticmethod
+    def _parse_front_matter(content: str) -> tuple:
+        """Extract YAML front matter as a dict and return it with the remaining content."""
         if not content.startswith("---"):
-            return {}
+            return {}, content
 
         parts = content.split('---', 2)
         if len(parts) < 3:
-            return {}
+            return {}, content
 
-        front_matter_raw = parts[1]
+        front_matter_raw, content_body = parts[1], parts[2]
+        
         try:
             parsed = yaml.safe_load(front_matter_raw) or {}
-            return parsed if isinstance(parsed, dict) else {}
+            metadata = parsed if isinstance(parsed, dict) else {}
         except yaml.YAMLError:
-            return WikiJSPublisher._fallback_front_matter(front_matter_raw)
+            metadata = WikiJSPublisher._fallback_front_matter(front_matter_raw)
 
+        return metadata, content_body.lstrip()
     @staticmethod
     def _fallback_front_matter(front_matter_raw: str) -> Dict:
         """Best-effort parser when YAML safe load fails (e.g., unquoted colons)"""
