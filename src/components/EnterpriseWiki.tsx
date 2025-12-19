@@ -15,6 +15,11 @@ import type {
 const { Book, CheckCircle, ChevronRight, Code, FileText, Shield, Activity } =
   enterpriseWikiIcons;
 
+const wikiPageUrl =
+  'https://github.com/samueljackson-collab/Portfolio-Project/blob/main/docs/enterprise-wiki/README.md';
+
+const createWikiLink = (anchor: string) => `${wikiPageUrl}#${anchor}`;
+
 // Lightweight helper to assemble Tailwind class strings without pulling in a
 // third-party dependency just for conditional styling.
 const classNames = (
@@ -28,7 +33,17 @@ const WeekDetail: React.FC<{
   guideAnchorId: string;
   resourcesAnchorId: string;
   roleTitle: string;
-}> = ({ week, theme, guideAnchorId, resourcesAnchorId, roleTitle }) => (
+  wikiGuideHref: string;
+  wikiResourcesHref: string;
+}> = ({
+  week,
+  theme,
+  guideAnchorId,
+  resourcesAnchorId,
+  roleTitle,
+  wikiGuideHref,
+  wikiResourcesHref,
+}) => (
   <div className="bg-slate-800 rounded-xl p-6 shadow-xl" id={guideAnchorId}>
     <div className="flex items-center justify-between mb-6">
       <div>
@@ -91,19 +106,23 @@ const WeekDetail: React.FC<{
       id={resourcesAnchorId}
     >
       <a
-        href={`#${guideAnchorId}`}
+        href={wikiGuideHref}
         className={classNames(
           'flex-1 py-3 px-6 text-white rounded-lg font-semibold transition-colors text-center',
           theme.accentBg,
           theme.accentHoverBg,
         )}
+        target="_blank"
+        rel="noreferrer"
         aria-label={`View the detailed guide for ${roleTitle} week ${week.number}: ${week.title}`}
       >
         View Detailed Guide
       </a>
       <a
-        href={`#${resourcesAnchorId}`}
+        href={wikiResourcesHref}
         className="py-3 px-6 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 transition-colors text-center"
+        target="_blank"
+        rel="noreferrer"
         aria-label={`Open the resource collection for ${roleTitle} week ${week.number}: ${week.title}`}
       >
         Access Resources
@@ -147,6 +166,11 @@ const EnterpriseWiki: React.FC = () => {
   const codeExamplesAnchorId = createAnchorId('code-examples');
   const liveDemosAnchorId = createAnchorId('live-demos');
   const bestPracticesAnchorId = createAnchorId('best-practices');
+  const wikiGuideHref = createWikiLink(guideAnchorId);
+  const wikiResourcesHref = createWikiLink(resourcesAnchorId);
+  const codeExamplesHref = createWikiLink(codeExamplesAnchorId);
+  const liveDemosHref = createWikiLink(liveDemosAnchorId);
+  const bestPracticesHref = createWikiLink(bestPracticesAnchorId);
 
   // Protect against rounding overshooting 100% when the last week is active.
   const progressPercentage = useMemo(
@@ -301,14 +325,18 @@ const EnterpriseWiki: React.FC = () => {
                 guideAnchorId={guideAnchorId}
                 resourcesAnchorId={resourcesAnchorId}
                 roleTitle={currentRole.title}
+                wikiGuideHref={wikiGuideHref}
+                wikiResourcesHref={wikiResourcesHref}
               />
             )}
 
             <div className="grid md:grid-cols-3 gap-4 mt-6">
               <a
-                href={`#${codeExamplesAnchorId}`}
+                href={codeExamplesHref}
                 id={codeExamplesAnchorId}
                 className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
+                target="_blank"
+                rel="noreferrer"
                 aria-label={`Browse code examples for ${currentRole.title} week ${activeWeek.number}`}
               >
                 <Code className="w-8 h-8 text-blue-500 mb-2" />
@@ -316,9 +344,11 @@ const EnterpriseWiki: React.FC = () => {
                 <p className="text-sm text-slate-400">Full implementation samples</p>
               </a>
               <a
-                href={`#${liveDemosAnchorId}`}
+                href={liveDemosHref}
                 id={liveDemosAnchorId}
                 className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
+                target="_blank"
+                rel="noreferrer"
                 aria-label={`Open live demos for ${currentRole.title} week ${activeWeek.number}`}
               >
                 <Activity className="w-8 h-8 text-green-500 mb-2" />
@@ -326,9 +356,11 @@ const EnterpriseWiki: React.FC = () => {
                 <p className="text-sm text-slate-400">Interactive tutorials</p>
               </a>
               <a
-                href={`#${bestPracticesAnchorId}`}
+                href={bestPracticesHref}
                 id={bestPracticesAnchorId}
                 className="bg-slate-800 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer block"
+                target="_blank"
+                rel="noreferrer"
                 aria-label={`Review best practices for ${currentRole.title} week ${activeWeek.number}`}
               >
                 <Shield className="w-8 h-8 text-purple-500 mb-2" />
