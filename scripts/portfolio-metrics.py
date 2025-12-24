@@ -325,6 +325,18 @@ class PortfolioMetrics:
         bar = "█" * filled + "░" * (length - filled)
         print(f"   [{bar}] {percentage}%")
 
+    def _generate_recommendations(self) -> list[str]:
+        """Generate portfolio improvement recommendations."""
+        github_stats = self.metrics.get("github", {})
+        total_commits = github_stats.get("total_commits", 0)
+
+        return [
+            (
+                f"Commit history shows {total_commits} total commits; "
+                "maintain frequent, descriptive commits to preserve traceability."
+            )
+        ]
+
     def save_metrics(self, output_file="portfolio-metrics.json"):
         """Save metrics to JSON file"""
         output_path = self.base_dir / output_file
