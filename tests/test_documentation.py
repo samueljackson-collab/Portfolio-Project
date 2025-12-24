@@ -145,8 +145,10 @@ class TestADRDocuments:
                 has_negative = any(word in consequences for word in 
                     ['negative', 'cost', 'disadvantage', 'trade-off', 'tradeoff', 'overhead'])
                 
-                assert has_positive or has_negative, \
-                    f"ADR {adr_file.name} Consequences should discuss impacts"
+                assert has_positive, \
+                    f"ADR {adr_file.name} Consequences should include benefits"
+                assert has_negative, \
+                    f"ADR {adr_file.name} Consequences should include downsides"
 
 
 class TestRunbookDocuments:
