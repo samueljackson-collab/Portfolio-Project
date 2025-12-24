@@ -48,7 +48,7 @@
 ### VLAN & Subnet Summary
 | VLAN | Name | Subnet | Gateway | DHCP Pool | DNS | SSID/Port Profile |
 |------|------|--------|---------|-----------|-----|-------------------|
-| 1 | Management | 192.168.1.0/24 | 192.168.1.1 | None (static) | 192.168.10.2 / 1.1.1.1 | Trunk native |
+| 1 | Management | 192.168.1.0/24 | 192.168.1.1 | None (static) | 1.1.1.1 / 8.8.8.8 | Trunk native |
 | 10 | Trusted | 192.168.10.0/24 | 192.168.10.1 | 192.168.10.100-200 | 192.168.10.2 | `HL-Trusted` / Access-Trusted |
 | 50 | IoT | 192.168.50.0/24 | 192.168.50.1 | 192.168.50.100-200 | 1.1.1.1 / 8.8.8.8 | `HL-IoT` / Access-IoT |
 | 99 | Guest | 192.168.99.0/24 | 192.168.99.1 | 192.168.99.100-200 | 1.1.1.1 / 8.8.8.8 | `HL-Guest` / Access-Guest |
