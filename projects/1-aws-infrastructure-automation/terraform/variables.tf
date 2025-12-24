@@ -40,6 +40,42 @@ variable "database_subnet_cidrs" {
   default     = ["10.0.201.0/24", "10.0.202.0/24", "10.0.203.0/24"]
 }
 
+variable "web_instance_type" {
+  description = "Instance type for the web Auto Scaling Group."
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "web_min_size" {
+  description = "Minimum number of instances in the web Auto Scaling Group."
+  type        = number
+  default     = 2
+}
+
+variable "web_max_size" {
+  description = "Maximum number of instances in the web Auto Scaling Group."
+  type        = number
+  default     = 6
+}
+
+variable "web_desired_capacity" {
+  description = "Desired capacity for the web Auto Scaling Group."
+  type        = number
+  default     = 3
+}
+
+variable "asset_bucket_name" {
+  description = "Name of the S3 bucket used for static assets."
+  type        = string
+  default     = "portfolio-static-assets-example"
+}
+
+variable "cloudfront_price_class" {
+  description = "CloudFront price class to control edge location coverage."
+  type        = string
+  default     = "PriceClass_200"
+}
+
 variable "db_username" {
   description = "Master username for the PostgreSQL database."
   type        = string

@@ -8,7 +8,8 @@ Production operations runbook for Project 1 AWS Infrastructure Automation platfo
 - Multi-AZ VPC with public, private, and database subnets
 - Amazon EKS (Elastic Kubernetes Service) cluster with managed node groups
 - Amazon RDS PostgreSQL with Multi-AZ deployment
-- Auto Scaling groups for EKS worker nodes
+- Auto Scaling groups for EKS worker nodes and standalone web tier behind an Application Load Balancer
+- S3 bucket for static assets fronted by CloudFront distribution
 - CloudWatch monitoring and alerting
 - Infrastructure-as-Code (Terraform, AWS CDK, Pulumi)
 
@@ -196,6 +197,45 @@ aws eks update-nodegroup-version \
   --cluster-name production-eks-cluster \
   --nodegroup-name default-node-group
 ```
+
+### Web Tier (ALB + Auto Scaling Group)
+
+#### Check ALB and Target Health
+```bash
+# List ALBs
+aws elbv2 describe-load-balancers \
+  --names portfolio-alb-production \
+  --query 'LoadBalancers[*].DNSName'
+
+# Target group health
+aws elbv2 describe-target-health \
+  --target-group-arn $(terraform output -raw alb_target_group_arn)
+```
+
+#### Inspect Web Auto Scaling Group
+```bash
+WEB_ASG=$(terraform output -raw web_autoscaling_group_name)
+aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names "$WEB_ASG" \
+  --query 'AutoScalingGroups[0].{Desired:DesiredCapacity,InService:Instances[*].LifecycleState}'
+
+# Scale out/in
+aws autoscaling update-auto-scaling-group \
+  --auto-scaling-group-name "$WEB_ASG" \
+  --desired-capacity 4
+```
+
+### S3 + CloudFront Static Delivery
+```bash
+# Upload static asset
+aws s3 cp ./assets/index.html s3://$(terraform output -raw asset_bucket_name)/index.html
+
+# Invalidate cache for updated assets
+aws cloudfront create-invalidation \
+  --distribution-id $(terraform output -raw cloudfront_distribution_id) \
+  --paths "/index.html"
+```
+
 
 ### RDS Database Management
 

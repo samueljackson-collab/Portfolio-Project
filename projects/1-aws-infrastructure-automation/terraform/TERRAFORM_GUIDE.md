@@ -6,6 +6,8 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 - VPC with public/private subnets across multiple availability zones
 - EKS (Elastic Kubernetes Service) cluster with managed node groups
 - RDS PostgreSQL database with automated backups
+- Application Load Balancer with Auto Scaling web tier
+- S3 bucket for static assets served through CloudFront
 - NAT gateways for private subnet internet access
 - Security groups and network ACLs
 
@@ -71,17 +73,33 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 - **Performance Insights** enabled
 - **Encryption at rest** enabled by default
 
+### Web Tier (ALB + Auto Scaling)
+- **Application Load Balancer** exposed on port 80
+- **Target group** with health checks on `/`
+- **Launch template** bootstraps NGINX landing page
+- **Auto Scaling Group** across private subnets (min 2 / desired 3 / max 6)
+- **Security groups** restricting web traffic to ALB ingress only
+
+### Static Assets + CDN
+- **S3 bucket** with versioning, SSE, and public access blocks
+- **CloudFront distribution** with S3 default origin and ALB `/api/*` behavior
+- **Origin Access Identity (OAI)** for least-privilege S3 read access
+
 ## Input Variables
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|----------|
-| `region` | AWS region to deploy resources | string | `us-east-1` | no |
-| `environment` | Environment name (dev/staging/production) | string | n/a | yes |
+| `region` | AWS region to deploy resources | string | `us-west-2` | no |
+| `environment` | Environment name (dev/staging/production) | string | `dev` | no |
 | `vpc_cidr` | CIDR block for VPC | string | `10.0.0.0/16` | no |
-| `availability_zones` | List of availability zones | list(string) | `["us-east-1a", "us-east-1b"]` | no |
-| `private_subnet_cidrs` | CIDR blocks for private subnets | list(string) | `["10.0.1.0/24", "10.0.2.0/24"]` | no |
-| `public_subnet_cidrs` | CIDR blocks for public subnets | list(string) | `["10.0.101.0/24", "10.0.102.0/24"]` | no |
-| `database_subnet_cidrs` | CIDR blocks for database subnets | list(string) | `["10.0.201.0/24", "10.0.202.0/24"]` | no |
+| `availability_zones` | List of availability zones | list(string) | `["us-west-2a", "us-west-2b", "us-west-2c"]` | no |
+| `private_subnet_cidrs` | CIDR blocks for private subnets | list(string) | `["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]` | no |
+| `public_subnet_cidrs` | CIDR blocks for public subnets | list(string) | `["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]` | no |
+| `database_subnet_cidrs` | CIDR blocks for database subnets | list(string) | `["10.0.201.0/24", "10.0.202.0/24", "10.0.203.0/24"]` | no |
+| `web_instance_type` | Instance type for web ASG | string | `t3.micro` | no |
+| `web_min_size` / `web_desired_capacity` / `web_max_size` | Web Auto Scaling Group sizes | number | `2 / 3 / 6` | no |
+| `asset_bucket_name` | S3 bucket for static assets | string | `portfolio-static-assets-example` | yes (unique) |
+| `cloudfront_price_class` | CloudFront edge coverage | string | `PriceClass_200` | no |
 | `db_username` | Master username for RDS | string | n/a | yes |
 | `db_password` | Master password for RDS | string | n/a | yes |
 
@@ -90,14 +108,14 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 | Name | Description |
 |------|-------------|
 | `vpc_id` | ID of the created VPC |
-| `private_subnet_ids` | IDs of private subnets |
-| `public_subnet_ids` | IDs of public subnets |
-| `database_subnet_ids` | IDs of database subnets |
-| `eks_cluster_endpoint` | Endpoint URL for EKS cluster |
+| `private_subnets` | IDs of private subnets |
 | `eks_cluster_name` | Name of the EKS cluster |
-| `eks_cluster_security_group_id` | Security group ID for EKS cluster |
 | `rds_endpoint` | Connection endpoint for RDS instance |
-| `rds_instance_id` | ID of the RDS instance |
+| `alb_dns_name` | Public DNS name of the Application Load Balancer |
+| `alb_target_group_arn` | Target group ARN backing the ALB |
+| `web_autoscaling_group_name` | Name of the web Auto Scaling Group |
+| `asset_bucket_name` / `asset_bucket_arn` | Static asset S3 bucket identifiers |
+| `cloudfront_domain_name` / `cloudfront_distribution_id` | CloudFront endpoint and distribution ID |
 
 ## Usage
 

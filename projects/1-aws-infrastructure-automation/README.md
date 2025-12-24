@@ -6,6 +6,7 @@ This project provisions a production-ready AWS environment with multiple impleme
 - Launch a multi-AZ network foundation with private, public, and database subnets.
 - Provide a managed Kubernetes control plane, managed worker nodes, and autoscaling policies.
 - Supply a resilient PostgreSQL database tier with routine backups and monitoring toggles.
+- Deliver an internet-facing Application Load Balancer with Auto Scaling web tier plus CloudFront/S3 edge delivery for static assets.
 - Offer interchangeable infrastructure definitions so the same outcome can be reached with different toolchains.
 
 ## Contents
@@ -57,4 +58,3 @@ Write Terraform code to set up CloudWatch alarms for EC2 CPU utilization, RDS co
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-
