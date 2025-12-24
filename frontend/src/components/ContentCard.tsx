@@ -31,7 +31,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   const statusClasses = content.is_published
     ? 'bg-emerald-500/15 text-emerald-100 border-emerald-500/30'
     : 'bg-amber-500/15 text-amber-100 border-amber-500/30'
-
+  const statusDotClass = content.is_published ? 'bg-emerald-300' : 'bg-amber-300'
   const statusLabel = content.is_published ? 'Published' : 'Draft'
 
   return (
