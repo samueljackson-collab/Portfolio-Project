@@ -184,7 +184,7 @@ PoE device offline?
 ### Resolutions
 - Reduce load: disable PoE on unused ports; stagger camera power-up to avoid inrush trips.
 - If budget tight, move high-draw device to injector or secondary switch.
-- Replace suspect cable with Cat6; ensure AP ports configured for PoE+.
+- Replace suspect cable with Cat6a; ensure AP ports configured for PoE+.
 - Re-provision device in UniFi after restoring power to clear “Adopting” loops.
 
 ### Verification
