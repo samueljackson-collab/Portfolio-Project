@@ -25,7 +25,7 @@
   - AP1: Ceiling centrally located; PoE from Port 1; SSIDs mapped to VLANs (LAN→20, Guest→40, Cameras→50).  
   - AP2: Living room; PoE from Port 2; identical SSID/VLAN mappings; Ethernet passthrough disabled.
 - **Endpoint Groups by VLAN**  
-  - **VLAN 10 – Infrastructure (192.168.10.0/24)**: UDMP, switch mgmt `192.168.10.2`, hypervisor management `192.168.10.20`, UPS `192.168.10.30`.  
+  - **VLAN 10 – Infrastructure (192.168.10.0/24)**: UDMP (`192.168.10.1`), switch mgmt `192.168.10.2`, hypervisor management `192.168.10.20`, UPS `192.168.10.30`.  
   - **VLAN 20 – Users (192.168.20.0/24)**: laptops, desktops, printer.  
   - **VLAN 30 – Servers/Storage (192.168.30.0/24)**: NAS, VMs, media cabinet devices.  
   - **VLAN 40 – IoT/Guest (192.168.40.0/24)**: IoT hub, smart devices, guest Wi‑Fi clients.  
