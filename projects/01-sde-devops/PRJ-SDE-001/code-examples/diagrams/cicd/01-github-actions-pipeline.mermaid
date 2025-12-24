@@ -1,0 +1,198 @@
+```mermaid
+graph TB
+    START[Push to main /<br/>Create PR /<br/>Publish Release] --> TRIGGER{Event Type}
+
+    TRIGGER -->|All Events| STAGE1[Stage 1: Code Quality & Security]
+
+    subgraph "Stage 1: Code Quality & Security - 5 min"
+        STAGE1 --> S1_CHECKOUT[Checkout Code]
+        S1_CHECKOUT --> S1_NODE[Setup Node.js 20.x]
+        S1_NODE --> S1_DEPS[npm ci]
+        S1_DEPS --> S1_LINT[ESLint]
+        S1_LINT --> S1_FORMAT[Prettier Check]
+        S1_FORMAT --> S1_TYPE[TypeScript Check]
+        S1_TYPE --> S1_AUDIT[npm audit]
+        S1_AUDIT --> S1_SEMGREP[Semgrep SAST]
+        S1_SEMGREP --> S1_SNYK[Snyk Scan]
+    end
+
+    S1_SNYK --> STAGE2A[Stage 2: Unit Tests]
+    S1_SNYK --> STAGE2B[Stage 3: Integration Tests]
+
+    subgraph "Stage 2: Unit Tests - 8 min"
+        STAGE2A --> S2_MATRIX{Node.js Matrix}
+        S2_MATRIX -->|18.x| S2_N18[Unit Tests Node 18]
+        S2_MATRIX -->|20.x| S2_N20[Unit Tests Node 20]
+        S2_N18 --> S2_COV18[Coverage Upload]
+        S2_N20 --> S2_COV20[Coverage Upload]
+        S2_COV18 --> S2_SONAR[SonarCloud Scan]
+        S2_COV20 --> S2_SONAR
+    end
+
+    subgraph "Stage 3: Integration Tests - 6 min"
+        STAGE2B --> S3_SERVICES[Start PostgreSQL<br/>& Redis Services]
+        S3_SERVICES --> S3_MIGRATE[Run Migrations]
+        S3_MIGRATE --> S3_TESTS[Integration Tests]
+    end
+
+    S2_SONAR --> STAGE4[Stage 4: E2E Tests]
+    S3_TESTS --> STAGE4
+
+    subgraph "Stage 4: E2E Tests - 10 min"
+        STAGE4 --> S4_PLAYWRIGHT[Install Playwright]
+        S4_PLAYWRIGHT --> S4_BUILD[Build Application]
+        S4_BUILD --> S4_E2E[Run E2E Tests]
+        S4_E2E --> S4_REPORT[Upload Report]
+    end
+
+    S4_REPORT --> CHECK_EVENT{Event Type?}
+
+    CHECK_EVENT -->|Pull Request| END_PR[End Pipeline]
+    CHECK_EVENT -->|Push/Release| STAGE5[Stage 5: Build & Push]
+
+    subgraph "Stage 5: Build & Push Docker - 12 min"
+        STAGE5 --> S5_BUILDX[Setup Docker Buildx]
+        S5_BUILDX --> S5_LOGIN[Login to GHCR]
+        S5_LOGIN --> S5_META[Extract Metadata]
+        S5_META --> S5_BUILD[Build Multi-Arch Image<br/>amd64 + arm64]
+        S5_BUILD --> S5_PUSH[Push to Registry]
+        S5_PUSH --> S5_TRIVY[Trivy Security Scan]
+        S5_TRIVY --> S5_SBOM[Generate SBOM]
+        S5_SBOM --> S5_UPLOAD[Upload Artifacts]
+    end
+
+    S5_UPLOAD --> CHECK_BRANCH{Branch?}
+
+    CHECK_BRANCH -->|main| STAGE6[Stage 6: Deploy Staging]
+    CHECK_BRANCH -->|release| STAGE8[Stage 8: Deploy Production]
+
+    subgraph "Stage 6: Deploy to Staging - 8 min"
+        STAGE6 --> S6_AWS[Configure AWS]
+        S6_AWS --> S6_KUBE[Update kubeconfig]
+        S6_KUBE --> S6_HELM[Helm Upgrade]
+        S6_HELM --> S6_VERIFY[Verify Deployment]
+        S6_VERIFY --> S6_SMOKE[Smoke Tests]
+        S6_SMOKE --> S6_SLACK[Slack Notification]
+    end
+
+    S6_SLACK --> STAGE7[Stage 7: Performance Test]
+
+    subgraph "Stage 7: Performance Testing - 15 min"
+        STAGE7 --> S7_K6[Setup K6]
+        S7_K6 --> S7_RUN[Run Load Test<br/>0 → 200 users]
+        S7_RUN --> S7_RESULTS[Upload Results]
+    end
+
+    subgraph "Stage 8: Deploy to Production - 20 min"
+        STAGE8 --> S8_AWS[Configure AWS Prod]
+        S8_AWS --> S8_KUBE[Update kubeconfig Prod]
+        S8_KUBE --> S8_BACKUP[Backup Deployment]
+        S8_BACKUP --> S8_CANARY[Deploy Canary 10%]
+        S8_CANARY --> S8_MONITOR[Monitor 5 Minutes<br/>Error Rate < 1%]
+        S8_MONITOR --> S8_CHECK{Metrics OK?}
+        S8_CHECK -->|Yes| S8_PROMOTE[Promote to 100%]
+        S8_CHECK -->|No| S8_ROLLBACK[Automatic Rollback]
+        S8_PROMOTE --> S8_VERIFY[Verify Production]
+        S8_VERIFY --> S8_SMOKE_PROD[Production Smoke Tests]
+        S8_SMOKE_PROD --> S8_TRACK[Update Deployment Tracker]
+        S8_TRACK --> S8_NOTIFY[Notify Team]
+        S8_ROLLBACK --> S8_ALERT[Alert Team]
+    end
+
+    S7_RESULTS --> END_STAGING[End - Staging Deployed]
+    S8_NOTIFY --> END_PROD[End - Production Deployed]
+    S8_ALERT --> END_FAIL[End - Deployment Failed]
+
+    style STAGE1 fill:#ffd1d1
+    style STAGE2A fill:#fff4d1
+    style STAGE2B fill:#fff4d1
+    style STAGE4 fill:#d1e7ff
+    style STAGE5 fill:#d1ffd7
+    style STAGE6 fill:#ffd1f5
+    style STAGE7 fill:#e8d1ff
+    style STAGE8 fill:#ff9999
+    style S8_ROLLBACK fill:#ff0000,color:#ffffff
+    style S8_PROMOTE fill:#00ff00
+```
+
+## GitHub Actions Pipeline - 8 Stages
+
+### Pipeline Triggers:
+- **Push to main**: Triggers stages 1-7 (Deploy to Staging)
+- **Pull Request**: Triggers stages 1-4 (Testing only)
+- **Release**: Triggers all stages 1-8 (Deploy to Production)
+
+### Stage Details:
+
+#### Stage 1: Code Quality & Security (~5 min)
+- ESLint, Prettier, TypeScript checks
+- npm audit for dependency vulnerabilities
+- Semgrep for SAST (Static Application Security Testing)
+- Snyk for dependency scanning
+- **Fail Fast**: Pipeline stops if quality checks fail
+
+#### Stage 2: Unit Tests (~8 min)
+- **Matrix Strategy**: Tests on Node.js 18.x and 20.x
+- Code coverage collection
+- Upload to Codecov
+- SonarCloud analysis
+- **Target**: >80% code coverage
+
+#### Stage 3: Integration Tests (~6 min)
+- **Services**: PostgreSQL 15 + Redis 7
+- Database migrations
+- Service integration validation
+- **Environment**: Isolated test databases
+
+#### Stage 4: E2E Tests (~10 min)
+- Playwright browser testing
+- Full user journey validation
+- Screenshot/video artifacts
+- **Browsers**: Chromium, Firefox, WebKit
+
+#### Stage 5: Build & Push (~12 min)
+- **Multi-architecture**: linux/amd64 + linux/arm64
+- Docker layer caching (GitHub Actions cache)
+- Push to GitHub Container Registry
+- Trivy vulnerability scanning
+- SBOM (Software Bill of Materials) generation
+
+#### Stage 6: Deploy to Staging (~8 min)
+- AWS EKS deployment
+- Helm chart installation
+- Rolling update strategy
+- Smoke test execution
+- Slack notification
+
+#### Stage 7: Performance Testing (~15 min)
+- K6 load testing
+- Ramp-up: 0 → 50 → 100 → 200 users
+- **Thresholds**: p95 < 500ms, p99 < 1s, errors < 1%
+- Results artifact upload
+
+#### Stage 8: Deploy to Production (~20 min)
+- **Canary Deployment**: 10% traffic
+- **Monitoring**: 5-minute observation
+- **Metrics Check**: Error rate < 1%
+- **Automatic Rollback**: If metrics degrade
+- **Full Promotion**: If metrics are healthy
+- Deployment tracking
+- Team notification
+
+### Total Pipeline Duration:
+- **PR Pipeline**: 29 minutes (Stages 1-4)
+- **Staging Pipeline**: 64 minutes (Stages 1-7)
+- **Production Pipeline**: 84 minutes (Stages 1-8)
+
+### Success Criteria:
+- All tests pass
+- Code coverage > 80%
+- No high/critical vulnerabilities
+- Performance thresholds met
+- Canary deployment metrics healthy
+
+### Failure Handling:
+- **Stage 1-4**: Fail fast, block merge
+- **Stage 5**: Alert team, no deployment
+- **Stage 6**: Rollback staging, alert team
+- **Stage 8**: Automatic rollback, PagerDuty alert

@@ -1,408 +1,50 @@
-# Grafana Dashboards Provisioning Configuration
-# =====================================================
-# Version: Grafana 10.2.0
-# Purpose: Auto-import dashboards from JSON files on startup
+# Grafana Dashboards - Automated Provisioning
+# ==========================================
 # Last Updated: November 6, 2025
-#
-# Configuration Philosophy:
-# ------------------------
-# This configuration automatically provisions dashboards in Grafana,
-# enabling dashboards-as-code and version control. Dashboards are
-# imported from JSON files and organized into folders.
-#
-# Key Design Decisions:
-# ---------------------
-# 1. Folder Organization:
-#    - Infrastructure: Proxmox, network, storage, OS metrics
-#    - Applications: Immich, Wiki.js, Home Assistant
-#    - Databases: PostgreSQL, Redis
-#    - Monitoring: Prometheus, Loki, Grafana itself
-#    - Security: Authentication, firewall, IPS
-#
-# 2. Dashboard Sources:
-#    - Local JSON files (custom dashboards)
-#    - Grafana.com imports (community dashboards)
-#    - Generated from Grafonnet (advanced)
-#
-# 3. Update Strategy:
-#    - updateIntervalSeconds: 30 (check for changes every 30s)
-#    - allowUiUpdates: false (prevent UI modifications)
-#    - Ensures git remains source of truth
-#
-# 4. Dashboard Naming:
-#    - Descriptive names (e.g., "Node Exporter Full")
-#    - Version numbers for tracking (e.g., "v1.5.0")
-#    - Tags for categorization (e.g., ["linux", "prometheus"])
-#
-# =====================================================
 
 apiVersion: 1
 
 providers:
-
-  # ===================================================
-  # PROVIDER 1: Infrastructure Dashboards
-  # ===================================================
-  # System-level monitoring (CPU, RAM, disk, network)
-  - name: 'Infrastructure'
+  # Default dashboards (root folder)
+  - name: 'default'
     orgId: 1
-    folder: 'Infrastructure'
+    folder: ''
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+  
+  # Infrastructure dashboards
+  - name: 'infrastructure'
+    orgId: 1
+    folder: 'Infrastructure'
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 60
     allowUiUpdates: false
     options:
-      path: /etc/grafana/provisioning/dashboards/infrastructure
-      foldersFromFilesStructure: false
-
-    # Dashboards to provision:
-    # - node-exporter-full.json (Dashboard ID: 1860)
-    # - proxmox-cluster.json (custom)
-    # - network-overview.json (custom)
-    # - storage-capacity.json (custom)
-    # - truenas-monitoring.json (custom)
-
-  # ===================================================
-  # PROVIDER 2: Application Dashboards
-  # ===================================================
-  # Application-specific metrics (Immich, Wiki.js, etc.)
-  - name: 'Applications'
+      path: /var/lib/grafana/dashboards/infrastructure
+  
+  # Application dashboards
+  - name: 'application'
     orgId: 1
     folder: 'Applications'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
-    allowUiUpdates: false
+    allowUiUpdates: true
     options:
-      path: /etc/grafana/provisioning/dashboards/applications
-      foldersFromFilesStructure: false
-
-    # Dashboards to provision:
-    # - immich-monitoring.json (custom)
-    # - wikijs-monitoring.json (custom)
-    # - homeassistant-monitoring.json (custom)
-    # - nginx-proxy-manager.json (Dashboard ID: 12708)
-    # - docker-container-metrics.json (Dashboard ID: 14282)
-
-  # ===================================================
-  # PROVIDER 3: Database Dashboards
-  # ===================================================
-  # Database performance and health monitoring
-  - name: 'Databases'
+      path: /var/lib/grafana/dashboards/application
+  
+  # Community dashboards
+  - name: 'community'
     orgId: 1
-    folder: 'Databases'
+    folder: 'Community'
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 30
-    allowUiUpdates: false
+    updateIntervalSeconds: 0
+    allowUiUpdates: true
     options:
-      path: /etc/grafana/provisioning/dashboards/databases
-      foldersFromFilesStructure: false
-
-    # Dashboards to provision:
-    # - postgresql-database.json (Dashboard ID: 9628)
-    # - redis-monitoring.json (Dashboard ID: 11835)
-
-  # ===================================================
-  # PROVIDER 4: Monitoring System Dashboards
-  # ===================================================
-  # Meta-monitoring (monitor the monitoring system)
-  - name: 'Monitoring'
-    orgId: 1
-    folder: 'Monitoring'
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 30
-    allowUiUpdates: false
-    options:
-      path: /etc/grafana/provisioning/dashboards/monitoring
-      foldersFromFilesStructure: false
-
-    # Dashboards to provision:
-    # - prometheus-stats.json (Dashboard ID: 3662)
-    # - loki-monitoring.json (Dashboard ID: 13639)
-    # - grafana-monitoring.json (Dashboard ID: 3590)
-    # - alertmanager-overview.json (Dashboard ID: 9578)
-
-  # ===================================================
-  # PROVIDER 5: Security Dashboards
-  # ===================================================
-  # Security events, failed logins, firewall logs
-  - name: 'Security'
-    orgId: 1
-    folder: 'Security'
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 30
-    allowUiUpdates: false
-    options:
-      path: /etc/grafana/provisioning/dashboards/security
-      foldersFromFilesStructure: false
-
-    # Dashboards to provision:
-    # - authentication-logs.json (custom)
-    # - pfsense-firewall.json (custom)
-    # - suricata-ips.json (custom)
-    # - failed-logins.json (custom)
-
-  # ===================================================
-  # PROVIDER 6: Business Metrics (Optional)
-  # ===================================================
-  # High-level business/operational KPIs
-  - name: 'Business'
-    orgId: 1
-    folder: 'Business'
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 30
-    allowUiUpdates: true  # Allow UI updates for business dashboards
-    options:
-      path: /etc/grafana/provisioning/dashboards/business
-      foldersFromFilesStructure: false
-
-    # Dashboards to provision:
-    # - homelab-overview.json (custom)
-    # - cost-analysis.json (custom)
-    # - uptime-sla.json (custom)
-
-  # ===================================================
-  # PROVIDER 7: Custom Dashboards (User-Created)
-  # ===================================================
-  # Ad-hoc dashboards created via UI
-  - name: 'Custom'
-    orgId: 1
-    folder: 'Custom'
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 30
-    allowUiUpdates: true  # Allow UI modifications
-    options:
-      path: /etc/grafana/provisioning/dashboards/custom
-      foldersFromFilesStructure: true  # Create folders from directory structure
-
-# =====================================================
-# DASHBOARD JSON FILE STRUCTURE
-# =====================================================
-#
-# Directory structure:
-# /etc/grafana/provisioning/dashboards/
-# ├── infrastructure/
-# │   ├── node-exporter-full.json
-# │   ├── proxmox-cluster.json
-# │   └── network-overview.json
-# ├── applications/
-# │   ├── immich-monitoring.json
-# │   ├── wikijs-monitoring.json
-# │   └── homeassistant-monitoring.json
-# ├── databases/
-# │   ├── postgresql-database.json
-# │   └── redis-monitoring.json
-# ├── monitoring/
-# │   ├── prometheus-stats.json
-# │   ├── loki-monitoring.json
-# │   └── grafana-monitoring.json
-# ├── security/
-# │   ├── authentication-logs.json
-# │   └── pfsense-firewall.json
-# ├── business/
-# │   └── homelab-overview.json
-# └── custom/
-#     └── (user-created dashboards)
-#
-# Each JSON file is a complete Grafana dashboard export.
-
-# =====================================================
-# RECOMMENDED COMMUNITY DASHBOARDS
-# =====================================================
-#
-# To import from Grafana.com:
-# 1. Download JSON: curl https://grafana.com/api/dashboards/1860/revisions/latest/download -o node-exporter-full.json
-# 2. Place in appropriate directory
-# 3. Restart Grafana or wait for auto-import
-#
-# Top Recommended Dashboards (by ID):
-#
-# Infrastructure:
-# - 1860: Node Exporter Full (comprehensive system metrics)
-# - 11074: Node Exporter for Prometheus Dashboard (alternative)
-# - 7362: Proxmox VE Cluster Monitor
-# - 13770: Network UPS Tools (NUT) Dashboard
-#
-# Applications:
-# - 14282: Docker Container & Host Metrics
-# - 12708: Nginx Proxy Manager Dashboard
-# - 10991: Home Assistant Dashboard
-#
-# Databases:
-# - 9628: PostgreSQL Database (official)
-# - 11835: Redis Dashboard for Prometheus
-# - 7362: MySQL Overview
-#
-# Monitoring:
-# - 3662: Prometheus 2.0 Stats
-# - 13639: Loki & Promtail
-# - 3590: Grafana Metrics
-# - 9578: Alertmanager
-#
-# Security:
-# - 11274: pfSense Firewall
-# - 12325: Suricata IPS/IDS
-# - 10242: Authentication & Authorization Logs
-#
-# Logs:
-# - 13639: Logs / App / Loki
-# - 15141: Kubernetes Logs (Loki)
-# - 12611: Syslog Dashboard
-#
-# Business:
-# - 13665: SLA & Uptime Dashboard
-# - 14314: Service Health Overview
-#
-# =====================================================
-
-# =====================================================
-# OPERATIONAL NOTES
-# =====================================================
-#
-# Provisioning Behavior:
-# - Dashboards imported on Grafana startup
-# - Changes detected every updateIntervalSeconds
-# - allowUiUpdates: false = read-only dashboards
-# - allowUiUpdates: true = can be modified via UI
-#
-# Creating Custom Dashboards:
-# 1. Create dashboard in Grafana UI
-# 2. Export as JSON (Share → Export → Save to file)
-# 3. Place JSON in appropriate provisioning directory
-# 4. Wait 30 seconds or restart Grafana
-#
-# Exporting Existing Dashboards:
-# Method 1 (UI): Dashboard Settings → JSON Model → Copy
-# Method 2 (API):
-# curl -H "Authorization: Bearer ${GRAFANA_API_KEY}" \
-#   http://localhost:3000/api/dashboards/uid/dashboard_uid | jq .dashboard > dashboard.json
-#
-# Importing from Grafana.com:
-# Method 1 (UI): + → Import → Enter Dashboard ID
-# Method 2 (CLI):
-# curl https://grafana.com/api/dashboards/1860/revisions/latest/download -o node-exporter.json
-#
-# Updating Dashboards:
-# 1. Edit JSON file
-# 2. Increment dashboard version number
-# 3. Save file
-# 4. Grafana auto-imports within 30 seconds
-#
-# Dashboard Versioning:
-# - Grafana stores version history
-# - View: Dashboard Settings → Versions
-# - Restore previous version if needed
-# - Git provides additional version control
-#
-# Troubleshooting:
-# - Dashboard not appearing: Check file permissions, JSON syntax
-# - Datasource not found: Verify datasource name matches provisioned name
-# - Variables not working: Check variable query syntax
-# - Panels empty: Verify Prometheus/Loki have data
-#
-# Dashboard Best Practices:
-# 1. Use template variables for flexibility (instance, job, etc.)
-# 2. Add panel descriptions for documentation
-# 3. Organize panels into logical rows
-# 4. Include links to runbooks and documentation
-# 5. Set appropriate time ranges (Last 1 hour, 6 hours, 24 hours)
-# 6. Use consistent color schemes
-# 7. Add alerts for critical metrics
-# 8. Test with different time ranges
-#
-# Template Variables:
-# Common variables to include:
-# - datasource: Select datasource (Prometheus, Loki)
-# - instance: Filter by specific host
-# - job: Filter by job name
-# - interval: Auto-adjust resolution based on time range
-#
-# Example variable query (Prometheus):
-# label_values(up, instance)
-# label_values(node_uname_info{job="node_exporter"}, instance)
-#
-# Dashboard Annotations:
-# - Show deployment events on graphs
-# - Display alert firing times
-# - Mark maintenance windows
-#
-# Example annotation query (Prometheus):
-# ALERTS{alertstate="firing"}
-#
-# Grafana Provisioning Path:
-# Default: /etc/grafana/provisioning/dashboards/
-# Docker mount: -v ./dashboards:/etc/grafana/provisioning/dashboards:ro
-#
-# Docker Compose Example:
-# grafana:
-#   volumes:
-#     - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
-#     - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
-#
-# Folder Permissions:
-# The grafana user (UID 472) needs read access:
-# chown -R 472:472 ./grafana/provisioning/dashboards
-# chmod -R 755 ./grafana/provisioning/dashboards
-#
-# Dashboard JSON Structure:
-# Required fields:
-# - title: Dashboard name
-# - uid: Unique identifier (for links)
-# - panels: Array of panel objects
-# - templating: Variable definitions
-# - time: Default time range
-# - timezone: Default timezone
-# - version: Dashboard version number
-#
-# For more info: https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards
-#
-# =====================================================
-
-# =====================================================
-# QUICK START GUIDE
-# =====================================================
-#
-# 1. Download recommended community dashboards:
-#
-# mkdir -p dashboards/infrastructure dashboards/applications dashboards/databases
-#
-# # Node Exporter Full
-# curl -o dashboards/infrastructure/node-exporter-full.json \
-#   https://grafana.com/api/dashboards/1860/revisions/latest/download
-#
-# # PostgreSQL Database
-# curl -o dashboards/databases/postgresql.json \
-#   https://grafana.com/api/dashboards/9628/revisions/latest/download
-#
-# # Prometheus Stats
-# curl -o dashboards/monitoring/prometheus.json \
-#   https://grafana.com/api/dashboards/3662/revisions/latest/download
-#
-# # Docker Container Metrics
-# curl -o dashboards/applications/docker.json \
-#   https://grafana.com/api/dashboards/14282/revisions/latest/download
-#
-# 2. Update datasource references in JSON files:
-# sed -i 's/"datasource": "Prometheus"/"datasource": "${DS_PROMETHEUS}"/g' dashboards/**/*.json
-#
-# 3. Mount in docker-compose.yml:
-# volumes:
-#   - ./dashboards:/etc/grafana/provisioning/dashboards:ro
-#
-# 4. Start Grafana:
-# docker-compose up -d grafana
-#
-# 5. Access Grafana:
-# http://192.168.40.30:3000
-# Default login: admin / admin (change on first login)
-#
-# 6. Verify dashboards:
-# Navigate to Dashboards → Browse
-# Should see folders: Infrastructure, Applications, Databases, Monitoring
-#
-# =====================================================
+      path: /var/lib/grafana/dashboards/community

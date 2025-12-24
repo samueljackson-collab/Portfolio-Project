@@ -12,14 +12,25 @@ Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a revers
 
 ## Next Steps
 
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
+- Cross-check PBS job definitions with the latest backup report under `assets/configs/monitoring/pbs-backup-report.md`.
+- Rotate sanitized screenshots quarterly to reflect patch levels and storage utilization trends.
+- Expand observability rules as new services land on the cluster.
 
 ## Contact
 
 For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
 
 ---
-*Placeholder — Documentation pending*
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-baseline).
+- [x] Virtualization evidence checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
+
+---
+
+## Evidence Artifacts
+- **Backup & Observability Logs:** `assets/configs/monitoring/pbs-backup-report.md` and `observability-snapshots.md` document PBS, Prometheus, Grafana, and Loki excerpts.
+- **Service Mapping:** See `assets/configs/monitoring/observability-snapshots.md` for cluster-level health thresholds tied to FreeIPA, Pi-hole, and Nginx reverse proxy.
+
 # PRJ-HOME-002: Virtualization & Core Services
 
 **Status:** ✅ Completed  
@@ -221,6 +232,14 @@ Creates production-ready VM template (ID 9000) with:
 ### Disaster Recovery
 - [`disaster-recovery-plan.md`](assets/recovery/disaster-recovery-plan.md) - Comprehensive DR plan with RTO/RPO
 - [`recovery-procedures/`](assets/recovery/recovery-procedures/) - Step-by-step recovery guides
+
+### Demo & Visualizations
+- [`demo/home-assistant-dashboard.html`](demo/home-assistant-dashboard.html) - Interactive Home Assistant dashboard mockup
+  - Demonstrates smart home integration with homelab services
+  - Features: Climate control, lighting, security monitoring, energy tracking, media player, and service status
+  - Live React version available in portfolio frontend at `/home-assistant`
+- [`demo/wiki-infrastructure-overview.html`](demo/wiki-infrastructure-overview.html) - Wiki.js infrastructure documentation mockup
+- See [`demo/README.md`](demo/README.md) for detailed information about all demo files
 
 ## Skills Demonstrated
 

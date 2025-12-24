@@ -1,0 +1,160 @@
+"""
+Authentication and authorization utilities.
+
+This module provides:
+- Password hashing and verification using bcrypt
+- JWT token generation and validation
+- User authentication helpers
+- Token decoding with expiration handling
+
+Security Considerations:
+- Passwords are never stored in plain text
+- bcrypt automatically handles salt generation
+- JWT tokens expire after 30 minutes by default
+- Token signature prevents tampering
+"""
+
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from fastapi import HTTPException, status
+
+from app.config import settings
+
+
+# Password hashing context using bcrypt
+pwd_context = CryptContext(
+    schemes=["pbkdf2_sha256"],
+    deprecated="auto",
+    pbkdf2_sha256__default_rounds=200000
+)
+
+
+def hash_password(password: str) -> str:
+    """
+    Hash a plain text password using bcrypt.
+
+    bcrypt automatically generates a unique salt for each password,
+    so two users with the same password will have different hashes.
+
+    Args:
+        password: Plain text password from user input
+
+    Returns:
+        str: Hashed password safe for database storage
+    """
+    return pwd_context.hash(password)
+
+
+# Backwards-compatible alias --------------------------------------------------
+def get_password_hash(password: str) -> str:
+    """Compatibility wrapper around :func:`hash_password`."""
+
+    return hash_password(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verify a plain text password against a hashed password.
+
+    This is a constant-time comparison to prevent timing attacks.
+
+    Args:
+        plain_password: Password entered by user during login
+        hashed_password: Hashed password from database
+
+    Returns:
+        bool: True if password matches, False otherwise
+    """
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Create a JWT access token with expiration.
+
+    The token contains:
+    - sub: Subject (usually user ID)
+    - exp: Expiration timestamp
+    - iat: Issued at timestamp
+    - Any additional claims passed in data
+
+    Args:
+        data: Dictionary of claims to encode in token
+        expires_delta: Optional custom expiration time
+
+    Returns:
+        str: Encoded JWT token
+
+    Security Note:
+        The token is signed but NOT encrypted. Don't put sensitive
+        data like passwords or credit cards in the payload!
+    """
+    to_encode = data.copy()
+
+    # Calculate expiration time
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.access_token_expire_minutes
+        )
+
+    # Add standard claims
+    to_encode.update({
+        "exp": expire,
+        "iat": datetime.now(timezone.utc),
+    })
+
+    # Encode and sign the token
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.secret_key,
+        algorithm=settings.algorithm
+    )
+
+    return encoded_jwt
+
+
+def decode_access_token(token: str) -> dict:
+    """
+    Decode and validate a JWT token.
+
+    This function:
+    1. Verifies the signature matches
+    2. Checks the token hasn't expired
+    3. Returns the payload if valid
+
+    Args:
+        token: JWT token string from Authorization header
+
+    Returns:
+        dict: Decoded token payload
+
+    Raises:
+        HTTPException: If token is invalid or expired
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        # Decode token with signature verification
+        payload = jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[settings.algorithm]
+        )
+
+        # Extract subject (user identifier)
+        user_identifier: str = payload.get("sub")
+        if user_identifier is None:
+            raise credentials_exception
+
+        return payload
+
+    except JWTError as e:
+        raise credentials_exception from e

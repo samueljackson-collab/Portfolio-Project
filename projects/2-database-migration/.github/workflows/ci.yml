@@ -1,0 +1,167 @@
+name: Database Migration CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'projects/2-database-migration/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'projects/2-database-migration/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('projects/2-database-migration/requirements.txt') }}
+
+      - name: Install dependencies
+        working-directory: projects/2-database-migration
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run linting
+        working-directory: projects/2-database-migration
+        run: |
+          pip install flake8 black mypy
+          flake8 src/ tests/ --max-line-length=100
+          black --check src/ tests/
+
+      - name: Run type checking
+        working-directory: projects/2-database-migration
+        run: |
+          mypy src/ --ignore-missing-imports
+
+      - name: Run unit tests
+        working-directory: projects/2-database-migration
+        run: |
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: projects/2-database-migration/coverage.xml
+          flags: database-migration
+
+  build:
+    name: Build Container Image
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/database-migration
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: projects/2-database-migration
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+
+    services:
+      postgres-source:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: source_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      postgres-target:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: target_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5433:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        working-directory: projects/2-database-migration
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run integration tests
+        working-directory: projects/2-database-migration
+        env:
+          SOURCE_DB_HOST: localhost
+          SOURCE_DB_PORT: 5432
+          SOURCE_DB_USER: testuser
+          SOURCE_DB_PASSWORD: testpass
+          SOURCE_DB_NAME: source_db
+          TARGET_DB_HOST: localhost
+          TARGET_DB_PORT: 5433
+          TARGET_DB_USER: testuser
+          TARGET_DB_PASSWORD: testpass
+          TARGET_DB_NAME: target_db
+        run: |
+          pytest tests/ -v -m integration

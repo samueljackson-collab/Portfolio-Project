@@ -1,0 +1,72 @@
+{
+  "id": null,
+  "uid": "infrastructure-overview",
+  "title": "Infrastructure Overview",
+  "tags": ["portfolio", "infrastructure"],
+  "timezone": "",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "CPU Usage",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "avg(rate(node_cpu_seconds_total{mode!='idle'}[5m])) * 100",
+          "legendFormat": "CPU %"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory Usage",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+          "legendFormat": "Memory %"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "Disk Usage",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "100 - (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\",mountpoint='/'}/ node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\",mountpoint='/'}) * 100",
+          "legendFormat": "Disk %"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "type": "stat",
+      "title": "Prometheus Health",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "min(up{job=\"prometheus\"})",
+          "legendFormat": "Prometheus"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8}
+    },
+    {
+      "type": "stat",
+      "title": "Backend API Health",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "min(up{job=\"backend-api\"})",
+          "legendFormat": "Backend"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8}
+    }
+  ]
+}

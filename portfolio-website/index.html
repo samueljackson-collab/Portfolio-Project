@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Samuel Jackson - Enterprise Infrastructure & DevOps Portfolio showcasing 22+ production-grade projects">
+    <meta name="author" content="Samuel Jackson">
+    <title>Samuel Jackson - Enterprise Portfolio</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e293b;
+            --accent: #06b6d4;
+            --text: #334155;
+            --light: #f8fafc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 8rem 0 4rem;
+            margin-top: 4rem;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .btn {
+            display: inline-block;
+            background: white;
+            color: var(--primary);
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Stats Section */
+        .stats {
+            background: white;
+            padding: 2rem 0;
+            margin-top: -2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item p {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* Projects Grid */
+        .projects {
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--secondary);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .project-card h3 {
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .project-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .status-complete { background: #dcfce7; color: #166534; }
+        .status-progress { background: #fef9c3; color: #854d0e; }
+        .status-planned { background: #fee2e2; color: #991b1b; }
+
+        .project-links {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .project-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        /* Skills Section */
+        .skills {
+            background: var(--secondary);
+            color: white;
+            padding: 4rem 0;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .skill-category h3 {
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .skill-list {
+            list-style: none;
+        }
+
+        .skill-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .skill-list li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        /* Contact */
+        .contact {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .contact-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.125rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--secondary);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">Samuel Jackson</div>
+            <ul class="nav-links">
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="https://github.com/samueljackson-collab/Portfolio-Project" target="_blank">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Enterprise Infrastructure & DevOps Portfolio</h1>
+                <p>22+ production-grade projects showcasing cloud architecture, automation, and system design</p>
+                <a href="#projects" class="btn">Explore Projects</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>22+</h3>
+                    <p>Portfolio Projects</p>
+                </div>
+                <div class="stat-item">
+                    <h3>8</h3>
+                    <p>Completed Projects</p>
+                </div>
+                <div class="stat-item">
+                    <h3>6</h3>
+                    <p>In Progress</p>
+                </div>
+                <div class="stat-item">
+                    <h3>65%</h3>
+                    <p>Overall Completion</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects" class="projects">
+        <div class="container">
+            <h2 class="section-title">Featured Projects</h2>
+            <div class="projects-grid">
+                <div class="project-card">
+                    <span class="project-status status-complete">Complete</span>
+                    <h3>Homelab Infrastructure (PRJ-HOME-002)</h3>
+                    <p>Production-grade homelab with Proxmox, Docker, monitoring stack, and automated backups. Features Wiki.js, Home Assistant, and Immich behind reverse proxy with TLS.</p>
+                    <p><strong>Tech:</strong> Proxmox, Docker, Grafana, PostgreSQL, Nginx</p>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/06-homelab/PRJ-HOME-002">View Project →</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <span class="project-status status-progress">In Progress</span>
+                    <h3>AWS Terraform Platform (PRJ-CLOUD-001)</h3>
+                    <p>Infrastructure as Code platform for multi-environment AWS deployments with VPC, RDS, ALB, and auto-scaling groups.</p>
+                    <p><strong>Tech:</strong> Terraform, AWS, CloudFormation, GitHub Actions</p>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/1-aws-infrastructure-automation">View Project →</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <span class="project-status status-complete">Complete</span>
+                    <h3>Enterprise Observability Stack</h3>
+                    <p>Complete monitoring solution with Prometheus, Grafana, Loki, and Alertmanager for golden signals tracking and SLO monitoring.</p>
+                    <p><strong>Tech:</strong> Prometheus, Grafana, Loki, Alertmanager</p>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/23-advanced-monitoring">View Project →</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <span class="project-status status-progress">In Progress</span>
+                    <h3>Kubernetes CI/CD Pipeline</h3>
+                    <p>GitOps pipeline with ArgoCD, Helm, and progressive deployment strategies for cloud-native applications.</p>
+                    <p><strong>Tech:</strong> Kubernetes, ArgoCD, Helm, Istio</p>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/3-kubernetes-cicd">View Project →</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <span class="project-status status-complete">Complete</span>
+                    <h3>AstraDup - AI Video De-duplication</h3>
+                    <p>AI-powered video de-duplication system with perceptual hashing, ML-based scene detection, and automated processing pipelines.</p>
+                    <p><strong>Tech:</strong> Python, OpenCV, PyTorch, FastAPI</p>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/astradup-video-deduplication">View Project →</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <span class="project-status status-complete">Complete</span>
+                    <h3>Home Assistant Smart Home Dashboard</h3>
+                    <p>Interactive smart home automation platform with device control, energy monitoring, and custom integrations.</p>
+                    <p><strong>Tech:</strong> Home Assistant, YAML, Python, MQTT</p>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/HOME_ASSISTANT_DASHBOARD.md">View Project →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="skills" class="skills">
+        <div class="container">
+            <h2 class="section-title">Technical Skills</h2>
+            <div class="skills-grid">
+                <div class="skill-category">
+                    <h3>Cloud & Infrastructure</h3>
+                    <ul class="skill-list">
+                        <li>AWS (EC2, VPC, RDS, IAM, S3)</li>
+                        <li>Terraform & CloudFormation</li>
+                        <li>Docker & Containerization</li>
+                        <li>Proxmox Virtualization</li>
+                        <li>Network Design & Security</li>
+                    </ul>
+                </div>
+
+                <div class="skill-category">
+                    <h3>DevOps & Automation</h3>
+                    <ul class="skill-list">
+                        <li>CI/CD Pipelines (GitHub Actions)</li>
+                        <li>Kubernetes & Helm</li>
+                        <li>Monitoring (Prometheus, Grafana)</li>
+                        <li>Scripting (Bash, Python)</li>
+                        <li>GitOps (ArgoCD)</li>
+                    </ul>
+                </div>
+
+                <div class="skill-category">
+                    <h3>Databases & Backend</h3>
+                    <ul class="skill-list">
+                        <li>PostgreSQL Administration</li>
+                        <li>Database Performance Tuning</li>
+                        <li>High Availability Setup</li>
+                        <li>Backup & Recovery</li>
+                        <li>SQL Optimization</li>
+                    </ul>
+                </div>
+
+                <div class="skill-category">
+                    <h3>System Design</h3>
+                    <ul class="skill-list">
+                        <li>Linux/Windows Administration</li>
+                        <li>Network Architecture</li>
+                        <li>Security Hardening</li>
+                        <li>Disaster Recovery Planning</li>
+                        <li>Technical Documentation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Get In Touch</h2>
+            <p>Interested in collaborating or discussing opportunities?</p>
+            <div class="contact-links">
+                <a href="https://github.com/samueljackson-collab" class="contact-link">GitHub</a>
+                <a href="https://www.linkedin.com/in/sams-jackson" class="contact-link">LinkedIn</a>
+                <a href="mailto:contact@example.com" class="contact-link">Email</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Samuel Jackson. All rights reserved.</p>
+            <p>Built with modern web technologies and deployed via GitHub Pages</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(255, 255, 255, 0.95)';
+                header.style.backdropFilter = 'blur(10px)';
+            } else {
+                header.style.background = 'white';
+                header.style.backdropFilter = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

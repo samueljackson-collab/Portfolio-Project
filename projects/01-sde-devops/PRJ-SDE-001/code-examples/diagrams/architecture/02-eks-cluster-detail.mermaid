@@ -1,0 +1,179 @@
+```mermaid
+graph TB
+    subgraph "AWS Account"
+        subgraph "EKS Control Plane"
+            API[API Server]
+            SCHED[Scheduler]
+            CM[Controller Manager]
+            ETCD[etcd]
+
+            subgraph "Logging"
+                LOG_API[API Logs]
+                LOG_AUDIT[Audit Logs]
+                LOG_AUTH[Authenticator Logs]
+                LOG_CM[Controller Manager Logs]
+                LOG_SCHED[Scheduler Logs]
+            end
+        end
+
+        subgraph "Data Plane - Private Subnets"
+            subgraph "Node Group - Auto Scaling"
+                subgraph "Worker Node 1 - AZ-A"
+                    N1_POD1[Pod 1<br/>App Container]
+                    N1_POD2[Pod 2<br/>App Container]
+                    N1_KUBELET[kubelet]
+                    N1_PROXY[kube-proxy]
+                    N1_CNI[AWS VPC CNI]
+                end
+
+                subgraph "Worker Node 2 - AZ-B"
+                    N2_POD1[Pod 3<br/>App Container]
+                    N2_POD2[Pod 4<br/>App Container]
+                    N2_KUBELET[kubelet]
+                    N2_PROXY[kube-proxy]
+                    N2_CNI[AWS VPC CNI]
+                end
+
+                subgraph "Worker Node 3 - AZ-C"
+                    N3_POD1[Pod 5<br/>App Container]
+                    N3_POD2[Pod 6<br/>App Container]
+                    N3_KUBELET[kubelet]
+                    N3_PROXY[kube-proxy]
+                    N3_CNI[AWS VPC CNI]
+                end
+            end
+
+            ASG[Auto Scaling Group<br/>Min: 2, Max: 10<br/>Desired: 3]
+        end
+
+        subgraph "Security & IAM"
+            OIDC[OIDC Provider]
+            CLUSTER_ROLE[Cluster IAM Role]
+            NODE_ROLE[Node IAM Role]
+            POD_ROLE[Pod IAM Roles<br/>via IRSA]
+            KMS[KMS Key<br/>Secrets Encryption]
+            CLUSTER_SG[Cluster Security Group]
+            NODE_SG[Node Security Group]
+        end
+
+        subgraph "Networking"
+            VPC_ENI[VPC ENIs<br/>for Pods]
+            ALB[Application Load Balancer]
+            NLB[Network Load Balancer]
+        end
+
+        subgraph "Storage"
+            EBS[EBS Volumes]
+            EFS[EFS File System]
+        end
+
+        subgraph "Add-ons"
+            COREDNS[CoreDNS]
+            PROXY_ADDON[kube-proxy]
+            CNI_ADDON[VPC CNI Plugin]
+            EBS_CSI[EBS CSI Driver]
+            EFS_CSI[EFS CSI Driver]
+        end
+
+        subgraph "Monitoring & Observability"
+            CWL[CloudWatch Logs]
+            CWM[CloudWatch Metrics]
+            CONTAINER_INSIGHTS[Container Insights]
+        end
+    end
+
+    API --> N1_KUBELET
+    API --> N2_KUBELET
+    API --> N3_KUBELET
+
+    N1_KUBELET --> N1_POD1
+    N1_KUBELET --> N1_POD2
+    N2_KUBELET --> N2_POD1
+    N2_KUBELET --> N2_POD2
+    N3_KUBELET --> N3_POD1
+    N3_KUBELET --> N3_POD2
+
+    ASG --> N1_KUBELET
+    ASG --> N2_KUBELET
+    ASG --> N3_KUBELET
+
+    API --> LOG_API
+    API --> LOG_AUDIT
+    API --> LOG_AUTH
+    CM --> LOG_CM
+    SCHED --> LOG_SCHED
+
+    LOG_API --> CWL
+    LOG_AUDIT --> CWL
+    LOG_AUTH --> CWL
+    LOG_CM --> CWL
+    LOG_SCHED --> CWL
+
+    API --> OIDC
+    OIDC --> POD_ROLE
+    CLUSTER_ROLE --> API
+    NODE_ROLE --> N1_KUBELET
+    NODE_ROLE --> N2_KUBELET
+    NODE_ROLE --> N3_KUBELET
+
+    KMS --> ETCD
+
+    N1_CNI --> VPC_ENI
+    N2_CNI --> VPC_ENI
+    N3_CNI --> VPC_ENI
+
+    ALB --> N1_POD1
+    ALB --> N2_POD1
+    ALB --> N3_POD1
+
+    N1_POD1 --> EBS
+    N2_POD1 --> EBS
+    N1_POD2 --> EFS
+    N2_POD2 --> EFS
+
+    N1_KUBELET --> CWM
+    N2_KUBELET --> CWM
+    N3_KUBELET --> CWM
+
+    CWM --> CONTAINER_INSIGHTS
+
+    style API fill:#ff9999
+    style ETCD fill:#ff9999
+    style N1_POD1 fill:#99ccff
+    style N2_POD1 fill:#99ccff
+    style N3_POD1 fill:#99ccff
+    style OIDC fill:#99ff99
+    style KMS fill:#99ff99
+    style CWL fill:#ffcc99
+```
+
+## EKS Cluster Architecture Detail
+
+### Control Plane Components:
+- **API Server**: Kubernetes API endpoint
+- **Scheduler**: Pod placement decisions
+- **Controller Manager**: Cluster state reconciliation
+- **etcd**: Encrypted configuration storage
+
+### Data Plane (Worker Nodes):
+- **Auto Scaling Group**: 2-10 nodes across 3 AZs
+- **Instance Type**: t3.medium (configurable)
+- **Pod Networking**: AWS VPC CNI with ENIs
+- **Storage**: EBS CSI and EFS CSI drivers
+
+### Security Features:
+- **IRSA**: IAM Roles for Service Accounts via OIDC
+- **KMS Encryption**: etcd secrets encryption at rest
+- **Security Groups**: Cluster and node isolation
+- **Network Policies**: Pod-level network controls
+
+### High Availability:
+- Multi-AZ control plane (managed by AWS)
+- Multi-AZ worker nodes
+- Pod anti-affinity rules
+- Auto-scaling based on CPU/memory
+
+### Monitoring:
+- All control plane logs to CloudWatch
+- Container Insights for pod metrics
+- Custom metrics and alarms

@@ -1,0 +1,50 @@
+{
+  "comment": "Configuration template for GitHub Actions CI/CD IAM Policy",
+  "usage": "Copy this to policy-config.json and fill in your values. Then use envsubst or sed to replace variables in github_actions_ci_policy.json",
+  "variables": {
+    "TFSTATE_BUCKET_NAME": "your-project-tfstate-bucket",
+    "TFSTATE_LOCK_TABLE": "your-project-tfstate-lock",
+    "AWS_REGION": "us-east-1",
+    "AWS_ACCOUNT_ID": "123456789012",
+    "PROJECT_NAME": "twisted-monk"
+  },
+  "deployment_steps": [
+    "1. Copy this file: cp policy-config.example.json policy-config.json",
+    "2. Edit policy-config.json with your actual AWS values",
+    "3. Use envsubst to generate the final policy:",
+    "   export $(jq -r '.variables | to_entries | .[] | \"\\(.key)=\\(.value)\"' policy-config.json)",
+    "   envsubst < github_actions_ci_policy.json > github_actions_ci_policy_final.json",
+    "4. Create the IAM policy in AWS:",
+    "   aws iam create-policy --policy-name GitHubActionsTerraformPolicy --policy-document file://github_actions_ci_policy_final.json",
+    "5. Attach to your GitHub Actions IAM role or user"
+  ],
+  "security_notes": [
+    "DO NOT commit policy-config.json to git (add to .gitignore)",
+    "Use least-privilege principle - remove unused service permissions",
+    "Consider using separate policies for dev/staging/prod environments",
+    "Review and audit policy permissions quarterly",
+    "Enable CloudTrail for all API calls made with this policy"
+  ],
+  "scope_summary": {
+    "services_covered": [
+      "S3 (Terraform state + application buckets)",
+      "DynamoDB (state locking)",
+      "KMS (encryption)",
+      "VPC (networking)",
+      "EC2 (compute instances)",
+      "Security Groups (network security)",
+      "Load Balancers (ELB/ALB/NLB)",
+      "Auto Scaling Groups",
+      "RDS (databases)",
+      "EKS (Kubernetes)",
+      "IAM (service roles)",
+      "CloudWatch (logs & metrics)",
+      "Secrets Manager",
+      "Lambda",
+      "ECR (container registry)"
+    ],
+    "total_permissions": "200+",
+    "permission_level": "Full infrastructure management",
+    "cost_impact": "Can create resources that incur charges"
+  }
+}

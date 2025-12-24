@@ -1,0 +1,9 @@
+node_modules/
+reports/
+*.log
+.env
+collections/environment.dev.json
+collections/environment.staging.json
+collections/environment.prod.json
+newman/
+.DS_Store

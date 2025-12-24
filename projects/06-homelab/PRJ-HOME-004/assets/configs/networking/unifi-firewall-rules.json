@@ -1,0 +1,208 @@
+{
+  "firewall_groups": {
+    "address_groups": [
+      {
+        "name": "RFC1918_PRIVATE",
+        "addresses": [
+          "10.0.0.0/8",
+          "172.16.0.0/12",
+          "192.168.0.0/16"
+        ]
+      },
+      {
+        "name": "HOMELAB_MANAGEMENT",
+        "addresses": [
+          "192.168.10.10",
+          "192.168.10.11",
+          "192.168.10.12"
+        ]
+      },
+      {
+        "name": "VPN_CLIENTS",
+        "addresses": [
+          "10.10.10.0/24"
+        ]
+      }
+    ],
+    "port_groups": [
+      {
+        "name": "MANAGEMENT_PORTS",
+        "ports": ["22", "443", "8006"]
+      },
+      {
+        "name": "WEB_SERVICES",
+        "ports": ["80", "443"]
+      }
+    ]
+  },
+  "firewall_rules": [
+    {
+      "name": "Block Bogon Networks (WAN In)",
+      "rule_index": 1,
+      "action": "drop",
+      "protocol": "all",
+      "src_address": ["0.0.0.0/8", "127.0.0.0/8", "169.254.0.0/16", "224.0.0.0/4"],
+      "direction": "in",
+      "interface": "WAN",
+      "enabled": true,
+      "log": true
+    },
+    {
+      "name": "Allow Established/Related (WAN In)",
+      "rule_index": 2,
+      "action": "accept",
+      "protocol": "all",
+      "state_established": true,
+      "state_related": true,
+      "direction": "in",
+      "interface": "WAN",
+      "enabled": true,
+      "log": false
+    },
+    {
+      "name": "Allow WireGuard VPN",
+      "rule_index": 3,
+      "action": "accept",
+      "protocol": "udp",
+      "dst_port": "51820",
+      "direction": "in",
+      "interface": "WAN",
+      "enabled": true,
+      "log": false
+    },
+    {
+      "name": "Drop All Other WAN Traffic",
+      "rule_index": 4,
+      "action": "drop",
+      "protocol": "all",
+      "direction": "in",
+      "interface": "WAN",
+      "enabled": true,
+      "log": true
+    },
+    {
+      "name": "Admin VLAN to Management VLAN (HTTPS/SSH)",
+      "rule_index": 100,
+      "action": "accept",
+      "protocol": "tcp",
+      "src_network": "VLAN20",
+      "dst_network": "VLAN10",
+      "dst_port_group": "MANAGEMENT_PORTS",
+      "direction": "in",
+      "interface": "VLAN20",
+      "enabled": true,
+      "log": false
+    },
+    {
+      "name": "Admin VLAN to Application VLAN (Reverse Proxy)",
+      "rule_index": 101,
+      "action": "accept",
+      "protocol": "tcp",
+      "src_network": "VLAN20",
+      "dst_network": "VLAN30",
+      "dst_port": "443",
+      "direction": "in",
+      "interface": "VLAN20",
+      "enabled": true,
+      "log": false
+    },
+    {
+      "name": "Application VLAN to Protect VLAN (Cameras)",
+      "rule_index": 102,
+      "action": "accept",
+      "protocol": "tcp,udp",
+      "src_network": "VLAN30",
+      "dst_network": "VLAN50",
+      "dst_port": "7441,7442,7443,7444,7445,7446,7447",
+      "direction": "in",
+      "interface": "VLAN30",
+      "enabled": true,
+      "log": false
+    },
+    {
+      "name": "VPN Clients to Admin VLAN",
+      "rule_index": 110,
+      "action": "accept",
+      "protocol": "all",
+      "src_address_group": "VPN_CLIENTS",
+      "dst_network": "VLAN20",
+      "direction": "in",
+      "interface": "WireGuard",
+      "enabled": true,
+      "log": false
+    },
+    {
+      "name": "Block IoT to All Internal Networks",
+      "rule_index": 200,
+      "action": "reject",
+      "protocol": "all",
+      "src_network": "VLAN40",
+      "dst_address_group": "RFC1918_PRIVATE",
+      "direction": "in",
+      "interface": "VLAN40",
+      "enabled": true,
+      "log": true
+    },
+    {
+      "name": "Block Protect to All Internal Networks",
+      "rule_index": 201,
+      "action": "reject",
+      "protocol": "all",
+      "src_network": "VLAN50",
+      "dst_address_group": "RFC1918_PRIVATE",
+      "direction": "in",
+      "interface": "VLAN50",
+      "enabled": true,
+      "log": true
+    },
+    {
+      "name": "Allow All VLANs to Internet",
+      "rule_index": 999,
+      "action": "accept",
+      "protocol": "all",
+      "direction": "out",
+      "interface": "WAN",
+      "enabled": true,
+      "log": false
+    }
+  ],
+  "network_configuration": {
+    "vlans": [
+      {
+        "id": 10,
+        "name": "Management",
+        "subnet": "192.168.10.0/24",
+        "gateway": "192.168.10.1",
+        "dhcp_range": "192.168.10.100-192.168.10.200"
+      },
+      {
+        "id": 20,
+        "name": "Admin",
+        "subnet": "192.168.20.0/24",
+        "gateway": "192.168.20.1",
+        "dhcp_range": "192.168.20.100-192.168.20.200"
+      },
+      {
+        "id": 30,
+        "name": "Application",
+        "subnet": "192.168.30.0/24",
+        "gateway": "192.168.30.1",
+        "dhcp_range": "192.168.30.100-192.168.30.200"
+      },
+      {
+        "id": 40,
+        "name": "IoT",
+        "subnet": "192.168.40.0/24",
+        "gateway": "192.168.40.1",
+        "dhcp_range": "192.168.40.100-192.168.40.200"
+      },
+      {
+        "id": 50,
+        "name": "Protect",
+        "subnet": "192.168.50.0/24",
+        "gateway": "192.168.50.1",
+        "dhcp_range": "192.168.50.100-192.168.50.200"
+      }
+    ]
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "comment": "Nginx Proxy Manager - Proxy Hosts Configuration Example",
+  "note": "This is a sanitized example showing proxy host configurations",
+  "warning": "Real domain names have been replaced with example.com",
+  "proxy_hosts": [
+    {
+      "id": 1,
+      "created_on": "2024-11-01 10:00:00",
+      "modified_on": "2024-11-06 08:30:00",
+      "domain_names": [
+        "wiki.example.com"
+      ],
+      "forward_scheme": "http",
+      "forward_host": "192.168.10.100",
+      "forward_port": 3000,
+      "access_list_id": 0,
+      "certificate_id": 1,
+      "ssl_forced": true,
+      "hsts_enabled": true,
+      "hsts_subdomains": false,
+      "http2_support": true,
+      "block_exploits": true,
+      "caching_enabled": false,
+      "allow_websocket_upgrade": true,
+      "custom_locations": [],
+      "meta": {
+        "letsencrypt_agree": true,
+        "dns_challenge": true,
+        "dns_provider": "cloudflare",
+        "dns_provider_credentials": "REDACTED"
+      },
+      "description": "Wiki.js knowledge base",
+      "enabled": true
+    },
+    {
+      "id": 2,
+      "created_on": "2024-11-01 10:15:00",
+      "modified_on": "2024-11-06 08:30:00",
+      "domain_names": [
+        "homeassistant.example.com",
+        "ha.example.com"
+      ],
+      "forward_scheme": "http",
+      "forward_host": "192.168.10.101",
+      "forward_port": 8123,
+      "access_list_id": 1,
+      "certificate_id": 1,
+      "ssl_forced": true,
+      "hsts_enabled": true,
+      "hsts_subdomains": false,
+      "http2_support": true,
+      "block_exploits": true,
+      "caching_enabled": false,
+      "allow_websocket_upgrade": true,
+      "custom_locations": [],
+      "advanced_config": "# Custom headers for Home Assistant\nproxy_set_header Upgrade $http_upgrade;\nproxy_set_header Connection \"upgrade\";\nproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\nproxy_set_header X-Forwarded-Proto $scheme;\nproxy_buffering off;",
+      "description": "Home Assistant smart home hub",
+      "enabled": true
+    },
+    {
+      "id": 3,
+      "created_on": "2024-11-01 10:30:00",
+      "modified_on": "2024-11-06 08:30:00",
+      "domain_names": [
+        "photos.example.com"
+      ],
+      "forward_scheme": "http",
+      "forward_host": "192.168.10.102",
+      "forward_port": 2283,
+      "access_list_id": 1,
+      "certificate_id": 1,
+      "ssl_forced": true,
+      "hsts_enabled": true,
+      "hsts_subdomains": false,
+      "http2_support": true,
+      "block_exploits": true,
+      "caching_enabled": false,
+      "allow_websocket_upgrade": true,
+      "custom_locations": [],
+      "advanced_config": "# Increase upload size for photos\nclient_max_body_size 500M;\nproxy_request_buffering off;",
+      "description": "Immich photo management",
+      "enabled": true
+    },
+    {
+      "id": 4,
+      "created_on": "2024-11-01 11:00:00",
+      "modified_on": "2024-11-06 08:30:00",
+      "domain_names": [
+        "grafana.example.com"
+      ],
+      "forward_scheme": "http",
+      "forward_host": "192.168.10.103",
+      "forward_port": 3000,
+      "access_list_id": 1,
+      "certificate_id": 1,
+      "ssl_forced": true,
+      "hsts_enabled": true,
+      "hsts_subdomains": false,
+      "http2_support": true,
+      "block_exploits": true,
+      "caching_enabled": false,
+      "allow_websocket_upgrade": true,
+      "custom_locations": [],
+      "description": "Grafana monitoring dashboards",
+      "enabled": true
+    },
+    {
+      "id": 5,
+      "created_on": "2024-11-01 11:15:00",
+      "modified_on": "2024-11-06 08:30:00",
+      "domain_names": [
+        "prometheus.example.com"
+      ],
+      "forward_scheme": "http",
+      "forward_host": "192.168.10.103",
+      "forward_port": 9090,
+      "access_list_id": 2,
+      "certificate_id": 1,
+      "ssl_forced": true,
+      "hsts_enabled": true,
+      "hsts_subdomains": false,
+      "http2_support": true,
+      "block_exploits": true,
+      "caching_enabled": false,
+      "allow_websocket_upgrade": false,
+      "custom_locations": [],
+      "description": "Prometheus metrics database (admin only)",
+      "enabled": true
+    }
+  ],
+  "access_lists": [
+    {
+      "id": 1,
+      "name": "Trusted Users",
+      "satisfy": "all",
+      "items": [
+        {
+          "username": "admin",
+          "password": "HASHED_PASSWORD_REDACTED"
+        }
+      ],
+      "clients": [
+        "192.168.10.0/24",
+        "192.168.1.0/24"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Admin Only",
+      "satisfy": "all",
+      "items": [
+        {
+          "username": "admin",
+          "password": "HASHED_PASSWORD_REDACTED"
+        }
+      ],
+      "clients": [
+        "192.168.10.0/24"
+      ]
+    }
+  ],
+  "certificates": [
+    {
+      "id": 1,
+      "provider": "letsencrypt",
+      "nice_name": "Wildcard *.example.com",
+      "domain_names": [
+        "*.example.com",
+        "example.com"
+      ],
+      "expires_on": "2025-02-01 00:00:00",
+      "meta": {
+        "letsencrypt_email": "admin@example.com",
+        "dns_challenge": true,
+        "dns_provider": "cloudflare",
+        "dns_provider_credentials": "REDACTED"
+      }
+    }
+  ],
+  "settings": {
+    "default_site": "congratulations",
+    "ipv4_binding": "0.0.0.0",
+    "ipv6_binding": "::",
+    "http_port": 80,
+    "https_port": 443,
+    "fallback_certificate_id": 1
+  },
+  "notes": [
+    "All domain names replaced with example.com",
+    "All credentials and API keys are redacted",
+    "IP addresses are examples from private ranges",
+    "Export generated from NPM web interface: Settings > Backup",
+    "To import: Settings > Restore",
+    "Always verify certificate renewals are working after restore"
+  ]
+}

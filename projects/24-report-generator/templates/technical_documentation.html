@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Technical Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: #f8f9fa;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            margin: -40px -40px 40px -40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .header-meta {
+            font-size: 0.9em;
+            opacity: 0.9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .toc {
+            background: #ecf0f1;
+            padding: 25px;
+            margin: 30px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        .toc h2 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            padding: 8px 0;
+            border-bottom: 1px solid #bdc3c7;
+        }
+
+        .toc a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            margin: 50px 0;
+            page-break-inside: avoid;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        h3 {
+            font-size: 1.3em;
+            color: #34495e;
+            margin: 25px 0 15px 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .project-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+
+        .project-table th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .project-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .project-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+        }
+
+        .architecture-section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #2ecc71;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge.danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .tech-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .tech-card h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .tech-card .count {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #2980b9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .warning-box {
+            background: #fff9e6;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 2px solid #ecf0f1;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.85em;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Portfolio Technical Documentation</h1>
+            <div class="header-meta">
+                Generated: {{ generated_date }} at {{ generated_time }} |
+                Projects: {{ summary.total_projects }} |
+                LOC: {{ summary.total_lines|format_number }}
+            </div>
+        </header>
+
+        <div class="toc">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#overview">1. System Overview</a></li>
+                <li><a href="#architecture">2. Architecture Patterns</a></li>
+                <li><a href="#technologies">3. Technology Stack</a></li>
+                <li><a href="#projects">4. Project Inventory</a></li>
+                <li><a href="#infrastructure">5. Infrastructure Details</a></li>
+                <li><a href="#deployment">6. Deployment Guide</a></li>
+                <li><a href="#maintenance">7. Maintenance & Operations</a></li>
+            </ul>
+        </div>
+
+        <div class="section" id="overview">
+            <h2>1. System Overview</h2>
+
+            <div class="metric-row">
+                <span class="metric-label">Total Projects</span>
+                <span class="metric-value">{{ summary.total_projects }}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Total Lines of Code</span>
+                <span class="metric-value">{{ summary.total_lines|format_number }}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Total Files</span>
+                <span class="metric-value">{{ summary.total_files|format_number }}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Average Completion</span>
+                <span class="metric-value">{{ summary.avg_completion }}%</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Projects with CI/CD</span>
+                <span class="metric-value">{{ summary.projects_with_ci_cd }}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Containerized Projects</span>
+                <span class="metric-value">{{ summary.projects_with_docker }}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">Kubernetes Deployments</span>
+                <span class="metric-value">{{ summary.projects_with_k8s }}</span>
+            </div>
+
+            <div class="info-box" style="margin-top: 30px;">
+                <h3>Portfolio Characteristics</h3>
+                <p>
+                    This portfolio encompasses cloud-native applications, infrastructure automation,
+                    data engineering pipelines, and DevOps tooling. All projects follow industry best
+                    practices including infrastructure-as-code, containerization, automated testing,
+                    and continuous deployment.
+                </p>
+            </div>
+        </div>
+
+        <div class="section" id="architecture">
+            <h2>2. Architecture Patterns</h2>
+
+            <h3>Microservices Architecture</h3>
+            <div class="architecture-section">
+                <p>
+                    Multiple projects implement microservices patterns with containerized services,
+                    service mesh integration, and API gateway patterns for inter-service communication.
+                </p>
+            </div>
+
+            <h3>Event-Driven Architecture</h3>
+            <div class="architecture-section">
+                <p>
+                    Serverless functions and event processing pipelines utilize AWS Lambda, SQS, SNS,
+                    and EventBridge for asynchronous, scalable event handling.
+                </p>
+            </div>
+
+            <h3>Infrastructure as Code</h3>
+            <div class="architecture-section">
+                <p>
+                    All infrastructure is defined as code using Terraform, AWS CDK, or Pulumi, enabling
+                    version control, reproducibility, and automated provisioning across environments.
+                </p>
+            </div>
+
+            <h3>GitOps Deployment</h3>
+            <div class="architecture-section">
+                <p>
+                    Kubernetes applications use ArgoCD for GitOps-based continuous deployment, ensuring
+                    declarative configuration and automated synchronization.
+                </p>
+            </div>
+        </div>
+
+        <div class="section" id="technologies">
+            <h2>3. Technology Stack</h2>
+
+            <div class="tech-grid">
+                {% for tech, count in summary.tech_stack_count.items() %}
+                <div class="tech-card">
+                    <h4>{{ tech }}</h4>
+                    <div class="count">{{ count }}</div>
+                    <div style="font-size: 0.85em; color: #7f8c8d; margin-top: 5px;">
+                        {{ count }} project{{ 's' if count != 1 else '' }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section" id="projects">
+            <h2>4. Project Inventory</h2>
+
+            <table class="project-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Project Name</th>
+                        <th>Status</th>
+                        <th>Completion</th>
+                        <th>LOC</th>
+                        <th>Technologies</th>
+                        <th>Features</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects|sort(attribute='id') %}
+                    <tr>
+                        <td><strong>{{ project.id }}</strong></td>
+                        <td>{{ project.name }}</td>
+                        <td>
+                            <span class="badge {{ 'success' if project.completion >= 90 else 'warning' if project.completion >= 50 else 'danger' }}">
+                                {{ project.status }}
+                            </span>
+                        </td>
+                        <td>{{ project.completion }}%</td>
+                        <td>{{ project.line_count|format_number }}</td>
+                        <td>
+                            {% if project.tech_stack %}
+                                {{ project.tech_stack[:3]|join(', ') }}
+                                {% if project.tech_stack|length > 3 %}
+                                    <span style="color: #7f8c8d;">+{{ project.tech_stack|length - 3 }}</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if project.has_tests %}<span class="badge info">Tests</span>{% endif %}
+                            {% if project.has_ci_cd %}<span class="badge info">CI/CD</span>{% endif %}
+                            {% if project.has_docker %}<span class="badge info">Docker</span>{% endif %}
+                            {% if project.has_k8s %}<span class="badge info">K8s</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section" id="infrastructure">
+            <h2>5. Infrastructure Details</h2>
+
+            <h3>Cloud Providers</h3>
+            <p>
+                Projects utilize multiple cloud providers including AWS, with potential multi-cloud
+                configurations. Infrastructure is provisioned using Infrastructure-as-Code tools.
+            </p>
+
+            <h3>Compute Resources</h3>
+            <ul style="margin-left: 30px; margin-top: 15px;">
+                <li><strong>Kubernetes Clusters:</strong> {{ summary.projects_with_k8s }} projects</li>
+                <li><strong>Containerized Services:</strong> {{ summary.projects_with_docker }} projects</li>
+                <li><strong>Serverless Functions:</strong> Multiple Lambda-based implementations</li>
+            </ul>
+
+            <h3>Data Storage</h3>
+            <ul style="margin-left: 30px; margin-top: 15px;">
+                <li><strong>Relational Databases:</strong> PostgreSQL, MySQL with RDS</li>
+                <li><strong>NoSQL Databases:</strong> DynamoDB, MongoDB</li>
+                <li><strong>Object Storage:</strong> S3 with cross-region replication</li>
+                <li><strong>Caching:</strong> Redis, ElastiCache</li>
+            </ul>
+
+            <h3>Networking</h3>
+            <ul style="margin-left: 30px; margin-top: 15px;">
+                <li><strong>VPC Configuration:</strong> Multi-tier networking with public/private subnets</li>
+                <li><strong>Load Balancing:</strong> ALB/NLB for traffic distribution</li>
+                <li><strong>DNS & Routing:</strong> Route53 with health checks and failover</li>
+                <li><strong>CDN:</strong> CloudFront for static content delivery</li>
+            </ul>
+        </div>
+
+        <div class="section" id="deployment">
+            <h2>6. Deployment Guide</h2>
+
+            <h3>Prerequisites</h3>
+            <div class="code-block">
+# Required tools
+- AWS CLI v2+
+- kubectl 1.24+
+- terraform 1.3+
+- docker 20.10+
+- helm 3.0+
+            </div>
+
+            <h3>Deployment Process</h3>
+            <div class="warning-box">
+                <strong>Note:</strong> Each project contains specific deployment instructions in its
+                respective README.md and deployment documentation.
+            </div>
+
+            <h3>General Workflow</h3>
+            <div class="code-block">
+# 1. Clone repository
+git clone &lt;repository-url&gt;
+cd &lt;project-directory&gt;
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with appropriate values
+
+# 3. Provision infrastructure
+cd terraform
+terraform init
+terraform plan
+terraform apply
+
+# 4. Deploy application
+kubectl apply -f k8s/
+# OR
+docker-compose up -d
+# OR
+sam deploy --guided
+            </div>
+        </div>
+
+        <div class="section" id="maintenance">
+            <h2>7. Maintenance & Operations</h2>
+
+            <h3>Monitoring</h3>
+            <p>
+                Projects implement comprehensive monitoring using Prometheus, Grafana, CloudWatch,
+                and custom alerting rules for proactive issue detection.
+            </p>
+
+            <h3>Backup & Recovery</h3>
+            <p>
+                Automated backup strategies include RDS snapshots, S3 versioning, and cross-region
+                replication for disaster recovery scenarios.
+            </p>
+
+            <h3>Scaling</h3>
+            <p>
+                Auto-scaling is implemented through Kubernetes HPA, AWS Auto Scaling Groups, and
+                serverless automatic scaling based on demand.
+            </p>
+
+            <h3>Security</h3>
+            <ul style="margin-left: 30px; margin-top: 15px;">
+                <li>IAM roles and policies following least-privilege principle</li>
+                <li>Secrets management using AWS Secrets Manager</li>
+                <li>Network security groups and NACLs</li>
+                <li>Container security scanning in CI/CD pipelines</li>
+                <li>SSL/TLS encryption for all traffic</li>
+            </ul>
+
+            <div class="info-box" style="margin-top: 30px;">
+                <h3>Operational Best Practices</h3>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Regular security patches and updates</li>
+                    <li>Automated testing before production deployments</li>
+                    <li>Blue-green or canary deployment strategies</li>
+                    <li>Comprehensive logging and distributed tracing</li>
+                    <li>Regular disaster recovery drills</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>Portfolio Technical Documentation</p>
+            <p>Generated: {{ generated_date }} at {{ generated_time }}</p>
+            <p>For questions or updates, refer to individual project documentation</p>
+        </footer>
+    </div>
+</body>
+</html>

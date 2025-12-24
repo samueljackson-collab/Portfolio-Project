@@ -1,0 +1,23 @@
+{
+  "name": "p08-api-testing",
+  "version": "1.0.0",
+  "description": "Backend API testing with Postman and Newman",
+  "scripts": {
+    "test": "newman run collections/api-tests.json -e collections/environment.dev.json",
+    "test:ci": "newman run collections/api-tests.json -e collections/environment.dev.json -r htmlextra,json",
+    "test:verbose": "newman run collections/api-tests.json -e collections/environment.dev.json --verbose"
+  },
+  "keywords": [
+    "api",
+    "testing",
+    "postman",
+    "newman",
+    "qa"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "newman": "^6.0.0",
+    "newman-reporter-htmlextra": "^1.23.0"
+  }
+}

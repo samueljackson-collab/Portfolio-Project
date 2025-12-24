@@ -1,0 +1,53 @@
+flowchart TB
+    Internet[Internet]
+    IGW[Internet Gateway]
+
+    subgraph VPC[VPC - 10.0.0.0/16]
+        subgraph AZ1[Availability Zone 1a]
+            PubSub1[Public Subnet<br/>10.0.1.0/24]
+            PrivSub1[Private Subnet<br/>10.0.101.0/24]
+            NAT1[NAT Gateway]
+        end
+
+        subgraph AZ2[Availability Zone 1b]
+            PubSub2[Public Subnet<br/>10.0.2.0/24]
+            PrivSub2[Private Subnet<br/>10.0.102.0/24]
+            NAT2[NAT Gateway]
+        end
+
+        subgraph AZ3[Availability Zone 1c]
+            PubSub3[Public Subnet<br/>10.0.3.0/24]
+            PrivSub3[Private Subnet<br/>10.0.103.0/24]
+            NAT3[NAT Gateway]
+        end
+
+        subgraph Database[RDS Multi-AZ]
+            RDSPrimary[(Primary RDS<br/>us-east-1a)]
+            RDSStandby[(Standby RDS<br/>us-east-1b)]
+        end
+    end
+
+    CloudFormation[CloudFormation Stack]
+    Config[AWS Config<br/>Drift Detection]
+    Secrets[Secrets Manager]
+
+    Internet --> IGW
+    IGW --> PubSub1 & PubSub2 & PubSub3
+    PubSub1 --> NAT1
+    PubSub2 --> NAT2
+    PubSub3 --> NAT3
+
+    NAT1 --> PrivSub1
+    NAT2 --> PrivSub2
+    NAT3 --> PrivSub3
+
+    PrivSub1 & PrivSub2 & PrivSub3 --> RDSPrimary
+    RDSPrimary -.Multi-AZ Replication.-> RDSStandby
+
+    CloudFormation --> VPC
+    Config -.monitors.-> VPC
+    Secrets -.provides credentials.-> RDSPrimary
+
+    style RDSPrimary fill:#4CAF50
+    style RDSStandby fill:#FFC107
+    style Database fill:#E3F2FD

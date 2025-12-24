@@ -146,24 +146,35 @@ resource "aws_eks_cluster" "cluster" {
   depends_on = [aws_iam_role.eks_cluster_role]
 }
 
-# Outputs
-output "vpc_id" {
-  value = aws_vpc.twisted_monk.id
+# S3 Bucket for application assets
+resource "aws_s3_bucket" "app_assets" {
+  bucket = "${var.project_tag}-assets-${random_id.bucket_suffix.hex}"
+  tags   = merge(local.common_tags, { Name = "${var.project_tag}-assets" })
 }
 
-output "public_subnet_ids" {
-  value = [for s in aws_subnet.public : s.id]
+resource "aws_s3_bucket_public_access_block" "app_assets" {
+  bucket = aws_s3_bucket.app_assets.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
-output "private_subnet_ids" {
-  value = [for s in aws_subnet.private : s.id]
-}
+resource "aws_s3_bucket_versioning" "app_assets" {
+  bucket = aws_s3_bucket.app_assets.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
-output "rds_endpoint" {
-  value = var.create_rds ? aws_db_instance.postgres[0].address : ""
-}
+resource "aws_s3_bucket_server_side_encryption_configuration" "app_assets" {
+  bucket = aws_s3_bucket.app_assets.id
 
-output "assets_bucket" {
-  value = aws_s3_bucket.app_assets.bucket
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
 }

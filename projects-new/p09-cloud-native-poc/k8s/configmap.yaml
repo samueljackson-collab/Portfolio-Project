@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: poc-api-config
+  namespace: poc-api
+  labels:
+    app: poc-api
+data:
+  LOG_LEVEL: "info"
+  POSTGRES_DB: "pocdb"
+  POSTGRES_USER: "pocuser"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  APP_NAME: "POC API"
+  ENVIRONMENT: "production"
+  WORKERS: "4"

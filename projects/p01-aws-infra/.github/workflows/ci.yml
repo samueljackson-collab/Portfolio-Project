@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          cd projects/p01-aws-infra
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint markdown
+        run: |
+          cd projects/p01-aws-infra
+          npm install -g markdownlint-cli || true
+          markdownlint *.md docs/**/*.md || true
+
+      - name: Validate CloudFormation templates
+        run: |
+          cd projects/p01-aws-infra
+          python src/validate_template.py || echo "⚠ AWS CLI validation skipped (credentials not available)"
+          cfn-lint infra/*.yaml
+
+      - name: Run tests
+        run: |
+          cd projects/p01-aws-infra
+          pytest -v tests/
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: projects/p01-aws-infra/.pytest_cache/

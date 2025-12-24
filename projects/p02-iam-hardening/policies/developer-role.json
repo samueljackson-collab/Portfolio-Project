@@ -1,0 +1,54 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EC2ReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "ec2:Get*",
+        "ec2:List*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3DevBucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::dev-*",
+        "arn:aws:s3:::dev-*/*"
+      ]
+    },
+    {
+      "Sid": "CloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:GetLogEvents",
+        "logs:FilterLogEvents"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyProductionResources",
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": [
+        "arn:aws:s3:::prod-*",
+        "arn:aws:ec2:*:*:instance/*",
+        "arn:aws:rds:*:*:db:prod-*"
+      ],
+      "Condition": {
+        "StringLike": {
+          "aws:ResourceTag/Environment": "production"
+        }
+      }
+    }
+  ]
+}

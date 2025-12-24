@@ -1,0 +1,846 @@
+# Prometheus Alert Rules
+# =======================
+# Alert and recording rules for infrastructure and application monitoring.
+#
+# Rule Structure:
+#   - groups: Logical grouping of related rules
+#   - alert: Alert name (CamelCase convention)
+#   - expr: PromQL expression (condition for firing)
+#   - for: Duration condition must be true before firing
+#   - labels: Additional labels attached to alert
+#   - annotations: Human-readable metadata (summary, description, runbook)
+#
+# Alert Severity Levels:
+#   - critical: Immediate action required, service impact
+#   - warning: Attention needed, potential future impact
+#   - info: Informational, no action required
+#
+# Best Practices:
+#   - Always include 'for' duration to avoid alert flapping
+#   - Provide actionable runbook steps in annotations
+#   - Use template variables for dynamic values: {{ $labels.instance }}
+#   - Test alerts with: amtool alert add --end=30m alertname=TestAlert
+#
+# Validation:
+#   promtool check rules rules.yml
+#
+# Documentation: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+# Author: Portfolio Project
+# Last Updated: 2024-11-24
+
+groups:
+  # Infrastructure Alerts
+  # =====================
+  # Alerts for host-level issues: CPU, memory, disk, network failures.
+  # Critical for: Detecting hardware failures, capacity issues, outages.
+  #
+  - name: infrastructure_alerts
+    interval: 30s  # How often to evaluate these rules
+    rules:
+      # Instance Down Alert
+      # -------------------
+      # Fires when Prometheus cannot scrape a target.
+      # Indicates: Target crashed, network issue, or exporter failure.
+      #
+      # Why 2 minutes?
+      #   - Avoids flapping during brief network hiccups
+      #   - Long enough for transient issues to resolve
+      #   - Short enough to detect real outages quickly
+      #
+      # False positive scenarios:
+      #   - Prometheus restart (all targets briefly down)
+      #   - Network partition
+      #   - Target maintenance window
+      #
+      - alert: InstanceDown
+        # up{} metric: 1 = scrapable, 0 = down/unreachable
+        # Automatically created by Prometheus for each scrape target
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: |
+            Target {{ $labels.instance }} (job: {{ $labels.job }}) has been unreachable for more than 2 minutes.
+            Current status: {{ $value }} (0 = down, 1 = up)
+
+          # Runbook: Step-by-step troubleshooting procedure
+          runbook: |
+            1. Verify target is running:
+               - Docker: docker ps | grep {{ $labels.job }}
+               - Systemd: systemctl status {{ $labels.job }}
+
+            2. Check network connectivity:
+               - Ping test: ping {{ $labels.instance }}
+               - Port test: telnet {{ $labels.instance }} <port>
+
+            3. Check exporter logs:
+               - Docker: docker logs {{ $labels.job }}
+               - Systemd: journalctl -u {{ $labels.job }} -n 50
+
+            4. Verify Prometheus configuration:
+               - Check prometheus.yml for correct target address
+               - Validate config: promtool check config prometheus.yml
+
+            5. Check firewall rules:
+               - Ensure port is open between Prometheus and target
+               - Verify security groups (cloud) or iptables (on-prem)
+
+            6. Restart target if necessary:
+               - Docker: docker restart {{ $labels.job }}
+               - Systemd: systemctl restart {{ $labels.job }}
+
+      # High CPU Usage Alert (Warning)
+      # -------------------------------
+      # Fires when CPU usage exceeds 80% for 5 minutes.
+      # Indicates: High load, inefficient code, or insufficient resources.
+      #
+      # Metric Explanation:
+      #   node_cpu_seconds_total: Counter of CPU time per mode (idle, user, system, etc.)
+      #   rate(5m): Per-second rate over 5-minute window
+      #   mode="idle": Time CPU spent doing nothing
+      #   100 - (idle * 100): Inverted to get busy percentage
+      #   avg by (instance): Average across all CPU cores
+      #
+      # Why 80% threshold for 5 minutes?
+      #   - 80%: High but not critical, allows proactive response
+      #   - 5min: Sustained high usage, not just a brief spike
+      #   - Provides time to investigate before critical threshold
+      #
+      - alert: HighCPUUsageWarning
+        expr: |
+          (100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: |
+            CPU usage on {{ $labels.instance }} has been above 80% for 5 minutes.
+            Current usage: {{ $value | humanizePercentage }}
+
+          runbook: |
+            1. Identify top CPU consumers:
+               - SSH to host and run: top -o %CPU
+               - Or check cAdvisor: Check container_cpu_usage_seconds_total
+
+            2. Analyze specific process:
+               - Process details: ps aux | grep <process>
+               - Thread breakdown: top -H -p <pid>
+
+            3. Check for resource constraints:
+               - Docker limits: docker inspect <container> | grep -A 5 Resources
+               - CPU throttling: Check container_cpu_cfs_throttled_seconds_total
+
+            4. Review recent changes:
+               - New deployments or configuration changes
+               - Increased traffic or workload
+
+            5. Mitigation options:
+               - Scale horizontally (add instances)
+               - Optimize code or queries
+               - Increase CPU allocation
+               - Rate limit incoming requests
+
+            6. Monitor trends:
+               - Check Grafana dashboard for historical patterns
+               - Determine if growth or spike
+
+      # High CPU Usage Alert (Critical)
+      # --------------------------------
+      # Fires when CPU usage exceeds 95% for 2 minutes.
+      # Indicates: Severe performance degradation, service at risk.
+      #
+      - alert: HighCPUUsageCritical
+        expr: |
+          (100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 95
+        for: 2m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: "CRITICAL: CPU usage on {{ $labels.instance }} exceeds 95%"
+          description: |
+            CPU usage on {{ $labels.instance }} has been above 95% for 2 minutes.
+            Service degradation likely. Immediate action required.
+            Current usage: {{ $value | humanizePercentage }}
+
+          runbook: |
+            IMMEDIATE ACTIONS:
+
+            1. Identify and kill non-essential processes:
+               - List by CPU: ps aux --sort=-%cpu | head -20
+               - Kill process: kill -9 <pid>
+
+            2. Restart overloaded services:
+               - Docker: docker restart <container>
+               - Systemd: systemctl restart <service>
+
+            3. Temporarily reduce load:
+               - Disable batch jobs or cron tasks
+               - Rate limit incoming requests at load balancer
+               - Scale down non-critical services
+
+            4. Check for runaway processes:
+               - Infinite loops, memory leaks causing CPU spin
+               - Zombie processes: ps aux | grep defunct
+
+            5. Emergency scaling:
+               - Add additional instances immediately
+               - Redirect traffic to healthy instances
+
+            POST-INCIDENT:
+            - Root cause analysis (what caused spike?)
+            - Implement permanent fix (optimization, scaling)
+            - Update alert thresholds if necessary
+
+      # High Memory Usage Alert (Warning)
+      # ----------------------------------
+      # Fires when available memory drops below 15% for 5 minutes.
+      # Indicates: Memory pressure, potential OOM risk.
+      #
+      # Metric Explanation:
+      #   MemAvailable: Estimate of memory available for new processes
+      #   Includes: Free memory + reclaimable cache/buffers
+      #   More accurate than MemFree (which excludes cache)
+      #
+      # Why 85% threshold?
+      #   - Linux uses free memory for cache (performance)
+      #   - 85% usage often normal on well-utilized systems
+      #   - OOM killer typically triggers at 95%+
+      #   - Warning provides time to investigate
+      #
+      - alert: HighMemoryUsageWarning
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: |
+            Memory usage on {{ $labels.instance }} has exceeded 85% for 5 minutes.
+            Available memory: {{ $value | humanizePercentage }} used
+            Free: {{ with query "node_memory_MemAvailable_bytes{instance='$labels.instance'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+          runbook: |
+            1. Check current memory usage:
+               - Overview: free -h
+               - Detailed: cat /proc/meminfo
+               - Per process: ps aux --sort=-%mem | head -20
+
+            2. Identify memory hogs:
+               - Docker containers: docker stats --no-stream
+               - System processes: top -o %MEM
+
+            3. Analyze memory composition:
+               - Cache: cat /proc/meminfo | grep -E "Cached|Buffers"
+               - Swap usage: cat /proc/meminfo | grep -E "Swap"
+               - Shared memory: ipcs -m
+
+            4. Check for memory leaks:
+               - Growing RSS over time (check container_memory_rss{})
+               - Review application logs for out-of-memory errors
+
+            5. Mitigation options:
+               - Clear cache: echo 3 > /proc/sys/vm/drop_caches (temporary)
+               - Restart leaking applications
+               - Increase memory allocation
+               - Scale horizontally
+
+            6. Prevent future issues:
+               - Set memory limits on containers
+               - Implement memory monitoring in applications
+               - Review and optimize memory usage
+
+      # High Memory Usage Alert (Critical)
+      # -----------------------------------
+      # Fires when available memory drops below 5% for 2 minutes.
+      # Indicates: Imminent OOM risk, services may be killed.
+      #
+      - alert: HighMemoryUsageCritical
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          category: resources
+        annotations:
+          summary: "CRITICAL: Memory usage on {{ $labels.instance }} exceeds 95%"
+          description: |
+            Memory usage on {{ $labels.instance }} has exceeded 95% for 2 minutes.
+            OOM killer may terminate processes. Immediate action required.
+            Available memory: {{ with query "node_memory_MemAvailable_bytes{instance='$labels.instance'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+          runbook: |
+            IMMEDIATE ACTIONS:
+
+            1. Check for OOM killer activity:
+               - dmesg | grep -i "out of memory"
+               - journalctl -k | grep -i "killed process"
+
+            2. Identify and stop non-essential services:
+               - List services: systemctl list-units --type=service --state=running
+               - Stop service: systemctl stop <service>
+               - Stop container: docker stop <container>
+
+            3. Clear system cache (releases memory immediately):
+               - Sync first: sync
+               - Clear cache: echo 3 > /proc/sys/vm/drop_caches
+               - Note: Only temporary, root cause must be addressed
+
+            4. Restart high-memory services:
+               - Frees leaked memory
+               - Docker: docker restart <container>
+               - Systemd: systemctl restart <service>
+
+            5. Emergency measures:
+               - Enable additional swap: swapon -a
+               - Migrate workloads to other hosts
+               - Scale up instance size
+
+            POST-INCIDENT:
+            - Identify root cause (memory leak, workload spike)
+            - Implement monitoring for early detection
+            - Right-size memory allocation
+
+      # Low Disk Space Alert (Warning)
+      # -------------------------------
+      # Fires when filesystem usage exceeds 85%.
+      # Indicates: Disk filling up, action needed soon.
+      #
+      # Why 85% threshold?
+      #   - Modern filesystems degrade performance near capacity
+      #   - ext4/XFS recommend <80% for optimal performance
+      #   - Provides buffer before critical threshold
+      #   - Time to clean up or expand storage
+      #
+      - alert: DiskSpaceLowWarning
+        expr: |
+          (1 - (node_filesystem_avail_bytes{fstype=~"ext4|xfs"} / node_filesystem_size_bytes{fstype=~"ext4|xfs"})) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}:{{ $labels.mountpoint }}"
+          description: |
+            Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is {{ $value | humanizePercentage }} full.
+            Available space: {{ with query "node_filesystem_avail_bytes{instance='$labels.instance',mountpoint='$labels.mountpoint'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+          runbook: |
+            1. Check disk usage:
+               - Overall: df -h
+               - Specific mount: df -h {{ $labels.mountpoint }}
+
+            2. Identify large directories:
+               - Top-level: du -sh {{ $labels.mountpoint }}/* | sort -rh | head -20
+               - Recursive search: du -ah {{ $labels.mountpoint }} | sort -rh | head -50
+
+            3. Find large files:
+               - Recent large files: find {{ $labels.mountpoint }} -type f -size +100M -exec ls -lh {} \; | awk '{ print $9 ": " $5 }'
+               - Largest files: find {{ $labels.mountpoint }} -type f -printf '%s %p\n' | sort -nr | head -20
+
+            4. Clean up options:
+               - Docker: docker system prune -a (removes unused images/containers)
+               - Logs: journalctl --vacuum-time=7d (keep last 7 days)
+               - Package cache: apt clean / yum clean all
+               - Temp files: rm -rf /tmp/*
+               - Old backups: Review and delete old backup files
+
+            5. Check for deleted files still held open:
+               - lsof +L1 (lists deleted files still open by processes)
+               - Restart service to release file descriptors
+
+            6. Long-term solutions:
+               - Implement log rotation
+               - Expand disk size
+               - Add additional storage volumes
+               - Archive old data to cold storage
+
+      # Low Disk Space Alert (Critical)
+      # --------------------------------
+      # Fires when filesystem usage exceeds 95%.
+      # Indicates: Imminent disk full, service failures likely.
+      #
+      - alert: DiskSpaceLowCritical
+        expr: |
+          (1 - (node_filesystem_avail_bytes{fstype=~"ext4|xfs"} / node_filesystem_size_bytes{fstype=~"ext4|xfs"})) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "CRITICAL: Disk space on {{ $labels.instance }}:{{ $labels.mountpoint }} is 95%+ full"
+          description: |
+            Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is {{ $value | humanizePercentage }} full.
+            Services may fail. Immediate action required.
+            Available space: {{ with query "node_filesystem_avail_bytes{instance='$labels.instance',mountpoint='$labels.mountpoint'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+          runbook: |
+            IMMEDIATE ACTIONS:
+
+            1. Free space immediately:
+               - Docker cleanup: docker system prune -af --volumes (removes everything unused)
+               - Clear logs: > /var/log/syslog (truncate large log files)
+               - Remove temp files: rm -rf /tmp/* /var/tmp/*
+
+            2. Stop non-essential services to prevent further writes:
+               - systemctl stop <service>
+               - docker stop <container>
+
+            3. Identify and remove largest files quickly:
+               - find {{ $labels.mountpoint }} -type f -size +1G -delete (CAREFUL: removes files >1GB)
+               - Or selectively: find {{ $labels.mountpoint }} -type f -size +1G -exec rm -i {} \;
+
+            4. Emergency disk expansion:
+               - Extend volume (cloud): Resize volume in provider console
+               - Extend partition: growpart /dev/sda 1
+               - Extend filesystem: resize2fs /dev/sda1
+
+            POST-INCIDENT:
+            - Root cause analysis (why did disk fill?)
+            - Implement proactive monitoring
+            - Set up automated cleanup jobs
+
+      # Disk Will Fill Soon Alert (Predictive)
+      # ---------------------------------------
+      # Fires when disk predicted to fill within 24 hours based on growth trend.
+      # Indicates: Proactive alert, take action before space runs out.
+      #
+      # PromQL Explanation:
+      #   predict_linear(metric[1h], 24*3600): Linear regression prediction
+      #   [1h]: Use last 1 hour of data for trend
+      #   24*3600: Predict 24 hours (86400 seconds) into future
+      #   < 0: Prediction shows negative (no) available space
+      #
+      # Why 1-hour window?
+      #   - Short enough to detect rapid growth
+      #   - Long enough to avoid noise from brief spikes
+      #   - Balance between sensitivity and stability
+      #
+      # False positives:
+      #   - Temporary high write activity (backups, builds)
+      #   - Non-linear growth patterns
+      #   - Adjust window or prediction horizon if too sensitive
+      #
+      - alert: DiskWillFillSoon
+        expr: |
+          predict_linear(node_filesystem_avail_bytes{fstype=~"ext4|xfs"}[1h], 24*3600) < 0
+        for: 15m
+        labels:
+          severity: warning
+          category: capacity
+        annotations:
+          summary: "Disk {{ $labels.mountpoint }} on {{ $labels.instance }} will fill within 24 hours"
+          description: |
+            Based on current growth trend, filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} will run out of space within 24 hours.
+            Current available: {{ with query "node_filesystem_avail_bytes{instance='$labels.instance',mountpoint='$labels.mountpoint'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+            Take preventive action now.
+
+          runbook: |
+            1. Verify growth trend in Grafana:
+               - Check disk usage over last 6-12 hours
+               - Determine if linear or temporary spike
+
+            2. Identify cause of growth:
+               - Recent changes (new service, increased logging)
+               - Check what's growing: du -sh {{ $labels.mountpoint }}/* | sort -rh
+
+            3. Preventive actions:
+               - Clean up unneeded files now (before critical)
+               - Implement log rotation if not already present
+               - Archive or delete old data
+               - Plan disk expansion
+
+            4. Set up automated cleanup:
+               - Cron job to clean old logs: logrotate
+               - Docker prune: cron job for docker system prune
+               - Application-level cleanup (old backups, temp files)
+
+            5. Monitor prediction accuracy:
+               - Check if prediction aligns with actual behavior
+               - Adjust prediction window if false positives
+
+  # Container Alerts
+  # ================
+  # Alerts specific to Docker containers.
+  # Critical for: Container orchestration, resource limits, health.
+  #
+  - name: container_alerts
+    interval: 30s
+    rules:
+      # Container High CPU Alert
+      # ------------------------
+      # Fires when container uses >90% of CPU limit for 5 minutes.
+      # Indicates: CPU throttling, poor performance, needs optimization or scaling.
+      #
+      # Metric Explanation:
+      #   container_cpu_usage_seconds_total: CPU time used by container
+      #   container_spec_cpu_quota: CPU limit (in microseconds per 100ms)
+      #   container_spec_cpu_period: Quota period (typically 100000 = 100ms)
+      #   Rate + division gives CPU usage as fraction of limit
+      #
+      - alert: ContainerHighCPU
+        expr: |
+          (rate(container_cpu_usage_seconds_total{name!=""}[5m]) / (container_spec_cpu_quota{name!=""}/container_spec_cpu_period{name!=""})) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} high CPU usage"
+          description: |
+            Container {{ $labels.name }} on {{ $labels.instance }} is using {{ $value | humanizePercentage }} of CPU limit.
+            Consider increasing CPU allocation or optimizing container workload.
+
+          runbook: |
+            1. Check container resource usage:
+               - docker stats {{ $labels.name }}
+
+            2. Review CPU limit:
+               - docker inspect {{ $labels.name }} | grep -A 5 "NanoCpus"
+
+            3. Identify CPU-intensive processes in container:
+               - docker exec {{ $labels.name }} top -b -n 1
+
+            4. Check for CPU throttling:
+               - Check metric: container_cpu_cfs_throttled_seconds_total
+               - High throttling = needs more CPU allocation
+
+            5. Mitigation options:
+               - Increase CPU limit: docker update --cpus="2.0" {{ $labels.name }}
+               - Optimize application code
+               - Scale horizontally (more container replicas)
+               - Review resource allocation in docker-compose.yml
+
+      # Container High Memory Alert
+      # ----------------------------
+      # Fires when container uses >90% of memory limit for 5 minutes.
+      # Indicates: Memory pressure, potential OOM kill risk.
+      #
+      # Metric Explanation:
+      #   container_memory_working_set_bytes: Active memory (better than usage)
+      #   Excludes: Reclaimable cache (page cache)
+      #   More accurate indicator of OOM risk than usage_bytes
+      #
+      - alert: ContainerHighMemory
+        expr: |
+          (container_memory_working_set_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""}) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} high memory usage"
+          description: |
+            Container {{ $labels.name }} on {{ $labels.instance }} is using {{ $value | humanizePercentage }} of memory limit.
+            Risk of OOM kill. Consider increasing memory allocation or investigating memory leak.
+            Current usage: {{ with query "container_memory_working_set_bytes{name='$labels.name'}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+          runbook: |
+            1. Check container memory usage:
+               - docker stats {{ $labels.name }}
+
+            2. Review memory limit:
+               - docker inspect {{ $labels.name }} | grep -A 5 "Memory"
+
+            3. Check for OOM kills:
+               - docker inspect {{ $labels.name }} | grep "OOMKilled"
+               - dmesg | grep -i "{{ $labels.name }}"
+
+            4. Analyze memory usage in container:
+               - docker exec {{ $labels.name }} free -h
+               - docker exec {{ $labels.name }} ps aux --sort=-%mem
+
+            5. Check for memory leaks:
+               - Review container_memory_working_set_bytes trend over time
+               - Steadily increasing = likely memory leak
+
+            6. Mitigation options:
+               - Increase memory limit: docker update --memory="2g" {{ $labels.name }}
+               - Restart container (temporary fix): docker restart {{ $labels.name }}
+               - Fix memory leak in application code
+               - Implement heap dumps for analysis
+
+      # Container Restarting Alert
+      # ---------------------------
+      # Fires when container restarts more than 3 times in 15 minutes.
+      # Indicates: Application crash loop, configuration error, resource limit hit.
+      #
+      # Metric Explanation:
+      #   container_last_seen: Timestamp of last container observation
+      #   changes(): Counts how many times metric value changed
+      #   Container restart = container_last_seen timestamp updates
+      #
+      - alert: ContainerRestarting
+        expr: |
+          rate(container_last_seen{name!=""}[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting frequently"
+          description: |
+            Container {{ $labels.name }} on {{ $labels.instance }} has restarted {{ $value }} times in the last 15 minutes.
+            Indicates crash loop or resource limit issue.
+
+          runbook: |
+            1. Check container status and restart count:
+               - docker ps -a | grep {{ $labels.name }}
+               - docker inspect {{ $labels.name }} | grep -A 10 "RestartCount"
+
+            2. Check container logs for errors:
+               - docker logs --tail 100 {{ $labels.name }}
+               - Look for: exceptions, OOM errors, exit codes
+
+            3. Check container exit code:
+               - docker inspect {{ $labels.name }} | grep "ExitCode"
+               - Exit codes:
+                 - 0: Normal exit (shouldn't restart)
+                 - 1: Application error
+                 - 137: OOM killed (killed by system)
+                 - 139: Segmentation fault
+                 - 143: SIGTERM (graceful shutdown)
+
+            4. Check resource limits:
+               - docker stats {{ $labels.name }}
+               - OOM kill? Check: container_memory_failcnt
+
+            5. Check health check configuration:
+               - docker inspect {{ $labels.name }} | grep -A 20 "Healthcheck"
+               - Overly aggressive health check can cause restarts
+
+            6. Troubleshooting steps:
+               - Run container interactively: docker run -it --entrypoint /bin/sh <image>
+               - Test application startup manually
+               - Review environment variables and config
+
+            7. Fix options:
+               - Fix application bug causing crash
+               - Increase resource limits
+               - Fix health check configuration
+               - Review restart policy
+
+  # Monitoring Stack Alerts
+  # ========================
+  # Alerts for the monitoring system itself (meta-monitoring).
+  # Critical for: Ensuring monitoring reliability, detecting monitoring failures.
+  #
+  - name: monitoring_stack_alerts
+    interval: 30s
+    rules:
+      # Prometheus Down Alert
+      # ---------------------
+      # Fires when Prometheus itself is unavailable.
+      # Note: This alert only works if using external monitoring or federated setup.
+      # Self-monitoring limitation: Prometheus can't alert about itself being down.
+      #
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: monitoring
+        annotations:
+          summary: "Prometheus is down"
+          description: |
+            Prometheus instance {{ $labels.instance }} is unreachable.
+            All monitoring and alerting is impacted.
+
+          runbook: |
+            CRITICAL: Monitoring system is down. Act immediately.
+
+            1. Check if Prometheus container is running:
+               - docker ps | grep prometheus
+               - If not running: docker start prometheus
+
+            2. Check Prometheus logs:
+               - docker logs prometheus --tail 50
+               - Look for: startup errors, config issues, OOM kills
+
+            3. Verify configuration:
+               - promtool check config /path/to/prometheus.yml
+               - Fix any syntax errors
+
+            4. Check system resources:
+               - docker stats prometheus
+               - Sufficient CPU/memory available?
+
+            5. Check data directory:
+               - Corruption? Check: docker logs prometheus | grep corruption
+               - Disk full? Check: df -h
+
+            6. Restart Prometheus:
+               - docker restart prometheus
+               - Monitor startup: docker logs -f prometheus
+
+            7. If can't restore:
+               - Deploy backup Prometheus instance
+               - Restore configuration from version control
+
+      # Prometheus TSDB Reloads Failing
+      # --------------------------------
+      # Fires when Prometheus TSDB (time-series database) reloads are failing.
+      # Indicates: Data corruption risk, configuration issues.
+      #
+      - alert: PrometheusTSDBReloadsFailing
+        expr: increase(prometheus_tsdb_reloads_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "Prometheus TSDB reload failures detected"
+          description: |
+            Prometheus {{ $labels.instance }} has experienced {{ $value }} TSDB reload failures in the last 5 minutes.
+            This may indicate data corruption or resource constraints.
+
+          runbook: |
+            1. Check Prometheus logs for TSDB errors:
+               - docker logs prometheus | grep -i tsdb
+               - docker logs prometheus | grep -i reload
+
+            2. Check for disk issues:
+               - df -h (disk full?)
+               - dmesg | grep -i error (disk I/O errors?)
+
+            3. Check TSDB size and health:
+               - du -sh /prometheus/data
+               - Check metrics: prometheus_tsdb_storage_blocks_bytes
+
+            4. Verify data directory permissions:
+               - ls -la /prometheus/data
+               - Should be owned by nobody:nogroup (UID 65534 in container)
+
+            5. Check for file system corruption:
+               - fsck on unmounted filesystem (requires downtime)
+
+            6. Recovery options:
+               - Restart Prometheus: docker restart prometheus
+               - If persistent: Remove corrupted TSDB blocks
+               - Last resort: Delete TSDB and start fresh (data loss)
+
+      # Prometheus Rule Evaluation Failures
+      # ------------------------------------
+      # Fires when Prometheus fails to evaluate alert rules.
+      # Indicates: Bad rule syntax, metric unavailability, performance issues.
+      #
+      - alert: PrometheusRuleEvaluationFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "Prometheus rule evaluation failures detected"
+          description: |
+            Prometheus {{ $labels.instance }} has experienced {{ $value }} rule evaluation failures in the last 5 minutes.
+            Alerts may not fire correctly.
+
+          runbook: |
+            1. Check which rules are failing:
+               - docker logs prometheus | grep "rule evaluation"
+               - Check Prometheus UI: Status -> Rules
+
+            2. Validate rule syntax:
+               - promtool check rules /path/to/rules.yml
+               - Fix any syntax errors
+
+            3. Check if required metrics exist:
+               - Query each metric used in failing rules
+               - Ensure scraped targets are up
+
+            4. Check rule evaluation timing:
+               - Metric: prometheus_rule_evaluation_duration_seconds
+               - If high: Simplify complex queries or increase resources
+
+            5. Review rule changes:
+               - Recent rule modifications?
+               - Rollback if necessary
+
+            6. Fix options:
+               - Correct rule syntax
+               - Ensure scraped targets available
+               - Optimize expensive queries
+               - Increase Prometheus resources
+
+      # Grafana Down Alert
+      # ------------------
+      # Fires when Grafana is unavailable.
+      # Indicates: Service crash, resource exhaustion, configuration error.
+      #
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "Grafana is down"
+          description: |
+            Grafana instance {{ $labels.instance }} is unreachable.
+            Dashboards and visualizations are unavailable.
+
+          runbook: |
+            1. Check if Grafana container is running:
+               - docker ps | grep grafana
+               - If not running: docker start grafana
+
+            2. Check Grafana logs:
+               - docker logs grafana --tail 50
+               - Look for: plugin errors, database issues, permission problems
+
+            3. Check database (SQLite):
+               - Corruption? Check logs for "database locked" or "disk I/O error"
+               - Location: /var/lib/grafana/grafana.db
+
+            4. Check plugin installation:
+               - docker logs grafana | grep plugin
+               - Failed plugin install can prevent startup
+
+            5. Verify configuration:
+               - Check environment variables in docker-compose.yml
+               - Verify grafana.ini if customized
+
+            6. Check resources:
+               - docker stats grafana
+               - OOM killed? Increase memory limit
+
+            7. Restart Grafana:
+               - docker restart grafana
+               - Monitor startup: docker logs -f grafana
+
+            8. If can't restore:
+               - Restore from backup
+               - Redeploy container with last known good config
+
+# Recording Rules (Optional)
+# ===========================
+# Pre-compute expensive queries and store as new metrics.
+# Benefits: Faster dashboard queries, reduced query load, data aggregation.
+#
+# Example recording rules:
+#
+# - name: recording_rules
+#   interval: 30s
+#   rules:
+#     # Record per-instance CPU usage percentage
+#     - record: instance:node_cpu:avg_rate5m
+#       expr: |
+#         100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+#
+#     # Record per-instance memory usage percentage
+#     - record: instance:node_memory:usage_ratio
+#       expr: |
+#         1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+#
+#     # Record total HTTP requests per service
+#     - record: service:http_requests:rate5m
+#       expr: |
+#         sum by (service) (rate(http_requests_total[5m]))

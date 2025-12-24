@@ -1,0 +1,59 @@
+graph TB
+    subgraph "Internet Perimeter"
+        INTERNET[Internet]
+        INTERNET --> CF[Cloudflare DNS]
+        INTERNET --> NPM[Nginx Proxy Manager]
+    end
+
+    subgraph "Security Layer"
+        NPM --> WIREGUARD[WireGuard VPN]
+        WIREGUARD --> FIREWALL[UniFi Firewall]
+    end
+
+    subgraph "Network Segmentation"
+        FIREWALL --> VLAN10[VLAN 10 - Management]
+        FIREWALL --> VLAN20[VLAN 20 - Trusted]
+        FIREWALL --> VLAN30[VLAN 30 - Services]
+        FIREWALL --> VLAN40[VLAN 40 - IoT]
+        FIREWALL --> VLAN50[VLAN 50 - Cameras]
+    end
+
+    subgraph "Compute Layer"
+        VLAN10 --> PROXMOX[Proxmox VE Host]
+        VLAN30 --> PROXMOX
+
+        subgraph "Service Containers"
+            PROXMOX --> IMMICH[Immich Photo Service]
+            PROXMOX --> WIKI[Wiki.js]
+            PROXMOX --> GRAFANA[Grafana]
+            PROXMOX --> PROMETHEUS[Prometheus]
+            PROXMOX --> LOKI[Loki]
+        end
+    end
+
+    subgraph "Storage Layer"
+        PROXMOX --> TRUENAS[TrueNAS ZFS]
+        TRUENAS --> ZFS[ZFS Mirror Pool]
+        ZFS --> BACKUPS[Backup Datasets]
+        ZFS --> MEDIA[Media Storage]
+    end
+
+    subgraph "Multi-Site Resilience"
+        BACKUPS --> SYNC[Syncthing Replication]
+        SYNC --> SITE1[Thavy's House]
+        SYNC --> SITE2[Dad's House]
+        SYNC --> SITE3[Our House]
+    end
+
+    subgraph "Camera System"
+        VLAN50 --> PROTECT[UniFi Protect]
+        PROTECT --> CAM1[Front Door 4K]
+        PROTECT --> CAM2[Perimeter 4K]
+        PROTECT --> CAM3[Interior 4K]
+    end
+
+    style VLAN10 fill:#e1f5fe
+    style VLAN20 fill:#f3e5f5
+    style VLAN30 fill:#e8f5e8
+    style VLAN40 fill:#fff3e0
+    style VLAN50 fill:#ffebee
