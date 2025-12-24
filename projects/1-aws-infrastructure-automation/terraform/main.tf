@@ -288,7 +288,7 @@ resource "aws_autoscaling_group" "app" {
   min_size                  = var.app_min_size
   desired_capacity          = var.app_desired_capacity
   vpc_zone_identifier       = module.vpc.private_subnets
-  health_check_type         = "EC2"
+  health_check_type         = "ELB"
   health_check_grace_period = 60
   target_group_arns         = [module.application_alb.target_group_arns["app"]]
 
