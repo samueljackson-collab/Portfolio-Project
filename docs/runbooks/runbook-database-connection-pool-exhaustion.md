@@ -265,13 +265,11 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
 
   // Connection pool sizing
-  min: 10,  // Minimum idle connections
   max: 50,  // Maximum total connections
 
-  // Timeouts
-  connectionTimeoutMillis: 5000,  // 5 seconds to get connection
-  idleTimeoutMillis: 30000,       // Close idle connections after 30s
-  maxLifetime: 1800000,           // Max connection lifetime: 30 min
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000,
+  maxUses: 5000,
 
   // Error handling
   allowExitOnIdle: false,
@@ -282,7 +280,6 @@ const pool = new Pool({
 
 // Set database max_connections higher than total app pool size
 // If 10 app instances with max=50 each: set max_connections=600+
-```
 
 ### 3. Long-Running Transactions
 
