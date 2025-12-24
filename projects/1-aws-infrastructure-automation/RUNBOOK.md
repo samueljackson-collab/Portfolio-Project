@@ -92,6 +92,13 @@ terraform apply tfplan
 # Verify deployment
 terraform show
 terraform output
+
+# Validate ALB, ASG, and CDN artifacts
+aws elbv2 describe-load-balancers --names portfolio-app-${ENVIRONMENT:-dev}
+aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names portfolio-app-${ENVIRONMENT:-dev} \
+  --query 'AutoScalingGroups[0].{Desired:DesiredCapacity,InService:Instances[?LifecycleState==`InService`].InstanceId}'
+aws cloudfront list-distributions --query 'DistributionList.Items[*].{Id:Id,Domain:DomainName,Comment:Comment}'
 ```
 
 #### AWS CDK Deployment
@@ -157,6 +164,35 @@ aws eks describe-nodegroup --cluster-name production-eks-cluster \
 # Check nodes
 kubectl get nodes -o wide
 kubectl top nodes
+```
+
+### Web Tier (ALB + Auto Scaling Group)
+```bash
+# Target group health
+aws elbv2 describe-target-health \
+  --target-group-arn $(terraform output -raw alb_target_group_arn) \
+  --query 'TargetHealthDescriptions[*].{Id:Target.Id,State:TargetHealth.State,Reason:TargetHealth.Reason}'
+
+# Autoscaling inventory
+aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names $(terraform output -raw app_autoscaling_group_name) \
+  --query 'AutoScalingGroups[0].{Desired:DesiredCapacity,Min:MinSize,Max:MaxSize,Instances:Instances[*].InstanceId}'
+
+# Blue/green refresh of the web tier
+aws autoscaling start-instance-refresh \
+  --auto-scaling-group-name $(terraform output -raw app_autoscaling_group_name) \
+  --preferences MinHealthyPercentage=90,CheckpointDelay=180
+```
+
+### Static Assets & CDN
+```bash
+# Publish static build
+aws s3 sync web/dist/ s3://$(terraform output -raw static_site_bucket)/ --delete
+
+# Force propagation after release
+aws cloudfront create-invalidation \
+  --distribution-id $(terraform output -raw cloudfront_distribution_id) \
+  --paths "/*"
 ```
 
 #### Scale Node Groups

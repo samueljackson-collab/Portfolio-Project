@@ -12,7 +12,9 @@ Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a revers
 
 ## Next Steps
 
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
+- Cross-check PBS job definitions with the latest backup report under `assets/configs/monitoring/pbs-backup-report.md`.
+- Rotate sanitized screenshots quarterly to reflect patch levels and storage utilization trends.
+- Expand observability rules as new services land on the cluster.
 
 ## Contact
 
@@ -24,7 +26,11 @@ For questions about this project, please reach out via [GitHub](https://github.c
 - [x] Virtualization evidence checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
 
 ---
-*Placeholder — Documentation pending*
+
+## Evidence Artifacts
+- **Backup & Observability Logs:** `assets/configs/monitoring/pbs-backup-report.md` and `observability-snapshots.md` document PBS, Prometheus, Grafana, and Loki excerpts.
+- **Service Mapping:** See `assets/configs/monitoring/observability-snapshots.md` for cluster-level health thresholds tied to FreeIPA, Pi-hole, and Nginx reverse proxy.
+
 # PRJ-HOME-002: Virtualization & Core Services
 
 **Status:** ✅ Completed  

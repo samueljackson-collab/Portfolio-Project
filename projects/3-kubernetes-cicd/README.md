@@ -6,6 +6,35 @@ Declarative delivery pipeline with GitHub Actions, ArgoCD, and progressive deliv
 - `pipelines/github-actions.yaml` — build/test/deploy workflow.
 - `pipelines/argocd-app.yaml` — GitOps application manifest.
 
+## GitHub Actions Workflow
+The `portfolio-delivery` workflow enforces validation, security, and progressive deployment stages:
+
+1. **Lint & Validate** — `yamllint` plus `kubeconform` schema validation fails the build on YAML or Kubernetes schema errors.
+2. **Unit Tests** — Installs Python 3.11 dependencies (via `requirements.txt` when present) and executes `pytest`.
+3. **Build & Push** — Builds the container image and pushes both `latest` and SHA tags to the configured registry.
+4. **Image Security** — Runs Trivy (fail on HIGH/CRITICAL) and Dockle (fail on CIS/Owasp findings). Any findings fail the pipeline.
+5. **Progressive Delivery** — Syncs manifests through Argo CD, then drives a canary rollout by default (or blue/green when `DEPLOY_STRATEGY=blue-green`). Health checks and rollback steps enforce safe promotion.
+
+### Required Secrets & Inputs
+Configure these repository secrets/variables for the workflow to succeed:
+
+| Name | Type | Purpose |
+| ---- | ---- | ------- |
+| `REGISTRY_URL` | Secret | Registry hostname (e.g., `ghcr.io/owner`). |
+| `REGISTRY_USERNAME` / `REGISTRY_PASSWORD` | Secrets | Credentials for `docker/login-action`. |
+| `IMAGE_NAME` | Secret | Repository/image name (e.g., `portfolio/api`). |
+| `KUBECONFIG_B64` | Secret | Base64-encoded kubeconfig for validation and rollouts. |
+| `ARGOCD_SERVER` / `ARGOCD_AUTH_TOKEN` | Secrets | Endpoint and token for Argo CD CLI login. |
+| `ARGOCD_APP_NAME` | Secret | Target Argo CD application name. |
+| `ARGOCD_NAMESPACE` | Secret | Namespace containing the rollout. |
+| `ROLLOUT_NAME` | Secret | Argo Rollouts resource to drive canary/blue-green promotion. |
+| `DEPLOY_STRATEGY` | Repository variable (optional) | `canary` (default) or `blue-green` to align promotion steps with release strategy. |
+
+### Failure & Rollback Behavior
+- **Lint/Test/Scan**: Any validation, test, Trivy, or Dockle failure stops the pipeline.
+- **Deployment**: Argo CD sync failures trigger `argocd app rollback` and Argo Rollouts rollback to the prior stable ReplicaSet.
+- **Progressive Delivery**: Canary promotions watch rollout health and block until steady; blue/green promotions gate traffic switching with status checks.
+
 
 ## Code Generation Prompts
 
@@ -47,4 +76,3 @@ Write a Kubernetes operator in Go that watches for a custom CRD and automaticall
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

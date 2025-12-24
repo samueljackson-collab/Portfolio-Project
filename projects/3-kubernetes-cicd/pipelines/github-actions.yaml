@@ -1,17 +1,173 @@
 name: portfolio-delivery
+
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ${{ secrets.REGISTRY_URL }}
+  IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+  IMAGE_TAG: ${{ github.sha }}
+  ARGOCD_APP: ${{ secrets.ARGOCD_APP_NAME }}
+  ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+  ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+  ARGOCD_NAMESPACE: ${{ secrets.ARGOCD_NAMESPACE }}
+  ROLLOUT_NAME: ${{ secrets.ROLLOUT_NAME }}
+  DEPLOY_STRATEGY: ${{ vars.DEPLOY_STRATEGY && vars.DEPLOY_STRATEGY || 'canary' }}
+
 jobs:
-  build:
+  lint:
+    name: YAML & Kubernetes validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/setup-kubectl@v3
-      - run: echo "Running unit tests"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install validation tooling
+        run: |
+          sudo curl -L "https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz" \
+            | sudo tar -C /usr/local/bin -xz kubeconform
+          sudo apt-get update && sudo apt-get install -y yamllint
+
+      - name: YAML lint
+        run: yamllint .
+
+      - name: Kubernetes schema validation
+        run: |
+          FILES=$(find k8s manifests -maxdepth 2 -type f -name "*.yaml" 2>/dev/null | tr '\n' ' ')
+          if [ -z "$FILES" ]; then
+            echo "No Kubernetes manifests found; skipping kubeconform"
+            exit 0
+          fi
+          kubeconform -summary -strict -ignore-missing-schemas \
+            -kubernetes-version 1.28 \
+            -skip CustomResourceDefinition \
+            $FILES
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
+
+      - name: Run tests
+        run: pytest --maxfail=1 --disable-warnings -q
+
+  build-and-push:
+    name: Build and push image
+    needs: [lint, unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  image-scan:
+    name: Trivy & Dockle scans
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          exit-code: '1'
+
+      - name: Dockle scan
+        uses: erzz/dockle-action@v1.3.0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          exit-code: 1
+
   deploy:
-    needs: build
+    name: Progressive deployment
+    needs: image-scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Syncing ArgoCD application"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > $HOME/.kube/config
+
+      - name: Install Argo CD CLI
+        run: |
+          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          sudo install -m 755 argocd-linux-amd64 /usr/local/bin/argocd
+
+      - name: Install Argo Rollouts plugin
+        run: |
+          curl -sSL -o kubectl-argo-rollouts https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+          sudo install -m 755 kubectl-argo-rollouts /usr/local/bin/kubectl-argo-rollouts
+
+      - name: Authenticate to Argo CD
+        env:
+          ARGOCD_AUTH_TOKEN: ${{ env.ARGOCD_AUTH_TOKEN }}
+          ARGOCD_SERVER: ${{ env.ARGOCD_SERVER }}
+        run: |
+          argocd login ${ARGOCD_SERVER} --username "token" --password "${ARGOCD_AUTH_TOKEN}" --insecure
+
+      - name: Sync application manifests
+        run: |
+          argocd app sync ${{ env.ARGOCD_APP }} --prune --retry-limit 3 --timeout 600
+          argocd app wait ${{ env.ARGOCD_APP }} --health --timeout 600
+
+      - name: Canary rollout verification
+        if: env.DEPLOY_STRATEGY == 'canary'
+        env:
+          ROLLOUT_NAME: ${{ env.ROLLOUT_NAME }}
+          NAMESPACE: ${{ env.ARGOCD_NAMESPACE }}
+        run: |
+          kubectl-argo-rollouts -n ${NAMESPACE} set image ${ROLLOUT_NAME} "app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          kubectl-argo-rollouts -n ${NAMESPACE} promote ${ROLLOUT_NAME} --full
+          kubectl-argo-rollouts -n ${NAMESPACE} status ${ROLLOUT_NAME} --watch --timeout 300s
+
+      - name: Blue/Green traffic switch
+        if: env.DEPLOY_STRATEGY == 'blue-green'
+        env:
+          ROLLOUT_NAME: ${{ env.ROLLOUT_NAME }}
+          NAMESPACE: ${{ env.ARGOCD_NAMESPACE }}
+        run: |
+          kubectl-argo-rollouts -n ${NAMESPACE} promote ${ROLLOUT_NAME} --skip-analysis=false
+          kubectl-argo-rollouts -n ${NAMESPACE} status ${ROLLOUT_NAME} --watch --timeout 300s
+
+      - name: Post-sync health check
+        run: argocd app wait ${{ env.ARGOCD_APP }} --health --timeout 300
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          argocd app rollback ${{ env.ARGOCD_APP }}
+          kubectl-argo-rollouts -n ${{ env.ARGOCD_NAMESPACE }} rollback ${{ env.ROLLOUT_NAME }}
