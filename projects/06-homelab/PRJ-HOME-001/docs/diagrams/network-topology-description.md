@@ -1,0 +1,76 @@
+# Network Topology Description
+
+## Physical Layout — Left to Right (Cables, Ports, Endpoints)
+- **ISP drop → DOCSIS/ONT modem**  
+  - ISP handoff: coax/fiber to modem WAN.  
+  - Modem LAN handoff: copper **CAT6 → UDMP WAN1** (RJ45, labeled *ISP-WAN*).
+- **Ubiquiti Dream Machine Pro (UDMP)**  
+  - WAN1 (eth0) to modem; WAN2 (eth1) reserved for failover (empty).  
+  - LAN uplink: **UDMP LAN10G SFP+ (Port 10G1) → Switch SFP+1** using DAC.  
+  - Management IP: `192.168.1.1/24`; DHCP for infra VLAN `192.168.10.0/24`.  
+  - Local services: DHCP, DNS, IDS/IPS, firewall.
+- **Core Switch (PoE L3/managed)**  
+  - Uplink: **SFP+1 ↔ UDMP 10G1** (DAC).  
+  - **Downlink trunks (802.1Q tagged)**:  
+    - **PoE Port 1 (Gi1/0/1) → AP1** (Ceiling, PoE+ Cat6, tagged VLANs 20/30/40).  
+    - **PoE Port 2 (Gi1/0/2) → AP2** (Living Room, PoE+ Cat6, tagged VLANs 20/30/40).  
+    - **Port 3 (Gi1/0/3) → Media Cabinet mini-switch** (Cat6, tagged VLANs 30/50).  
+    - **Port 4 (Gi1/0/4) → Workbench patch panel** (Cat6, tagged 10/30/40/50).  
+    - **Port 5 (Gi1/0/5) → NAS** (Cat6, access VLAN 30, static `192.168.30.10`).  
+    - **Port 6 (Gi1/0/6) → Home Server (Proxmox)** (Cat6, trunk 20/30/40/50, mgmt `192.168.10.20`).  
+    - **Port 7 (Gi1/0/7) → IoT Hub** (Cat6, access VLAN 40, static `192.168.40.5`).  
+    - **Port 8 (Gi1/0/8) → Printer** (Cat6, access VLAN 20, DHCP).  
+  - Aggregate/reserve: ports 9–12 spare for lab/guest gear (tagged trunk ready).
+- **Wireless Access Points (AP1/AP2)**  
+  - AP1: Ceiling centrally located; PoE from Port 1; SSIDs mapped to VLANs (LAN→20, Guest→40, Cameras→50).  
+  - AP2: Living room; PoE from Port 2; identical SSID/VLAN mappings; Ethernet passthrough disabled.
+- **Endpoint Groups by VLAN**  
+  - **VLAN 10 – Infrastructure (192.168.10.0/24)**: UDMP, switch mgmt `192.168.10.2`, hypervisor management `192.168.10.20`, UPS `192.168.10.30`.  
+  - **VLAN 20 – Users (192.168.20.0/24)**: laptops, desktops, printer.  
+  - **VLAN 30 – Servers/Storage (192.168.30.0/24)**: NAS, VMs, media cabinet devices.  
+  - **VLAN 40 – IoT/Guest (192.168.40.0/24)**: IoT hub, smart devices, guest Wi‑Fi clients.  
+  - **VLAN 50 – Cameras (192.168.50.0/24)**: PoE cameras on media cabinet switch; NVR on VLAN 30 with allowlisted ingress.
+
+## Logical Diagram Spec — Zones, Bubbles, Flows, Rules
+- **Canvas layout (top-down)**  
+  - Top row: **Internet cloud → Modem → UDMP**.  
+  - Middle row: **Core Switch** centered; trunks down to APs (left/right) and to server/storage blocks (bottom).  
+  - Bottom row: endpoint bubbles grouped by VLAN/subnet.
+- **Zone grouping (rectangles)**  
+  - **Perimeter Zone**: Internet + Modem (gray).  
+  - **Security/Control Zone**: UDMP + IDS/IPS (blue).  
+  - **Distribution Zone**: Core Switch + trunks (dark gray).  
+  - **Access Zones**:  
+    - *User Zone* (VLAN 20, green).  
+    - *Infra Zone* (VLAN 10, steel blue).  
+    - *Server/Storage Zone* (VLAN 30, purple).  
+    - *IoT/Guest Zone* (VLAN 40, orange).  
+    - *Cameras Zone* (VLAN 50, red).
+- **VLAN bubbles and labels**  
+  - Each zone encloses a bubble with: `VLAN ID`, `Subnet/CIDR`, DHCP/static note.  
+  - Trunk ports annotated with `T (10/20/30/40/50)`; access ports annotated `A (VLAN X)`.
+- **Flows and firewall rules (arrow overlays)**  
+  - **Allowed**:  
+    - Infra (10) ↔ Servers (30) for management (SSH/HTTPS), backups (NFS/SMB).  
+    - Users (20) → Servers (30) for media (HTTPS/SMB), printing to VLAN 20 printer.  
+    - Cameras (50) → NVR (30) on TCP 7443/8554; NVR → Internet only via UDMP for updates.  
+    - IoT/Guest (40) → Internet only; limited → Servers (30) for MQTT/HTTPS to IoT broker.  
+  - **Blocked**:  
+    - East-west between 20 ↔ 40 and 40 ↔ 50 except allowlisted services.  
+    - Cameras (50) → Users (20) denied; Users (20) → Cameras (50) denied except NVR.  
+    - Guest devices (40) cannot reach Infra (10).
+- **Color coding**  
+  - Links: WAN (red), LAN/Uplink (blue), Access (green), PoE (teal).  
+  - Devices: Modem (gray), UDMP (blue), Switch (dark gray), APs (teal), Servers (purple), Users (green), IoT (orange), Cameras (red).  
+  - Flows: Allowed arrows solid green; blocked arrows dashed red.  
+  - Cables: DAC for SFP+ labeled “DAC 10G”; copper labeled “CAT6”.
+- **Annotations**  
+  - Port callouts on UDMP (`WAN1`, `10G1`), switch (`Gi1/0/x`, `SFP+1`), AP uplinks.  
+  - IP tags near key hosts (NAS `192.168.30.10`, Hypervisor `192.168.10.20`, UDMP `192.168.1.1`/`192.168.10.1`).  
+  - DHCP scopes per VLAN; static reservations noted.  
+  - Label trunks with allowed VLAN list; label access ports with VLAN ID.
+- **Legend (corner panel)**  
+  - Icon shapes for modem/router/switch/AP/server/endpoint.  
+  - Line styles for WAN, trunk, access, and PoE.  
+  - Arrow styles for allowed vs. blocked flows.  
+  - Color swatches matching VLAN/zones and link types.
