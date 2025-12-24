@@ -13,7 +13,7 @@ This project provisions a production-ready AWS environment with multiple impleme
 ## Contents
 - `terraform/` — Primary IaC implementation using community modules and environment-specific variables (VPC, ALB, Auto Scaling Group, EKS, RDS, S3 + CloudFront).
 - `cdk/` — Python-based AWS CDK app that mirrors the Terraform footprint and highlights programmatic constructs.
-- `pulumi/` — Pulumi project using Python for multi-cloud friendly infrastructure authoring.
+- `pulumi/` — Pulumi project using Python for multi-cloud-friendly infrastructure authoring.
 - `scripts/` — Helper scripts for planning, deployment, validation, and teardown workflows.
 
 Each implementation aligns with the runbooks described in the Wiki.js guide so the documentation, automation, and validation steps can be exercised end-to-end.
