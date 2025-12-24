@@ -39,7 +39,7 @@
 ---
 ## 3. Inter-VLAN Security Policies (per VLAN)
 
-### VLAN 10 – Trusted (192.168.1.0/24)
+### VLAN 10 – Trusted (192.168.10.0/24)
 - **Allowed:** Full internet; management to IoT/Servers; VPN termination; RADIUS/SSH/HTTPS to infrastructure.  
 - **Restricted:** No direct access to DMZ management planes; changes require admin role.  
 - **Monitoring:** Auth/logon failures generate alerts; firewall rule changes logged.
