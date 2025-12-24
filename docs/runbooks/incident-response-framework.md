@@ -386,7 +386,8 @@ aws sts assume-role \
 kubectl exec -it -n production db-proxy -- psql -U readonly
 
 # View production secrets (audit logged)
-kubectl get secret -n production app-secrets -o jsonpath='{.data}'
+# View a specific secret key (e.g., 'API_KEY'), decoded
+kubectl get secret -n production app-secrets -o jsonpath='{.data.API_KEY}' | base64 --decode
 ```
 
 ## Incident Metrics
