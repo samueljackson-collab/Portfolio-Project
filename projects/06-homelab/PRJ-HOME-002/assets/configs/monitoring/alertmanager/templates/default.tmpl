@@ -1,0 +1,482 @@
+{{/* Alertmanager Notification Templates */}}
+{{/* ===================================== */}}
+{{/* Version: 1.0 */}}
+{{/* Purpose: Custom notification formatting for Slack, Email, PagerDuty */}}
+{{/* Last Updated: November 6, 2025 */}}
+{{/*  */}}
+{{/* Template Philosophy: */}}
+{{/* - Clear, actionable notifications */}}
+{{/* - Include essential context (what, where, when, why) */}}
+{{/* - Link to dashboards and runbooks */}}
+{{/* - Different formatting per severity */}}
+{{/* - Consistent structure across channels */}}
+{{/* ===================================== */}}
+
+{{/* ===================================== */}}
+{{/* HELPER TEMPLATES */}}
+{{/* ===================================== */}}
+
+{{/* Format timestamp in human-readable format */}}
+{{ define "__timestamp" }}{{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+
+{{/* Format duration (how long alert has been firing) */}}
+{{ define "__duration" }}{{ if .EndsAt.IsZero }}{{ (sub now.Unix .StartsAt.Unix) | humanizeDuration }}{{ else }}{{ (.EndsAt.Sub .StartsAt) | humanizeDuration }}{{ end }}{{ end }}
+
+{{/* Alert status emoji */}}
+{{ define "__alert_emoji" }}{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }}{{ end }}
+
+{{/* Severity emoji */}}
+{{ define "__severity_emoji" }}{{ if eq .Labels.severity "critical" }}🚨{{ else if eq .Labels.severity "warning" }}⚠️{{ else if eq .Labels.severity "info" }}ℹ️{{ else }}📋{{ end }}{{ end }}
+
+{{/* Alert count summary */}}
+{{ define "__alert_count" }}{{ .Alerts.Firing | len }} firing{{ if gt (.Alerts.Resolved | len) 0 }}, {{ .Alerts.Resolved | len }} resolved{{ end }}{{ end }}
+
+{{/* Grafana dashboard URL builder */}}
+{{ define "__grafana_url" }}https://grafana.example.com/d/{{ .Labels.dashboard_id }}{{ end }}
+
+{{/* Prometheus alert URL */}}
+{{ define "__prometheus_url" }}https://prometheus.example.com/graph?g0.expr={{ .GeneratorURL }}{{ end }}
+
+{{/* Alert silence URL */}}
+{{ define "__silence_url" }}{{ .ExternalURL }}/#/silences/new?filter=%7B{{ range .GroupLabels.SortedPairs }}{{ if ne .Name "alertname" }}{{ .Name }}%3D%22{{ .Value }}%22%2C{{ end }}{{ end }}%7D{{ end }}
+
+{{/* ===================================== */}}
+{{/* SLACK TEMPLATES */}}
+{{/* ===================================== */}}
+
+{{/* Default Slack notification */}}
+{{ define "slack.default.text" }}
+{{ template "__alert_emoji" . }} *{{ .GroupLabels.alertname }}*
+
+{{ range .Alerts }}
+{{ template "__severity_emoji" . }} **{{ .Labels.severity | toUpper }}**
+*Instance:* `{{ .Labels.instance }}`
+{{ if .Labels.service }}*Service:* `{{ .Labels.service }}`{{ end }}
+{{ if .Labels.job }}*Job:* `{{ .Labels.job }}`{{ end }}
+
+*Summary:* {{ .Annotations.summary }}
+{{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+
+{{ if eq .Status "firing" }}
+*Started:* {{ template "__timestamp" . }}
+*Duration:* {{ template "__duration" . }}
+{{ else }}
+*Resolved:* {{ template "__timestamp" . }}
+*Was firing for:* {{ template "__duration" . }}
+{{ end }}
+
+{{ if .Annotations.runbook_url }}📖 <{{ .Annotations.runbook_url }}|Runbook>{{ end }}
+{{ if .Annotations.dashboard_url }}📊 <{{ .Annotations.dashboard_url }}|Dashboard>{{ end }}
+
+---
+{{ end }}
+
+*Summary:* {{ template "__alert_count" . }}
+{{ end }}
+
+{{/* Critical alerts Slack template */}}
+{{ define "slack.critical.text" }}
+🚨 *CRITICAL ALERT* 🚨
+
+{{ range .Alerts }}
+*Alert:* {{ .Labels.alertname }}
+*Severity:* CRITICAL
+*Instance:* `{{ .Labels.instance }}`
+{{ if .Labels.service }}*Service:* `{{ .Labels.service }}`{{ end }}
+{{ if .Labels.tier }}*Tier:* `{{ .Labels.tier }}`{{ end }}
+
+*Summary:* {{ .Annotations.summary }}
+{{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+
+{{ if .Annotations.impact }}*Impact:* {{ .Annotations.impact }}{{ end }}
+
+{{ if eq .Status "firing" }}
+⏰ *Firing since:* {{ template "__timestamp" . }} ({{ template "__duration" . }})
+{{ else }}
+✅ *Resolved at:* {{ template "__timestamp" . }}
+{{ end }}
+
+{{ if .Annotations.runbook_url }}📖 <{{ .Annotations.runbook_url }}|Runbook - Immediate Action Required>{{ end }}
+{{ if .Annotations.dashboard_url }}📊 <{{ .Annotations.dashboard_url }}|Dashboard>{{ end }}
+{{ if .Annotations.logs_url }}📝 <{{ .Annotations.logs_url }}|Logs>{{ end }}
+
+*Alert URL:* {{ .GeneratorURL }}
+---
+{{ end }}
+
+*Total:* {{ template "__alert_count" . }}
+{{ if gt (.Alerts.Firing | len) 0 }}@here{{ end }}
+{{ end }}
+
+{{/* Database alerts Slack template */}}
+{{ define "slack.database.text" }}
+🗄️ *DATABASE ALERT*
+
+{{ range .Alerts }}
+*Alert:* {{ .Labels.alertname }}
+*Database:* `{{ .Labels.service }}`
+{{ if .Labels.database }}*Database Name:* `{{ .Labels.database }}`{{ end }}
+*Instance:* `{{ .Labels.instance }}`
+
+{{ if .Annotations.summary }}*Summary:* {{ .Annotations.summary }}{{ end }}
+{{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+
+{{ if .Labels.severity }}*Severity:* {{ .Labels.severity | toUpper }}{{ end }}
+
+{{ if eq .Status "firing" }}
+⏰ *Started:* {{ template "__timestamp" . }}
+*Duration:* {{ template "__duration" . }}
+{{ else }}
+✅ *Resolved:* {{ template "__timestamp" . }}
+{{ end }}
+
+{{ if .Annotations.current_value }}*Current Value:* {{ .Annotations.current_value }}{{ end }}
+{{ if .Annotations.threshold }}*Threshold:* {{ .Annotations.threshold }}{{ end }}
+
+{{ if .Annotations.runbook_url }}📖 <{{ .Annotations.runbook_url }}|Database Runbook>{{ end }}
+{{ if .Annotations.dashboard_url }}📊 <{{ .Annotations.dashboard_url }}|Database Dashboard>{{ end }}
+---
+{{ end }}
+
+*Summary:* {{ template "__alert_count" . }}
+{{ end }}
+
+{{/* Security alerts Slack template */}}
+{{ define "slack.security.text" }}
+🛡️ *SECURITY ALERT* 🛡️
+
+{{ range .Alerts }}
+*Alert:* {{ .Labels.alertname }}
+*Instance:* `{{ .Labels.instance }}`
+{{ if .Labels.user }}*User:* `{{ .Labels.user }}`{{ end }}
+{{ if .Labels.source_ip }}*Source IP:* `{{ .Labels.source_ip }}`{{ end }}
+
+{{ if .Annotations.summary }}*Summary:* {{ .Annotations.summary }}{{ end }}
+{{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+
+{{ if eq .Status "firing" }}
+⏰ *Detected:* {{ template "__timestamp" . }}
+*Duration:* {{ template "__duration" . }}
+{{ else }}
+✅ *Resolved:* {{ template "__timestamp" . }}
+{{ end }}
+
+{{ if .Annotations.recommended_action }}*Recommended Action:* {{ .Annotations.recommended_action }}{{ end }}
+
+{{ if .Annotations.runbook_url }}📖 <{{ .Annotations.runbook_url }}|Security Runbook>{{ end }}
+{{ if .Annotations.logs_url }}📝 <{{ .Annotations.logs_url }}|View Logs>{{ end }}
+---
+{{ end }}
+
+*Summary:* {{ template "__alert_count" . }}
+{{ if gt (.Alerts.Firing | len) 0 }}@channel{{ end }}
+{{ end }}
+
+{{/* Storage alerts Slack template */}}
+{{ define "slack.storage.text" }}
+💾 *STORAGE ALERT*
+
+{{ range .Alerts }}
+*Alert:* {{ .Labels.alertname }}
+*Instance:* `{{ .Labels.instance }}`
+{{ if .Labels.mountpoint }}*Mount Point:* `{{ .Labels.mountpoint }}`{{ end }}
+{{ if .Labels.device }}*Device:* `{{ .Labels.device }}`{{ end }}
+
+{{ if .Annotations.summary }}*Summary:* {{ .Annotations.summary }}{{ end }}
+
+{{ if .Annotations.current_value }}*Current Usage:* {{ .Annotations.current_value }}{{ end }}
+{{ if .Annotations.threshold }}*Threshold:* {{ .Annotations.threshold }}{{ end }}
+
+{{ if eq .Status "firing" }}
+⏰ *Started:* {{ template "__timestamp" . }}
+{{ else }}
+✅ *Resolved:* {{ template "__timestamp" . }}
+{{ end }}
+
+{{ if .Annotations.runbook_url }}📖 <{{ .Annotations.runbook_url }}|Storage Runbook>{{ end }}
+{{ if .Annotations.dashboard_url }}📊 <{{ .Annotations.dashboard_url }}|Storage Dashboard>{{ end }}
+---
+{{ end }}
+
+*Summary:* {{ template "__alert_count" . }}
+{{ end }}
+
+{{/* Network alerts Slack template */}}
+{{ define "slack.network.text" }}
+🌐 *NETWORK ALERT*
+
+{{ range .Alerts }}
+*Alert:* {{ .Labels.alertname }}
+*Instance:* `{{ .Labels.instance }}`
+{{ if .Labels.interface }}*Interface:* `{{ .Labels.interface }}`{{ end }}
+
+{{ if .Annotations.summary }}*Summary:* {{ .Annotations.summary }}{{ end }}
+{{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+
+{{ if eq .Status "firing" }}
+⏰ *Started:* {{ template "__timestamp" . }}
+{{ else }}
+✅ *Resolved:* {{ template "__timestamp" . }}
+{{ end }}
+
+{{ if .Annotations.dashboard_url }}📊 <{{ .Annotations.dashboard_url }}|Network Dashboard>{{ end }}
+---
+{{ end }}
+
+*Summary:* {{ template "__alert_count" . }}
+{{ end }}
+
+{{/* Application alerts Slack template */}}
+{{ define "slack.application.text" }}
+📦 *APPLICATION ALERT*
+
+{{ range .Alerts }}
+*Alert:* {{ .Labels.alertname }}
+*Service:* `{{ .Labels.service }}`
+*Instance:* `{{ .Labels.instance }}`
+
+{{ if .Annotations.summary }}*Summary:* {{ .Annotations.summary }}{{ end }}
+{{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+
+{{ if eq .Status "firing" }}
+⏰ *Started:* {{ template "__timestamp" . }}
+{{ else }}
+✅ *Resolved:* {{ template "__timestamp" . }}
+{{ end }}
+
+{{ if .Annotations.runbook_url }}📖 <{{ .Annotations.runbook_url }}|Runbook>{{ end }}
+{{ if .Annotations.dashboard_url }}📊 <{{ .Annotations.dashboard_url }}|Dashboard>{{ end }}
+{{ if .Annotations.logs_url }}📝 <{{ .Annotations.logs_url }}|Logs>{{ end }}
+---
+{{ end }}
+
+*Summary:* {{ template "__alert_count" . }}
+{{ end }}
+
+{{/* Monitoring system alerts Slack template */}}
+{{ define "slack.monitoring.text" }}
+👁️ *MONITORING SYSTEM ALERT*
+
+⚠️ The monitoring infrastructure itself is having issues!
+
+{{ range .Alerts }}
+*Alert:* {{ .Labels.alertname }}
+*Component:* `{{ .Labels.job }}`
+*Instance:* `{{ .Labels.instance }}`
+
+{{ if .Annotations.summary }}*Summary:* {{ .Annotations.summary }}{{ end }}
+{{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+
+{{ if .Annotations.impact }}*Impact:* {{ .Annotations.impact }}{{ end }}
+
+{{ if eq .Status "firing" }}
+⏰ *Started:* {{ template "__timestamp" . }}
+{{ else }}
+✅ *Resolved:* {{ template "__timestamp" . }}
+{{ end }}
+
+{{ if .Annotations.runbook_url }}📖 <{{ .Annotations.runbook_url }}|Monitoring Runbook>{{ end }}
+---
+{{ end }}
+
+*Summary:* {{ template "__alert_count" . }}
+{{ end }}
+
+{{/* Info alerts Slack template */}}
+{{ define "slack.info.text" }}
+ℹ️ *INFO*
+
+{{ range .Alerts }}
+*{{ .Labels.alertname }}*
+{{ if .Labels.instance }}Instance: `{{ .Labels.instance }}`{{ end }}
+
+{{ if .Annotations.summary }}{{ .Annotations.summary }}{{ end }}
+
+{{ if eq .Status "firing" }}
+Started: {{ template "__timestamp" . }}
+{{ else }}
+Resolved: {{ template "__timestamp" . }}
+{{ end }}
+---
+{{ end }}
+{{ end }}
+
+{{/* ===================================== */}}
+{{/* EMAIL TEMPLATES */}}
+{{/* ===================================== */}}
+
+{{/* Default email template */}}
+{{ define "email.default.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .alert { border-left: 4px solid #f0ad4e; padding: 15px; margin: 15px 0; background: #fcf8e3; }
+        .alert.critical { border-color: #d9534f; background: #f2dede; }
+        .alert.resolved { border-color: #5cb85c; background: #dff0d8; }
+        .header { background: #333; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
+        .label { font-weight: bold; }
+        .value { font-family: monospace; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #777; }
+        a { color: #337ab7; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} Homelab Alert Notification</h2>
+        </div>
+
+        <p><strong>Summary:</strong> {{ template "__alert_count" . }}</p>
+
+        {{ range .Alerts }}
+        <div class="alert {{ if eq .Labels.severity "critical" }}critical{{ else if eq .Status "resolved" }}resolved{{ end }}">
+            <h3>{{ .Labels.alertname }}</h3>
+
+            <p><span class="label">Severity:</span> <span class="value">{{ .Labels.severity | toUpper }}</span></p>
+            <p><span class="label">Instance:</span> <span class="value">{{ .Labels.instance }}</span></p>
+            {{ if .Labels.service }}<p><span class="label">Service:</span> <span class="value">{{ .Labels.service }}</span></p>{{ end }}
+
+            {{ if .Annotations.summary }}<p><strong>Summary:</strong> {{ .Annotations.summary }}</p>{{ end }}
+            {{ if .Annotations.description }}<p><strong>Description:</strong> {{ .Annotations.description }}</p>{{ end }}
+
+            {{ if eq .Status "firing" }}
+            <p><span class="label">Started:</span> {{ template "__timestamp" . }}</p>
+            <p><span class="label">Duration:</span> {{ template "__duration" . }}</p>
+            {{ else }}
+            <p><span class="label">Resolved:</span> {{ template "__timestamp" . }}</p>
+            {{ end }}
+
+            {{ if .Annotations.current_value }}<p><span class="label">Current Value:</span> {{ .Annotations.current_value }}</p>{{ end }}
+            {{ if .Annotations.threshold }}<p><span class="label">Threshold:</span> {{ .Annotations.threshold }}</p>{{ end }}
+
+            <p>
+                {{ if .Annotations.runbook_url }}<a href="{{ .Annotations.runbook_url }}">📖 Runbook</a> | {{ end }}
+                {{ if .Annotations.dashboard_url }}<a href="{{ .Annotations.dashboard_url }}">📊 Dashboard</a> | {{ end }}
+                <a href="{{ .GeneratorURL }}">🔍 Prometheus</a>
+            </p>
+        </div>
+        {{ end }}
+
+        <div class="footer">
+            <p>This is an automated notification from Homelab Alertmanager.</p>
+            <p>Alertmanager: <a href="{{ .ExternalURL }}">{{ .ExternalURL }}</a></p>
+        </div>
+    </div>
+</body>
+</html>
+{{ end }}
+
+{{/* Critical alert email template */}}
+{{ define "email.critical.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .alert { border-left: 4px solid #d9534f; padding: 15px; margin: 15px 0; background: #f2dede; }
+        .header { background: #d9534f; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
+        .critical-banner { background: #f00; color: white; padding: 10px; text-align: center; font-weight: bold; }
+        .label { font-weight: bold; }
+        .value { font-family: monospace; }
+        a { color: #337ab7; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="critical-banner">
+            🚨 CRITICAL ALERT - IMMEDIATE ATTENTION REQUIRED 🚨
+        </div>
+        <div class="header">
+            <h2>Critical Infrastructure Alert</h2>
+        </div>
+
+        {{ range .Alerts }}
+        <div class="alert">
+            <h3>{{ .Labels.alertname }}</h3>
+
+            <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+            {{ if .Annotations.description }}<p><strong>Description:</strong> {{ .Annotations.description }}</p>{{ end }}
+            {{ if .Annotations.impact }}<p><strong>Impact:</strong> {{ .Annotations.impact }}</p>{{ end }}
+
+            <p><span class="label">Instance:</span> <span class="value">{{ .Labels.instance }}</span></p>
+            {{ if .Labels.service }}<p><span class="label">Service:</span> <span class="value">{{ .Labels.service }}</span></p>{{ end }}
+
+            <p><span class="label">Started:</span> {{ template "__timestamp" . }}</p>
+            <p><span class="label">Duration:</span> {{ template "__duration" . }}</p>
+
+            <p>
+                {{ if .Annotations.runbook_url }}<a href="{{ .Annotations.runbook_url }}" style="font-size: 16px; color: #d9534f; font-weight: bold;">📖 IMMEDIATE ACTION REQUIRED - VIEW RUNBOOK</a>{{ end }}
+            </p>
+        </div>
+        {{ end }}
+    </div>
+</body>
+</html>
+{{ end }}
+
+{{/* Security alert email template */}}
+{{ define "email.security.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .alert { border-left: 4px solid #ff6600; padding: 15px; margin: 15px 0; background: #fff3cd; }
+        .header { background: #ff6600; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
+        .label { font-weight: bold; }
+        a { color: #337ab7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🛡️ Security Alert</h2>
+        </div>
+
+        {{ range .Alerts }}
+        <div class="alert">
+            <h3>{{ .Labels.alertname }}</h3>
+
+            <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+            {{ if .Annotations.description }}<p><strong>Description:</strong> {{ .Annotations.description }}</p>{{ end }}
+
+            <p><span class="label">Instance:</span> {{ .Labels.instance }}</p>
+            {{ if .Labels.user }}<p><span class="label">User:</span> {{ .Labels.user }}</p>{{ end }}
+            {{ if .Labels.source_ip }}<p><span class="label">Source IP:</span> {{ .Labels.source_ip }}</p>{{ end }}
+
+            <p><span class="label">Detected:</span> {{ template "__timestamp" . }}</p>
+
+            {{ if .Annotations.recommended_action }}
+            <p><strong>Recommended Action:</strong> {{ .Annotations.recommended_action }}</p>
+            {{ end }}
+
+            {{ if .Annotations.runbook_url }}<p><a href="{{ .Annotations.runbook_url }}">📖 Security Runbook</a></p>{{ end }}
+        </div>
+        {{ end }}
+    </div>
+</body>
+</html>
+{{ end }}
+
+{{/* ===================================== */}}
+{{/* PAGERDUTY TEMPLATES */}}
+{{/* ===================================== */}}
+
+{{/* PagerDuty URL for alert */}}
+{{ define "pagerduty.default.url" }}{{ .ExternalURL }}{{ end }}
+
+{{/* ===================================== */}}
+{{/* SLACK HELPER TEMPLATES */}}
+{{/* ===================================== */}}
+
+{{/* Slack title link */}}
+{{ define "slack.default.titlelink" }}{{ .ExternalURL }}{{ end }}
+
+{{/* Slack silence URL */}}
+{{ define "slack.default.silenceURL" }}{{ template "__silence_url" . }}{{ end }}
