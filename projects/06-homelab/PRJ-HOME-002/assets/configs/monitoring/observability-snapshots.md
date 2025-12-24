@@ -28,7 +28,6 @@
 ## Loki Log Snippet (reverse proxy)
 ```
 2024-12-18T04:21:41Z service=nginx-gateway ingress=ha status=200 path=/api/health latency_ms=24 client=192.168.40.12
-2024-12-18T04:22:05Z service=nginx-gateway ingress=wikijs status=200 path=/ status=200 latency_ms=37 client=192.168.40.15
-```
+2024-12-18T04:22:05Z service=nginx-gateway ingress=wikijs status=200 path=/ latency_ms=37 client=192.168.40.15
 
 All entries scrubbed of DNS names and private identifiers.
