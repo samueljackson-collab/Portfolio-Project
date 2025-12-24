@@ -464,8 +464,11 @@ aws sts get-caller-identity
 psql -h production-db -U readonly -c "SELECT 1"
 
 # Test alerting
+# ⚠️  SECURITY: Never paste real tokens into documentation or scripts
+# Use environment variables instead:
 curl -X POST https://events.pagerduty.com/v2/enqueue \
-  -H 'Authorization: Token token=TEST' \
+  -H "Authorization: Token token=${PAGERDUTY_TOKEN}" \
+    -d '{"routing_key":"YOUR_KEY","event_action":"trigger"}'
   -d '{"routing_key":"YOUR_KEY","event_action":"trigger"}'
 
 # Review recent incidents
