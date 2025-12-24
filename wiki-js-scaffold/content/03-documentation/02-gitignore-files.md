@@ -64,7 +64,7 @@ A typical use case for gitignore files:
 
 - Team collaboration scenarios
 - Individual project workflows
-- Open source contributions
+- Open-source contributions
 - Production deployments
 
 ## 🛠️ Hands-On Practice
