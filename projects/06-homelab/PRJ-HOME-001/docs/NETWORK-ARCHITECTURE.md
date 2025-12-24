@@ -40,9 +40,9 @@
 - **RF Design**: 5 GHz 80 MHz on channels 149/36/157; 2.4 GHz 20 MHz on 1/6/11; TX power medium; band steering on; minimum RSSI -75 dBm; BSS coloring enabled.
 - **SSID to VLAN Mapping**:
   - `HL-Trusted` (WPA3-Personal, VLAN 10)
-  - `HL-IoT` (WPA2-Personal, VLAN 50, mDNS reflector)
-  - `HL-Guest` (WPA2-Personal + Guest Policy, VLAN 99, captive portal disabled, rate limit 10 Mbps/client)
-  - `HL-Lab` (WPA2-Personal, VLAN 100, no band steering)
+  - `HL-IoT` (WPA2/WPA3-Personal, VLAN 50, mDNS reflector)
+  - `HL-Guest` (WPA2/WPA3-Personal + Guest Policy, VLAN 99, captive portal disabled, rate limit 10 Mbps/client)
+  - `HL-Lab` (WPA2/WPA3-Personal, VLAN 100, no band steering)
 
 ## Logical Architecture
 ### VLAN & Subnet Summary
