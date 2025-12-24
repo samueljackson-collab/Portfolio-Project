@@ -122,7 +122,7 @@ npx hardhat test
 ---
 
 ### Infrastructure/IaC Projects
-**Projects**: 1, 9, 17
+**Projects (3 total)**: 1, 9, 17
 **Key Technologies**:
 - Terraform/HCL
 - AWS CDK (Python)
@@ -396,4 +396,3 @@ npm run docs:dev
 | 25 | 50% | 3 days | 4 days |
 
 **Total Estimated Effort**: ~90 days for all projects to 100%
-
