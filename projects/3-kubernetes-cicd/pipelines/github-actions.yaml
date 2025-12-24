@@ -151,8 +151,10 @@ jobs:
           NAMESPACE: ${{ env.ARGOCD_NAMESPACE }}
         run: |
           kubectl-argo-rollouts -n ${NAMESPACE} set image ${ROLLOUT_NAME} "app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
-          kubectl-argo-rollouts -n ${NAMESPACE} promote ${ROLLOUT_NAME} --full
+          # Wait for analysis to complete before promoting
           kubectl-argo-rollouts -n ${NAMESPACE} status ${ROLLOUT_NAME} --watch --timeout 300s
+          # Promote only after successful analysis (remove --full to step through phases)
+          kubectl-argo-rollouts -n ${NAMESPACE} promote ${ROLLOUT_NAME}
 
       - name: Blue/Green traffic switch
         if: env.DEPLOY_STRATEGY == 'blue-green'
