@@ -382,8 +382,9 @@ class TestRunbookContentQuality:
                 content = f.read().lower()
             
             has_time_estimate = any(re.search(pattern, content) for pattern in time_patterns)
-            # Soft check - not all runbooks need explicit time estimates
-    
+            assert has_time_estimate, (
+                f"{runbook.name} should include time estimates for key actions"
+            )
     def test_runbook_has_symptoms_or_detection(self, runbook_files):
         """Test that runbooks describe how to detect the issue"""
         for runbook in runbook_files:
