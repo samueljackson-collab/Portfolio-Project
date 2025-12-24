@@ -75,9 +75,10 @@ class PortfolioAnalyzer(_AnalyzerBase):
     """Analyze local repositories for portfolio completeness."""
 
     def __init__(self, required_documentation: Optional[Sequence[str]] = None) -> None:
-        self.required_documentation: Sequence[str] = (
-            required_documentation or DEFAULT_REQUIRED_DOCS
-        )
+        if required_documentation is None:
+            self.required_documentation = DEFAULT_REQUIRED_DOCS
+        else:
+            self.required_documentation = required_documentation
 
     def analyze_repository(self, repo_path: Path | str) -> RepositoryMetrics:
         """Analyze a local repository directory."""
