@@ -3,6 +3,11 @@ output "vpc_id" {
   value       = module.vpc.vpc_id
 }
 
+output "public_subnets" {
+  description = "Public subnet IDs for load balancers and ingress."
+  value       = module.vpc.public_subnets
+}
+
 output "private_subnets" {
   description = "Private subnet IDs for workloads."
   value       = module.vpc.private_subnets
@@ -19,32 +24,27 @@ output "rds_endpoint" {
 }
 
 output "alb_dns_name" {
-  description = "Public DNS name of the Application Load Balancer."
-  value       = aws_lb.app.dns_name
+  description = "DNS name of the application load balancer."
+  value       = module.application_alb.lb_dns_name
 }
 
 output "alb_target_group_arn" {
-  description = "ARN of the ALB target group for the web tier."
-  value       = aws_lb_target_group.app.arn
+  description = "ARN of the ALB target group used by application instances."
+  value       = module.application_alb.target_group_arns["app"]
 }
 
-output "web_autoscaling_group_name" {
-  description = "Name of the web Auto Scaling Group."
-  value       = aws_autoscaling_group.web.name
+output "app_autoscaling_group_name" {
+  description = "Name of the application Auto Scaling Group."
+  value       = aws_autoscaling_group.app.name
 }
 
-output "asset_bucket_name" {
-  description = "Name of the S3 bucket used for static assets."
-  value       = aws_s3_bucket.assets.bucket
-}
-
-output "asset_bucket_arn" {
-  description = "ARN of the S3 bucket used for static assets."
-  value       = aws_s3_bucket.assets.arn
+output "static_site_bucket" {
+  description = "Name of the static site S3 bucket."
+  value       = aws_s3_bucket.static_site.bucket
 }
 
 output "cloudfront_domain_name" {
-  description = "Domain name of the CloudFront distribution."
+  description = "CloudFront distribution domain for static and application traffic."
   value       = aws_cloudfront_distribution.portfolio.domain_name
 }
 

@@ -40,40 +40,40 @@ variable "database_subnet_cidrs" {
   default     = ["10.0.201.0/24", "10.0.202.0/24", "10.0.203.0/24"]
 }
 
-variable "web_instance_type" {
-  description = "Instance type for the web Auto Scaling Group."
+variable "app_instance_type" {
+  description = "EC2 instance type for application Auto Scaling Group."
   type        = string
-  default     = "t3.micro"
+  default     = "t3.small"
 }
 
-variable "web_min_size" {
-  description = "Minimum number of instances in the web Auto Scaling Group."
+variable "app_min_size" {
+  description = "Minimum number of application instances."
   type        = number
   default     = 2
 }
 
-variable "web_max_size" {
-  description = "Maximum number of instances in the web Auto Scaling Group."
+variable "app_max_size" {
+  description = "Maximum number of application instances."
   type        = number
   default     = 6
 }
 
-variable "web_desired_capacity" {
-  description = "Desired capacity for the web Auto Scaling Group."
+variable "app_desired_capacity" {
+  description = "Desired number of application instances."
   type        = number
-  default     = 3
+  default     = 2
 }
 
-variable "asset_bucket_name" {
-  description = "Name of the S3 bucket used for static assets."
+variable "static_site_bucket_name" {
+  description = "Optional custom name for the static site bucket. Must be globally unique."
   type        = string
-  default     = "portfolio-static-assets-example"
+  default     = null
 }
 
 variable "cloudfront_price_class" {
-  description = "CloudFront price class to control edge location coverage."
+  description = "CloudFront price class (e.g., PriceClass_100, PriceClass_200, PriceClass_All)."
   type        = string
-  default     = "PriceClass_200"
+  default     = "PriceClass_100"
 }
 
 variable "db_username" {

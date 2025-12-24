@@ -4,10 +4,10 @@
 
 This Terraform configuration creates a complete AWS infrastructure for the portfolio project, including:
 - VPC with public/private subnets across multiple availability zones
+- Application Load Balancer + Auto Scaling Group for web tier
 - EKS (Elastic Kubernetes Service) cluster with managed node groups
 - RDS PostgreSQL database with automated backups
-- Application Load Balancer with Auto Scaling web tier
-- S3 bucket for static assets served through CloudFront
+- S3 bucket for static content with CloudFront CDN distribution
 - NAT gateways for private subnet internet access
 - Security groups and network ACLs
 
@@ -25,6 +25,7 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 │  │  │   (AZ-1)      │        │   (AZ-2)      │      │    │
 │  │  │               │        │               │      │    │
 │  │  │  NAT Gateway  │        │  NAT Gateway  │      │    │
+│  │  │  ALB (HTTP)   │        │               │      │    │
 │  │  └───────┬───────┘        └───────┬───────┘      │    │
 │  │          │                        │              │    │
 │  │  ┌───────▼───────┐        ┌───────▼───────┐      │    │
@@ -32,6 +33,7 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 │  │  │ Subnet (AZ-1) │        │ Subnet (AZ-2) │      │    │
 │  │  │               │        │               │      │    │
 │  │  │  EKS Nodes    │        │  EKS Nodes    │      │    │
+│  │  │  Web ASG      │        │  Web ASG      │      │    │
 │  │  └───────────────┘        └───────────────┘      │    │
 │  │                                                   │    │
 │  │  ┌───────────────┐        ┌───────────────┐      │    │
@@ -42,6 +44,8 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 │  │  └───────────────┘        └───────────────┘      │    │
 │  └────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
+
+CloudFront (global) → ALB (dynamic) + S3 (static)
 ```
 
 ## Resources Created
@@ -64,6 +68,12 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 - **IAM roles** for cluster and nodes
 - **Security groups** for cluster communication
 
+### Load Balancing & Compute
+- **Application Load Balancer** with HTTP listener and health checks
+- **Target Groups** forwarding to private application instances
+- **Auto Scaling Group** with Amazon Linux 2023 launch template
+- **SSM access** to instances for troubleshooting
+
 ### RDS Module
 - **PostgreSQL 15.4** database
 - **Instance class**: db.t3.medium
@@ -73,17 +83,10 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 - **Performance Insights** enabled
 - **Encryption at rest** enabled by default
 
-### Web Tier (ALB + Auto Scaling)
-- **Application Load Balancer** exposed on port 80
-- **Target group** with health checks on `/`
-- **Launch template** bootstraps NGINX landing page
-- **Auto Scaling Group** across private subnets (min 2 / desired 3 / max 6)
-- **Security groups** restricting web traffic to ALB ingress only
-
-### Static Assets + CDN
-- **S3 bucket** with versioning, SSE, and public access blocks
-- **CloudFront distribution** with S3 default origin and ALB `/api/*` behavior
-- **Origin Access Identity (OAI)** for least-privilege S3 read access
+### Static Delivery
+- **S3 bucket** for static web artifacts with versioning and SSE
+- **CloudFront distribution** with Origin Access Identity
+- **Ordered behaviors** routing `/app/*` to the ALB and everything else to S3
 
 ## Input Variables
 
@@ -92,14 +95,16 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 | `region` | AWS region to deploy resources | string | `us-west-2` | no |
 | `environment` | Environment name (dev/staging/production) | string | `dev` | no |
 | `vpc_cidr` | CIDR block for VPC | string | `10.0.0.0/16` | no |
-| `availability_zones` | List of availability zones | list(string) | `["us-west-2a", "us-west-2b", "us-west-2c"]` | no |
-| `private_subnet_cidrs` | CIDR blocks for private subnets | list(string) | `["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]` | no |
-| `public_subnet_cidrs` | CIDR blocks for public subnets | list(string) | `["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]` | no |
-| `database_subnet_cidrs` | CIDR blocks for database subnets | list(string) | `["10.0.201.0/24", "10.0.202.0/24", "10.0.203.0/24"]` | no |
-| `web_instance_type` | Instance type for web ASG | string | `t3.micro` | no |
-| `web_min_size` / `web_desired_capacity` / `web_max_size` | Web Auto Scaling Group sizes | number | `2 / 3 / 6` | no |
-| `asset_bucket_name` | S3 bucket for static assets | string | `portfolio-static-assets-example` | yes (unique) |
-| `cloudfront_price_class` | CloudFront edge coverage | string | `PriceClass_200` | no |
+| `availability_zones` | List of availability zones | list(string) | `["us-east-1a", "us-east-1b"]` | no |
+| `private_subnet_cidrs` | CIDR blocks for private subnets | list(string) | `["10.0.1.0/24", "10.0.2.0/24"]` | no |
+| `public_subnet_cidrs` | CIDR blocks for public subnets | list(string) | `["10.0.101.0/24", "10.0.102.0/24"]` | no |
+| `database_subnet_cidrs` | CIDR blocks for database subnets | list(string) | `["10.0.201.0/24", "10.0.202.0/24"]` | no |
+| `app_instance_type` | EC2 instance type for web ASG | string | `t3.small` | no |
+| `app_min_size` | Minimum web ASG size | number | `2` | no |
+| `app_max_size` | Maximum web ASG size | number | `6` | no |
+| `app_desired_capacity` | Desired web ASG capacity | number | `2` | no |
+| `static_site_bucket_name` | Optional custom S3 bucket name (must be unique) | string | `null` | no |
+| `cloudfront_price_class` | CloudFront price class | string | `PriceClass_100` | no |
 | `db_username` | Master username for RDS | string | n/a | yes |
 | `db_password` | Master password for RDS | string | n/a | yes |
 
@@ -111,13 +116,13 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 | `private_subnets` | IDs of private subnets |
 | `eks_cluster_name` | Name of the EKS cluster |
 | `rds_endpoint` | Connection endpoint for RDS instance |
-| `alb_dns_name` | Public DNS name of the Application Load Balancer |
-| `alb_target_group_arn` | Target group ARN backing the ALB |
-| `web_autoscaling_group_name` | Name of the web Auto Scaling Group |
-| `asset_bucket_name` | Static asset S3 bucket name |
-| `asset_bucket_arn` | Static asset S3 bucket ARN |
-| `cloudfront_domain_name` | CloudFront endpoint domain name |
-| `cloudfront_distribution_id` | CloudFront distribution ID |
+| `rds_instance_id` | ID of the RDS instance |
+| `alb_dns_name` | DNS endpoint for the Application Load Balancer |
+| `alb_target_group_arn` | ARN of the ALB target group |
+| `app_autoscaling_group_name` | Name of the web Auto Scaling Group |
+| `static_site_bucket` | Name of the static asset bucket |
+| `cloudfront_domain_name` | CloudFront distribution domain name |
+| `cloudfront_distribution_id` | ID of the CloudFront distribution |
 
 ## Usage
 
@@ -162,6 +167,10 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
    private_subnet_cidrs   = ["10.0.1.0/24", "10.0.2.0/24"]
    public_subnet_cidrs    = ["10.0.101.0/24", "10.0.102.0/24"]
    database_subnet_cidrs  = ["10.0.201.0/24", "10.0.202.0/24"]
+
+   app_instance_type     = "t3.small"
+   app_desired_capacity  = 2
+   static_site_bucket_name = null # optional override, must be globally unique
 
    db_username = "admin"
    db_password = "CHANGE_ME_SECURE_PASSWORD"  # Use AWS Secrets Manager in production

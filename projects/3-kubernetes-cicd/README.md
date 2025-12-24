@@ -6,36 +6,35 @@ Declarative delivery pipeline with GitHub Actions, ArgoCD, and progressive deliv
 - `pipelines/github-actions.yaml` — build, test, scan, and progressive delivery workflow.
 - `pipelines/argocd-app.yaml` — GitOps application manifest.
 
-## GitHub Actions workflow
+## GitHub Actions Workflow
+The `portfolio-delivery` workflow enforces validation, security, and progressive deployment stages:
 
-The `portfolio-delivery` workflow now implements end-to-end quality gates:
+1. **Lint & Validate** — `yamllint` plus `kubeconform` schema validation fails the build on YAML or Kubernetes schema errors.
+2. **Unit Tests** — Installs Python 3.11 dependencies (via `requirements.txt` when present) and executes `pytest`.
+3. **Build & Push** — Builds the container image and pushes both `latest` and SHA tags to the configured registry.
+4. **Image Security** — Runs Trivy (fail on HIGH/CRITICAL) and Dockle (fail on CIS/Owasp findings). Any findings fail the pipeline.
+5. **Progressive Delivery** — Syncs manifests through Argo CD, then drives a canary rollout by default (or blue/green when `DEPLOY_STRATEGY=blue-green`). Health checks and rollback steps enforce safe promotion.
 
-- **Lint & schema validation**: `yamllint` plus `kubeconform` against `k8s/` manifests with strict mode enabled.
-- **Unit tests**: Python toolchain bootstrapped from `requirements.txt` followed by `pytest` on `projects/3-kubernetes-cicd/tests`.
-- **Image build & push**: Docker Buildx pushes the application image from `projects/3-kubernetes-cicd/Dockerfile`.
-- **Security scans**: Trivy (HIGH/CRITICAL severities) and Dockle (CIS hardening) fail the pipeline on findings.
-- **Progressive delivery**: ArgoCD sync + Argo Rollouts canary (default) or blue/green promotion with automated rollback on failure.
-
-### Required secrets/vars
+### Required Secrets & Inputs
+Configure these repository secrets/variables for the workflow to succeed:
 
 | Name | Type | Purpose |
-| --- | --- | --- |
-| `REGISTRY_HOST` | Secret | Container registry hostname (e.g., `ghcr.io`). |
-| `REGISTRY_USERNAME` / `REGISTRY_PASSWORD` | Secret | Credentials for pushing images. |
-| `REGISTRY_REPOSITORY` | Secret (optional) | Override repository path (defaults to `<owner>/<repo>`). |
-| `KUBECONFIG_BASE64` | Secret | Base64-encoded kubeconfig for promotion steps. |
-| `ARGOCD_SERVER` / `ARGOCD_AUTH_TOKEN` | Secret | API endpoint and token for ArgoCD CLI. |
-| `ARGOCD_APP_NAME` | Secret | Target ArgoCD application to sync and monitor. |
-| `ROLLOUT_NAME` | Secret | Argo Rollouts resource to promote (canary or blue/green). |
-| `ROLLOUT_NAMESPACE` | Secret/Var | Namespace for the rollout (defaults to `default`). |
-| `DEPLOY_STRATEGY` | Repository variable | Set to `canary` (default) or `blue-green`. |
+| ---- | ---- | ------- |
+| `REGISTRY_URL` | Secret | Registry hostname (e.g., `ghcr.io/owner`). |
+| `REGISTRY_USERNAME` / `REGISTRY_PASSWORD` | Secrets | Credentials for `docker/login-action`. |
+| `IMAGE_NAME` | Secret | Repository/image name (e.g., `portfolio/api`). |
+| `KUBECONFIG_B64` | Secret | Base64-encoded kubeconfig for validation and rollouts. |
+| `ARGOCD_SERVER` / `ARGOCD_AUTH_TOKEN` | Secrets | Endpoint and token for Argo CD CLI login. |
+| `ARGOCD_APP_NAME` | Secret | Target Argo CD application name. |
+| `ARGOCD_NAMESPACE` | Secret | Namespace containing the rollout. |
+| `ROLLOUT_NAME` | Secret | Argo Rollouts resource to drive canary/blue-green promotion. |
+| `DEPLOY_STRATEGY` | Repository variable (optional) | `canary` (default) or `blue-green` to align promotion steps with release strategy. |
 
-### Canary vs. blue/green
+### Failure & Rollback Behavior
+- **Lint/Test/Scan**: Any validation, test, Trivy, or Dockle failure stops the pipeline.
+- **Deployment**: Argo CD sync failures trigger `argocd app rollback` and Argo Rollouts rollback to the prior stable ReplicaSet.
+- **Progressive Delivery**: Canary promotions watch rollout health and block until steady; blue/green promotions gate traffic switching with status checks.
 
-- **Canary (default):** Sets the rollout image to the freshly built tag, gates at 20% traffic weight, and promotes to 100% after health verification.
-- **Blue/green:** Updates the rollout image, promotes the green slot, and optionally waits on the service specified by `BLUE_GREEN_SERVICE_NAME` before cutover.
-
-On any sync or promotion failure, the workflow triggers `argocd app rollback` to restore the last healthy revision.
 
 ## Code Generation Prompts
 

@@ -1,130 +1,117 @@
 name: portfolio-delivery
+
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ${{ secrets.REGISTRY_URL }}
+  IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+  IMAGE_TAG: ${{ github.sha }}
+  ARGOCD_APP: ${{ secrets.ARGOCD_APP_NAME }}
+  ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+  ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+  ARGOCD_NAMESPACE: ${{ secrets.ARGOCD_NAMESPACE }}
+  ROLLOUT_NAME: ${{ secrets.ROLLOUT_NAME }}
+  DEPLOY_STRATEGY: ${{ vars.DEPLOY_STRATEGY && vars.DEPLOY_STRATEGY || 'canary' }}
+
 jobs:
-  lint-and-validate:
-    name: Lint YAML and validate Kubernetes schemas
+  lint:
+    name: YAML & Kubernetes validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install lint/validate tooling
+      - name: Install validation tooling
         run: |
-          sudo apt-get update
-          sudo apt-get install -y yamllint
-          curl -L "https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz" \
-            | tar -xz kubeconform
-          sudo mv kubeconform /usr/local/bin/kubeconform
+          sudo curl -L "https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz" \
+            | sudo tar -C /usr/local/bin -xz kubeconform
+          sudo apt-get update && sudo apt-get install -y yamllint
 
       - name: YAML lint
-        run: |
-          yamllint -d "{extends: relaxed, rules: {line-length: {max: 160}}}" projects/3-kubernetes-cicd
+        run: yamllint .
 
       - name: Kubernetes schema validation
         run: |
-          manifests=$(find projects/3-kubernetes-cicd/k8s -name '*.yaml' -o -name '*.yml')
-          if [ -n "$manifests" ]; then
-            kubeconform -summary -strict -ignore-missing-schemas $manifests
-          else
-            echo "No Kubernetes manifests found to validate"
+          FILES=$(find k8s manifests -maxdepth 2 -type f -name "*.yaml" 2>/dev/null | tr '\n' ' ')
+          if [ -z "$FILES" ]; then
+            echo "No Kubernetes manifests found; skipping kubeconform"
+            exit 0
           fi
+          kubeconform -summary -strict -ignore-missing-schemas \
+            -kubernetes-version 1.28 \
+            -skip CustomResourceDefinition \
+            $FILES
 
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            python -m pip install -r requirements.txt
-          fi
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
 
       - name: Run tests
-        run: |
-          pytest projects/3-kubernetes-cicd/tests
+        run: pytest --maxfail=1 --disable-warnings -q
 
   build-and-push:
-    name: Build and push container image
-    needs:
-      - lint-and-validate
-      - unit-tests
+    name: Build and push image
+    needs: [lint, unit-tests]
     runs-on: ubuntu-latest
-    env:
-      REGISTRY: ${{ secrets.REGISTRY_HOST }}
-      IMAGE_REPOSITORY: ${{ secrets.REGISTRY_REPOSITORY != '' && secrets.REGISTRY_REPOSITORY || github.repository }}
-      IMAGE_TAG: ${{ github.sha }}
-    outputs:
-      image: ${{ steps.image_meta.outputs.image }}
-      digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Login to container registry
+      - name: Log in to registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build and push image
-        id: build
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: projects/3-kubernetes-cicd
-          file: projects/3-kubernetes-cicd/Dockerfile
+          context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
-      - name: Export image metadata
-        id: image_meta
-        run: |
-          echo "image=${REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
-
-  image-security:
-    name: Image scanning (Trivy & Dockle)
+  image-scan:
+    name: Trivy & Dockle scans
     needs: build-and-push
     runs-on: ubuntu-latest
-    env:
-      IMAGE_REF: ${{ needs.build-and-push.outputs.image }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to container registry
-        uses: docker/login-action@v3
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.20.0
         with:
-          registry: ${{ secrets.REGISTRY_HOST }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Trivy scan (fail on HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@v0.24.0
-        with:
-          image-ref: ${{ env.IMAGE_REF }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           severity: CRITICAL,HIGH
-          exit-code: "1"
-          ignore-unfixed: true
+          ignore-unfixed: false
+          exit-code: '1'
 
-      - name: Dockle scan (CIS hardening)
-        uses: erzz/dockle-action@v1
+      - name: Dockle scan
+        uses: erzz/dockle-action@v1.3.0
         with:
-          image: ${{ env.IMAGE_REF }}
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           exit-code: 1
 
   deploy:
-    name: Progressive delivery via ArgoCD
-    needs:
-      - lint-and-validate
-      - unit-tests
-      - image-security
+    name: Progressive deployment
+    needs: image-scan
     runs-on: ubuntu-latest
     env:
       ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
@@ -136,53 +123,62 @@ jobs:
       ROLLOUT_NAMESPACE: ${{ secrets.ROLLOUT_NAMESPACE || 'default' }}
       IMAGE_REF: ${{ needs.build-and-push.outputs.image }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install ArgoCD and Argo Rollouts CLIs
-        run: |
-          curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x /usr/local/bin/argocd
-          curl -sSL -o /usr/local/bin/kubectl-argo-rollouts https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
-          chmod +x /usr/local/bin/kubectl-argo-rollouts
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure kubeconfig
         run: |
-          echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 -d > "$KUBECONFIG_FILE"
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > $HOME/.kube/config
 
-      - name: Login and sync ArgoCD application
-        env:
-          KUBECONFIG: ${{ env.KUBECONFIG_FILE }}
+      - name: Install Argo CD CLI
         run: |
-          argocd login "$ARGOCD_SERVER" --grpc-web --insecure --auth-token "$ARGOCD_AUTH_TOKEN"
-          argocd app sync "$ARGOCD_APP_NAME" --revision "$GITHUB_SHA"
-          argocd app wait "$ARGOCD_APP_NAME" --health --timeout 600
+          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          sudo install -m 755 argocd-linux-amd64 /usr/local/bin/argocd
 
-      - name: Progressive delivery (canary or blue/green)
-        env:
-          KUBECONFIG: ${{ env.KUBECONFIG_FILE }}
+      - name: Install Argo Rollouts plugin
         run: |
-          if [ -z "$ROLLOUT_NAME" ]; then
-            echo "ROLLOUT_NAME not provided; cannot drive canary/blue-green promotion."
-            exit 1
-          fi
+          curl -sSL -o kubectl-argo-rollouts https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+          sudo install -m 755 kubectl-argo-rollouts /usr/local/bin/kubectl-argo-rollouts
 
-          if [ "$DEPLOY_STRATEGY" = "blue-green" ]; then
-            echo "Running blue/green cutover for $ROLLOUT_NAME"
-            kubectl-argo-rollouts set image "$ROLLOUT_NAME" "*=$IMAGE_REF" -n "$ROLLOUT_NAMESPACE"
-            kubectl-argo-rollouts promote "$ROLLOUT_NAME" --full -n "$ROLLOUT_NAMESPACE"
-            kubectl-argo-rollouts status rollout "$ROLLOUT_NAME" --watch --timeout 10m -n "$ROLLOUT_NAMESPACE"
-          else
-            echo "Running canary promotion for $ROLLOUT_NAME"
-            kubectl-argo-rollouts set image "$ROLLOUT_NAME" "*=$IMAGE_REF" -n "$ROLLOUT_NAMESPACE"
-            kubectl-argo-rollouts set weight "$ROLLOUT_NAME" 20 -n "$ROLLOUT_NAMESPACE"
-            kubectl-argo-rollouts status rollout "$ROLLOUT_NAME" --watch --timeout 10m -n "$ROLLOUT_NAMESPACE"
-            kubectl-argo-rollouts promote "$ROLLOUT_NAME" --full -n "$ROLLOUT_NAMESPACE"
-          fi
+      - name: Authenticate to Argo CD
+        env:
+          ARGOCD_AUTH_TOKEN: ${{ env.ARGOCD_AUTH_TOKEN }}
+          ARGOCD_SERVER: ${{ env.ARGOCD_SERVER }}
+        run: |
+          argocd login ${ARGOCD_SERVER} --username "token" --password "${ARGOCD_AUTH_TOKEN}" --insecure
 
-      - name: Roll back on failure
+      - name: Sync application manifests
+        run: |
+          argocd app sync ${{ env.ARGOCD_APP }} --prune --retry-limit 3 --timeout 600
+          argocd app wait ${{ env.ARGOCD_APP }} --health --timeout 600
+
+      - name: Canary rollout verification
+        if: env.DEPLOY_STRATEGY == 'canary'
+        env:
+          ROLLOUT_NAME: ${{ env.ROLLOUT_NAME }}
+          NAMESPACE: ${{ env.ARGOCD_NAMESPACE }}
+        run: |
+          kubectl-argo-rollouts -n ${NAMESPACE} set image ${ROLLOUT_NAME} "app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          # Wait for analysis to complete before promoting
+          kubectl-argo-rollouts -n ${NAMESPACE} status ${ROLLOUT_NAME} --watch --timeout 300s
+          # Promote only after successful analysis (remove --full to step through phases)
+          kubectl-argo-rollouts -n ${NAMESPACE} promote ${ROLLOUT_NAME}
+
+      - name: Blue/Green traffic switch
+        if: env.DEPLOY_STRATEGY == 'blue-green'
+        env:
+          ROLLOUT_NAME: ${{ env.ROLLOUT_NAME }}
+          NAMESPACE: ${{ env.ARGOCD_NAMESPACE }}
+        run: |
+          kubectl-argo-rollouts -n ${NAMESPACE} promote ${ROLLOUT_NAME} --skip-analysis=false
+          kubectl-argo-rollouts -n ${NAMESPACE} status ${ROLLOUT_NAME} --watch --timeout 300s
+
+      - name: Post-sync health check
+        run: argocd app wait ${{ env.ARGOCD_APP }} --health --timeout 300
+
+      - name: Rollback on failure
         if: failure()
-        env:
-          KUBECONFIG: ${{ env.KUBECONFIG_FILE }}
         run: |
-          echo "Deployment failed, initiating ArgoCD rollback"
-          argocd app rollback "$ARGOCD_APP_NAME"
+          argocd app rollback ${{ env.ARGOCD_APP }}
+          kubectl-argo-rollouts -n ${{ env.ARGOCD_NAMESPACE }} rollback ${{ env.ROLLOUT_NAME }}
