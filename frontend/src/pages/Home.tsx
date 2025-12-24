@@ -34,7 +34,7 @@ export const Home: React.FC = () => {
         setMetrics({
           total: data.length,
           published: publishedItems.length,
-          drafts: Math.max(data.length - publishedItems.length, 0),
+          drafts: data.length - publishedItems.length,
         })
       } catch (err) {
         setError('Failed to load content')
