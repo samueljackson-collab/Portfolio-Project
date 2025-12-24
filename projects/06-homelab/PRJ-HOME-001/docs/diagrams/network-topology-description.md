@@ -52,7 +52,7 @@
 - **Flows and firewall rules (arrow overlays)**  
   - **Allowed**:  
     - Infra (10) ↔ Servers (30) for management (SSH/HTTPS), backups (NFS/SMB).  
-    - Users (20) → Servers (30) for media (HTTPS/SMB), printing to VLAN 20 printer.  
+    - Users (20) → Servers (30) for media access (HTTPS/SMB). (Note: Printing occurs within VLAN 20).  
     - Cameras (50) → NVR (30) on TCP 7443/8554; NVR → Internet only via UDMP for updates.  
     - IoT/Guest (40) → Internet only; limited → Servers (30) for MQTT/HTTPS to IoT broker.  
   - **Blocked**:  
