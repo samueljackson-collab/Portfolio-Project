@@ -259,6 +259,16 @@ module "application_alb" {
     http = {
       port     = 80
       protocol = "HTTP"
+      redirect = {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+    https = {
+      port            = 443
+      protocol        = "HTTPS"
+      certificate_arn = var.acm_certificate_arn
       forward = {
         target_group_key = "app"
       }
