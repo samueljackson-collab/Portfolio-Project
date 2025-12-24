@@ -6,15 +6,24 @@ This project provisions a production-ready AWS environment with multiple impleme
 - Launch a multi-AZ network foundation with private, public, and database subnets.
 - Provide a managed Kubernetes control plane, managed worker nodes, and autoscaling policies.
 - Supply a resilient PostgreSQL database tier with routine backups and monitoring toggles.
+- Front application workloads with an Application Load Balancer and auto-scaling group.
+- Deliver static assets via S3 with global distribution through CloudFront.
 - Offer interchangeable infrastructure definitions so the same outcome can be reached with different toolchains.
 
 ## Contents
-- `terraform/` — Primary IaC implementation using community modules and environment-specific variables.
+- `terraform/` — Primary IaC implementation using community modules and environment-specific variables (VPC, ALB, Auto Scaling Group, EKS, RDS, S3 + CloudFront).
 - `cdk/` — Python-based AWS CDK app that mirrors the Terraform footprint and highlights programmatic constructs.
-- `pulumi/` — Pulumi project using Python for multi-cloud friendly infrastructure authoring.
+- `pulumi/` — Pulumi project using Python for multi-cloud-friendly infrastructure authoring.
 - `scripts/` — Helper scripts for planning, deployment, validation, and teardown workflows.
 
 Each implementation aligns with the runbooks described in the Wiki.js guide so the documentation, automation, and validation steps can be exercised end-to-end.
+
+## Footprint Highlights
+- Internet-facing Application Load Balancer with target group health checks and deregistration protections.
+- Auto Scaling Group for web workloads with Amazon Linux 2023 launch template and SSM access.
+- Managed EKS control plane and managed node groups for container orchestration.
+- RDS PostgreSQL in isolated database subnets with automated backups.
+- Static asset delivery via S3, secured by Origin Access Identity and cached globally by CloudFront.
 
 
 ## Code Generation Prompts
@@ -57,4 +66,3 @@ Write Terraform code to set up CloudWatch alarms for EC2 CPU utilization, RDS co
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-
