@@ -71,7 +71,8 @@ class WikiBackup {
       // Docker deployment
       const dbUser = process.env.DB_USER || 'wikijs';
       const dbName = process.env.DB_NAME || 'wiki';
-      const command = `docker-compose -f docker/docker-compose.yml exec -T db pg_dump -U ${dbUser} ${dbName} > ${dbFile}`;
+      const dockerComposeFile = path.join(__dirname, '../docker/docker-compose.yml');
+      const command = `docker-compose -f ${dockerComposeFile} exec -T db pg_dump -U ${dbUser} ${dbName} > ${dbFile}`;
       this.exec(command);
     } else {
       // Local deployment
