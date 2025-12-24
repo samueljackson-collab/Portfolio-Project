@@ -42,7 +42,7 @@ Can you reach pfSense UI/SSH?
 - **VPN:** `sockstat -4 | grep 1194` and `clog /var/log/openvpn.log | tail` for listener and auth errors.
 
 ### Resolutions
-- Reseat/replace cables or fail to backup WAN if modem offline; renew WAN lease in pfSense Status → Interfaces.
+- Reseat/replace cables or failover to backup WAN if modem offline; renew WAN lease in pfSense Status → Interfaces.
 - If default route missing, reapply interface assignments (pfSense console option 1) and reload config backup.
 - Restore firewall if disabled: `pfctl -e`; avoid rule flushes that break default-deny posture.
 - For VPN, restart OpenVPN service; re-issue/re-import client certs if recent CA rotation occurred.
