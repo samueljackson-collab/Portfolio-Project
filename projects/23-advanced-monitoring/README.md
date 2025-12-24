@@ -46,11 +46,20 @@ docker-compose logs -f prometheus grafana
 
 ### Access Dashboards
 
-- **Grafana**: http://localhost:3000 (admin/admin)
+- **Grafana**: http://localhost:3000 (use `GRAFANA_ADMIN_USER`/`GRAFANA_ADMIN_PASSWORD` from your `.env`)
 - **Prometheus**: http://localhost:9090
 - **Alertmanager**: http://localhost:9093
 - **Thanos Query**: http://localhost:10904
 - **Custom Metrics**: http://localhost:8000/metrics
+
+## 🔐 Secrets & Access Control
+
+- Copy `.env.example` to `.env` and populate strong secrets:
+  - Grafana admin credentials (password must be at least 12 characters with upper/lower/number/symbol).
+  - Alertmanager Slack webhook, PagerDuty integration key, and SMTP credentials.
+  - Thanos object-store keys (prefer IAM roles in production).
+- Supply secrets via environment files for local runs (`docker-compose --env-file .env up`), Docker secrets, or a secrets manager such as Vault for production.
+- Rotate credentials by updating the secrets source, reloading the services (`docker-compose up -d --force-recreate`), and revoking the old credentials at the provider.
 
 ## 📊 Components
 
@@ -221,4 +230,3 @@ Write a Fluentd configuration that collects logs from multiple sources, parses J
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

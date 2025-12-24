@@ -129,6 +129,14 @@ curl -G http://localhost:9090/api/v1/query \
 
 ### Stack Deployment
 
+#### Secrets validation (fail fast)
+```bash
+# Ensure required secrets are present before any deployment
+test -f .env || cp .env.example .env  # copy template once, then edit with real values
+docker-compose --env-file .env config >/dev/null
+# The command fails fast if any required secret (Grafana admin, Alertmanager Slack/PagerDuty/SMTP, Thanos object store) is missing.
+```
+
 #### Deploy to Staging
 ```bash
 # Apply Kustomize overlay for staging

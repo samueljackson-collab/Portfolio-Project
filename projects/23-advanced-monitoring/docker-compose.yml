@@ -28,7 +28,9 @@ services:
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
       - ./grafana/datasources:/etc/grafana/provisioning/datasources
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      # Required: strong admin credentials (min 12 chars with upper/lower/number/symbol)
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:?Grafana admin username is required}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Grafana admin password is required and must meet the password policy}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=http://localhost:3000
     ports:
@@ -48,6 +50,14 @@ services:
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
+    environment:
+      # Required: external notification secrets
+      - ALERTMANAGER_SLACK_API_URL=${ALERTMANAGER_SLACK_API_URL:?Slack webhook URL is required}
+      - ALERTMANAGER_PAGERDUTY_SERVICE_KEY=${ALERTMANAGER_PAGERDUTY_SERVICE_KEY:?PagerDuty integration key is required}
+      - ALERTMANAGER_SMTP_SMARTHOST=${ALERTMANAGER_SMTP_SMARTHOST:?SMTP smarthost is required (e.g., smtp.example.com:587)}
+      - ALERTMANAGER_SMTP_FROM=${ALERTMANAGER_SMTP_FROM:?SMTP from address is required}
+      - ALERTMANAGER_SMTP_USERNAME=${ALERTMANAGER_SMTP_USERNAME:?SMTP username is required}
+      - ALERTMANAGER_SMTP_PASSWORD=${ALERTMANAGER_SMTP_PASSWORD:?SMTP password or app password is required}
     ports:
       - "9093:9093"
     networks:
@@ -135,6 +145,11 @@ services:
     volumes:
       - prometheus-data:/prometheus
       - ./thanos/bucket.yml:/etc/thanos/bucket.yml
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
     command:
       - 'sidecar'
       - '--tsdb.path=/prometheus'
@@ -174,6 +189,11 @@ services:
     volumes:
       - ./thanos/bucket.yml:/etc/thanos/bucket.yml
       - thanos-store-data:/data
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
     command:
       - 'store'
       - '--data-dir=/data'
@@ -193,6 +213,11 @@ services:
     volumes:
       - ./thanos/bucket.yml:/etc/thanos/bucket.yml
       - thanos-compactor-data:/data
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
     command:
       - 'compact'
       - '--data-dir=/data'

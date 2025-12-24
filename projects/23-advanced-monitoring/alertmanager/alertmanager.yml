@@ -2,10 +2,16 @@ global:
   # Global configuration
   resolve_timeout: 5m
   # Slack API URL (set via environment variable or use webhook)
-  slack_api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+  slack_api_url: '${ALERTMANAGER_SLACK_API_URL:?Alertmanager Slack webhook URL is required}'
 
   # PagerDuty API URL
   pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+  # SMTP configuration (required when email notifications are enabled)
+  smtp_smarthost: '${ALERTMANAGER_SMTP_SMARTHOST:?SMTP smarthost is required (e.g., smtp.example.com:587)}'
+  smtp_from: '${ALERTMANAGER_SMTP_FROM:?SMTP from address is required}'
+  smtp_auth_username: '${ALERTMANAGER_SMTP_USERNAME:?SMTP username is required}'
+  smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD:?SMTP password or app password is required}'
 
 # Templates for notification formatting
 templates:
@@ -82,7 +88,7 @@ receivers:
   # PagerDuty for critical alerts
   - name: 'pagerduty-critical'
     pagerduty_configs:
-      - service_key: '<YOUR_PAGERDUTY_INTEGRATION_KEY>'
+      - service_key: '${ALERTMANAGER_PAGERDUTY_SERVICE_KEY:?PagerDuty service key is required}'
         severity: '{{ if eq .GroupLabels.severity "critical" }}critical{{ else }}error{{ end }}'
         description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
         details:
