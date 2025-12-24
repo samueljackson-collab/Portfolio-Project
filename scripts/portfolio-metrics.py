@@ -5,11 +5,18 @@ Analyzes and reports on portfolio completion and progress
 """
 
 import json
+import logging
 import os
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
+from typing import Optional
 import re
+
+import requests
+
+
+logger = logging.getLogger(__name__)
 
 
 class PortfolioMetrics:
@@ -54,6 +61,117 @@ class PortfolioMetrics:
             },
             "project_details": [],
         }
+
+    def analyze_github_activity(self, repo: Optional[str] = None, token: Optional[str] = None) -> None:
+        """Populate GitHub metrics using the REST API."""
+
+        repository = repo or os.getenv("GITHUB_REPO", "samueljackson-collab/Portfolio-Project")
+        github_token = token or os.getenv("GITHUB_TOKEN")
+
+        try:
+            total_commits = self._analyze_via_rest_api(repository, github_token)
+        except requests.HTTPError as exc:
+            status_code = exc.response.status_code if exc.response else "unknown"
+            if status_code == 403:
+                rate_remaining = exc.response.headers.get("X-RateLimit-Remaining") if exc.response else None
+                if rate_remaining == "0":
+                    print("⚠️  GitHub API rate limit exceeded. Set GITHUB_TOKEN or wait for reset.")
+                else:
+                    print("⚠️  GitHub API access forbidden. Verify token scopes or repository visibility.")
+            elif status_code == 401:
+                print("⚠️  GitHub API authentication failed. Check your GITHUB_TOKEN.")
+            else:
+                print(f"⚠️  GitHub API error ({status_code}): {exc}")
+            logger.warning("GitHub API HTTP error when analyzing commits", exc_info=exc)
+            return
+        except Exception as exc:  # noqa: BLE001
+            print(f"⚠️  Unexpected error analyzing GitHub commits: {exc}")
+            logger.exception("Unexpected error analyzing GitHub commits")
+            return
+
+        self.metrics["github"]["total_commits"] = total_commits
+        print(f"✅ GitHub commits analyzed for {repository}: {total_commits}")
+
+    def _analyze_via_rest_api(self, repository: str, token: Optional[str] = None) -> int:
+        """Return total commits using GitHub REST API with paging safeguards."""
+
+        url = f"https://api.github.com/repos/{repository}/commits"
+        headers = {"Accept": "application/vnd.github+json"}
+
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+
+        response = requests.get(url, headers=headers, params={"per_page": 1}, timeout=20)
+        self._raise_for_github_errors(response)
+
+        total_commits = self._extract_total_from_headers(response)
+        if total_commits is not None:
+            return total_commits
+
+        print("ℹ️  Link header missing; scanning commit pages until exhausted.")
+        return self._count_commits_by_iteration(url, headers)
+
+    def _raise_for_github_errors(self, response: requests.Response) -> None:
+        """Raise for status with clearer logging for auth or rate limits."""
+
+        if response.status_code in (401, 403):
+            rate_remaining = response.headers.get("X-RateLimit-Remaining")
+            rate_reset = response.headers.get("X-RateLimit-Reset")
+            logger.error(
+                "GitHub API returned %s (remaining=%s, reset=%s)",
+                response.status_code,
+                rate_remaining,
+                rate_reset,
+            )
+        response.raise_for_status()
+
+    def _extract_total_from_headers(self, response: requests.Response) -> Optional[int]:
+        """Extract commit total from Link or X-Total-Count headers."""
+
+        if "X-Total-Count" in response.headers:
+            try:
+                return int(response.headers["X-Total-Count"])
+            except ValueError:
+                logger.warning("Invalid X-Total-Count header: %s", response.headers["X-Total-Count"])
+
+        link_header = response.headers.get("Link", "")
+        if "rel=\"last\"" in link_header:
+            match = re.search(r"[?&]page=(\d+)>; rel=\"last\"", link_header)
+            if match:
+                return int(match.group(1))
+
+        return None
+
+    def _count_commits_by_iteration(self, url: str, headers: dict) -> int:
+        """Fallback pagination when Link headers are absent."""
+
+        total_commits = 0
+        page = 1
+        per_page = 100
+
+        while True:
+            page_response = requests.get(
+                url,
+                headers=headers,
+                params={"per_page": per_page, "page": page},
+                timeout=20,
+            )
+            self._raise_for_github_errors(page_response)
+
+            commits = page_response.json()
+            if not isinstance(commits, list):
+                raise ValueError("Unexpected response format from GitHub commits API")
+
+            if not commits:
+                break
+
+            total_commits += len(commits)
+            if len(commits) < per_page:
+                break
+
+            page += 1
+
+        return total_commits
 
     def scan_projects(self):
         """Scan projects directory and collect metrics"""
@@ -359,6 +477,7 @@ class PortfolioMetrics:
         self.scan_projects()
         self.scan_documentation()
         self.scan_infrastructure()
+        self.analyze_github_activity()
         self.generate_report()
         self.save_metrics()
         self.generate_badge_data()
