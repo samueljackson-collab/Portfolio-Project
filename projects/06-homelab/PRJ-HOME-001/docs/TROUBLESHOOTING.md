@@ -110,7 +110,7 @@ Is issue VLAN-specific or SSID-wide?
 - **Client distribution:** Check band steering; avoid >40 clients per radio on U6 Pro.
 - **PHY rates:** Look for excessive legacy (802.11b/g) associations; enforce minimum RSSI in controller if needed.
 - **Interference sweep:** Confirm channels match plan (2.4 GHz: 1/6; 5 GHz: 36/149 @80 MHz). Avoid DFS if radar hits logged.
-- **Backhaul:** `iperf3` between VLAN 10 client and server on VLAN 40 to validate wired path; check switch for errors (`show interfaces` via UniFi). 
+- **Backhaul:** `iperf3` between VLAN 10 client and server on VLAN 40 to validate wired path; check switch for errors (`show interfaces` via UniFi).
 - **QoS/contention:** Verify Smart Queues/traffic shaping on pfSense aren’t saturating uplink; inspect Suricata for drops.
 
 ### Resolutions
