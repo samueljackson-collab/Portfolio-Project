@@ -114,8 +114,10 @@ This Terraform configuration creates a complete AWS infrastructure for the portf
 | `alb_dns_name` | Public DNS name of the Application Load Balancer |
 | `alb_target_group_arn` | Target group ARN backing the ALB |
 | `web_autoscaling_group_name` | Name of the web Auto Scaling Group |
-| `asset_bucket_name` / `asset_bucket_arn` | Static asset S3 bucket identifiers |
-| `cloudfront_domain_name` / `cloudfront_distribution_id` | CloudFront endpoint and distribution ID |
+| `asset_bucket_name` | Static asset S3 bucket name |
+| `asset_bucket_arn` | Static asset S3 bucket ARN |
+| `cloudfront_domain_name` | CloudFront endpoint domain name |
+| `cloudfront_distribution_id` | CloudFront distribution ID |
 
 ## Usage
 
