@@ -204,7 +204,7 @@ aws eks update-nodegroup-version \
 ```bash
 # List ALBs
 aws elbv2 describe-load-balancers \
-  --names portfolio-alb-production \
+  --names "portfolio-alb-${ENVIRONMENT:-production}"
   --query 'LoadBalancers[*].DNSName'
 
 # Target group health
