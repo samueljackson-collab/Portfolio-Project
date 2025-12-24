@@ -14,7 +14,7 @@
 
 ### Rapid Checks
 - Confirm power and link on pfSense WAN/LAN, UniFi switch uplink, and AP trunks.
-- Validate management plane reachability: `curl -k https://192.168.1.1` (pfSense) and `https://192.168.1.2:8443/status` (UniFi).
+- Validate management plane reachability: `curl -k https://192.168.1.1` (pfSense) and `curl -k https://192.168.1.2:8443/status` (UniFi).
 
 ### Decision Tree
 ```
