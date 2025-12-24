@@ -21,7 +21,7 @@
 - **Firmware**: UniFi OS 4.0.6; UniFi Network Application 8.3.32.
 - **WAN**: Port WAN (SFP) → ISP ONT; static IP 203.0.113.10/30; DNS 1.1.1.1/8.8.8.8; Smart Queues disabled (line rate).
 - **LAN**: LAN1 (Port 1) → USW-24-PoE; LAN2 (Port 2) → USW-8-PoE (uplink failover).
-- **Services**: DPI/Threat Mgmt (Balanced), GeoIP block (RU,CN,KP,IR,SY), WireGuard VPN (UDP/51820), L2TP disabled, SNMP v2c RO community `homelab-snmp`, syslog to 192.168.10.5:514 (TrueNAS).
+- **Services**: DPI/Threat Mgmt (Balanced), GeoIP block (RU,CN,KP,IR,SY), WireGuard VPN (UDP/51820), L2TP disabled, SNMPv3 (AuthPriv), syslog to 192.168.10.5:514 (TrueNAS).
 - **Backups**: Nightly automatic backup to 192.168.10.5 via SMB share `\\truenas\unifi-backups`.
 
 ### Switching
