@@ -797,7 +797,7 @@ async function generateSecurityReport(): Promise<SecurityMetrics> {
 ### Positive
 - SOC 2 Type II compliant
 - PCI DSS Level 1 certified
-- HIPAA compliant
+- HIPAA-compliant
 - 99.9% uptime with security measures
 - Zero data breaches since implementation
 
