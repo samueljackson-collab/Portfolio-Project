@@ -77,7 +77,7 @@
 - **Tuning:** Weekly false-positive review; suppression lists for known-good; performance targets CPU <50%, drop rate <1%.  
 - **Updates:** Signatures auto-refresh daily at 03:00; immediate manual pull for high/zero-day CVEs.  
 - **Actions:** High severity → drop & alert; Medium → alert; Low → log only; auto-quarantine source for repeated critical hits (>3 in 10 minutes).  
-- **Visibility:** Alerts forwarded to syslog/SEIM; dashboards show top talkers, signatures, and destinations.  
+- **Visibility:** Alerts forwarded to syslog/SIEM; dashboards show top talkers, signatures, and destinations.  
 - **Validation:** Monthly test using benign eicar-equivalent and nmap scan from Trusted to confirm block and alert paths.
 
 ---
