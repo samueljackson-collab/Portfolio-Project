@@ -3,7 +3,7 @@
 Declarative delivery pipeline with GitHub Actions, ArgoCD, and progressive delivery strategies.
 
 ## Contents
-- `pipelines/github-actions.yaml` — build/test/deploy workflow.
+- `pipelines/github-actions.yaml` — build, test, scan, and progressive delivery workflow.
 - `pipelines/argocd-app.yaml` — GitOps application manifest.
 
 ## GitHub Actions Workflow

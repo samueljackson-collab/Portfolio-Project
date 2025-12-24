@@ -1,6 +1,6 @@
 # Virtualization & Core Services
 
-**Status:** 🟢 Done
+**Status:** 🟢 Done (evidence captured)
 
 ## Description
 
@@ -11,9 +11,12 @@ Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a revers
 - [Evidence/Diagrams](./assets)
 - [Parent Documentation](../README.md)
 
-## Next Steps
+## Evidence Added
 
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
+- **Diagrams:** Cluster + storage topology in `diagrams/` (PNG/SVG with editable sources).
+- **Observability:** Prometheus/Grafana/Loki excerpts in `configs/monitoring/observability-evidence.md`.
+- **Backups:** PBS nightly report in `configs/truenas/pbs-backup-report.md`.
+- **Screenshots:** Sanitized Proxmox and TrueNAS dashboards stored externally (not committed as binaries).
 
 ## Contact
 
@@ -25,7 +28,7 @@ For questions about this project, please reach out via [GitHub](https://github.c
 - [x] Upload/validation checklist aligned to the [Prompt Execution Framework workflow](../../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
 
 ---
-*Placeholder — Documentation pending*
+*Documentation is live; ongoing updates will expand recovery and automation sections.*
 # PRJ-HOME-002 Assets
 
 This directory contains supporting materials for the Virtualization & Core Services project.
@@ -61,13 +64,11 @@ Written documentation:
 **Format:** Markdown (.md)
 
 ### 📷 screenshots/
-Visual evidence:
+Visual evidence (stored externally to avoid binary artifacts in repo):
 - Proxmox dashboard
 - Service interfaces
 - Backup logs/status
 - Monitoring views
-
-**Format:** PNG
 
 ---
 

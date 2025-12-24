@@ -92,8 +92,8 @@ CloudFront (global) → ALB (dynamic) + S3 (static)
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|----------|
-| `region` | AWS region to deploy resources | string | `us-east-1` | no |
-| `environment` | Environment name (dev/staging/production) | string | n/a | yes |
+| `region` | AWS region to deploy resources | string | `us-west-2` | no |
+| `environment` | Environment name (dev/staging/production) | string | `dev` | no |
 | `vpc_cidr` | CIDR block for VPC | string | `10.0.0.0/16` | no |
 | `availability_zones` | List of availability zones | list(string) | `["us-east-1a", "us-east-1b"]` | no |
 | `private_subnet_cidrs` | CIDR blocks for private subnets | list(string) | `["10.0.1.0/24", "10.0.2.0/24"]` | no |
@@ -113,12 +113,8 @@ CloudFront (global) → ALB (dynamic) + S3 (static)
 | Name | Description |
 |------|-------------|
 | `vpc_id` | ID of the created VPC |
-| `private_subnet_ids` | IDs of private subnets |
-| `public_subnet_ids` | IDs of public subnets |
-| `database_subnet_ids` | IDs of database subnets |
-| `eks_cluster_endpoint` | Endpoint URL for EKS cluster |
+| `private_subnets` | IDs of private subnets |
 | `eks_cluster_name` | Name of the EKS cluster |
-| `eks_cluster_security_group_id` | Security group ID for EKS cluster |
 | `rds_endpoint` | Connection endpoint for RDS instance |
 | `rds_instance_id` | ID of the RDS instance |
 | `alb_dns_name` | DNS endpoint for the Application Load Balancer |

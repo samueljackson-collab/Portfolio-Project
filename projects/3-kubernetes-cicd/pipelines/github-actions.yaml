@@ -113,6 +113,15 @@ jobs:
     name: Progressive deployment
     needs: image-scan
     runs-on: ubuntu-latest
+    env:
+      ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+      ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+      ARGOCD_APP_NAME: ${{ secrets.ARGOCD_APP_NAME }}
+      KUBECONFIG_FILE: ${{ runner.temp }}/kubeconfig
+      DEPLOY_STRATEGY: ${{ vars.DEPLOY_STRATEGY || 'canary' }}
+      ROLLOUT_NAME: ${{ secrets.ROLLOUT_NAME }}
+      ROLLOUT_NAMESPACE: ${{ secrets.ROLLOUT_NAMESPACE || 'default' }}
+      IMAGE_REF: ${{ needs.build-and-push.outputs.image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
