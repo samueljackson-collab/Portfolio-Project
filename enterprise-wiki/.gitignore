@@ -26,3 +26,16 @@ dist-ssr
 
 # Build outputs
 *.tsbuildinfo
+
+# Environment variables (security critical)
+.env
+.env.local
+.env.*.local
+
+# Linting & testing caches
+.eslintcache
+coverage/
+.nyc_output/
+
+# Vite cache
+.vite/
