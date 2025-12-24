@@ -186,8 +186,8 @@ export const Home: React.FC = () => {
               <p className="text-slate-300">Review your curated items in a drive-like grid.</p>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-300">
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Grid</span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Cards</span>
+              <button type="button" className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 transition hover:bg-white/20 hover:text-white">Grid</button>
+              <button type="button" className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300 transition hover:bg-white/20 hover:text-white">Cards</button>
             </div>
           </div>
 
