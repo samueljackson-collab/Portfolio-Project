@@ -18,26 +18,27 @@ export const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="bg-white shadow-lg">
+    <nav className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo and primary nav */}
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-2xl font-bold text-primary-600">
-                Portfolio
-              </Link>
-            </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+          <div className="flex items-center gap-6">
+            <Link to="/" className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-300 via-primary-500 to-fuchsia-500 text-base font-semibold text-slate-950 shadow-lg shadow-primary-500/40">
+                P
+              </span>
+              <span className="text-lg font-semibold text-white">Portfolio Drive</span>
+            </Link>
+            <div className="hidden items-center gap-4 sm:flex">
               <Link
                 to="/"
-                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                className="inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
               >
                 Home
               </Link>
               <Link
                 to="/enterprise-portfolio"
-                className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                className="inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
               >
                 Portfolio Showcase
               </Link>
@@ -45,25 +46,25 @@ export const Navbar: React.FC = () => {
                 <>
                   <Link
                     to="/dashboard"
-                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                    className="inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
                   >
                     Dashboard
                   </Link>
                   <Link
                     to="/photos"
-                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                    className="inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
                   >
                     Photos
                   </Link>
                   <Link
                     to="/operations"
-                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                    className="inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
                   >
                     Operations
                   </Link>
                   <Link
                     to="/security-simulators"
-                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors"
+                    className="inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
                   >
                     Security Sims
                   </Link>
@@ -73,34 +74,32 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Right side - auth buttons */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
             {isAuthenticated ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-700">
-                  {user?.email}
-                </span>
+              <>
+                <span className="hidden text-sm text-slate-200 sm:inline">{user?.email}</span>
                 <button
                   onClick={handleLogout}
-                  className="btn-secondary"
+                  className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-primary-300 hover:text-white"
                 >
                   Logout
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center space-x-4">
+              <>
                 <Link
                   to="/login"
-                  className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors"
+                  className="text-sm font-semibold text-slate-200 transition hover:text-white"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="btn-primary"
+                  className="rounded-lg bg-gradient-to-r from-primary-300 via-primary-500 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-primary-500/40 transition hover:from-primary-200 hover:via-primary-400 hover:to-fuchsia-400"
                 >
                   Sign Up
                 </Link>
-              </div>
+              </>
             )}
           </div>
         </div>
