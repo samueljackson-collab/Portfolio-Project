@@ -10,8 +10,8 @@ Deepen your Git expertise with history rewriting, advanced branching strategies,
 
 ## 📘 Lessons in this Section
 
-1. [Git Rebase & History](./01-git-rebase-and-history.md)
-2. [Advanced Workflows](./02-advanced-workflows.md)
+1. [Git Rebase & History](/advanced-topics/git-rebase-and-history)
+2. [Advanced Workflows](/advanced-topics/advanced-workflows)
 
 ## 🔜 Up Next
 
