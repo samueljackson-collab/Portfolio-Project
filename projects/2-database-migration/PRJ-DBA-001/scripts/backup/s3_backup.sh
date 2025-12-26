@@ -12,8 +12,8 @@ fi
 : "${S3_PREFIX:=postgresql/backups}"
 : "${S3_SSE_ALGORITHM:=AES256}"
 
-if [[ ! -f "${backup_path}" ]]; then
-  echo "Backup file not found: ${backup_path}" >&2
+if [[ ! -e "${backup_path}" ]]; then
+  echo "Backup path not found: ${backup_path}" >&2
   exit 1
 fi
 
