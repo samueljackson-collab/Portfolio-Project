@@ -31,7 +31,7 @@ scp admin@192.168.30.1:/data/backups/config-*.tar.gz ~/network-backups/
 - [ ] Backup downloaded to local workstation
 - [ ] Backup file size > 1MB (sanity check)
 
-###  2: Firmware Updates
+### Step 2: Firmware Updates
 ```bash
 # Check for firmware updates
 system info
