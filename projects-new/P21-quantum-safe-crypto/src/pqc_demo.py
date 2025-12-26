@@ -45,7 +45,7 @@ class PQCDemo:
         if original_secret_hex:
             shared_secret = bytes.fromhex(original_secret_hex)
         else:
-            shared_secret = os.urandom(32)
+            raise ValueError("original_secret_hex must be provided for this demo decapsulation")
 
         print(f"✓ Shared secret recovered ({len(shared_secret)} bytes)")
 
