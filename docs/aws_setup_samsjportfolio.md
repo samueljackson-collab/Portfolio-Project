@@ -43,7 +43,7 @@ This guide walks through **setting up AWS from scratch** in **us-west-2**, using
 2. Add users to appropriate groups.
 3. Create roles for services:
    - `ecsTaskExecutionRole-SamSJPortfolio` → AmazonECSTaskExecutionRolePolicy
-   - `report-gen-task-role-SamSJPortfolio` → custom least-privilege policy
+   - `report-gen-task-role-SamSJPortfolio` → Create a custom least-privilege policy. This role needs permissions to access secrets (Secrets Manager), read configuration (SSM), and write to S3 buckets.
 
 ## Step 5: Configure AWS CLI
 1. Install AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
