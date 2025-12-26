@@ -1,0 +1,65 @@
+# Alert Rules for DevSecOps
+
+groups:
+  - name: devsecops_alerts
+    interval: 30s
+    rules:
+      - alert: CriticalVulnerabilityDetected
+        expr: trivy_vulnerabilities{severity="CRITICAL"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Critical vulnerabilities detected in {{ $labels.image }}"
+          description: "{{ $value }} critical vulnerabilities found"
+
+      - alert: SonarQubeQualityGateFailed
+        expr: sonarqube_quality_gate_status{status="ERROR"} == 1
+        for: 1m
+        labels:
+          severity: warning
+          component: code-quality
+        annotations:
+          summary: "SonarQube quality gate failed for {{ $labels.project }}"
+          description: "Code quality check failed"
+
+      - alert: VaultSealedStatus
+        expr: vault_core_unsealed == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Vault is sealed"
+          description: "Vault needs to be unsealed immediately"
+
+      - alert: HighSecurityAlertRate
+        expr: rate(falco_alerts_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: runtime-security
+        annotations:
+          summary: "High rate of security alerts"
+          description: "{{ $value }} security alerts per second"
+
+      - alert: OutdatedDependencies
+        expr: dependency_check_outdated_count > 20
+        for: 1h
+        labels:
+          severity: warning
+          component: dependencies
+        annotations:
+          summary: "{{ $value }} outdated dependencies detected"
+          description: "Review and update dependencies"
+
+      - alert: SecurityScanTimeout
+        expr: security_scan_duration_seconds > 1800
+        for: 5m
+        labels:
+          severity: warning
+          component: scanning
+        annotations:
+          summary: "Security scan taking too long"
+          description: "Scan duration: {{ $value }}s"

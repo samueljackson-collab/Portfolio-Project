@@ -2,14 +2,36 @@
 
 **Status:** 🔄 Recovery — sanitized artifacts published for review.
 
-## Navigation
-- [Project README](../README.md)
-- [Recovery Log](../RECOVERY.md)
-- [Runbooks](docs/runbooks/)
-- [Case Studies](docs/case-studies/recovery-case-studies.md)
-- [Code Samples](code/)
-- [Diagrams](diagrams/architecture.md)
-- [Screenshots Plan](screenshots/README.md)
+## Description
+
+Previously built and managed: resort booking site; high-SKU flooring store; tours site with complex variations. Code and process docs are being rebuilt for publication.
+
+## Links
+
+- [Parent Documentation](../README.md)
+
+## Next Steps
+
+This is a placeholder README. Documentation and evidence will be added as the project progresses.
+
+## Contact
+
+For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
+
+---
+## Code Generation Prompts
+- [x] Asset catalog scaffold produced from the [Evidence and assets prompt](../../../../AI_PROMPT_LIBRARY.md#evidence--assets-catalog).
+- [x] Recovery asset checklist aligned to the [Prompt Execution Framework workflow](../../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
+
+---
+*Placeholder — Documentation pending*
+# PRJ-WEB-001 Assets
+
+This directory contains supporting materials for the Commercial E-commerce & Booking Systems project.
+
+**Note:** This project is in recovery mode. Assets will be added as they are recovered and sanitized.
+
+## What Goes Here
 
 ## Contents
 ### 💻 code/

@@ -1,0 +1,98 @@
+# Consolidated alert rules for PRJ-SDE-002 (sanitized)
+# Link each alert to runbooks and dashboards for faster response.
+
+groups:
+  - name: sre-core
+    interval: 30s
+    rules:
+      - alert: APILatencyBurn
+        expr: |
+          (
+            rate(http_request_duration_seconds_sum{service="demo-api"}[5m])
+            /
+            rate(http_request_duration_seconds_count{service="demo-api"}[5m])
+          ) > 0.35
+        for: 5m
+        labels:
+          severity: critical
+          service: demo-api
+        annotations:
+          summary: "API latency burn alert"
+          description: "demo-api latency above SLO threshold (p95 ~350ms)"
+          runbook_url: "../runbooks/OPERATIONAL_RUNBOOK.md#alert-response-procedures"
+          dashboard_url: "../grafana/dashboards/application-metrics.json"
+
+      - alert: LogIngestDrop
+        expr: rate(loki_request_duration_seconds_count{status_code="200"}[5m]) < 1
+        for: 10m
+        labels:
+          severity: warning
+          service: loki
+        annotations:
+          summary: "Loki ingest volume dropped"
+          description: "Ingestion rate is near-zero; check Promtail and Loki availability."
+          runbook_url: "../runbooks/OPERATIONAL_RUNBOOK.md#alert-response-procedures"
+          dashboard_url: "../grafana/dashboards/infrastructure-overview.json"
+
+      - alert: PBSBackupFailure
+        expr: increase(pbs_task_failed_total{task_type="backup"}[30m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+          category: backup
+        annotations:
+          summary: "PBS backup task failed"
+          description: "One or more PBS backup tasks failed in the last 30m."
+          runbook_url: "../runbooks/ALERTING_BACKUP_FAILURE.md"
+          dashboard_url: "../grafana/dashboards/backup-health.json"
+
+      - alert: PBSRetentionDrift
+        expr: increase(pbs_retention_policy_drift_total[1h]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: backup
+        annotations:
+          summary: "PBS retention policy not enforced"
+          description: "Retention/prune task reported drift from configured policy in the last hour."
+          runbook_url: "../runbooks/ALERTING_BACKUP_FAILURE.md"
+          dashboard_url: "../grafana/dashboards/backup-health.json"
+
+      - alert: PBSRepositoryCapacityRisk
+        expr: predict_linear(pbs_datastore_used_bytes[2h], 12 * 3600) / pbs_datastore_total_bytes > 0.85
+        for: 15m
+        labels:
+          severity: critical
+          category: backup
+        annotations:
+          summary: "PBS repository capacity risk"
+          description: "Projected datastore usage exceeds 85% within 12h; adjust retention or add capacity."
+          runbook_url: "../runbooks/ALERTING_BACKUP_FAILURE.md"
+          dashboard_url: "../grafana/dashboards/backup-health.json"
+
+  - name: infra-health
+    interval: 1m
+    rules:
+      - alert: NodeFilesystemFilling
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|fuse.lxcfs"}) < 0.15
+        for: 10m
+        labels:
+          severity: warning
+          service: node-exporter
+        annotations:
+          summary: "Filesystem low on space"
+          description: "{{ $labels.instance }} {{ $labels.mountpoint }} has less than 15% free."
+          runbook_url: "../runbooks/OPERATIONAL_RUNBOOK.md#alert-response-procedures"
+          dashboard_url: "../grafana/dashboards/infrastructure-overview.json"
+
+      - alert: PrometheusScrapeErrors
+        expr: increase(scrape_samples_scraped{job="prometheus"}[5m]) == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: prometheus
+        annotations:
+          summary: "Prometheus scrape halted"
+          description: "Prometheus is not scraping samples; check service health and targets."
+          runbook_url: "../runbooks/PRODUCTION_RUNBOOKS_INCIDENT_RESPONSE.md"
+          dashboard_url: "../grafana/dashboards/infrastructure-overview.json"

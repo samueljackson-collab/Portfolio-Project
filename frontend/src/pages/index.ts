@@ -11,3 +11,4 @@ export { EnterprisePortfolio } from './EnterprisePortfolio'
 
 export { PhotosPage } from './Photos/PhotosPage'
 export { OrchestrationConsole } from './OrchestrationConsole'
+export { default as SecuritySimulators } from './SecuritySimulators'

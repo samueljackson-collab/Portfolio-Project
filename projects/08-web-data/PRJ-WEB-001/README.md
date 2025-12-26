@@ -25,6 +25,11 @@ Previously built and managed: resort booking site; high-SKU flooring store; tour
 For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
 
 ---
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-baseline).
+- [x] Recovery checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#workflow).
+
+---
 *Placeholder — Documentation pending*
 # PRJ-WEB-001: Commercial E-commerce & Booking Systems
 

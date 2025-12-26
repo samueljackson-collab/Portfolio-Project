@@ -1,0 +1,135 @@
+version: 1.0.0
+title: Multi-Region Failover Test
+description: |
+  Simulate primary region failure and verify automatic failover to DR region.
+  This experiment validates that:
+  1. Route53 health checks detect primary region failure
+  2. Traffic automatically fails over to DR region
+  3. Application remains available during failover
+  4. RTO (Recovery Time Objective) is met
+
+configuration:
+  aws_region: us-east-1
+  aws_profile: default
+
+steady-state-hypothesis:
+  title: Application is healthy in primary region
+  probes:
+  - type: probe
+    name: primary-region-responds
+    tolerance: 200
+    provider:
+      type: http
+      url: ${application_url}/health
+      timeout: 5
+      headers:
+        User-Agent: chaos-toolkit
+
+  - type: probe
+    name: primary-alb-is-healthy
+    tolerance: true
+    provider:
+      type: python
+      module: chaosaws.elbv2.probes
+      func: all_targets_healthy
+      arguments:
+        tg_names: ["${primary_target_group}"]
+
+  - type: probe
+    name: primary-rds-available
+    tolerance: true
+    provider:
+      type: python
+      module: chaosaws.rds.probes
+      func: instance_available
+      arguments:
+        instance_id: "${primary_db_instance}"
+
+method:
+- type: action
+  name: stop-primary-region-instances
+  provider:
+    type: python
+    module: chaosaws.ec2.actions
+    func: stop_instances
+    arguments:
+      filters:
+      - Name: tag:Environment
+        Values: [${environment}]
+      - Name: tag:Region
+        Values: [primary]
+      az: ${primary_region}a
+
+  pauses:
+    after: 30  # Wait for instances to stop
+
+- type: probe
+  name: verify-route53-fails-over
+  tolerance: true
+  provider:
+    type: python
+    module: chaosaws.route53.probes
+    func: health_check_is_healthy
+    arguments:
+      health_check_id: "${health_check_id}"
+  pauses:
+    before: 60  # Wait for Route53 to detect failure
+
+- type: probe
+  name: verify-dr-region-serving-traffic
+  tolerance: 200
+  provider:
+    type: http
+    url: ${application_url}/health
+    timeout: 30
+  pauses:
+    before: 30  # Wait for DNS propagation
+
+- type: probe
+  name: verify-dr-alb-healthy
+  tolerance: true
+  provider:
+    type: python
+    module: chaosaws.elbv2.probes
+    func: all_targets_healthy
+    arguments:
+      tg_names: ["${dr_target_group}"]
+      region: ${dr_region}
+
+- type: probe
+  name: measure-failover-time
+  provider:
+    type: python
+    module: custom_probes
+    func: measure_rto
+    arguments:
+      start_time: ${chaos_start_time}
+
+rollbacks:
+- type: action
+  name: restart-primary-instances
+  provider:
+    type: python
+    module: chaosaws.ec2.actions
+    func: start_instances
+    arguments:
+      filters:
+      - Name: tag:Environment
+        Values: [${environment}]
+      - Name: tag:Region
+        Values: [primary]
+      az: ${primary_region}a
+
+- type: probe
+  name: wait-for-primary-recovery
+  provider:
+    type: python
+    module: chaosaws.ec2.probes
+    func: instance_state
+    arguments:
+      state: running
+      filters:
+      - Name: tag:Region
+        Values: [primary]
+  pauses:
+    before: 60
