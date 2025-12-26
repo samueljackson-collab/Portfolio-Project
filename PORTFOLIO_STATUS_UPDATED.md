@@ -12,10 +12,16 @@ This document is the **authoritative status table** for portfolio planning. All 
 
 ## Mismatch Summary (What Was Reconciled)
 The following projects were marked as **minimal/partial** in older reports but now have tests and CI workflows, with additional infrastructure or deployment artifacts verified in the project directories:
-- Projects **1–3**: tests + CI + infra/deploy assets are present.
-- Projects **6–7**: tests + CI + infra/deploy assets are present.
-- Project **9**: tests + CI + Terraform present.
-- Projects **23–24**: tests + CI present (Project 23 also has docker-compose).
+- Projects **1–3**: tests + CI + infra/deploy assets are present (see [P1 tests](projects/1-aws-infrastructure-automation/tests), [P1 CI](projects/1-aws-infrastructure-automation/.github/workflows/terraform.yml), [P2 tests](projects/2-database-migration/tests), [P2 CI](projects/2-database-migration/.github/workflows/ci.yml), [P3 tests](projects/3-kubernetes-cicd/tests), [P3 CI](projects/3-kubernetes-cicd/.github/workflows/ci-cd.yaml)).
+- Projects **6–7**: tests + CI + infra/deploy assets are present (see [P6 tests](projects/6-mlops-platform/tests), [P6 CI](projects/6-mlops-platform/.github/workflows/ci.yml), [P7 tests](projects/7-serverless-data-processing/tests), [P7 CI](projects/7-serverless-data-processing/.github/workflows/ci.yml)).
+- Project **9**: tests + CI + Terraform present (see [P9 tests](projects/9-multi-region-disaster-recovery/tests), [P9 CI](projects/9-multi-region-disaster-recovery/.github/workflows/ci.yml), [P9 terraform](projects/9-multi-region-disaster-recovery/terraform)).
+- Projects **23–24**: tests + CI present (see [P23 tests](projects/23-advanced-monitoring/tests), [P23 CI](projects/23-advanced-monitoring/.github/workflows/monitoring.yml), [P23 compose](projects/23-advanced-monitoring/docker-compose.yml), [P24 tests](projects/24-report-generator/tests), [P24 CI](projects/24-report-generator/.github/workflows/ci.yml)).
+
+## Verification Notes (2025-12-26)
+Reconciliation was confirmed by inspecting project directories for the presence of:
+- `tests/` suites
+- `.github/workflows/*.yml` CI workflows
+- Infra/deploy artifacts such as `terraform/`, `k8s/`, `infrastructure/`, or `docker-compose.yml`
 
 ---
 
@@ -48,24 +54,3 @@ The following projects were marked as **minimal/partial** in older reports but n
 | 23 | Advanced Monitoring & Observability | Implemented (tests + CI + deploy) | [tests](projects/23-advanced-monitoring/tests) · [CI](projects/23-advanced-monitoring/.github/workflows/monitoring.yml) · [docker-compose](projects/23-advanced-monitoring/docker-compose.yml) |
 | 24 | Report Generator | Implemented (tests + CI) | [tests](projects/24-report-generator/tests) · [CI](projects/24-report-generator/.github/workflows/ci.yml) |
 | 25 | Portfolio Website | Implemented (tests + CI) | [tests](projects/25-portfolio-website/tests) · [CI](projects/25-portfolio-website/.github/workflows/ci.yml) |
-
----
-
-## CI & Coverage Dashboard (Priority Projects)
-
-Coverage values represent the current baseline captured by CI (starting at 0% until the
-workflow publishes a new report). CI status reflects whether lint/tests are wired in GitHub
-Actions for each project.
-
-| Project | CI Status | Coverage (Baseline) |
-| --- | --- | --- |
-| 1 - AWS Infrastructure Automation | Configured (lint + tests) | 0% |
-| 2 - Database Migration Platform | Configured (lint + tests) | 0% |
-| 3 - Kubernetes CI/CD Pipeline | Configured (lint + tests) | 0% |
-| 4 - DevSecOps Pipeline | Configured (lint + tests) | 0% |
-| 5 - Real-time Data Streaming | Configured (lint + tests) | 0% |
-| 9 - Multi-Region Disaster Recovery | Configured (lint + tests) | 0% |
-| 10 - Blockchain Smart Contract Platform | Configured (lint + tests) | 0% |
-| 23 - Advanced Monitoring & Observability | Configured (lint + tests) | 0% |
-| 24 - Report Generator | Configured (lint + tests) | 0% |
-| 25 - Portfolio Website | Configured (lint + tests) | 0% |

@@ -9,6 +9,6 @@ Reason: to prevent drift between multiple summary files, status planning should
 reference the single reconciled table that includes timestamps and evidence
 links for Projects 1–25.
 
-Last reconciled table: 2025-12-26 (see PORTFOLIO_STATUS_UPDATED.md)
+Last reconciled table: 2025-12-26 (see PORTFOLIO_STATUS_UPDATED.md for evidence)
 
 ================================================================================

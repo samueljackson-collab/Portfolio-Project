@@ -1,13 +1,30 @@
-"""Health check helpers for 24-report-generator."""
+"""Health check for Report Generator project."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import json
+from pathlib import Path
 
 
-def check_health() -> dict[str, str]:
-    """Return a minimal health check payload."""
-    return {
-        "status": "ok",
-        "project": "24-report-generator",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
+def run_health_check() -> dict:
+    """Verify report generation assets exist."""
+    base_dir = Path(__file__).resolve().parents[1]
+    required_paths = [
+        base_dir / "README.md",
+        base_dir / "requirements.txt",
+        base_dir / "src" / "generate_report.py",
+        base_dir / "templates",
+    ]
+    missing = [str(path.relative_to(base_dir)) for path in required_paths if not path.exists()]
+    status = "ok" if not missing else "failed"
+    return {"status": status, "missing": missing}
+
+
+def main() -> int:
+    """CLI entrypoint for container health checks."""
+    result = run_health_check()
+    print(json.dumps(result))
+    return 0 if result["status"] == "ok" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
