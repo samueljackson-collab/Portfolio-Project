@@ -29,9 +29,9 @@ Welcome to the GitHub Fundamentals Wiki.js hub. This space turns the course into
 ## 🔎 Recommended Learning Paths
 
 ### Beginner Track
-1. [Setup & Fundamentals](./01-setup-fundamentals/00-index.md)
-2. [Git Fundamentals](./02-git-fundamentals/00-index.md)
-3. [Documentation](./03-documentation/00-index.md)
+1. [Setup & Fundamentals](/setup-fundamentals)
+2. [Git Fundamentals](/git-fundamentals)
+3. [Documentation](/documentation)
 
 ### Portfolio Track
 1. [Real-World Projects](./04-real-world-projects/00-index.md)
