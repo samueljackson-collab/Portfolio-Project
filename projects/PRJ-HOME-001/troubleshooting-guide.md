@@ -6,7 +6,7 @@
 - If dual LACP uplink flaps, disable one link to isolate cabling issues.
 
 ## Adoption and Provisioning
-- AP stuck in adopting: factory-reset (press 10s), ensure DHCP on VLAN 10 provides IP, then re-adopt.
+- AP stuck in adopting: factory-reset (press 10 seconds), ensure DHCP on VLAN 10 provides IP, then re-adopt.
 - Switch not adopting: confirm controller discovery is allowed on management VLAN and SSH is enabled during onboarding.
 - Firmware failures: switch controller to manual upgrade and upload stable firmware from UniFi downloads.
 
