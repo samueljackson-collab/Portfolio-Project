@@ -8,7 +8,8 @@ Production operations runbook for Project 1 AWS Infrastructure Automation platfo
 - Multi-AZ VPC with public, private, and database subnets
 - Amazon EKS (Elastic Kubernetes Service) cluster with managed node groups
 - Amazon RDS PostgreSQL with Multi-AZ deployment
-- Auto Scaling groups for EKS worker nodes
+- Auto Scaling groups for EKS worker nodes and standalone web tier behind an Application Load Balancer
+- S3 bucket for static assets fronted by CloudFront distribution
 - CloudWatch monitoring and alerting
 - Infrastructure-as-Code (Terraform, AWS CDK, Pulumi)
 
@@ -92,6 +93,13 @@ terraform apply tfplan
 # Verify deployment
 terraform show
 terraform output
+
+# Validate ALB, ASG, and CDN artifacts
+aws elbv2 describe-load-balancers --names portfolio-app-${ENVIRONMENT:-dev}
+aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names portfolio-app-${ENVIRONMENT:-dev} \
+  --query 'AutoScalingGroups[0].{Desired:DesiredCapacity,InService:Instances[?LifecycleState==`InService`].InstanceId}'
+aws cloudfront list-distributions --query 'DistributionList.Items[*].{Id:Id,Domain:DomainName,Comment:Comment}'
 ```
 
 #### AWS CDK Deployment
@@ -159,6 +167,35 @@ kubectl get nodes -o wide
 kubectl top nodes
 ```
 
+### Web Tier (ALB + Auto Scaling Group)
+```bash
+# Target group health
+aws elbv2 describe-target-health \
+  --target-group-arn $(terraform output -raw alb_target_group_arn) \
+  --query 'TargetHealthDescriptions[*].{Id:Target.Id,State:TargetHealth.State,Reason:TargetHealth.Reason}'
+
+# Autoscaling inventory
+aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names $(terraform output -raw app_autoscaling_group_name) \
+  --query 'AutoScalingGroups[0].{Desired:DesiredCapacity,Min:MinSize,Max:MaxSize,Instances:Instances[*].InstanceId}'
+
+# Blue/green refresh of the web tier
+aws autoscaling start-instance-refresh \
+  --auto-scaling-group-name $(terraform output -raw app_autoscaling_group_name) \
+  --preferences MinHealthyPercentage=90,CheckpointDelay=180
+```
+
+### Static Assets & CDN
+```bash
+# Publish static build
+aws s3 sync web/dist/ s3://$(terraform output -raw static_site_bucket)/ --delete
+
+# Force propagation after release
+aws cloudfront create-invalidation \
+  --distribution-id $(terraform output -raw cloudfront_distribution_id) \
+  --paths "/*"
+```
+
 #### Scale Node Groups
 ```bash
 # Scale node group up
@@ -196,6 +233,45 @@ aws eks update-nodegroup-version \
   --cluster-name production-eks-cluster \
   --nodegroup-name default-node-group
 ```
+
+### Web Tier (ALB + Auto Scaling Group)
+
+#### Check ALB and Target Health
+```bash
+# List ALBs
+aws elbv2 describe-load-balancers \
+  --names "portfolio-alb-${ENVIRONMENT:-production}"
+  --query 'LoadBalancers[*].DNSName'
+
+# Target group health
+aws elbv2 describe-target-health \
+  --target-group-arn $(terraform output -raw alb_target_group_arn)
+```
+
+#### Inspect Web Auto Scaling Group
+```bash
+WEB_ASG=$(terraform output -raw web_autoscaling_group_name)
+aws autoscaling describe-auto-scaling-groups \
+  --auto-scaling-group-names "$WEB_ASG" \
+  --query 'AutoScalingGroups[0].{Desired:DesiredCapacity,InService:Instances[*].LifecycleState}'
+
+# Scale out/in
+aws autoscaling update-auto-scaling-group \
+  --auto-scaling-group-name "$WEB_ASG" \
+  --desired-capacity 4
+```
+
+### S3 + CloudFront Static Delivery
+```bash
+# Upload static asset
+aws s3 cp ./assets/index.html s3://$(terraform output -raw asset_bucket_name)/index.html
+
+# Invalidate cache for updated assets
+aws cloudfront create-invalidation \
+  --distribution-id $(terraform output -raw cloudfront_distribution_id) \
+  --paths "/index.html"
+```
+
 
 ### RDS Database Management
 
@@ -953,6 +1029,24 @@ aws eks describe-nodegroup --cluster-name production-eks-cluster --nodegroup-nam
 # Force refresh: kubectl drain <node> && kubectl delete node <node>
 
 # Emergency infrastructure redeployment
+# ⚠️ DANGER: This will destroy ALL production infrastructure!
+# ⚠️ Only use as absolute last resort with approval from VP Engineering
+# ⚠️ Ensure backups are recent before proceeding
+cd /home/user/Portfolio-Project/projects/1-aws-infrastructure-automation/terraform
+
+# Safer approach: Targeted resource recreation
+# terraform taint aws_eks_cluster.this
+# terraform apply -var-file=environments/prod.tfvars
+
+# Complete redeployment (requires multiple confirmations):
+# Step 1: Verify you have recent backups
+# Step 2: Get written approval from leadership
+# Step 3: Export current state for recovery
+terraform show > state-backup-$(date +%Y%m%d-%H%M%S).txt
+# Step 4: Destroy (will prompt for confirmation - do NOT use -auto-approve)
+terraform destroy -var-file=environments/prod.tfvars
+# Step 5: Redeploy (will prompt for confirmation - do NOT use -auto-approve)
+terraform apply -var-file=environments/prod.tfvars
 cd /home/user/Portfolio-Project/projects/1-aws-infrastructure-automation/terraform
 terraform destroy -var-file=environments/prod.tfvars
 terraform apply -var-file=environments/prod.tfvars -auto-approve

@@ -19,10 +19,96 @@ from app.auth import decode_access_token
 from app.models import User
 
 
+# =============================================================================
+# Exception Helpers - Reduce code duplication across routers
+# =============================================================================
+
+def raise_not_found(resource: str = "Resource") -> None:
+    """
+    Raise a 404 Not Found HTTP exception.
+
+    Args:
+        resource: Name of the resource that was not found
+    """
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"{resource} not found"
+    )
+
+
+def raise_forbidden(action: str = "perform this action") -> None:
+    """
+    Raise a 403 Forbidden HTTP exception.
+
+    Args:
+        action: Description of the forbidden action
+    """
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=f"Permission denied to {action}"
+    )
+
+
+def raise_bad_request(message: str) -> None:
+    """
+    Raise a 400 Bad Request HTTP exception.
+
+    Args:
+        message: Error message describing the bad request
+    """
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=message
+    )
+
+
+def raise_conflict(message: str) -> None:
+    """
+    Raise a 409 Conflict HTTP exception.
+
+    Args:
+        message: Error message describing the conflict
+    """
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=message
+    )
+
+
+def raise_server_error(message: str = "An internal error occurred") -> None:
+    """
+    Raise a 500 Internal Server Error HTTP exception.
+
+    Args:
+        message: Error message
+    """
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail=message
+    )
+
+
+def check_ownership(resource, current_user: User, action: str = "access this resource") -> None:
+    """
+    Verify that the current user owns the resource.
+
+    Args:
+        resource: Database model instance with owner_id attribute
+        current_user: The currently authenticated user
+        action: Description of the action being attempted
+
+    Raises:
+        HTTPException: 403 if user doesn't own the resource
+    """
+    if resource.owner_id != current_user.id:
+        raise_forbidden(action)
+
+
 # Security scheme for Swagger UI
 security = HTTPBearer(
     scheme_name="Bearer Token",
-    description="JWT access token from login endpoint"
+    description="JWT access token from login endpoint",
+    auto_error=False
 )
 
 
@@ -61,9 +147,12 @@ async def get_current_user(
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if credentials is None:
+        raise credentials_exception
 
     try:
         # Extract token from credentials

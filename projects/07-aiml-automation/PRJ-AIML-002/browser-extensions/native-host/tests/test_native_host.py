@@ -10,8 +10,6 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from io import BytesIO
 
-# Import the module under test
-sys.path.insert(0, '..')
 from native_host import NativeMessagingHost
 
 

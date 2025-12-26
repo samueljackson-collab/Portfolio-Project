@@ -1,3 +1,45 @@
+# Prometheus Configuration - Complete Production Setup
+# =====================================================
+# Version: Prometheus 2.48
+# Purpose: Central metrics collection and alerting for homelab infrastructure
+# Last Updated: November 6, 2025
+#
+# Configuration Philosophy:
+# ------------------------
+# This Prometheus configuration is designed for a homelab environment with:
+# - 10-15 monitored targets (VMs, containers, physical hosts)
+# - 15-second scrape intervals (balance between granularity and storage)
+# - 15-day retention (sufficient for weekly trending, not excessive storage)
+# - Multi-label organization (environment, service, team, criticality)
+# - Defense-in-depth monitoring (infrastructure + application + business metrics)
+#
+# Key Design Decisions:
+# ---------------------
+# 1. Scrape Interval: 15 seconds
+#    - Short enough for real-time alerting (detect issues within 30-60 seconds)
+#    - Long enough to avoid overwhelming targets (1,000 samples/target/day = manageable)
+#    - Industry standard for non-high-frequency monitoring
+#
+# 2. Evaluation Interval: 15 seconds
+#    - Matches scrape interval for consistent alert evaluation
+#    - Allows rules to evaluate on fresh data immediately
+#    - Prevents alert flapping from stale data
+#
+# 3. External Labels:
+#    - environment=homelab: Distinguishes this Prometheus instance from others
+#    - cluster=primary: Allows future expansion to multi-cluster setup
+#    - Used by Alertmanager for routing and by federation for aggregation
+#
+# 4. Scrape Timeout: 10 seconds (default)
+#    - Gives targets ample time to respond (10s is very generous)
+#    - Prevents false "target down" alerts from slow responses
+#    - Can be overridden per job if needed
+#
+# =====================================================
+
+# =====================================================
+# GLOBAL CONFIGURATION
+# =====================================================
 # Prometheus Configuration - Production Homelab Setup
 # ===================================================
 # Last Updated: November 6, 2025
@@ -20,39 +62,69 @@ alerting:
       timeout: 10s
       api_version: v2
 
+# =====================================================
+# RULE FILES
+# =====================================================
 rule_files:
   - 'alerts/*.yml'
+  - 'alerts/infrastructure/*.yml'
+  - 'alerts/application/*.yml'
   - 'recording_rules/*.yml'
 
+# =====================================================
+# SCRAPE CONFIGURATIONS
+# =====================================================
 scrape_configs:
-  # Self-monitoring
+
+  # =====================================================
+  # JOB: Prometheus Self-Monitoring
+  # =====================================================
   - job_name: 'prometheus'
     scrape_interval: 30s
     static_configs:
-      - targets: ['localhost:9090']
+      - targets:
+          - 'localhost:9090'
         labels:
           service: 'prometheus'
           tier: 'monitoring'
           criticality: 'high'
+          team: 'platform'
+    metrics_path: '/metrics'
+    scheme: http
 
-  # Node Exporter - System metrics
+  # =====================================================
+  # JOB: Node Exporter (System Metrics)
+  # =====================================================
   - job_name: 'node_exporter'
+    scrape_interval: 15s
     static_configs:
-      - targets: ['192.168.40.20:9100']
+      # Wiki.js VM
+      - targets:
+          - '192.168.40.20:9100'
         labels:
           instance: 'wikijs-vm'
           service: 'wiki.js'
           tier: 'application'
           criticality: 'medium'
-      
-      - targets: ['192.168.40.21:9100']
+          team: 'platform'
+          os: 'ubuntu-22.04'
+          vlan: 'lab'
+
+      # Home Assistant VM
+      - targets:
+          - '192.168.40.21:9100'
         labels:
           instance: 'homeassistant-vm'
           service: 'home-assistant'
           tier: 'application'
           criticality: 'high'
-      
-      - targets: ['192.168.40.22:9100']
+          team: 'platform'
+          os: 'haos-11.1'
+          vlan: 'iot'
+
+      # Immich VM
+      - targets:
+          - '192.168.40.22:9100'
         labels:
           instance: 'immich-vm'
           service: 'immich'

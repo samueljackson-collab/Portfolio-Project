@@ -1,0 +1,288 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  P11 Serverless API Gateway - REST API with Lambda and DynamoDB
+  Implements CRUD operations for managing items with full observability
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: python3.11
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref ItemsTable
+        LOG_LEVEL: INFO
+  Api:
+    TracingEnabled: true
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment environment
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, prod]
+
+Resources:
+  # ===== DynamoDB Table =====
+  ItemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'items-table-${Environment}'
+      BillingMode: !If [IsProduction, PROVISIONED, PAY_PER_REQUEST]
+      ProvisionedThroughput: !If
+        - IsProduction
+        - ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        - !Ref AWS::NoValue
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !If [IsProduction, true, false]
+      Tags:
+        - Key: Project
+          Value: P11-serverless-api-gateway
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ===== IAM Role for Lambda Functions =====
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:DeleteItem'
+                  - 'dynamodb:Scan'
+                  - 'dynamodb:Query'
+                Resource: !GetAtt ItemsTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:GetRecords'
+                  - 'dynamodb:GetShardIterator'
+                  - 'dynamodb:DescribeStream'
+                  - 'dynamodb:ListStreams'
+                  - 'dynamodb:ListTables'
+                Resource: !Sub '${ItemsTable.Arn}/stream/*'
+
+  # ===== API Gateway REST API =====
+  ItemsApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      TracingEnabled: true
+      MethodSettings:
+        - ResourcePath: '/*'
+          HttpMethod: '*'
+          LoggingLevel: INFO
+          DataTraceEnabled: true
+          MetricsEnabled: true
+      Auth:
+        DefaultAuthorizer: ApiKeyAuthorizer
+        Authorizers:
+          ApiKeyAuthorizer:
+            FunctionArn: !GetAtt ApiKeyAuthFunction.Arn
+
+  # ===== API Key Authorization Function =====
+  ApiKeyAuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'api-key-auth-${Environment}'
+      CodeUri: lambda_handlers/
+      Handler: auth.lambda_handler
+      Runtime: python3.11
+      Environment:
+        Variables:
+          ALLOWED_API_KEYS: 'dev-key-12345,prod-key-67890'
+      Description: API Key authorization function
+
+  # ===== CREATE Function =====
+  CreateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'create-item-${Environment}'
+      CodeUri: lambda_handlers/
+      Handler: create.lambda_handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+          LOG_LEVEL: INFO
+      Events:
+        CreateItemAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ItemsApi
+            Path: /items
+            Method: POST
+            Auth:
+              DefaultAuthorizer: ApiKeyAuthorizer
+      Description: Creates a new item in the table
+
+  # ===== READ Function =====
+  ReadItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'read-item-${Environment}'
+      CodeUri: lambda_handlers/
+      Handler: read.lambda_handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+          LOG_LEVEL: INFO
+      Events:
+        ListItemsAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ItemsApi
+            Path: /items
+            Method: GET
+            Auth:
+              DefaultAuthorizer: ApiKeyAuthorizer
+        GetItemAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ItemsApi
+            Path: /items/{item_id}
+            Method: GET
+            Auth:
+              DefaultAuthorizer: ApiKeyAuthorizer
+      Description: Retrieves items from the table
+
+  # ===== UPDATE Function =====
+  UpdateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'update-item-${Environment}'
+      CodeUri: lambda_handlers/
+      Handler: update.lambda_handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+          LOG_LEVEL: INFO
+      Events:
+        UpdateItemAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ItemsApi
+            Path: /items/{item_id}
+            Method: PUT
+            Auth:
+              DefaultAuthorizer: ApiKeyAuthorizer
+      Description: Updates an existing item in the table
+
+  # ===== DELETE Function =====
+  DeleteItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'delete-item-${Environment}'
+      CodeUri: lambda_handlers/
+      Handler: delete.lambda_handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ItemsTable
+          LOG_LEVEL: INFO
+      Events:
+        DeleteItemAPI:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ItemsApi
+            Path: /items/{item_id}
+            Method: DELETE
+            Auth:
+              DefaultAuthorizer: ApiKeyAuthorizer
+      Description: Deletes an item from the table
+
+  # ===== CloudWatch Log Group for API Gateway =====
+  ApiGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/apigateway/items-api-${Environment}'
+      RetentionInDays: !If [IsProduction, 30, 7]
+
+Outputs:
+  ItemsApiEndpoint:
+    Description: Items API endpoint URL
+    Value: !Sub 'https://${ItemsApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub 'ItemsApiEndpoint-${Environment}'
+
+  ItemsTableName:
+    Description: DynamoDB table name
+    Value: !Ref ItemsTable
+    Export:
+      Name: !Sub 'ItemsTableName-${Environment}'
+
+  ItemsTableArn:
+    Description: DynamoDB table ARN
+    Value: !GetAtt ItemsTable.Arn
+    Export:
+      Name: !Sub 'ItemsTableArn-${Environment}'
+
+  CreateFunctionArn:
+    Description: Create Lambda function ARN
+    Value: !GetAtt CreateItemFunction.Arn
+    Export:
+      Name: !Sub 'CreateFunction-${Environment}'
+
+  ReadFunctionArn:
+    Description: Read Lambda function ARN
+    Value: !GetAtt ReadItemFunction.Arn
+    Export:
+      Name: !Sub 'ReadFunction-${Environment}'
+
+  UpdateFunctionArn:
+    Description: Update Lambda function ARN
+    Value: !GetAtt UpdateItemFunction.Arn
+    Export:
+      Name: !Sub 'UpdateFunction-${Environment}'
+
+  DeleteFunctionArn:
+    Description: Delete Lambda function ARN
+    Value: !GetAtt DeleteItemFunction.Arn
+    Export:
+      Name: !Sub 'DeleteFunction-${Environment}'

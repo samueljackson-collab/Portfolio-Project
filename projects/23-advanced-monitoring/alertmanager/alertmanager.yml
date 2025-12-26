@@ -1,0 +1,198 @@
+global:
+  # Global configuration
+  resolve_timeout: 5m
+  # Slack API URL (set via .env -> ALERTMANAGER_SLACK_API_URL)
+  slack_api_url: '__ALERTMANAGER_SLACK_API_URL__'
+
+  # PagerDuty API URL
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates for notification formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alert distribution
+route:
+  # Root route with default receiver
+  receiver: 'default'
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s        # Wait before sending first notification
+  group_interval: 10s    # Wait before sending updates for group
+  repeat_interval: 12h   # Wait before resending alert
+
+  # Child routes for specific alert handling
+  routes:
+    # Critical alerts go to PagerDuty and Slack
+    - match:
+        severity: critical
+      receiver: 'pagerduty-critical'
+      continue: true       # Also send to other matching routes
+
+    - match:
+        severity: critical
+      receiver: 'slack-critical'
+
+    # Warning alerts go to Slack
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+
+    # Database alerts
+    - match:
+        alertname: DatabaseDown
+      receiver: 'pagerduty-critical'
+      repeat_interval: 5m
+
+    # Infrastructure alerts
+    - match_re:
+        service: (kubernetes|node|infrastructure)
+      receiver: 'slack-infrastructure'
+
+    # Application alerts
+    - match_re:
+        service: (api|web|backend)
+      receiver: 'slack-application'
+
+# Inhibition rules to suppress alerts
+inhibit_rules:
+  # Inhibit warning if critical is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+  # Inhibit all alerts if cluster is down
+  - source_match:
+      alertname: 'ClusterDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['cluster']
+
+# Receivers define notification destinations
+receivers:
+  # Default receiver (catch-all)
+  - name: 'default'
+    slack_configs:
+      - channel: '#alerts-default'
+        title: 'Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        send_resolved: true
+
+  # PagerDuty for critical alerts
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key: '__ALERTMANAGER_PAGERDUTY_KEY__'
+        severity: '{{ if eq .GroupLabels.severity "critical" }}critical{{ else }}error{{ end }}'
+        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+        details:
+          firing: '{{ .Alerts.Firing | len }}'
+          resolved: '{{ .Alerts.Resolved | len }}'
+          cluster: '{{ .GroupLabels.cluster }}'
+          service: '{{ .GroupLabels.service }}'
+        client: 'Prometheus Alertmanager'
+        client_url: 'http://alertmanager:9093'
+
+  # Slack for critical alerts
+  - name: 'slack-critical'
+    slack_configs:
+      - channel: '#alerts-critical'
+        username: 'Alertmanager'
+        icon_emoji: ':fire:'
+        color: 'danger'
+        title: ':fire: CRITICAL: {{ .GroupLabels.alertname }}'
+        title_link: 'http://grafana:3000/d/alerts'
+        text: |-
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Severity:* {{ .GroupLabels.severity }}
+          *Service:* {{ .GroupLabels.service }}
+          *Cluster:* {{ .GroupLabels.cluster }}
+
+          *Firing Alerts:* {{ .Alerts.Firing | len }}
+          {{ range .Alerts.Firing }}
+          • *{{ .Labels.instance }}*: {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: 'http://grafana:3000/d/alerts'
+          - type: button
+            text: 'Silence'
+            url: 'http://alertmanager:9093/#/silences/new'
+
+  # Slack for warnings
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#alerts-warnings'
+        username: 'Alertmanager'
+        icon_emoji: ':warning:'
+        color: 'warning'
+        title: ':warning: WARNING: {{ .GroupLabels.alertname }}'
+        text: |-
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Service:* {{ .GroupLabels.service }}
+
+          {{ range .Alerts.Firing }}
+          • {{ .Labels.instance }}: {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
+
+  # Slack for infrastructure alerts
+  - name: 'slack-infrastructure'
+    slack_configs:
+      - channel: '#infrastructure-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':building_construction:'
+        color: '{{ if eq .GroupLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
+        title: 'Infrastructure Alert: {{ .GroupLabels.alertname }}'
+        text: |-
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Service:* {{ .GroupLabels.service }}
+          *Cluster:* {{ .GroupLabels.cluster }}
+          {{ range .Alerts.Firing }}
+          • {{ .Labels.instance }}
+          {{ end }}
+        send_resolved: true
+
+  # Slack for application alerts
+  - name: 'slack-application'
+    slack_configs:
+      - channel: '#application-alerts'
+        username: 'Alertmanager'
+        icon_emoji: ':computer:'
+        color: '{{ if eq .GroupLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
+        title: 'Application Alert: {{ .GroupLabels.alertname }}'
+        text: |-
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Service:* {{ .GroupLabels.service }}
+
+          *Metrics:*
+          {{ range .Alerts.Firing }}
+          • {{ .Labels.instance }}: {{ .Annotations.description }}
+            Value: {{ .Annotations.value }}
+          {{ end }}
+        send_resolved: true
+
+# Email configuration (optional)
+# receivers:
+#   - name: 'email-ops'
+#     email_configs:
+#       - to: 'ops-team@example.com'
+#         from: 'alertmanager@example.com'
+#         smarthost: 'smtp.gmail.com:587'
+#         auth_username: 'alertmanager@example.com'
+#         auth_password: '<APP_PASSWORD>'
+#         headers:
+#           Subject: 'Alert: {{ .GroupLabels.alertname }}'
+
+# Webhook configuration (for custom integrations)
+# receivers:
+#   - name: 'webhook-custom'
+#     webhook_configs:
+#       - url: 'http://custom-webhook-service/alerts'
+#         send_resolved: true
+#         http_config:
+#           bearer_token: '<YOUR_BEARER_TOKEN>'

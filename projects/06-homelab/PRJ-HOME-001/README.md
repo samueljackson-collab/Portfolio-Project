@@ -12,14 +12,26 @@ Designed and wired a home network from scratch: rack-mounted gear, VLAN segmenta
 
 ## Next Steps
 
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
+- Review new evidence artifacts (diagrams, screenshots, configs) for audit-readiness.
+- Keep sanitized screenshots refreshed quarterly to reflect controller upgrades.
+- Align future firmware updates with the VLAN segmentation design to avoid drift.
 
 ## Contact
 
 For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
 
 ---
-*Placeholder — Documentation pending*
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-baseline).
+- [x] Homelab evidence checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
+
+---
+
+## Evidence Artifacts
+- **Network Topology:** `assets/diagrams/network-topology.mmd` (Mermaid source) depicts WAN → pfSense → UniFi → downstream gear.
+- **VLAN Segmentation:** `assets/diagrams/vlan-segmentation.mmd` captures the five-zone isolation model.
+- **Monitoring Evidence:** `assets/configs/monitoring-snapshots.md` includes Prometheus, Grafana, and Loki excerpts with sensitive values redacted.
+
 # PRJ-HOME-001: Homelab & Secure Network Build
 
 **Status:** ✅ Completed  
