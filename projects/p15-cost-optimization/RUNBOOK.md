@@ -646,22 +646,22 @@ aws ce get-anomalies \
 
 #### Severity Classification
 
-**P0: Critical Cost Event**
+### P0: Critical Cost Event
 - Cost anomaly > $10,000 spike
 - Monthly budget exceeded by > 50%
 - Runaway resource creation detected
 
-**P1: Significant Cost Issue**
+### P1: Significant Cost Issue
 - Cost anomaly > $1,000 spike
 - Projected to exceed monthly budget
 - Major inefficiency detected
 
-**P2: Cost Optimization Opportunity**
+### P2: Cost Optimization Opportunity
 - RI utilization < 50%
 - Significant rightsizing opportunities
 - Idle resources accumulating
 
-**P3: Routine Optimization**
+### P3: Routine Optimization
 - Minor cost trends
 - Incremental optimization opportunities
 - Tagging compliance issues

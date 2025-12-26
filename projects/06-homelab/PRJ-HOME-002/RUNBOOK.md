@@ -21,9 +21,11 @@
 ## Overview
 
 ### Purpose
+
 This runbook provides comprehensive operational procedures for managing the homelab virtualization platform including Proxmox VE cluster, distributed Ceph storage, core infrastructure services, and automated backup/recovery operations.
 
 ### Scope
+
 - **Virtualization:** 3-node Proxmox VE cluster with HA
 - **Storage:** Ceph RBD (distributed), Local LVM, TrueNAS (NFS/iSCSI)
 - **Core Services:** FreeIPA, Pi-hole, Nginx, Rsyslog, NTP
@@ -31,6 +33,7 @@ This runbook provides comprehensive operational procedures for managing the home
 - **Backup:** Proxmox Backup Server, 3-2-1 strategy
 
 ### Service Level Objectives
+
 - **Availability:** 99.95% (HA services)
 - **RTO:** 1 hour (critical), 4 hours (core), 24 hours (standard)
 - **RPO:** 24 hours (daily backups)
@@ -40,21 +43,24 @@ This runbook provides comprehensive operational procedures for managing the home
 ## Quick Reference
 
 ### Critical Contact Information
+
 - **Primary Admin:** Samuel Jackson
 - **Documentation:** `/projects/06-homelab/PRJ-HOME-002/README.md`
 - **Backup Location:** PBS (192.168.40.50) + TrueNAS (192.168.40.20)
 - **Automation:** `/opt/ansible/` and `/opt/terraform/`
 
 ### Cluster Access Points
+
 | System | URL/IP | Port | Purpose |
 |--------|--------|------|---------|
-| Proxmox Node 1 | https://192.168.40.10:8006 | 8006 | Cluster management |
-| Proxmox Node 2 | https://192.168.40.11:8006 | 8006 | Cluster management |
-| Proxmox Node 3 | https://192.168.40.12:8006 | 8006 | Cluster management |
-| PBS | https://192.168.40.50:8007 | 8007 | Backup management |
-| TrueNAS | https://192.168.40.20 | 443 | Storage management |
+| Proxmox Node 1 | <https://192.168.40.10:8006> | 8006 | Cluster management |
+| Proxmox Node 2 | <https://192.168.40.11:8006> | 8006 | Cluster management |
+| Proxmox Node 3 | <https://192.168.40.12:8006> | 8006 | Cluster management |
+| PBS | <https://192.168.40.50:8007> | 8007 | Backup management |
+| TrueNAS | <https://192.168.40.20> | 443 | Storage management |
 
 ### Core Services Quick Reference
+
 | Service | IP Address | Purpose | Status Check |
 |---------|------------|---------|--------------|
 | FreeIPA | 192.168.40.25 | LDAP/RADIUS/CA | `curl -k https://192.168.40.25/ipa/ui/` |
@@ -64,6 +70,7 @@ This runbook provides comprehensive operational procedures for managing the home
 | NTP | 192.168.40.45 | Time sync | `ntpdate -q 192.168.40.45` |
 
 ### Cluster Health Check Commands
+
 ```bash
 # SSH to any Proxmox node
 ssh root@192.168.40.10
@@ -91,9 +98,11 @@ pvesm status
 This project includes several comprehensive runbooks located in `assets/runbooks/`:
 
 ### 1. Proxmox Cluster Operations Runbook
+
 **Location:** `assets/runbooks/PROXMOX_CLUSTER_OPERATIONS.md`
 
 **Covers:**
+
 - Cluster management and health monitoring
 - VM lifecycle management (create, start, stop, delete)
 - Live VM migration between nodes
@@ -102,6 +111,7 @@ This project includes several comprehensive runbooks located in `assets/runbooks
 - Emergency procedures (node failure, cluster failure)
 
 **Use When:**
+
 - Managing VMs or cluster nodes
 - Performing live migrations
 - Troubleshooting cluster or VM issues
@@ -109,9 +119,11 @@ This project includes several comprehensive runbooks located in `assets/runbooks
 - Planning node maintenance
 
 ### 2. Backup and Recovery Operations Runbook
+
 **Location:** `assets/runbooks/BACKUP_RECOVERY_RUNBOOK.md`
 
 **Covers:**
+
 - 3-2-1 backup strategy implementation
 - Daily/weekly/monthly backup procedures
 - VM backup and restore operations
@@ -121,6 +133,7 @@ This project includes several comprehensive runbooks located in `assets/runbooks
 - Recovery time/point objectives (RTO/RPO)
 
 **Use When:**
+
 - Performing manual backups
 - Restoring VMs from backup
 - Testing disaster recovery procedures
@@ -128,9 +141,11 @@ This project includes several comprehensive runbooks located in `assets/runbooks
 - Planning recovery from data loss
 
 ### 3. Service Management Runbook
+
 **Location:** `assets/runbooks/SERVICE_MANAGEMENT_RUNBOOK.md`
 
 **Covers:**
+
 - FreeIPA: User management, RADIUS, LDAP operations
 - Pi-hole: DNS configuration, ad-blocking, custom records
 - Nginx: Reverse proxy configuration, SSL management
@@ -139,6 +154,7 @@ This project includes several comprehensive runbooks located in `assets/runbooks
 - Service dependencies and health checks
 
 **Use When:**
+
 - Managing user accounts (FreeIPA)
 - Configuring DNS records (Pi-hole)
 - Adding reverse proxy entries (Nginx)
@@ -152,6 +168,7 @@ This project includes several comprehensive runbooks located in `assets/runbooks
 ### Daily Operations
 
 #### 1. Cluster Health Check
+
 ```bash
 # SSH to any node
 ssh root@192.168.40.10
@@ -171,6 +188,7 @@ df -h                    # Disk usage
 **Frequency:** Daily (automated)
 
 #### 2. Review Backup Status
+
 ```bash
 # Check last backup completion
 cat /var/log/vzdump.log | grep "INFO: Finished"
@@ -187,6 +205,7 @@ pvesm status | grep -E "pbs|truenas"
 **Frequency:** Daily
 
 #### 3. Monitor Core Services
+
 ```bash
 # Run automated health check
 ssh admin@192.168.40.35
@@ -227,6 +246,7 @@ tail -50 /var/log/security-audit.log
 ### Weekly Operations
 
 #### 1. Update Systems
+
 ```bash
 # Update Proxmox nodes (one at a time)
 ssh root@192.168.40.10
@@ -250,6 +270,7 @@ ansible-playbook playbooks/maintenance-updates.yml
 **Frequency:** Weekly
 
 #### 2. Storage Capacity Review
+
 ```bash
 # Check all storage usage
 pvesm status
@@ -267,6 +288,7 @@ ceph df
 **Frequency:** Weekly
 
 #### 3. Log Review
+
 ```bash
 # Review centralized logs
 ssh admin@192.168.40.30
@@ -286,6 +308,7 @@ journalctl -p err -since "1 week ago"
 ### Monthly Operations
 
 #### 1. Test Backup Restore
+
 **See:** `assets/runbooks/BACKUP_RECOVERY_RUNBOOK.md` → Testing Procedures
 
 ```bash
@@ -311,6 +334,7 @@ echo "$(date): Backup restore test successful" >> /var/log/backup-tests.log
 **Frequency:** Monthly
 
 #### 2. Security Audit
+
 ```bash
 # Check for unauthorized VMs
 qm list | awk '{print $1,$2}' | sort
@@ -330,6 +354,7 @@ tail -1000 /var/log/nginx/access.log | \
 **Frequency:** Monthly
 
 #### 3. Performance Baseline
+
 ```bash
 # Test network between nodes
 ssh root@192.168.40.10
@@ -352,6 +377,7 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 ### Quarterly Operations
 
 #### 1. Disaster Recovery Test
+
 **See:** `assets/runbooks/BACKUP_RECOVERY_RUNBOOK.md` → Disaster Recovery
 
 ```bash
@@ -369,6 +395,7 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 **Next Test:** February 1, 2026
 
 #### 2. Cluster Maintenance Window
+
 ```bash
 # Full cluster maintenance
 # 1. Update all nodes to latest Proxmox version
@@ -384,6 +411,7 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 **Frequency:** Quarterly
 
 #### 3. Documentation Review
+
 ```bash
 # Review and update all documentation
 # 1. Verify IP addresses are current
@@ -401,10 +429,12 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 ## Emergency Procedures
 
 ### P0: Single Node Failure
+
 **Expected Response Time:** Immediate
 **See:** `assets/runbooks/PROXMOX_CLUSTER_OPERATIONS.md` → Emergency Procedures
 
 **Quick Steps:**
+
 1. Don't panic - HA will auto-migrate VMs
 2. Verify HA status on surviving nodes
 3. Check for any non-HA VMs that need manual start
@@ -414,10 +444,12 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 **Expected RTO:** 5 minutes (HA VMs), 1 hour (non-HA)
 
 ### P0: Complete Cluster Failure
+
 **Expected Response Time:** Immediate
 **See:** `assets/runbooks/BACKUP_RECOVERY_RUNBOOK.md` → Disaster Recovery
 
 **Quick Steps:**
+
 1. Assess: Power outage? Network failure? Multiple hardware failures?
 2. Power on nodes in order (wait for each to boot)
 3. Verify cluster quorum forms
@@ -428,10 +460,12 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 **Expected RTO:** 1 hour (critical services), 4-24 hours (full recovery)
 
 ### P0: Critical Service Down (FreeIPA, Pi-hole)
+
 **Expected Response Time:** 5 minutes
 **See:** `assets/runbooks/SERVICE_MANAGEMENT_RUNBOOK.md` → Service Management
 
 **Quick Steps:**
+
 1. Identify which service is down
 2. SSH to service VM
 3. Check service status
@@ -442,10 +476,12 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 **Expected RTO:** 15 minutes (restart), 1 hour (restore)
 
 ### P1: Storage Degraded (Ceph Warning)
+
 **Expected Response Time:** 15 minutes
 **See:** `assets/runbooks/PROXMOX_CLUSTER_OPERATIONS.md` → Troubleshooting
 
 **Quick Steps:**
+
 1. Check Ceph status: `ceph status`
 2. Check Ceph health detail: `ceph health detail`
 3. Identify down OSDs: `ceph osd tree`
@@ -456,10 +492,12 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 **Expected RTO:** 1-4 hours for recovery
 
 ### P1: Backup Failure
+
 **Expected Response Time:** 4 hours
 **See:** `assets/runbooks/BACKUP_RECOVERY_RUNBOOK.md` → Backup Operations
 
 **Quick Steps:**
+
 1. Check backup logs: `cat /var/log/vzdump.log`
 2. Identify failed VM and reason
 3. Check storage space on PBS and TrueNAS
@@ -474,6 +512,7 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 ## Maintenance Schedule
 
 ### Daily (Automated)
+
 - ✅ Cluster health monitoring
 - ✅ VM backups to PBS (2:00 AM)
 - ✅ Core services health check (every 5 min)
@@ -481,6 +520,7 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 - ✅ Backup verification
 
 ### Weekly (Manual - 1-2 hours)
+
 - System security updates (Proxmox nodes + VMs)
 - Storage capacity review
 - Log review for anomalies
@@ -488,6 +528,7 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 - Backup cleanup (prune old backups)
 
 ### Monthly (Manual - 2-3 hours)
+
 - Backup restore test
 - Security audit (user accounts, access logs)
 - Performance baseline testing
@@ -496,6 +537,7 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 - Ansible playbook execution (maintenance)
 
 ### Quarterly (Manual - 4-8 hours)
+
 - Full disaster recovery test
 - Cluster maintenance window
 - Major version updates (Proxmox, Ceph)
@@ -512,6 +554,7 @@ fio --name=test --ioengine=libaio --rw=randrw --bs=4k \
 **Location:** `/opt/ansible/playbooks/` or `assets/automation/ansible/playbooks/`
 
 Available playbooks:
+
 - `provision-infrastructure.yml` - Initialize Proxmox nodes
 - `deploy-services.yml` - Deploy core services
 - `maintenance-updates.yml` - Apply security updates
@@ -520,6 +563,7 @@ Available playbooks:
 - `check-services.yml` - Service health checks
 
 **Usage:**
+
 ```bash
 cd /opt/ansible
 ansible-playbook playbooks/maintenance-updates.yml
@@ -536,6 +580,7 @@ ansible-playbook playbooks/maintenance-updates.yml --check
 **Location:** `/opt/terraform/` or `assets/automation/terraform/`
 
 **Usage:**
+
 ```bash
 cd /opt/terraform
 
@@ -557,6 +602,7 @@ terraform destroy
 **Location:** `/usr/local/bin/` or `assets/automation/scripts/`
 
 Available scripts:
+
 - `health-check.sh` - Check all service health
 - `backup-verify.sh` - Verify backup completion
 - `security-scan.sh` - Vulnerability scanning
@@ -567,6 +613,7 @@ Available scripts:
 ## Configuration Management
 
 ### Configuration Backup Locations
+
 - **Proxmox Node Configs:** `/etc/pve/` (replicated across cluster)
 - **VM Configs:** Included in VM backups
 - **Service Configs:** `/opt/configs/` + Git repository
@@ -574,6 +621,7 @@ Available scripts:
 - **Terraform State:** Remote backend (configured)
 
 ### Git Repository Integration
+
 ```bash
 # Configuration changes should be committed to Git
 cd /opt/configs
@@ -592,12 +640,14 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 ## Monitoring and Alerting
 
 ### Health Monitoring
+
 - **Method:** Automated health checks every 5 minutes
 - **Script:** `/usr/local/bin/health-check.sh`
 - **Alerts:** Email/Slack on failure
 - **Dashboard:** Proxmox WebGUI + Custom dashboard (if Grafana deployed)
 
 ### Alert Conditions
+
 - Cluster node offline
 - VM unexpectedly stopped
 - HA failover event
@@ -607,7 +657,8 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 - Service health check failure
 
 ### Alert Destinations
-- **Email:** admin@homelab.local
+
+- **Email:** <admin@homelab.local>
 - **Slack:** #homelab-alerts (if configured)
 - **Log:** `/var/log/alerts.log`
 
@@ -616,6 +667,7 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 ## Troubleshooting Quick Guide
 
 ### "Cluster shows node offline"
+
 1. Can you ping the node? If no → network or power issue
 2. Can you SSH to the node? If no → node is down
 3. Check cluster logs: `journalctl -u pve-cluster`
@@ -623,6 +675,7 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 5. Restart services: `systemctl restart pve-cluster corosync`
 
 ### "VM won't start"
+
 1. Check VM config: `qm config <VMID>`
 2. Check for locks: `qm unlock <VMID>`
 3. Check storage: `pvesm list <STORAGE>`
@@ -630,6 +683,7 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 5. Try starting from command line: `qm start <VMID>`
 
 ### "Backup failed"
+
 1. Check backup log: `cat /var/log/vzdump.log`
 2. Check storage space on target
 3. Check VM is running (snapshot mode required)
@@ -637,6 +691,7 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 5. Check PBS connection: `pvesm status | grep pbs`
 
 ### "Service not responding"
+
 1. Identify service and VM
 2. SSH to VM: `ssh admin@<VM_IP>`
 3. Check service: `systemctl status <SERVICE>`
@@ -649,16 +704,19 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 ## Related Documentation
 
 ### Project Documentation
+
 - **Project README:** `/projects/06-homelab/PRJ-HOME-002/README.md`
 - **Disaster Recovery Plan:** `assets/recovery/disaster-recovery-plan.md`
 - **Recovery Procedures:** `assets/recovery/recovery-procedures/`
 
 ### Configuration Files
+
 - **Proxmox Configs:** `assets/proxmox/`
 - **Service Configs:** `assets/services/`
 - **Automation:** `assets/automation/`
 
 ### External Resources
+
 - [Proxmox VE Documentation](https://pve.proxmox.com/wiki/)
 - [Ceph Documentation](https://docs.ceph.com/)
 - [Ansible Documentation](https://docs.ansible.com/)
@@ -671,6 +729,7 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 ### Making Changes to Infrastructure
 
 **Before Making Changes:**
+
 1. Document planned change
 2. Backup affected VMs/configs
 3. Test in development environment (if possible)
@@ -679,6 +738,7 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 6. Notify affected users
 
 **During Changes:**
+
 1. Follow runbook procedures
 2. Make incremental changes
 3. Test after each change
@@ -686,6 +746,7 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 5. Monitor for issues
 
 **After Changes:**
+
 1. Verify all services operational
 2. Run health checks: `/usr/local/bin/health-check.sh`
 3. Update documentation
@@ -694,6 +755,7 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 6. Close change ticket
 
 **Rollback Procedure:**
+
 1. Stop making changes immediately
 2. Assess impact and risk
 3. Restore from backup (if needed)
@@ -706,18 +768,21 @@ ansible-playbook /opt/ansible/playbooks/backup-configs.yml
 ## Contacts and Escalation
 
 ### Self-Service Resources (Tier 1)
+
 - This runbook
 - Detailed runbooks in `assets/runbooks/`
 - Project README
 - Inline documentation in configs
 
 ### Community Support (Tier 2)
+
 - r/Proxmox (Reddit)
 - r/homelab (Reddit)
 - Proxmox Forum
 - FreeIPA mailing list
 
 ### Professional Support (Tier 3)
+
 - Proxmox Subscription Support
 - Commercial support services (if needed)
 

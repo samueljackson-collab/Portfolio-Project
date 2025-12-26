@@ -574,25 +574,25 @@ curl -s http://localhost:9090/api/v1/alerts | \
 
 #### Severity Classification
 
-**P0: Complete Observability Loss**
+### P0: Complete Observability Loss
 - All monitoring components down
 - Cannot determine system health
 - SLO tracking unavailable
 - Critical alerts not firing
 
-**P1: Partial Observability Loss**
+### P1: Partial Observability Loss
 - Single component down (Prometheus/Loki/Tempo)
 - SLO burn rate critical (>14.4x)
 - Alert delivery completely failing
 - Dashboard unavailable
 
-**P2: Degraded Observability**
+### P2: Degraded Observability
 - High query latency
 - Ingestion lag significant
 - SLO burn rate elevated (>6x)
 - Some scrape targets down
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual scrape target down
 - Dashboard performance degraded
 - Non-critical component warnings

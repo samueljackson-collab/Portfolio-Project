@@ -44,6 +44,46 @@ terraform init
 terraform plan
 ```
 
+### Verification
+
+To verify your OIDC setup:
+
+1. Push a change to the `infra/bootstrap-terraform` branch or create a PR
+2. Check the Actions tab to see if the workflow runs successfully
+3. Verify that the plan job completes without authentication errors
+4. For apply, verify that it waits for manual approval in the production environment
+
+### Troubleshooting
+
+**"Not authorized to perform sts:AssumeRoleWithWebIdentity"**
+
+- Verify the trust policy has the correct AWS account ID and repository name
+- Ensure the OIDC provider thumbprint is correct
+- Check that the branch/tag matches the condition in the trust policy
+
+**"Access Denied" during Terraform operations**
+
+- Review the IAM policy attached to the role
+- Check CloudTrail logs for specific denied actions
+- Ensure S3 bucket and DynamoDB table names are correct in the policy
+
+**Apply job doesn't wait for approval**
+
+- Verify the environment name in the workflow matches the environment in GitHub settings
+- Ensure environment protection rules are configured with required reviewers
+
+Testing & quality:
+
+- terraform fmt -recursive
+- terraform validate
+- tflint
+- checkov (static security scan)
+- terratest (Go) for integration tests
+
+Notes:
+
+- The bootstrap script creates S3 and DynamoDB for Terraform remote state. Run it once with an admin account.
+- The provided main.tf is an example. Replace/add modules for VPC, EKS, RDS, etc. per your architecture.
 ## CI/CD
 GitHub Actions (`.github/workflows/terraform.yml`) runs `terraform fmt`, `validate`, `tfsec`, and `tflint`, produces a plan on pull requests, and requires environment approval before applying to `main`.
 

@@ -1,6 +1,9 @@
 # COMPREHENSIVE REMEDIATION PLAN
+
 # ================================
+
 # Portfolio Project - Critical Issues & Fixes
+
 # Generated: 2024-11-07
 
 ## OVERVIEW
@@ -18,6 +21,7 @@ This document provides **step-by-step fixes** for all issues identified in the c
 ### 🔴 FIX #1: Terraform Missing Variables (60 minutes)
 
 **Files to Modify:**
+
 1. `terraform/variables.tf`
 2. `terraform/main.tf`
 
@@ -28,6 +32,7 @@ cd /home/user/Portfolio-Project/terraform
 ```
 
 Add to `variables.tf`:
+
 ```hcl
 variable "aws_region" {
   description = "AWS region for all resources"
@@ -54,6 +59,7 @@ variable "project_tag" {
 **Step 2: Create terraform.tfvars.example**
 
 Create `terraform/terraform.tfvars.example`:
+
 ```hcl
 # Copy this file to terraform.tfvars and fill in your values
 # Do NOT commit terraform.tfvars to git (it's in .gitignore)
@@ -147,6 +153,7 @@ resource "aws_s3_bucket_public_access_block" "app_assets" {
 **Solution: Create Proper outputs.tf**
 
 Create `terraform/outputs.tf`:
+
 ```hcl
 # VPC Outputs
 output "vpc_id" {
@@ -220,16 +227,19 @@ output "cloudwatch_log_group_name" {
 **Line:** 13
 
 **Current (BROKEN):**
+
 ```bash
 tf=terraform fmt -recursive
 ```
 
 **Fixed:**
+
 ```bash
 terraform fmt -recursive
 ```
 
 **Full corrected section:**
+
 ```bash
 echo "Formatting Terraform code..."
 terraform fmt -recursive
@@ -255,6 +265,7 @@ fi
 **Step 1: Create Environment Variable Template**
 
 Create `projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/.env.example`:
+
 ```bash
 # AlertManager Environment Variables
 # Copy to .env and fill in real values
@@ -276,6 +287,7 @@ ALERTMANAGER_PAGERDUTY_SERVICE_KEY=your-pagerduty-integration-key
 **Step 2: Update alertmanager.yml to Use Environment Variables**
 
 Replace secrets section in `alertmanager.yml`:
+
 ```yaml
 global:
   smtp_from: '{{ env "ALERTMANAGER_SMTP_FROM" }}'
@@ -297,6 +309,7 @@ receivers:
 **Step 3: Update Docker Compose to Pass Environment Variables**
 
 In `docker-compose-full-stack.yml`, update alertmanager service:
+
 ```yaml
 alertmanager:
   image: prom/alertmanager:latest
@@ -317,6 +330,7 @@ alertmanager:
 **Step 1: Create Backend Setup Script**
 
 Create `terraform/setup-backend.sh`:
+
 ```bash
 #!/bin/bash
 # Terraform Backend Setup Script
@@ -407,6 +421,7 @@ echo ""
 ```
 
 Make executable:
+
 ```bash
 chmod +x terraform/setup-backend.sh
 ```
@@ -422,6 +437,7 @@ chmod +x terraform/setup-backend.sh
 **Step 1: Create Template Processing Script**
 
 Create `terraform/iam/configure-iam-policy.sh`:
+
 ```bash
 #!/bin/bash
 # Configure IAM policy template
@@ -453,6 +469,7 @@ echo "    --policy-document file://github_actions_ci_policy.json"
 ```
 
 **Step 2: Rename current file to template:**
+
 ```bash
 cd terraform/iam
 mv github_actions_ci_policy.json github_actions_ci_policy.json.template
@@ -465,11 +482,13 @@ mv github_actions_ci_policy.json github_actions_ci_policy.json.template
 **File:** `projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/alertmanager.yml`
 
 **Line 66 - Change from:**
+
 ```yaml
 *Instance:* {{ .GroupLabels.alertname }}
 ```
 
 **To:**
+
 ```yaml
 *Instance:* {{ .GroupLabels.instance }}
 ```
@@ -483,6 +502,7 @@ mv github_actions_ci_policy.json github_actions_ci_policy.json.template
 **Additional: Create Master .env.example in Repository Root**
 
 Create `/home/user/Portfolio-Project/.env.example`:
+
 ```bash
 # Portfolio Project - Master Environment Configuration
 # ====================================================
@@ -528,6 +548,7 @@ HOMEASSISTANT_API_TOKEN=CHANGE_ME_TOKEN
 **File:** `projects/03-cybersecurity/PRJ-CYB-BLUE-001/lambda/log_transformer.py`
 
 **Replace lines 68-75 with:**
+
 ```python
 except json.JSONDecodeError as e:
     logger.error(
@@ -584,6 +605,7 @@ except Exception as e:
 ### 🟡 FIX #11-14: Type Hints, Validation, Health Checks
 
 **Due to length, these are documented in separate files:**
+
 - See `REMEDIATION_PHASE3.md` for medium severity fixes
 - See `REMEDIATION_PHASE4.md` for low severity fixes
 
@@ -594,6 +616,7 @@ except Exception as e:
 After applying fixes, run these tests:
 
 ### Terraform Validation
+
 ```bash
 cd terraform
 terraform init
@@ -602,22 +625,26 @@ terraform plan
 ```
 
 ### Python Syntax
+
 ```bash
 python3 -m py_compile scripts/*.py
 python3 -m pytest tests/
 ```
 
 ### YAML Validation
+
 ```bash
 yamllint projects/01-sde-devops/PRJ-SDE-002/assets/**/*.yml
 ```
 
 ### Docker Compose
+
 ```bash
 docker-compose -f projects/06-homelab/PRJ-HOME-002/assets/configs/docker-compose-full-stack.yml config
 ```
 
 ### Shell Scripts
+
 ```bash
 shellcheck scripts/*.sh
 ```
@@ -638,6 +665,7 @@ shellcheck scripts/*.sh
 ## SUCCESS CRITERIA
 
 After Phase 1 fixes:
+
 - ✅ Terraform validates successfully
 - ✅ All Python scripts have valid syntax
 - ✅ No secrets in version control
@@ -645,6 +673,7 @@ After Phase 1 fixes:
 - ✅ Backend is configurable
 
 After All Phases:
+
 - ✅ All 24 issues resolved
 - ✅ Full test suite passes
 - ✅ Complete CI/CD pipeline
@@ -656,12 +685,14 @@ After All Phases:
 ## NEED HELP?
 
 For each fix, you can:
+
 1. Follow the step-by-step instructions above
 2. Use the provided code snippets
 3. Run the test commands to verify
 4. Check the CODE_QUALITY_REPORT.md for context
 
 **Estimated Total Time:**
+
 - Phase 1 (Critical): 2 hours ← **DO THIS FIRST**
 - Phase 2 (High): 5 hours
 - Phase 3 (Medium): 8 hours

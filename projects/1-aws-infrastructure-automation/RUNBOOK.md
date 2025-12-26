@@ -385,25 +385,25 @@ aws cloudwatch describe-alarms \
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 - EKS cluster API server unreachable
 - RDS instance stopped or failed
 - Complete infrastructure deployment failure in production
 - VPC networking failure affecting all services
 
-**P1: Degraded Service**
+### P1: Degraded Service
 - All EKS nodes unhealthy or terminated
 - RDS connection exhaustion
 - Single-AZ failure affecting availability
 - Infrastructure drift causing service issues
 
-**P2: Warning State**
+### P2: Warning State
 - Infrastructure drift detected
 - Node autoscaling not responding
 - RDS storage approaching limits
 - Non-critical deployment failures
 
-**P3: Informational**
+### P3: Informational
 - Cost optimization opportunities
 - Minor configuration drift
 - Successful but slow deployments

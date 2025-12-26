@@ -532,25 +532,25 @@ grep -i "error\|failed" backup/logs/*.log | tail -20
 
 #### Severity Classification
 
-**P0: Critical DR Failure**
+### P0: Critical DR Failure
 - Multiple consecutive backup failures
 - RPO exceeded by > 2x target
 - DR site completely unavailable
 - Production disaster requiring immediate recovery
 
-**P1: Degraded DR Capability**
+### P1: Degraded DR Capability
 - Single backup type failure
 - RPO warning (approaching limit)
 - DR site partially available
 - Restore validation failure
 
-**P2: DR Warning State**
+### P2: DR Warning State
 - Backup delays
 - Storage capacity warning
 - Minor DR site issues
 - Backup performance degradation
 
-**P3: Informational**
+### P3: Informational
 - Single backup retry succeeded
 - Minor backup delays
 - Routine maintenance notifications

@@ -1,4 +1,5 @@
-# Hi, I'm Sam Jackson!
+# Hi, I'm Sam Jackson
+
 **[System Development Engineer](https://github.com/samueljackson-collab)** · **[DevOps & QA Enthusiast](https://www.linkedin.com/in/sams-jackson)** · **Freelance Full-Stack Web Developer**
 
 [![CI](https://github.com/samueljackson-collab/Portfolio-Project/workflows/CI/badge.svg?branch=main)](https://github.com/samueljackson-collab/Portfolio-Project/actions/workflows/ci.yml)
@@ -14,12 +15,15 @@
 > 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
 
 ---
+
 ## 🧭 Reviewer Fast Reference
 
 - **Reviewer Checklist:** For a detailed validation checklist covering top metrics, interview workflow, and file map, please see [**PORTFOLIO_VALIDATION.md**](./PORTFOLIO_VALIDATION.md). This file serves as the single source of truth for validation runs.
 
 ---
+
 ## 🎯 Summary
+
 System-minded engineer specializing in building, securing, and operating infrastructure and data-heavy web systems. Hands-on with homelab → production-like setups (wired rack, UniFi network, VPN, backup/restore drills), and pragmatic DevOps/QA practices.
 
 <details><summary><strong>Alternate summaries for tailoring</strong></summary>
@@ -30,24 +34,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 </details>
 
 ---
-## 🚀 Flagship Live Deployments
 
-Initial live deployments are tracked for the flagship portfolio projects below. Each project README includes verification steps and a deployment record.
-
-| Project | Live URL | Deployment record |
-| --- | --- | --- |
-| Project 1 — AWS Infrastructure Automation | https://aws-infra-automation.example.com | [DEPLOYMENT_STATUS.md](./projects/1-aws-infrastructure-automation/DEPLOYMENT_STATUS.md) |
-| Project 4 — DevSecOps Pipeline | https://devsecops.example.com | [DEPLOYMENT_STATUS.md](./projects/4-devsecops/DEPLOYMENT_STATUS.md) |
-| Project 23 — Advanced Monitoring | https://monitoring.example.com/grafana | [DEPLOYMENT_STATUS.md](./projects/23-advanced-monitoring/DEPLOYMENT_STATUS.md) |
-
-**Verification steps (sample)**
-```bash
-curl -fsSL https://aws-infra-automation.example.com/healthz
-curl -fsSL https://devsecops.example.com/healthz
-curl -fsSL https://monitoring.example.com/healthz
-```
-
----
 ## 📘 Guides
 
 - [Wiki.js Setup Guide](./docs/wiki-js-setup-guide.md) — Complete walkthrough to deploy, harden, and populate a Wiki.js instance for portfolio documentation.
@@ -281,7 +268,9 @@ curl -fsSL https://monitoring.example.com/healthz
   - Evidence: [Blueprint](./projects/24-report-generator)
 
 ---
+
 ## 🛠️ Core Skills
+
 - **Systems & Infra:** Linux/Windows, networking, VLANs, VPN, UniFi, NAS, Active Directory
 - **Virtualization/Services:** Proxmox/TrueNAS, reverse proxy + TLS, RBAC/MFA, backup/restore drills
 - **Automation & Scripting:** PowerShell, Bash, SQL (catalog ops, reporting), Git
@@ -291,29 +280,35 @@ curl -fsSL https://monitoring.example.com/healthz
 - **Quality & Process:** runbooks, acceptance criteria, regression checklists, change control
 
 ---
+
 ## 🟢 Completed Projects (📝 Documentation in Progress)
 
 ### Homelab & Secure Network Build
+
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
 **Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-001/assets/screenshots)
 
 ### Virtualization & Core Services
+
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
 **Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Evidence Assets](./projects/06-homelab/PRJ-HOME-002/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-002/assets/screenshots)
 
 ### Observability & Backups Stack
+
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
 **Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets) · [Screenshots/Logs](./projects/01-sde-devops/PRJ-SDE-002/assets/screenshots)
 
 ---
+
 ## 🔄 Past Projects Requiring Recovery
 
 Older commercial efforts live in cold storage while I recreate code, processes, and documentation that were lost when a retired workstation took the original knowledge base with it. Fresh assets will be published as they’re rebuilt.
 
 ### Commercial E-commerce & Booking Systems (Rebuild in Progress)
+
 **Status:** 🔄 Recovery in progress
 **Description** Previously built and managed: resort booking site; high-SKU flooring store; tours site with complex variations. Code and process docs are being rebuilt for publication.
 **Links**: [Project README & Recovery Plan](./projects/08-web-data/PRJ-WEB-001/) · [Evidence](./projects/08-web-data/PRJ-WEB-001/assets) *(pending recovery)*
@@ -321,48 +316,62 @@ Older commercial efforts live in cold storage while I recreate code, processes, 
 > **Recovery plan & timeline:** Catalog and restore SQL workflows and automation scripts (Week 1), re-document content management processes and deployment steps (Week 2), publish refreshed artifacts (Week 3+).
 
 ---
+
 ## 🟠 In-Progress Projects (Milestones)
+
 - **Database Infrastructure Module (Terraform RDS)** · [Project README](./projects/01-sde-devops/PRJ-SDE-001/) · ✅ Module complete, expanding to full-stack
 - **Resume Set (SDE/Cloud/QA/Net/Cyber)** · [Project README](./professional/resume/) · 📝 Structure created, content in progress
 
 ### 🔵 Planned Infrastructure Projects
+
 - **GitOps Platform with IaC (Terraform + ArgoCD)** · *Roadmap defined*
 - **AWS Landing Zone (Organizations + SSO)** · *Research phase*
 - **Active Directory Design & Automation (DSC/Ansible)** · *Planning phase*
 
 ---
+
 ## 🔵 Planned Projects (Roadmaps)
 
 ### Cybersecurity Projects
+
 - **SIEM Pipeline**: Sysmon → Ingest → Detections → Dashboards · *Blue team defense*
 - **Adversary Emulation**: Validate detections via safe ATT&CK TTP emulation · *Purple team testing*
 - **Incident Response Playbook**: Clear IR guidance for ransomware · *Operations readiness*
 
 ### QA & Testing Projects
+
 - **Web App Login Test Plan**: Functional, security, and performance test design · *Test strategy*
 - **Selenium + PyTest CI**: Automate UI sanity runs in GitHub Actions · *Test automation*
 
 ### Infrastructure Expansion
+
 - **Multi-OS Lab**: Kali, SlackoPuppy, Ubuntu lab for comparative analysis · *Homelab expansion*
 
 ### Automation & Tooling
+
 - **Document Packaging Pipeline**: One-click generation of Docs/PDFs/XLSX from prompts · *Documentation automation*
 
 ### Process Documentation
+
 - **IT Playbook (E2E Lifecycle)**: Unifying playbook from intake to operations · *Operational excellence*
 - **Engineer's Handbook (Standards/QA Gates)**: Practical standards and quality bars · *Quality framework*
 
 ---
+
 ## 💼 Experience
+
 **Desktop Support Technician — 3DM (Redmond, WA) · Feb 2025–Present**  
 **Freelance IT & Web Manager — Self-employed · 2015–2022**  
 **Web Designer, Content & SEO — IPM Corp. (Cambodia) · 2013–2014**
 
 ---
+
 ## 🎓 Education & Certifications
+
 **B.S., Information Systems** — Colorado State University (2016–2024)  
 
 ---
+
 ## 🤳 Connect
 [GitHub](https://github.com/samueljackson-collab) · [LinkedIn](https://www.linkedin.com/in/sams-jackson) 
 [![GitHub Profile](https://img.shields.io/badge/GitHub-Portfolio-181717?style=flat&logo=github)](https://github.com/samueljackson-collab)

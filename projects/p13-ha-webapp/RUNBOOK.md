@@ -2,9 +2,12 @@
 
 ## Overview
 
-Production operations runbook for the P13 High-Availability Web Application platform. This runbook covers load balancer management, application instance operations, database replication, health monitoring, incident response, and troubleshooting for the NGINX-based HA architecture.
+Production operations runbook for the P13 High-Availability Web Application platform. This runbook
+covers load balancer management, application instance operations, database replication, health
+monitoring, incident response, and troubleshooting for the NGINX-based HA architecture.
 
 **System Components:**
+
 - NGINX load balancer with upstream health checks
 - Multiple application instances (3 replicas) with Docker Compose
 - Database replication (primary-replica configuration)
@@ -33,6 +36,7 @@ Production operations runbook for the P13 High-Availability Web Application plat
 ### Dashboards
 
 #### Load Balancer Dashboard
+
 ```bash
 # Check NGINX status
 docker-compose ps nginx
@@ -52,6 +56,7 @@ docker-compose exec nginx nginx -T | grep -A 5 "upstream backend"
 ```
 
 #### Application Instance Dashboard
+
 ```bash
 # Check all app instances
 docker-compose ps | grep app
@@ -71,6 +76,7 @@ docker-compose logs app-1 app-2 app-3 --tail=50 --follow
 ```
 
 #### Database Replication Dashboard
+
 ```bash
 # Check primary database status
 docker-compose exec db-primary psql -U postgres -c "SELECT pg_is_in_recovery();"
@@ -159,6 +165,7 @@ fi
 ### Load Balancer Operations
 
 #### Start/Stop NGINX
+
 ```bash
 # Start NGINX
 docker-compose up -d nginx
@@ -178,6 +185,7 @@ curl -I http://localhost
 ```
 
 #### Update NGINX Configuration
+
 ```bash
 # 1. Edit configuration
 vim nginx/conf.d/default.conf
@@ -198,6 +206,7 @@ done
 ```
 
 #### View NGINX Logs
+
 ```bash
 # Access logs (all requests)
 docker-compose logs nginx --tail=100 --follow
@@ -219,6 +228,7 @@ docker-compose logs nginx --since 1h | grep -c "HTTP/" | \
 ### Application Instance Management
 
 #### Check Instance Health
+
 ```bash
 # Check all instances
 make test-ha
@@ -237,6 +247,7 @@ done | sort | uniq -c
 ```
 
 #### Restart Single Instance
+
 ```bash
 # Restart specific instance (NGINX routes around it)
 docker-compose restart app-1
@@ -250,6 +261,7 @@ docker-compose logs nginx --since 1m | grep app-1
 ```
 
 #### Scale Application Instances
+
 ```bash
 # Scale up to 5 instances
 docker-compose up -d --scale app=5
@@ -266,6 +278,7 @@ docker-compose exec nginx nginx -s reload
 ```
 
 #### Deploy New Version (Rolling Update)
+
 ```bash
 # Rolling deployment strategy (zero downtime)
 
@@ -304,6 +317,7 @@ echo "Rolling deployment completed"
 ```
 
 #### View Application Logs
+
 ```bash
 # View logs from all instances
 docker-compose logs app-1 app-2 app-3 --follow
@@ -321,6 +335,7 @@ docker-compose logs nginx | grep -oP "app-[0-9]" | sort | uniq -c
 ### Database Operations
 
 #### Check Database Health
+
 ```bash
 # Check primary database
 docker-compose exec db-primary psql -U postgres -c "SELECT version();"
@@ -336,6 +351,7 @@ docker-compose exec db-replica psql -U postgres -c "SELECT * FROM pg_stat_wal_re
 ```
 
 #### Monitor Replication Lag
+
 ```bash
 # Check lag in seconds
 docker-compose exec db-replica psql -U postgres -c "
@@ -351,6 +367,7 @@ SELECT EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) AS lag_seco
 ```
 
 #### Promote Replica to Primary (Failover)
+
 ```bash
 # CAUTION: This is a destructive operation!
 
@@ -383,6 +400,7 @@ curl -X POST http://localhost/api/test \
 ```
 
 #### Backup Database
+
 ```bash
 # Backup from replica (don't impact primary)
 docker-compose exec db-replica pg_dump -U postgres appdb > backup/appdb-$(date +%Y%m%d-%H%M%S).sql
@@ -400,6 +418,7 @@ docker-compose exec -T db-primary psql -U postgres appdb < backup/appdb-20251110
 ### Health Check and Monitoring
 
 #### Manual Health Checks
+
 ```bash
 # Full system health check
 echo "=== Load Balancer ==="
@@ -423,6 +442,7 @@ SELECT EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) || ' second
 ```
 
 #### Automated Health Monitoring Script
+
 ```bash
 # Create monitoring script
 cat > scripts/health-check.sh <<'EOF'
@@ -486,12 +506,14 @@ chmod +x scripts/health-check.sh
 ### Detection
 
 **Automated Detection:**
+
 - Health check monitoring failures
 - NGINX upstream health check failures
 - Database replication lag alerts
 - High error rate alerts
 
 **Manual Detection:**
+
 ```bash
 # Check overall system status
 docker-compose ps
@@ -512,24 +534,28 @@ docker-compose exec db-replica psql -U postgres -c "SELECT pg_is_in_recovery();"
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
+
 - All application instances down
 - Load balancer down
 - Primary database down (writes failing)
 
-**P1: Degraded Service**
+### P1: Degraded Service
+
 - 2 of 3 app instances down (reduced capacity)
 - Replication lag > 60 seconds
 - Error rate > 5%
 - Primary database issues (reads from replica OK)
 
-**P2: Warning State**
+### P2: Warning State
+
 - Single app instance down
 - Replication lag > 10 seconds
 - Elevated error rate (1-5%)
 - High resource usage
 
-**P3: Informational**
+### P3: Informational
+
 - Minor performance degradation
 - Single instance restart
 - Brief replication lag spike
@@ -539,6 +565,7 @@ docker-compose exec db-replica psql -U postgres -c "SELECT pg_is_in_recovery();"
 #### P0: All Application Instances Down
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check instance status
 docker-compose ps | grep app
@@ -570,6 +597,7 @@ curl -X POST http://localhost/api/test \
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Check for common issues
 # 1. Database connectivity
@@ -587,6 +615,7 @@ docker-compose logs app-1 --since 1h | grep -i "error\|exception" | tail -20
 ```
 
 **Root Cause Analysis:**
+
 - Database connection pool exhausted
 - Application code bug (recent deployment)
 - Resource limits exceeded (memory/CPU)
@@ -597,6 +626,7 @@ docker-compose logs app-1 --since 1h | grep -i "error\|exception" | tail -20
 #### P0: Load Balancer Down
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Check NGINX status
 docker-compose ps nginx
@@ -618,6 +648,7 @@ done | sort | uniq -c
 ```
 
 **Investigation (2-15 minutes):**
+
 ```bash
 # Check NGINX configuration
 docker-compose exec nginx nginx -t
@@ -639,6 +670,7 @@ dmesg | tail -50
 #### P0: Primary Database Down
 
 **Immediate Actions (0-10 minutes):**
+
 ```bash
 # 1. Verify primary is down
 docker-compose ps db-primary
@@ -678,6 +710,7 @@ curl -X POST http://localhost/api/test \
 ```
 
 **Investigation (10-60 minutes):**
+
 ```bash
 # Check old primary logs
 docker-compose logs db-primary --tail=100 | grep -i "error\|fatal\|panic"
@@ -694,6 +727,7 @@ docker-compose restart db-primary
 #### P1: Multiple App Instances Down
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Identify failed instances
 docker-compose ps | grep app
@@ -717,6 +751,7 @@ docker-compose logs nginx --since 10m | grep -c " 5[0-9][0-9] "
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Check for systemic issues
 # 1. Database connectivity
@@ -739,6 +774,7 @@ done
 #### P1: High Replication Lag
 
 **Investigation:**
+
 ```bash
 # Check current lag
 docker-compose exec db-replica psql -U postgres -c "
@@ -767,6 +803,7 @@ ORDER BY duration DESC;
 ```
 
 **Mitigation:**
+
 ```bash
 # If replication is stuck, restart replica replication
 docker-compose restart db-replica
@@ -787,6 +824,7 @@ SELECT EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp()));
 ### Essential Troubleshooting Commands
 
 #### Load Balancer Troubleshooting
+
 ```bash
 # Check NGINX configuration
 docker-compose exec nginx nginx -t
@@ -810,6 +848,7 @@ docker-compose logs nginx | grep error | tail -20
 ```
 
 #### Application Troubleshooting
+
 ```bash
 # Check instance connectivity
 for i in 1 2 3; do
@@ -832,6 +871,7 @@ docker-compose exec app-1 env | grep -i db
 ```
 
 #### Database Troubleshooting
+
 ```bash
 # Check database connections
 docker-compose exec db-primary psql -U postgres -c "
@@ -873,10 +913,12 @@ LIMIT 10;
 #### Issue: "502 Bad Gateway" from NGINX
 
 **Symptoms:**
+
 - Users receiving 502 errors
 - NGINX logs show "upstream prematurely closed connection"
 
 **Diagnosis:**
+
 ```bash
 # Check if upstream instances are running
 docker-compose ps | grep app
@@ -891,6 +933,7 @@ docker-compose logs nginx | grep "upstream\|502"
 ```
 
 **Solution:**
+
 ```bash
 # Restart failed app instances
 docker-compose restart app-1 app-2 app-3
@@ -905,10 +948,12 @@ docker-compose exec nginx nginx -s reload
 #### Issue: Uneven load distribution
 
 **Symptoms:**
+
 - One instance receiving significantly more traffic than others
 - Uneven CPU/memory usage across instances
 
 **Diagnosis:**
+
 ```bash
 # Check request distribution
 docker-compose logs nginx | grep -oP "app-[0-9]" | sort | uniq -c
@@ -918,6 +963,7 @@ docker stats --no-stream | grep app
 ```
 
 **Solution:**
+
 ```bash
 # Review NGINX load balancing algorithm
 docker-compose exec nginx cat /etc/nginx/conf.d/upstream.conf
@@ -939,10 +985,12 @@ docker-compose exec nginx nginx -s reload
 #### Issue: Database connection pool exhausted
 
 **Symptoms:**
+
 - Application errors: "could not open connection"
 - Database has max connections reached
 
 **Diagnosis:**
+
 ```bash
 # Check current connections
 docker-compose exec db-primary psql -U postgres -c "
@@ -961,6 +1009,7 @@ GROUP BY application_name;
 ```
 
 **Solution:**
+
 ```bash
 # Increase max_connections in PostgreSQL
 docker-compose exec db-primary psql -U postgres -c "
@@ -988,6 +1037,7 @@ docker-compose restart db-primary
 ### Backup Strategy
 
 **Database Backups:**
+
 ```bash
 # Automated backup script
 cat > scripts/backup-db.sh <<'EOF'
@@ -1010,6 +1060,7 @@ chmod +x scripts/backup-db.sh
 ```
 
 **Configuration Backups:**
+
 ```bash
 # Backup NGINX configuration
 tar -czf backup/nginx-config-$(date +%Y%m%d).tar.gz nginx/
@@ -1028,6 +1079,7 @@ git push
 #### Complete System Loss
 
 **Recovery Steps (10-15 minutes):**
+
 ```bash
 # 1. Restore code from Git
 git clone <repository-url>
@@ -1068,6 +1120,7 @@ curl -I http://localhost
 ### DR Drill Procedure
 
 **Quarterly DR Drill (1 hour):**
+
 ```bash
 # 1. Document current state
 docker-compose ps > dr-drill-state-before.txt
@@ -1110,6 +1163,7 @@ echo "Actual recovery time: $RECOVERY_TIME seconds" | tee -a dr-drill-log.txt
 ### Routine Maintenance
 
 #### Daily Tasks
+
 ```bash
 # Health check
 ./scripts/health-check.sh
@@ -1128,6 +1182,7 @@ docker system df
 ```
 
 #### Weekly Tasks
+
 ```bash
 # Review logs for errors
 docker-compose logs --since 7d | grep -i "error" | wc -l
@@ -1146,6 +1201,7 @@ find logs/ -name "*.log" -mtime +30 -delete
 ```
 
 #### Monthly Tasks
+
 ```bash
 # Review performance metrics
 # - Average response time
@@ -1167,6 +1223,7 @@ docker-compose up -d --build
 ## Quick Reference
 
 ### Common Commands
+
 ```bash
 # Start system
 make run
@@ -1191,6 +1248,7 @@ docker-compose logs -f nginx app-1 app-2 app-3
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: All apps down - Restart all
 docker-compose restart app-1 app-2 app-3
@@ -1210,6 +1268,7 @@ docker-compose restart db-replica
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Platform Engineering Team

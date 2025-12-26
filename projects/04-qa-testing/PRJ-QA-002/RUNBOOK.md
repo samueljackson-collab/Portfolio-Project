@@ -354,25 +354,25 @@ open test-results/latest/report.html
 
 #### Severity Classification
 
-**P0: Complete Test Failure**
+### P0: Complete Test Failure
 - All UI tests failing (100% failure rate)
 - CI pipeline completely broken
 - Application completely inaccessible
 - Browser driver failures
 
-**P1: Critical Path Failure**
+### P1: Critical Path Failure
 - Login tests failing
 - Checkout/payment flow broken
 - > 50% test failure rate
 - Multiple consecutive CI failures
 
-**P2: Partial Failure**
+### P2: Partial Failure
 - Single feature tests failing
 - Flaky test rate > 10%
 - Test execution time doubled
 - 10-50% test failure rate
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual test failing
 - Single selector update needed
 - Performance within acceptable limits

@@ -2,9 +2,12 @@
 
 ## Overview
 
-Production operations runbook for the Playwright end-to-end testing framework. This runbook covers test execution, CI/CD pipeline management, test maintenance, visual regression testing, and troubleshooting procedures for automated web application testing.
+Production operations runbook for the Playwright end-to-end testing framework. This runbook covers
+test execution, CI/CD pipeline management, test maintenance, visual regression testing, and
+troubleshooting procedures for automated web application testing.
 
 **System Components:**
+
 - Playwright Test framework with cross-browser support
 - Page Object Model (POM) test architecture
 - GitHub Actions CI/CD pipeline
@@ -32,6 +35,7 @@ Production operations runbook for the Playwright end-to-end testing framework. T
 ### Dashboards
 
 #### Test Execution Dashboard
+
 ```bash
 # View test report locally
 make report
@@ -45,6 +49,7 @@ npx playwright show-trace test-results/trace.zip
 ```
 
 #### GitHub Actions Dashboard
+
 ```bash
 # View CI test runs
 # Navigate to: https://github.com/<org>/<repo>/actions
@@ -60,6 +65,7 @@ gh run download <run-id>
 ```
 
 #### Test Metrics Dashboard
+
 ```bash
 # Analyze test results
 cat playwright-report/results.json | jq '{
@@ -91,6 +97,7 @@ cat playwright-report/results.json | jq '.suites[].specs[] | {
 #### Alert Queries
 
 **Check for failing critical tests:**
+
 ```bash
 # Check login test status
 grep -i "login.*FAIL" playwright-report/index.html && echo "ALERT: Login tests failing"
@@ -100,6 +107,7 @@ npx playwright test tests/checkout.spec.ts --reporter=list | grep -E "FAIL|ERROR
 ```
 
 **Monitor flaky tests:**
+
 ```bash
 # Extract flaky tests from report
 cat playwright-report/results.json | jq '.suites[].specs[] | select(.results | length > 1) | .title'
@@ -115,6 +123,7 @@ cat playwright-report/results.json | jq '[.suites[].specs[].results | length] | 
 ### Test Execution
 
 #### Run Full Test Suite
+
 ```bash
 # Local execution (headless)
 make test
@@ -132,6 +141,7 @@ npx playwright test --workers=8
 ```
 
 #### Run Specific Tests
+
 ```bash
 # Single test file
 npx playwright test tests/login.spec.ts
@@ -148,6 +158,7 @@ npx playwright test --grep @regression
 ```
 
 #### Debug Mode
+
 ```bash
 # Interactive debug mode
 npx playwright test --debug
@@ -165,6 +176,7 @@ npx playwright test --headed --slow-mo=1000
 ### Visual Regression Testing
 
 #### Update Visual Snapshots
+
 ```bash
 # Update all snapshots (use with caution)
 npx playwright test --update-snapshots
@@ -177,6 +189,7 @@ git diff tests/**/*.png
 ```
 
 #### Compare Snapshots
+
 ```bash
 # View snapshot diff in report
 npx playwright show-report
@@ -189,6 +202,7 @@ ls test-results/
 ### CI/CD Pipeline Management
 
 #### Trigger CI Pipeline
+
 ```bash
 # Pipelines trigger automatically on push/PR
 git add .
@@ -203,6 +217,7 @@ gh run view --log
 ```
 
 #### Manual Pipeline Trigger
+
 ```bash
 # Trigger workflow manually
 gh workflow run playwright-tests.yml
@@ -214,6 +229,7 @@ gh workflow run playwright-tests.yml -f environment=staging
 ### Test Maintenance
 
 #### Install/Update Dependencies
+
 ```bash
 # Install all dependencies
 make setup
@@ -228,6 +244,7 @@ npx playwright install
 ```
 
 #### Update Test Data
+
 ```bash
 # Update test credentials (from .env)
 cp .env.example .env
@@ -245,11 +262,13 @@ npx playwright test --reporter=list --dry-run
 ### Detection
 
 **Automated Detection:**
+
 - GitHub Actions failure notifications
 - Test report analysis
 - Flaky test monitoring
 
 **Manual Detection:**
+
 ```bash
 # Check recent test runs
 gh run list --workflow=playwright-tests.yml --limit 10
@@ -265,24 +284,28 @@ cat playwright-report/results.json | jq '.suites[].specs[] | select(.ok == false
 
 #### Severity Classification
 
-**P0: Complete Test Failure**
+### P0: Complete Test Failure
+
 - All tests failing (100% failure rate)
 - CI pipeline completely broken
 - Application completely down
 
-**P1: Critical Flow Failure**
+### P1: Critical Flow Failure
+
 - Login tests failing
 - Checkout flow broken
 - Authentication issues
 - > 50% test failure rate
 
-**P2: Partial Test Failure**
+### P2: Partial Test Failure
+
 - Single feature broken
 - Flaky test rate > 10%
 - Visual regression issues
 - 10-50% test failure rate
 
-**P3: Minor Issues**
+### P3: Minor Issues
+
 - Individual test failing
 - Performance degradation
 - Non-critical visual changes
@@ -293,6 +316,7 @@ cat playwright-report/results.json | jq '.suites[].specs[] | select(.ok == false
 #### P0: All Tests Failing
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check if application is accessible
 curl -I https://${BASE_URL}/
@@ -311,6 +335,7 @@ npx playwright install --dry-run
 ```
 
 **Investigation (5-15 minutes):**
+
 ```bash
 # Check test logs
 cat playwright-report/results.json | jq '.suites[].specs[].results[].error'
@@ -326,6 +351,7 @@ npx playwright test tests/login.spec.ts --trace on
 ```
 
 **Mitigation:**
+
 ```bash
 # If application issue: Rollback deployment
 # (See application deployment runbook)
@@ -345,6 +371,7 @@ git push
 #### P1: Critical Flow Failing (Login Tests)
 
 **Investigation:**
+
 ```bash
 # Run only login tests with trace
 npx playwright test tests/login.spec.ts --trace on
@@ -362,6 +389,7 @@ npx playwright show-trace test-results/*login*/trace.zip
 **Common Causes & Fixes:**
 
 **Selector Change (element not found):**
+
 ```bash
 # Test error: "Element not found: #login-button"
 
@@ -374,6 +402,7 @@ npx playwright codegen https://${BASE_URL}/login
 ```
 
 **Timing Issue (element not ready):**
+
 ```bash
 # Test error: "Timeout waiting for element"
 
@@ -387,6 +416,7 @@ npx playwright codegen https://${BASE_URL}/login
 ```
 
 **Authentication Failure:**
+
 ```bash
 # Test error: "Invalid credentials"
 
@@ -404,6 +434,7 @@ vi .env
 #### P2: Visual Regression Failures
 
 **Investigation:**
+
 ```bash
 # Check visual diff
 npx playwright show-report
@@ -417,6 +448,7 @@ open test-results/homepage-1-actual.png
 ```
 
 **Mitigation:**
+
 ```bash
 # If legitimate UI change: Update snapshots
 git pull origin main  # Get latest changes
@@ -437,6 +469,7 @@ git push
 #### P2: Flaky Tests
 
 **Investigation:**
+
 ```bash
 # Identify flaky tests
 cat playwright-report/results.json | \
@@ -455,6 +488,7 @@ cat playwright-report/results.json | \
 **Common Causes & Fixes:**
 
 **Race Condition:**
+
 ```typescript
 // Bad: Race condition
 await page.click('#submit');
@@ -467,6 +501,7 @@ await expect(page.locator('.success')).toBeVisible();
 ```
 
 **Animation/Transition Issues:**
+
 ```typescript
 // Bad: Element still animating
 await page.click('.modal-button');
@@ -478,6 +513,7 @@ await page.waitForTimeout(500);  // Wait for animation
 ```
 
 **Non-Deterministic Data:**
+
 ```typescript
 // Bad: Depends on server state
 await expect(page.locator('.item-count')).toHaveText('5 items');
@@ -491,6 +527,7 @@ await expect(page.locator('.item-count')).toHaveText('5 items');
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -528,6 +565,7 @@ EOF
 ### Essential Troubleshooting Commands
 
 #### Test Execution Issues
+
 ```bash
 # Check Playwright installation
 npx playwright --version
@@ -547,6 +585,7 @@ npx playwright test --dry-run
 ```
 
 #### Browser Issues
+
 ```bash
 # Reinstall browsers
 npx playwright install --force
@@ -562,6 +601,7 @@ npx playwright test --project=chromium --headed
 ```
 
 #### Debugging Failed Tests
+
 ```bash
 # Get detailed error output
 npx playwright test --reporter=line
@@ -580,6 +620,7 @@ npx playwright show-trace test-results/*/trace.zip
 ```
 
 #### CI/CD Issues
+
 ```bash
 # Check GitHub Actions workflow syntax
 gh workflow view playwright-tests.yml
@@ -599,18 +640,21 @@ gh run view <run-id> --log-failed
 #### Issue: "Browser executable not found"
 
 **Symptoms:**
+
 ```bash
 $ npx playwright test
 Error: Browser executable not found at /path/to/chromium
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check installed browsers
 npx playwright install --dry-run
 ```
 
 **Solution:**
+
 ```bash
 # Install browsers
 npx playwright install --with-deps
@@ -624,12 +668,14 @@ npx playwright install chromium
 #### Issue: "Timeout waiting for selector"
 
 **Symptoms:**
+
 ```bash
 Error: Timeout 30000ms exceeded.
 waiting for selector "#login-button"
 ```
 
 **Diagnosis:**
+
 ```bash
 # Run in headed mode to see what's happening
 npx playwright test tests/login.spec.ts --headed --debug
@@ -639,6 +685,7 @@ npx playwright codegen https://${BASE_URL}/login
 ```
 
 **Solution:**
+
 ```bash
 # Option 1: Update selector
 # Use data-testid for stability
@@ -657,6 +704,7 @@ npx playwright codegen https://${BASE_URL}/login
 #### Issue: Visual regression test failing unexpectedly
 
 **Symptoms:**
+
 ```bash
 Error: Screenshot comparison failed:
 expected: tests/screenshots/homepage.png
@@ -665,6 +713,7 @@ diff:     test-results/homepage-diff.png
 ```
 
 **Diagnosis:**
+
 ```bash
 # View the diff
 open test-results/homepage-diff.png
@@ -674,6 +723,7 @@ git diff tests/screenshots/homepage.png
 ```
 
 **Solution:**
+
 ```bash
 # If change is intentional (UI update)
 npx playwright test --update-snapshots
@@ -692,10 +742,12 @@ npx playwright test --update-snapshots
 #### Issue: Tests pass locally but fail in CI
 
 **Symptoms:**
+
 - Tests pass on local machine
 - Same tests fail in GitHub Actions
 
 **Diagnosis:**
+
 ```bash
 # Check environment differences
 echo $BASE_URL
@@ -709,6 +761,7 @@ node --version
 ```
 
 **Solution:**
+
 ```bash
 # Match CI environment locally
 # Use same Node version as CI
@@ -738,6 +791,7 @@ gh run download <run-id>
 ### Backup Strategy
 
 **Test Code Backups:**
+
 ```bash
 # All test code is in Git
 git push origin main
@@ -753,6 +807,7 @@ aws s3 cp test-backups-*.tar.gz s3://test-artifacts/
 ```
 
 **Configuration Backups:**
+
 ```bash
 # Export environment configuration
 cp .env .env.backup-$(date +%Y%m%d)
@@ -770,6 +825,7 @@ git add .github/workflows/playwright-tests.yml
 #### Complete Environment Loss
 
 **Recovery Steps (10-15 minutes):**
+
 ```bash
 # 1. Clone repository
 git clone <repo-url>
@@ -795,6 +851,7 @@ npx playwright show-report
 #### Test Data Recovery
 
 **Recovery Steps:**
+
 ```bash
 # Restore visual snapshots from backup
 tar -xzf test-backups-*.tar.gz playwright-snapshots/
@@ -813,6 +870,7 @@ git diff playwright-snapshots/
 ### Routine Maintenance
 
 #### Daily Tasks
+
 ```bash
 # Review overnight test runs
 gh run list --workflow=playwright-tests.yml --created=$(date +%Y-%m-%d)
@@ -826,6 +884,7 @@ cat playwright-report/results.json | jq '.stats.duration'
 ```
 
 #### Weekly Tasks
+
 ```bash
 # Update dependencies
 npm update
@@ -845,6 +904,7 @@ git status playwright-snapshots/
 ```
 
 #### Monthly Tasks
+
 ```bash
 # Major dependency updates
 npm outdated
@@ -864,6 +924,7 @@ npm update @playwright/test
 ### Upgrade Procedures
 
 #### Update Playwright Version
+
 ```bash
 # 1. Check current version
 npx playwright --version
@@ -890,6 +951,7 @@ git commit -m "chore: update Playwright to v1.40.0"
 ```
 
 #### Migrate to New Test Pattern
+
 ```bash
 # Example: Migrate to Page Object Model
 
@@ -913,6 +975,7 @@ npx playwright test
 ## Operational Best Practices
 
 ### Pre-Deployment Checklist
+
 - [ ] All tests passing locally
 - [ ] Visual snapshots reviewed and updated if needed
 - [ ] Test data configuration verified
@@ -921,6 +984,7 @@ npx playwright test
 - [ ] No new flaky tests introduced
 
 ### Post-Deployment Checklist
+
 - [ ] CI tests passed after deployment
 - [ ] No visual regression failures
 - [ ] Critical flows verified (login, checkout)
@@ -928,6 +992,7 @@ npx playwright test
 - [ ] Flaky test rate checked
 
 ### Test Development Standards
+
 ```typescript
 // Good practices:
 // 1. Use data-testid for stable selectors
@@ -960,12 +1025,14 @@ await page.request.post('/api/reset-test-data');
 ## References
 
 ### Internal Documentation
+
 - [P06 Project README](./README.md)
 - [Playwright Configuration](./playwright.config.ts)
 - [Test Suite](./tests/)
 - [Page Objects](./tests/pages/)
 
 ### External Resources
+
 - [Playwright Documentation](https://playwright.dev/)
 - [Page Object Model Pattern](https://playwright.dev/docs/pom)
 - [Visual Comparisons](https://playwright.dev/docs/test-snapshots)
@@ -973,6 +1040,7 @@ await page.request.post('/api/reset-test-data');
 - [Debugging Tools](https://playwright.dev/docs/debug)
 
 ### Emergency Contacts
+
 - **QA Team Slack:** #qa-automation
 - **CI/CD Issues:** #platform-engineering
 - **Escalation:** Follow escalation path above
@@ -982,6 +1050,7 @@ await page.request.post('/api/reset-test-data');
 ## Quick Reference Card
 
 ### Most Common Operations
+
 ```bash
 # Run all tests
 make test
@@ -1003,6 +1072,7 @@ npx playwright show-trace test-results/*/trace.zip
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: All tests failing - check application
 curl -I https://${BASE_URL}/
@@ -1023,6 +1093,7 @@ npx playwright test --update-snapshots
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** QA Engineering Team

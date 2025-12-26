@@ -2,9 +2,12 @@
 
 ## Overview
 
-Production operations runbook for multi-cloud infrastructure deployment using Terraform. This runbook covers infrastructure provisioning, state management, workspace operations, and incident response for AWS and Azure cloud environments.
+Production operations runbook for multi-cloud infrastructure deployment using Terraform. This
+runbook covers infrastructure provisioning, state management, workspace operations, and incident
+response for AWS and Azure cloud environments.
 
 **System Components:**
+
 - Terraform configuration files (AWS and Azure modules)
 - Remote state backend (S3 + DynamoDB for AWS, Azure Storage for Azure)
 - Terraform workspaces (dev, staging, production)
@@ -33,6 +36,7 @@ Production operations runbook for multi-cloud infrastructure deployment using Te
 ### Dashboards
 
 #### Infrastructure Status Dashboard
+
 ```bash
 # Check current infrastructure state
 make status
@@ -52,6 +56,7 @@ echo "Azure Resources: $(cd azure && terraform state list | wc -l)"
 ```
 
 #### Drift Detection Dashboard
+
 ```bash
 # Check for infrastructure drift (AWS)
 make plan-aws
@@ -67,6 +72,7 @@ terraform plan -detailed-exitcode 2>&1 | grep -E "will be (created|destroyed|upd
 ```
 
 #### State Management Dashboard
+
 ```bash
 # Check state backend configuration
 terraform state pull | jq '.backend'
@@ -131,6 +137,7 @@ terraform plan -json | jq -r '.resource_changes[] | select(.change.actions[] == 
 ### Workspace Management
 
 #### Create New Workspace
+
 ```bash
 # Create workspace for new environment
 terraform workspace new staging
@@ -146,6 +153,7 @@ terraform state pull | jq '.backend'
 ```
 
 #### Switch Workspaces
+
 ```bash
 # List available workspaces
 terraform workspace list
@@ -161,6 +169,7 @@ terraform state list
 ```
 
 #### Delete Workspace
+
 ```bash
 # Switch away from target workspace
 terraform workspace select default
@@ -180,6 +189,7 @@ terraform workspace list
 ### Infrastructure Deployment
 
 #### Plan Changes (AWS)
+
 ```bash
 # Validate configuration
 make validate
@@ -201,6 +211,7 @@ terraform show tfplan-aws-*.plan | less
 ```
 
 #### Apply Changes (AWS)
+
 ```bash
 # Apply from saved plan
 terraform apply tfplan-aws-*.plan
@@ -220,6 +231,7 @@ aws ec2 describe-instances --filters "Name=tag:ManagedBy,Values=Terraform"
 ```
 
 #### Plan Changes (Azure)
+
 ```bash
 # Switch to Azure directory
 cd azure/
@@ -238,6 +250,7 @@ terraform show tfplan-azure-*.plan
 ```
 
 #### Apply Changes (Azure)
+
 ```bash
 # Apply from saved plan
 terraform apply tfplan-azure-*.plan
@@ -250,6 +263,7 @@ az resource list --tag ManagedBy=Terraform --output table
 ```
 
 #### Multi-Cloud Deployment
+
 ```bash
 # Deploy to both clouds sequentially
 make plan-aws
@@ -269,6 +283,7 @@ cd azure && terraform state list && cd ..
 ### State Management
 
 #### Pull and Inspect State
+
 ```bash
 # Pull current state
 terraform state pull > state-backup-local.json
@@ -284,6 +299,7 @@ terraform state show aws_vpc.main
 ```
 
 #### Push State (Restore)
+
 ```bash
 # Backup current state first
 terraform state pull > state-current-backup.json
@@ -314,6 +330,7 @@ terraform plan  # Should not show lock error
 ```
 
 #### Move Resources Between States
+
 ```bash
 # Move resource to different state address
 terraform state mv aws_instance.old_name aws_instance.new_name
@@ -331,6 +348,7 @@ terraform state rm aws_instance.unmanaged
 ### Provider Configuration
 
 #### Update AWS Provider
+
 ```bash
 # Edit provider configuration
 cat >> providers.tf << 'EOF'
@@ -354,6 +372,7 @@ terraform version
 ```
 
 #### Update Azure Provider
+
 ```bash
 # Edit provider configuration
 cat >> providers.tf << 'EOF'
@@ -374,6 +393,7 @@ az account show
 ### Module Management
 
 #### Create Reusable Module
+
 ```bash
 # Create module directory structure
 mkdir -p modules/vpc/{main.tf,variables.tf,outputs.tf}
@@ -401,6 +421,7 @@ EOF
 ```
 
 #### Update Module Version
+
 ```bash
 # Update module source
 sed -i 's|source = "./modules/vpc"|source = "git::https://github.com/org/modules.git//vpc?ref=v2.0.0"|' main.tf
@@ -419,6 +440,7 @@ terraform plan
 ### Detection
 
 **Automated Detection:**
+
 - Terraform apply failures (CI/CD alerts)
 - State lock timeout alerts
 - Drift detection reports
@@ -426,6 +448,7 @@ terraform plan
 - Provider authentication failures
 
 **Manual Detection:**
+
 ```bash
 # Check recent Terraform runs
 ./scripts/check-terraform-history.sh
@@ -449,25 +472,29 @@ terraform plan -detailed-exitcode
 
 #### Severity Classification
 
-**P0: Critical Infrastructure Failure**
+### P0: Critical Infrastructure Failure
+
 - State file corrupted or lost
 - Accidental terraform destroy in production
 - State lock corrupted preventing all operations
 - Multi-cloud cascading failure
 
-**P1: Deployment Failure**
+### P1: Deployment Failure
+
 - Terraform apply failed with errors
 - Resource creation failed
 - Provider authentication failure
 - State lock held indefinitely
 
-**P2: Configuration Drift**
+### P2: Configuration Drift
+
 - Unmanaged changes detected in production
 - Terraform plan shows unexpected changes
 - State backup failed
 - Provider version mismatch
 
-**P3: Operational Warnings**
+### P3: Operational Warnings
+
 - Deprecated resource usage warnings
 - Provider deprecation notices
 - Module version updates available
@@ -477,6 +504,7 @@ terraform plan -detailed-exitcode
 #### P0: State File Corrupted
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Stop all Terraform operations immediately
 echo "INCIDENT: State file corrupted - halt all deployments" | ./scripts/notify-team.sh
@@ -496,6 +524,7 @@ cat latest-backup.json | jq . && echo "Backup is valid"
 ```
 
 **Restoration (5-20 minutes):**
+
 ```bash
 # 1. Create safety backup of corrupted state
 terraform state pull > corrupted-state-$(date +%Y%m%d-%H%M%S).json
@@ -526,6 +555,7 @@ EOF
 #### P0: Accidental Destroy in Production
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. STOP THE DESTROY IMMEDIATELY
 # If still running, Ctrl+C the terraform destroy
@@ -538,6 +568,7 @@ terraform show -json | jq '.values.root_module.resources[].address'
 ```
 
 **Recovery (2-30 minutes):**
+
 ```bash
 # 1. Pull state before destroy
 aws s3 cp s3://terraform-state-backup/terraform.tfstate-pre-destroy.backup pre-destroy-state.json
@@ -567,6 +598,7 @@ terraform plan  # Should show infrastructure is correct
 #### P1: Terraform Apply Failed
 
 **Investigation:**
+
 ```bash
 # 1. Review error output
 terraform apply 2>&1 | tee apply-error-$(date +%Y%m%d-%H%M%S).log
@@ -592,6 +624,7 @@ az vm list-usage --location eastus
 **Remediation:**
 
 **Insufficient Permissions:**
+
 ```bash
 # Check current permissions
 aws iam get-user
@@ -604,6 +637,7 @@ aws iam attach-user-policy \
 ```
 
 **Resource Quota Exceeded:**
+
 ```bash
 # Request quota increase
 aws service-quotas request-service-quota-increase \
@@ -616,6 +650,7 @@ terraform apply -target=aws_instance.web[0]  # Deploy subset
 ```
 
 **Dependency Error:**
+
 ```bash
 # Identify dependency chain
 terraform graph | dot -Tpng > dependency-graph.png
@@ -629,6 +664,7 @@ terraform apply  # Now apply everything
 #### P2: Configuration Drift Detected
 
 **Investigation:**
+
 ```bash
 # 1. Identify drifted resources
 terraform plan -out=drift-check.plan
@@ -646,6 +682,7 @@ az monitor activity-log list --resource-group production-rg
 ```
 
 **Remediation:**
+
 ```bash
 # Option 1: Align infrastructure with Terraform
 terraform apply  # Apply Terraform's desired state
@@ -662,6 +699,7 @@ terraform plan  # Verify no changes needed
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -708,6 +746,7 @@ make test
 #### Issue: State Lock Timeout
 
 **Symptoms:**
+
 ```bash
 $ terraform apply
 Error: Error locking state: Error acquiring the state lock: ConditionalCheckFailedException
@@ -721,6 +760,7 @@ Lock Info:
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check lock details
 aws dynamodb get-item \
@@ -733,6 +773,7 @@ ps aux | grep terraform
 ```
 
 **Solution:**
+
 ```bash
 # If terraform process is dead, force unlock
 terraform force-unlock <lock-id>
@@ -750,12 +791,14 @@ terraform plan  # Should succeed
 #### Issue: Provider Authentication Failed
 
 **Symptoms:**
+
 ```bash
 $ terraform plan
 Error: error configuring Terraform AWS Provider: failed to refresh cached credentials
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check AWS credentials
 aws sts get-caller-identity
@@ -768,6 +811,7 @@ az account show
 ```
 
 **Solution:**
+
 ```bash
 # AWS: Refresh credentials
 aws sso login
@@ -787,12 +831,14 @@ terraform plan
 #### Issue: Resource Already Exists
 
 **Symptoms:**
+
 ```bash
 $ terraform apply
 Error: Error creating VPC: VpcLimitExceeded: The maximum number of VPCs has been reached
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check if resource exists outside Terraform
 aws ec2 describe-vpcs --filters "Name=tag:Name,Values=production-vpc"
@@ -802,6 +848,7 @@ terraform state list | grep vpc
 ```
 
 **Solution:**
+
 ```bash
 # Import existing resource
 terraform import aws_vpc.main vpc-1234567890abcdef0
@@ -818,12 +865,14 @@ terraform plan
 #### Issue: Module Not Found
 
 **Symptoms:**
+
 ```bash
 $ terraform init
 Error: Module not found: ./modules/vpc
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check module path
 ls -la modules/vpc/
@@ -833,6 +882,7 @@ grep -r "source.*vpc" *.tf
 ```
 
 **Solution:**
+
 ```bash
 # If module moved, update source
 sed -i 's|./modules/vpc|./terraform/modules/vpc|' main.tf
@@ -852,12 +902,14 @@ terraform get
 #### Issue: Inconsistent State
 
 **Symptoms:**
+
 ```bash
 $ terraform plan
 Error: Provider produced inconsistent final plan
 ```
 
 **Diagnosis:**
+
 ```bash
 # Refresh state from actual infrastructure
 terraform refresh
@@ -870,6 +922,7 @@ terraform validate
 ```
 
 **Solution:**
+
 ```bash
 # Refresh state
 terraform refresh
@@ -895,6 +948,7 @@ terraform refresh
 ### Backup Strategy
 
 **State File Backups:**
+
 ```bash
 # Automated backup (pre-apply hook)
 cat > .terraform.d/pre-apply.sh << 'EOF'
@@ -913,6 +967,7 @@ aws s3 ls s3://terraform-state-backup/ --recursive | tail -10
 ```
 
 **Configuration Backups:**
+
 ```bash
 # Version control (Git)
 git add *.tf modules/
@@ -925,6 +980,7 @@ git push --tags
 ```
 
 **Provider-Specific Backups:**
+
 ```bash
 # AWS: CloudFormation drift detection
 aws cloudformation detect-stack-drift --stack-name terraform-managed
@@ -938,6 +994,7 @@ az group export --name production-rg > azure-resources-$(date +%Y%m%d).json
 #### Complete State Loss
 
 **Recovery Steps (30-60 minutes):**
+
 ```bash
 # 1. Attempt to restore from latest backup
 aws s3 cp s3://terraform-state-backup/latest.json recovered-state.json
@@ -966,6 +1023,7 @@ terraform plan  # Should show minimal or no changes
 #### Multi-Cloud Failure
 
 **Recovery Steps (45-90 minutes):**
+
 ```bash
 # 1. Isolate working cloud environments
 # If AWS working but Azure failed
@@ -989,6 +1047,7 @@ terraform plan
 ### DR Drill Procedure
 
 **Monthly DR Drill (90 minutes):**
+
 ```bash
 # 1. Create test workspace
 terraform workspace new dr-drill-$(date +%Y%m%d)
@@ -1026,6 +1085,7 @@ terraform workspace delete dr-drill-*
 ## Maintenance Procedures
 
 ### Daily Tasks
+
 ```bash
 # Check for infrastructure drift
 make plan-aws
@@ -1044,6 +1104,7 @@ az --version
 ```
 
 ### Weekly Tasks
+
 ```bash
 # Update provider versions
 terraform init -upgrade
@@ -1059,6 +1120,7 @@ terraform state list | ./scripts/find-unused-resources.sh
 ```
 
 ### Monthly Tasks
+
 ```bash
 # Rotate state backend credentials
 ./scripts/rotate-backend-credentials.sh
@@ -1074,6 +1136,7 @@ aws s3 sync s3://terraform-state-backup/ s3://terraform-state-archive/$(date +%Y
 ```
 
 ### Quarterly Tasks
+
 ```bash
 # Major provider version upgrades
 ./scripts/upgrade-providers.sh
@@ -1093,6 +1156,7 @@ make dr-drill
 ## Operational Best Practices
 
 ### Pre-Deployment Checklist
+
 - [ ] Configuration validated (`terraform validate`)
 - [ ] Plan reviewed and approved
 - [ ] State backup created
@@ -1102,6 +1166,7 @@ make dr-drill
 - [ ] Change window approved
 
 ### Post-Deployment Checklist
+
 - [ ] Apply completed successfully
 - [ ] Resources verified in cloud consoles
 - [ ] State backup created
@@ -1110,6 +1175,7 @@ make dr-drill
 - [ ] Documentation updated
 
 ### Terraform Best Practices
+
 - **Always use remote state** with locking enabled
 - **Never commit sensitive values** to Git (use variables)
 - **Use workspaces** for environment separation
@@ -1124,6 +1190,7 @@ make dr-drill
 ## Quick Reference
 
 ### Most Common Operations
+
 ```bash
 # Validate configuration
 terraform validate
@@ -1154,6 +1221,7 @@ terraform state pull > backup.json
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: State corrupted
 aws s3 cp s3://terraform-state-backup/latest.json backup.json
@@ -1175,6 +1243,7 @@ terraform force-unlock <lock-id>
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Platform Engineering Team

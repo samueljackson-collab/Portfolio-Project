@@ -2,9 +2,12 @@
 
 ## Overview
 
-Production operations runbook for the FastAPI cloud-native application. This runbook covers container operations, database management, API monitoring, incident response, and troubleshooting procedures for the Dockerized FastAPI application with SQLite backend.
+Production operations runbook for the FastAPI cloud-native application. This runbook covers
+container operations, database management, API monitoring, incident response, and troubleshooting
+procedures for the Dockerized FastAPI application with SQLite backend.
 
 **System Components:**
+
 - FastAPI REST API application
 - SQLite database with SQLAlchemy ORM
 - Docker containerization
@@ -33,6 +36,7 @@ Production operations runbook for the FastAPI cloud-native application. This run
 ### Dashboards
 
 #### Application Health Dashboard
+
 ```bash
 # Check application health
 curl http://localhost:8000/health
@@ -50,6 +54,7 @@ curl http://localhost:8000/docs
 ```
 
 #### Container Status Dashboard
+
 ```bash
 # Check container status
 docker ps | grep cloud-native-poc
@@ -65,6 +70,7 @@ docker events --filter container=cloud-native-poc --since 1h
 ```
 
 #### Performance Metrics Dashboard
+
 ```bash
 # Check Prometheus metrics (if enabled)
 curl http://localhost:8000/metrics
@@ -79,6 +85,7 @@ curl -w "@curl-format.txt" -o /dev/null -s http://localhost:8000/api/items
 ```
 
 #### Database Dashboard
+
 ```bash
 # Check database size
 ls -lh data/app.db
@@ -108,6 +115,7 @@ sqlite3 data/app.db ".schema"
 #### Alert Queries
 
 **Check container health:**
+
 ```bash
 # Container running?
 docker inspect cloud-native-poc | jq -e '.[0].State.Running' || \
@@ -122,6 +130,7 @@ docker inspect cloud-native-poc | jq '.[0].State.ExitCode'
 ```
 
 **Monitor error rate:**
+
 ```bash
 # Count recent errors in logs
 docker logs cloud-native-poc --since 5m 2>&1 | \
@@ -133,6 +142,7 @@ docker logs cloud-native-poc --since 5m 2>&1 | \
 ```
 
 **Check resource usage:**
+
 ```bash
 # Memory usage
 MEM_USAGE=$(docker stats cloud-native-poc --no-stream --format "{{.MemPerc}}" | sed 's/%//')
@@ -150,6 +160,7 @@ CPU_USAGE=$(docker stats cloud-native-poc --no-stream --format "{{.CPUPerc}}" | 
 ### Container Management
 
 #### Start Application
+
 ```bash
 # Start with Docker Compose
 make run
@@ -166,6 +177,7 @@ curl http://localhost:8000/health
 ```
 
 #### Stop Application
+
 ```bash
 # Graceful stop
 make stop
@@ -181,6 +193,7 @@ docker stop -t 30 cloud-native-poc
 ```
 
 #### Restart Application
+
 ```bash
 # Restart container
 docker-compose restart
@@ -199,6 +212,7 @@ docker-compose up -d --no-deps --build app
 ### Application Deployment
 
 #### Deploy New Version
+
 ```bash
 # 1. Pull latest code
 git pull origin main
@@ -227,6 +241,7 @@ docker logs -f cloud-native-poc
 ```
 
 #### Rollback Deployment
+
 ```bash
 # 1. Identify previous version
 docker images cloud-native-poc
@@ -252,6 +267,7 @@ vi docker-compose.yml
 ### Database Operations
 
 #### Backup Database
+
 ```bash
 # Stop application to ensure consistency
 docker-compose stop
@@ -270,6 +286,7 @@ sqlite3 data/app.db ".backup backups/app-$(date +%Y%m%d-%H%M).db"
 ```
 
 #### Restore Database
+
 ```bash
 # 1. Stop application
 docker-compose stop
@@ -294,6 +311,7 @@ curl http://localhost:8000/api/items
 ```
 
 #### Database Maintenance
+
 ```bash
 # Vacuum database (reclaim space)
 sqlite3 data/app.db "VACUUM;"
@@ -319,6 +337,7 @@ EOF
 ### Log Management
 
 #### View Logs
+
 ```bash
 # Follow logs in real-time
 docker logs -f cloud-native-poc
@@ -337,6 +356,7 @@ docker logs cloud-native-poc 2>&1 | jq -r 'select(.path == "/api/items")'
 ```
 
 #### Export Logs
+
 ```bash
 # Export to file
 docker logs cloud-native-poc > logs/app-$(date +%Y%m%d).log
@@ -351,6 +371,7 @@ gzip logs/app-$(date -d '7 days ago' +%Y%m%d).log
 ### Testing
 
 #### Run Tests
+
 ```bash
 # Run all tests
 make test
@@ -375,11 +396,13 @@ make test-docker
 ### Detection
 
 **Automated Detection:**
+
 - Health check monitoring
 - Container restart events
 - Log error patterns
 
 **Manual Detection:**
+
 ```bash
 # Check application health
 curl http://localhost:8000/health
@@ -398,25 +421,29 @@ curl http://localhost:8000/api/items
 
 #### Severity Classification
 
-**P0: Application Down**
+### P0: Application Down
+
 - Container stopped/crashed
 - Health check returning 500
 - Database corrupted
 - All API requests failing
 
-**P1: Degraded Service**
+### P1: Degraded Service
+
 - Error rate > 5%
 - Response time > 1 second
 - Some API endpoints failing
 - Database locked
 
-**P2: Performance Issues**
+### P2: Performance Issues
+
 - Response time 500ms-1s
 - Memory usage > 90%
 - Slow database queries
 - Error rate 1-5%
 
-**P3: Minor Issues**
+### P3: Minor Issues
+
 - Individual request failures
 - Warning logs
 - Non-critical endpoint issues
@@ -426,6 +453,7 @@ curl http://localhost:8000/api/items
 #### P0: Container Crashed
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check container status
 docker ps -a | grep cloud-native-poc
@@ -444,6 +472,7 @@ curl http://localhost:8000/health
 ```
 
 **Investigation (5-15 minutes):**
+
 ```bash
 # Check crash logs
 docker logs cloud-native-poc 2>&1 | tail -100
@@ -463,6 +492,7 @@ git log --oneline -5
 ```
 
 **Recovery:**
+
 ```bash
 # If database corrupt: Restore from backup
 docker-compose stop
@@ -485,6 +515,7 @@ curl http://localhost:8000/api/items
 #### P0: Health Check Failing
 
 **Investigation:**
+
 ```bash
 # 1. Check health endpoint directly
 curl -v http://localhost:8000/health
@@ -505,6 +536,7 @@ docker exec cloud-native-poc ps aux
 **Common Causes & Fixes:**
 
 **Database Locked:**
+
 ```bash
 # Check for lock file
 ls -la data/app.db-*
@@ -517,6 +549,7 @@ docker restart cloud-native-poc
 ```
 
 **Port Already in Use:**
+
 ```bash
 # Check what's using port 8000
 lsof -i :8000
@@ -530,6 +563,7 @@ vi docker-compose.yml
 ```
 
 **Database Connection Error:**
+
 ```bash
 # Check database file permissions
 ls -l data/app.db
@@ -545,6 +579,7 @@ docker restart cloud-native-poc
 #### P1: High Error Rate
 
 **Investigation:**
+
 ```bash
 # 1. Count errors by type
 docker logs cloud-native-poc --since 1h 2>&1 | \
@@ -562,6 +597,7 @@ curl -v http://localhost:8000/api/items/999
 ```
 
 **Mitigation:**
+
 ```bash
 # If database issue: Check locks
 sqlite3 data/app.db "PRAGMA locking_mode;"
@@ -579,6 +615,7 @@ docker restart cloud-native-poc
 #### P2: Performance Degradation
 
 **Investigation:**
+
 ```bash
 # 1. Measure response time
 time curl http://localhost:8000/api/items
@@ -602,6 +639,7 @@ docker logs cloud-native-poc 2>&1 | \
 ```
 
 **Mitigation:**
+
 ```bash
 # Optimize database
 sqlite3 data/app.db << 'EOF'
@@ -630,6 +668,7 @@ vi docker-compose.yml
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -669,6 +708,7 @@ docker stats cloud-native-poc --no-stream >> metrics/daily-stats.txt
 ### Essential Troubleshooting Commands
 
 #### Container Issues
+
 ```bash
 # Check container status
 docker ps -a | grep cloud-native-poc
@@ -687,6 +727,7 @@ docker inspect cloud-native-poc | jq '.[0].Mounts'
 ```
 
 #### Application Issues
+
 ```bash
 # Execute command in container
 docker exec cloud-native-poc ls -la /app
@@ -705,6 +746,7 @@ docker exec -it cloud-native-poc /bin/sh
 ```
 
 #### Database Issues
+
 ```bash
 # Check database file
 ls -lh data/app.db*
@@ -731,12 +773,14 @@ EOF
 #### Issue: Container won't start
 
 **Symptoms:**
+
 ```bash
 $ docker-compose up
 Error: Cannot start container...
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check logs
 docker logs cloud-native-poc
@@ -752,6 +796,7 @@ docker images cloud-native-poc
 ```
 
 **Solution:**
+
 ```bash
 # Remove old container
 docker rm -f cloud-native-poc
@@ -772,12 +817,14 @@ docker-compose up -d
 #### Issue: API returning 500 errors
 
 **Symptoms:**
+
 ```bash
 $ curl http://localhost:8000/api/items
 {"detail": "Internal Server Error"}
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check logs
 docker logs --tail 50 cloud-native-poc
@@ -793,6 +840,7 @@ docker logs cloud-native-poc 2>&1 | grep -i "traceback"
 ```
 
 **Solution:**
+
 ```bash
 # If database issue: Check permissions
 ls -l data/app.db
@@ -814,11 +862,13 @@ docker-compose up -d --build
 #### Issue: Database file locked
 
 **Symptoms:**
+
 ```bash
 sqlite3.OperationalError: database is locked
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check for lock file
 ls -la data/app.db-*
@@ -831,6 +881,7 @@ sqlite3 data/app.db "PRAGMA locking_mode;"
 ```
 
 **Solution:**
+
 ```bash
 # Stop application
 docker-compose stop
@@ -857,6 +908,7 @@ sqlite3 data/app.db "PRAGMA locking_mode=NORMAL;"
 ### Backup Strategy
 
 **Automated Backups:**
+
 ```bash
 # Hourly backup script
 cat > scripts/backup.sh << 'EOF'
@@ -884,6 +936,7 @@ crontab -e
 ```
 
 **Manual Backups:**
+
 ```bash
 # Before deployment
 sqlite3 data/app.db ".backup backups/app-pre-deploy-$(date +%Y%m%d).db"
@@ -899,6 +952,7 @@ docker-compose start
 #### Complete Data Loss
 
 **Recovery Steps (10-15 minutes):**
+
 ```bash
 # 1. Stop application
 docker-compose down
@@ -926,6 +980,7 @@ make test
 #### Container Image Loss
 
 **Recovery Steps (5-10 minutes):**
+
 ```bash
 # 1. Pull from Git
 git pull origin main
@@ -947,6 +1002,7 @@ curl http://localhost:8000/health
 ### Routine Maintenance
 
 #### Daily Tasks
+
 ```bash
 # Check application health
 curl http://localhost:8000/health
@@ -962,6 +1018,7 @@ sqlite3 data/app.db ".backup backups/app-$(date +%Y%m%d).db"
 ```
 
 #### Weekly Tasks
+
 ```bash
 # Check disk usage
 df -h data/
@@ -981,6 +1038,7 @@ docker pull python:3.11-slim
 ```
 
 #### Monthly Tasks
+
 ```bash
 # Rotate logs
 tar -czf logs/archive-$(date +%Y%m).tar.gz logs/*.log
@@ -1006,6 +1064,7 @@ docker-compose build
 ## Quick Reference
 
 ### Common Commands
+
 ```bash
 # Start application
 make run
@@ -1027,6 +1086,7 @@ docker restart cloud-native-poc
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: Container crashed - restart
 docker start cloud-native-poc
@@ -1047,6 +1107,7 @@ rm data/app.db-shm data/app.db-wal && docker restart cloud-native-poc
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Platform Engineering Team

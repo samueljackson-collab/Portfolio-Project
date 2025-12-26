@@ -2,9 +2,12 @@
 
 ## Overview
 
-Production operations runbook for the P12 Apache Airflow data pipeline platform. This runbook covers DAG management, task execution, scheduler operations, incident response, and troubleshooting for the Airflow-based ETL workflows.
+Production operations runbook for the P12 Apache Airflow data pipeline platform. This runbook covers
+DAG management, task execution, scheduler operations, incident response, and troubleshooting for the
+Airflow-based ETL workflows.
 
 **System Components:**
+
 - Apache Airflow with Docker Compose
 - PostgreSQL metadata database
 - Scheduler and Executor services
@@ -32,6 +35,7 @@ Production operations runbook for the P12 Apache Airflow data pipeline platform.
 ### Dashboards
 
 #### Airflow Web UI Dashboard
+
 ```bash
 # Access Web UI (default: http://localhost:8080)
 # Username: admin / Password: admin
@@ -45,6 +49,7 @@ Production operations runbook for the P12 Apache Airflow data pipeline platform.
 ```
 
 #### CLI Dashboard Commands
+
 ```bash
 # Check Airflow status
 docker-compose ps
@@ -68,6 +73,7 @@ docker-compose exec airflow-db psql -U airflow -c "SELECT count(*) FROM pg_stat_
 ```
 
 #### Metrics and Monitoring
+
 ```bash
 # Task duration stats
 docker-compose exec airflow-db psql -U airflow -d airflow -c "
@@ -157,6 +163,7 @@ docker-compose logs airflow-scheduler | grep -i "Failed to import\|DagBag\|Parse
 ### Airflow Service Management
 
 #### Start Airflow
+
 ```bash
 # Start all services
 make run
@@ -183,6 +190,7 @@ echo "Username: admin / Password: admin"
 ```
 
 #### Stop Airflow
+
 ```bash
 # Stop all services gracefully
 docker-compose down
@@ -195,6 +203,7 @@ docker-compose down --remove-orphans
 ```
 
 #### Restart Airflow Components
+
 ```bash
 # Restart all services
 docker-compose restart
@@ -215,6 +224,7 @@ docker-compose logs --tail=50 airflow-scheduler
 ### DAG Management
 
 #### Deploy New DAG
+
 ```bash
 # 1. Add DAG file to dags/ directory
 cp my-new-dag.py dags/
@@ -240,6 +250,7 @@ docker-compose exec airflow-scheduler airflow dags trigger my-new-dag
 ```
 
 #### Update Existing DAG
+
 ```bash
 # 1. Update DAG file in dags/
 vim dags/etl_pipeline.py
@@ -258,6 +269,7 @@ docker-compose exec airflow-scheduler airflow dags test etl_pipeline $(date +%Y-
 ```
 
 #### Pause/Unpause DAG
+
 ```bash
 # Pause DAG (stops scheduled runs)
 docker-compose exec airflow-scheduler airflow dags pause etl_pipeline
@@ -270,6 +282,7 @@ docker-compose exec airflow-scheduler airflow dags list | grep etl_pipeline
 ```
 
 #### Delete DAG
+
 ```bash
 # 1. Pause DAG
 docker-compose exec airflow-scheduler airflow dags pause etl_pipeline
@@ -287,6 +300,7 @@ docker-compose exec airflow-scheduler airflow dags list | grep etl_pipeline
 ### Task Management
 
 #### Manually Trigger DAG Run
+
 ```bash
 # Trigger DAG with default config
 docker-compose exec airflow-scheduler airflow dags trigger etl_pipeline
@@ -305,6 +319,7 @@ docker-compose exec airflow-scheduler airflow dags list-runs --dag-id etl_pipeli
 ```
 
 #### Run Single Task
+
 ```bash
 # Test single task without dependencies
 docker-compose exec airflow-scheduler airflow tasks test \
@@ -327,6 +342,7 @@ docker-compose exec airflow-scheduler airflow tasks run \
 ```
 
 #### Clear Task State
+
 ```bash
 # Clear task instance to re-run
 docker-compose exec airflow-scheduler airflow tasks clear \
@@ -362,6 +378,7 @@ docker-compose exec airflow-scheduler airflow tasks clear \
 ```
 
 #### Mark Task Success/Failed
+
 ```bash
 # Mark task as success (skip execution)
 docker-compose exec airflow-db psql -U airflow -d airflow -c "
@@ -385,6 +402,7 @@ WHERE dag_id='etl_pipeline'
 ### Database Operations
 
 #### Access Database
+
 ```bash
 # Connect to PostgreSQL
 docker-compose exec airflow-db psql -U airflow -d airflow
@@ -400,6 +418,7 @@ docker-compose exec -T airflow-db psql -U airflow -d airflow < backup/airflow-20
 ```
 
 #### Common Database Queries
+
 ```bash
 # Show all DAGs
 docker-compose exec airflow-db psql -U airflow -d airflow -c "SELECT dag_id, is_paused FROM dag;"
@@ -437,6 +456,7 @@ LIMIT 10;
 ### Monitoring and Logging
 
 #### View Logs
+
 ```bash
 # View scheduler logs
 docker-compose logs -f airflow-scheduler
@@ -461,6 +481,7 @@ docker-compose logs airflow-scheduler | grep -i "error\|exception\|failed"
 ```
 
 #### Export Logs
+
 ```bash
 # Export scheduler logs
 docker-compose logs airflow-scheduler > logs/scheduler-$(date +%Y%m%d).log
@@ -484,12 +505,14 @@ COPY (
 ### Detection
 
 **Automated Detection:**
+
 - DAG run failures
 - Task retry limit exceeded
 - Scheduler heartbeat missing
 - Database connection errors
 
 **Manual Detection:**
+
 ```bash
 # Check overall system health
 docker-compose ps | grep -v "Up (healthy)"
@@ -518,25 +541,29 @@ WHERE state='running' AND start_date < NOW() - INTERVAL '1 hour';
 
 #### Severity Classification
 
-**P0: Critical Pipeline Failure**
+### P0: Critical Pipeline Failure
+
 - Scheduler not running
 - Database connection failed
 - Critical SLA-bound DAG failed
 - All DAG runs failing
 
-**P1: Degraded Service**
+### P1: Degraded Service
+
 - Individual DAG failing repeatedly
 - Tasks exceeding retry limits
 - Executor queue backed up
 - Slow task execution impacting downstream
 
-**P2: Warning State**
+### P2: Warning State
+
 - DAG parse errors
 - Individual task failures (with retries remaining)
 - Task duration warnings
 - High retry rates
 
-**P3: Informational**
+### P3: Informational
+
 - Single task failure (recovered)
 - DAG run delays
 - Performance degradation
@@ -546,6 +573,7 @@ WHERE state='running' AND start_date < NOW() - INTERVAL '1 hour';
 #### P0: Scheduler Not Running
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check scheduler status
 docker-compose ps airflow-scheduler
@@ -574,6 +602,7 @@ LIMIT 1;
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Check for zombie jobs
 docker-compose exec airflow-db psql -U airflow -d airflow -c "
@@ -601,6 +630,7 @@ docker stats --no-stream
 ```
 
 **Recovery:**
+
 ```bash
 # Full service restart if needed
 docker-compose restart
@@ -618,6 +648,7 @@ docker-compose ps
 #### P0: Database Connection Failed
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check database container
 docker-compose ps airflow-db
@@ -642,6 +673,7 @@ docker-compose exec airflow-scheduler airflow db check
 ```
 
 **Investigation (5-30 minutes):**
+
 ```bash
 # Check connection pool exhaustion
 docker-compose exec airflow-db psql -U airflow -d airflow -c "
@@ -668,6 +700,7 @@ ORDER BY duration DESC;
 #### P1: Critical DAG Failed (SLA Miss)
 
 **Immediate Actions (0-15 minutes):**
+
 ```bash
 # 1. Identify failed DAG run
 docker-compose exec airflow-scheduler airflow dags list-runs \
@@ -710,6 +743,7 @@ docker-compose exec airflow-scheduler airflow dags trigger etl_pipeline
 **Common Failure Scenarios:**
 
 **Data Source Unavailable:**
+
 ```bash
 # Check if source is accessible
 docker-compose exec airflow-scheduler curl -I https://data-source.example.com
@@ -720,6 +754,7 @@ docker-compose exec airflow-scheduler airflow tasks clear \
 ```
 
 **Transformation Error:**
+
 ```bash
 # Check logs for data quality issues
 docker-compose exec airflow-scheduler airflow tasks logs \
@@ -731,6 +766,7 @@ docker-compose exec airflow-scheduler airflow tasks clear \
 ```
 
 **Destination Load Failure:**
+
 ```bash
 # Check destination database/storage
 # Verify credentials, capacity, permissions
@@ -745,6 +781,7 @@ docker-compose exec airflow-scheduler airflow tasks clear \
 #### P1: Executor Queue Full
 
 **Investigation:**
+
 ```bash
 # Check task queue
 docker-compose exec airflow-db psql -U airflow -d airflow -c "
@@ -768,6 +805,7 @@ ORDER BY start_date ASC;
 ```
 
 **Mitigation:**
+
 ```bash
 # Option 1: Increase pool slots
 docker-compose exec airflow-scheduler airflow pools set default_pool 32 "Default pool"
@@ -797,6 +835,7 @@ docker-compose exec airflow-scheduler airflow tasks clear \
 ### Essential Troubleshooting Commands
 
 #### DAG Issues
+
 ```bash
 # List all DAGs with status
 docker-compose exec airflow-scheduler airflow dags list
@@ -815,6 +854,7 @@ docker-compose exec airflow-scheduler python /opt/airflow/dags/etl_pipeline.py
 ```
 
 #### Task Issues
+
 ```bash
 # List all tasks in DAG
 docker-compose exec airflow-scheduler airflow tasks list etl_pipeline
@@ -837,6 +877,7 @@ docker-compose exec airflow-scheduler airflow tasks render \
 ```
 
 #### System Health
+
 ```bash
 # Check all service status
 docker-compose ps
@@ -872,10 +913,12 @@ LIMIT 10;
 #### Issue: DAG not appearing in Web UI
 
 **Symptoms:**
+
 - DAG file added to dags/ directory
 - DAG not visible in Web UI
 
 **Diagnosis:**
+
 ```bash
 # Check if DAG file is in correct location
 ls -la dags/
@@ -891,6 +934,7 @@ docker-compose exec airflow-scheduler python /opt/airflow/dags/my-dag.py
 ```
 
 **Solution:**
+
 ```bash
 # Fix syntax errors in DAG file
 # Restart scheduler to force re-parse
@@ -905,10 +949,12 @@ docker-compose exec airflow-scheduler airflow dags reserialize
 #### Issue: Task stuck in "running" state
 
 **Symptoms:**
+
 - Task shows as running for extended period
 - No recent log updates
 
 **Diagnosis:**
+
 ```bash
 # Check task status
 docker-compose exec airflow-db psql -U airflow -d airflow -c "
@@ -928,6 +974,7 @@ docker-compose exec airflow-scheduler airflow tasks logs \
 ```
 
 **Solution:**
+
 ```bash
 # Mark task as failed to reschedule
 docker-compose exec airflow-db psql -U airflow -d airflow -c "
@@ -948,10 +995,12 @@ docker-compose exec airflow-scheduler airflow tasks clear \
 #### Issue: "Broken DAG" error
 
 **Symptoms:**
+
 - DAG shows as "Broken" in UI
 - DAG won't execute
 
 **Diagnosis:**
+
 ```bash
 # Check import errors
 docker-compose exec airflow-scheduler airflow dags list-import-errors
@@ -961,6 +1010,7 @@ docker-compose exec airflow-scheduler python /opt/airflow/dags/broken-dag.py
 ```
 
 **Solution:**
+
 ```bash
 # Fix errors in DAG file (syntax, imports, etc.)
 vim dags/broken-dag.py
@@ -977,10 +1027,12 @@ docker-compose restart airflow-scheduler
 #### Issue: "Connection refused" to database
 
 **Symptoms:**
+
 - Scheduler or webserver can't connect to PostgreSQL
 - "connection refused" errors in logs
 
 **Diagnosis:**
+
 ```bash
 # Check database container
 docker-compose ps airflow-db
@@ -993,6 +1045,7 @@ docker-compose exec airflow-db psql -U airflow -d airflow -c "SELECT 1;"
 ```
 
 **Solution:**
+
 ```bash
 # Restart database
 docker-compose restart airflow-db
@@ -1019,6 +1072,7 @@ docker-compose exec airflow-scheduler airflow db check
 ### Backup Strategy
 
 **Database Backups:**
+
 ```bash
 # Create database backup
 docker-compose exec airflow-db pg_dump -U airflow airflow > backup/airflow-$(date +%Y%m%d-%H%M%S).sql
@@ -1042,6 +1096,7 @@ chmod +x backup-airflow.sh
 ```
 
 **DAG Code Backups:**
+
 ```bash
 # DAG files in Git
 git add dags/
@@ -1057,6 +1112,7 @@ tar -czf backup/dags-$(date +%Y%m%d).tar.gz dags/
 #### Complete System Loss
 
 **Recovery Steps (30-45 minutes):**
+
 ```bash
 # 1. Restore code from Git
 git clone <repository-url>
@@ -1090,6 +1146,7 @@ docker-compose exec airflow-scheduler airflow dags test etl_pipeline $(date +%Y-
 #### Database Corruption
 
 **Recovery Steps (15-30 minutes):**
+
 ```bash
 # 1. Stop all services
 docker-compose down
@@ -1118,6 +1175,7 @@ docker-compose exec airflow-scheduler airflow dags list
 ### DR Drill Procedure
 
 **Monthly DR Drill (1 hour):**
+
 ```bash
 # 1. Create backup
 docker-compose exec airflow-db pg_dump -U airflow airflow > dr-drill-backup.sql
@@ -1168,6 +1226,7 @@ rm dr-drill-backup.sql dr-drill-dags-*.txt dr-drill-stats-*.txt
 ### Routine Maintenance
 
 #### Daily Tasks
+
 ```bash
 # Check DAG run status
 docker-compose exec airflow-scheduler airflow dags list-runs --state failed --no-backfill
@@ -1188,6 +1247,7 @@ df -h
 ```
 
 #### Weekly Tasks
+
 ```bash
 # Review DAG performance
 docker-compose exec airflow-db psql -U airflow -d airflow -c "
@@ -1218,6 +1278,7 @@ docker-compose exec airflow-db pg_dump -U airflow airflow | gzip > backup/weekly
 ```
 
 #### Monthly Tasks
+
 ```bash
 # Clean up old task instances and DAG runs
 docker-compose exec airflow-scheduler airflow db clean --clean-before-timestamp "$(date -d '90 days ago' +%Y-%m-%d)" --yes
@@ -1248,6 +1309,7 @@ mv backup/airflow-$(date -d '60 days ago' +%Y%m)*.sql.gz backup/archive/$(date +
 ### Upgrade Procedures
 
 #### Update Airflow Version
+
 ```bash
 # 1. Backup current database
 docker-compose exec airflow-db pg_dump -U airflow airflow > backup/pre-upgrade-$(date +%Y%m%d).sql
@@ -1278,6 +1340,7 @@ docker-compose exec airflow-scheduler airflow dags test etl_pipeline $(date +%Y-
 ## Quick Reference
 
 ### Common Commands
+
 ```bash
 # Start Airflow
 make run
@@ -1302,6 +1365,7 @@ docker-compose exec airflow-db pg_dump -U airflow airflow > backup/airflow-$(dat
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: Scheduler down - Restart
 docker-compose restart airflow-scheduler
@@ -1319,6 +1383,7 @@ docker-compose exec airflow-scheduler airflow pools set default_pool 64 "Default
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Data Engineering Team

@@ -330,27 +330,27 @@ opa eval -d policies/ -i manifests/ 'data.kubernetes.admission.deny'
 
 #### Severity Classification
 
-**P0: Critical Security Incident**
+### P0: Critical Security Incident
 - Critical CVE (CVSS >9) in production
 - Active exploit detected
 - Unsigned image deployed to production
 - Security policy bypass detected
 - Credentials leaked in code or logs
 
-**P1: High Security Risk**
+### P1: High Security Risk
 - High severity CVE (CVSS 7-9) in production
 - Multiple medium vulnerabilities
 - SBOM missing for production deployment
 - Security scan failed, deployment blocked
 - Policy violation in production
 
-**P2: Medium Security Risk**
+### P2: Medium Security Risk
 - Medium severity vulnerabilities
 - SBOM generation failed
 - Non-critical policy warnings
 - Security scan delays
 
-**P3: Low Security Risk**
+### P3: Low Security Risk
 - Low severity vulnerabilities
 - Minor compliance issues
 - Security scan performance issues

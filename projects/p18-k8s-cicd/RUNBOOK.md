@@ -266,24 +266,24 @@ kubectl describe svc app-service -n default
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 - Zero pods running
 - Deployment rollout failed completely
 - Cluster unreachable
 
-**P1: Degraded Service**
+### P1: Degraded Service
 - < 2 pods running (reduced capacity)
 - Repeated pod crashes
 - Service endpoints unavailable
 - CI/CD pipeline completely broken
 
-**P2: Warning State**
+### P2: Warning State
 - Pods restarting frequently
 - Health checks intermittently failing
 - High resource usage
 - Individual CI/CD job failures
 
-**P3: Informational**
+### P3: Informational
 - Single pod restart
 - Temporary health check blip
 - Resource usage approaching limits
