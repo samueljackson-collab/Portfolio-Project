@@ -4,9 +4,9 @@ Welcome to the GitHub Fundamentals Wiki.js hub. This space turns the course into
 
 ## 🚀 Start Here
 
-- **New to Git & GitHub?** Begin with the [Setup & Fundamentals overview](./01-setup-fundamentals/00-index.md).
-- **Already using Git?** Jump to [Git Fundamentals](./02-git-fundamentals/00-index.md) or [Documentation](./03-documentation/00-index.md).
-- **Building a portfolio?** Head straight to [Real-World Projects](./04-real-world-projects/00-index.md).
+- **New to Git & GitHub?** Begin with the [Setup & Fundamentals overview](/setup-fundamentals).
+- **Already using Git?** Jump to [Git Fundamentals](/git-fundamentals) or [Documentation](/documentation).
+- **Building a portfolio?** Head straight to [Real-World Projects](/real-world-projects).
 
 ## 🧭 Quick Navigation
 
