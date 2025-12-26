@@ -18,13 +18,14 @@ install_packages() {
 
   if command -v apt-get >/dev/null 2>&1; then
     apt-get update -y
-    apt-get install -y docker.io
+    apt-get install -y docker.io wget
     systemctl enable --now docker
 
-    if apt-cache show amazon-cloudwatch-agent >/dev/null 2>&1; then
-      apt-get install -y amazon-cloudwatch-agent
-      return 0
-    fi
+    # Download and install CloudWatch agent for Debian/Ubuntu
+    wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb -O /tmp/amazon-cloudwatch-agent.deb
+    dpkg -i -E /tmp/amazon-cloudwatch-agent.deb
+    rm /tmp/amazon-cloudwatch-agent.deb
+    return 0
   fi
 
   return 1
