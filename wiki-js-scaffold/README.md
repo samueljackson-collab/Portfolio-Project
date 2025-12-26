@@ -1,6 +1,6 @@
 # GitHub Fundamentals Wiki.js
 
-Complete Wiki.js deployment scaffold for the GitHub Fundamentals course with 32 comprehensive pages covering Git, GitHub, and professional development workflows.
+Complete Wiki.js deployment scaffold for the GitHub Fundamentals course with 32 lessons plus navigation pages covering Git, GitHub, and professional development workflows.
 
 ## 📚 Table of Contents
 
@@ -15,9 +15,10 @@ Complete Wiki.js deployment scaffold for the GitHub Fundamentals course with 32 
 
 ## ✨ Features
 
-- **32 Comprehensive Pages** - Complete GitHub Fundamentals curriculum
+- **40 Comprehensive Pages** - Complete GitHub Fundamentals curriculum
 - **Multiple Deployment Options** - Docker, manual, API-based, Git-synced
 - **Automated Import Scripts** - One-command content deployment
+- **Section Landing Pages** - Clear navigation with home and section overviews
 - **Production-Ready** - SSL, backups, monitoring included
 - **Customizable** - Themes, branding, multi-language support
 - **Scalable** - PostgreSQL database, Nginx reverse proxy
@@ -141,43 +142,53 @@ node scripts/import-to-wikijs.js
 ```
 wiki-js-scaffold/
 ├── content/                    # All wiki pages
+│   ├── 00-home.md
 │   ├── 01-setup-fundamentals/
+│   │   ├── 00-index.md
 │   │   ├── 01-course-overview.md
 │   │   ├── 02-prerequisites-tools.md
-│   │   ├── 03-git-installation-windows.md
+│   │   ├── 03-git-installation.md
 │   │   ├── 04-git-configuration.md
 │   │   ├── 05-ssh-key-setup.md
 │   │   └── 06-github-account-creation.md
 │   ├── 02-git-fundamentals/
-│   │   ├── 07-repository-fundamentals.md
-│   │   ├── 08-creating-first-repository.md
-│   │   ├── 09-cloning-repositories.md
-│   │   ├── 10-basic-git-workflow.md
-│   │   ├── 11-adding-committing-changes.md
-│   │   ├── 12-pushing-to-github.md
-│   │   ├── 24-branching-merging.md
-│   │   └── 25-pull-requests-code-review.md
+│   │   ├── 00-index.md
+│   │   ├── 01-repository-basics.md
+│   │   ├── 02-staging-and-committing.md
+│   │   ├── 03-viewing-history.md
+│   │   ├── 04-branching-fundamentals.md
+│   │   ├── 05-merging-changes.md
+│   │   ├── 06-remote-repositories.md
+│   │   ├── 07-pushing-changes.md
+│   │   └── 08-undoing-changes.md
 │   ├── 03-documentation/
-│   │   ├── 15-readme-best-practices.md
-│   │   ├── 16-gitignore-configuration.md
-│   │   └── 18-license-selection.md
+│   │   ├── 00-index.md
+│   │   ├── 01-readme-best-practices.md
+│   │   ├── 02-gitignore-files.md
+│   │   └── 03-licenses-and-contributing.md
 │   ├── 04-real-world-projects/
-│   │   ├── 10-aws-architecture.md
-│   │   ├── 14-kubernetes-cicd.md
-│   │   ├── 17-iam-security-hardening.md
-│   │   ├── 19-monitoring-stack.md
-│   │   └── 20-incident-response.md
+│   │   ├── 00-index.md
+│   │   ├── 01-portfolio-setup.md
+│   │   ├── 02-project-structure.md
+│   │   ├── 03-collaboration-workflow.md
+│   │   ├── 04-project-management.md
+│   │   └── 05-deployment-basics.md
 │   ├── 05-github-platform/
-│   │   ├── 26-github-issues-management.md
-│   │   ├── 27-github-actions-cicd.md
-│   │   ├── 28-github-pages-documentation.md
-│   │   ├── 29-collaboration-workflows.md
-│   │   └── 30-github-cli-api.md
+│   │   ├── 00-index.md
+│   │   ├── 01-issues-and-discussions.md
+│   │   ├── 02-pull-requests.md
+│   │   ├── 03-github-actions.md
+│   │   ├── 04-security-features.md
+│   │   └── 05-advanced-github.md
 │   ├── 06-advanced-topics/
-│   │   ├── 22-advanced-git-github.md
-│   │   └── 21-troubleshooting-issues.md
+│   │   ├── 00-index.md
+│   │   ├── 01-git-rebase-and-history.md
+│   │   └── 02-advanced-workflows.md
 │   └── 07-next-steps/
-│       └── 23-next-steps-resources.md
+│       ├── 00-index.md
+│       ├── 01-contributing-to-open-source.md
+│       ├── 02-career-development.md
+│       └── 03-continuing-education.md
 ├── assets/                     # Images, diagrams, media
 │   ├── screenshots/
 │   ├── diagrams/
@@ -284,6 +295,13 @@ nano content/01-setup-fundamentals/01-course-overview.md
 npm run import
 ```
 
+### Section Landing Pages
+
+Create section landing pages to improve navigation and search:
+
+- `content/00-home.md` becomes `/home` (recommended Wiki.js home page)
+- `content/**/00-index.md` becomes the section root (e.g., `/01-setup-fundamentals` → `/setup-fundamentals`)
+
 ### Navigation Structure
 
 Edit navigation in **Administration** → **Navigation**
@@ -294,7 +312,7 @@ Or use `navigation-config.json`:
   {
     "label": "Home",
     "icon": "home",
-    "target": "/",
+    "target": "/home",
     "type": "page"
   },
   {

@@ -169,6 +169,10 @@ class WikiJSImporter {
       .map(part => part.replace(/^\d+-/, '').toLowerCase())
       .join('/');
 
+    if (cleanFilename === 'index' && cleanBasePath) {
+      return `/${cleanBasePath}`;
+    }
+
     return cleanBasePath ? `/${cleanBasePath}/${cleanFilename}` : `/${cleanFilename}`;
   }
 
