@@ -145,6 +145,51 @@ scrape_configs:
           tier: 'infrastructure'
           criticality: 'critical'
 
+  # Proxmox Exporter - Hypervisor metrics
+  - job_name: 'proxmox_exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - '192.168.40.10:9221'
+          - '192.168.40.11:9221'
+          - '192.168.40.12:9221'
+        labels:
+          service: 'proxmox'
+          tier: 'infrastructure'
+          criticality: 'high'
+
+  # TrueNAS Exporter - Storage metrics
+  - job_name: 'truenas_exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - '192.168.40.20:9108'
+        labels:
+          service: 'truenas'
+          tier: 'storage'
+          criticality: 'high'
+
+  # SNMP Exporter - Network devices
+  - job_name: 'snmp_exporter'
+    scrape_interval: 60s
+    static_configs:
+      - targets:
+          - '192.168.40.2' # UniFi switch
+          - '192.168.40.3' # UniFi gateway
+        labels:
+          service: 'network'
+          tier: 'infrastructure'
+    metrics_path: /snmp
+    params:
+      module: [unifi_switch]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: '192.168.40.30:9116'
+
   # PostgreSQL Exporter
   - job_name: 'postgres_exporter'
     scrape_interval: 30s

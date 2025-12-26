@@ -1,0 +1,26 @@
+http:
+  routers:
+    wikijs:
+      rule: "Host(`wiki.homelab.local`)"
+      entryPoints:
+        - websecure
+      service: wikijs
+      tls:
+        certResolver: stepca
+    grafana:
+      rule: "Host(`grafana.homelab.local`)"
+      entryPoints:
+        - websecure
+      service: grafana
+      tls:
+        certResolver: stepca
+
+  services:
+    wikijs:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.40.60:3000"
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.40.30:3000"

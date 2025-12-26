@@ -986,3 +986,22 @@ sqlite3 data/subscribers.db "UPDATE subscribers SET state='idle', visited_mcc_mn
 - **Owner:** Telecom Testing Team
 - **Review Schedule:** Quarterly or after major protocol changes
 - **Feedback:** Create issue or submit PR with updates
+
+## Evidence & Verification
+
+Verification summary: Baseline evidence captured to validate the latest quickstart configuration and document supporting artifacts for audits.
+
+**Evidence artifacts**
+- [Screenshot](./docs/evidence/screenshot.svg)
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

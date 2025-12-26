@@ -223,6 +223,11 @@ services:
     volumes:
       - prometheus-data:/prometheus
       - ./thanos/bucket.yml:/etc/thanos/bucket.yml
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
     command:
       - 'sidecar'
       - '--tsdb.path=/prometheus'
@@ -274,6 +279,11 @@ services:
     volumes:
       - ./thanos/bucket.yml:/etc/thanos/bucket.yml
       - thanos-store-data:/data
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
     command:
       - 'store'
       - '--data-dir=/data'
@@ -298,6 +308,11 @@ services:
     volumes:
       - ./thanos/bucket.yml:/etc/thanos/bucket.yml
       - thanos-compactor-data:/data
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
     command:
       - 'compact'
       - '--data-dir=/data'
