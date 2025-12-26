@@ -19,4 +19,4 @@ Explore the advanced capabilities of GitHub to collaborate, automate, and secure
 
 ## 🔜 Up Next
 
-Looking for deeper workflows? Visit [Advanced Topics](../06-advanced-topics/00-index.md).
+Looking for deeper workflows? Visit [Advanced Topics](/advanced-topics).
