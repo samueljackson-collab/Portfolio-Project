@@ -6,17 +6,21 @@
 const statusIndicator = document.getElementById('statusIndicator');
 const statusText = document.getElementById('statusText');
 const organizeBtn = document.getElementById('organizeBtn');
+const syncBtn = document.getElementById('syncBtn');
 const settingsBtn = document.getElementById('settingsBtn');
 const tabCount = document.getElementById('tabCount');
 const groupCount = document.getElementById('groupCount');
 const lastOrganized = document.getElementById('lastOrganized');
 const openApp = document.getElementById('openApp');
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
 
 // Initialize popup
 async function initialize() {
   updateStatus();
   updateStats();
   setupEventListeners();
+  renderSearchResults('');
 }
 
 // Update connection status
@@ -100,6 +104,27 @@ function setupEventListeners() {
     }
   });
 
+  syncBtn.addEventListener('click', async () => {
+    syncBtn.disabled = true;
+    syncBtn.textContent = 'Syncing...';
+
+    try {
+      await chrome.runtime.sendMessage({ type: 'sync_now' });
+      syncBtn.textContent = 'Synced!';
+      setTimeout(() => {
+        syncBtn.textContent = 'Sync Now';
+        syncBtn.disabled = false;
+      }, 1500);
+    } catch (error) {
+      console.error('Failed to sync:', error);
+      syncBtn.textContent = 'Sync failed';
+      setTimeout(() => {
+        syncBtn.textContent = 'Sync Now';
+        syncBtn.disabled = false;
+      }, 2000);
+    }
+  });
+
   settingsBtn.addEventListener('click', () => {
     // Open settings page
     chrome.runtime.openOptionsPage();
@@ -118,6 +143,63 @@ function setupEventListeners() {
       openApp.textContent = 'Open Desktop App';
     });
   });
+
+  searchInput.addEventListener('input', async (event) => {
+    const query = event.target.value.trim();
+    await renderSearchResults(query);
+  });
+}
+
+async function renderSearchResults(query) {
+  searchResults.innerHTML = '';
+
+  if (!query) {
+    const empty = document.createElement('div');
+    empty.className = 'search-item';
+    empty.textContent = 'Type to search tabs...';
+    searchResults.appendChild(empty);
+    return;
+  }
+
+  try {
+    const tabs = await chrome.tabs.query({});
+    const filtered = tabs.filter((tab) => {
+      const text = `${tab.title || ''} ${tab.url || ''}`.toLowerCase();
+      return text.includes(query.toLowerCase());
+    });
+
+    const limited = filtered.slice(0, 6);
+    if (limited.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'search-item';
+      empty.textContent = 'No matching tabs.';
+      searchResults.appendChild(empty);
+      return;
+    }
+
+    limited.forEach((tab) => {
+      const item = document.createElement('div');
+      item.className = 'search-item';
+      item.addEventListener('click', () => {
+        chrome.tabs.update(tab.id, { active: true });
+        chrome.windows.update(tab.windowId, { focused: true });
+      });
+
+      const title = document.createElement('div');
+      title.className = 'search-item-title';
+      title.textContent = tab.title || 'Untitled Tab';
+
+      const subtitle = document.createElement('div');
+      subtitle.className = 'search-item-subtitle';
+      subtitle.textContent = tab.url || '';
+
+      item.appendChild(title);
+      item.appendChild(subtitle);
+      searchResults.appendChild(item);
+    });
+  } catch (error) {
+    console.error('Failed to search tabs:', error);
+  }
 }
 
 // Initialize when popup opens

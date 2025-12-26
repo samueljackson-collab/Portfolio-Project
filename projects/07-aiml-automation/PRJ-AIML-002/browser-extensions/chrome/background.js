@@ -4,14 +4,24 @@
  */
 
 const NATIVE_HOST_NAME = 'com.taborganizer.native_host';
-const SYNC_INTERVAL = 5000; // 5 seconds
+const SETTINGS_KEY = 'syncSettings';
+const DEFAULT_SETTINGS = {
+  syncEnabled: true,
+  syncIntervalSeconds: 5,
+};
 
 let nativePort = null;
 let isConnected = false;
+let syncSettings = { ...DEFAULT_SETTINGS };
+let syncIntervalId = null;
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Tab Organizer extension installed');
+  initializeExtension();
+});
+
+chrome.runtime.onStartup.addListener(() => {
   initializeExtension();
 });
 
@@ -45,20 +55,47 @@ function connectToNativeHost() {
 }
 
 // Initialize extension
-function initializeExtension() {
+async function initializeExtension() {
   // Connect to native host
   connectToNativeHost();
 
-  // Set up periodic sync
-  setInterval(syncTabs, SYNC_INTERVAL);
+  await loadSettings();
 
   // Initial tab sync
-  syncTabs();
+  await syncTabs();
+}
+
+async function loadSettings() {
+  const stored = await chrome.storage.sync.get({
+    [SETTINGS_KEY]: DEFAULT_SETTINGS,
+  });
+  syncSettings = {
+    ...DEFAULT_SETTINGS,
+    ...(stored[SETTINGS_KEY] || {}),
+  };
+  scheduleSync();
+}
+
+function scheduleSync() {
+  if (syncIntervalId) {
+    clearInterval(syncIntervalId);
+    syncIntervalId = null;
+  }
+
+  if (!syncSettings.syncEnabled) {
+    console.log('Sync disabled by settings');
+    return;
+  }
+
+  const intervalMs = Math.max(syncSettings.syncIntervalSeconds * 1000, 5000);
+  syncIntervalId = setInterval(syncTabs, intervalMs);
 }
 
 // Sync all tabs with native host
 async function syncTabs() {
-  if (!isConnected) return;
+  if (!isConnected || !syncSettings.syncEnabled) {
+    return { success: false, reason: 'not_connected_or_disabled' };
+  }
 
   try {
     const tabs = await chrome.tabs.query({});
@@ -69,8 +106,10 @@ async function syncTabs() {
       tabs: tabData,
       timestamp: Date.now(),
     });
+    return { success: true, count: tabData.length };
   } catch (error) {
     console.error('Failed to sync tabs:', error);
+    return { success: false, reason: 'sync_failed' };
   }
 }
 
@@ -228,6 +267,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       timestamp: Date.now(),
     });
     sendResponse({ success: true });
+  } else if (message.type === 'sync_now') {
+    syncTabs().then((result) => {
+      sendResponse({ success: result.success, count: result.count });
+    });
   } else if (message.type === 'open_desktop_app') {
     if (isConnected) {
       sendToNativeHost({
@@ -237,13 +280,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       sendResponse({ success: true });
     } else {
-      chrome.tabs.create({ url: 'taborganizer://open' }, () => {
+      chrome.tabs.create({ url: 'taborganizer://open?source=extension' }, () => {
         sendResponse({ success: true });
       });
     }
   }
 
   return true;
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'sync' || !changes[SETTINGS_KEY]) return;
+  syncSettings = {
+    ...DEFAULT_SETTINGS,
+    ...(changes[SETTINGS_KEY].newValue || {}),
+  };
+  scheduleSync();
 });
 
 console.log('Tab Organizer background script loaded');

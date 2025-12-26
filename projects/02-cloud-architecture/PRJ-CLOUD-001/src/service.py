@@ -6,6 +6,7 @@ control plane.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List
@@ -79,10 +80,68 @@ def service_metadata() -> ServiceMetadata:
     )
 
 
-def _check_required(value: str, label: str) -> Dict[str, str]:
-    status = "pass" if value else "fail"
-    details = "configured" if value else "missing"
-    return {"name": label, "status": status, "details": details}
+def _check_org_id(org_id: str) -> Dict[str, str]:
+    if not org_id:
+        return {"name": "organizations_id", "status": "fail", "details": "missing"}
+    if not org_id.startswith("o-") or len(org_id) < 6:
+        return {
+            "name": "organizations_id",
+            "status": "fail",
+            "details": "invalid format",
+        }
+    return {"name": "organizations_id", "status": "pass", "details": "configured"}
+
+
+def _check_bucket_name(bucket: str) -> Dict[str, str]:
+    if not bucket:
+        return {"name": "cloudtrail_bucket", "status": "fail", "details": "missing"}
+    pattern = re.compile(r"^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$")
+    if not pattern.match(bucket):
+        return {
+            "name": "cloudtrail_bucket",
+            "status": "fail",
+            "details": "invalid bucket name",
+        }
+    return {"name": "cloudtrail_bucket", "status": "pass", "details": "configured"}
+
+
+def _check_sso_arn(arn: str) -> Dict[str, str]:
+    if not arn:
+        return {"name": "sso_instance_arn", "status": "fail", "details": "missing"}
+    if not arn.startswith("arn:") or "sso" not in arn or "instance/" not in arn:
+        return {"name": "sso_instance_arn", "status": "fail", "details": "invalid arn"}
+    return {"name": "sso_instance_arn", "status": "pass", "details": "configured"}
+
+
+def _check_account_inventory(account_count: int) -> Dict[str, str]:
+    status = "pass" if account_count >= 1 else "warn"
+    return {
+        "name": "account_inventory",
+        "status": status,
+        "details": f"{account_count} accounts tracked",
+    }
+
+
+def _check_log_retention(log_retention_days: int) -> Dict[str, str]:
+    if log_retention_days >= 90:
+        status = "pass"
+    elif log_retention_days >= 30:
+        status = "warn"
+    else:
+        status = "fail"
+    return {
+        "name": "log_retention_days",
+        "status": status,
+        "details": f"{log_retention_days} days",
+    }
+
+
+def _mask_value(value: str) -> str:
+    if not value:
+        return ""
+    if len(value) <= 8:
+        return "*" * len(value)
+    return f"{value[:4]}...{value[-4:]}"
 
 
 def health_check() -> Dict[str, object]:
@@ -91,28 +150,34 @@ def health_check() -> Dict[str, object]:
     config = load_config()
 
     checks = [
-        _check_required(config.org_id, "organizations_id"),
-        _check_required(config.audit_log_bucket, "cloudtrail_bucket"),
-        _check_required(config.sso_instance_arn, "sso_instance_arn"),
-        {
-            "name": "account_inventory",
-            "status": "pass" if config.account_count > 0 else "warn",
-            "details": f"{config.account_count} accounts tracked",
-        },
-        {
-            "name": "log_retention_days",
-            "status": "pass" if config.log_retention_days >= 90 else "warn",
-            "details": f"{config.log_retention_days} days",
-        },
+        _check_org_id(config.org_id),
+        _check_bucket_name(config.audit_log_bucket),
+        _check_sso_arn(config.sso_instance_arn),
+        _check_account_inventory(config.account_count),
+        _check_log_retention(config.log_retention_days),
     ]
 
     required_ok = all(check["status"] == "pass" for check in checks[:3])
-    status = "ok" if required_ok else "degraded"
+    has_failures = any(check["status"] == "fail" for check in checks)
+    has_warnings = any(check["status"] == "warn" for check in checks)
+    if not required_ok or has_failures:
+        status = "degraded"
+    elif has_warnings:
+        status = "warning"
+    else:
+        status = "ok"
 
     return {
         "status": status,
         "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         "region": config.region,
         "metadata": metadata.as_dict(),
+        "config_summary": {
+            "org_id": _mask_value(config.org_id),
+            "audit_log_bucket": config.audit_log_bucket,
+            "sso_instance_arn": _mask_value(config.sso_instance_arn),
+            "account_count": config.account_count,
+            "log_retention_days": config.log_retention_days,
+        },
         "checks": checks,
     }

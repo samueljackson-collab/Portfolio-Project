@@ -202,6 +202,28 @@ ansible-playbook playbooks/check-services.yml
 **Expected Time:** 5 minutes
 **Frequency:** Automated every 5 minutes
 
+#### 4. Security Hardening Verification
+```bash
+# Verify fail2ban + auditd are running on core hosts
+sudo systemctl status fail2ban
+sudo systemctl status auditd
+
+# Confirm MQTT TLS listener responds
+openssl s_client -connect 192.168.40.51:8883 -servername mosquitto \
+  -CAfile /opt/homeassistant/mosquitto/config/ca.crt </dev/null
+
+# Review recent security audit log
+tail -50 /var/log/security-audit.log
+```
+
+**Manual UI Checks (Monthly):**
+- **Home Assistant:** Settings → People → MFA (TOTP) enabled for admin accounts
+- **Nginx Proxy Manager:** Admin → Users → 2FA enabled; Activity Log reviewed
+- **Wiki.js:** Administration → Authentication → MFA enabled; Logging enabled
+
+**Expected Time:** 10 minutes
+**Frequency:** Weekly (command checks) + Monthly (UI review)
+
 ### Weekly Operations
 
 #### 1. Update Systems
