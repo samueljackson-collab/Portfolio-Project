@@ -598,7 +598,7 @@ Resources:
             path=Path("projects/p10-multi-region/tests/test_failover_factory.py"),
             prompt="Pytest harness that mocks Route 53 health responses and asserts failover orchestration logic.",
             template="""def test_failover_triggers_secondary(monkeypatch):
-    from projects.p10_multi_region import failover
+    from .. import failover
 
     monkeypatch.setattr(failover, "is_primary_healthy", lambda: False)
     monkeypatch.setattr(failover, "promote_secondary", lambda: "promoted")
