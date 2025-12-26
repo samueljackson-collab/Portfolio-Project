@@ -11,8 +11,7 @@ sequenceDiagram
     rect rgb(230, 240, 255)
         Note over User,NPM: 1. User Access Flow
         User->>+NPM: HTTPS Request (port 443)
-        NPM->>SSL: Validate Certificate
-        SSL-->>NPM: Valid Certificate
+        NPM->>NPM: TLS Handshake (with local cert)
         NPM->>+Service: Proxy to Backend (internal IP)
         Service->>Storage: Read/Write Data (NFS)
         Storage-->>Service: Data Response
