@@ -1,0 +1,94 @@
+graph TB
+    subgraph Internet
+        ISP[ISP Modem<br/>192.168.1.1]
+    end
+    
+    subgraph "Security Edge"
+        UDMP[UniFi Dream Machine Pro<br/>Gateway/Firewall<br/>WAN: DHCP<br/>LAN: 192.168.30.1]
+        style UDMP fill:#0559C9,stroke:#333,color:#fff
+    end
+    
+    subgraph "Network Core"
+        SW1[UniFi Pro Switch 24<br/>Core Switch<br/>192.168.30.2]
+        SW2[UniFi Pro Switch 8<br/>Access Switch<br/>192.168.30.3]
+        style SW1 fill:#0559C9,stroke:#333,color:#fff
+        style SW2 fill:#0559C9,stroke:#333,color:#fff
+    end
+    
+    subgraph "Wireless Infrastructure"
+        AP1[UniFi AP-AC-Pro<br/>Main Floor<br/>192.168.30.10]
+        AP2[UniFi AP-AC-Lite<br/>Upper Floor<br/>192.168.30.11]
+        style AP1 fill:#0559C9,stroke:#333,color:#fff
+        style AP2 fill:#0559C9,stroke:#333,color:#fff
+    end
+    
+    subgraph "VLAN 10 - Trusted Network"
+        DESK[Desktop<br/>192.168.10.50]
+        LAPTOP[Laptop<br/>DHCP]
+        PHONE[Mobile Devices<br/>DHCP]
+        PROXMOX[Proxmox Host<br/>192.168.10.10]
+        PBS[Proxmox Backup<br/>192.168.10.12]
+        style PROXMOX fill:#E57000,stroke:#333,color:#fff
+    end
+    
+    subgraph "VLAN 30 - Management"
+        MGMT1[Network Equipment<br/>Management IPs]
+        style MGMT1 fill:#DC3545,stroke:#333,color:#fff
+    end
+    
+    subgraph "VLAN 50 - IoT Network"
+        HA[Home Assistant<br/>192.168.50.20]
+        CAM[IP Cameras<br/>192.168.50.30-35]
+        IOT[Smart Home Devices<br/>DHCP Pool]
+        style HA fill:#41BDF5,stroke:#333,color:#fff
+        style CAM fill:#888,stroke:#333,color:#fff
+    end
+    
+    subgraph "VLAN 99 - Guest Network"
+        GUEST[Guest Devices<br/>DHCP Pool<br/>192.168.99.100-200]
+        style GUEST fill:#6C757D,stroke:#333,color:#fff
+    end
+    
+    subgraph "Services - Proxmox VMs/Containers"
+        WIKI[Wiki.js<br/>192.168.10.20]
+        IMMICH[Immich Photos<br/>192.168.10.21]
+        NPM[Nginx Proxy Manager<br/>192.168.10.25]
+        TRUENAS[TrueNAS<br/>192.168.10.15]
+        style WIKI fill:#1976D2,stroke:#333,color:#fff
+        style IMMICH fill:#4CAF50,stroke:#333,color:#fff
+        style NPM fill:#009688,stroke:#333,color:#fff
+        style TRUENAS fill:#0095D5,stroke:#333,color:#fff
+    end
+    
+    ISP -->|WAN| UDMP
+    UDMP -->|Trunk<br/>All VLANs| SW1
+    SW1 -->|Trunk| SW2
+    SW1 -->|Trunk| AP1
+    SW1 -->|Trunk| AP2
+    
+    SW1 -.->|VLAN 10| PROXMOX
+    SW1 -.->|VLAN 10| PBS
+    SW1 -.->|VLAN 10| DESK
+    
+    SW2 -.->|VLAN 10| LAPTOP
+    AP1 -.->|VLAN 10<br/>Trusted SSID| PHONE
+    
+    UDMP -.->|VLAN 30<br/>Mgmt Only| MGMT1
+    
+    SW1 -.->|VLAN 50| CAM
+    AP1 -.->|VLAN 50<br/>IoT SSID| IOT
+    
+    AP1 -.->|VLAN 99<br/>Guest SSID| GUEST
+    AP2 -.->|VLAN 99<br/>Guest SSID| GUEST
+    
+    PROXMOX --> WIKI
+    PROXMOX --> IMMICH
+    PROXMOX --> NPM
+    PROXMOX --> HA
+    PROXMOX -.->|NFS Mount| TRUENAS
+    
+    NPM -->|Reverse Proxy<br/>SSL Termination| WIKI
+    NPM -->|Reverse Proxy<br/>SSL Termination| IMMICH
+    NPM -->|Reverse Proxy<br/>SSL Termination| HA
+    
+    UDMP -->|VPN| OUTSIDE[WireGuard VPN<br/>Remote Access]

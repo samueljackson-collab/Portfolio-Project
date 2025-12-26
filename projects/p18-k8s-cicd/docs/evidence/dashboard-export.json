@@ -1,0 +1,12 @@
+{
+  "project": "p18-k8s-cicd",
+  "capture_date": "2025-11-14",
+  "summary": "Baseline dashboard export for quickstart verification.",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Service health overview",
+      "description": "Placeholder export representing core metrics panels."
+    }
+  ]
+}

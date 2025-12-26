@@ -1,0 +1,30 @@
+flowchart TB
+  subgraph Network
+    Internet((Internet)) --> Firewall[UniFi Gateway]
+    Firewall --> Switch[UniFi Switch]
+  end
+
+  subgraph ProxmoxCluster
+    PVE1[proxmox-01]
+    PVE2[proxmox-02]
+    PVE3[proxmox-03]
+    PVE1 <-->|Ceph| PVE2
+    PVE2 <-->|Ceph| PVE3
+    PVE1 <-->|Ceph| PVE3
+  end
+
+  Switch --> ProxmoxCluster
+  ProxmoxCluster --> PBS[Proxmox Backup Server]
+  ProxmoxCluster --> TrueNAS[TrueNAS Storage]
+
+  subgraph CoreServices
+    DNS[Pi-hole DNS]
+    DHCP[DHCP Server]
+    NTP[NTP Server]
+    CA[Step CA]
+    Proxy[Traefik Reverse Proxy]
+  end
+
+  PVE1 --> CoreServices
+  CoreServices --> Apps[Wiki.js / Home Assistant / Immich]
+  Apps --> Monitoring[Prometheus / Grafana / Alertmanager]

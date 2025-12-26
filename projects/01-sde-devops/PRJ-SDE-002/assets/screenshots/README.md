@@ -1,6 +1,11 @@
-# Screenshots (Text-Only Repository Guidance)
+# Screenshots (Sanitized Evidence)
 
-Binary dashboard captures are intentionally omitted because the PR channel does not support binary assets. Use this folder to store locally generated, sanitized PNGs when working outside the PR channel.
+This folder contains sanitized SVG snapshots of key monitoring views. Use PNG exports for higher-fidelity captures as needed.
+
+## Available Snapshots
+- `PRJ-SDE-002_dashboards_01_20251110.svg` — Grafana infrastructure overview.
+- `PRJ-SDE-002_monitoring_01_20251110.svg` — Prometheus targets health.
+- `PRJ-SDE-002_monitoring_02_20251110.svg` — Alertmanager overview.
 
 ## How to Recreate Sanitized Screenshots
 1. Import the Grafana dashboards from `../grafana/dashboards/` (Infrastructure overview, Application metrics, Backup health).

@@ -1,5 +1,12 @@
 # Project 25: Portfolio Website & Documentation Hub
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Static documentation portal generated with VitePress, integrating the Wiki.js deployment instructions and showcasing all 25 projects.
 
@@ -50,4 +57,3 @@ Write comprehensive tests for [component], covering normal operations, edge case
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-
