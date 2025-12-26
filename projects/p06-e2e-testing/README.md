@@ -58,6 +58,8 @@ make report
 
 ## Configuration
 
+**Target URL**: Set `BASE_URL` to the application under test. Local default is `http://localhost:3000`; staging example: `https://staging.example.com`.
+
 | Env Var | Purpose | Example | Required |
 |---------|---------|---------|----------|
 | `BASE_URL` | Target application URL | `https://example.com` | Yes |
@@ -73,6 +75,11 @@ make report
 cp .env.example .env
 # Edit .env with your test credentials
 ```
+
+**CI Secrets (GitHub Actions)**:
+- `P06_BASE_URL` (target URL)
+- `P06_TEST_USER`
+- `P06_TEST_PASSWORD`
 
 ## Testing
 
@@ -99,10 +106,11 @@ npx playwright test --update-snapshots
 ## Operations
 
 ### Logs, Metrics, Traces
-- **Test Reports**: `playwright-report/index.html` (generated after test run)
+- **Test Reports**: `reports/playwright-html/index.html` (generated after test run)
+- **Machine-readable Reports**: `reports/playwright-report.json`, `reports/playwright-junit.xml`
 - **Trace Viewer**: `npx playwright show-trace trace.zip`
-- **Screenshots**: `test-results/` directory (on failure)
-- **Videos**: `test-results/` directory (configurable)
+- **Screenshots**: `reports/test-results/` directory (on failure)
+- **Videos**: `reports/test-results/` directory (configurable)
 
 ### Common Issues & Fixes
 
