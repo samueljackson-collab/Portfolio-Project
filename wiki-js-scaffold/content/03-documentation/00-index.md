@@ -10,9 +10,9 @@ Documentation separates good projects from great ones. This section teaches the 
 
 ## 📘 Lessons in this Section
 
-1. [README Best Practices](./01-readme-best-practices.md)
-2. [Using .gitignore Files](./02-gitignore-files.md)
-3. [Licenses & Contributing](./03-licenses-and-contributing.md)
+1. [README Best Practices](/documentation/readme-best-practices)
+2. [Using .gitignore Files](/documentation/gitignore-files)
+3. [Licenses & Contributing](/documentation/licenses-and-contributing)
 
 ## 🔜 Up Next
 
