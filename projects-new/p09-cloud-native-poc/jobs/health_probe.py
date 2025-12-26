@@ -96,8 +96,11 @@ def emit(result: dict, logfile: str | None) -> None:
     print(line)
 
     if logfile:
-        with open(logfile, "a", encoding="utf-8") as handle:
-            handle.write(f"{line}\n")
+        try:
+            with open(logfile, "a", encoding="utf-8") as handle:
+                handle.write(f"{line}\n")
+        except (IOError, OSError) as exc:
+            print(f"Error writing to logfile {logfile}: {exc}", file=sys.stderr)
 
 
 def main() -> int:
