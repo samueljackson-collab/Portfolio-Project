@@ -96,7 +96,7 @@ cp reports/security-scan-latest.json deployments/${DEPLOY_DATE}/security-scan-su
 cp sbom/myapp-latest.json deployments/${DEPLOY_DATE}/sbom-summary.json
 
 # Update the deployment record
-sed -n '1,120p' DEPLOYMENT_STATUS.md
+sed -i.bak "s/Deployment date: .* (planned)/Deployment date: ${DEPLOY_DATE} (live)/" DEPLOYMENT_STATUS.md
 ```
 
 ### Security Scanning Operations
