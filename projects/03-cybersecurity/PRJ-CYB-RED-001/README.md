@@ -88,7 +88,7 @@ resource "aws_instance" "redirector" {
   ami           = data.aws_ami.ubuntu.id # Ubuntu 20.04
   instance_type = "t2.micro"
   key_name      = var.key_name
-  security_groups = [aws_security_group.c2_sg.name]
+  vpc_security_group_ids = [aws_security_group.c2_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
