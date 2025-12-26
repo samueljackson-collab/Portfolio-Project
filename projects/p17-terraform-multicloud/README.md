@@ -11,6 +11,15 @@ Multi-cloud infrastructure deployment using Terraform with AWS and Azure provide
 - [x] Terraform workspaces for environments
 - [x] CI/CD integration with terraform plan/apply
 
+## AWS Module Library
+The AWS module library ships production-ready building blocks under `modules/aws/`:
+
+- `modules/aws/vpc` — multi-AZ VPC, subnets, NAT gateways, endpoints, flow logs.
+- `modules/aws/rds` — PostgreSQL/MySQL with Multi-AZ, replicas, backups, Secrets Manager.
+- `modules/aws/ecs` — ECS Fargate cluster, service, autoscaling, logging.
+- `modules/aws/s3` — hardened S3 buckets with versioning, encryption, lifecycle, replication.
+- `modules/aws/cloudfront` — CloudFront distributions with TLS, WAF, cache controls.
+
 ## Architecture
 
 ```mermaid
@@ -102,4 +111,3 @@ Write Terraform code to set up CloudWatch alarms for EC2 CPU utilization, RDS co
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-
