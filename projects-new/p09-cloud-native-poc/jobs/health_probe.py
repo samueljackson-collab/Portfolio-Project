@@ -11,9 +11,17 @@ import sys
 import time
 import urllib.request
 
+def get_int_env(var_name: str, default: str) -> int:
+    value = os.getenv(var_name, default)
+    try:
+        return int(value)
+    except ValueError:
+        print(f"Invalid value for environment variable {var_name}: '{value}'. Must be an integer.", file=sys.stderr)
+        sys.exit(2)
+
 DEFAULT_URL = os.getenv("PROBE_URL", "http://localhost:8080/healthz")
-MAX_LATENCY_MS = int(os.getenv("MAX_LATENCY_MS", "500"))
-TIMEOUT = int(os.getenv("PROBE_TIMEOUT", "5"))
+MAX_LATENCY_MS = get_int_env("MAX_LATENCY_MS", "500")
+TIMEOUT = get_int_env("PROBE_TIMEOUT", "5")
 
 def probe(url: str) -> None:
     start = time.perf_counter()
