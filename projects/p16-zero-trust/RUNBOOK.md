@@ -323,25 +323,25 @@ tcpdump -i any -n "port 443" -c 100 | grep -v "TLS"
 
 #### Severity Classification
 
-**P0: Critical Security Breach**
+### P0: Critical Security Breach
 - Expired CA certificate (all mTLS broken)
 - Zero-trust policy bypass confirmed
 - Vault unsealed by unauthorized entity
 - Mass token compromise
 
-**P1: Security Degradation**
+### P1: Security Degradation
 - Service certificate expired
 - JWT validation failures > 10%
 - Unauthorized access attempts detected
 - Secret rotation overdue > 90 days
 
-**P2: Security Warning**
+### P2: Security Warning
 - Certificate expiring < 7 days
 - mTLS handshake failures < 5%
 - Network policy misconfiguration
 - Audit log anomalies
 
-**P3: Informational**
+### P3: Informational
 - Certificate expiring < 30 days
 - Single failed authentication attempt
 - Secret age > 60 days
@@ -982,3 +982,22 @@ make deploy-certs
 - **Owner:** Security Engineering Team
 - **Review Schedule:** Quarterly or after security incidents
 - **Feedback:** Create issue or submit PR with updates
+
+## Evidence & Verification
+
+Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
+
+**Evidence artifacts**
+- [Screenshot](./docs/evidence/screenshot.svg)
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

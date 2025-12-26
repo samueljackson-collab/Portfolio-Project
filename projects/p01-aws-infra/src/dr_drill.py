@@ -18,7 +18,7 @@ import boto3
 import time
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from botocore.exceptions import ClientError
 
@@ -192,7 +192,7 @@ class RDSFailoverDrill:
             List of metric data points
         """
         try:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             start_time = end_time.replace(minute=end_time.minute - duration_minutes)
 
             metrics = []
@@ -238,7 +238,7 @@ class RDSFailoverDrill:
             output_file: Optional file path to save report
         """
         report = {
-            'drill_timestamp': datetime.utcnow().isoformat(),
+            'drill_timestamp': datetime.now(timezone.utc).isoformat(),
             'db_instance_id': db_instance_id,
             'region': self.region,
             'failover_result': result,
@@ -275,7 +275,7 @@ class RDSFailoverDrill:
         print("=" * 60)
         print("RDS MULTI-AZ FAILOVER DRILL")
         print("=" * 60)
-        print(f"Timestamp: {datetime.utcnow().isoformat()}")
+        print(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
         print(f"DB Instance: {db_instance_id}")
         print(f"Region: {self.region}\n")
 

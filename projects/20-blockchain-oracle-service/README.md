@@ -1,5 +1,12 @@
 # Project 20: Blockchain Oracle Service
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Chainlink-compatible external adapter exposing portfolio metrics to smart contracts.
 
@@ -49,4 +56,3 @@ Write a deployment script that deploys smart contracts to multiple networks (loc
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

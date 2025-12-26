@@ -1,0 +1,7 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='720'>
+  <rect width='1200' height='720' fill='#0f2f57'/>
+  <rect x='20' y='20' width='1160' height='680' fill='none' stroke='#5b9ef1' stroke-width='4'/>
+  <text x='40' y='60' fill='#ffffff' font-size='24' font-family='Arial'>Logical VLAN Map</text>
+  <text x='40' y='100' fill='#e4f1ff' font-size='18'>• VLAN 10: Management (restricted ACLs)</text><text x='40' y='140' fill='#e4f1ff' font-size='18'>• VLAN 20: Server + Hypervisor fabric</text><text x='40' y='180' fill='#e4f1ff' font-size='18'>• VLAN 30: IoT segmented with egress limits</text><text x='40' y='220' fill='#e4f1ff' font-size='18'>• VLAN 40: Guest SSID with Internet-only policy</text>
+  <text x='40' y='660' fill='#b8dcff' font-size='16'>Generated evidence diagram (sanitized)</text>
+</svg>

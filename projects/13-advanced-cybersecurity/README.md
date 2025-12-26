@@ -1,5 +1,12 @@
 # Project 13: Advanced Cybersecurity Platform
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Security orchestration and automated response (SOAR) engine that consolidates SIEM alerts, enriches them with threat intel, and executes playbooks.
 
@@ -55,4 +62,3 @@ Write a script to audit AWS resources for CIS Benchmark compliance, checking sec
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

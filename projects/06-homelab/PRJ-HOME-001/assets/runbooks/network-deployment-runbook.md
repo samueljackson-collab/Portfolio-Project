@@ -49,6 +49,7 @@
 ```
 
 ### Step 2.2: Cable Termination
+
 1. Run Cat6a cables from rooms to patch panel
 2. Terminate with keystone jacks (T568B)
 3. Label each port:
@@ -61,6 +62,7 @@
 **Expected**: All 8 wires green (pass), Gigabit+ rated
 
 ### Step 2.3: Access Point Installation
+
 1. Mount APs to ceiling (Living Room, Bedroom, Office)
 2. Run Cat6 cables to each location
 3. Connect to patch panel (ports 2, 3, 4)
@@ -71,8 +73,9 @@
 ## 3. UDMP Initial Configuration (Day 1)
 
 ### Step 3.1: Factory Setup
+
 1. Connect laptop to UDMP LAN port 1
-2. Navigate to https://192.168.1.1
+2. Navigate to <https://192.168.1.1>
 3. Complete setup wizard:
    - Country: United States
    - Timezone: America/New_York
@@ -80,11 +83,13 @@
    - Admin Account: Create strong password
 
 ### Step 3.2: WAN Configuration
+
 1. Connect UDMP WAN port to ISP modem
 2. Configure WAN as DHCP
 3. Wait for internet connectivity
 
 **Verification:**
+
 ```bash
 
 ssh admin@192.168.1.1
@@ -94,6 +99,7 @@ ping -c 4 google.com
 ```
 
 **Expected Output:**
+
 ```
 
 4 packets transmitted, 4 received, 0% packet loss
@@ -101,6 +107,7 @@ ping -c 4 google.com
 ```
 
 ### Step 3.3: Adopt Network Devices
+
 1. Power on UniFi Switch 24 PoE
 2. In UniFi Controller → Devices → Pending
 3. Adopt each device
@@ -109,15 +116,18 @@ ping -c 4 google.com
 ## 4. VLAN Configuration (Day 2)
 
 ### Step 4.1: Create VLANs
+
 **Settings → Networks → Create New Network**
 
 **VLAN 1 (Management):**
+
 - Name: Management
 - VLAN ID: 1
 - Gateway: 192.168.1.1/24
 - DHCP: Disabled
 
 **VLAN 10 (Trusted):**
+
 - Name: Trusted
 - VLAN ID: 10
 - Gateway: 192.168.10.1/24
@@ -125,6 +135,7 @@ ping -c 4 google.com
 - DNS: 192.168.10.2
 
 **VLAN 50 (IoT):**
+
 - Name: IoT
 - VLAN ID: 50
 - Gateway: 192.168.50.1/24
@@ -133,6 +144,7 @@ ping -c 4 google.com
 - mDNS: Enabled
 
 **VLAN 99 (Guest):**
+
 - Name: Guest
 - VLAN ID: 99
 - Gateway: 192.168.99.1/24
@@ -140,6 +152,7 @@ ping -c 4 google.com
 - Guest Policy: Enabled
 
 **VLAN 100 (Lab):**
+
 - Name: Lab
 - VLAN ID: 100
 - Gateway: 192.168.100.1/24
@@ -152,6 +165,7 @@ ping -c 4 google.com
 ### Settings → WiFi → Create New WiFi Network
 
 **Homelab-Trusted:**
+
 - Security: WPA3-Personal
 - Password: [Strong 32-char password]
 - Network: VLAN 10
@@ -160,12 +174,14 @@ ping -c 4 google.com
 - Fast Roaming: 802.11r enabled
 
 **Homelab-IoT:**
+
 - Security: WPA2-Personal
 - Password: [Different strong password]
 - Network: VLAN 50
 - Band: 2.4 GHz only
 
 **Homelab-Guest:**
+
 - Security: WPA2-Personal
 - Password: [Simple password]
 - Network: VLAN 99
@@ -174,6 +190,7 @@ ping -c 4 google.com
 - Rate Limit: 10 Mbps
 
 **Homelab-Lab:**
+
 - Security: WPA2-Personal
 - Password: [Strong password]
 - Network: VLAN 100
@@ -189,6 +206,7 @@ ping -c 4 google.com
 **Key Rules to Create:**
 
 **Rule 1: Trusted → Management**
+
 - Type: LAN IN
 - Source: VLAN 10
 - Destination: VLAN 1
@@ -197,6 +215,7 @@ ping -c 4 google.com
 - Logging: Enabled
 
 **Rule 2: IoT → Internet Only**
+
 - Type: LAN IN
 - Source: VLAN 50
 - Destination: Internet
@@ -204,6 +223,7 @@ ping -c 4 google.com
 - Action: Accept
 
 **Rule 3: IoT → All VLANs DENY**
+
 - Type: LAN IN
 - Source: VLAN 50
 - Destination: 192.168.0.0/16
@@ -211,6 +231,7 @@ ping -c 4 google.com
 - Logging: Enabled
 
 **Rule 4: Guest → Internal DENY**
+
 - Type: LAN IN
 - Source: VLAN 99
 - Destination: 192.168.0.0/16
@@ -218,6 +239,7 @@ ping -c 4 google.com
 - Logging: Enabled
 
 **Test Firewall:**
+
 ```bash
 # From IoT device
 ping 8.8.8.8          # Should work
@@ -247,6 +269,7 @@ iface eth0 inet static
 **TrueNAS**: Configure via web UI Network → Interfaces
 
 ### Step 7.2: Create DHCP Reservations
+
 **Settings → Networks → [VLAN] → DHCP → Reservations**
 
 - Desktop: MAC → 192.168.10.20
@@ -258,6 +281,7 @@ iface eth0 inet static
 ## 8. DNS Configuration with Pi-hole (Day 4)
 
 ### Step 8.1: Install Pi-hole
+
 ```bash
 
 ssh pi@192.168.10.2
@@ -276,11 +300,13 @@ curl -sSL https://install.pi-hole.net | bash
 ```
 
 ### Step 8.2: Configure DHCP to Use Pi-hole
+
 - UniFi Settings → Networks → Trusted
 - DHCP Name Server: 192.168.10.2
 - Secondary: 1.1.1.1
 
 ### Step 8.3: Test Ad Blocking
+
 ```bash
 nslookup doubleclick.net 192.168.10.2
 # Expected: 0.0.0.0 (blocked)
@@ -313,12 +339,14 @@ ping 192.168.10.1    # Should work
 ## 10. Verification and Testing (Day 5)
 
 ### Step 10.1: Connectivity Tests
+
 - [ ] Each VLAN can reach internet
 - [ ] Trusted devices can ping each other
 - [ ] IoT devices CANNOT ping trusted
 - [ ] Guest devices CANNOT reach internal
 
 ### Step 10.2: Performance Tests
+
 ```bash
 
 # Internal speed test
@@ -331,6 +359,7 @@ iperf3 -c 192.168.10.10  # Client
 ```
 
 ### Step 10.3: Backup Configuration
+
 - Settings → Backup → Download Backup
 - Store securely (external drive + cloud)
 - Set auto-backup schedule (daily, 7 days retention)
@@ -346,15 +375,18 @@ iperf3 -c 192.168.10.10  # Client
 ## 12. Ongoing Maintenance
 
 **Weekly:**
+
 - Check UniFi alerts
 - Review Pi-hole logs
 
 **Monthly:**
+
 - Update firmware
 - Review firewall logs
 - Test backup restore
 
 **Quarterly:**
+
 - Review and update firewall rules
 - Audit DHCP reservations
 - Test VPN
@@ -362,6 +394,7 @@ iperf3 -c 192.168.10.10  # Client
 ## Rollback Procedure
 
 If deployment fails:
+
 1. Stop at failed step
 2. Revert to previous backup (Settings → Backup → Restore)
 3. Identify failure point (check logs)

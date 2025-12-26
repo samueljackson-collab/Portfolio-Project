@@ -23,9 +23,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: iot
-      POSTGRES_PASSWORD: iot_password
-      POSTGRES_DB: iot_analytics
+      POSTGRES_USER: ${POSTGRES_USER:-iot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iot_password}
+      POSTGRES_DB: ${POSTGRES_DB:-iot_analytics}
     volumes:
       - timescale-data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
@@ -54,9 +54,9 @@ services:
       MQTT_TOPIC: portfolio/telemetry
       POSTGRES_HOST: timescaledb
       POSTGRES_PORT: 5432
-      POSTGRES_DB: iot_analytics
-      POSTGRES_USER: iot
-      POSTGRES_PASSWORD: iot_password
+      POSTGRES_DB: ${POSTGRES_DB:-iot_analytics}
+      POSTGRES_USER: ${POSTGRES_USER:-iot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iot_password}
     volumes:
       - ./src:/app/src
     restart: unless-stopped
@@ -88,8 +88,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
       GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
     volumes:
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards

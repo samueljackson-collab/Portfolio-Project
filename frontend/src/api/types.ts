@@ -153,3 +153,166 @@ export interface OrchestrationRun {
   artifacts: Record<string, string>
   summary?: string
 }
+
+// Project 5 - Red team simulator
+export interface OperationEvent {
+  id: string
+  operation_id: string
+  day: number
+  timestamp: string
+  description: string
+  category: string
+  detected: boolean
+  detection_confidence: number
+}
+
+export interface Operation {
+  id: string
+  name: string
+  objective?: string | null
+  stealth_factor: number
+  days_elapsed: number
+  undetected_streak: number
+  first_detection_at?: string | null
+  status: string
+  events: OperationEvent[]
+}
+
+// Project 6 - Ransomware response
+export interface IncidentEvent {
+  id: string
+  incident_id: string
+  sequence: number
+  type: string
+  details: string
+  timestamp: string
+}
+
+export interface Incident {
+  id: string
+  name: string
+  status: string
+  severity: string
+  created_at: string
+  resolved_at?: string | null
+  events: IncidentEvent[]
+  warning?: string | null
+}
+
+// Project 7 - SOC portal
+export interface SocAlert {
+  id: string
+  title: string
+  description: string
+  severity: string
+  status: string
+  source: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SocCase {
+  id: string
+  title: string
+  status: string
+  assigned_to?: string | null
+  playbook_id?: string | null
+  alerts: SocAlert[]
+}
+
+export interface SocPlaybook {
+  id: string
+  name: string
+  description?: string | null
+  steps?: string[] | null
+}
+
+// Project 8 - Threat hunting
+export interface Hypothesis {
+  id: string
+  title: string
+  description?: string | null
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Finding {
+  id: string
+  hypothesis_id: string
+  severity: string
+  details: string
+  status: string
+  created_at: string
+}
+
+export interface DetectionRule {
+  id: string
+  name: string
+  query: string
+  status: string
+  source_finding_id?: string | null
+  created_at: string
+}
+
+// Project 9 - Malware analysis
+export interface MalwareSample {
+  id: string
+  name: string
+  file_hash: string
+  sample_type: string
+  family?: string | null
+  status: string
+  created_at: string
+}
+
+export interface AnalysisReport {
+  id: string
+  sample_id: string
+  static_analysis: string
+  dynamic_analysis: string
+  iocs?: string[]
+  yara_rule: string
+  created_at: string
+}
+
+export interface MalwareDetail {
+  sample: MalwareSample
+  report?: AnalysisReport | null
+}
+
+// Project 10 - EDR simulation
+export interface Endpoint {
+  id: string
+  hostname: string
+  operating_system: string
+  agent_version: string
+  last_checkin: string
+  online: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface EndpointPolicy {
+  id: string
+  name: string
+  description?: string | null
+  enabled: boolean
+}
+
+export interface EndpointAlert {
+  id: string
+  endpoint_id?: string | null
+  severity: string
+  status: string
+  description: string
+  created_at: string
+}
+
+export interface DeploymentSummary {
+  total_endpoints: number
+  online: number
+  outdated_agents: number
+  coverage: number
+  active_policies: number
+}

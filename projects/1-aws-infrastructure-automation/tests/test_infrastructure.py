@@ -7,6 +7,7 @@ These tests validate the Terraform configuration without deploying actual resour
 import os
 import json
 import pytest
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -27,6 +28,8 @@ class TestTerraformConfiguration:
 
     def test_terraform_format(self, terraform_dir):
         """Verify Terraform files are properly formatted."""
+        if not shutil.which("terraform"):
+            pytest.skip("Terraform CLI not available")
         result = subprocess.run(
             ['terraform', 'fmt', '-check', '-recursive'],
             cwd=terraform_dir,
@@ -37,6 +40,8 @@ class TestTerraformConfiguration:
 
     def test_terraform_validate(self, terraform_dir):
         """Validate Terraform configuration syntax."""
+        if not shutil.which("terraform"):
+            pytest.skip("Terraform CLI not available")
         # Initialize Terraform (without backend)
         init_result = subprocess.run(
             ['terraform', 'init', '-backend=false'],

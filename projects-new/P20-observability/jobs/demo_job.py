@@ -2,12 +2,12 @@
 from pathlib import Path
 import json
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def enrich_payload(raw_path: Path) -> Path:
     data = json.loads(raw_path.read_text())
-    data["processed_at"] = datetime.utcnow().isoformat() + "Z"
+    data["processed_at"] = datetime.now(timezone.utc).isoformat() + "Z"
     data["checksum"] = hashlib.sha256(raw_path.read_bytes()).hexdigest()
     enriched_path = raw_path.parent / "enriched.json"
     enriched_path.write_text(json.dumps(data, indent=2))

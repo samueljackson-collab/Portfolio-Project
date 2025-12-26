@@ -6,7 +6,7 @@ import logging
 import signal
 import sys
 from collections import defaultdict, Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional, Callable
 
 from kafka import KafkaConsumer
@@ -61,7 +61,7 @@ class EventConsumer:
             'total_events': 0,
             'events_by_type': Counter(),
             'events_by_user': Counter(),
-            'start_time': datetime.utcnow(),
+            'start_time': datetime.now(timezone.utc),
             'errors': 0
         }
 
@@ -173,7 +173,7 @@ class EventConsumer:
 
     def _print_stats(self):
         """Print consumption statistics."""
-        elapsed = (datetime.utcnow() - self.stats['start_time']).total_seconds()
+        elapsed = (datetime.now(timezone.utc) - self.stats['start_time']).total_seconds()
         rate = self.stats['total_events'] / elapsed if elapsed > 0 else 0
 
         logger.info("=" * 60)
@@ -223,13 +223,13 @@ class AggregatingConsumer(EventConsumer):
         """
         super().__init__(*args, **kwargs)
         self.window_seconds = window_seconds
-        self.window_start = datetime.utcnow()
+        self.window_start = datetime.now(timezone.utc)
         self.window_data = defaultdict(lambda: defaultdict(int))
 
     def process_event(self, event: Dict[str, Any]) -> bool:
         """Process event and aggregate data."""
         # Check if we need to flush the window
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if (now - self.window_start).total_seconds() >= self.window_seconds:
             self._flush_window()
             self.window_start = now

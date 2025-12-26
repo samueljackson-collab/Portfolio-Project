@@ -1,4 +1,4 @@
-.PHONY: setup validate test lint run deploy-dev deploy-stage deploy-prod changeset clean help
+.PHONY: setup validate test lint test-unit test-integration terraform-init terraform-plan terraform-apply 	cfn-changeset cfn-apply deploy-dev deploy-stage deploy-prod clean help
 
 SHELL := /bin/bash
 PYTHON := python3
@@ -6,7 +6,12 @@ STACK_NAME ?= my-infra-stack
 ENVIRONMENT ?= dev
 AWS_REGION ?= us-east-1
 TEMPLATE := infra/vpc-rds.yaml
+RDS_TEMPLATE := infra/rds.yaml
 PARAMS ?= params/$(ENVIRONMENT).json
+TF_DIR := terraform
+STATE_BUCKET ?= p01-aws-infra-tf-state
+LOCK_TABLE ?= p01-aws-infra-tf-locks
+CHANGE_SET_NAME ?= $(STACK_NAME)-$(shell date +%Y%m%d-%H%M%S)
 
 setup: ## Install dependencies
 	$(PYTHON) -m venv .venv || true
@@ -21,12 +26,22 @@ validate: ## Validate CloudFormation templates
 		$(PYTHON) src/validate_template.py; \
 	fi
 
-test: ## Run unit tests
-	@echo "Running tests..."
+test: test-unit test-integration ## Run all tests
+
+test-unit: ## Run unit tests only
+	@echo "Running unit tests..."
 	@if [ -f .venv/bin/activate ]; then \
-		. .venv/bin/activate && pytest -v tests/; \
+		. .venv/bin/activate && pytest -v tests/unit; \
 	else \
-		pytest -v tests/; \
+		pytest -v tests/unit; \
+	fi
+
+test-integration: ## Run integration tests only
+	@echo "Running integration tests..."
+	@if [ -f .venv/bin/activate ]; then \
+		. .venv/bin/activate && pytest -v tests/integration; \
+	else \
+		pytest -v tests/integration; \
 	fi
 
 lint: ## Lint markdown files
@@ -37,21 +52,46 @@ lint: ## Lint markdown files
 		echo "⚠ markdownlint not installed (npm install -g markdownlint-cli)"; \
 	fi
 
-changeset: validate ## Create CloudFormation change set
-	@echo "Creating change set for stack: $(STACK_NAME)..."
+cfn-changeset: validate ## Create CloudFormation change set for the RDS stack
+	@echo "Creating change set for stack: $(STACK_NAME) using $(RDS_TEMPLATE)..."
 	aws cloudformation create-change-set \
 		--stack-name $(STACK_NAME) \
-		--change-set-name $(STACK_NAME)-$(shell date +%Y%m%d-%H%M%S) \
-		--template-body file://$(TEMPLATE) \
-		--parameters file://$(PARAMS) \
-		--capabilities CAPABILITY_IAM \
-		--region $(AWS_REGION) || \
-	aws cloudformation create-change-set \
-		--stack-name $(STACK_NAME) \
-		--change-set-name $(STACK_NAME)-$(shell date +%Y%m%d-%H%M%S) \
-		--template-body file://$(TEMPLATE) \
+		--change-set-name $(CHANGE_SET_NAME) \
+		--template-body file://$(RDS_TEMPLATE) \
 		--capabilities CAPABILITY_IAM \
 		--region $(AWS_REGION)
+	aws cloudformation describe-change-set --stack-name $(STACK_NAME) --change-set-name $(CHANGE_SET_NAME) --region $(AWS_REGION)
+
+cfn-apply: ## Execute a previously created CloudFormation change set
+	@echo "Executing change set $(CHANGE_SET_NAME) for stack $(STACK_NAME)..."
+	aws cloudformation execute-change-set \
+		--stack-name $(STACK_NAME) \
+		--change-set-name $(CHANGE_SET_NAME) \
+		--region $(AWS_REGION)
+
+terraform-init: ## Initialize Terraform with remote state backend
+	@echo "Initializing Terraform backend..."
+	@if [ -z "$(STATE_BUCKET)" ] || [ -z "$(LOCK_TABLE)" ]; then \
+		echo "STATE_BUCKET and LOCK_TABLE are required"; exit 1; \
+	fi
+	terraform -chdir=$(TF_DIR) init -input=false \
+		-backend-config="bucket=$(STATE_BUCKET)" \
+		-backend-config="key=p01-aws-infra/terraform.tfstate" \
+		-backend-config="region=$(AWS_REGION)" \
+		-backend-config="dynamodb_table=$(LOCK_TABLE)" \
+		-backend-config="encrypt=true"
+
+terraform-plan: terraform-init ## Generate Terraform plan
+	terraform -chdir=$(TF_DIR) plan -input=false -out=plan.out
+
+terraform-apply: terraform-plan ## Apply Terraform plan (requires confirmation)
+	@read -p "Apply Terraform plan to $(ENVIRONMENT)? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		terraform -chdir=$(TF_DIR) apply -input=false plan.out; \
+	else \
+		echo "Terraform apply cancelled"; \
+	fi
 
 deploy-dev: ENVIRONMENT=dev
 deploy-dev: validate ## Deploy stack to dev environment
@@ -98,6 +138,7 @@ clean: ## Clean build artifacts
 	find . -type f -name "*.pyc" -delete
 
 help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "[36m%-20s[0m %s
+", $$1, $$2}'
 
 .DEFAULT_GOAL := help

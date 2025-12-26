@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import boto3
@@ -129,7 +129,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if 'timestamp' in data:
             try:
                 event_time = datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
-                if event_time > datetime.utcnow():
+                if event_time > datetime.now(timezone.utc):
                     validation_errors.append(f"Timestamp in future: {data['timestamp']}")
             except ValueError:
                 validation_errors.append(f"Invalid timestamp format: {data['timestamp']}")
@@ -155,7 +155,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'schema_name': schema_name,
             'schema_version': schema.get('$id', 'unknown'),
             'record_count': 1,  # For batch processing, count records
-            'validation_timestamp': datetime.utcnow().isoformat()
+            'validation_timestamp': datetime.now(timezone.utc).isoformat()
         }
 
     except ValidationError:
@@ -203,7 +203,7 @@ def send_to_dlq(event: Dict[str, Any], error_message: str, error_type: str) -> N
             'key': event['key'],
             'error_type': error_type,
             'error_message': error_message,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'original_event': event
         }
 
@@ -235,7 +235,7 @@ def update_metadata_status(execution_id: str, timestamp: int, status: str, error
         update_expression = 'SET #status = :status, validation_timestamp = :validation_timestamp'
         expression_values = {
             ':status': status,
-            ':validation_timestamp': datetime.utcnow().isoformat()
+            ':validation_timestamp': datetime.now(timezone.utc).isoformat()
         }
 
         if error_message:

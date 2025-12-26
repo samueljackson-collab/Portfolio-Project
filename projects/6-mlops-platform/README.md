@@ -1,5 +1,12 @@
 # Project 6: Machine Learning Pipeline (MLOps Platform)
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 This project delivers an end-to-end MLOps workflow for training, evaluating, registering, and deploying machine learning models. The platform combines MLflow for experiment tracking, Optuna for automated hyperparameter tuning, and a modular deployment layer that targets Kubernetes, AWS Lambda, or Amazon SageMaker.
 
@@ -91,4 +98,3 @@ Write a feature engineering pipeline that handles missing values, encodes catego
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

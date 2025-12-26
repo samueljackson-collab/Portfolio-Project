@@ -2,7 +2,7 @@
 import json
 import os
 import boto3
-from datetime import datetime
+from datetime import datetime, timezone
 
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
@@ -20,7 +20,7 @@ def lambda_handler(event, context):
             Key={'execution_id': execution_id, 'timestamp': event['timestamp']},
             UpdateExpression='SET #status = :status, transform_start = :start',
             ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={':status': 'TRANSFORMING', ':start': datetime.utcnow().isoformat()}
+            ExpressionAttributeValues={':status': 'TRANSFORMING', ':start': datetime.now(timezone.utc).isoformat()}
         )
 
         # Download from S3
@@ -36,7 +36,7 @@ def lambda_handler(event, context):
             values = line.split(',')
             record = dict(zip(headers, values))
             # Add enrichment
-            record['processed_timestamp'] = datetime.utcnow().isoformat()
+            record['processed_timestamp'] = datetime.now(timezone.utc).isoformat()
             record['processing_id'] = execution_id
             records.append(record)
 
@@ -60,7 +60,7 @@ def lambda_handler(event, context):
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'TRANSFORMED',
-                ':end': datetime.utcnow().isoformat(),
+                ':end': datetime.now(timezone.utc).isoformat(),
                 ':key': output_key,
                 ':count': len(records)
             }

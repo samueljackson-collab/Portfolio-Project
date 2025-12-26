@@ -585,25 +585,25 @@ grep -i "report generation" /var/log/report-generator/scheduler.log
 
 #### Severity Classification
 
-**P0: All Reports Failing**
+### P0: All Reports Failing
 - Service completely down
 - All scheduled reports failing
 - Critical data sources unreachable
 - Complete email delivery failure
 
-**P1: Major Report Failure**
+### P1: Major Report Failure
 - Critical scheduled report missed
 - Multiple report generation failures
 - PDF rendering completely broken
 - Primary data source unavailable
 
-**P2: Degraded Service**
+### P2: Degraded Service
 - Individual report failures
 - Slow report generation (>2 min)
 - Intermittent data source issues
 - Some email deliveries failing
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Template warnings
 - Non-critical data source timeout
 - Individual email failure

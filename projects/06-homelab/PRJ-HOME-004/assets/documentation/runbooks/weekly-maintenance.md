@@ -193,7 +193,40 @@ openssl s_client -connect photos.homelab.local:443 -servername photos.homelab.lo
 
 ---
 
-### 3. Storage Maintenance (15 minutes)
+### 3. Security Hardening Verification (10 minutes)
+
+#### Fail2ban + Audit Logging
+
+```bash
+# Fail2ban overall status
+sudo fail2ban-client status
+
+# Review banned IPs from the last week
+sudo fail2ban-client status sshd | grep "Banned IP list" -A 1
+
+# Audit log volume and shipping
+sudo systemctl is-active auditd
+sudo ausearch -m USER_LOGIN -ts this-week | tail -n 10
+```
+
+#### MQTT TLS + 2FA Review
+
+```bash
+# Verify MQTT TLS cert validity
+openssl s_client -connect mqtt.homelab.local:8883 -servername mqtt.homelab.local </dev/null 2>/dev/null | openssl x509 -noout -dates
+
+# Validate Mosquitto TLS listener is active
+sudo ss -lntp | grep 8883
+```
+
+- [ ] Fail2ban jails active (sshd, nginx)
+- [ ] auditd logs are forwarding to Loki
+- [ ] MQTT TLS certificate not expiring within 30 days
+- [ ] Admin MFA enforcement reviewed in SSO/Vaultwarden
+
+---
+
+### 4. Storage Maintenance (15 minutes)
 
 #### ZFS Health Check
 

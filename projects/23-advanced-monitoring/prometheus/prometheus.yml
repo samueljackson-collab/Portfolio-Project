@@ -169,29 +169,47 @@ scrape_configs:
         labels:
           cloud: 'aws'
 
-# Remote write for long-term storage (optional)
-# remote_write:
-#   - url: http://thanos-receive:19291/api/v1/receive
-#     queue_config:
-#       capacity: 10000
-#       max_shards: 50
-#       max_samples_per_send: 5000
+  # Custom Application Exporter
+  - job_name: 'custom-app-metrics'
+    static_configs:
+      - targets: ['app-exporter:8000']
+        labels:
+          service: 'application'
+          exporter: 'custom'
+    scrape_interval: 15s
+    scrape_timeout: 10s
 
-# Remote read (optional)
-# remote_read:
-#   - url: http://thanos-query:9090/api/v1/read
-    cluster: 23-advanced-monitoring
-    environment: production
-alerting:
-  alertmanagers:
-  - static_configs:
-    - targets:
-      - alertmanager:9093
-rule_files:
-- rules.yml
-scrape_configs:
-- job_name: 23-advanced-monitoring
-  static_configs:
-  - targets:
-    - app:8080
-  metrics_path: /metrics
+# Remote write for long-term storage with Thanos
+remote_write:
+  - url: http://thanos-receive:19291/api/v1/receive
+    queue_config:
+      capacity: 10000
+      max_shards: 50
+      max_samples_per_send: 5000
+      min_backoff: 30ms
+      max_backoff: 100ms
+    write_relabel_configs:
+      # Drop high-cardinality metrics
+      - source_labels: [__name__]
+        regex: 'go_.*'
+        action: drop
+
+  # Alternative: Cortex for long-term storage
+  # - url: http://cortex:9009/api/prom/push
+  #   queue_config:
+  #     capacity: 10000
+  #     max_shards: 50
+
+  # Alternative: AWS Managed Prometheus (AMP)
+  # - url: https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-xxx/api/v1/remote_write
+  #   sigv4:
+  #     region: us-east-1
+  #   queue_config:
+  #     max_samples_per_send: 1000
+  #     max_shards: 200
+  #     capacity: 2500
+
+# Remote read from Thanos for historical queries
+remote_read:
+  - url: http://thanos-query:9090/api/v1/read
+    read_recent: true

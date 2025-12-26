@@ -14,7 +14,6 @@ import os
 sys.modules['tensorflow'] = MagicMock()
 sys.modules['transformers'] = MagicMock()
 
-sys.path.insert(0, '..')
 from train_classifier import TabClassifierModel, load_dataset, CATEGORIES
 
 

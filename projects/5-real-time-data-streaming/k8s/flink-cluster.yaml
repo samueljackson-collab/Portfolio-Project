@@ -1,0 +1,343 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streaming
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flink-config
+  namespace: streaming
+data:
+  flink-conf.yaml: |+
+    jobmanager.rpc.address: flink-jobmanager
+    taskmanager.numberOfTaskSlots: 4
+    parallelism.default: 2
+
+    # High availability
+    high-availability: zookeeper
+    high-availability.storageDir: file:///opt/flink/ha
+    high-availability.zookeeper.quorum: zookeeper:2181
+    high-availability.zookeeper.path.root: /flink
+    high-availability.cluster-id: /streaming-cluster
+
+    # State backend (RocksDB)
+    state.backend: rocksdb
+    state.checkpoints.dir: file:///opt/flink/checkpoints
+    state.savepoints.dir: file:///opt/flink/savepoints
+    state.backend.incremental: true
+    state.backend.rocksdb.predefined-options: SPINNING_DISK_OPTIMIZED
+
+    # Checkpointing
+    execution.checkpointing.interval: 60000
+    execution.checkpointing.mode: EXACTLY_ONCE
+    execution.checkpointing.timeout: 600000
+    execution.checkpointing.max-concurrent-checkpoints: 1
+    execution.checkpointing.min-pause: 10000
+
+    # Memory
+    jobmanager.memory.process.size: 2048m
+    taskmanager.memory.process.size: 4096m
+    taskmanager.memory.managed.fraction: 0.4
+
+    # Metrics
+    metrics.reporter.prom.class: org.apache.flink.metrics.prometheus.PrometheusReporter
+    metrics.reporter.prom.port: 9249
+
+    # Rest
+    rest.port: 8081
+    rest.bind-address: 0.0.0.0
+
+  log4j-console.properties: |+
+    rootLogger.level = INFO
+    rootLogger.appenderRef.console.ref = ConsoleAppender
+    appender.console.name = ConsoleAppender
+    appender.console.type = CONSOLE
+    appender.console.layout.type = PatternLayout
+    appender.console.layout.pattern = %d{yyyy-MM-dd HH:mm:ss,SSS} %-5p %-60c %x - %m%n
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager
+  namespace: streaming
+spec:
+  type: ClusterIP
+  ports:
+  - name: rpc
+    port: 6123
+  - name: blob-server
+    port: 6124
+  - name: webui
+    port: 8081
+  - name: metrics
+    port: 9249
+  selector:
+    app: flink
+    component: jobmanager
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager-rest
+  namespace: streaming
+spec:
+  type: LoadBalancer
+  ports:
+  - name: rest
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
+  selector:
+    app: flink
+    component: jobmanager
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-jobmanager
+  namespace: streaming
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink
+      component: jobmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: jobmanager
+    spec:
+      containers:
+      - name: jobmanager
+        image: flink:1.17-scala_2.12-java11
+        args: ["jobmanager"]
+        ports:
+        - containerPort: 6123
+          name: rpc
+        - containerPort: 6124
+          name: blob-server
+        - containerPort: 8081
+          name: webui
+        - containerPort: 9249
+          name: metrics
+        env:
+        - name: JOB_MANAGER_RPC_ADDRESS
+          value: flink-jobmanager
+        livenessProbe:
+          tcpSocket:
+            port: 6123
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          tcpSocket:
+            port: 6123
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        volumeMounts:
+        - name: flink-config-volume
+          mountPath: /opt/flink/conf
+        - name: flink-checkpoints
+          mountPath: /opt/flink/checkpoints
+        - name: flink-savepoints
+          mountPath: /opt/flink/savepoints
+        - name: flink-ha
+          mountPath: /opt/flink/ha
+      volumes:
+      - name: flink-config-volume
+        configMap:
+          name: flink-config
+          items:
+          - key: flink-conf.yaml
+            path: flink-conf.yaml
+          - key: log4j-console.properties
+            path: log4j-console.properties
+      - name: flink-checkpoints
+        persistentVolumeClaim:
+          claimName: flink-checkpoints-pvc
+      - name: flink-savepoints
+        persistentVolumeClaim:
+          claimName: flink-savepoints-pvc
+      - name: flink-ha
+        persistentVolumeClaim:
+          claimName: flink-ha-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-taskmanager
+  namespace: streaming
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flink
+      component: taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: taskmanager
+    spec:
+      containers:
+      - name: taskmanager
+        image: flink:1.17-scala_2.12-java11
+        args: ["taskmanager"]
+        ports:
+        - containerPort: 6122
+          name: rpc
+        - containerPort: 6125
+          name: query-state
+        - containerPort: 9249
+          name: metrics
+        env:
+        - name: JOB_MANAGER_RPC_ADDRESS
+          value: flink-jobmanager
+        livenessProbe:
+          tcpSocket:
+            port: 6122
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        readinessProbe:
+          tcpSocket:
+            port: 6122
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+        volumeMounts:
+        - name: flink-config-volume
+          mountPath: /opt/flink/conf
+        - name: flink-checkpoints
+          mountPath: /opt/flink/checkpoints
+        - name: flink-savepoints
+          mountPath: /opt/flink/savepoints
+      volumes:
+      - name: flink-config-volume
+        configMap:
+          name: flink-config
+          items:
+          - key: flink-conf.yaml
+            path: flink-conf.yaml
+          - key: log4j-console.properties
+            path: log4j-console.properties
+      - name: flink-checkpoints
+        persistentVolumeClaim:
+          claimName: flink-checkpoints-pvc
+      - name: flink-savepoints
+        persistentVolumeClaim:
+          claimName: flink-savepoints-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flink-checkpoints-pvc
+  namespace: streaming
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flink-savepoints-pvc
+  namespace: streaming
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flink-ha-pvc
+  namespace: streaming
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: flink-jobmanager-pdb
+  namespace: streaming
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: flink
+      component: jobmanager
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: flink-taskmanager-pdb
+  namespace: streaming
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: flink
+      component: taskmanager
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: flink-taskmanager-hpa
+  namespace: streaming
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: flink-taskmanager
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

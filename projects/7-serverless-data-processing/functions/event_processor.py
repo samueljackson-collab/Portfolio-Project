@@ -8,7 +8,7 @@ validates, transforms, and forwards to downstream systems.
 import json
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 import boto3
 from botocore.exceptions import ClientError
@@ -71,7 +71,7 @@ class EventTransformer:
             'event_id': event.get('event_id', generate_event_id()),
             'event_type': event['event_type'],
             'timestamp': event['timestamp'],
-            'processed_at': datetime.utcnow().isoformat(),
+            'processed_at': datetime.now(timezone.utc).isoformat(),
             'data': event['data'],
             'metadata': {
                 'source': event.get('source', 'unknown'),
@@ -105,7 +105,7 @@ def send_to_dlq(event: Dict, error: str):
         message = {
             'original_event': event,
             'error': error,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'retry_count': event.get('retry_count', 0) + 1
         }
 
@@ -129,12 +129,12 @@ def record_metric(metric_name: str, value: float, event_type: str):
         table = dynamodb.Table(METRICS_TABLE)
         table.put_item(
             Item={
-                'metric_id': f"{metric_name}#{datetime.utcnow().isoformat()}",
+                'metric_id': f"{metric_name}#{datetime.now(timezone.utc).isoformat()}",
                 'metric_name': metric_name,
                 'value': value,
                 'event_type': event_type,
-                'timestamp': datetime.utcnow().isoformat(),
-                'ttl': int(datetime.utcnow().timestamp()) + (7 * 24 * 3600)  # 7 days
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'ttl': int(datetime.now(timezone.utc).timestamp()) + (7 * 24 * 3600)  # 7 days
             }
         )
     except Exception as e:
@@ -149,7 +149,7 @@ def save_to_s3(data: Dict, prefix: str = 'processed'):
 
     try:
         # Generate S3 key with date partitioning
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         key = f"{prefix}/year={now.year}/month={now.month:02d}/day={now.day:02d}/{generate_event_id()}.json"
 
         s3_client.put_object(

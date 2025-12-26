@@ -121,7 +121,34 @@ zpool status tank | grep -i error
 docker ps -a --filter "status=exited" --filter "since=24h"
 ```
 
-### 5. Service Availability Test (2 minutes)
+### 5. Security Control Verification (2 minutes)
+
+**Validate fail2ban and audit logging:**
+```bash
+# Fail2ban status for SSH
+sudo fail2ban-client status sshd
+
+# Audit daemon running
+sudo systemctl is-active auditd
+
+# Confirm auth events logged today
+sudo ausearch -m USER_LOGIN -ts today | tail -n 5
+```
+
+**Validate MQTT TLS and 2FA enforcement:**
+```bash
+# MQTT TLS handshake
+openssl s_client -connect mqtt.homelab.local:8883 -servername mqtt.homelab.local </dev/null 2>/dev/null | openssl x509 -noout -dates
+
+# Confirm admin MFA policies in IdP/Vaultwarden/SSO dashboards
+```
+
+- [ ] Fail2ban active and banning as expected
+- [ ] auditd running and shipping logs to Loki
+- [ ] MQTT TLS certificate valid and not expiring within 30 days
+- [ ] 2FA enforced on admin portals (Proxmox, UniFi, Vaultwarden)
+
+### 6. Service Availability Test (2 minutes)
 
 **Test critical service endpoints:**
 ```bash
@@ -140,7 +167,7 @@ curl -I https://grafana.homelab.local
 - [ ] Nginx Proxy Manager accessible
 - [ ] All SSL certificates valid
 
-### 6. Capacity Planning Check (3 minutes)
+### 7. Capacity Planning Check (3 minutes)
 
 **Review growth trends:**
 ```

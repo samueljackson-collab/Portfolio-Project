@@ -58,6 +58,8 @@ make report
 
 ## Configuration
 
+**Target URL**: Set `BASE_URL` to the application under test. Local default is `http://localhost:3000`; staging example: `https://staging.example.com`.
+
 | Env Var | Purpose | Example | Required |
 |---------|---------|---------|----------|
 | `BASE_URL` | Target application URL | `https://example.com` | Yes |
@@ -73,6 +75,11 @@ make report
 cp .env.example .env
 # Edit .env with your test credentials
 ```
+
+**CI Secrets (GitHub Actions)**:
+- `P06_BASE_URL` (target URL)
+- `P06_TEST_USER`
+- `P06_TEST_PASSWORD`
 
 ## Testing
 
@@ -99,10 +106,11 @@ npx playwright test --update-snapshots
 ## Operations
 
 ### Logs, Metrics, Traces
-- **Test Reports**: `playwright-report/index.html` (generated after test run)
+- **Test Reports**: `reports/playwright-html/index.html` (generated after test run)
+- **Machine-readable Reports**: `reports/playwright-report.json`, `reports/playwright-junit.xml`
 - **Trace Viewer**: `npx playwright show-trace trace.zip`
-- **Screenshots**: `test-results/` directory (on failure)
-- **Videos**: `test-results/` directory (configurable)
+- **Screenshots**: `reports/test-results/` directory (on failure)
+- **Videos**: `reports/test-results/` directory (configurable)
 
 ### Common Issues & Fixes
 
@@ -184,3 +192,21 @@ Write a Locust load test that simulates 100 concurrent users performing read/wri
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
 
+## Evidence & Verification
+
+Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
+
+**Evidence artifacts**
+- [Screenshot](./docs/evidence/screenshot.svg)
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import click
 import yaml
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -65,9 +65,9 @@ class ReportGenerator:
         summary = self.collector.get_summary_stats(projects)
 
         return {
-            'generated_at': datetime.utcnow().isoformat(),
-            'generated_date': datetime.utcnow().strftime('%Y-%m-%d'),
-            'generated_time': datetime.utcnow().strftime('%H:%M:%S UTC'),
+            'generated_at': datetime.now(timezone.utc).isoformat(),
+            'generated_date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+            'generated_time': datetime.now(timezone.utc).strftime('%H:%M:%S UTC'),
             'projects': [p.to_dict() for p in projects],
             'summary': summary,
             'config': self.config

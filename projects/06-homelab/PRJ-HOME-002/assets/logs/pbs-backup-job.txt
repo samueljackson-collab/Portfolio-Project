@@ -1,0 +1,6 @@
+[2025-11-10 02:04:12] job=nightly-vm-backups datastore=truenas-pbs status=started
+[2025-11-10 02:04:12] vm=wiki-js size=24.6GB mode=snapshot
+[2025-11-10 02:06:44] vm=home-assistant size=18.1GB mode=snapshot
+[2025-11-10 02:09:17] vm=immich size=42.3GB mode=snapshot
+[2025-11-10 02:12:58] verification=ok dedup_ratio=2.7x duration=8m46s
+[2025-11-10 02:13:01] job=nightly-vm-backups status=success

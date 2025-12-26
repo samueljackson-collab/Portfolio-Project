@@ -3,16 +3,16 @@ services:
   db:
     image: postgres:15.6
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pen_test
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pen_test}
     ports:
       - "5432:5432"
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/pen_test
-      SECRET_KEY: devsecret
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-pen_test}
+      SECRET_KEY: ${SECRET_KEY:-devsecret}
     ports:
       - "8000:8000"
     depends_on:
@@ -20,7 +20,7 @@ services:
   frontend:
     build: ./frontend
     environment:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     ports:
       - "4173:4173"
     depends_on:
