@@ -4,126 +4,131 @@ layout: home
 hero:
   name: Sam Jackson
   text: Enterprise Technical Portfolio
-  tagline: System Development Engineer specializing in Cloud Infrastructure, DevOps, and Full-Stack Solutions
+  tagline: System Development Engineer specializing in cloud infrastructure, DevOps, and production-ready platforms
   image:
     src: /hero-image.svg
     alt: Portfolio Hero
   actions:
     - theme: brand
-      text: View Projects
+      text: View Elite Projects
       link: /projects/01-aws-infrastructure
     - theme: alt
       text: GitHub
       link: https://github.com/samueljackson-collab
 
 features:
+  - icon: ⭐
+    title: Elite Focus
+    details: Concentrated on 5 flagship projects with validated demos, evidence artifacts, and interview-ready narratives
   - icon: 🏗️
-    title: Infrastructure & DevOps
-    details: Production-grade AWS infrastructure with Terraform, Kubernetes CI/CD pipelines, and zero-downtime database migrations
+    title: AWS Infrastructure Automation
+    details: Terraform-driven AWS environments with modular IaC, CI validation, and deployment evidence
     link: /projects/01-aws-infrastructure
-  - icon: 🤖
-    title: AI/ML & Data Engineering
-    details: Real-time streaming platforms, MLOps pipelines, serverless data processing, and RAG-powered chatbots
-    link: /projects/06-mlops
-  - icon: 🔐
-    title: Security & Blockchain
-    details: IoT analytics, SOAR platforms, smart contracts, and edge AI inference systems
-    link: /projects/13-cybersecurity
-  - icon: 🚀
-    title: Emerging Technologies
-    details: Quantum computing, GPU-accelerated workloads, Kubernetes operators, and multi-cloud service mesh
-    link: /projects/17-service-mesh
-  - icon: 🏢
-    title: Enterprise Systems
-    details: Advanced monitoring, autonomous DevOps, disaster recovery, and quantum-safe cryptography
-    link: /projects/23-monitoring
+  - icon: ☸️
+    title: Kubernetes CI/CD Pipeline
+    details: GitOps delivery with automated build, scan, and deployment workflows
+    link: /projects/03-kubernetes-cicd
   - icon: 📊
-    title: Portfolio Metrics
-    details: 25 enterprise projects | 52% avg completion | 75+ technologies demonstrated
+    title: Enterprise Monitoring Stack
+    details: Prometheus + Grafana observability with alerting and dashboard screenshots
+    link: /projects/23-monitoring
+  - icon: 🛡️
+    title: DevSecOps Pipeline
+    details: Security-first CI with Trivy scans, remediation guidance, and audit-ready reports
+    link: /projects/04-devsecops
+  - icon: 🌐
+    title: Portfolio Website & Docs Hub
+    details: VitePress portal with elite project summaries and recruiter-focused navigation
+    link: /projects/25-portfolio-website
 ---
 
 # Welcome to My Technical Portfolio
 
 ## About This Portfolio
 
-This documentation hub showcases **25 enterprise-grade projects** spanning cloud infrastructure, machine learning, cybersecurity, and emerging technologies. Each project demonstrates production-ready implementations with comprehensive documentation, architecture diagrams, and working code.
+This documentation hub highlights **5 elite projects** that demonstrate cloud infrastructure, DevOps automation, observability, and security engineering. Supporting materials include evidence artifacts, runbooks, and interview-ready summaries.
 
 ## Portfolio Statistics
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0;">
   <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; text-align: center;">
-    <h3 style="font-size: 2.5em; margin: 0; color: #3b82f6;">25</h3>
-    <p style="margin: 10px 0 0 0; color: #6b7280;">Enterprise Projects</p>
+    <h3 style="font-size: 2.5em; margin: 0; color: #3b82f6;">5</h3>
+    <p style="margin: 10px 0 0 0; color: #6b7280;">Elite Projects</p>
   </div>
   <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; text-align: center;">
-    <h3 style="font-size: 2.5em; margin: 0; color: #10b981;">75+</h3>
-    <p style="margin: 10px 0 0 0; color: #6b7280;">Technologies</p>
+    <h3 style="font-size: 2.5em; margin: 0; color: #10b981;">12+</h3>
+    <p style="margin: 10px 0 0 0; color: #6b7280;">Core Technologies</p>
   </div>
   <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; text-align: center;">
-    <h3 style="font-size: 2.5em; margin: 0; color: #f59e0b;">52%</h3>
-    <p style="margin: 10px 0 0 0; color: #6b7280;">Avg Completion</p>
+    <h3 style="font-size: 2.5em; margin: 0; color: #f59e0b;">100%</h3>
+    <p style="margin: 10px 0 0 0; color: #6b7280;">Evidence Coverage</p>
   </div>
   <div style="border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; text-align: center;">
-    <h3 style="font-size: 2.5em; margin: 0; color: #ef4444;">5</h3>
-    <p style="margin: 10px 0 0 0; color: #6b7280;">Categories</p>
+    <h3 style="font-size: 2.5em; margin: 0; color: #ef4444;">4</h3>
+    <p style="margin: 10px 0 0 0; color: #6b7280;">Core Domains</p>
   </div>
 </div>
 
-## Featured Projects
+## Elite Project Lineup
 
 ### 🏆 Project 1: AWS Infrastructure Automation
-**Status:** 75% Complete | **Category:** Infrastructure & DevOps
+**Status:** Demo Ready | **Category:** Infrastructure & DevOps
 
-Production-ready AWS environment with VPC, EKS, and RDS PostgreSQL. Demonstrates IaC fluency across Terraform, AWS CDK, and Pulumi.
+Production-ready AWS environment with modular Terraform, validated plans, and reusable IaC patterns.
 
 [View Project →](/projects/01-aws-infrastructure)
 
 ---
 
-### 🏆 Project 8: Advanced AI Chatbot
-**Status:** 55% Complete | **Category:** AI/ML
+### 🏆 Project 3: Kubernetes CI/CD Pipeline
+**Status:** Demo Ready | **Category:** DevOps
 
-RAG-powered chatbot with vector search, tool orchestration, and WebSocket streaming. Built with FastAPI and OpenAI.
+GitOps pipeline with automated build, scan, and deployment workflows backed by ArgoCD patterns.
 
-[View Project →](/projects/08-ai-chatbot)
-
----
-
-### 🏆 Project 10: Blockchain Smart Contracts
-**Status:** 70% Complete | **Category:** Security & Blockchain
-
-DeFi protocol with Solidity contracts, Hardhat tooling, and security analysis. Demonstrates blockchain development and smart contract security.
-
-[View Project →](/projects/10-blockchain)
+[View Project →](/projects/03-kubernetes-cicd)
 
 ---
 
-### 🏆 Project 23: Advanced Monitoring & Observability
-**Status:** 55% Complete | **Category:** Enterprise Systems
+### 🏆 Project 23: Enterprise Monitoring Stack
+**Status:** Demo Ready | **Category:** Observability
 
-Unified observability stack with Prometheus, Grafana, Tempo, and Loki. Implements SLO-based alerting and distributed tracing.
+Prometheus + Grafana stack with alerting examples, dashboards, and evidence artifacts.
 
 [View Project →](/projects/23-monitoring)
 
+---
+
+### 🏆 Project 4: DevSecOps Pipeline
+**Status:** Demo Ready | **Category:** Security
+
+Security-first CI with Trivy scans, remediation guidance, and sample audit-ready reports.
+
+[View Project →](/projects/04-devsecops)
+
+---
+
+### 🏆 Project 25: Portfolio Website & Documentation Hub
+**Status:** Demo Ready | **Category:** Documentation
+
+VitePress documentation hub with elite project summaries, evidence artifacts, and recruiter-ready navigation.
+
+[View Project →](/projects/25-portfolio-website)
+
 ## Technology Stack
 
-**Cloud & Infrastructure:** AWS, Kubernetes, Terraform, Docker, Pulumi, AWS CDK
+**Cloud & Infrastructure:** AWS, Terraform, Docker, Kubernetes
 
-**Programming Languages:** Python, TypeScript, JavaScript, Bash, Solidity, HCL
+**Programming Languages:** Python, TypeScript, Bash, HCL
 
-**Data & ML:** Kafka, Flink, MLflow, Optuna, PostgreSQL, TimescaleDB, Delta Lake
+**DevOps & Monitoring:** GitHub Actions, ArgoCD, Prometheus, Grafana
 
-**DevOps & Monitoring:** GitHub Actions, ArgoCD, Prometheus, Grafana, Loki, Tempo
-
-**Security:** SonarQube, Snyk, Trivy, OWASP ZAP, HashiCorp Vault, mTLS
-
-**Emerging Tech:** Qiskit, CUDA, ONNX, Istio, Chainlink, Kyber KEM
+**Security:** Trivy, OWASP ZAP, HashiCorp Vault
 
 ## Quick Navigation
 
-- **Browse by Category:** Use the sidebar to explore projects organized by domain
+- **Browse by Category:** Use the sidebar to explore elite projects organized by domain
 - **Search:** Use the search bar (top right) to find specific technologies or topics
-- **GitHub:** View source code for all projects on [GitHub](https://github.com/samueljackson-collab/Portfolio-Project)
+- **GitHub:** View source code and supporting artifacts on [GitHub](https://github.com/samueljackson-collab/Portfolio-Project)
 
 ## About Me
 
@@ -135,4 +140,4 @@ Unified observability stack with Prometheus, Grafana, Tempo, and Loki. Implement
 
 ---
 
-**Last Updated:** November 2024 | **Projects:** 25 | **Status:** Actively Developing
+**Last Updated:** December 2025 | **Projects:** 5 Elite | **Status:** Demo Ready
