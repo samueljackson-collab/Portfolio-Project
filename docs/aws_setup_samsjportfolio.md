@@ -76,9 +76,9 @@ Create these security groups:
   - Allow inbound 80/443 from 0.0.0.0/0
   - Allow SSH from your IP only
 - **sg-app-SamSJPortfolio**
-  - Allow inbound from sg-web only
+  - Add an inbound rule allowing traffic on your application port, with the source set to the ID of `sg-web-SamSJPortfolio`.
 - **sg-db-SamSJPortfolio**
-  - Allow inbound 5432 only from sg-app
+  - Add an inbound rule for port 5432 (Postgres), with the source set to the ID of `sg-app-SamSJPortfolio`.
 
 ## Step 8: S3 buckets
 1. Create bucket: `reports-SamSJPortfolio-us-west-2`
