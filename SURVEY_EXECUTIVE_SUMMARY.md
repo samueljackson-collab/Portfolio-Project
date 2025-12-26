@@ -31,8 +31,7 @@ Projects <40% Complete:            4 (Projects 3, 4, 17, 25)
 
 ### By Technology Domain
 
-**Cloud & Infrastructure** (8 projects: 1, 6, 7, 8, 9, 11, 12, 18, 22)
-
+**Cloud & Infrastructure** (10 projects: 1, 6, 7, 8, 9, 11, 12, 17, 18, 22)
 - AWS focus (Lambda, ECS, RDS, SageMaker, IoT Core)
 - Multi-cloud capable (6, 17)
 - Average completion: 52%

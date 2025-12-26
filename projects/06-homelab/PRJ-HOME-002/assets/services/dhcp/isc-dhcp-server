@@ -1,0 +1,5 @@
+# Defaults for isc-dhcp-server
+# This file lives at /etc/default/isc-dhcp-server
+
+INTERFACESv4="vmbr0"
+INTERFACESv6=""

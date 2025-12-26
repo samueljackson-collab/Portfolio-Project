@@ -1,0 +1,98 @@
+{
+  "id": null,
+  "uid": "backend-frontend-overview",
+  "title": "Backend & Frontend Service Overview",
+  "tags": ["portfolio", "backend", "frontend"],
+  "timezone": "",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Backend Up",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "max(up{job=\"backend-api\"})",
+          "legendFormat": "backend"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"type": "value", "options": {"0": {"text": "Down"}, "1": {"text": "Up"}}}
+          ]
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0}
+    },
+    {
+      "type": "stat",
+      "title": "Frontend Up",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "max(up{job=\"frontend-nginx\"})",
+          "legendFormat": "frontend"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"type": "value", "options": {"0": {"text": "Down"}, "1": {"text": "Up"}}}
+          ]
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "Backend Request Rate",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"backend-api\"}[5m]))",
+          "legendFormat": "req/s"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
+    },
+    {
+      "type": "timeseries",
+      "title": "Backend p95 Latency",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"backend-api\"}[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6}
+    },
+    {
+      "type": "timeseries",
+      "title": "Frontend Requests",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "sum(rate(nginx_http_requests_total{job=\"frontend-nginx\"}[5m]))",
+          "legendFormat": "req/s"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14}
+    },
+    {
+      "type": "timeseries",
+      "title": "Frontend Active Connections",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "nginx_connections_active{job=\"frontend-nginx\"}",
+          "legendFormat": "active"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14}
+    }
+  ]
+}

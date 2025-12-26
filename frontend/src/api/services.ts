@@ -14,11 +14,26 @@ import type {
   CreateContentRequest,
   UpdateContentRequest,
   Photo,
-  Album,
   PhotoListResponse,
   AlbumListResponse,
   PhotoUploadResponse,
   CalendarMonthResponse,
+  Operation,
+  OperationEvent,
+  Incident,
+  IncidentEvent,
+  SocAlert,
+  SocCase,
+  SocPlaybook,
+  Hypothesis,
+  Finding,
+  DetectionRule,
+  MalwareSample,
+  MalwareDetail,
+  Endpoint,
+  EndpointAlert,
+  EndpointPolicy,
+  DeploymentSummary,
 } from './types'
 
 /**
@@ -201,6 +216,166 @@ export const albumService = {
     album_type?: 'location' | 'date' | 'custom'
   }): Promise<AlbumListResponse> {
     const response = await apiClient.get<AlbumListResponse>('/photos/albums', { params })
+    return response.data
+  },
+}
+
+/**
+ * Red team simulator services
+ */
+export const redTeamService = {
+  async createOperation(data: { name: string; objective?: string; stealth_factor?: number }) {
+    const response = await apiClient.post<Operation>('/red-team/operations', data)
+    return response.data
+  },
+  async listOperations() {
+    const response = await apiClient.get<Operation[]>('/red-team/operations')
+    return response.data
+  },
+  async addEvent(operationId: string, data: Partial<OperationEvent>) {
+    const response = await apiClient.post<OperationEvent>(`/red-team/operations/${operationId}/events`, data)
+    return response.data
+  },
+  async simulate(operationId: string, seed?: number) {
+    const response = await apiClient.post<OperationEvent>(
+      `/red-team/operations/${operationId}/simulate-next-day`,
+      undefined,
+      { params: seed ? { seed } : undefined }
+    )
+    return response.data
+  },
+  async timeline(operationId: string, detected?: boolean) {
+    const response = await apiClient.get<OperationEvent[]>(`/red-team/operations/${operationId}/timeline`, {
+      params: detected !== undefined ? { detected } : undefined,
+    })
+    return response.data
+  },
+}
+
+/**
+ * Ransomware response services
+ */
+export const ransomwareService = {
+  async createIncident(data: { name: string; severity?: string }) {
+    const response = await apiClient.post<Incident>('/incidents', data)
+    return response.data
+  },
+  async listIncidents() {
+    const response = await apiClient.get<Incident[]>('/incidents')
+    return response.data
+  },
+  async simulate(incidentId: string) {
+    const response = await apiClient.post<Incident>(`/incidents/${incidentId}/simulate`)
+    return response.data
+  },
+  async timeline(incidentId: string) {
+    const response = await apiClient.get<IncidentEvent[]>(`/incidents/${incidentId}/timeline`)
+    return response.data
+  },
+}
+
+/**
+ * SOC portal services
+ */
+export const socService = {
+  async listPlaybooks() {
+    const response = await apiClient.get<SocPlaybook[]>('/soc/playbooks')
+    return response.data
+  },
+  async generateAlerts() {
+    const response = await apiClient.post<SocAlert[]>('/soc/alerts/generate')
+    return response.data
+  },
+  async listAlerts() {
+    const response = await apiClient.get<SocAlert[]>('/soc/alerts')
+    return response.data
+  },
+  async createCase(data: { title: string; alert_ids?: string[] }) {
+    const response = await apiClient.post<SocCase>('/soc/cases', data)
+    return response.data
+  },
+  async listCases() {
+    const response = await apiClient.get<SocCase[]>('/soc/cases')
+    return response.data
+  },
+}
+
+/**
+ * Threat hunting services
+ */
+export const huntingService = {
+  async listHypotheses() {
+    const response = await apiClient.get<Hypothesis[]>('/threat-hunting/hypotheses')
+    return response.data
+  },
+  async createHypothesis(data: { title: string; description?: string }) {
+    const response = await apiClient.post<Hypothesis>('/threat-hunting/hypotheses', data)
+    return response.data
+  },
+  async addFinding(hypothesisId: string, data: { severity: string; details: string }) {
+    const response = await apiClient.post<Finding>(`/threat-hunting/hypotheses/${hypothesisId}/findings`, data)
+    return response.data
+  },
+  async listFindings(hypothesisId: string) {
+    const response = await apiClient.get<Finding[]>(`/threat-hunting/hypotheses/${hypothesisId}/findings`)
+    return response.data
+  },
+  async promoteFinding(findingId: string) {
+    const response = await apiClient.post<DetectionRule>(`/threat-hunting/findings/${findingId}/promote`)
+    return response.data
+  },
+  async listRules(status?: string) {
+    const response = await apiClient.get<DetectionRule[]>('/threat-hunting/detection-rules', {
+      params: status ? { status } : undefined,
+    })
+    return response.data
+  },
+}
+
+/**
+ * Malware analysis services
+ */
+export const malwareService = {
+  async createSample(data: { name: string; file_hash: string; sample_type?: string }) {
+    const response = await apiClient.post<MalwareSample>('/malware/samples', data)
+    return response.data
+  },
+  async listSamples() {
+    const response = await apiClient.get<MalwareSample[]>('/malware/samples')
+    return response.data
+  },
+  async analyze(sampleId: string) {
+    const response = await apiClient.post<MalwareDetail>(`/malware/samples/${sampleId}/analyze`)
+    return response.data
+  },
+}
+
+/**
+ * EDR simulation services
+ */
+export const edrService = {
+  async registerEndpoint(data: { hostname: string; operating_system: string; agent_version: string }) {
+    const response = await apiClient.post<Endpoint>('/edr/endpoints', data)
+    return response.data
+  },
+  async listEndpoints() {
+    const response = await apiClient.get<Endpoint[]>('/edr/endpoints')
+    return response.data
+  },
+  async listAlerts() {
+    const response = await apiClient.get<EndpointAlert[]>('/edr/alerts')
+    return response.data
+  },
+  async listPolicies() {
+    const response = await apiClient.get<EndpointPolicy[]>('/edr/policies')
+    return response.data
+  },
+  async togglePolicy(policyId: string, enabled: boolean) {
+    const response = await apiClient.patch<EndpointPolicy>(`/edr/policies/${policyId}`, { enabled })
+    return response.data
+  },
+  async deploymentSummary() {
+    const response = await apiClient.get<DeploymentSummary>('/edr/deployment/summary')
     return response.data
   },
 }

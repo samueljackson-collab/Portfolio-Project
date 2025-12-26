@@ -1,5 +1,12 @@
 # Project 21: Quantum-Safe Cryptography
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Hybrid key exchange service that combines Kyber KEM with classical ECDH for defense-in-depth.
 
@@ -50,4 +57,3 @@ Write a variational quantum eigensolver (VQE) implementation that combines quant
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

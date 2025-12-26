@@ -6,8 +6,23 @@ This directory contains automation scripts for managing and maintaining the port
 
 ## Available Scripts
 
-### 1. organize-screenshots.py
+### 1. emergency_cleanup.sh
+**Purpose:** Safely close all open GitHub pull requests after explicit confirmation
 
+**Safety Features:**
+- Requires GitHub CLI (`gh`) to be installed and authenticated
+- Interactive confirmation prompt to prevent accidental execution
+- Lists and processes up to 500 open pull requests
+- Adds an audit comment to each closed PR
+
+**Usage:**
+```bash
+./scripts/emergency_cleanup.sh
+```
+
+**Note:** This is an irreversible bulk action. Ensure you really want to close every open PR in the repository before running.
+
+### 2. organize-screenshots.py
 **Purpose:** Intelligent screenshot organization and cataloging for portfolio projects
 
 **Features:**
@@ -60,8 +75,7 @@ projects/PROJECT/assets/screenshots/
 
 ---
 
-### 2. create-diagram-viewers.py
-
+### 3. create-diagram-viewers.py
 **Purpose:** Create GitHub-viewable markdown wrappers for Mermaid diagrams
 
 **Features:**
@@ -90,8 +104,7 @@ For each `diagram.mermaid` file, creates `diagram.md` with:
 
 ---
 
-### 3. convert-mermaid-to-png.py
-
+### 4. convert-mermaid-to-png.py
 **Purpose:** Convert Mermaid diagrams to PNG using mermaid.ink API
 
 **Features:**

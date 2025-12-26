@@ -8,7 +8,7 @@ Health checks are used by:
 - CI/CD pipelines to verify deployment success
 """
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
@@ -50,7 +50,8 @@ async def health_check(
     return HealthResponse(
         status=overall_status,
         version=settings.version,
-        database=database_status
+        database=database_status,
+        service=settings.app_name,
     )
 
 
@@ -85,10 +86,10 @@ async def readiness(
     """
     try:
         await db.execute(text("SELECT 1"))
-        return {"status": "ready"}
+        return {"status": "ready", "database": "connected"}
     except Exception:
-        from fastapi import Response
         return Response(
-            content='{"status": "not ready"}',
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+            content='{"status": "not ready", "database": "disconnected"}',
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            media_type="application/json",
         )

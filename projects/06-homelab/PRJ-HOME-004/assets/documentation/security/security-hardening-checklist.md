@@ -15,8 +15,8 @@
 - [ ] Root login disabled via SSH (`PermitRootLogin no`)
 - [ ] Password authentication disabled (`PasswordAuthentication no`)
 - [ ] SSH key-only authentication enforced
-- [ ] Failed login attempts logged and monitored
-- [ ] Account lockout policy configured (fail2ban)
+- [x] Failed login attempts logged and monitored (journalctl + Loki alerts)
+- [x] Account lockout policy configured (fail2ban)
 - [ ] Minimum password complexity requirements set
 - [ ] Password expiration policy configured (90 days)
 - [ ] Inactive account auto-disable (30 days)
@@ -63,13 +63,12 @@
 - [ ] Unused packages removed
 
 #### Logging and Auditing
-
-- [ ] auditd installed and configured
-- [ ] All authentication events logged
-- [ ] Privilege escalation logged
-- [ ] File access to sensitive files logged
-- [ ] Logs sent to centralized log server (Loki)
-- [ ] Log retention policy enforced (30 days)
+- [x] auditd installed and configured with CIS rule set
+- [x] All authentication events logged (sshd, sudo, PAM)
+- [x] Privilege escalation logged (sudoers + audit rules)
+- [x] File access to sensitive files logged (/etc, /var/lib, backups)
+- [x] Logs sent to centralized log server (Loki)
+- [x] Log retention policy enforced (30 days)
 - [ ] Log integrity protected (read-only, signed)
 
 ---
@@ -115,6 +114,16 @@
 - [ ] Default bridge network not used
 - [ ] Custom networks with encryption
 - [ ] Content trust enabled (DOCKER_CONTENT_TRUST=1)
+
+### MQTT Broker (Mosquitto)
+
+#### MQTT Transport Security
+- [x] TLS enabled for broker listeners (port 8883)
+- [x] CA-signed certificates deployed with rotation reminders
+- [x] Anonymous access disabled (`allow_anonymous false`)
+- [x] Username/password auth enforced for devices
+- [ ] Client certificate auth enforced for admin topics
+- [x] MQTT audit logs forwarded to Loki
 
 ### Web Applications
 
@@ -204,8 +213,7 @@
 ## Access Control
 
 ### Authentication
-
-- [ ] Multi-factor authentication (MFA) on all admin interfaces
+- [x] Multi-factor authentication (MFA/2FA) on all admin interfaces
 - [ ] Passkey/FIDO2 support enabled where possible
 - [ ] Password manager required for all users
 - [ ] Biometric authentication enabled on mobile
@@ -241,7 +249,7 @@
 - [ ] Privilege escalation logged
 - [ ] New service detection
 - [ ] Port scan detection
-- [ ] Brute force detection (fail2ban)
+- [x] Brute force detection (fail2ban)
 - [ ] Anomaly detection configured
 
 ### Vulnerability Management

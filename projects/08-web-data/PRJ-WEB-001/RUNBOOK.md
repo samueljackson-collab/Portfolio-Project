@@ -17,6 +17,8 @@ Production operations runbook for Commercial E-commerce & Booking Systems - a po
 
 **Current Status:** 🔄 Recovery/Rebuild in Progress
 
+**Recovery Additions:** Deployment and content workflows have been reconstructed with sanitized procedures; see [assets/docs/runbooks/deployment_pipeline.md](assets/docs/runbooks/deployment_pipeline.md) and [assets/docs/runbooks/content_ops.md](assets/docs/runbooks/content_ops.md) for promotion and catalog refresh steps with rollback coverage.
+
 **Original Deployments:**
 
 - High-SKU Flooring Store (10,000+ products)

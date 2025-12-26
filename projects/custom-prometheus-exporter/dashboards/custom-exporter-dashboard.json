@@ -1,0 +1,25 @@
+{
+  "title": "Custom Prometheus Exporter",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Exporter Up",
+      "targets": [
+        {
+          "expr": "custom_exporter_up"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "API Request Duration",
+      "targets": [
+        {
+          "expr": "rate(custom_exporter_api_request_duration_seconds_sum[5m])"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

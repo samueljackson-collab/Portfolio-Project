@@ -27,3 +27,18 @@ output "launch_template_id" {
   value       = aws_launch_template.app.id
   description = "Launch template ID"
 }
+
+output "instance_profile_name" {
+  value       = local.instance_profile_name
+  description = "Instance profile name used by the launch template"
+}
+
+output "iam_role_arn" {
+  value       = local.create_instance_profile ? aws_iam_role.app[0].arn : null
+  description = "IAM role ARN for the application instances"
+}
+
+output "cloudwatch_log_group_name" {
+  value       = aws_cloudwatch_log_group.app.name
+  description = "CloudWatch log group for application logs"
+}

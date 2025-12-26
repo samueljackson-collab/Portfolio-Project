@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Managed RDS deployment aligned to master factory CI steps. Provisions a Multi-AZ
+  PostgreSQL instance, subnet group, and least-privilege security group for
+  private-only access.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+    Description: Deployment environment used for tagging.
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC hosting the RDS instance.
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnet IDs for the DB subnet group.
+  DBName:
+    Type: String
+    Default: appdb
+    Description: Logical database name to create.
+  DBInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+    Description: Instance class for the RDS instance.
+  EngineVersion:
+    Type: String
+    Default: '15.5'
+    Description: PostgreSQL engine version.
+  AllocatedStorage:
+    Type: Number
+    Default: 20
+    Description: Allocated storage (GiB).
+  MasterUsername:
+    Type: String
+    Default: admin
+    Description: Master username (use Secrets Manager for password input).
+  MasterUserPassword:
+    Type: String
+    NoEcho: true
+    Description: Master password (retrieve from AWS Secrets Manager in CI/CD).
+  BackupRetentionDays:
+    Type: Number
+    Default: 7
+    MinValue: 7
+    MaxValue: 35
+    Description: Automated backup retention in days.
+
+Resources:
+  RdsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow database access from private subnets
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: !Select [0, !Ref SubnetIds]
+      Tags:
+        - Key: Name
+          Value: !Sub "rds-${Environment}-sg"
+        - Key: Environment
+          Value: !Ref Environment
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private subnets for RDS
+      SubnetIds: !Ref SubnetIds
+      Tags:
+        - Key: Name
+          Value: !Sub "rds-${Environment}-subnets"
+        - Key: Environment
+          Value: !Ref Environment
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub "p01-${Environment}-rds"
+      AllocatedStorage: !Ref AllocatedStorage
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: postgres
+      EngineVersion: !Ref EngineVersion
+      DBName: !Ref DBName
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      BackupRetentionPeriod: !Ref BackupRetentionDays
+      DeletionProtection: true
+      MultiAZ: true
+      PubliclyAccessible: false
+      StorageEncrypted: true
+      VPCSecurityGroups:
+        - !Ref RdsSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      CopyTagsToSnapshot: true
+      EnablePerformanceInsights: true
+    DeletionPolicy: Snapshot
+
+Outputs:
+  DBInstanceIdentifier:
+    Description: Identifier for the RDS instance.
+    Value: !Ref DBInstance
+    Export:
+      Name: !Sub "${AWS::StackName}-db-id"
+
+  DBEndpoint:
+    Description: RDS endpoint address.
+    Value: !GetAtt DBInstance.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-db-endpoint"
+
+  RdsSecurityGroupId:
+    Description: Security group protecting the database.
+    Value: !Ref RdsSecurityGroup
+
+  DbSubnetGroupName:
+    Description: Name of the DB subnet group used by the instance.
+    Value: !Ref DBSubnetGroup

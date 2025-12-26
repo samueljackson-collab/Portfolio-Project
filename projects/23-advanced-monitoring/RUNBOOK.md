@@ -127,7 +127,32 @@ curl -G http://localhost:9090/api/v1/query \
 
 ## Standard Operations
 
+### Live Deployment Publication (Manual)
+```bash
+# Create a deployment evidence folder
+DEPLOY_DATE=$(date +%Y-%m-%d)
+mkdir -p deployments/${DEPLOY_DATE}
+
+# Start the stack and capture logs
+docker-compose up -d
+docker-compose logs --no-color > deployments/${DEPLOY_DATE}/docker-compose.log
+
+# Capture health snapshots
+curl -fsSL http://localhost:3000/api/health > deployments/${DEPLOY_DATE}/stack-health.json
+
+# Update the deployment record
+sed -i.bak "s/Deployment date: .* (planned)/Deployment date: ${DEPLOY_DATE} (live)/" DEPLOYMENT_STATUS.md
+```
+
 ### Stack Deployment
+
+#### Secrets validation (fail fast)
+```bash
+# Ensure required secrets are present before any deployment
+test -f .env || cp .env.example .env  # copy template once, then edit with real values
+docker-compose --env-file .env config >/dev/null
+# The command fails fast if any required secret (Grafana admin, Alertmanager Slack/PagerDuty/SMTP, Thanos object store) is missing.
+```
 
 #### Deploy to Staging
 ```bash

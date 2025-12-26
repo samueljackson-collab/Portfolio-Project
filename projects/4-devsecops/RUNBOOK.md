@@ -81,6 +81,24 @@ opa test policies/ --verbose
 
 ## Standard Operations
 
+### Live Deployment Publication (Manual)
+```bash
+# Create a deployment evidence folder
+DEPLOY_DATE=$(date +%Y-%m-%d)
+mkdir -p deployments/${DEPLOY_DATE}
+
+# Trigger pipeline and capture logs
+gh workflow run security-pipeline.yml
+gh run watch --workflow security-pipeline.yml | tee deployments/${DEPLOY_DATE}/pipeline-run.log
+
+# Capture security scan and SBOM summaries
+cp reports/security-scan-latest.json deployments/${DEPLOY_DATE}/security-scan-summary.json
+cp sbom/myapp-latest.json deployments/${DEPLOY_DATE}/sbom-summary.json
+
+# Update the deployment record
+sed -i.bak "s/Deployment date: .* (planned)/Deployment date: ${DEPLOY_DATE} (live)/" DEPLOYMENT_STATUS.md
+```
+
 ### Security Scanning Operations
 
 #### Run Vulnerability Scan
