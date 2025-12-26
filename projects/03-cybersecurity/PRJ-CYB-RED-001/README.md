@@ -189,14 +189,16 @@ class AtomicRunner:
             return
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            if result.returncode == 0:
-                logging.info("TTP Execution Successful")
-                logging.debug(f"Output: {result.stdout}")
-            else:
-                logging.error(f"TTP Execution Failed: {result.stderr}")
-        except Exception as e:
-            logging.error(f"Execution Error: {str(e)}")
+            # Using check=True to automatically raise CalledProcessError on non-zero exit codes
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=True)
+            logging.info(f"TTP Execution Successful: {self.technique_id}")
+            logging.debug(f"Output: {result.stdout}")
+        except subprocess.TimeoutExpired:
+            logging.error(f"Execution for {self.technique_id} timed out after 30 seconds.")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"TTP Execution Failed for {self.technique_id} with stderr: {e.stderr}")
+        except FileNotFoundError:
+            logging.error(f"Command for {self.technique_id} not found. Ensure executor is in PATH.")
 
     def cleanup(self):
         logging.info(f"Cleaning up artifacts for {self.technique_id}")
