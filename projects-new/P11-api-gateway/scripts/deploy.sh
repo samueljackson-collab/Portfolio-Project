@@ -23,7 +23,10 @@ if [[ -z "${PROJECT_NAME}" ]]; then
   exit 1
 fi
 ECR_REPOSITORY="${ECR_REPOSITORY:-$PROJECT_NAME}"
-IMAGE_TAG="${ENV}-$(git rev-parse --short HEAD)"
+if ! IMAGE_TAG="${ENV}-$(git rev-parse --short HEAD 2>/dev/null)"; then
+  echo "Warning: git hash unavailable, using timestamp" >&2
+  IMAGE_TAG="${ENV}-$(date +%s)"
+fi
 ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
 
 echo "Deploying ${RAW_PROJECT_NAME} as ${PROJECT_NAME} to ${ENV} environment..."
