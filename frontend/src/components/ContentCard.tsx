@@ -28,22 +28,35 @@ export const ContentCard: React.FC<ContentCardProps> = ({
     })
   }
 
+  const statusClasses = content.is_published
+    ? 'bg-emerald-500/15 text-emerald-100 border-emerald-500/30'
+    : 'bg-amber-500/15 text-amber-100 border-amber-500/30'
+  const statusDotClass = content.is_published ? 'bg-emerald-300' : 'bg-amber-300'
+  const statusLabel = content.is_published ? 'Published' : 'Draft'
+
   return (
-    <div className="card hover:shadow-lg transition-shadow">
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 p-6 text-slate-50 shadow-2xl shadow-slate-900/40 backdrop-blur-xl transition duration-200 hover:-translate-y-1 hover:shadow-primary-500/30">
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500/10 via-slate-900/40 to-fuchsia-500/10" />
+
       {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="flex-1 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-100/80">
+            Workspace item
+          </p>
+          <h3 className="text-xl font-semibold text-white">
             {content.title}
           </h3>
-          <div className="flex items-center space-x-4 text-sm text-gray-500">
-            <span>Created: {formatDate(content.created_at)}</span>
-            <span className={`px-2 py-1 rounded-full text-xs ${
-              content.is_published
-                ? 'bg-green-100 text-green-800'
-                : 'bg-yellow-100 text-yellow-800'
-            }`}>
-              {content.is_published ? 'Published' : 'Draft'}
+          <div className="flex items-center gap-3 text-sm text-slate-300">
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-primary-300" />
+              Created {formatDate(content.created_at)}
+            </span>
+            <span
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${statusClasses}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${statusDotClass}`} />
+              {statusLabel}
             </span>
           </div>
         </div>
@@ -51,8 +64,8 @@ export const ContentCard: React.FC<ContentCardProps> = ({
 
       {/* Body */}
       {content.body && (
-        <div className="mb-4">
-          <p className="text-gray-700 line-clamp-3">
+        <div className="relative mt-4">
+          <p className="text-sm text-slate-200/90 line-clamp-3">
             {content.body}
           </p>
         </div>
@@ -60,11 +73,11 @@ export const ContentCard: React.FC<ContentCardProps> = ({
 
       {/* Actions */}
       {showActions && (onEdit || onDelete) && (
-        <div className="flex justify-end space-x-2 pt-4 border-t">
+        <div className="relative mt-6 flex items-center justify-end gap-2 border-t border-white/10 pt-4">
           {onEdit && (
             <button
               onClick={() => onEdit(content)}
-              className="px-3 py-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+              className="rounded-lg border border-white/20 px-3 py-1.5 text-sm font-semibold text-slate-100 transition hover:border-primary-300 hover:text-white"
             >
               Edit
             </button>
@@ -72,7 +85,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
           {onDelete && (
             <button
               onClick={() => onDelete(content.id)}
-              className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+              className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-1.5 text-sm font-semibold text-red-100 transition hover:border-red-300 hover:bg-red-500/20"
             >
               Delete
             </button>

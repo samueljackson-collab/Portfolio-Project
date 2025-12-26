@@ -45,16 +45,19 @@ The Tab Organizer is a distributed system consisting of multiple components work
 **Purpose**: Capture tab events and communicate with the native app
 
 **Technologies**:
+
 - Chrome/Edge: Manifest V3
 - Firefox: Manifest V2/V3
 
 **Key Files**:
+
 - `manifest.json` - Extension configuration
 - `background.js` - Service worker handling tab events
 - `popup.js` - Extension UI logic
 - `content.js` - Page content analysis
 
 **Responsibilities**:
+
 - Monitor tab creation, updates, and removal
 - Capture tab metadata (URL, title, favicon)
 - Analyze page content
@@ -62,6 +65,7 @@ The Tab Organizer is a distributed system consisting of multiple components work
 - Create and manage tab groups
 
 **Communication**:
+
 - Browser API → Background Script
 - Background Script → Native Host (JSON over stdio)
 - Content Script → Background Script (Message passing)
@@ -73,12 +77,14 @@ The Tab Organizer is a distributed system consisting of multiple components work
 **Technology**: Node.js or Dart
 
 **Key Features**:
+
 - Stdin/stdout communication
 - JSON message protocol
 - Message routing and validation
 - Error handling and logging
 
 **Message Protocol**:
+
 ```json
 {
   "type": "TAB_CREATED",
@@ -102,11 +108,13 @@ The Tab Organizer is a distributed system consisting of multiple components work
 **Layers**:
 
 #### Presentation Layer
+
 - **Screens**: UI pages (HomeScreen, SettingsScreen, etc.)
 - **Widgets**: Reusable UI components
 - **Providers**: State management (TabProvider, SettingsProvider)
 
 #### Business Logic Layer
+
 - **Services**: Core functionality
   - `TabService`: Tab and group management
   - `AIService`: ML-based classification
@@ -114,6 +122,7 @@ The Tab Organizer is a distributed system consisting of multiple components work
   - `NativeMessagingService`: Browser communication
 
 #### Data Layer
+
 - **Models**: Data structures (TabModel, TabGroup)
 - **Storage**: Local persistence (Hive)
 - **API**: Cloud backend (Firebase)
@@ -129,6 +138,7 @@ The Tab Organizer is a distributed system consisting of multiple components work
 **Framework**: TensorFlow Lite
 
 **Architecture**:
+
 ```
 Input Layer (15 features)
     ↓
@@ -146,6 +156,7 @@ Output Layer (7 categories, Softmax)
 ```
 
 **Input Features**:
+
 1. Domain pattern matches (6 features)
 2. Keyword scores (6 features)
 3. URL structure (3 features)
@@ -185,6 +196,7 @@ Box<TabGroup> groups
 ```
 
 **Advantages**:
+
 - No SQL required
 - Type-safe
 - Fast read/write
@@ -196,11 +208,13 @@ Box<TabGroup> groups
 **Purpose**: Synchronize data across devices
 
 **Services Used**:
+
 - **Firestore**: Data storage
 - **Authentication**: User management
 - **Cloud Functions**: Backend logic (optional)
 
 **Firestore Structure**:
+
 ```
 users/
   {userId}/
@@ -225,6 +239,7 @@ users/
 ```
 
 **Sync Strategy**:
+
 - Periodic sync every 5 minutes
 - Real-time listeners for updates
 - Conflict resolution: Last-write-wins
@@ -263,18 +278,21 @@ users/
 ## Security Architecture
 
 ### Data Protection
+
 - Local data encrypted at rest (Hive encryption)
 - Cloud data encrypted in transit (HTTPS)
 - Optional end-to-end encryption for sensitive data
 - No telemetry or tracking
 
 ### Privacy Measures
+
 - All tab content processed locally
 - ML inference runs on-device
 - Cloud sync is optional
 - User can export/delete all data
 
 ### Authentication
+
 - Firebase Anonymous Auth (default)
 - Optional email/password auth
 - OAuth support (Google, GitHub)
@@ -282,6 +300,7 @@ users/
 ## Performance Considerations
 
 ### Optimization Strategies
+
 1. **Lazy Loading**: Load tabs on-demand
 2. **Pagination**: Display tabs in chunks
 3. **Caching**: Cache frequently accessed data
@@ -289,6 +308,7 @@ users/
 5. **Debouncing**: Throttle sync operations
 
 ### Resource Limits
+
 - Max tabs in memory: 1000
 - Max tabs per group: 50
 - Sync batch size: 100 tabs
@@ -297,11 +317,13 @@ users/
 ## Scalability
 
 ### Horizontal Scaling
+
 - Multiple browser instances supported
 - Multiple devices per user
 - Cloud backend auto-scales (Firebase)
 
 ### Vertical Scaling
+
 - Efficient data structures
 - Indexed queries
 - Compressed storage
@@ -310,6 +332,7 @@ users/
 ## Deployment Architecture
 
 ### Development
+
 ```
 Local Machine
   - Flutter app (debug mode)
@@ -318,6 +341,7 @@ Local Machine
 ```
 
 ### Production
+
 ```
 User Device
   - Flutter app (release build)
@@ -377,6 +401,7 @@ signOut()
 ## Monitoring & Observability
 
 ### Metrics
+
 - Tab count per category
 - Classification accuracy
 - Sync success rate
@@ -384,11 +409,13 @@ signOut()
 - Performance metrics (load time, inference time)
 
 ### Logging
+
 - Application logs (debug, info, warning, error)
 - Crash reports
 - Usage analytics (opt-in)
 
 ### Error Handling
+
 - Try-catch blocks around critical operations
 - Graceful degradation (fallback to pattern matching if ML fails)
 - User-friendly error messages
@@ -397,6 +424,7 @@ signOut()
 ## Future Enhancements
 
 ### Planned Features
+
 1. Collaborative workspaces
 2. Tab sharing and collections
 3. Browser history integration
@@ -405,6 +433,7 @@ signOut()
 6. Integration with productivity tools
 
 ### Architecture Evolution
+
 1. Microservices backend (replacing Firebase)
 2. GraphQL API
 3. WebSocket for real-time updates

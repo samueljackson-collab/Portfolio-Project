@@ -8,6 +8,7 @@
 # ======================================
 data/
 backups/
+!assets/backups/
 *.tar.gz
 
 # Logs

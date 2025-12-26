@@ -1,6 +1,6 @@
 # Virtualization & Core Services
 
-**Status:** 🟢 Done
+**Status:** 🟢 Done (evidence captured)
 
 ## Description
 
@@ -11,16 +11,25 @@ Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a revers
 - [Evidence/Diagrams](./assets)
 - [Parent Documentation](../README.md)
 
-## Next Steps
+## Evidence Added
 
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
+- **Diagrams:** Cluster + storage topology in `diagrams/` (PNG/SVG with editable sources).
+- **Observability:** Prometheus/Grafana/Loki excerpts in `configs/monitoring/observability-evidence.md`.
+- **Backups:** PBS nightly report in `configs/truenas/pbs-backup-report.md`.
+- **Screenshots:** Sanitized Proxmox, TrueNAS, and service proxy snapshots stored in `screenshots/`.
+- **Logs:** Sanitized cluster health and PBS backup summaries stored in `logs/`.
 
 ## Contact
 
 For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
 
 ---
-*Placeholder — Documentation pending*
+## Code Generation Prompts
+- [x] Asset catalog scaffold produced from the [Evidence and assets prompt](../../../../AI_PROMPT_LIBRARY.md#evidence--assets-catalog).
+- [x] Upload/validation checklist aligned to the [Prompt Execution Framework workflow](../../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
+
+---
+*Documentation is live; ongoing updates will expand recovery and automation sections.*
 # PRJ-HOME-002 Assets
 
 This directory contains supporting materials for the Virtualization & Core Services project.
@@ -61,8 +70,6 @@ Visual evidence:
 - Service interfaces
 - Backup logs/status
 - Monitoring views
-
-**Format:** PNG
 
 ---
 

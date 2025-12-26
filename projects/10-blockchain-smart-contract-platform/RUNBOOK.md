@@ -409,25 +409,25 @@ npx hardhat run scripts/security_scan.js --network mainnet
 
 #### Severity Classification
 
-**P0: Critical Security Incident**
+### P0: Critical Security Incident
 - Contract exploit detected
 - Treasury drained
 - Unauthorized access to admin functions
 - Contract permanently locked
 
-**P1: Major Issue**
+### P1: Major Issue
 - High transaction failure rate (> 20%)
 - Oracle data stale > 1 hour
 - Suspicious activity detected
 - Contract paused unexpectedly
 
-**P2: Degraded Service**
+### P2: Degraded Service
 - High gas prices preventing transactions
 - Non-critical function failures
 - Event emission issues
 - UI/frontend issues
 
-**P3: Minor Issue**
+### P3: Minor Issue
 - Cosmetic issues
 - Documentation discrepancies
 - Minor optimization opportunities

@@ -12,18 +12,21 @@ All missing subdirectories referenced in `COMPLETION_SUMMARY.md` have been creat
 ### ✅ Directories Created
 
 **PRJ-HOME-001: Homelab & Secure Network Build**
+
 - `projects/06-homelab/PRJ-HOME-001/assets/diagrams/`
 - `projects/06-homelab/PRJ-HOME-001/assets/configs/`
 - `projects/06-homelab/PRJ-HOME-001/assets/docs/`
 - `projects/06-homelab/PRJ-HOME-001/assets/photos/`
 
 **PRJ-HOME-002: Virtualization & Core Services**
+
 - `projects/06-homelab/PRJ-HOME-002/assets/diagrams/`
 - `projects/06-homelab/PRJ-HOME-002/assets/configs/`
 - `projects/06-homelab/PRJ-HOME-002/assets/docs/`
 - `projects/06-homelab/PRJ-HOME-002/assets/screenshots/`
 
 **PRJ-WEB-001: E-commerce & Booking Systems**
+
 - `projects/08-web-data/PRJ-WEB-001/assets/code/sql/`
 - `projects/08-web-data/PRJ-WEB-001/assets/code/php/`
 - `projects/08-web-data/PRJ-WEB-001/assets/code/scripts/`
@@ -43,6 +46,7 @@ All missing subdirectories referenced in `COMPLETION_SUMMARY.md` have been creat
 All directories have been verified and include `.gitkeep` files to ensure Git tracks them.
 
 To verify yourself, run:
+
 ```bash
 find projects/06-homelab/PRJ-HOME-001/assets -type d | sort
 find projects/06-homelab/PRJ-HOME-002/assets -type d | sort

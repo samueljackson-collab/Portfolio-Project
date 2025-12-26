@@ -1,0 +1,50 @@
+server:
+  address: "0.0.0.0"
+  port: 9108
+
+logging:
+  level: "info"
+
+scrape:
+  interval: 30s
+
+labels:
+  environment: "dev"
+  team: "observability"
+
+feature_flags:
+  enable_api: true
+  enable_files: true
+  enable_sql: false
+
+metric_filter:
+  disabled: []
+
+api_endpoints:
+  - name: "sample_api"
+    url: "https://api.example.com/metrics"
+    method: "GET"
+    timeout: 5s
+    value_path: "data.value"
+    metric_type: "gauge"
+    labels:
+      service: "api"
+    headers:
+      Authorization: "Bearer replace-me"
+
+file_metrics:
+  - name: "queue_depth"
+    path: "/var/lib/custom-exporter/queue_depth.txt"
+    trim_space: true
+    metric_type: "gauge"
+    labels:
+      region: "us-east-1"
+
+sql_metrics:
+  - name: "orders_pending"
+    driver: "sqlite"
+    dsn: "/var/lib/custom-exporter/app.db"
+    query: "select count(*) from orders where status = 'pending'"
+    metric_type: "gauge"
+    labels:
+      component: "orders"

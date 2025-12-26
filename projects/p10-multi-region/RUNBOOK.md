@@ -568,26 +568,26 @@ aws elbv2 describe-target-health \
 
 #### Severity Classification
 
-**P0: Primary Region Complete Outage**
+### P0: Primary Region Complete Outage
 - Primary region completely unavailable
 - All health checks failing in primary
 - No healthy targets in primary ALB
 - Critical: Execute immediate failover
 
-**P1: Partial Primary Region Degradation**
+### P1: Partial Primary Region Degradation
 - > 50% of targets unhealthy
 - High error rate in primary
 - RDS experiencing issues
 - Health checks intermittent
 - Prepare for failover
 
-**P2: Secondary Region Issues**
+### P2: Secondary Region Issues
 - Secondary region degraded
 - RDS replication lag high
 - S3 replication delayed
 - DR capability at risk
 
-**P3: Single Component Failure**
+### P3: Single Component Failure
 - Single instance unhealthy
 - Individual health check failing
 - Minor replication delays
@@ -1265,3 +1265,22 @@ make check-health REGION=us-west-2
 - **Owner:** Infrastructure Engineering Team / SRE Team
 - **Review Schedule:** Quarterly or after DR drills/actual failover events
 - **Feedback:** Create issue or submit PR with updates
+
+## Evidence & Verification
+
+Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
+
+**Evidence artifacts**
+- [Screenshot](./docs/evidence/screenshot.svg)
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

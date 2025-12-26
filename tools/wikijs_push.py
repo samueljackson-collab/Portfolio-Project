@@ -6,8 +6,6 @@ Automatically publishes Markdown documentation to Wiki.js via GraphQL API
 
 import os
 import sys
-import glob
-import json
 import argparse
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -19,6 +17,13 @@ except ImportError:
     print("Install with: pip install requests")
     sys.exit(1)
 
+try:
+    import yaml
+except ImportError:
+    print("Error: PyYAML module not found")
+    print("Install with: pip install pyyaml")
+    sys.exit(1)
+
 # Configuration
 API_URL = os.getenv("WIKI_URL", "http://localhost:3000/graphql")
 API_TOKEN = os.getenv("WIKI_TOKEN", "")
@@ -26,7 +31,7 @@ BASE_PATH = os.getenv("WIKI_BASE_PATH", "/projects")
 
 # GraphQL mutations
 UPSERT_PAGE_MUTATION = """
-mutation CreateOrUpdatePage($title: String!, $content: String!, $path: String!, $locale: String!) {
+mutation CreateOrUpdatePage($title: String!, $content: String!, $path: String!, $locale: String!, $tags: [String!]!) {
   pages {
     create(
       content: $content
@@ -36,7 +41,7 @@ mutation CreateOrUpdatePage($title: String!, $content: String!, $path: String!, 
       isPrivate: false
       locale: $locale
       path: $path
-      tags: []
+      tags: $tags
       title: $title
     ) {
       responseResult {
@@ -56,7 +61,7 @@ mutation CreateOrUpdatePage($title: String!, $content: String!, $path: String!, 
 """
 
 UPDATE_PAGE_MUTATION = """
-mutation UpdatePage($id: Int!, $title: String!, $content: String!, $path: String!) {
+mutation UpdatePage($id: Int!, $title: String!, $content: String!, $path: String!, $tags: [String!]!) {
   pages {
     update(
       id: $id
@@ -66,7 +71,7 @@ mutation UpdatePage($id: Int!, $title: String!, $content: String!, $path: String
       isPublished: true
       isPrivate: false
       path: $path
-      tags: []
+      tags: $tags
       title: $title
     ) {
       responseResult {
@@ -136,13 +141,14 @@ class WikiJSPublisher:
             return result["data"]["pages"]["single"]
         return None
 
-    def create_page(self, title: str, content: str, path: str, locale: str = "en") -> bool:
+    def create_page(self, title: str, content: str, path: str, locale: str = "en", tags: Optional[List[str]] = None) -> bool:
         """Create a new page"""
         variables = {
             "title": title,
             "content": content,
             "path": path,
-            "locale": locale
+            "locale": locale,
+            "tags": tags or []
         }
 
         result = self.graphql_request(UPSERT_PAGE_MUTATION, variables)
@@ -156,13 +162,14 @@ class WikiJSPublisher:
             print(f"✗ Failed to create {title}: {error}")
             return False
 
-    def update_page(self, page_id: int, title: str, content: str, path: str) -> bool:
+    def update_page(self, page_id: int, title: str, content: str, path: str, tags: Optional[List[str]] = None) -> bool:
         """Update an existing page"""
         variables = {
             "id": page_id,
             "title": title,
             "content": content,
-            "path": path
+            "path": path,
+            "tags": tags or []
         }
 
         result = self.graphql_request(UPDATE_PAGE_MUTATION, variables)
@@ -177,13 +184,7 @@ class WikiJSPublisher:
             return False
 
     def publish_file(self, md_path: Path, base_path: str = "/projects") -> bool:
-        """Publish a single Markdown file"""
-        # Extract title from filename
-        title = md_path.stem.replace("-", " ").replace("_", " ").title()
-
-        # Generate Wiki.js path
-        relative_path = md_path.relative_to(md_path.parents[len(md_path.parents) - 1])
-        wiki_path = f"{base_path}/{md_path.stem}"
+        """Publish a single Markdown file using YAML front matter when available"""
 
         # Read content
         try:
@@ -192,6 +193,18 @@ class WikiJSPublisher:
         except Exception as e:
             print(f"✗ Error reading {md_path}: {e}")
             return False
+
+        metadata = self._parse_front_matter(content)
+
+        title = metadata.get("title") or md_path.stem.replace("-", " ").replace("_", " ").title()
+
+        wiki_path = metadata.get("path")
+        if wiki_path:
+            wiki_path = wiki_path if wiki_path.startswith("/") else f"/{wiki_path}"
+        else:
+            wiki_path = f"{base_path.rstrip('/')}/{md_path.stem}"
+
+        tags = metadata.get("tags") if isinstance(metadata.get("tags"), list) else []
 
         # Check if page exists
         existing_page = self.get_page(wiki_path)
@@ -202,27 +215,31 @@ class WikiJSPublisher:
                 page_id=existing_page["id"],
                 title=title,
                 content=content,
-                path=wiki_path
+                path=wiki_path,
+                tags=tags
             )
         else:
             # Create new page
             return self.create_page(
                 title=title,
                 content=content,
-                path=wiki_path
+                path=wiki_path,
+                tags=tags
             )
 
     def publish_directory(self, directory: Path, pattern: str = "*.md", base_path: str = "/projects") -> Dict[str, int]:
         """Publish all Markdown files in a directory"""
-        stats = {"success": 0, "failed": 0, "skipped": 0}
-
-        markdown_files = list(directory.glob(pattern))
-
+        markdown_files = sorted(directory.glob(pattern))
         if not markdown_files:
             print(f"No Markdown files found in {directory}")
-            return stats
+            return {"success": 0, "failed": 0, "skipped": 0}
 
         print(f"\nPublishing {len(markdown_files)} file(s) from {directory}...\n")
+        return self.publish_files(markdown_files, base_path)
+
+    def publish_files(self, markdown_files: List[Path], base_path: str = "/projects") -> Dict[str, int]:
+        """Publish an explicit list of Markdown files"""
+        stats = {"success": 0, "failed": 0, "skipped": 0}
 
         for md_file in markdown_files:
             # Skip README files (usually contain repo-specific info)
@@ -238,6 +255,47 @@ class WikiJSPublisher:
 
         return stats
 
+    @staticmethod
+    @staticmethod
+    def _parse_front_matter(content: str) -> tuple:
+        """Extract YAML front matter as a dict and return it with the remaining content."""
+        if not content.startswith("---"):
+            return {}, content
+
+        parts = content.split('---', 2)
+        if len(parts) < 3:
+            return {}, content
+
+        front_matter_raw, content_body = parts[1], parts[2]
+        
+        try:
+            parsed = yaml.safe_load(front_matter_raw) or {}
+            metadata = parsed if isinstance(parsed, dict) else {}
+        except yaml.YAMLError:
+            metadata = WikiJSPublisher._fallback_front_matter(front_matter_raw)
+
+        return metadata, content_body.lstrip()
+    @staticmethod
+    def _fallback_front_matter(front_matter_raw: str) -> Dict:
+        """Best-effort parser when YAML safe load fails (e.g., unquoted colons)"""
+        parsed: Dict[str, object] = {}
+        for line in front_matter_raw.splitlines():
+            if not line.strip() or line.strip().startswith("#") or ":" not in line:
+                continue
+
+            key, value = line.split(":", 1)
+            key = key.strip()
+            value = value.strip()
+
+            try:
+                parsed_value = yaml.safe_load(value)
+            except yaml.YAMLError:
+                parsed_value = value
+
+            parsed[key] = parsed_value
+
+        return parsed
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -245,6 +303,7 @@ def main():
     )
     parser.add_argument(
         "path",
+        nargs="?",
         help="Path to Markdown file or directory"
     )
     parser.add_argument(
@@ -267,6 +326,15 @@ def main():
         default=API_TOKEN,
         help="Wiki.js API token (or set WIKI_TOKEN env var)"
     )
+    parser.add_argument(
+        "--content-root",
+        help="Root directory to search for Markdown files (used with --glob)"
+    )
+    parser.add_argument(
+        "--glob",
+        dest="glob_pattern",
+        help="Glob pattern relative to --content-root (e.g., '*/wiki/*.md')"
+    )
 
     args = parser.parse_args()
 
@@ -278,6 +346,34 @@ def main():
 
     # Create publisher
     publisher = WikiJSPublisher(args.api_url, args.api_token)
+
+    if args.content_root:
+        content_root = Path(args.content_root)
+        if not content_root.is_dir():
+            print(f"Error: Content root not found: {content_root}")
+            sys.exit(1)
+
+        glob_pattern = args.glob_pattern or "*/wiki/*.md"
+        markdown_files = sorted(content_root.glob(glob_pattern))
+
+        if not markdown_files:
+            print(f"No Markdown files found in {content_root} matching pattern '{glob_pattern}'")
+            sys.exit(1)
+
+        print(f"\nPublishing {len(markdown_files)} file(s) from {content_root} using pattern '{glob_pattern}'...\n")
+        stats = publisher.publish_files(markdown_files, args.base_path)
+
+        print("\n" + "=" * 50)
+        print("Summary:")
+        print(f"  Success: {stats['success']}")
+        print(f"  Failed:  {stats['failed']}")
+        print(f"  Skipped: {stats['skipped']}")
+        print("=" * 50 + "\n")
+
+        sys.exit(0 if stats["failed"] == 0 else 1)
+
+    if not args.path:
+        parser.error("Provide either a path or --content-root with --glob.")
 
     # Publish
     path = Path(args.path)

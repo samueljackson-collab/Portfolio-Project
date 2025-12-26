@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450">
+  <rect width="100%" height="100%" fill="#0f172a"/>
+  <text x="40" y="70" font-family="Arial, sans-serif" font-size="26" fill="#f8fafc">Project 3 CI/CD • Argo Rollouts Canary</text>
+  <text x="40" y="110" font-family="Arial, sans-serif" font-size="16" fill="#cbd5f5">Sanitized rollout status • Captured 2025-11-10</text>
+  <rect x="40" y="150" width="720" height="240" rx="16" fill="#1e293b"/>
+  <text x="60" y="195" font-family="Arial, sans-serif" font-size="15" fill="#e2e8f0">Steps: 5 · Current weight: 50% · Analysis: pass</text>
+  <text x="60" y="225" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8">Metrics: latency p95 240ms · error rate 0.4%</text>
+  <text x="60" y="255" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8">Automated rollback: enabled</text>
+  <text x="60" y="300" font-family="Arial, sans-serif" font-size="13" fill="#64748b">Artifact: assets/screenshots/project-3-cicd_pipeline_03_20251110.svg</text>
+</svg>

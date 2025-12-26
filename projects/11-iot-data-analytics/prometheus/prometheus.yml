@@ -1,0 +1,53 @@
+# Prometheus Configuration for IoT Data Analytics
+# Monitors IoT devices, MQTT broker, time-series data ingestion
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'iot'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # MQTT broker (Mosquitto)
+  - job_name: 'mqtt-broker'
+    static_configs:
+      - targets: ['mqtt-exporter:9234']
+
+  # IoT gateway
+  - job_name: 'iot-gateway'
+    static_configs:
+      - targets: ['iot-gateway:8080']
+
+  # TimescaleDB metrics
+  - job_name: 'timescaledb'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # InfluxDB for time-series data
+  - job_name: 'influxdb'
+    static_configs:
+      - targets: ['influxdb:8086']
+    metrics_path: '/metrics'
+
+  # Edge processing nodes
+  - job_name: 'edge-nodes'
+    static_configs:
+      - targets: ['edge-node-1:9090', 'edge-node-2:9090']
+
+  # Device telemetry aggregator
+  - job_name: 'telemetry-aggregator'
+    static_configs:
+      - targets: ['aggregator:9091']

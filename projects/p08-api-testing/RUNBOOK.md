@@ -322,25 +322,25 @@ gh run list --workflow=newman-tests.yml --json status,conclusion
 
 #### Severity Classification
 
-**P0: Complete API Failure**
+### P0: Complete API Failure
 - All tests failing (100%)
 - API unreachable (ECONNREFUSED)
 - Authentication completely broken
 - Production API down
 
-**P1: Critical Endpoint Failure**
+### P1: Critical Endpoint Failure
 - Login endpoint failing
 - Core business API broken
 - > 50% test failure rate
 - Production data inconsistency
 
-**P2: Partial Failure**
+### P2: Partial Failure
 - Single endpoint failing
 - Schema validation failures
 - Performance degradation
 - 10-50% test failure rate
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Single test failing
 - Non-critical endpoint issue
 - Minor schema mismatch
@@ -941,3 +941,22 @@ vi collections/environment.dev.json
 - **Owner:** QA Engineering Team
 - **Review Schedule:** Quarterly or after major API changes
 - **Feedback:** Create issue or submit PR with updates
+
+## Evidence & Verification
+
+Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
+
+**Evidence artifacts**
+- [Screenshot](./docs/evidence/screenshot.svg)
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

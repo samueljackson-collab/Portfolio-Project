@@ -294,26 +294,26 @@ grep -r "FAIL\|ERROR" test-results/latest/
 
 #### Severity Classification
 
-**P0: Critical Test Failure**
+### P0: Critical Test Failure
 - All login tests failing
 - Production-blocking security vulnerability found
 - Test environment completely down
 - Data corruption in test environment
 
-**P1: Major Test Failure**
+### P1: Major Test Failure
 - Critical login path failing
 - High-severity security issue found
 - Performance degradation > 50%
 - > 30% test failure rate
 
-**P2: Moderate Test Failure**
+### P2: Moderate Test Failure
 - Secondary login flow failing
 - Medium-severity security issue
 - Performance degradation 20-50%
 - 10-30% test failure rate
 - Test data synchronization issues
 
-**P3: Minor Test Failure**
+### P3: Minor Test Failure
 - Single test case failing
 - Low-severity security finding
 - Minor performance variance

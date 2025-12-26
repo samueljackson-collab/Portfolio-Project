@@ -358,25 +358,25 @@ kubectl get events -n production --sort-by='.lastTimestamp' | head -20
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 - All pods failing in production
 - ArgoCD cannot sync production applications
 - GitHub Actions completely broken (no deployments possible)
 - Kubernetes API server unreachable
 
-**P1: Degraded Service**
+### P1: Degraded Service
 - Some pods failing (reduced capacity)
 - ArgoCD out of sync for >10 minutes
 - Canary deployment failing health checks
 - CI pipeline failing all builds
 
-**P2: Warning State**
+### P2: Warning State
 - Individual pod restarts
 - ArgoCD application degraded
 - Slow CI/CD pipeline
 - Non-critical test failures
 
-**P3: Informational**
+### P3: Informational
 - Successful deployments with warnings
 - Minor sync delays
 - Flaky tests
