@@ -19,7 +19,7 @@
    - Justification: Normal user access to services.
 3. **DNS egress control**
    - Action: Accept
-   - Source: Any
+   - Source: Internal Networks (VLANs 10, 20, 30, 40)
    - Destination: DNS allow-list group (1.1.1.1, 9.9.9.9)
    - Protocol: UDP/53
    - Justification: Prevent rogue DNS tunneling.
