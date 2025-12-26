@@ -43,12 +43,16 @@ echo "✓ Image pushed: ${ECR_URI}:${IMAGE_TAG}"
 
 if [[ -n "${ECS_CLUSTER:-}" && -n "${ECS_SERVICE:-}" ]]; then
   echo "Updating ECS service ${ECS_SERVICE} in cluster ${ECS_CLUSTER}..."
-  aws ecs update-service \
+  if aws ecs update-service \
     --cluster "${ECS_CLUSTER}" \
     --service "${ECS_SERVICE}" \
     --force-new-deployment \
-    --region "${AWS_REGION}" >/dev/null
-  echo "✓ ECS service update triggered"
+    --region "${AWS_REGION}" >/dev/null 2>&1; then
+    echo "✓ ECS service update triggered"
+  else
+    echo "Error: ECS service update failed" >&2
+    exit 1
+  fi
 else
   echo "ℹ️ Skipping ECS deployment because ECS_CLUSTER or ECS_SERVICE is not set"
 fi
