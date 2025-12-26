@@ -17,7 +17,7 @@ graph LR
   IOT -. drop .-> TRUST
   IOT -. drop .-> GUEST
   GUEST -. drop .-> TRUST
-  TRUST -->|Allow RFC1918| MGMT
+  TRUST -->|Allow SSH/HTTPS from Admin IPs| MGMT
 ```
 
 > Layer-3 gateways terminate at the UDM-Pro; inter-VLAN policies enforced by firewall rules noted in `vlan-firewall-dhcp-config.md`.
