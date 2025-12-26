@@ -615,9 +615,18 @@ const doc = new Document({
 const outputDir = path.resolve(process.cwd(), "outputs");
 const outputPath = path.join(outputDir, "TwistedMonk_POC_REAL_FULL_45Pages.docx");
 
-fs.mkdirSync(outputDir, { recursive: true });
+const main = async () => {
+  try {
+    await fs.mkdir(outputDir, { recursive: true });
+    const buffer = await Packer.toBuffer(doc);
+    await fs.writeFile(outputPath, buffer);
+    console.log(
+      `${path.basename(outputPath)} created successfully at ${outputPath}.`
+    );
+  } catch (error) {
+    console.error("Failed to generate document:", error);
+    process.exit(1);
+  }
+};
 
-Packer.toBuffer(doc).then((buffer) => {
-  fs.writeFileSync(outputPath, buffer);
-  console.log(`${path.basename(outputPath)} created successfully at ${outputPath}.`);
-});
+main();
