@@ -1,94 +1,14 @@
 ================================================================================
-                    25 ENTERPRISE PROJECTS - QUICK REFERENCE SUMMARY
+                 PORTFOLIO STATUS TABLE (AUTHORITATIVE SOURCE)
 ================================================================================
 
-Project #  Name                                  Files  Size   Status    Priority
-─────────────────────────────────────────────────────────────────────────────
-  1        AWS Infrastructure Automation           17    42K    PARTIAL   HIGH
-  2        Database Migration Platform              3    9K     MINIMAL   CRITICAL
-  3        Kubernetes CI/CD Pipeline                3    9.5K   MINIMAL   CRITICAL
-  4        DevSecOps Pipeline                       2    9K     MINIMAL   CRITICAL
-  5        Real-time Data Streaming                 3    9K     MINIMAL   HIGH
-  6        MLOps Platform                           6    28K    PARTIAL   HIGH
-  7        Serverless Data Processing               6    25K    PARTIAL   HIGH
-  8        Advanced AI Chatbot                      5    20K    PARTIAL   HIGH
-  9        Multi-Region Disaster Recovery           6    26K    PARTIAL   HIGH
- 10        Blockchain Smart Contract Platform       9    29K    PARTIAL   MEDIUM
- 11        IoT Data Analytics                       4    12K    MINIMAL   MEDIUM
- 12        Quantum Computing Integration            4    12K    MINIMAL   MEDIUM
- 13        Advanced Cybersecurity Platform          4    16K    MINIMAL   MEDIUM
- 14        Edge AI Inference Platform               4    11K    MINIMAL   MEDIUM
- 15        Real-time Collaboration Platform         4    11K    MINIMAL   MEDIUM
- 16        Advanced Data Lake                       5    15K    MINIMAL   MEDIUM
- 17        Multi-Cloud Service Mesh                 3    14K    MINIMAL   MEDIUM
- 18        GPU-Accelerated Computing                4    10K    MINIMAL   LOW
- 19        Advanced Kubernetes Operators            4    11K    MINIMAL   LOW
- 20        Blockchain Oracle Service                4    15K    MINIMAL   LOW
- 21        Quantum-Safe Cryptography                4    11K    MINIMAL   LOW
- 22        Autonomous DevOps Platform               3    10K    MINIMAL   CRITICAL
- 23        Advanced Monitoring & Observability      3    14K    MINIMAL   HIGH
- 24        Report Generator                         5    15K    MINIMAL   MEDIUM
- 25        Portfolio Website                        7    20K    PARTIAL   MEDIUM
+The portfolio status table is maintained in:
+  PORTFOLIO_STATUS_UPDATED.md
 
-================================================================================
-                                 STATISTICS
-================================================================================
+Reason: to prevent drift between multiple summary files, status planning should
+reference the single reconciled table that includes timestamps and evidence
+links for Projects 1–25.
 
-Status Distribution:
-  - Production-Ready (Complete):        2 projects (  8%)
-  - Partial Implementation:            10 projects ( 40%)
-  - Minimal/Stub Implementation:       13 projects ( 52%)
-  - Empty Projects:                     0 projects (  0%)
+Last reconciled table: 2025-12-26 (see PORTFOLIO_STATUS_UPDATED.md)
 
-Component Implementation:
-  - README Documentation:              25 / 25 (100%)
-  - Application Code:                  23 / 25 ( 92%)
-  - Infrastructure Code:                7 / 25 ( 28%)
-  - Tests:                              1 / 25 (  4%) ⚠️
-  - CI/CD Pipelines:                    0 / 25 (  0%) ⚠️
-  - Monitoring/Observability:           1 / 25 (  4%) ⚠️
-  - Docker Support:                     1 / 25 (  4%) ⚠️
-  - Deployment Scripts:                 8 / 25 ( 32%)
-
-Technology Breakdown:
-  - Python Code:    15 projects (602 LOC total)
-  - Terraform:       4 projects (365 LOC total)
-  - JavaScript/TS:   3 projects (73 LOC total)
-  - Solidity:        2 projects (52 LOC total)
-  - YAML:            5 projects (25 LOC total)
-
-================================================================================
-                              TOP PRIORITIES
-================================================================================
-
-CRITICAL - START NOW:
-  1. Project 2: Database Migration - only 20 LOC, needs Debezium integration
-  2. Project 4: DevSecOps - needs security tool implementation
-  3. Project 22: Autonomous DevOps - needs runbook engine
-
-HIGH - NEXT SPRINT:
-  1. Add GitHub Actions to ALL 25 projects (0% coverage currently)
-  2. Add unit/integration tests to ALL projects (4% coverage)
-  3. Add Docker support to ALL projects (4% coverage)
-  4. Complete Projects 3, 5, 17, 23 infrastructure
-
-MEDIUM - NEXT QUARTER:
-  1. Add comprehensive documentation (ADRs, runbooks)
-  2. Implement monitoring/observability across projects
-  3. Add performance benchmarking
-  4. Create integration between projects
-
-================================================================================
-                            TOP 5 COMPLETE PROJECTS
-================================================================================
-
-1. Project 1 (AWS Infrastructure)    - 211 lines Terraform + 89 Python
-2. Project 6 (MLOps Platform)        - 187 lines Python + comprehensive pipeline
-3. Project 10 (Blockchain)           - 52 Solidity + test framework + Hardhat
-4. Project 9 (Disaster Recovery)     - 151 lines Terraform + runbooks
-5. Project 25 (Portfolio Website)    - Full VitePress + docs structure
-
-================================================================================
-Report generated: 2025-11-10
-Full detailed report: PORTFOLIO_ASSESSMENT_REPORT.md
 ================================================================================

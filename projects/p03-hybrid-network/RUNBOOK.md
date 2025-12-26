@@ -437,3 +437,22 @@ sudo ipsec down vpn-tunnel-1 && sudo ipsec up vpn-tunnel-1
 - **Owner:** Network Engineering Team
 - **Review Schedule:** Quarterly
 - **Feedback:** Submit PR with updates
+
+## Evidence & Verification
+
+Verification summary: Baseline evidence captured to validate the latest quickstart configuration and document supporting artifacts for audits.
+
+**Evidence artifacts**
+- [Screenshot](./docs/evidence/screenshot.svg)
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

@@ -1,6 +1,11 @@
 # 25 Enterprise Projects Assessment Report
 Generated: 2025-11-10
 
+## Status Table Notice (Reconciled 2025-12-26)
+The authoritative, current status table for Projects 1–25 lives in
+[PORTFOLIO_STATUS_UPDATED.md](PORTFOLIO_STATUS_UPDATED.md). This report is a
+historical snapshot from 2025-11-10 and should not be used for current planning.
+
 ## Executive Summary
 - **Total Projects Analyzed**: 25
 - **Complete/Production-Ready**: ~2

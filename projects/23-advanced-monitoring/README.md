@@ -34,6 +34,9 @@ Enterprise-grade monitoring and observability stack featuring Prometheus, Grafan
 ### Start the Stack
 
 ```bash
+# Copy environment template and customize credentials/urls
+cp .env.example .env
+
 # Start all monitoring services
 docker-compose up -d
 
@@ -46,20 +49,37 @@ docker-compose logs -f prometheus grafana
 
 ### Access Dashboards
 
-- **Grafana**: http://localhost:3000 (use `GRAFANA_ADMIN_USER`/`GRAFANA_ADMIN_PASSWORD` from your `.env`)
+- **Grafana**: http://localhost:3000 (admin credentials set via `.env`)
 - **Prometheus**: http://localhost:9090
 - **Alertmanager**: http://localhost:9093
 - **Thanos Query**: http://localhost:10904
 - **Custom Metrics**: http://localhost:8000/metrics
 
-## 🔐 Secrets & Access Control
+> **Security note:** All web UIs bind to `127.0.0.1` by default. Expose them externally only via a reverse proxy with TLS/authentication.
 
-- Copy `.env.example` to `.env` and populate strong secrets:
-  - Grafana admin credentials (password must be at least 12 characters with upper/lower/number/symbol).
-  - Alertmanager Slack webhook, PagerDuty integration key, and SMTP credentials.
-  - Thanos object-store keys (prefer IAM roles in production).
-- Supply secrets via environment files for local runs (`docker-compose --env-file .env up`), Docker secrets, or a secrets manager such as Vault for production.
-- Rotate credentials by updating the secrets source, reloading the services (`docker-compose up -d --force-recreate`), and revoking the old credentials at the provider.
+### Version Matrix & Health Expectations
+
+| Service | Version | Health endpoint | Notes |
+| --- | --- | --- | --- |
+| Prometheus | `v2.52.0` | `/-/healthy` | 30s interval, 5s timeout, 5 retries |
+| Grafana | `10.4.3` | `/api/health` | 30s interval, 5s timeout, 5 retries |
+| Alertmanager | `v0.27.0` | `/-/healthy` | 30s interval, 5s timeout, 5 retries |
+| Loki | `2.9.3` | `/ready` | 30s interval, 5s timeout, 5 retries |
+| Promtail | `2.9.3` | `/ready` (port 9080) | 30s interval, 5s timeout, 5 retries |
+| Node Exporter | `v1.8.1` | `/-/healthy` | 30s interval, 5s timeout, 5 retries |
+| cAdvisor | `v0.47.2` | `/healthz` | 30s interval, 5s timeout, 5 retries |
+| Thanos (sidecar/query/store/compactor) | `v0.34.1` | `/-/healthy` | Query binds 10904→9090 on localhost |
+
+### Configuration via `.env`
+
+The stack reads user-tunable values from `.env`:
+- Retention: `PROMETHEUS_RETENTION_TIME`, `LOKI_RETENTION_PERIOD`
+- Credentials & admin users: `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`
+- Alert destinations: `ALERTMANAGER_SLACK_API_URL`, `ALERTMANAGER_PAGERDUTY_KEY`
+- Promtail host tag: `PROMTAIL_HOSTNAME`
+- App exporter metadata: `APP_EXPORTER_VERSION`, `APP_EXPORTER_ENVIRONMENT`, `APP_EXPORTER_AWS_REGION`
+
+> Keep `.env` out of version control if it contains secrets.
 
 ## 📊 Components
 
@@ -125,10 +145,10 @@ Located in `alertmanager/alertmanager.yml`
 vi alertmanager/alertmanager.yml
 
 # Update Slack webhook URL
-slack_api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+slack_api_url: '${ALERTMANAGER_SLACK_API_URL}'
 
 # Update PagerDuty integration key
-service_key: '<YOUR_PAGERDUTY_INTEGRATION_KEY>'
+service_key: '${ALERTMANAGER_PAGERDUTY_KEY}'
 
 # Restart Alertmanager
 docker-compose restart alertmanager

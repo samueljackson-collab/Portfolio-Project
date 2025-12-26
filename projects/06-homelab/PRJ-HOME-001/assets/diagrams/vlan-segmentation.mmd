@@ -1,0 +1,11 @@
+flowchart TB
+  FW[pfsense] -->|VLAN10| Trusted
+  FW -->|VLAN20| IoT
+  FW -->|VLAN30| Guest
+  FW -->|VLAN40| Servers
+  FW -->|VLAN50| DMZ
+  Trusted --> APs[UniFi APs]
+  IoT --> APs
+  Guest --> APs
+  Servers --> PMX[Proxmox]
+  DMZ --> NPM[Nginx Proxy]

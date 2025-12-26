@@ -1,0 +1,32 @@
+#cloud-config
+# Rocky Linux 9 Cloud-Init Template
+# Purpose: Baseline configuration for RockyLinux VMs in homelab
+
+hostname: rockylinux-template
+manage_etc_hosts: true
+
+users:
+  - name: rocky
+    groups: [wheel]
+    shell: /bin/bash
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAA... homelab-admin"
+
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+  - curl
+  - vim
+  - htop
+  - firewalld
+
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - systemctl enable --now firewalld
+  - firewall-cmd --permanent --add-service=ssh
+  - firewall-cmd --reload
+  - echo "RockyLinux template initialized" > /etc/motd
+
+final_message: "RockyLinux cloud-init completed after $UPTIME seconds"
