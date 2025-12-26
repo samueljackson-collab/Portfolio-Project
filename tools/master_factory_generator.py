@@ -773,6 +773,24 @@ REQUIRED_SECTIONS = [
 
 
 def generate_master_factory(project: ProjectSpec, base_dir: Path, scaffold_ci: bool, scaffold_iac: bool, scaffold_tests: bool, overwrite: bool) -> Path:
+    """
+    Generate a MASTER_FACTORY.md playbook for a given project, and optionally scaffold CI, IaC, and test artifacts.
+
+    Parameters:
+        project (ProjectSpec): The project specification containing metadata and artifact specs.
+        base_dir (Path): The base directory in which to create project files.
+        scaffold_ci (bool): If True, scaffold the CI workflow artifact.
+        scaffold_iac (bool): If True, scaffold the Infrastructure as Code artifact.
+        scaffold_tests (bool): If True, scaffold the test harness artifact.
+        overwrite (bool): If True, overwrite existing files; otherwise, skip writing if files exist.
+
+    Returns:
+        Path: The path to the generated MASTER_FACTORY.md file.
+
+    Side Effects:
+        - Creates directories and files for the project and its artifacts.
+        - Writes to the console (stdout) to indicate actions taken.
+    """
     project_root = project.project_root(base_dir)
     project_root.mkdir(parents=True, exist_ok=True)
     master_factory_path = project_root / MASTER_FACTORY_FILENAME
