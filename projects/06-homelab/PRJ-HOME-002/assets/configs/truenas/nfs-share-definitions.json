@@ -1,0 +1,20 @@
+{
+  "shares": [
+    {
+      "path": "/mnt/tank/homelab/backups",
+      "maproot_user": "root",
+      "maproot_group": "wheel",
+      "hosts": ["192.168.40.10", "192.168.40.11", "192.168.40.12"],
+      "security": "sys",
+      "comment": "Proxmox backup exports"
+    },
+    {
+      "path": "/mnt/tank/homelab/virtualization",
+      "maproot_user": "root",
+      "maproot_group": "wheel",
+      "hosts": ["192.168.40.10", "192.168.40.11", "192.168.40.12"],
+      "security": "sys",
+      "comment": "VM template and ISO storage"
+    }
+  ]
+}
