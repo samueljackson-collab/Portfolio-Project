@@ -23,7 +23,19 @@ if [[ -z "${PROJECT_NAME}" ]]; then
   exit 1
 fi
 ECR_REPOSITORY="${ECR_REPOSITORY:-$PROJECT_NAME}"
-IMAGE_TAG="${ENV}-$(git rev-parse --short HEAD)"
+if ! command -v git >/dev/null 2>&1; then
+  echo "Error: git CLI not found" >&2
+  exit 1
+fi
+
+RAW_PROJECT_NAME="${PROJECT_NAME:-$(basename "$(pwd)")}"
+PROJECT_NAME="$(echo "${RAW_PROJECT_NAME}" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9_.-]/-/g' -e 's/^-*//' -e 's/-*$//')"
+if [[ -z "${PROJECT_NAME}" ]]; then
+  echo "Error: derived Docker image name is empty" >&2
+  exit 1
+fi
+ECR_REPOSITORY="${ECR_REPOSITORY:-$PROJECT_NAME}"
+IMAGE_TAG="${ENV}-$(git rev-parse --short HEAD 2>/dev/null || date +%s)"
 ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
 
 echo "Deploying ${RAW_PROJECT_NAME} as ${PROJECT_NAME} to ${ENV} environment..."
