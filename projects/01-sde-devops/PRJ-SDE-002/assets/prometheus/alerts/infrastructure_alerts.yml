@@ -1,129 +1,46 @@
-# Infrastructure Alert Rules for Prometheus
-# Project: PRJ-SDE-002 - Observability & Monitoring Implementation
-# Location: projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/alerts/infrastructure_alerts.yml
 groups:
-  - name: infrastructure_critical
-    interval: 30s
+  - name: infrastructure_alerts
     rules:
-      # Host/Instance Down
-      - alert: HostDown
-        expr: up == 0
-        for: 2m
-        labels:
-          severity: critical
-          category: availability
-        annotations:
-          summary: "Host {{ $labels.instance }} is down"
-          description: "The Prometheus target {{ $labels.instance }} (job: {{ $labels.job }}) has been down for more than 2 minutes."
-          runbook_url: "https://runbooks.homelab.local/host-down"
-
-      # Critical CPU Usage
-      - alert: CriticalCPUUsage
-        expr: |
-          100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+      # Backup failures
+      - alert: BackupFailed
+        expr: increase(backup_last_status{status="failed"}[1h]) > 0
         for: 5m
         labels:
           severity: critical
-          category: performance
+          category: infrastructure
         annotations:
-          summary: "Critical CPU usage on {{ $labels.instance }}"
-          description: "CPU usage on {{ $labels.instance }} is at {{ $value }}% for more than 5 minutes."
-          runbook_url: "https://runbooks.homelab.local/critical-cpu"
+          summary: "Backup failed on {{ $labels.instance }}"
+          description: "Backup job {{ $labels.job }} has failed on {{ $labels.instance }}"
 
-      # Critical Memory Usage
-      - alert: CriticalMemoryUsage
-        expr: |
-          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+      # Container restarts
+      - alert: ContainerRestarting
+        expr: rate(container_restart_count[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "Container {{ $labels.name }} restarting frequently"
+          description: "Container {{ $labels.name }} on {{ $labels.instance }} has restarted {{ $value }} times in the last 15 minutes"
+
+      # Network errors
+      - alert: HighNetworkErrors
+        expr: rate(node_network_receive_errs_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High network errors on {{ $labels.instance }}"
+          description: "Network interface {{ $labels.device }} on {{ $labels.instance }} experiencing high error rate: {{ $value }} errors/sec"
+
+      # ZFS pool health
+      - alert: ZFSPoolDegraded
+        expr: node_zfs_zpool_state{state!="online"} > 0
         for: 5m
         labels:
           severity: critical
-          category: performance
+          category: infrastructure
         annotations:
-          summary: "Critical memory usage on {{ $labels.instance }}"
-          description: "Memory usage on {{ $labels.instance }} is at {{ $value }}% for more than 5 minutes."
-          runbook_url: "https://runbooks.homelab.local/critical-memory"
-
-      # Disk Space Critical
-      - alert: DiskSpaceCritical
-        expr: |
-          (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes) * 100 < 5
-        for: 5m
-        labels:
-          severity: critical
-          category: storage
-        annotations:
-          summary: "Critical disk space on {{ $labels.instance }}"
-          description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} has only {{ $value }}% free space remaining."
-          runbook_url: "https://runbooks.homelab.local/disk-space"
-
-  - name: infrastructure_warning
-    interval: 1m
-    rules:
-      # High CPU Usage
-      - alert: HighCPUUsage
-        expr: |
-          100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 15m
-        labels:
-          severity: warning
-          category: performance
-        annotations:
-          summary: "High CPU usage on {{ $labels.instance }}"
-          description: "CPU usage on {{ $labels.instance }} is at {{ $value }}% for more than 15 minutes."
-          runbook_url: "https://runbooks.homelab.local/high-cpu"
-
-      # High Memory Usage
-      - alert: HighMemoryUsage
-        expr: |
-          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
-        for: 15m
-        labels:
-          severity: warning
-          category: performance
-        annotations:
-          summary: "High memory usage on {{ $labels.instance }}"
-          description: "Memory usage on {{ $labels.instance }} is at {{ $value }}% for more than 15 minutes."
-          runbook_url: "https://runbooks.homelab.local/high-memory"
-
-      # Disk Space Warning
-      - alert: DiskSpaceWarning
-        expr: |
-          (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes) * 100 < 15
-        for: 10m
-        labels:
-          severity: warning
-          category: storage
-        annotations:
-          summary: "Low disk space on {{ $labels.instance }}"
-          description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} has only {{ $value }}% free space remaining."
-          runbook_url: "https://runbooks.homelab.local/disk-space"
-
-  - name: backup_monitoring
-    interval: 5m
-    rules:
-      # Backup Job Failed
-      - alert: BackupJobFailed
-        expr: proxmox_backup_job_last_status != 0
-        for: 1h
-        labels:
-          severity: critical
-          category: backup
-        annotations:
-          summary: "Backup job failed for {{ $labels.job_name }}"
-          description: "The backup job {{ $labels.job_name }} has failed with status code {{ $value }}."
-          runbook_url: "https://runbooks.homelab.local/backup-failure"
-
-  - name: service_monitoring
-    interval: 1m
-    rules:
-      # HTTP Service Down
-      - alert: HTTPServiceDown
-        expr: probe_success{job="blackbox-http"} == 0
-        for: 3m
-        labels:
-          severity: critical
-          category: availability
-        annotations:
-          summary: "HTTP service {{ $labels.instance }} is down"
-          description: "The HTTP probe for {{ $labels.instance }} has been failing for more than 3 minutes."
-          runbook_url: "https://runbooks.homelab.local/service-down"
+          summary: "ZFS pool {{ $labels.zpool }} degraded on {{ $labels.instance }}"
+          description: "ZFS pool {{ $labels.zpool }} is in {{ $labels.state }} state"

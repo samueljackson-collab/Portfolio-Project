@@ -1,35 +1,28 @@
-# Observability & Backups Stack
-
-**Status:** 🟢 Done
-
-## Description
-
-Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-
-## Links
-
-- [Parent Documentation](../../../README.md)
-
-## Next Steps
-
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
-
-## Contact
-
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
-
----
-*Placeholder — Documentation pending*
 # PRJ-SDE-002: Observability & Backups Stack
 
-**Status:** 🟢 Completed (Documentation Pending)
-**Category:** System Development Engineering / DevOps
+**Status:** 🟢 Completed  
+**Category:** System Development Engineering / DevOps  
 **Technologies:** Prometheus, Grafana, Loki, Alertmanager, Proxmox Backup Server
+
+Comprehensive monitoring, logging, alerting, and backup automation for the homelab portfolio. The stack is designed around the USE/RED philosophies, emphasizes alert hygiene with linked runbooks, and documents PBS backup posture with verification evidence.
+
+## Quick Links
+- [Assets Index](./assets/README.md)
+- [Monitoring Philosophy (USE/RED)](./assets/docs/monitoring-philosophy.md)
+- [Alert Runbooks](./assets/runbooks/ALERT_RESPONSES.md)
+- [Operational Runbook](./assets/runbooks/OPERATIONAL_RUNBOOK.md)
+- [Grafana Dashboards](./assets/grafana/dashboards)
+- [Screenshots](./assets/screenshots)
+- [Log Samples](./assets/logs)
+- [Prometheus/Alertmanager/Loki/Promtail Configs](./assets/configs)
+- [PBS Jobs & Retention Evidence](./assets/backups)
+- [Parent Documentation](../../../README.md)
+
+**Sanitization:** All artifacts use placeholder hosts/webhooks and demo data. Screenshots are scrubbed; configs omit credentials.
 
 ---
 
 ## Overview
-
 Implemented a comprehensive monitoring, logging, and alerting stack to observe homelab infrastructure and ensure data resilience through automated backups.
 
 ## Architecture
@@ -70,7 +63,6 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - Retention policies and pruning
 
 ## How It Works
-
 1. **Provision Prometheus and exporters** on the Proxmox host, followed by Node Exporter installation on all VMs and containers.
 2. **Deploy Grafana** once Prometheus is scraping data to verify dashboards render correctly.
 3. **Configure Loki and Promtail** to begin ingesting logs alongside metrics.
@@ -98,30 +90,30 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 │   Targets   │────▶│  Exporters  │────▶│ Prometheus  │
 │ (VMs/Hosts) │     │ (Port 9100+)│     │ (Port 9090) │
 └─────────────┘     └─────────────┘     └──────┬──────┘
-                                               │
-                    ┌──────────────────────────┼──────────────────────────┐
-                    │                          │                          │
-                    ▼                          ▼                          ▼
-            ┌───────────────┐         ┌──────────────┐         ┌─────────────┐
-            │ Alertmanager  │         │   Grafana    │         │    Loki     │
-            │  (Port 9093)  │         │ (Port 3000)  │         │ (Port 3100) │
-            └───────┬───────┘         └──────────────┘         └──────┬──────┘
-                    │                                                  │
-                    ▼                                                  ▼
-            ┌───────────────┐                                  ┌─────────────┐
-            │ Slack/Email   │                                  │  Promtail   │
-            │ Notifications │                                  │  (Logs)     │
-            └───────────────┘                                  └─────────────┘
+                                              │
+                   ┌──────────────────────────┼──────────────────────────┐
+                   │                          │                          │
+                   ▼                          ▼                          ▼
+           ┌───────────────┐         ┌──────────────┐         ┌─────────────┐
+           │ Alertmanager  │         │   Grafana    │         │    Loki     │
+           │  (Port 9093)  │         │ (Port 3000)  │         │ (Port 3100) │
+           └───────┬───────┘         └──────────────┘         └──────┬──────┘
+                   │                                                  │
+                   ▼                                                  ▼
+           ┌───────────────┐                                  ┌─────────────┐
+           │ Slack/Email   │                                  │  Promtail   │
+           │ Notifications │                                  │  (Logs)     │
+           └───────────────┘                                  └─────────────┘
 ```
 
 **Data Flow Overview**
-1. **Metrics Collection**: Node Exporters (9100), Proxmox Exporter (9221), and application-specific exporters expose metrics
-2. **Log Shipping**: Promtail agents tail log files and push to Loki (port 3100)
-3. **Scraping**: Prometheus scrapes all exporters every 15 seconds, evaluates alert rules every 30 seconds
-4. **Storage**: Prometheus stores metrics locally with 30-day retention; Loki stores logs with 14-day retention
-5. **Alerting**: Alertmanager receives alerts from Prometheus, groups/routes them to Slack channel #homelab-alerts
-6. **Visualization**: Grafana queries Prometheus and Loki, renders dashboards on port 3000
-7. **Backup**: PBS runs nightly at 02:00, snapshots are stored on TrueNAS NFS share at 192.168.1.10:/mnt/tank/backups
+1. **Metrics Collection**: Node Exporters (9100), Proxmox Exporter (9221), and application-specific exporters expose metrics.
+2. **Log Shipping**: Promtail agents tail log files and push to Loki (port 3100).
+3. **Scraping**: Prometheus scrapes all exporters every 15 seconds, evaluates alert rules every 30 seconds.
+4. **Storage**: Prometheus stores metrics locally with 30-day retention; Loki stores logs with 14-day retention.
+5. **Alerting**: Alertmanager receives alerts from Prometheus, groups/routes them to Slack channel #homelab-alerts.
+6. **Visualization**: Grafana queries Prometheus and Loki, renders dashboards on port 3000.
+7. **Backup**: PBS runs nightly at 02:00, snapshots are stored on TrueNAS NFS share at <NFS_SERVER>:/mnt/<DATASTORE>/backups.
 
 ## Key Dashboards
 
@@ -268,24 +260,24 @@ groups:
     rules:
       - record: instance:node_cpu_utilization:rate5m
         expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-      
+
       - record: instance:node_memory_utilization:ratio
         expr: 1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
-      
+
       - record: instance:node_disk_utilization:ratio
         expr: 1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|fuse.lxcfs"})
-      
+
       - record: job:http_request_rate:rate5m
         expr: sum(rate(http_requests_total[5m])) by (job)
-      
+
       - record: job:http_error_rate:rate5m
         expr: sum(rate(http_requests_total{status=~"5.."}[5m])) by (job) / sum(rate(http_requests_total[5m])) by (job)
 ```
 
 **Usage Notes:**
-- Recording rules reduce dashboard load time by pre-computing complex queries
-- Stored with 5-minute granularity for 90 days
-- Used in high-traffic dashboards and alerting rules
+- Recording rules reduce dashboard load time by pre-computing complex queries.
+- Stored with 5-minute granularity for 90 days.
+- Used in high-traffic dashboards and alerting rules.
 
 ## Skills Demonstrated
 
@@ -310,7 +302,7 @@ And the **RED Method** (Rate, Errors, Duration) for services:
 
 ## Documentation Status
 
-📝 **Pending:** Dashboard exports, Prometheus configurations, alert rule examples, and backup logs are being prepared and will be added to the `assets/` directory.
+📝 Dashboard exports, Prometheus configurations, alert rule examples, and backup evidence are provided in the `assets/` directory, including sanitized configs, screenshots, and PBS retention artifacts.
 
 ## Lessons Learned
 

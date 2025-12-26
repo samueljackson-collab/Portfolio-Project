@@ -1,0 +1,134 @@
+# Prometheus Alert Rules for AWS Infrastructure Automation
+
+groups:
+  - name: aws_infrastructure_alerts
+    interval: 30s
+    rules:
+      # EC2 instance down
+      - alert: EC2InstanceDown
+        expr: up{job="ec2-instances"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: compute
+        annotations:
+          summary: "EC2 instance {{ $labels.instance_name }} is down"
+          description: "EC2 instance {{ $labels.instance_id }} in {{ $labels.availability_zone }} has been down for more than 5 minutes."
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: compute
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 10 minutes. Current value: {{ $value }}%"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: memory
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85%. Current value: {{ $value }}%"
+
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          component: storage
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} has less than 15% space available. Current: {{ $value }}%"
+
+      # Terraform state drift detected
+      - alert: TerraformStateDrift
+        expr: terraform_state_drift_count > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Terraform state drift detected"
+          description: "{{ $value }} resources have drifted from the Terraform state. Review and apply changes."
+
+      # ELB unhealthy targets
+      - alert: ELBUnhealthyTargets
+        expr: aws_elb_un_healthy_host_count_average > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: loadbalancer
+        annotations:
+          summary: "Unhealthy targets in ELB {{ $labels.load_balancer_name }}"
+          description: "{{ $value }} unhealthy targets detected for more than 5 minutes."
+
+      # API endpoint down
+      - alert: APIEndpointDown
+        expr: probe_success{job="blackbox"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "API endpoint {{ $labels.instance }} is down"
+          description: "Health check failed for {{ $labels.instance }} for more than 3 minutes."
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5%. Current rate: {{ $value }}"
+
+      # AWS service quota approaching limit
+      - alert: AWSServiceQuotaHigh
+        expr: aws_service_quota_usage_percentage > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: quota
+        annotations:
+          summary: "AWS service quota {{ $labels.quota_name }} approaching limit"
+          description: "Service quota is at {{ $value }}% of the limit."
+
+      # CloudWatch API errors
+      - alert: CloudWatchAPIErrors
+        expr: rate(aws_cloudwatch_api_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "CloudWatch API errors detected"
+          description: "CloudWatch API error rate: {{ $value }} errors/sec"
+
+  - name: aws_infrastructure_capacity
+    interval: 1m
+    rules:
+      # EC2 instance count
+      - record: aws_ec2_instance_count
+        expr: count(up{job="ec2-instances"})
+
+      # Total CPU usage across all instances
+      - record: aws_total_cpu_usage_percent
+        expr: avg(100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100))
+
+      # Total memory usage across all instances
+      - record: aws_total_memory_usage_percent
+        expr: avg((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)
+
+      # Terraform resources under management
+      - record: terraform_managed_resources_total
+        expr: sum(terraform_resource_count)

@@ -1,0 +1,849 @@
+# =====================================================
+# Complete Monitoring Stack - Production Setup
+# =====================================================
+# Version: 1.0
+# Purpose: Comprehensive observability for homelab infrastructure
+# VM: 192.168.40.30 (monitoring-vm)
+# Resources: 8GB RAM, 100GB storage, 4 vCPU
+# Last Updated: November 6, 2025
+#
+# Stack Components:
+# ----------------
+# - Prometheus: Metrics collection and storage
+# - Grafana: Visualization and dashboards
+# - Loki: Log aggregation
+# - Promtail: Log shipping agent
+# - Alertmanager: Alert routing and notification
+# - Node Exporter: Host metrics
+# - cAdvisor: Container metrics
+# - Blackbox Exporter: Endpoint monitoring
+# - SNMP Exporter: Network device monitoring (optional)
+#
+# Architecture:
+# ------------
+# This is a complete observability stack implementing the three pillars:
+# 1. Metrics (Prometheus)
+# 2. Logs (Loki)
+# 3. Traces (Tempo - future enhancement)
+#
+# All components are interconnected:
+# - Grafana queries Prometheus for metrics
+# - Grafana queries Loki for logs
+# - Prometheus sends alerts to Alertmanager
+# - Promtail ships logs to Loki
+# - All services expose metrics for self-monitoring
+#
+# Data Flow:
+# ---------
+# Metrics: Exporters → Prometheus → Grafana
+# Logs: Applications → Promtail → Loki → Grafana
+# Alerts: Prometheus → Alertmanager → Slack/Email/PagerDuty
+#
+# Storage:
+# -------
+# - Prometheus: 15 days retention, ~20GB
+# - Loki: 30 days retention, ~30GB
+# - Grafana: Dashboards and configs, ~1GB
+#
+# =====================================================
+
+services:
+
+  # ===================================================
+  # SERVICE: Prometheus (Metrics Collection)
+  # ===================================================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus
+    hostname: prometheus
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Command arguments
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'        # 15 days retention
+      - '--storage.tsdb.retention.size=15GB'       # Max 15GB storage
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'                   # Enable reload via API
+      - '--web.enable-admin-api'                   # Enable admin API
+
+    # Port mapping
+    ports:
+      - "9090:9090"
+
+    # Volume mounts
+    volumes:
+      # Configuration file (we created this earlier)
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+      # Alert rules
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+
+      # Data storage (persistent)
+      - prometheus_data:/prometheus
+
+    # Network
+    networks:
+      - homelab
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # Labels
+    labels:
+      - "com.homelab.service=prometheus"
+      - "com.homelab.tier=monitoring"
+      - "com.homelab.criticality=high"
+
+  # ===================================================
+  # SERVICE: Grafana (Visualization)
+  # ===================================================
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    hostname: grafana
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # Environment variables
+    environment:
+      # Admin credentials (change after first login!)
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+
+      # Server settings
+      GF_SERVER_ROOT_URL: https://grafana.example.com
+      GF_SERVER_DOMAIN: grafana.example.com
+
+      # Database (SQLite for simplicity, PostgreSQL for production)
+      GF_DATABASE_TYPE: sqlite3
+      # For PostgreSQL:
+      # GF_DATABASE_TYPE: postgres
+      # GF_DATABASE_HOST: 192.168.40.23:5432
+      # GF_DATABASE_NAME: grafana
+      # GF_DATABASE_USER: grafana_user
+      # GF_DATABASE_PASSWORD: ${GRAFANA_DB_PASSWORD}
+
+      # Auth (allow anonymous viewing for dashboards)
+      GF_AUTH_ANONYMOUS_ENABLED: false
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+
+      # Provisioning (auto-load datasources and dashboards)
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+
+      # Plugins
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
+
+      # SMTP (for alert emails)
+      GF_SMTP_ENABLED: true
+      GF_SMTP_HOST: mail.homelab.local:587
+      GF_SMTP_USER: grafana@homelab.local
+      GF_SMTP_PASSWORD: ${GRAFANA_SMTP_PASSWORD}
+      GF_SMTP_FROM_ADDRESS: grafana@homelab.local
+      GF_SMTP_FROM_NAME: Grafana
+
+      # Security
+      GF_SECURITY_DISABLE_GRAVATAR: true
+      GF_SECURITY_COOKIE_SECURE: true
+      GF_SECURITY_STRICT_TRANSPORT_SECURITY: true
+
+      # Timezone
+      TZ: America/New_York
+
+    # User (run as specific UID:GID)
+    user: "472:472"  # Default Grafana user
+
+    # Port mapping
+    ports:
+      - "3000:3000"
+
+    # Volume mounts
+    volumes:
+      # Data directory (dashboards, plugins, etc.)
+      - grafana_data:/var/lib/grafana
+
+      # Provisioning (datasources and dashboards)
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+
+      # Dashboard JSON files
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+    # Network
+    networks:
+      - homelab
+
+    # Dependencies
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    labels:
+      - "com.homelab.service=grafana"
+      - "com.homelab.tier=monitoring"
+      - "com.homelab.criticality=high"
+
+  # ===================================================
+  # SERVICE: Loki (Log Aggregation)
+  # ===================================================
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    hostname: loki
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # Command arguments
+    command: -config.file=/etc/loki/loki-config.yml
+
+    # Port mapping
+    ports:
+      - "3100:3100"
+
+    # Volume mounts
+    volumes:
+      # Configuration file (we created this earlier)
+      - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+
+      # Data storage
+      - loki_data:/loki
+
+    # Network
+    networks:
+      - homelab
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    labels:
+      - "com.homelab.service=loki"
+      - "com.homelab.tier=monitoring"
+      - "com.homelab.criticality=high"
+
+  # ===================================================
+  # SERVICE: Promtail (Log Shipper)
+  # ===================================================
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    hostname: promtail
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+    # Command arguments
+    command: -config.file=/etc/promtail/promtail-config.yml
+
+    # Volume mounts
+    volumes:
+      # Configuration file (we created this earlier)
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+
+      # System logs (read-only)
+      - /var/log:/var/log:ro
+
+      # Docker logs (read-only)
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
+      # Position tracking (persistent)
+      - promtail_positions:/tmp
+
+    # Network
+    networks:
+      - homelab
+
+    # Dependencies
+    depends_on:
+      loki:
+        condition: service_healthy
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9080/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    labels:
+      - "com.homelab.service=promtail"
+      - "com.homelab.tier=monitoring"
+
+  # ===================================================
+  # SERVICE: Alertmanager (Alert Routing)
+  # ===================================================
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    hostname: alertmanager
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+    # Command arguments
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=https://alertmanager.example.com'
+      - '--cluster.advertise-address=0.0.0.0:9093'
+
+    # Environment variables
+    environment:
+      # For templates and notifications
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      PAGERDUTY_SERVICE_KEY: ${PAGERDUTY_SERVICE_KEY}
+
+    # Port mapping
+    ports:
+      - "9093:9093"
+
+    # Volume mounts
+    volumes:
+      # Configuration file (we created this earlier)
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+
+      # Templates
+      - ./monitoring/alertmanager/templates:/etc/alertmanager/templates:ro
+
+      # Data storage
+      - alertmanager_data:/alertmanager
+
+    # Network
+    networks:
+      - homelab
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9093/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    labels:
+      - "com.homelab.service=alertmanager"
+      - "com.homelab.tier=monitoring"
+      - "com.homelab.criticality=high"
+
+  # ===================================================
+  # SERVICE: Node Exporter (Host Metrics)
+  # ===================================================
+  node_exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node_exporter
+    hostname: node-exporter
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+    # Command arguments (enable specific collectors)
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.netclass.ignored-devices=^(veth|docker|br-).*'
+      - '--collector.netdev.device-exclude=^(veth|docker|br-).*'
+
+    # Port mapping
+    ports:
+      - "9100:9100"
+
+    # Volume mounts (read-only host filesystem)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro,rslave
+
+    # Network
+    networks:
+      - homelab
+
+    # Run with host PID namespace (for accurate process metrics)
+    pid: host
+
+    labels:
+      - "com.homelab.service=node-exporter"
+      - "com.homelab.tier=monitoring"
+
+  # ===================================================
+  # SERVICE: cAdvisor (Container Metrics)
+  # ===================================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor
+    hostname: cadvisor
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+    # Port mapping
+    ports:
+      - "8080:8080"
+
+    # Volume mounts
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+
+    # Privileged mode (required for container metrics)
+    privileged: true
+
+    # Network
+    networks:
+      - homelab
+
+    # Devices (for disk metrics)
+    devices:
+      - /dev/kmsg
+
+    labels:
+      - "com.homelab.service=cadvisor"
+      - "com.homelab.tier=monitoring"
+
+  # ===================================================
+  # SERVICE: Blackbox Exporter (Endpoint Monitoring)
+  # ===================================================
+  blackbox_exporter:
+    image: prom/blackbox-exporter:v0.24.0
+    container_name: blackbox_exporter
+    hostname: blackbox-exporter
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+    # Command arguments
+    command:
+      - '--config.file=/etc/blackbox/blackbox.yml'
+
+    # Port mapping
+    ports:
+      - "9115:9115"
+
+    # Volume mounts
+    volumes:
+      # Configuration file
+      - ./monitoring/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+
+    # Network
+    networks:
+      - homelab
+
+    labels:
+      - "com.homelab.service=blackbox-exporter"
+      - "com.homelab.tier=monitoring"
+
+  # ===================================================
+  # SERVICE: SNMP Exporter (Network Equipment - Optional)
+  # ===================================================
+  # Uncomment if monitoring network switches/routers via SNMP
+  #
+  # snmp_exporter:
+  #   image: prom/snmp-exporter:v0.24.1
+  #   container_name: snmp_exporter
+  #   hostname: snmp-exporter
+  #   restart: unless-stopped
+  #
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.25'
+  #         memory: 128M
+  #
+  #   command:
+  #     - '--config.file=/etc/snmp_exporter/snmp.yml'
+  #
+  #   ports:
+  #     - "9116:9116"
+  #
+  #   volumes:
+  #     - ./monitoring/snmp/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+  #
+  #   networks:
+  #     - homelab
+  #
+  #   labels:
+  #     - "com.homelab.service=snmp-exporter"
+  #     - "com.homelab.tier=monitoring"
+
+  # ===================================================
+  # SERVICE: Tempo (Distributed Tracing - Future)
+  # ===================================================
+  # Uncomment when ready to implement distributed tracing
+  #
+  # tempo:
+  #   image: grafana/tempo:2.3.0
+  #   container_name: tempo
+  #   hostname: tempo
+  #   restart: unless-stopped
+  #
+  #   command: ["-config.file=/etc/tempo/tempo.yml"]
+  #
+  #   ports:
+  #     - "3200:3200"    # Tempo HTTP
+  #     - "4317:4317"    # OTLP gRPC
+  #     - "4318:4318"    # OTLP HTTP
+  #
+  #   volumes:
+  #     - ./monitoring/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+  #     - tempo_data:/var/tempo
+  #
+  #   networks:
+  #     - homelab
+
+# =====================================================
+# NETWORKS
+# =====================================================
+networks:
+  homelab:
+    name: homelab_network
+    driver: bridge
+
+# =====================================================
+# VOLUMES
+# =====================================================
+volumes:
+  # Prometheus data (15 days retention, ~20GB)
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/monitoring/prometheus
+
+  # Grafana data (dashboards, plugins, ~1GB)
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/monitoring/grafana
+
+  # Loki data (30 days retention, ~30GB)
+  loki_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/monitoring/loki
+
+  # Alertmanager data (alerts, silences)
+  alertmanager_data:
+    driver: local
+
+  # Promtail positions (track read position in log files)
+  promtail_positions:
+    driver: local
+
+  # Tempo data (future)
+  # tempo_data:
+  #   driver: local
+
+# =====================================================
+# DEPLOYMENT INSTRUCTIONS
+# =====================================================
+#
+# Prerequisites:
+# 1. Create data directories:
+#    sudo mkdir -p /mnt/monitoring/{prometheus,grafana,loki}
+#    sudo chown -R 472:472 /mnt/monitoring/grafana  # Grafana UID
+#    sudo chown -R 65534:65534 /mnt/monitoring/prometheus  # nobody:nogroup
+#    sudo chown -R 10001:10001 /mnt/monitoring/loki  # Loki UID
+#
+# 2. Create config directories:
+#    mkdir -p monitoring/{prometheus/rules,loki,promtail,alertmanager/templates,grafana/{provisioning,dashboards},blackbox}
+#
+# 3. Copy configuration files (we created these earlier):
+#    - prometheus.yml → monitoring/prometheus/
+#    - loki-config.yml → monitoring/loki/
+#    - promtail-config.yml → monitoring/promtail/
+#    - alertmanager.yml → monitoring/alertmanager/
+#    - datasources.yml → monitoring/grafana/provisioning/datasources/
+#    - dashboards.yml → monitoring/grafana/provisioning/dashboards/
+#
+# 4. Create .env file with secrets:
+#    GRAFANA_ADMIN_PASSWORD=secure_password
+#    GRAFANA_SMTP_PASSWORD=smtp_password
+#    SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+#    PAGERDUTY_SERVICE_KEY=your_pagerduty_key
+#    SMTP_PASSWORD=smtp_password
+#
+# Initial Deployment:
+# docker-compose -f docker-compose-monitoring-stack.yml up -d
+#
+# Verify Services:
+# docker-compose -f docker-compose-monitoring-stack.yml ps
+# docker logs prometheus
+# docker logs grafana
+# docker logs loki
+#
+# Access UIs:
+# - Prometheus: http://192.168.40.30:9090
+# - Grafana: http://192.168.40.30:3000 (admin / your_password)
+# - Alertmanager: http://192.168.40.30:9093
+#
+# =====================================================
+
+# =====================================================
+# BLACKBOX EXPORTER CONFIGURATION
+# =====================================================
+# File: monitoring/blackbox/blackbox.yml
+#
+# modules:
+#   http_2xx:
+#     prober: http
+#     timeout: 5s
+#     http:
+#       valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+#       valid_status_codes: [200, 201, 202, 204]
+#       method: GET
+#       fail_if_ssl: false
+#       fail_if_not_ssl: false
+#       tls_config:
+#         insecure_skip_verify: false
+#
+#   http_post_2xx:
+#     prober: http
+#     http:
+#       method: POST
+#
+#   tcp_connect:
+#     prober: tcp
+#     timeout: 5s
+#
+#   icmp:
+#     prober: icmp
+#     timeout: 5s
+#
+# =====================================================
+
+# =====================================================
+# PROMETHEUS ALERT RULES
+# =====================================================
+# File: monitoring/prometheus/rules/alerts.yml
+#
+# groups:
+#   - name: instance_alerts
+#     interval: 30s
+#     rules:
+#       - alert: InstanceDown
+#         expr: up == 0
+#         for: 5m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "Instance {{ $labels.instance }} down"
+#           description: "{{ $labels.instance }} has been down for more than 5 minutes."
+#
+#       - alert: HighCPU
+#         expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+#         for: 10m
+#         labels:
+#           severity: warning
+#         annotations:
+#           summary: "High CPU usage on {{ $labels.instance }}"
+#           description: "CPU usage is above 80% for 10 minutes."
+#
+#       - alert: HighMemory
+#         expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+#         for: 10m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "High memory usage on {{ $labels.instance }}"
+#           description: "Memory usage is above 90%."
+#
+#       - alert: DiskSpaceLow
+#         expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+#         for: 5m
+#         labels:
+#           severity: critical
+#         annotations:
+#           summary: "Low disk space on {{ $labels.instance }}"
+#           description: "Disk space is below 10%."
+#
+# =====================================================
+
+# =====================================================
+# OPERATIONAL NOTES
+# =====================================================
+#
+# Starting the Stack:
+# docker-compose -f docker-compose-monitoring-stack.yml up -d
+#
+# Stopping the Stack:
+# docker-compose -f docker-compose-monitoring-stack.yml down
+#
+# Viewing Logs:
+# docker-compose -f docker-compose-monitoring-stack.yml logs -f [service_name]
+#
+# Reloading Prometheus Config:
+# curl -X POST http://192.168.40.30:9090/-/reload
+#
+# Reloading Alertmanager Config:
+# curl -X POST http://192.168.40.30:9093/-/reload
+#
+# Updating Services:
+# docker-compose -f docker-compose-monitoring-stack.yml pull
+# docker-compose -f docker-compose-monitoring-stack.yml up -d
+#
+# Backing Up Data:
+# sudo tar -czf monitoring_backup.tar.gz /mnt/monitoring/
+#
+# Resource Monitoring:
+# docker stats
+#
+# Health Checks:
+# for service in prometheus grafana loki alertmanager; do
+#   echo "Checking $service..."
+#   docker inspect --format='{{.State.Health.Status}}' $service
+# done
+#
+# =====================================================
+
+# =====================================================
+# TROUBLESHOOTING
+# =====================================================
+#
+# Issue: Prometheus not scraping targets
+# Solution:
+# - Check prometheus.yml syntax: promtool check config prometheus.yml
+# - Verify target endpoints are reachable: curl http://target:port/metrics
+# - Check Prometheus logs: docker logs prometheus
+# - View targets in UI: http://192.168.40.30:9090/targets
+#
+# Issue: Grafana can't connect to datasources
+# Solution:
+# - Verify datasources.yml is mounted correctly
+# - Check network connectivity: docker exec grafana ping prometheus
+# - Test datasource in Grafana UI: Configuration → Data Sources → Test
+#
+# Issue: Loki not receiving logs
+# Solution:
+# - Check Promtail logs: docker logs promtail
+# - Verify Promtail can reach Loki: docker exec promtail wget http://loki:3100/ready
+# - Check log file permissions
+# - Verify scrape configs in promtail-config.yml
+#
+# Issue: Alerts not firing
+# Solution:
+# - Check alert rules: promtool check rules rules/*.yml
+# - View alerts in Prometheus UI: http://192.168.40.30:9090/alerts
+# - Verify Alertmanager is receiving alerts: http://192.168.40.30:9093/#/alerts
+# - Check Alertmanager routing: http://192.168.40.30:9093/#/status
+#
+# Issue: High memory usage
+# Solution:
+# - Reduce Prometheus retention: --storage.tsdb.retention.time=7d
+# - Reduce Loki retention: retention_period: 360h (15 days)
+# - Drop unnecessary metrics with metric_relabel_configs
+# - Increase VM RAM allocation
+#
+# =====================================================
+
+# =====================================================
+# SECURITY BEST PRACTICES
+# =====================================================
+#
+# 1. Change default Grafana admin password immediately
+# 2. Use strong passwords stored in .env file (never commit!)
+# 3. Restrict ports 9090, 3000, 9093 to homelab network only
+# 4. Enable authentication on Prometheus and Alertmanager (if exposed)
+# 5. Use HTTPS for external access (via Nginx Proxy Manager)
+# 6. Regularly update Docker images for security patches
+# 7. Monitor for suspicious queries or access patterns
+# 8. Backup configurations and data regularly
+# 9. Use least privilege for file permissions
+# 10. Enable audit logging in Grafana
+#
+# =====================================================

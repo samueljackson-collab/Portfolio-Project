@@ -1,0 +1,35 @@
+# System alert rules
+# Keywords: HighCPUUsage, HighMemoryUsage, NodeDown
+
+groups:
+  - name: system-alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m])) > 0.85
+        for: 5m
+        labels:
+          severity: critical
+          team: homelab
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU utilization has been above 85% for more than 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.15
+        for: 5m
+        labels:
+          severity: warning
+          team: homelab
+        annotations:
+          summary: "Memory pressure on {{ $labels.instance }}"
+          description: "Available memory below 15% for at least 5 minutes."
+
+      - alert: NodeDown
+        expr: up{job="node_exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: homelab
+        annotations:
+          summary: "Node exporter down on {{ $labels.instance }}"
+          description: "Instance has stopped reporting metrics to Prometheus."

@@ -1,0 +1,109 @@
+{
+  "dashboard": {
+    "title": "Serverless Data Processing Dashboard",
+    "tags": ["serverless", "lambda", "aws"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "1m",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Lambda Invocations",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(aws_lambda_invocations_sum[5m])",
+            "legendFormat": "{{function_name}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Lambda Error Rate",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(aws_lambda_errors_sum[5m]) / rate(aws_lambda_invocations_sum[5m]) * 100",
+            "legendFormat": "{{function_name}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Lambda Duration (P95)",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "aws_lambda_duration_p95",
+            "legendFormat": "{{function_name}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Concurrent Executions",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "aws_lambda_concurrent_executions_average",
+            "legendFormat": "{{function_name}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "API Gateway Requests",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "sum(rate(aws_apigateway_count_sum[5m]))",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Step Functions Executions",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "rate(aws_stepfunctions_executions_started[5m])",
+            "legendFormat": "{{state_machine_name}} - Started",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(aws_stepfunctions_executions_succeeded[5m])",
+            "legendFormat": "{{state_machine_name}} - Succeeded",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(aws_stepfunctions_executions_failed[5m])",
+            "legendFormat": "{{state_machine_name}} - Failed",
+            "refId": "C"
+          }
+        ]
+      }
+    ]
+  }
+}

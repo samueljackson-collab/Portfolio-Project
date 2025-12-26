@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY src/device_simulator.py ./
+
+# Run the device simulator
+CMD ["python", "device_simulator.py", \
+     "--broker", "${MQTT_BROKER:-mosquitto}", \
+     "--topic", "${MQTT_TOPIC:-portfolio/telemetry}", \
+     "--device-count", "${DEVICE_COUNT:-10}", \
+     "--interval", "${INTERVAL:-5}"]

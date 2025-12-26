@@ -21,6 +21,8 @@ export type WeekPlan = {
   title: string;
   topics: string[];
   deliverables: string[];
+  duration?: string;
+  status?: 'planned' | 'in-progress' | 'completed';
 };
 
 export type RoleContent = {

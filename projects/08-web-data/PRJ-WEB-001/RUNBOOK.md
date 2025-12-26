@@ -5,6 +5,7 @@
 Production operations runbook for Commercial E-commerce & Booking Systems - a portfolio of WordPress/WooCommerce-based websites including high-SKU flooring stores, resort booking systems, and tour operator platforms.
 
 **System Components:**
+
 - WordPress core with WooCommerce
 - MySQL/MariaDB database (10,000+ products)
 - PHP-FPM application server
@@ -16,7 +17,10 @@ Production operations runbook for Commercial E-commerce & Booking Systems - a po
 
 **Current Status:** 🔄 Recovery/Rebuild in Progress
 
+**Recovery Additions:** Deployment and content workflows have been reconstructed with sanitized procedures; see [assets/docs/runbooks/deployment_pipeline.md](assets/docs/runbooks/deployment_pipeline.md) and [assets/docs/runbooks/content_ops.md](assets/docs/runbooks/content_ops.md) for promotion and catalog refresh steps with rollback coverage.
+
 **Original Deployments:**
+
 - High-SKU Flooring Store (10,000+ products)
 - Resort Booking Website
 - Tour Operator Website
@@ -49,6 +53,7 @@ Production operations runbook for Commercial E-commerce & Booking Systems - a po
 ### Dashboards
 
 #### Site Health Dashboard
+
 ```bash
 # Check WordPress status
 wp core version --path=/var/www/html
@@ -65,6 +70,7 @@ tail -50 /var/www/html/wp-content/debug.log
 ```
 
 #### Database Health Dashboard
+
 ```bash
 # Check MySQL status
 systemctl status mysql
@@ -87,6 +93,7 @@ wp db optimize --path=/var/www/html --dry-run
 ```
 
 #### Performance Dashboard
+
 ```bash
 # Check PHP-FPM status
 systemctl status php8.1-fpm
@@ -107,6 +114,7 @@ top -bn1 | head -20
 ```
 
 #### E-commerce Metrics Dashboard
+
 ```bash
 # Recent orders
 wp wc order list --status=processing --path=/var/www/html | head -20
@@ -190,6 +198,7 @@ fi
 ### WordPress Site Management
 
 #### Site Health Check
+
 ```bash
 # WordPress core health
 wp core verify-checksums --path=/var/www/html
@@ -212,6 +221,7 @@ curl -o /dev/null -s -w "Time: %{time_total}s\n" https://example.com/
 ```
 
 #### Update WordPress Core
+
 ```bash
 # 1. Backup before update
 /opt/scripts/backup-wordpress.sh
@@ -240,6 +250,7 @@ wp cache flush --path=/var/www/html
 ```
 
 #### Update Plugins
+
 ```bash
 # Check for updates
 wp plugin list --update=available --path=/var/www/html
@@ -265,6 +276,7 @@ tail -50 /var/www/html/wp-content/debug.log
 #### Product Management
 
 **Bulk Product Import:**
+
 ```bash
 # Import products via CSV
 wp wc product import /var/imports/products-$(date +%Y%m%d).csv \
@@ -282,6 +294,7 @@ grep -i "error\|failed" /var/www/html/wp-content/uploads/wc-logs/product-import-
 ```
 
 **SQL-Based Price Update (High-SKU Store):**
+
 ```bash
 # Prepare price update SQL
 cat > /tmp/price-update.sql << 'EOF'
@@ -327,6 +340,7 @@ wp wc product get <product-id> --path=/var/www/html --field=price
 ```
 
 **Product Stock Management:**
+
 ```bash
 # Check low stock products
 wp wc product list --stock_status=lowstock --path=/var/www/html
@@ -353,6 +367,7 @@ EOF
 #### Order Management
 
 **View Recent Orders:**
+
 ```bash
 # List orders
 wp wc order list --status=processing --path=/var/www/html
@@ -369,6 +384,7 @@ wp wc order list --after="2025-01-01" --before="2025-01-31" \
 ```
 
 **Handle Failed Orders:**
+
 ```bash
 # List failed orders
 wp db query "
@@ -392,6 +408,7 @@ tail -100 /var/www/html/wp-content/uploads/wc-logs/payment-gateway-*.log
 ### Database Operations
 
 #### Database Backup
+
 ```bash
 # Standard backup
 mysqldump -u root -p woocommerce_db | gzip > \
@@ -415,6 +432,7 @@ chmod +x /etc/cron.daily/woocommerce-backup
 ```
 
 #### Database Restore
+
 ```bash
 # Restore full database
 gunzip < /backup/woocommerce-db-20250101-1200.sql.gz | \
@@ -434,6 +452,7 @@ wp cache flush --path=/var/www/html
 ```
 
 #### Database Optimization
+
 ```bash
 # Check table status
 wp db query "SHOW TABLE STATUS" --path=/var/www/html | grep -E "Rows|Data_length"
@@ -463,6 +482,7 @@ mysql -u root -p woocommerce_db -e "
 ### Cache Management
 
 #### Clear All Caches
+
 ```bash
 # WordPress object cache
 wp cache flush --path=/var/www/html
@@ -488,6 +508,7 @@ curl -I https://example.com | grep -i "cache\|age"
 ```
 
 #### Warm Cache
+
 ```bash
 # Warm product pages
 wp post list --post_type=product --format=ids --path=/var/www/html | \
@@ -510,6 +531,7 @@ redis-cli INFO stats | grep -E "keyspace_hits|keyspace_misses"
 ### Booking System Operations (Resort/Tours)
 
 #### Manage Bookings
+
 ```bash
 # List today's bookings
 wp db query "
@@ -538,6 +560,7 @@ wp eval 'do_action("send_booking_confirmation", <booking-id>);' --path=/var/www/
 ```
 
 #### Capacity Management
+
 ```bash
 # Check room/tour capacity for date
 wp db query "
@@ -562,6 +585,7 @@ wp post create --post_type=booking_block \
 ### Detection
 
 **Automated Detection:**
+
 - UptimeRobot/Pingdom alerts
 - Server monitoring (Nagios, Zabbix)
 - Application performance monitoring (New Relic)
@@ -569,6 +593,7 @@ wp post create --post_type=booking_block \
 - WooCommerce status emails
 
 **Manual Detection:**
+
 ```bash
 # Check site availability
 curl -I https://example.com
@@ -594,27 +619,31 @@ wp db query "SELECT COUNT(*) FROM wp_posts WHERE post_type='shop_order' AND post
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
+
 - Site completely unreachable (500/502/503 errors)
 - Database server down
 - Payment processing completely broken
 - Data corruption detected
 
-**P1: Major Degradation**
+### P1: Major Degradation
+
 - Site very slow (> 5s page load)
 - Checkout process failing
 - Product import failures affecting inventory
 - High error rate (>10%)
 - Email notifications not sending
 
-**P2: Moderate Issues**
+### P2: Moderate Issues
+
 - Individual page errors
 - Cache performance degraded
 - Stock sync delays
 - Payment gateway intermittent issues
 - CDN issues affecting static assets
 
-**P3: Minor Issues**
+### P3: Minor Issues
+
 - Single order failure
 - Image upload issues
 - Minor plugin conflicts
@@ -625,6 +654,7 @@ wp db query "SELECT COUNT(*) FROM wp_posts WHERE post_type='shop_order' AND post
 #### P0: Site Completely Down
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Check web server status
 systemctl status nginx
@@ -643,6 +673,7 @@ tail -20 /var/www/html/wp-content/debug.log
 ```
 
 **Investigation (2-10 minutes):**
+
 ```bash
 # Check system resources
 free -m
@@ -664,6 +695,7 @@ tail -100 /var/www/html/wp-content/debug.log | grep -i "fatal"
 ```
 
 **Mitigation:**
+
 ```bash
 # Option 1: Restart services
 systemctl restart nginx
@@ -687,6 +719,7 @@ wp maintenance-mode deactivate --path=/var/www/html
 #### P1: Checkout Process Failing
 
 **Investigation:**
+
 ```bash
 # Check WooCommerce status
 wp wc status --path=/var/www/html
@@ -710,6 +743,7 @@ wp db query "
 ```
 
 **Mitigation:**
+
 ```bash
 # Disable problematic payment gateway
 wp wc payment_gateway update <gateway-id> --enabled=false --path=/var/www/html
@@ -734,6 +768,7 @@ watch -n 30 'wp db query "SELECT COUNT(*) FROM wp_posts WHERE post_type=\"shop_o
 #### P1: Product Import Failed
 
 **Investigation:**
+
 ```bash
 # Check import logs
 tail -100 /var/www/html/wp-content/uploads/wc-logs/product-import-*.log
@@ -753,6 +788,7 @@ tail -50 /var/log/mysql/error.log
 ```
 
 **Mitigation:**
+
 ```bash
 # Fix CSV format issues
 # Clean data in source file
@@ -779,6 +815,7 @@ wp cache flush --path=/var/www/html
 #### P2: Site Performance Degraded
 
 **Investigation:**
+
 ```bash
 # Check page load time
 time curl -o /dev/null -s https://example.com/shop/
@@ -801,6 +838,7 @@ redis-cli INFO stats | grep -E "hits|misses"
 ```
 
 **Mitigation:**
+
 ```bash
 # Clear and rebuild cache
 wp cache flush --path=/var/www/html
@@ -825,6 +863,7 @@ mysql -u root -p -e "KILL <process-id>;"
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > /var/log/incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -865,6 +904,7 @@ echo "$(date +%Y-%m-%d),P1,35,product-import" >> /var/log/incidents/incident-log
 ### Essential Troubleshooting Commands
 
 #### Site Issues
+
 ```bash
 # Check WordPress install
 wp core verify-checksums --path=/var/www/html
@@ -885,6 +925,7 @@ curl -o /dev/null -s -w "Time: %{time_total}s, HTTP: %{http_code}\n" https://exa
 ```
 
 #### Database Issues
+
 ```bash
 # Check database connectivity
 mysql -u wp_user -p$DB_PASSWORD -e "SELECT 1"
@@ -903,6 +944,7 @@ mysql -u root -p -e "SHOW FULL PROCESSLIST;"
 ```
 
 #### Performance Issues
+
 ```bash
 # Check server load
 uptime
@@ -929,11 +971,13 @@ cat /var/log/php8.1-fpm.log | grep "pool www" | tail -20
 #### Issue: "White Screen of Death (WSOD)"
 
 **Symptoms:**
+
 - Blank white page
 - No error messages visible
 - Site completely unresponsive
 
 **Diagnosis:**
+
 ```bash
 # Enable WP_DEBUG
 wp config set WP_DEBUG true --path=/var/www/html
@@ -950,6 +994,7 @@ grep -i "fatal" /var/www/html/wp-content/debug.log
 ```
 
 **Solution:**
+
 ```bash
 # Disable plugins one by one
 wp plugin deactivate --all --path=/var/www/html
@@ -976,11 +1021,13 @@ wp config set WP_MEMORY_LIMIT 256M --path=/var/www/html
 #### Issue: "Database connection error"
 
 **Symptoms:**
+
 - "Error establishing database connection"
 - Site completely down
 - Cannot access admin panel
 
 **Diagnosis:**
+
 ```bash
 # Check MySQL status
 systemctl status mysql
@@ -999,6 +1046,7 @@ tail -50 /var/log/mysql/error.log
 ```
 
 **Solution:**
+
 ```bash
 # Restart MySQL
 systemctl restart mysql
@@ -1021,12 +1069,14 @@ wp config set DB_PASSWORD new_password --path=/var/www/html
 #### Issue: "Products not displaying correctly after import"
 
 **Symptoms:**
+
 - Missing product images
 - Incorrect prices
 - Missing attributes
 - Broken product links
 
 **Diagnosis:**
+
 ```bash
 # Check import log
 tail -100 /var/www/html/wp-content/uploads/wc-logs/product-import-*.log
@@ -1047,6 +1097,7 @@ wp db query "
 ```
 
 **Solution:**
+
 ```bash
 # Regenerate product permalinks
 wp rewrite flush --path=/var/www/html
@@ -1086,6 +1137,7 @@ EOF
 ### Backup Strategy
 
 **Automated Daily Backups:**
+
 ```bash
 # Full site backup script
 cat > /opt/scripts/backup-wordpress.sh << 'EOF'
@@ -1121,6 +1173,7 @@ chmod +x /opt/scripts/backup-wordpress.sh
 ```
 
 **Off-site Backups:**
+
 ```bash
 # Sync to remote server
 rsync -avz /backup/woocommerce/ user@remote-server:/backups/woocommerce/
@@ -1135,6 +1188,7 @@ wp plugin install updraftplus --activate --path=/var/www/html
 ### Disaster Recovery Procedures
 
 #### Full Site Recovery
+
 ```bash
 # 1. Restore database
 gunzip < /backup/woocommerce/db-latest.sql.gz | \
@@ -1175,6 +1229,7 @@ wp wc product list --path=/var/www/html | head -10
 ### Routine Maintenance
 
 #### Daily Tasks
+
 ```bash
 # Check site health
 curl -I https://example.com
@@ -1194,6 +1249,7 @@ df -h /var/www
 ```
 
 #### Weekly Tasks
+
 ```bash
 # Update plugins and themes
 wp plugin update --all --path=/var/www/html
@@ -1213,6 +1269,7 @@ wp wc report sales --period=week --path=/var/www/html
 ```
 
 #### Monthly Tasks
+
 ```bash
 # Update WordPress core
 wp core update --path=/var/www/html
@@ -1244,6 +1301,7 @@ wp db optimize --path=/var/www/html
 ### Data Recovery from Lost Systems
 
 #### Export Available Data
+
 ```bash
 # If partial database backups exist
 gunzip < /recovery/partial-db-backup.sql.gz | mysql -u root -p recovery_db
@@ -1269,6 +1327,7 @@ mysqldump -u root -p recovery_db --no-data > /recovery/schema-export.sql
 ```
 
 #### Rebuild Documentation
+
 ```bash
 # Document recovered workflows
 cat > /recovery/docs/catalog-update-workflow.md << 'EOF'
@@ -1303,6 +1362,7 @@ EOF
 ## Operational Best Practices
 
 ### Pre-Deployment Checklist
+
 - [ ] Full backup completed
 - [ ] Changes tested in staging environment
 - [ ] Database migrations tested
@@ -1311,6 +1371,7 @@ EOF
 - [ ] Stakeholders notified
 
 ### Post-Deployment Checklist
+
 - [ ] Site loads correctly
 - [ ] Checkout process tested
 - [ ] Product pages display correctly
@@ -1324,6 +1385,7 @@ EOF
 ## Quick Reference Card
 
 ### Most Common Operations
+
 ```bash
 # Check site health
 wp core verify-checksums --path=/var/www/html
@@ -1349,6 +1411,7 @@ wp wc order list --status=processing --path=/var/www/html
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: Site down
 systemctl restart nginx
@@ -1367,6 +1430,7 @@ wp db optimize --path=/var/www/html
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Web Development & Data Management Team

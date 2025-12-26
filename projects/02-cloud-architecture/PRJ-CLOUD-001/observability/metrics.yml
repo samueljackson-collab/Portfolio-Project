@@ -1,0 +1,10 @@
+server:
+  port: 9090
+  scrape_interval: 15s
+metrics:
+  - name: scaffold_health
+    type: gauge
+    help: "Placeholder metric indicating the scaffold is reachable"
+    labels:
+      service: cloud-architecture
+      stage: sample

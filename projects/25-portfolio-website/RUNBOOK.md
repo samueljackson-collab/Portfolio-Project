@@ -510,25 +510,25 @@ curl -s https://portfolio.company.com/search?q=kubernetes | grep -q "results"
 
 #### Severity Classification
 
-**P0: Complete Site Outage**
+### P0: Complete Site Outage
 - Website completely inaccessible
 - All pages returning 5xx errors
 - DNS resolution failure
 - Hosting service down
 
-**P1: Major Functionality Loss**
+### P1: Major Functionality Loss
 - Build pipeline completely broken
 - All pages returning 404
 - Search functionality broken
 - Critical pages unavailable
 
-**P2: Degraded Performance**
+### P2: Degraded Performance
 - Slow page load times (>5s)
 - Individual pages broken
 - Build warnings/errors
 - Multiple broken links (>10)
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual broken link
 - Documentation typos
 - Image loading slow

@@ -1,6 +1,6 @@
 # Commercial E-commerce & Booking Systems
 
-**Status:** 🔄 Recovery (Phase 1 artifacts published)
+**Status:** 🔄 Recovery (artifacts published; screenshots pending)
 
 ## Description
 
@@ -9,18 +9,16 @@ Previously built and managed: resort booking site; high-SKU flooring store; tour
 ## Links
 
 - [Parent Documentation](../../../README.md)
-- [Recovery Timeline](./RECOVERY_TIMELINE.md)
-- [Runbook](./RUNBOOK.md)
-- [Backup Catalog](./assets/docs/recovery-backup-catalog.md)
-- [Schema & ERD](./assets/docs/schema-and-erd.md)
-- [Runbooks & Workflows](./assets/docs/runbooks)
-- [Case Studies](./assets/docs/case-studies)
-- [Sanitized Code Excerpts](./assets/code)
-- [Screenshots (sanitized)](./assets/screenshots)
+- [Recovery Log](./RECOVERY.md)
+- [Runbooks](./assets/docs/runbooks/)
+- [Case Studies](./assets/docs/case-studies/recovery-case-studies.md)
+- [Architecture & ERD](./assets/diagrams/architecture.md)
+- [Sanitized Code Samples](./assets/code/)
 
 ## Recovery Status
 
-**Current focus:** Catalog backups, rebuild schema/ERD, and restore operational runbooks for deployment and content workflows.
+- Capture sanitized screenshots for catalog, booking calendar, and checkout flows.
+- Add final evidence of deployment rehearsal using the rebuilt runbooks.
 
 ### Completed in this drop
 - Backup catalog drafted with storage locations and verification checks.
@@ -34,50 +32,119 @@ Previously built and managed: resort booking site; high-SKU flooring store; tour
 - Publish additional PHP plugin excerpts for discount logic and feed integrations.
 - Produce video walkthroughs for the deployment and rollback flows.
 
-## Recovery Plan (Updated)
+---
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-baseline).
+- [x] Recovery checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#workflow).
 
-### Week 1: Catalog and Restore (Current Phase)
+---
+*Placeholder — Documentation pending*
+# PRJ-WEB-001: Commercial E-commerce & Booking Systems
+
+**Status:** 🔄 Recovery/Rebuild in Progress
+**Category:** Web Development & Data Management
+**Technologies:** WordPress, WooCommerce, PHP, SQL, JavaScript
+
+---
+
+## ⚠️ Current Status
+
+This project is undergoing **recovery and reconstruction** following data loss from a retired workstation. Original source code, automation scripts, and detailed documentation were not fully backed up before the system was decommissioned.
+
+**What was lost:**
+- Custom WordPress/WooCommerce plugins and themes
+- SQL automation scripts for catalog management
+- Content management workflows and runbooks
+- Deployment automation and scripts
+- Original project documentation and screenshots
+
+**What's being recovered:**
+- High-level architectural knowledge (in-memory)
+- Database export snapshots (partial)
+- Client-facing site screenshots (limited)
+- Process knowledge and workflow patterns
+
+---
+
+## Original Project Overview
+
+### Project Portfolio
+
+Between 2015-2022, I designed, built, and managed multiple data-heavy commercial websites as a freelance web developer:
+
+#### 1. **Resort Booking Website**
+- Complex booking system with seasonal pricing
+- Accommodation variations (room types, packages, add-ons)
+- Calendar availability management
+- Email automation for confirmations and reminders
+- Integration with payment gateways
+
+#### 2. **High-SKU Flooring Store**
+- **10,000+ products** across multiple categories
+- Weekly price updates via SQL import scripts
+- Advanced filtering (material, color, size, brand)
+- Bulk inventory management
+- Product attribute synchronization
+
+#### 3. **Tour Operator Website**
+- Tours with complex variations (dates, group sizes, add-ons)
+- Dynamic pricing based on occupancy and season
+- Multi-day itinerary management
+- Gallery and review integration
+- Booking calendar with capacity limits
+
+### Technical Highlights
+
+#### Data Management at Scale
+- Developed SQL scripts to automate weekly price updates across thousands of SKUs
+- Prevented data inconsistencies with validation checks before import
+- Used staging environments to test bulk updates before production deployment
+
+#### Content & SEO Strategy
+- Optimized product pages for search engines (meta descriptions, structured data)
+- Implemented breadcrumb navigation for better UX and SEO
+- Created content templates for consistent product descriptions
+
+#### Performance Optimization
+- Implemented caching strategies for large catalogs
+- Optimized database queries to reduce page load times
+- Used CDN for image delivery
+
+#### Process Documentation
+- Created runbooks for common operations (price updates, new product additions)
+- Documented backup and restore procedures
+- Established change control processes for production updates
+
+---
+
+## Recovery Plan
+
+### Week 1: Catalog and Restore (Complete)
 - [x] Locate and extract data from backup exports
 - [x] Reconstruct database schema diagrams
 - [x] Document SQL workflow patterns from memory
 - [x] Identify recoverable code snippets or configuration files
 
-### Week 2: Re-document Processes
+### Week 2: Re-document Processes (Complete)
 - [x] Recreate content management runbooks
 - [x] Document deployment procedures
 - [x] Rebuild automation script templates
-- [ ] Capture architectural decisions and rationale
+- [x] Capture architectural decisions and rationale
 
-### Week 3: Publish Artifacts
+### Week 3: Publish Artifacts (In Progress)
 - [x] Create sanitized code examples (remove client-specific info)
 - [x] Write project narratives with before/after metrics
 - [x] Publish architecture diagrams
-- [x] Document lessons learned
+- [ ] Document lessons learned
 
-## What Will Be Published
+---
 
-### Documentation
-- **Architecture Overview** - System design and component interaction
-- **Data Workflows** - How catalog updates, bookings, and inventory were managed
-- **Operational Runbooks** - Step-by-step procedures for common tasks
-- **Lessons Learned** - What worked, what didn't, and what I'd do differently
+## Published Evidence (Current)
 
-### Code Examples (Sanitized)
-- SQL scripts for bulk operations (anonymized)
-- WordPress plugin snippets for custom functionality
-- Automation examples for scheduled tasks
-- API integration patterns
-
-### Visual Evidence
-- Architecture diagrams showing system components
-- Database ERD (entity-relationship diagrams)
-- Screenshots of admin interfaces (if available)
-- Performance metrics and analytics data
-
-### Case Studies
-- Problem-solution narratives for key challenges
-- Quantified outcomes (load time improvements, automation time savings)
-- Client feedback and testimonials (with permission)
+- **Documentation:** Architecture + ERD walkthrough ([architecture.md](./assets/diagrams/architecture.md)), recovery log ([RECOVERY.md](./RECOVERY.md)), deployment and content runbooks ([assets/docs/runbooks/](./assets/docs/runbooks/)).
+- **Sanitized Code:** SQL backup and validation workflows ([assets/code/sql/](./assets/code/sql/)) and PHP booking calculator excerpt ([assets/code/php/](./assets/code/php/)).
+- **Case Studies:** Issue → remediation → outcome narratives ([recovery-case-studies.md](./assets/docs/case-studies/recovery-case-studies.md)).
+- **Visuals:** Screenshot plan documented ([assets/screenshots/README.md](./assets/screenshots/README.md)); captures to follow.
 
 ## Lessons from Data Loss
 
@@ -119,8 +186,20 @@ These are now core practices in my current work and homelab projects.
 
 | Phase | Target Date | Status |
 |-------|-------------|--------|
-| Data Recovery | Week 1 | 🟢 Complete |
-| Process Documentation | Week 2 | 🟢 Complete |
-| Artifact Publication | Week 3 | 🟢 Complete |
+| Data Recovery | Week 1 | ✅ Complete |
+| Process Documentation | Week 2 | ✅ Complete |
+| Artifact Publication | Week 3 | 🔄 In Progress (screenshots pending) |
+
+**Last Updated:** November 13, 2025
+
+---
+
+## Contact
+
+For questions about this project or the recovery process, reach out via:
+- **GitHub:** [@sams-jackson](https://github.com/sams-jackson)
+- **LinkedIn:** [linkedin.com/in/sams-jackson](https://www.linkedin.com/in/sams-jackson)
+
+---
 
 **Last Updated:** December 6, 2025

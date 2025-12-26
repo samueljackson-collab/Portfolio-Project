@@ -1,19 +1,17 @@
-# Screenshots — PRJ-WEB-001
+# Screenshot Plan (Sanitized)
 
-Sanitized screenshot index for the recovery effort. Actual images are anonymized and should mask any client identifiers.
+## Capture Targets
+- Homepage (hero + category tiles) with anonymized branding.
+- Product detail page showing variation selectors and pricing table with placeholder SKUs.
+- Booking calendar page demonstrating availability states and rate breakdowns.
+- Admin catalog import screen (staging) with blurred supplier names.
+- Checkout confirmation page with masked order IDs.
 
-## Included/Planned Shots
-- **Catalog admin (sanitized):** Product list with neutral SKUs (`SKU-10001` etc.) and blurred branding.
-- **Booking calendar (sanitized):** Availability grid showing synthetic dates and capacities.
-- **Price update report:** Delta summary before/after bulk import with placeholder currency symbols.
-- **Deployment dashboard:** Staging checks (HTTP 200, plugin status) with redacted URLs.
+## Redaction & Anonymization Steps
+- Replace all logos/branding with neutral placeholders before capture.
+- Mask order IDs, email addresses, phone numbers, addresses, and payment references.
+- Remove EXIF metadata from PNG exports.
+- Store files in this folder using naming: `area-page-YYYYMMDD.png`.
 
-## Anonymization Rules
-- Blur/obscure any names, addresses, phone numbers, or booking IDs.
-- Replace domains with `example.com` and emails with `user@example.com` before capture.
-- Remove EXIF metadata using `exiftool -all=` and store compressed PNGs.
-- Store files with neutral names (e.g., `catalog-admin-sanitized.png`).
-
-## Storage Notes
-- Screenshots live only in this folder; originals remain offline.
-- Add a short caption per file describing context and checks performed.
+## Status
+Screenshots will be added after final validation; this README documents the planned, sanitized scope for reviewers.

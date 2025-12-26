@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Dict, Iterable, List
 
@@ -63,7 +63,7 @@ def analytics_handler(event: Dict[str, Any], _context: Any) -> Dict[str, Any]:
                 "total_records": len(records),
                 "total_amount": total_amount,
                 "unique_users": len(unique_users),
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             }
         ),
     }
@@ -85,7 +85,7 @@ def _validate_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _enrich_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
-    payload.setdefault("ingested_at", datetime.utcnow().isoformat())
+    payload.setdefault("ingested_at", datetime.now(timezone.utc).isoformat())
     payload.setdefault("amount", 0.0)
     payload.setdefault("channel", "api")
     return payload
@@ -95,7 +95,7 @@ def _start_workflow(payload: Dict[str, Any]) -> None:
     state_machine = os.environ["WORKFLOW_ARN"]
     step_functions.start_execution(
         stateMachineArn=state_machine,
-        input=json.dumps({"payload": payload, "received_at": datetime.utcnow().isoformat()}),
+        input=json.dumps({"payload": payload, "received_at": datetime.now(timezone.utc).isoformat()}),
     )
 
 

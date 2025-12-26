@@ -1,0 +1,95 @@
+# Alert Rules for Advanced Cybersecurity
+
+groups:
+  - name: cybersecurity_alerts
+    interval: 10s
+    rules:
+      - alert: CriticalSecurityEvent
+        expr: security_event_severity{level="critical"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+        annotations:
+          summary: "Critical security event detected"
+          description: "Event type: {{ $labels.event_type }}, Source: {{ $labels.source_ip }}"
+
+      - alert: IDSSignatureTriggered
+        expr: rate(ids_alerts_total{severity="high"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          component: ids
+        annotations:
+          summary: "High rate of IDS alerts"
+          description: "{{ $value }} high-severity alerts/sec"
+
+      - alert: BruteForceAttackDetected
+        expr: rate(security_failed_login_attempts[1m]) > 50
+        for: 2m
+        labels:
+          severity: critical
+          component: authentication
+        annotations:
+          summary: "Possible brute force attack from {{ $labels.source_ip }}"
+          description: "{{ $value }} failed login attempts/min"
+
+      - alert: DDoSAttackDetected
+        expr: rate(http_requests_total[1m]) > 10000
+        for: 3m
+        labels:
+          severity: critical
+          component: network
+        annotations:
+          summary: "Possible DDoS attack detected"
+          description: "Request rate: {{ $value }} req/sec"
+
+      - alert: MalwareDetected
+        expr: security_malware_detected_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: malware
+        annotations:
+          summary: "Malware detected on {{ $labels.host }}"
+          description: "Malware type: {{ $labels.malware_type }}"
+
+      - alert: UnauthorizedAccessAttempt
+        expr: rate(security_unauthorized_access_attempts[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: access-control
+        annotations:
+          summary: "Unauthorized access attempts detected"
+          description: "{{ $value }} attempts/sec to {{ $labels.resource }}"
+
+      - alert: ThreatIntelMatchFound
+        expr: threat_intel_matches_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: threat-intel
+        annotations:
+          summary: "Known threat actor IP detected"
+          description: "IP: {{ $labels.source_ip }}, Threat: {{ $labels.threat_type }}"
+
+      - alert: AnomalousNetworkTraffic
+        expr: network_traffic_anomaly_score > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: "Anomalous network traffic detected"
+          description: "Anomaly score: {{ $value }}"
+
+      - alert: SecurityPolicyViolation
+        expr: rate(security_policy_violations_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: compliance
+        annotations:
+          summary: "Security policy violations detected"
+          description: "Policy: {{ $labels.policy_name }}"
