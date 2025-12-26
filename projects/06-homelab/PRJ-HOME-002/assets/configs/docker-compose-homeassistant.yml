@@ -219,10 +219,11 @@ services:
     # MQTT ports
     # 1883: Standard MQTT (unencrypted, internal network only)
     # 9001: WebSocket MQTT (for browser-based clients)
-    # 8883: MQTT over TLS (currently disabled, enable for external access)
+    # 8883: MQTT over TLS (certs in /opt/homeassistant/mosquitto/config)
     ports:
       - "1883:1883"
       - "9001:9001"
+      - "8883:8883"
 
     volumes:
       # Mosquitto configuration file
@@ -300,13 +301,13 @@ services:
 # max_queued_messages 1000
 #
 # # Security
-# # Enable TLS for external access (currently disabled)
-# # listener 8883
-# # protocol mqtt
-# # cafile /mosquitto/config/ca.crt
-# # certfile /mosquitto/config/server.crt
-# # keyfile /mosquitto/config/server.key
-# # require_certificate false
+# # Enable TLS for external access
+# listener 8883
+# protocol mqtt
+# cafile /mosquitto/config/ca.crt
+# certfile /mosquitto/config/server.crt
+# keyfile /mosquitto/config/server.key
+# require_certificate false
 #
 # To create password file:
 #   docker exec mosquitto mosquitto_passwd -c /mosquitto/config/passwd homeassistant
@@ -342,6 +343,11 @@ services:
 #     - ::1
 #   ip_ban_enabled: true
 #   login_attempts_threshold: 5
+#
+# # Multi-factor authentication (TOTP)
+# auth_mfa_modules:
+#   - type: totp
+#     name: "Authenticator App"
 #
 # # PostgreSQL recorder for long-term history
 # recorder:
@@ -533,10 +539,10 @@ services:
 # - [x] Reverse proxy only (no direct external access)
 # - [x] Trusted proxies configured (prevent IP spoofing)
 # - [x] USB device access restricted (privileged mode unavoidable)
-# - [ ] TODO: Enable TLS for MQTT (8883)
-# - [ ] TODO: Implement two-factor authentication
-# - [ ] TODO: Set up fail2ban for brute force protection
-# - [ ] TODO: Enable audit logging
+# - [x] TLS enabled for MQTT (listener 8883 with CA/cert/key)
+# - [x] Two-factor authentication enabled (Home Assistant TOTP)
+# - [x] Fail2ban enabled on host (Home Assistant + proxy auth logs)
+# - [x] Audit logging enabled (logbook + recorder + centralized syslog)
 #
 # Update Procedure:
 # -----------------

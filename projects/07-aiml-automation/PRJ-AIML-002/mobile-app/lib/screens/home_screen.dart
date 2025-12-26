@@ -27,7 +27,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final settings = await Hive.openBox('settings');
     final autoSyncEnabled =
         settings.get('autoSyncEnabled', defaultValue: true) as bool;
-    if (autoSyncEnabled) {
+    final cloudSyncEnabled =
+        settings.get('cloudSyncEnabled', defaultValue: true) as bool;
+    if (autoSyncEnabled && cloudSyncEnabled) {
       _syncService.startAutoSync();
     }
   }
@@ -235,11 +237,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _onSearchPressed() async {
-    final tabs = await _loadLocalTabs();
+    final items = await _loadSearchItems();
     if (!mounted) return;
     await showSearch(
       context: context,
-      delegate: TabSearchDelegate(tabs: tabs),
+      delegate: TabSearchDelegate(items: items),
     );
   }
 
@@ -251,18 +253,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Future<List<Map<String, dynamic>>> _loadLocalTabs() async {
-    final box = await Hive.openBox<Map>('tabs');
-    return box.values
-        .map((value) => Map<String, dynamic>.from(value))
-        .toList();
+  Future<List<SearchItem>> _loadSearchItems() async {
+    final tabsBox = await Hive.openBox<Map>('tabs');
+    final groupsBox = await Hive.openBox<Map>('tab_groups');
+
+    final tabItems = tabsBox.values.map((value) {
+      final data = Map<String, dynamic>.from(value);
+      return SearchItem(
+        type: SearchItemType.tab,
+        id: data['id']?.toString() ?? '',
+        title: data['title']?.toString() ?? 'Untitled',
+        subtitle: data['url']?.toString() ?? '',
+        description: data['description']?.toString(),
+        metadata: data,
+      );
+    });
+
+    final groupItems = groupsBox.values.map((value) {
+      final data = Map<String, dynamic>.from(value);
+      return SearchItem(
+        type: SearchItemType.group,
+        id: data['id']?.toString() ?? '',
+        title: data['name']?.toString() ?? 'Untitled Group',
+        subtitle: data['category']?.toString() ?? 'Uncategorized',
+        description: data['description']?.toString(),
+        metadata: data,
+      );
+    });
+
+    return [...tabItems, ...groupItems].toList();
   }
 }
 
-class TabSearchDelegate extends SearchDelegate {
-  TabSearchDelegate({required this.tabs});
+enum SearchItemType { tab, group }
 
-  final List<Map<String, dynamic>> tabs;
+class SearchItem {
+  SearchItem({
+    required this.type,
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    this.description,
+    this.metadata,
+  });
+
+  final SearchItemType type;
+  final String id;
+  final String title;
+  final String subtitle;
+  final String? description;
+  final Map<String, dynamic>? metadata;
+
+  String get searchableText => [
+        title,
+        subtitle,
+        description ?? '',
+      ].join(' ').toLowerCase();
+}
+
+class TabSearchDelegate extends SearchDelegate {
+  TabSearchDelegate({required this.items});
+
+  final List<SearchItem> items;
 
   @override
   List<Widget>? buildActions(BuildContext context) {
@@ -285,7 +337,7 @@ class TabSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    final results = _filterTabs();
+    final results = _filterItems();
     if (results.isEmpty) {
       return const Center(child: Text('No matching tabs found.'));
     }
@@ -295,10 +347,12 @@ class TabSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         final tab = results[index];
         return ListTile(
-          leading: const Icon(Icons.tab),
-          title: Text(tab['title']?.toString() ?? 'Untitled'),
-          subtitle: Text(tab['url']?.toString() ?? ''),
-          onTap: () => close(context, tab),
+          leading: Icon(
+            tab.type == SearchItemType.tab ? Icons.tab : Icons.folder,
+          ),
+          title: Text(tab.title),
+          subtitle: Text(tab.subtitle),
+          onTap: () => close(context, tab.metadata),
         );
       },
     );
@@ -306,7 +360,7 @@ class TabSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = _filterTabs(limit: 5);
+    final suggestions = _filterItems(limit: 5);
     if (suggestions.isEmpty) {
       return const Center(child: Text('Search your tabs and groups.'));
     }
@@ -316,11 +370,13 @@ class TabSearchDelegate extends SearchDelegate {
       itemBuilder: (context, index) {
         final tab = suggestions[index];
         return ListTile(
-          leading: const Icon(Icons.search),
-          title: Text(tab['title']?.toString() ?? 'Untitled'),
-          subtitle: Text(tab['url']?.toString() ?? ''),
+          leading: Icon(
+            tab.type == SearchItemType.tab ? Icons.search : Icons.folder,
+          ),
+          title: Text(tab.title),
+          subtitle: Text(tab.subtitle),
           onTap: () {
-            query = tab['title']?.toString() ?? '';
+            query = tab.title;
             showResults(context);
           },
         );
@@ -328,20 +384,15 @@ class TabSearchDelegate extends SearchDelegate {
     );
   }
 
-  List<Map<String, dynamic>> _filterTabs({int? limit}) {
+  List<SearchItem> _filterItems({int? limit}) {
     final normalizedQuery = query.toLowerCase().trim();
     if (normalizedQuery.isEmpty) {
-      return limit != null ? tabs.take(limit).toList() : tabs;
+      return limit != null ? items.take(limit).toList() : items;
     }
 
-    final filtered = tabs.where((tab) {
-      final text = [
-        tab['title'] ?? '',
-        tab['url'] ?? '',
-        tab['description'] ?? '',
-      ].join(' ').toLowerCase();
-      return text.contains(normalizedQuery);
-    }).toList();
+    final filtered = items
+        .where((item) => item.searchableText.contains(normalizedQuery))
+        .toList();
 
     return limit != null ? filtered.take(limit).toList() : filtered;
   }
@@ -358,6 +409,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _autoSyncEnabled = true;
+  bool _cloudSyncEnabled = true;
   bool _wifiOnlySync = false;
   bool _notificationsEnabled = true;
   bool _biometricsEnabled = false;
@@ -373,6 +425,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _autoSyncEnabled =
           box.get('autoSyncEnabled', defaultValue: true) as bool;
+      _cloudSyncEnabled =
+          box.get('cloudSyncEnabled', defaultValue: true) as bool;
       _wifiOnlySync = box.get('wifiOnlySync', defaultValue: false) as bool;
       _notificationsEnabled =
           box.get('notificationsEnabled', defaultValue: true) as bool;
@@ -387,7 +441,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _openDesktopApp() async {
-    const uri = Uri.parse('taborganizer://open');
+    const uri = Uri.parse('taborganizer://open?source=mobile');
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -405,13 +459,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         children: [
           SwitchListTile(
+            title: const Text('Cloud sync'),
+            subtitle: const Text('Enable Firebase sync across devices'),
+            value: _cloudSyncEnabled,
+            onChanged: (value) async {
+              setState(() => _cloudSyncEnabled = value);
+              await _updateSetting('cloudSyncEnabled', value);
+              if (!value) {
+                widget.syncService.stopAutoSync();
+              } else if (_autoSyncEnabled) {
+                widget.syncService.startAutoSync();
+              }
+            },
+          ),
+          SwitchListTile(
             title: const Text('Auto-sync'),
             subtitle: const Text('Keep tabs synced in the background'),
             value: _autoSyncEnabled,
             onChanged: (value) async {
               setState(() => _autoSyncEnabled = value);
               await _updateSetting('autoSyncEnabled', value);
-              if (value) {
+              if (value && _cloudSyncEnabled) {
                 widget.syncService.startAutoSync();
               } else {
                 widget.syncService.stopAutoSync();
