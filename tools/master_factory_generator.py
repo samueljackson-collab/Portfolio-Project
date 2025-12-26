@@ -340,7 +340,7 @@ resource "aws_vpc" "roaming_lab" {
 from src.roaming import Simulator
 
 
-@pytest.fixture()
+@pytest.fixture
 def simulator():
     return Simulator.from_example_config()
 
