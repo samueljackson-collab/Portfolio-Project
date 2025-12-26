@@ -26,6 +26,28 @@ const classNames = (
   ...classes: Array<string | false | null | undefined>
 ): string => classes.filter(Boolean).join(' ');
 
+const getStatusStyles = (status: WeekPlan['status'], theme: RoleTheme) => {
+  const statusMap: Record<
+    NonNullable<WeekPlan['status']>,
+    { label: string; className: string }
+  > = {
+    planned: {
+      label: 'Planned',
+      className: 'bg-slate-700 text-slate-200 border border-slate-600',
+    },
+    'in-progress': {
+      label: 'In Progress',
+      className: classNames(theme.accentBg, 'text-white'),
+    },
+    completed: {
+      label: 'Completed',
+      className: classNames(theme.accentBg, 'text-white ring-2 ring-offset-2 ring-offset-slate-800'),
+    },
+  };
+
+  return status ? statusMap[status] : undefined;
+};
+
 // WeekDetail keeps the weekly curriculum rendering focused and predictable.
 const WeekDetail: React.FC<{
   week: WeekPlan;
@@ -58,7 +80,6 @@ const WeekDetail: React.FC<{
       <div className={classNames('px-4 py-2 rounded-lg', theme.accentBg)}>
         <span className="text-white font-semibold">In Progress</span>
       </div>
-    </div>
 
     <div className="grid md:grid-cols-2 gap-6">
       <div>
@@ -132,7 +153,8 @@ const WeekDetail: React.FC<{
       </a>
     </div>
   </div>
-);
+  );
+};
 
 // The main component stitches metadata and curriculum content together for the
 // interactive role selector view.
