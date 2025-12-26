@@ -8,6 +8,23 @@ Generated: 2025-11-10
 - **Minimal/Stub Implementation**: ~7
 - **Empty Projects**: 0
 
+## Critical Project CI & Coverage Dashboard
+Coverage and CI status for priority projects. Coverage values are baseline placeholders until the
+first CI run reports results.
+
+| Project | Path | CI Workflow | CI Status | Coverage (Last Run) |
+| --- | --- | --- | --- | --- |
+| Project 1: AWS Infrastructure Automation | `projects/1-aws-infrastructure-automation` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 2: Database Migration Platform | `projects/2-database-migration` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 3: Kubernetes CI/CD Pipeline | `projects/3-kubernetes-cicd` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 4: DevSecOps Pipeline | `projects/4-devsecops` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 5: Real-time Data Streaming | `projects/5-real-time-data-streaming` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 9: Multi-Region Disaster Recovery | `projects/9-multi-region-disaster-recovery` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 10: Blockchain Smart Contract Platform | `projects/10-blockchain-smart-contract-platform` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 23: Advanced Monitoring | `projects/23-advanced-monitoring` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 24: Report Generator | `projects/24-report-generator` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+| Project 25: Portfolio Website | `projects/25-portfolio-website` | `critical-projects-ci.yml` | Pending | 0% (awaiting CI run) |
+
 ## Detailed Project Assessments
 
 ### Project 1: AWS Infrastructure Automation
