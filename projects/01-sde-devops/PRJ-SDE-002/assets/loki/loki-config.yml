@@ -6,12 +6,17 @@ ingester:
   lifecycler:
     ring:
       kvstore:
-        store: "memberlist"
+        store: memberlist
 
 schema_config:
   configs:
-  - from: 1970-01-01
-    store: boltdb-shipper
+    - from: 1970-01-01
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v12
+      index:
+        prefix: index_
+        period: 24h
 
 storage_config:
   boltdb_shipper:
@@ -26,11 +31,8 @@ compactor:
 limits_config:
   retention_period: 720h
 
-chunk_store_config:
-  # Add chunk store configuration here
-
-# Table manager configuration
-
 ruler:
   alertmanager:
-    url: "http://alertmanager:9093"
+    url: http://alertmanager:9093
+
+# Sanitized example: filesystem paths and endpoints are portfolio-safe defaults.

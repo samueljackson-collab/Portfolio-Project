@@ -6,29 +6,34 @@ positions:
   filename: /tmp/positions.yaml
 
 clients:
-  - url: http://192.168.1.30:3100/loki/api/v1/push
+  - url: http://loki:3100/loki/api/v1/push
+    tenant_id: portfolio-demo
+    external_labels:
+      project: PRJ-SDE-002
+      environment: demo
 
 scrape_configs:
   - job_name: system
     static_configs:
-      - targets:
-          - localhost
+      - targets: [localhost]
         labels:
           job: varlogs
           __path__: /var/log/*log
+    pipeline_stages:
+      - drop:
+          expression: "(?i)password|token"
+          source: message
 
   - job_name: syslog
     static_configs:
-      - targets:
-          - localhost
+      - targets: [localhost]
         labels:
           job: syslog
           __path__: /var/log/syslog
 
   - job_name: docker
     static_configs:
-      - targets:
-          - localhost
+      - targets: [localhost]
         labels:
           job: docker
           __path__: /var/lib/docker/containers/*/*.log
@@ -38,10 +43,10 @@ scrape_configs:
             output: log
             stream: stream
             time: time
-      - labels:
-          stream:
       - timestamp:
           source: time
           format: RFC3339Nano
       - output:
           source: output
+
+# Sanitized example: endpoints and tenant IDs are placeholders for portfolio evidence.

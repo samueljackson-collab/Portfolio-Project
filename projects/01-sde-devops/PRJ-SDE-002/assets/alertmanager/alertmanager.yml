@@ -1,93 +1,71 @@
-# Alertmanager Configuration for Homelab Observability Stack
-# Project: PRJ-SDE-002 - Observability & Monitoring Implementation
-# Location: projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/alertmanager.yml
-#
-# IMPORTANT: This is a TEMPLATE file. Before deploying:
-# 1. Copy this to alertmanager-production.yml
-# 2. Replace {{ VARIABLE }} placeholders with actual values from your .env file
-# 3. Use envsubst or similar tool: envsubst < alertmanager.yml > alertmanager-production.yml
-# 4. Deploy the production file, NOT this template
-# 5. Add alertmanager-production.yml to .gitignore
+# Alertmanager Configuration - Sanitized Example for PRJ-SDE-002
+# Replace environment variables before deployment.
 
 global:
   resolve_timeout: 5m
-  smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'alerts@homelab.local'
-  smtp_auth_username: 'alerts@homelab.local'
+  smtp_smarthost: 'smtp.example.internal:587'
+  smtp_from: 'alerts@example.internal'
+  smtp_auth_username: '${ALERTMANAGER_SMTP_USERNAME}'
   smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD}'
   smtp_require_tls: true
   slack_api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
-  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
 
 route:
   group_by: ['alertname', 'cluster', 'service']
-  group_wait: 10s
+  group_wait: 15s
   group_interval: 10s
-  repeat_interval: 12h
+  repeat_interval: 6h
   receiver: 'critical-all'
   routes:
-    - match:
-        severity: critical
+    - matchers: ['severity="critical"']
       receiver: 'critical-all'
-      continue: false
-    - match:
-        severity: warning
+    - matchers: ['severity="warning"']
       receiver: 'warning-slack'
-      continue: false
-    - match:
-        category: backup
+    - matchers: ['category="backup"']
       receiver: 'backup-team'
-      continue: false
 
 receivers:
   - name: 'critical-all'
     email_configs:
-      - to: 'admin@homelab.local'
+      - to: 'oncall@example.internal'
         headers:
           Subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }} - {{ .GroupLabels.instance }}'
-        html: |
-          <h2>Critical Alert Firing</h2>
+        html: |-
+          <h3>Critical Alert</h3>
           <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
           <p><strong>Instance:</strong> {{ .GroupLabels.instance }}</p>
           <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
-          <p><strong>Time:</strong> {{ .Alerts.StartsAt }}</p>
+          <p><strong>Runbook:</strong> {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}</p>
     slack_configs:
-      - channel: '#homelab-alerts'
-        title: '🚨 CRITICAL Alert'
-        text: |
-          *Alert:* {{ .GroupLabels.alertname }}
-          *Instance:* {{ .GroupLabels.instance }}
-          *Description:* {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
-          *Runbook:* {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}
+      - channel: '#portfolio-alerts'
+        title: '🚨 Critical Alert'
+        text: |-
+          *Alert:* {{ .GroupLabels.alertname }}\n*Instance:* {{ .GroupLabels.instance }}\n*Runbook:* {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}
         color: 'danger'
-    pagerduty_configs:
-      - service_key: '${ALERTMANAGER_PAGERDUTY_SERVICE_KEY}'
-        description: '{{ .GroupLabels.alertname }} - {{ .GroupLabels.instance }}'
 
   - name: 'warning-slack'
     slack_configs:
-      - channel: '#homelab-alerts'
+      - channel: '#portfolio-monitoring'
         title: '⚠️ Warning Alert'
-        text: |
-          *Alert:* {{ .GroupLabels.alertname }}
-          *Instance:* {{ .GroupLabels.alertname }}
-          *Description:* {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
+        text: |-
+          *Alert:* {{ .GroupLabels.alertname }}\n*Instance:* {{ .GroupLabels.instance }}\n*Details:* {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
         color: 'warning'
 
   - name: 'backup-team'
     email_configs:
-      - to: 'backup-admin@homelab.local'
+      - to: 'backup-team@example.internal'
         headers:
           Subject: '💾 Backup Alert: {{ .GroupLabels.alertname }}'
+        html: |-
+          <p>Backup-related alert firing.</p>
+          <p>{{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
 
 inhibit_rules:
-  - source_match:
-      severity: 'critical'
-    target_match:
-      severity: 'warning'
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
     equal: ['alertname', 'instance']
-  - source_match:
-      alertname: 'HostDown'
-    target_match_re:
-      alertname: '(HighCPUUsage|HighMemoryUsage|DiskSpaceWarning)'
+  - source_matchers: ['alertname="HostDown"']
+    target_matchers: ['alertname=~"HighCPUUsage|HighMemoryUsage|DiskSpaceWarning"']
     equal: ['instance']
+
+# Sanitized placeholders only; configure real URLs and secrets via environment variables.
