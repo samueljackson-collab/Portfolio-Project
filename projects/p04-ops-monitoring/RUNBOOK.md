@@ -36,6 +36,7 @@ Access Grafana at: http://localhost:3000
 2. **Golden Signals** - Latency, traffic, errors, saturation
 3. **SLO Dashboard** - Error budget tracking, burn rates
 4. **Prometheus Health** - Scrape duration, rule evaluation time
+5. **Backend & Frontend Service Overview** - API and web tier request/latency/availability
 
 #### Quick Health Check
 ```bash
@@ -113,6 +114,45 @@ docker-compose ps
 curl -f http://localhost:9090/-/healthy  # Prometheus
 curl -f http://localhost:3000/api/health  # Grafana
 curl -f http://localhost:9093/-/healthy  # Alertmanager
+```
+
+### Backend & Frontend Metrics Setup
+
+#### Backend API (FastAPI) Metrics
+The portfolio backend exposes Prometheus metrics at `/metrics` via
+`prometheus_fastapi_instrumentator`.
+
+```bash
+# From repo root, start the backend API (example)
+cd backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Validate metrics endpoint
+curl -f http://localhost:8000/metrics
+```
+
+#### Frontend (Nginx) Metrics via Sidecar Exporter
+The frontend container exposes `/stub_status` and the monitoring stack runs
+`nginx-prometheus-exporter` to translate it into Prometheus metrics.
+
+```bash
+# Build/run the frontend container (example)
+cd frontend
+docker build -t portfolio-frontend .
+docker run -p 80:80 portfolio-frontend
+
+# Validate stub status endpoint
+curl -f http://localhost/stub_status
+
+# Validate exporter metrics (from monitoring stack)
+curl -f http://localhost:9113/metrics | head -n 20
+```
+
+#### Prometheus Target Validation
+```bash
+# Check backend + frontend targets are UP
+curl -s http://localhost:9090/api/v1/targets | \
+  jq '.data.activeTargets[] | select(.labels.job | test(\"backend-api|frontend-nginx\")) | {job: .labels.job, health: .health, scrapeUrl: .scrapeUrl}'
 ```
 
 #### Stop Monitoring Stack
