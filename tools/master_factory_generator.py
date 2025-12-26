@@ -154,7 +154,7 @@ jobs:
       - name: SAM Build
         run: sam build -t projects/02-cloud-architecture/template.yaml
       - name: SAM Package (dry-run)
-        run: sam package --s3-bucket example-bucket --s3-prefix sam-reference --template-file .aws-sam/build/template.yaml --output-template-file packaged.yaml --no-execute-changeset
+        run: sam package --s3-bucket example-bucket --s3-prefix sam-reference --template-file .aws-sam/build/template.yaml --output-template-file packaged.yaml
 """,
         ),
         iac=ArtifactSpec(
