@@ -74,6 +74,22 @@ aws rds describe-db-instances --db-instance-identifier production-postgres
 
 ## Standard Operations
 
+### Live Deployment Publication (Manual)
+```bash
+# Create a deployment evidence folder
+DEPLOY_DATE=$(date +%Y-%m-%d)
+mkdir -p deployments/${DEPLOY_DATE}
+
+# Run the deployment and capture logs. The subshell ensures we return to the project root.
+(cd terraform && \
+    terraform plan -var-file=environments/prod.tfvars -out=tfplan | tee "../deployments/${DEPLOY_DATE}/terraform-plan.txt" && \
+    terraform apply tfplan | tee "../deployments/${DEPLOY_DATE}/terraform-apply.log" && \
+    terraform output -json > "../deployments/${DEPLOY_DATE}/outputs.json")
+
+# Update the deployment record with the actual deployment date
+sed -i.bak "s/Deployment date: .* (planned)/Deployment date: ${DEPLOY_DATE} (live)/" DEPLOYMENT_STATUS.md
+```
+
 ### Infrastructure Deployment
 
 #### Terraform Deployment

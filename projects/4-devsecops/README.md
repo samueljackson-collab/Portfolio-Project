@@ -9,6 +9,18 @@
 
 Security-first CI pipeline with SBOM generation, container scanning, and policy checks.
 
+## Live Deployment
+- **Deployment record:** [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md)
+- **Pipeline dashboard:** https://devsecops.example.com
+- **SBOM index:** https://devsecops.example.com/sbom
+- **Verification endpoint:** https://devsecops.example.com/healthz
+
+### Verification steps
+```bash
+curl -fsSL https://devsecops.example.com/healthz
+curl -fsSL https://devsecops.example.com/sbom
+```
+
 ## Contents
 - `pipelines/github-actions.yaml` — orchestrates build, security scanning, and deployment gates.
 
