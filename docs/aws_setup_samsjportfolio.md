@@ -32,7 +32,7 @@ This guide walks through **setting up AWS from scratch** in **us-west-2**, using
 2. Username: `admin-SamSJPortfolio`
 3. Select **Provide user access to the AWS Management Console**.
 4. Set a password and require reset on first sign-in.
-5. Attach the policy **AdministratorAccess**.
+5. Attach the policy **AdministratorAccess**. **Warning:** This policy grants full access to your AWS account. Use this admin user only for tasks that require broad permissions. For all other work, use IAM roles with least-privilege policies.
 6. Create access keys for programmatic access (download the CSV securely).
 7. Enable MFA for the new IAM user.
 
