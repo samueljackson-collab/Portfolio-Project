@@ -91,23 +91,24 @@ resource "aws_instance" "redirector" {
   vpc_security_group_ids = [aws_security_group.c2_sg.id]
 
   user_data = <<-EOF
-              #!/bin/bash
-              apt-get update
-              apt-get install -y nginx
-              
-              # Configure Nginx as Reverse Proxy
-              cat <<EOT > /etc/nginx/sites-available/default
-              server {
-                  listen 80;
-                  server_name ${var.domain_name};
-                  location / {
-                      proxy_pass http://${var.c2_server_ip};
-                      proxy_set_header Host $host;
-                  }
-              }
-              EOT
-              systemctl restart nginx
-              EOF
+#!/bin/bash
+set -e
+apt-get update
+apt-get install -y nginx
+
+# Configure Nginx as Reverse Proxy
+cat <<EOT > /etc/nginx/sites-available/default
+server {
+    listen 80;
+    server_name ${var.domain_name};
+    location / {
+        proxy_pass http://${var.c2_server_ip};
+        proxy_set_header Host $host;
+    }
+}
+EOT
+systemctl restart nginx
+EOF
 
   tags = {
     Name = "RedTeam-Redirector-01"
