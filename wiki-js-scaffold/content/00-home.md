@@ -12,13 +12,13 @@ Welcome to the GitHub Fundamentals Wiki.js hub. This space turns the course into
 
 | Section | Focus | Best for |
 | --- | --- | --- |
-| [Setup & Fundamentals](./01-setup-fundamentals/00-index.md) | Installations, accounts, and core setup | First-time learners |
-| [Git Fundamentals](./02-git-fundamentals/00-index.md) | Daily workflow commands and concepts | Building confidence |
-| [Documentation](./03-documentation/00-index.md) | README, .gitignore, licensing | Polishing repositories |
-| [Real-World Projects](./04-real-world-projects/00-index.md) | Portfolio and collaboration flows | Practice & delivery |
-| [GitHub Platform](./05-github-platform/00-index.md) | Issues, Actions, security | Platform power users |
-| [Advanced Topics](./06-advanced-topics/00-index.md) | Rebase, advanced workflows | Experienced users |
-| [Next Steps](./07-next-steps/00-index.md) | Career growth, open source | Long-term growth |
+| [Setup & Fundamentals](/setup-fundamentals) | Installations, accounts, and core setup | First-time learners |
+| [Git Fundamentals](/git-fundamentals) | Daily workflow commands and concepts | Building confidence |
+| [Documentation](/documentation) | README, .gitignore, licensing | Polishing repositories |
+| [Real-World Projects](/real-world-projects) | Portfolio and collaboration flows | Practice & delivery |
+| [GitHub Platform](/github-platform) | Issues, Actions, security | Platform power users |
+| [Advanced Topics](/advanced-topics) | Rebase, advanced workflows | Experienced users |
+| [Next Steps](/next-steps) | Career growth, open source | Long-term growth |
 
 ## ✅ What You’ll Gain
 
