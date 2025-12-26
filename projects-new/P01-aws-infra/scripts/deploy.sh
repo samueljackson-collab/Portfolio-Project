@@ -16,7 +16,9 @@ fi
 : "${AWS_ACCOUNT_ID:?Environment variable AWS_ACCOUNT_ID is required}"
 : "${AWS_REGION:?Environment variable AWS_REGION is required}"
 
-RAW_PROJECT_NAME="${PROJECT_NAME:-$(basename "$(pwd)")}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+RAW_PROJECT_NAME="${PROJECT_NAME:-$(basename "${PROJECT_DIR}")}"
 PROJECT_NAME="$(echo "${RAW_PROJECT_NAME}" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9_.-]/-/g' -e 's/^-*//' -e 's/-*$//')"
 if [[ -z "${PROJECT_NAME}" ]]; then
   echo "Error: derived Docker image name is empty" >&2
