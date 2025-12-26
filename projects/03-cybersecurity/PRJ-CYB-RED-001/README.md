@@ -118,10 +118,11 @@ resource "aws_instance" "redirector" {
 resource "aws_security_group" "c2_sg" {
   name = "c2_redirector_sg"
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTPS for C2 redirection"
   }
   ingress {
     from_port   = 22
