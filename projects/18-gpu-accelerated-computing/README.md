@@ -1,5 +1,12 @@
 # Project 18: GPU-Accelerated Computing Platform
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 CUDA-based risk simulation engine with Dask integration for scale-out workloads.
 
@@ -50,4 +57,3 @@ Write a feature engineering pipeline that handles missing values, encodes catego
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

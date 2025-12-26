@@ -16,7 +16,8 @@ assets/
 │   ├── wifi-ssid-matrix.md
 │   ├── ip-addressing-scheme.md
 │   └── monitoring-observations.md
-├── screenshots/       # Sanitized UniFi + Proxmox dashboards (placeholder)
+├── screenshots/       # Sanitized UniFi + pfSense dashboard snapshots
+├── logs/              # Sanitized controller/firewall summary logs
 └── runbooks/          # Deployment and operational procedures
     └── network-deployment-runbook.md
 ```
@@ -34,7 +35,10 @@ assets/
 - **monitoring-observations.md**: Prometheus/Grafana/Loki evidence with sanitized metrics and log lines
 
 ### Screenshots
-- Pending sanitized UniFi and Proxmox dashboards (stored externally to avoid binary assets in repo).
+- Sanitized UniFi controller, pfSense firewall, and VLAN topology snapshots stored in `screenshots/`.
+
+### Logs
+- Sanitized controller/firewall summary logs stored in `logs/`.
 
 ### Runbooks
 - **network-deployment-runbook.md**: Step-by-step deployment guide with validation procedures
@@ -53,7 +57,8 @@ Follow the network-deployment-runbook.md for complete deployment procedures.
 ## Status
 - ✅ Physical topology diagram
 - ✅ Logical VLAN map
-- ⚠️ Sanitized dashboard screenshots stored externally (not committed as binaries)
+- ✅ Sanitized dashboard screenshots stored in `screenshots/`
+- ✅ Sanitized logs captured in `logs/`
 - ✅ Monitoring evidence excerpts (Prometheus/Grafana/Loki)
 - 📝 Configuration documentation (in progress)
 - 📝 Deployment runbook (in progress)

@@ -739,7 +739,7 @@ aws logs filter-log-events \
 
 #### Severity Classification
 
-**P0: Critical Security Incident**
+### P0: Critical Security Incident
 - GuardDuty severity ≥ 8 with confirmed exploitation
 - Ransomware or malware detected
 - Data breach confirmed (sensitive data exposed)
@@ -747,7 +747,7 @@ aws logs filter-log-events \
 - Complete SIEM pipeline failure
 - Critical infrastructure compromise
 
-**P1: High Severity Security Event**
+### P1: High Severity Security Event
 - GuardDuty severity 7 (high-severity threat)
 - Suspected data exfiltration
 - Brute force attack in progress
@@ -755,7 +755,7 @@ aws logs filter-log-events \
 - Security group widely opened (0.0.0.0/0)
 - GuardDuty or CloudTrail disabled
 
-**P2: Medium Severity Security Event**
+### P2: Medium Severity Security Event
 - GuardDuty severity 4-6
 - Failed authentication attempts (< 10)
 - Suspicious API activity
@@ -763,7 +763,7 @@ aws logs filter-log-events \
 - Configuration drift from baseline
 - Log ingestion delays
 
-**P3: Low Severity Security Event**
+### P3: Low Severity Security Event
 - GuardDuty severity 0-3
 - Informational findings
 - Policy violations (non-critical)

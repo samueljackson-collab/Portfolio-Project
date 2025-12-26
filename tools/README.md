@@ -1,10 +1,11 @@
 # Enterprise Portfolio - Tools & Automation
 
-This directory contains automation tools, scripts, and configuration for the Enterprise Portfolio infrastructure.
+This directory contains automation tools, scripts, and configuration for the
+Enterprise Portfolio infrastructure.
 
 ## 📂 Directory Structure
 
-```
+```text
 tools/
 ├── grafana/              # Grafana provisioning
 │   └── provisioning/
@@ -42,12 +43,14 @@ python tools/wikijs_push.py docs/ --base-path "/portfolio"
 ```
 
 **Features:**
+
 - Automatic page creation and updates
 - Support for directory batch publishing
 - SHA-256 verification
 - Error handling and retry logic
 
 **Configuration:**
+
 - `WIKI_URL`: Wiki.js GraphQL API endpoint
 - `WIKI_TOKEN`: API authentication token
 - `WIKI_BASE_PATH`: Base path for published pages (default: `/projects`)
@@ -57,6 +60,7 @@ python tools/wikijs_push.py docs/ --base-path "/portfolio"
 Automatically configures Grafana datasources and dashboards on startup.
 
 **Datasources:**
+
 - Prometheus (default): `http://prometheus:9090`
 - Loki: `http://loki:3100`
 
@@ -68,6 +72,7 @@ Place dashboard JSON files in `grafana/provisioning/dashboards/` for automatic i
 Log aggregation system with 7-day retention.
 
 **Key Settings:**
+
 - Retention: 168 hours (7 days)
 - Storage: Filesystem-based
 - Schema: v11 (BoltDB shipper)
@@ -88,6 +93,7 @@ curl -G -s "http://localhost:3100/loki/api/v1/query" \
 Routes and manages alerts from Prometheus.
 
 **Alert Routing:**
+
 - **Critical**: Routed to `critical` receiver
 - **Warning**: Routed to `warning` receiver
 - **Default**: All other alerts
@@ -95,6 +101,7 @@ Routes and manages alerts from Prometheus.
 **Customization:**
 
 Edit `alertmanager/alertmanager.yml` to configure:
+
 - Slack webhooks
 - Email notifications
 - PagerDuty integration
@@ -114,10 +121,10 @@ docker compose -f compose.demo.yml ps
 
 ### 2. Access Services
 
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3001 (admin/admin)
-- **Alertmanager**: http://localhost:9093
-- **Loki**: http://localhost:3100
+- **Prometheus**: <http://localhost:9090>
+- **Grafana**: <http://localhost:3001> (admin/admin)
+- **Alertmanager**: <http://localhost:9093>
+- **Loki**: <http://localhost:3100>
 
 ### 3. Publish Documentation to Wiki.js
 
@@ -137,19 +144,22 @@ python tools/wikijs_push.py projects/01-sde-devops/PRJ-SDE-001/README.md
 ### Prometheus Metrics
 
 Access metrics at:
-- Node Exporter: http://localhost:9100/metrics
-- cAdvisor: http://localhost:8080/metrics
-- Prometheus: http://localhost:9090/metrics
+
+- Node Exporter: <http://localhost:9100/metrics>
+- cAdvisor: <http://localhost:8080/metrics>
+- Prometheus: <http://localhost:9090/metrics>
 
 ### Grafana Dashboards
 
 Import pre-built dashboards:
-1. Navigate to http://localhost:3001
+
+1. Navigate to <http://localhost:3001>
 2. Login (admin/admin)
 3. Go to Dashboards → Import
-4. Use dashboard IDs from https://grafana.com/grafana/dashboards/
+4. Use dashboard IDs from <https://grafana.com/grafana/dashboards/>
 
 **Recommended Dashboards:**
+
 - 1860: Node Exporter Full
 - 893: Docker and System Monitoring
 - 13639: Loki Dashboard

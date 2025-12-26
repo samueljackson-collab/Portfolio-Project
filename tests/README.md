@@ -10,16 +10,19 @@ This directory contains comprehensive unit tests for the bash scripts and config
 ## Running Tests
 
 ### Run all tests
+
 ```bash
 python -m pytest tests/
 ```
 
 ### Run tests with verbose output
+
 ```bash
 python -m pytest tests/ -v
 ```
 
 ### Run specific test file
+
 ```bash
 python -m pytest tests/scripts/test_verify_pbs_backups.py
 ```
@@ -27,11 +30,13 @@ python -m pytest tests/scripts/test_verify_pbs_backups.py
 ## Test Categories
 
 ### Bash Script Tests
+
 - verify-pbs-backups.sh: Backup verification utility tests
 - dr-drill.sh: Disaster recovery drill tests
 - fix_unicode_arrows.sh: Unicode arrow replacement tests
 
 ### Configuration Tests
+
 - YAML configurations (Prometheus, Alertmanager, Loki, Promtail)
 - JSON configurations (Grafana dashboards)
 - ArgoCD application manifests
@@ -39,6 +44,7 @@ python -m pytest tests/scripts/test_verify_pbs_backups.py
 ## Requirements
 
 Tests require pytest>=7.2.0 and pyyaml (already in requirements.txt)
+
 # Test Suite Documentation
 
 This directory contains comprehensive tests for the infrastructure code added in this branch.
@@ -46,6 +52,7 @@ This directory contains comprehensive tests for the infrastructure code added in
 ## Test Coverage
 
 ### Bash Scripts (`tests/bash_scripts/`)
+
 - **test_bootstrap_remote_state.py**: Tests for `scripts/bootstrap_remote_state.sh`
   - Script existence and permissions
   - Argument parsing and defaults
@@ -63,6 +70,7 @@ This directory contains comprehensive tests for the infrastructure code added in
   - Safety checks
 
 ### Terraform Configuration (`tests/terraform/`)
+
 - **test_terraform_syntax.py**: Tests for Terraform files
   - HCL syntax validation
   - Resource definitions
@@ -82,6 +90,7 @@ This directory contains comprehensive tests for the infrastructure code added in
   - PR commenting
 
 ### JSON Configuration (`tests/json_config/`)
+
 - **test_iam_policies.py**: Tests for IAM policy files
   - JSON syntax validation
   - Policy structure
@@ -92,12 +101,14 @@ This directory contains comprehensive tests for the infrastructure code added in
 
 ## Running Tests
 
-### Run all tests:
+### Run all tests
+
 ```bash
 pytest
 ```
 
-### Run specific test categories:
+### Run specific test categories
+
 ```bash
 # Bash script tests
 pytest tests/bash_scripts/
@@ -109,12 +120,14 @@ pytest tests/terraform/
 pytest tests/json_config/
 ```
 
-### Run specific test file:
+### Run specific test file
+
 ```bash
 pytest tests/bash_scripts/test_bootstrap_remote_state.py -v
 ```
 
-### Run tests with coverage:
+### Run tests with coverage
+
 ```bash
 pytest --cov=. --cov-report=html
 ```
@@ -140,6 +153,7 @@ pytest --cov=. --cov-report=html
 ## Dependencies
 
 Tests require:
+
 - Python 3.11+
 - pytest
 - pytest-mock
@@ -147,6 +161,7 @@ Tests require:
 - PyYAML
 
 Install with:
+
 ```bash
 pip install -r requirements.txt
 ```

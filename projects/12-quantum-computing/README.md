@@ -1,5 +1,12 @@
 # Project 12: Quantum Computing Integration
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Prototype hybrid workloads that offload optimization subproblems to quantum circuits using Qiskit, while orchestrating classical pipelines in AWS Batch.
 
@@ -55,4 +62,3 @@ Write a variational quantum eigensolver (VQE) implementation that combines quant
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

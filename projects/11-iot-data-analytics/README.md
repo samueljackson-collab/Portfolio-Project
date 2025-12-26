@@ -1,5 +1,12 @@
 # Project 11: IoT Data Ingestion & Analytics
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 Production-grade IoT telemetry platform with MQTT ingestion, TimescaleDB time-series storage, real-time analytics, and anomaly detection.
 
 ## Overview
@@ -443,4 +450,3 @@ Write a data validation framework that checks for schema compliance, null values
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

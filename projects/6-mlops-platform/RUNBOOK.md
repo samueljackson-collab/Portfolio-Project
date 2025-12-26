@@ -2,9 +2,12 @@
 
 ## Overview
 
-Production operations runbook for the MLOps Platform. This runbook covers MLflow operations, model training workflows, hyperparameter optimization, model deployment procedures, monitoring, and troubleshooting for ML pipelines.
+Production operations runbook for the MLOps Platform. This runbook covers MLflow operations, model
+training workflows, hyperparameter optimization, model deployment procedures, monitoring, and
+troubleshooting for ML pipelines.
 
 **System Components:**
+
 - MLflow Tracking Server (experiment logging & model registry)
 - Optuna Study (hyperparameter optimization)
 - Model Training Jobs (scikit-learn, XGBoost)
@@ -32,6 +35,7 @@ Production operations runbook for the MLOps Platform. This runbook covers MLflow
 ### Dashboards
 
 #### MLflow Tracking Dashboard
+
 ```bash
 # Access MLflow UI
 mlflow ui --backend-store-uri sqlite:///mlruns.db --port 5000
@@ -45,6 +49,7 @@ curl -f http://localhost:5000/health || echo "MLflow server down"
 ```
 
 #### Model Registry Dashboard
+
 ```bash
 # List registered models
 mlflow models list --max-results 10
@@ -57,6 +62,7 @@ kubectl get svc -n ml-serving -l app=model-server
 ```
 
 #### Training Jobs Dashboard
+
 ```bash
 # Check active experiments
 python scripts/list_experiments.py
@@ -105,6 +111,7 @@ curl -sf http://localhost:5000/health || echo "ALERT: MLflow tracking server unr
 ### MLflow Tracking Server Management
 
 #### Start MLflow Server
+
 ```bash
 # Start tracking server with SQLite backend
 mlflow server \
@@ -126,6 +133,7 @@ mlflow experiments list
 ```
 
 #### Backup MLflow Data
+
 ```bash
 # Backup SQLite database
 cp mlruns.db backups/mlruns-$(date +%Y%m%d-%H%M).db
@@ -143,6 +151,7 @@ ls -lh backups/
 ### Model Training Operations
 
 #### Run Training Experiment
+
 ```bash
 # 1. Verify data availability
 ls data/training/*.csv
@@ -163,6 +172,7 @@ python scripts/get_best_run.py --experiment "churn-classifier"
 ```
 
 #### Hyperparameter Tuning with Optuna
+
 ```bash
 # 1. Define search space (edit configs/optuna_study.yaml)
 cat configs/optuna_study.yaml
@@ -187,6 +197,7 @@ python scripts/export_best_params.py --study-name "churn-optimization" \
 ```
 
 #### Distributed Training (Kubernetes)
+
 ```bash
 # 1. Create training job manifest
 kubectl apply -f manifests/training-job.yaml
@@ -205,6 +216,7 @@ kubectl exec -n ml-training <pod-name> -- \
 ### Model Deployment Operations
 
 #### Register Model in MLflow
+
 ```bash
 # 1. Get best run from experiment
 BEST_RUN=$(python scripts/get_best_run.py --experiment "churn-classifier" --metric "f1_score")
@@ -225,6 +237,7 @@ mlflow models transition \
 ```
 
 #### Deploy to Kubernetes
+
 ```bash
 # 1. Build model serving image
 docker build -t model-server:v1.0 -f deployment/kubernetes/Dockerfile .
@@ -249,6 +262,7 @@ pkill -f "port-forward"
 ```
 
 #### Deploy to AWS Lambda
+
 ```bash
 # 1. Package model and dependencies
 python scripts/package_lambda.py --model-name "churn-classifier" --version 1
@@ -267,6 +281,7 @@ cat output.json
 ```
 
 #### Deploy to SageMaker
+
 ```bash
 # 1. Create model package
 python scripts/create_sagemaker_model.py \
@@ -290,6 +305,7 @@ python scripts/test_sagemaker_endpoint.py \
 ### Monitoring & Drift Detection
 
 #### Check for Data Drift
+
 ```bash
 # Run drift detection on recent data
 python scripts/detect_drift.py \
@@ -307,6 +323,7 @@ fi
 ```
 
 #### Monitor Model Performance
+
 ```bash
 # Collect inference logs
 python scripts/collect_inference_logs.py --date $(date +%Y-%m-%d)
@@ -328,6 +345,7 @@ python scripts/generate_report.py --date $(date +%Y-%m-%d) \
 ### Detection
 
 **Automated Detection:**
+
 - MLflow server health check failures
 - Model serving pod crashes
 - Training job failures
@@ -335,6 +353,7 @@ python scripts/generate_report.py --date $(date +%Y-%m-%d) \
 - Inference latency SLO violations
 
 **Manual Detection:**
+
 ```bash
 # Check overall system health
 ./scripts/health_check.sh
@@ -356,24 +375,28 @@ ls -lt reports/drift-*.json | head -5
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
+
 - MLflow tracking server down (cannot log experiments)
 - All model serving pods down (no inference available)
 - Critical data pipeline failure (no training data)
 
-**P1: Degraded Service**
+### P1: Degraded Service
+
 - Model serving pods < 50% capacity
 - Training job success rate < 50%
 - High inference latency (p95 > 500ms)
 - Significant data drift detected
 
-**P2: Warning State**
+### P2: Warning State
+
 - Individual training job failures
 - Moderate drift detected
 - Increased inference latency (p95 > 200ms)
 - Hyperparameter tuning timeouts
 
-**P3: Informational**
+### P3: Informational
+
 - Single experiment failure
 - Minor drift detected
 - Resource usage approaching limits
@@ -383,6 +406,7 @@ ls -lt reports/drift-*.json | head -5
 #### P0: MLflow Tracking Server Down
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check server status
 curl http://localhost:5000/health
@@ -415,6 +439,7 @@ mlflow experiments list
 ```
 
 **Investigation (5-15 minutes):**
+
 ```bash
 # Check MLflow logs
 tail -100 mlflow.log
@@ -431,6 +456,7 @@ netstat -tulpn | grep 5000
 ```
 
 **Mitigation:**
+
 ```bash
 # If database corrupted (SQLite)
 cp backups/mlruns-latest.db mlruns.db
@@ -451,6 +477,7 @@ echo "MLflow server recovered at $(date)" >> incidents/mlflow-$(date +%Y%m%d).lo
 #### P0: All Model Serving Pods Down
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Check pod status
 kubectl get pods -n ml-serving -l app=model-server
@@ -469,6 +496,7 @@ kubectl rollout status deployment/model-server -n ml-serving
 ```
 
 **Investigation (2-10 minutes):**
+
 ```bash
 # Check pod logs
 kubectl logs -n ml-serving -l app=model-server --tail=100
@@ -488,6 +516,7 @@ kubectl describe pod $POD -n ml-serving | grep Image
 **Common Causes & Fixes:**
 
 **Model Loading Failure:**
+
 ```bash
 # Verify model exists in MLflow
 mlflow models list --name "churn-classifier"
@@ -500,6 +529,7 @@ kubectl set env deployment/model-server MODEL_VERSION=2 -n ml-serving
 ```
 
 **OOM (Out of Memory):**
+
 ```bash
 # Check memory usage
 kubectl top pods -n ml-serving
@@ -525,6 +555,7 @@ kubectl patch deployment model-server -n ml-serving -p '{
 #### P1: Training Job Failures
 
 **Investigation:**
+
 ```bash
 # List failed jobs
 kubectl get jobs -n ml-training --field-selector status.successful=0
@@ -542,6 +573,7 @@ aws s3 ls s3://feature-store/training-data/$(date +%Y%m%d)/
 **Common Causes & Fixes:**
 
 **Data Pipeline Failure:**
+
 ```bash
 # Check data freshness
 python scripts/check_data_freshness.py
@@ -555,6 +587,7 @@ sleep 300
 ```
 
 **Resource Constraints:**
+
 ```bash
 # Increase job resources
 kubectl patch job <job-name> -n ml-training -p '{
@@ -579,6 +612,7 @@ kubectl apply -f manifests/training-job.yaml
 ```
 
 **Dependency Issues:**
+
 ```bash
 # Rebuild training image with updated dependencies
 docker build -t training-image:v2.0 -f docker/Dockerfile.training .
@@ -591,6 +625,7 @@ kubectl set image job/<job-name> trainer=<registry>/training-image:v2.0 -n ml-tr
 #### P1: Significant Data Drift Detected
 
 **Investigation:**
+
 ```bash
 # Review drift report
 python scripts/view_drift_report.py --date $(date +%Y-%m-%d)
@@ -605,6 +640,7 @@ python scripts/evaluate_on_recent.py --days 7
 ```
 
 **Mitigation:**
+
 ```bash
 # 1. Trigger emergency retraining
 ./scripts/trigger_retraining.sh --priority high
@@ -627,6 +663,7 @@ python scripts/monitor_model.py --version 3 --duration 3600
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -671,12 +708,14 @@ git commit -m "docs: incident report for drift-triggered retraining"
 #### Issue: Experiment Not Logging to MLflow
 
 **Symptoms:**
+
 ```bash
 $ python train.py
 Error: Failed to log parameters to MLflow
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check MLflow server connectivity
 curl http://localhost:5000/health
@@ -689,6 +728,7 @@ telnet localhost 5000
 ```
 
 **Solution:**
+
 ```bash
 # Set tracking URI
 export MLFLOW_TRACKING_URI=http://localhost:5000
@@ -705,12 +745,14 @@ mlflow experiments list
 #### Issue: Model Loading Timeout in Serving Pod
 
 **Symptoms:**
+
 ```bash
 $ kubectl logs model-server-xxx -n ml-serving
 Error: Model loading timeout after 60 seconds
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check model size
 mlflow artifacts list -r <run-id>
@@ -723,6 +765,7 @@ aws s3 ls s3://mlflow-artifacts/<run-id>/
 ```
 
 **Solution:**
+
 ```bash
 # Increase readiness probe timeout
 kubectl patch deployment model-server -n ml-serving -p '{
@@ -750,10 +793,12 @@ python scripts/optimize_model.py --model-name "churn-classifier" --version 1
 #### Issue: Hyperparameter Tuning Not Converging
 
 **Symptoms:**
+
 - Optuna study running for hours without improvement
 - Trial results show high variance
 
 **Diagnosis:**
+
 ```bash
 # Check study progress
 python scripts/view_study.py --study-name "churn-optimization"
@@ -766,6 +811,7 @@ python scripts/plot_optimization.py --study-name "churn-optimization"
 ```
 
 **Solution:**
+
 ```bash
 # Option 1: Narrow search space
 # Edit configs/optuna_study.yaml to reduce parameter ranges
@@ -848,6 +894,7 @@ git pull
 ### Upgrade Procedures
 
 #### Update MLflow Version
+
 ```bash
 # 1. Backup current state
 cp mlruns.db backups/mlruns-pre-upgrade-$(date +%Y%m%d).db
@@ -872,6 +919,7 @@ mlflow experiments list
 ```
 
 #### Update Model Serving Image
+
 ```bash
 # 1. Build new image
 docker build -t model-server:v2.0 -f deployment/kubernetes/Dockerfile .
@@ -918,6 +966,7 @@ kubectl rollout undo deployment/model-server -n ml-serving
 ### Backup Strategy
 
 **MLflow Backup:**
+
 ```bash
 # Daily automated backup
 cat > scripts/backup_mlflow.sh << 'EOF'
@@ -945,6 +994,7 @@ chmod +x scripts/backup_mlflow.sh
 ```
 
 **Model Registry Backup:**
+
 ```bash
 # Export all registered models
 python scripts/export_models.py --output backups/models-$(date +%Y%m%d).json
@@ -960,6 +1010,7 @@ done
 #### Complete MLflow Server Loss
 
 **Recovery Steps (5-10 minutes):**
+
 ```bash
 # 1. Stop any running MLflow processes
 pkill -f "mlflow server"
@@ -988,6 +1039,7 @@ mlflow models list
 #### Model Serving Disaster Recovery
 
 **Recovery Steps (10-15 minutes):**
+
 ```bash
 # 1. Identify last known good model version
 mlflow models list --name "churn-classifier" | grep "Production"
@@ -1061,6 +1113,7 @@ kubectl apply -f manifests/training-job.yaml
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** ML Platform Team

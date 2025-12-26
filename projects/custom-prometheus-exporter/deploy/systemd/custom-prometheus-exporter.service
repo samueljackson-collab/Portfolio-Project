@@ -1,0 +1,14 @@
+[Unit]
+Description=Custom Prometheus Exporter
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/custom-exporter -config /etc/custom-prometheus-exporter/config.yaml
+Restart=on-failure
+Environment=EXPORTER_LOG_LEVEL=info
+User=prometheus
+Group=prometheus
+
+[Install]
+WantedBy=multi-user.target
