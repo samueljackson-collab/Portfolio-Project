@@ -300,7 +300,7 @@ npm run import
 Create section landing pages to improve navigation and search:
 
 - `content/00-home.md` becomes `/home` (recommended Wiki.js home page)
-- `content/**/00-index.md` becomes the section root (e.g., `/01-setup-fundamentals` → `/setup-fundamentals`)
+- `content/**/00-index.md` becomes the section root (e.g., `content/01-setup-fundamentals/00-index.md` imports to `/setup-fundamentals`)
 
 ### Navigation Structure
 
