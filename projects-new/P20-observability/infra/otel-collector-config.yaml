@@ -23,6 +23,8 @@ exporters:
   jaeger:
     endpoint: jaeger-collector:14250
     tls:
+      # WARNING: 'insecure: true' disables TLS verification and should only be used for development.
+      # Use proper TLS certificates and set 'insecure: false' in production environments.
       insecure: true
   otlp:
     endpoint: otel-backend:4317
