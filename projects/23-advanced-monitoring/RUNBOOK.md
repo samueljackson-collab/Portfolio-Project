@@ -141,7 +141,7 @@ docker-compose logs --no-color > deployments/${DEPLOY_DATE}/docker-compose.log
 curl -fsSL http://localhost:3000/api/health > deployments/${DEPLOY_DATE}/stack-health.json
 
 # Update the deployment record
-sed -n '1,140p' DEPLOYMENT_STATUS.md
+sed -i.bak "s/Deployment date: .* (planned)/Deployment date: ${DEPLOY_DATE} (live)/" DEPLOYMENT_STATUS.md
 ```
 
 ### Stack Deployment
