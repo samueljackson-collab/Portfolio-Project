@@ -31,10 +31,7 @@ Evidence and configurations for PRJ-SDE-002, covering Prometheus, Alertmanager, 
 - Backup alerts: [`runbooks/ALERTING_BACKUP_FAILURE.md`](./runbooks/ALERTING_BACKUP_FAILURE.md)
 
 ## Evidence / Screenshots
-Binary screenshots are intentionally omitted because the PR channel cannot transport binaries. To generate sanitized captures:
-- Import the Grafana JSON dashboards above into a lab Grafana instance.
-- Point them at demo datasources with placeholder hosts (e.g., `demo-api`, `pbs.example.internal`).
-- Export/share sanitized PNGs into [`./screenshots/`](./screenshots/) following [`screenshots/README.md`](./screenshots/README.md).
+Sanitized SVG snapshots are stored in [`./screenshots/`](./screenshots/) for quick review. Import the Grafana JSON dashboards above into a lab Grafana instance and export PNGs if higher-fidelity captures are required.
 
 ## Sanitization Checklist
 - ✅ Dummy hostnames/URLs (`demo-api`, `pbs.example.internal`)
@@ -54,7 +51,7 @@ Supporting materials for the Observability & Backups Stack. Dashboards, configs,
 - **docs/** — [Monitoring philosophy](./docs/monitoring-philosophy.md) (USE/RED), dashboard rationale, alert mapping, backups approach, and lessons learned.
 - **runbooks/** — [Alert responses](./runbooks/ALERT_RESPONSES.md) and [operational playbook](./runbooks/OPERATIONAL_RUNBOOK.md) for triage and recovery.
 - **grafana/dashboards/** — JSON exports for Infrastructure Overview, Application Metrics, Alert Operations, and PBS Backups.
-- **screenshots/** — Placeholder folder for dashboard evidence; binaries are excluded from the repo to keep PRs lintable.
+- **screenshots/** — Sanitized dashboard, targets, and alert snapshots (SVG placeholders).
 - **configs/** — Prometheus, Alertmanager, Loki, and Promtail example configs (placeholders for endpoints/webhooks).
 - **backups/** — PBS job plan and retention report summarizing backup posture.
 - **scripts/** — Helpers such as `verify-pbs-backups.sh` for sandbox restore checks.
@@ -71,7 +68,7 @@ Supporting materials for the Observability & Backups Stack. Dashboards, configs,
 ## Sanitization Checklist
 - Webhooks/emails use example values; tokens and passwords removed.
 - IPs and hostnames use non-routable or generic placeholders.
-- Screenshots generated with demo data and no tenant identifiers (store outside the repo when creating new captures).
+- Screenshots generated with demo data and no tenant identifiers.
 - Backup exports omit datastore credentials; only schedules and retention values are shown.
 
 ## References
