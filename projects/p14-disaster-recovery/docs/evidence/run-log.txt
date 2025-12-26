@@ -1,0 +1,4 @@
+[p14-disaster-recovery] Verification log
+- Evidence capture: automated placeholder log for quickstart verification.
+- Core checks: configuration review, automation dry run, lint checks.
+- Result: baseline evidence recorded for docs/runbook linkage.
