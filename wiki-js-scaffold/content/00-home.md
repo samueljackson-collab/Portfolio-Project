@@ -34,9 +34,9 @@ Welcome to the GitHub Fundamentals Wiki.js hub. This space turns the course into
 3. [Documentation](/documentation)
 
 ### Portfolio Track
-1. [Real-World Projects](./04-real-world-projects/00-index.md)
-2. [GitHub Platform](./05-github-platform/00-index.md)
-3. [Next Steps](./07-next-steps/00-index.md)
+1. [Real-World Projects](/real-world-projects)
+2. [GitHub Platform](/github-platform)
+3. [Next Steps](/next-steps)
 
 ### Advanced Track
 1. [Git Fundamentals](./02-git-fundamentals/00-index.md)
