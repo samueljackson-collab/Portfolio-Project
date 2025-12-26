@@ -92,14 +92,14 @@ class SyncService {
       final lastSync = await _getLastSyncTime();
       int uploaded = 0;
 
-      for (final entry in box.toMap().entries) {
-        final data = Map<String, dynamic>.from(entry.value);
+      for (final key in box.keys) {
+        final data = Map<String, dynamic>.from(box.get(key)!);
         final updatedAt = _parseTimestamp(data['updatedAt']);
         if (updatedAt.isBefore(lastSync)) {
           continue;
         }
 
-        final groupId = (data['id'] ?? entry.key).toString();
+        final groupId = (data['id'] ?? key).toString();
         data['id'] = groupId;
         data['updatedAt'] = updatedAt.toIso8601String();
 
