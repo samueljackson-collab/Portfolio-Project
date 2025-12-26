@@ -1,10 +1,21 @@
 # Project 3: Kubernetes CI/CD Pipeline
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 Declarative delivery pipeline with GitHub Actions, ArgoCD, and progressive delivery strategies.
 
 ## Contents
 - `pipelines/github-actions.yaml` — build, test, scan, and progressive delivery workflow.
 - `pipelines/argocd-app.yaml` — GitOps application manifest.
+- `assets/` — sanitized pipeline screenshots and log summaries.
+
+## Evidence Assets
+- [Assets Index](./assets/README.md)
 
 ## GitHub Actions Workflow
 The `portfolio-delivery` workflow enforces validation, security, and progressive deployment stages:

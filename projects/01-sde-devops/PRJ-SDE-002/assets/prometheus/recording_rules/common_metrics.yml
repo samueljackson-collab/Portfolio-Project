@@ -1,0 +1,27 @@
+groups:
+  - name: common_metrics
+    interval: 30s
+    rules:
+      # CPU usage percentage
+      - record: instance:cpu_usage:percent
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+      # Memory usage percentage
+      - record: instance:memory_usage:percent
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+
+      # Disk usage percentage
+      - record: instance:disk_usage:percent
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes)) * 100
+
+      # Network receive bytes per second
+      - record: instance:network_receive:bytes_per_sec
+        expr: rate(node_network_receive_bytes_total[5m])
+
+      # Network transmit bytes per second
+      - record: instance:network_transmit:bytes_per_sec
+        expr: rate(node_network_transmit_bytes_total[5m])
+
+      # Aggregated service availability
+      - record: job:up:percent
+        expr: avg by(job) (up) * 100

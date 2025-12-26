@@ -37,8 +37,8 @@ scrape_configs:
     metrics_path: '/metrics'
     scrape_interval: 15s
 
-  # Backend API metrics (FastAPI with prometheus_client)
-  # P02 project integration - backend service at :8000/metrics
+  # Backend API metrics (FastAPI with prometheus_fastapi_instrumentator)
+  # Portfolio backend service at :8000/metrics
   - job_name: 'backend-api'
     scrape_interval: 10s
     metrics_path: '/metrics'
@@ -52,16 +52,16 @@ scrape_configs:
       - source_labels: [__address__]
         target_label: instance
 
-  # Frontend application metrics (optional - uncomment when instrumented)
-  # P03 project integration - frontend service at :3000/metrics
-  - job_name: 'frontend-app'
-    scrape_interval: 30s
+  # Frontend application metrics via nginx-prometheus-exporter sidecar
+  # The exporter scrapes /stub_status from the frontend nginx container
+  - job_name: 'frontend-nginx'
+    scrape_interval: 15s
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['host.docker.internal:3000']
+      - targets: ['nginx-exporter:9113']
         labels:
           service: 'frontend'
-          component: 'web'
+          component: 'nginx'
           environment: 'dev'
     relabel_configs:
       - source_labels: [__address__]

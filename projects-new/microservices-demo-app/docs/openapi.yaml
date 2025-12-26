@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: Microservices Demo API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Gateway health check
+      responses:
+        "200":
+          description: OK
+  /users/auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: JWT token
+  /products:
+    get:
+      summary: List products
+      responses:
+        "200":
+          description: OK
+  /orders:
+    post:
+      summary: Create order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  type: string
+      responses:
+        "200":
+          description: Order created

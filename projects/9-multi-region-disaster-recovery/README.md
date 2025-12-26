@@ -1,5 +1,12 @@
 # Project 9: Multi-Region Disaster Recovery Automation
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 This project provisions a resilient architecture with automated failover between AWS regions. It synchronizes stateful services, validates replication health, and performs controlled recovery drills.
 
@@ -84,4 +91,3 @@ Write Terraform code to set up CloudWatch alarms for EC2 CPU utilization, RDS co
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

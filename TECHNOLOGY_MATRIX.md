@@ -37,8 +37,10 @@
 ## Technology Dependencies by Project
 
 ### Projects Using AWS
+
 **Projects**: 1, 6, 7, 8, 9, 11, 12, 18, 22
 **Key Services**:
+
 - EC2, ECS, Fargate
 - Lambda, API Gateway
 - RDS, DynamoDB
@@ -48,6 +50,7 @@
 - IoT Core, Kinesis Firehose
 
 **Setup Requirements**:
+
 ```bash
 # AWS CLI configuration
 aws configure
@@ -60,8 +63,10 @@ export AWS_DEFAULT_REGION=us-east-1
 ---
 
 ### Projects Using Kubernetes
+
 **Projects**: 1, 3, 6, 9, 17, 19, 23
 **Key Tools**:
+
 - kubectl
 - Helm
 - Kustomize
@@ -70,6 +75,7 @@ export AWS_DEFAULT_REGION=us-east-1
 - Prometheus/Grafana
 
 **Setup Requirements**:
+
 ```bash
 # Kubernetes cluster (EKS, GKE, or local)
 kubectl config use-context <cluster>
@@ -83,8 +89,10 @@ kubectl apply -k overlays/production
 ---
 
 ### Python Projects with ML/Data
+
 **Projects**: 5, 6, 8, 12, 13, 14, 15, 16, 18, 19, 21, 22
 **Common Libraries**:
+
 - numpy, pandas, scikit-learn
 - TensorFlow, PyTorch
 - Flask, FastAPI
@@ -93,6 +101,7 @@ kubectl apply -k overlays/production
 - boto3 (AWS SDK)
 
 **Setup Template**:
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -102,8 +111,10 @@ pip install -r requirements.txt
 ---
 
 ### Blockchain Projects
+
 **Projects**: 10, 20
 **Key Technologies**:
+
 - Solidity (smart contracts)
 - Hardhat (development framework)
 - Ethers.js / Web3.js
@@ -112,6 +123,7 @@ pip install -r requirements.txt
 - Ethereum network (testnet/mainnet)
 
 **Setup Requirements**:
+
 ```bash
 npm install
 # Create .env with private keys
@@ -122,8 +134,10 @@ npx hardhat test
 ---
 
 ### Infrastructure/IaC Projects
+
 **Projects**: 1, 9, 17
 **Key Technologies**:
+
 - Terraform/HCL
 - AWS CDK (Python)
 - Pulumi (Python/Go)
@@ -131,6 +145,7 @@ npx hardhat test
 - CloudFormation
 
 **Setup Requirements**:
+
 ```bash
 # Terraform
 terraform init
@@ -149,13 +164,16 @@ pulumi up
 ---
 
 ### Database Technologies
+
 **Projects Using Databases**:
+
 - PostgreSQL: 1, 2, 9, 11
 - DynamoDB: 7, 8
 - TimescaleDB: 11
 - Databricks/Delta Lake: 16
 
 **Setup Examples**:
+
 ```bash
 # PostgreSQL
 docker run -e POSTGRES_PASSWORD=password postgres:14
@@ -172,9 +190,10 @@ docker run -p 8000:8000 amazon/dynamodb-local
 
 ## Missing Dependencies Checklist
 
-### For Each Project, Verify:
+### For Each Project, Verify
 
 #### Infrastructure/Config
+
 - [ ] README.md present and accurate
 - [ ] .env.example or secrets template
 - [ ] Configuration files (tfvars, yaml, json)
@@ -182,6 +201,7 @@ docker run -p 8000:8000 amazon/dynamodb-local
 - [ ] Cloud provider credentials setup
 
 #### Code & Testing
+
 - [ ] Source code in src/ directory
 - [ ] Unit tests present
 - [ ] Integration tests present
@@ -189,6 +209,7 @@ docker run -p 8000:8000 amazon/dynamodb-local
 - [ ] Mock/stub implementations
 
 #### Documentation
+
 - [ ] API documentation
 - [ ] Architecture diagrams
 - [ ] Deployment guide
@@ -196,6 +217,7 @@ docker run -p 8000:8000 amazon/dynamodb-local
 - [ ] Example configurations
 
 #### Deployment
+
 - [ ] Dockerfile (if containerized)
 - [ ] docker-compose.yml (if local dev)
 - [ ] Kubernetes manifests (if K8s)
@@ -207,7 +229,9 @@ docker run -p 8000:8000 amazon/dynamodb-local
 ## Technology Installation Guide
 
 ### Required Base Tools
+
 All projects require:
+
 - Git
 - Python 3.8+ (19 projects)
 - Node.js 16+ (3 projects)
@@ -216,12 +240,14 @@ All projects require:
 ### Project-Specific Tools
 
 **For AWS Projects** (1,6,7,8,9,11,12,18,22):
+
 ```bash
 pip install boto3 awscli
 aws configure
 ```
 
 **For Terraform Projects** (1,9,17):
+
 ```bash
 # Download from terraform.io
 terraform version
@@ -229,6 +255,7 @@ terraform version
 ```
 
 **For Kubernetes Projects** (1,3,6,9,17,19,23):
+
 ```bash
 # Install kubectl
 kubectl version --client
@@ -239,17 +266,20 @@ kind create cluster
 ```
 
 **For Blockchain Projects** (10,20):
+
 ```bash
 npm install -g hardhat
 npm install ethers @nomiclabs/hardhat-ethers
 ```
 
 **For Python ML Projects** (6,12,18):
+
 ```bash
 pip install mlflow optuna torch scikit-learn
 ```
 
 **For Data Projects** (5,11,16):
+
 ```bash
 pip install kafka-python pyspark pandas
 ```
@@ -259,6 +289,7 @@ pip install kafka-python pyspark pandas
 ## Environment Variables Template
 
 ### For AWS Projects
+
 ```bash
 # .env.example
 AWS_ACCESS_KEY_ID=your_key
@@ -268,6 +299,7 @@ AWS_PROFILE=default
 ```
 
 ### For Blockchain Projects
+
 ```bash
 # .env.example
 PRIVATE_KEY=your_private_key_hex
@@ -276,6 +308,7 @@ ETHERSCAN_API_KEY=your_key
 ```
 
 ### For Azure Projects
+
 ```bash
 # .env.example
 AZURE_SUBSCRIPTION_ID=xxx
@@ -285,6 +318,7 @@ AZURE_CLIENT_SECRET=xxx
 ```
 
 ### For LLM Projects (8, 24, 25)
+
 ```bash
 # .env.example
 OPENAI_API_KEY=sk-xxx
@@ -297,6 +331,7 @@ PINECONE_ENVIRONMENT=xxx
 ## Quick Start Commands by Project
 
 ### Project 1: AWS Infrastructure
+
 ```bash
 cd projects/1-aws-infrastructure-automation
 terraform init -backend-config=terraform/backend.hcl
@@ -305,6 +340,7 @@ terraform plan -var-file=terraform/dev.tfvars
 ```
 
 ### Project 2: Database Migration
+
 ```bash
 cd projects/2-database-migration
 pip install -r requirements.txt
@@ -313,6 +349,7 @@ python src/migration_orchestrator.py
 ```
 
 ### Project 5: Data Streaming
+
 ```bash
 cd projects/5-real-time-data-streaming
 docker-compose up  # Kafka + Zookeeper
@@ -321,6 +358,7 @@ python src/process_events.py
 ```
 
 ### Project 6: MLOps
+
 ```bash
 cd projects/6-mlops-platform
 python -m venv .venv && source .venv/bin/activate
@@ -330,6 +368,7 @@ mlflow server --backend-store-uri sqlite:///mlruns.db
 ```
 
 ### Project 8: AI Chatbot
+
 ```bash
 cd projects/8-advanced-ai-chatbot
 pip install -r requirements.txt
@@ -338,6 +377,7 @@ python -m uvicorn src.chatbot_service:app --reload
 ```
 
 ### Project 10: Blockchain Smart Contracts
+
 ```bash
 cd projects/10-blockchain-smart-contract-platform
 npm install
@@ -347,6 +387,7 @@ npx hardhat run scripts/deploy.ts --network goerli
 ```
 
 ### Project 23: Monitoring
+
 ```bash
 cd projects/23-advanced-monitoring
 # Deploy to Kubernetes
@@ -356,6 +397,7 @@ kubectl apply -k manifests/overlays/production
 ```
 
 ### Project 25: Portfolio Website
+
 ```bash
 cd projects/25-portfolio-website
 npm install
@@ -367,7 +409,7 @@ npm run docs:dev
 
 ## Estimated Time to Full Completion (by project)
 
-| Project | Current | To 90% | To 100% | 
+| Project | Current | To 90% | To 100% |
 |---------|---------|---------|---------|
 | 1 | 75% | 2 days | 3 days |
 | 2 | 40% | 4 days | 5 days |
@@ -396,4 +438,3 @@ npm run docs:dev
 | 25 | 50% | 3 days | 4 days |
 
 **Total Estimated Effort**: ~90 days for all projects to 100%
-

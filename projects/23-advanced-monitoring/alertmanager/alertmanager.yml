@@ -7,6 +7,12 @@ global:
   # PagerDuty API URL
   pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
 
+  # SMTP configuration (required when email notifications are enabled)
+  smtp_smarthost: '${ALERTMANAGER_SMTP_SMARTHOST:?SMTP smarthost is required (e.g., smtp.example.com:587)}'
+  smtp_from: '${ALERTMANAGER_SMTP_FROM:?SMTP from address is required}'
+  smtp_auth_username: '${ALERTMANAGER_SMTP_USERNAME:?SMTP username is required}'
+  smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD:?SMTP password or app password is required}'
+
 # Templates for notification formatting
 templates:
   - '/etc/alertmanager/templates/*.tmpl'

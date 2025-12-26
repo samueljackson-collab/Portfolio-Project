@@ -9,6 +9,7 @@ Designed and wired a home network from scratch: rack-mounted gear, VLAN segmenta
 ## Links
 
 - [Parent Documentation](../../../README.md)
+- [Evidence Assets](./assets)
 
 ## Next Steps
 
@@ -21,7 +22,9 @@ Designed and wired a home network from scratch: rack-mounted gear, VLAN segmenta
 For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
 
 ---
+
 ## Code Generation Prompts
+
 - [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-baseline).
 - [x] Homelab evidence checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#prompt-execution-workflow).
 
@@ -31,6 +34,8 @@ For questions about this project, please reach out via [GitHub](https://github.c
 - **Network Topology:** `assets/diagrams/network-topology.mmd` (Mermaid source) depicts WAN → pfSense → UniFi → downstream gear.
 - **VLAN Segmentation:** `assets/diagrams/vlan-segmentation.mmd` captures the five-zone isolation model.
 - **Monitoring Evidence:** `assets/configs/monitoring-snapshots.md` includes Prometheus, Grafana, and Loki excerpts with sensitive values redacted.
+- **Screenshots:** `assets/screenshots/` includes sanitized UniFi, pfSense, and VLAN overview captures.
+- **Logs:** `assets/logs/` contains sanitized controller and firewall summary logs.
 
 # PRJ-HOME-001: Homelab & Secure Network Build
 
@@ -83,6 +88,7 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 ## Security Features
 
 ### Firewall Protection
+
 - **Default Deny:** All traffic blocked unless explicitly allowed
 - **Stateful Inspection:** Connection tracking and validation
 - **Inter-VLAN Rules:** Precise control over traffic between networks
@@ -90,23 +96,27 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 - **Rate Limiting:** Protection against flood attacks
 
 ### Intrusion Prevention
+
 - **Suricata IPS:** Active threat blocking on WAN and DMZ
 - **Rulesets:** Emerging Threats (malware, exploits, scans)
 - **Daily Updates:** Automated signature updates
 - **Inline Mode:** Real-time blocking of malicious traffic
 
 ### Wireless Security
+
 - **Homelab-Secure:** WPA3 Enterprise with RADIUS authentication
 - **Homelab-IoT:** WPA2-PSK with client isolation and scheduled access
 - **Homelab-Guest:** Open with captive portal, content filtering, bandwidth limits
 
 ### VPN Access
+
 - **OpenVPN:** Secure remote access to Trusted and Servers VLANs
 - **Certificate-Based:** Strong authentication without passwords
 - **AES-256-GCM:** Military-grade encryption
 - **Split Tunneling:** Optional for performance
 
 ### Additional Security
+
 - **DNS Security:** Unbound resolver with DNSSEC validation
 - **Traffic Shaping:** QoS for VoIP and critical services
 - **Centralized Logging:** All events forwarded to syslog server
@@ -115,6 +125,7 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 ## Hardware Configuration
 
 ### pfSense Firewall
+
 - **Model:** Custom build or Protectli Vault
 - **CPU:** Intel Quad-Core
 - **RAM:** 8GB
@@ -122,11 +133,13 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 - **NICs:** 6x Gigabit Ethernet (1 WAN, 5 VLANs)
 
 ### UniFi Switch 24 POE (US24P250)
+
 - **Ports:** 24x Gigabit (16x PoE+)
 - **PoE Budget:** 250W
 - **Features:** VLAN support, port security, RSTP
 
 ### 2x UniFi U6 Pro Access Points
+
 - **Standard:** Wi-Fi 6 (802.11ax)
 - **2.4 GHz:** Channels 1 & 6 (non-overlapping)
 - **5 GHz:** Channels 36 & 149 (80 MHz width)
@@ -135,10 +148,12 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 ## Project Artifacts
 
 ### Configuration Files
+
 - [`pfsense-config.xml`](assets/pfsense/pfsense-config.xml) - Complete pfSense configuration with all interfaces, firewall rules, DHCP, DNS, IPS, VPN, and traffic shaping
 - [`unifi-config.json`](assets/unifi/unifi-config.json) - UniFi Controller configuration including wireless networks, devices, port profiles, and security settings
 
 ### Documentation
+
 - [`network-architecture.mermaid`](assets/documentation/network-architecture.mermaid) - Visual network topology with security zones and device placement
 - [`network-inventory.md`](assets/documentation/network-inventory.md) - Complete IP allocation tables, device inventory, switch port assignments, and hardware specifications
 - [`security-policies.md`](assets/documentation/security-policies.md) - Comprehensive security policies including firewall rules, access control, incident response, and maintenance procedures
@@ -146,11 +161,13 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 ## Deployment Instructions
 
 ### Prerequisites
+
 1. pfSense 2.6+ installed on firewall hardware
 2. UniFi Controller 7.5+ running (self-hosted or cloud)
 3. UniFi Switch and Access Points adopted in controller
 
 ### pfSense Configuration
+
 1. Backup existing configuration
 2. Review `pfsense-config.xml` and adjust for your environment:
    - WAN interface settings (adjust for your ISP)
@@ -161,6 +178,7 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 5. Test connectivity on each VLAN
 
 ### UniFi Configuration
+
 1. Backup existing UniFi controller configuration
 2. Review `unifi-config.json` and customize:
    - Device MAC addresses
@@ -171,6 +189,7 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 5. Verify wireless networks broadcast correctly
 
 ### Validation
+
 - [ ] All VLANs can reach internet
 - [ ] Inter-VLAN rules enforced (test blocking)
 - [ ] Wireless clients connect successfully
@@ -182,12 +201,14 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 ## Skills Demonstrated
 
 ### Network Engineering
+
 - Multi-VLAN network design and implementation
 - Advanced routing and switching concepts
 - Wireless network planning and optimization
 - Channel planning for minimal interference
 
 ### Security
+
 - Firewall policy development and implementation
 - Defense-in-depth security architecture
 - Intrusion prevention system deployment
@@ -196,6 +217,7 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 - Security policy documentation
 
 ### Systems Administration
+
 - pfSense firewall administration
 - UniFi network management
 - DNS and DHCP server configuration
@@ -203,6 +225,7 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 - Configuration backup and disaster recovery
 
 ### Documentation
+
 - Network architecture diagramming
 - Technical documentation writing
 - Security policy creation
@@ -211,22 +234,26 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 ## Operational Procedures
 
 ### Daily Operations
+
 - Monitor Suricata IPS alerts
 - Review system logs for anomalies
 - Verify backup completion
 
 ### Weekly Maintenance
+
 - Review firewall logs
 - Check DHCP lease utilization
 - Update IPS signatures (automated)
 
 ### Monthly Maintenance
+
 - Audit firewall rules
 - Review security incidents
 - Test VPN connectivity
 - Rotate guest network credentials
 
 ### Quarterly Maintenance
+
 - Apply pfSense and UniFi updates
 - Full security audit
 - Penetration testing

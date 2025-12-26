@@ -6,7 +6,6 @@ import {
   Endpoint,
   Hypothesis,
   IncidentEvent,
-  MalwareDetail,
   OperationEvent,
   SocAlert
 } from '../../api'
@@ -195,4 +194,3 @@ export const DeploymentSummaryCard: React.FC<{ summary?: DeploymentSummary | nul
     </div>
   )
 }
-

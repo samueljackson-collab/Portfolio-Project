@@ -61,6 +61,17 @@ services:
       - "9100:9100"
     restart: unless-stopped
 
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    container_name: nginx-exporter
+    command:
+      - '-nginx.scrape-uri=http://host.docker.internal:80/stub_status'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9113:9113"
+    restart: unless-stopped
+
 volumes:
   prometheus_data:
   grafana_data:

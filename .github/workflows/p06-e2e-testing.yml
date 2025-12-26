@@ -1,0 +1,43 @@
+name: P06 E2E Testing
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/p06-e2e-testing
+    env:
+      BASE_URL: ${{ secrets.P06_BASE_URL || 'http://localhost:3000' }}
+      TEST_USER: ${{ secrets.P06_TEST_USER || 'test@example.com' }}
+      TEST_PASSWORD: ${{ secrets.P06_TEST_PASSWORD || 'ChangeMe123!' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: projects/p06-e2e-testing/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p06-e2e-test-reports
+          path: projects/p06-e2e-testing/reports
