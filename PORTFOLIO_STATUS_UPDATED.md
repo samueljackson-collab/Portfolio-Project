@@ -49,3 +49,23 @@ The following projects were marked as **minimal/partial** in older reports but n
 | 24 | Report Generator | Implemented (tests + CI) | [tests](projects/24-report-generator/tests) · [CI](projects/24-report-generator/.github/workflows/ci.yml) |
 | 25 | Portfolio Website | Implemented (tests + CI) | [tests](projects/25-portfolio-website/tests) · [CI](projects/25-portfolio-website/.github/workflows/ci.yml) |
 
+---
+
+## CI & Coverage Dashboard (Priority Projects)
+
+Coverage values represent the current baseline captured by CI (starting at 0% until the
+workflow publishes a new report). CI status reflects whether lint/tests are wired in GitHub
+Actions for each project.
+
+| Project | CI Status | Coverage (Baseline) |
+| --- | --- | --- |
+| 1 - AWS Infrastructure Automation | Configured (lint + tests) | 0% |
+| 2 - Database Migration Platform | Configured (lint + tests) | 0% |
+| 3 - Kubernetes CI/CD Pipeline | Configured (lint + tests) | 0% |
+| 4 - DevSecOps Pipeline | Configured (lint + tests) | 0% |
+| 5 - Real-time Data Streaming | Configured (lint + tests) | 0% |
+| 9 - Multi-Region Disaster Recovery | Configured (lint + tests) | 0% |
+| 10 - Blockchain Smart Contract Platform | Configured (lint + tests) | 0% |
+| 23 - Advanced Monitoring & Observability | Configured (lint + tests) | 0% |
+| 24 - Report Generator | Configured (lint + tests) | 0% |
+| 25 - Portfolio Website | Configured (lint + tests) | 0% |
