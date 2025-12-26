@@ -476,8 +476,17 @@ jobs:
         run: |
           cd projects/p09-cloud-native-poc
           docker compose up -d
-          sleep 10
-          curl -f http://localhost:8000/health
+          # Poll for service readiness
+          for i in {1..15}; do
+            if curl -sf http://localhost:8000/health > /dev/null; then
+              echo "Service is healthy."
+              exit 0
+            fi
+            echo "Waiting for service... ($i/15)"
+            sleep 2
+          done
+          echo "Error: Service failed to start in time."
+          exit 1
 """,
         ),
         iac=ArtifactSpec(
