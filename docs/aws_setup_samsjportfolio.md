@@ -74,7 +74,7 @@ This guide walks through **setting up AWS from scratch** in **us-west-2**, using
 Create these security groups:
 - **sg-web-SamSJPortfolio**
   - Allow inbound 80/443 from 0.0.0.0/0
-  - Allow SSH from your IP only
+  - Allow SSH from your IP only (or preferably, use AWS Systems Manager Session Manager for more secure access without opening SSH ports).
 - **sg-app-SamSJPortfolio**
   - Add an inbound rule allowing traffic on your application port, with the source set to the ID of `sg-web-SamSJPortfolio`.
 - **sg-db-SamSJPortfolio**
