@@ -85,7 +85,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 - **Project 3: Kubernetes CI/CD Pipeline**
   - What it is: GitOps-ready CI/CD for Kubernetes with progressive delivery.
   - What’s done: GitHub Actions with YAML/K8s validation, image builds, Trivy scans, ArgoCD sync, blue-green deploys, automated rollbacks.
-  - Evidence: [Blueprint](./projects/3-kubernetes-cicd) · [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-3-kubernetes-cicd-pipeline)
+  - Evidence: [Blueprint](./projects/3-kubernetes-cicd) · [Assets](./projects/3-kubernetes-cicd/assets) · [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-3-kubernetes-cicd-pipeline)
 - **Project 4: DevSecOps Pipeline**
   - What it is: Security-first pipeline covering SAST, SCA, secrets, SBOM, and DAST.
   - What’s done: Semgrep, Bandit, CodeQL, Gitleaks/TruffleHog, Syft SBOM, Trivy/Dockle, OWASP ZAP, and compliance policy validation.
@@ -181,17 +181,17 @@ System-minded engineer specializing in building, securing, and operating infrast
 ### Homelab & Secure Network Build
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets) *(being prepared)*
+**Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-001/assets/screenshots)
 
 ### Virtualization & Core Services
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Backup Logs](./projects/06-homelab/PRJ-HOME-002/assets) *(being prepared)*
+**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Evidence Assets](./projects/06-homelab/PRJ-HOME-002/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-002/assets/screenshots)
 
 ### Observability & Backups Stack
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets)
+**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets) · [Screenshots/Logs](./projects/01-sde-devops/PRJ-SDE-002/assets/screenshots)
 
 ---
 ## 🔄 Past Projects Requiring Recovery

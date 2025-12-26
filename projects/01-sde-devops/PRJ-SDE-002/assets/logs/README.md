@@ -5,70 +5,22 @@ This directory contains sanitized sample log files demonstrating the observabili
 
 ## Available Log Samples
 
-### 1. prometheus-scrape-sample.log
-**Purpose:** Demonstrates Prometheus startup and successful metric scraping
+### 1. prometheus-scrape-summary.txt
+**Purpose:** Summary of Prometheus scrape health and rule evaluation.
 **Content:**
-- Prometheus initialization sequence
-- TSDB (Time Series Database) startup
-- Target health checks for all monitored endpoints
-- Successful metric collection from:
-  - Prometheus itself (self-monitoring)
-  - Node exporters (system metrics)
-  - Blackbox exporter (endpoint probes)
-  - cAdvisor (container metrics)
-- Rule evaluation and compaction operations
-
-**Key Indicators:**
-- All targets are healthy and responding
-- Metrics are being collected successfully
-- No scrape failures
-- Regular compaction and checkpoint operations
+- Scrape and evaluation intervals
+- Targets up/down counts
+- Sample scrape durations per job
+- Alert rule evaluation totals
 
 ---
 
-### 2. backup-success-sample.log
-**Purpose:** Shows a complete nightly backup cycle using Proxmox Backup Server
+### 2. alertmanager-notification.txt
+**Purpose:** Alertmanager delivery summary for resolved alerts.
 **Content:**
-- Three VM backups running sequentially:
-  - Wiki.js VM (02:00 AM)
-  - Home Assistant VM (02:15 AM)
-  - Immich VM (02:30 AM)
-- Backup statistics:
-  - Incremental backup mode
-  - Compression ratios (1.8:1 to 2.3:1)
-  - Deduplication efficiency (78% to 91%)
-  - Transfer speeds (~140-150 MiB/s)
-- Retention policy enforcement
-- Automatic cleanup of old backups
-
-**Key Metrics:**
-- Total data transferred: 8.90 GiB
-- Average compression ratio: 2.1:1
-- Average deduplication: 85%
-- Datastore utilization: 80% (3.2 TiB free)
-
----
-
-### 3. alert-history-sample.log
-**Purpose:** Displays a week of alerting activity from Alertmanager
-**Content:**
-- Various alert types:
-  - Resource alerts (CPU, memory, disk)
-  - Service health alerts
-  - Backup job failures
-  - Network latency issues
-- Alert lifecycle:
-  - FIRING state when threshold is exceeded
-  - RESOLVED state when issue is fixed
-  - Duration tracking
-- Weekly summary statistics
-
-**Alert Categories:**
-- Critical: 2 (ServiceDown, BackupJobFailed)
-- Warning: 4 (CPU, Memory, Disk, Network)
-- All resolved successfully
-- No false positives
-- Average resolution time: 7m21s
+- Alert names, severity, and status
+- Notification receivers and delivery state
+- Active silence count
 
 ---
 
