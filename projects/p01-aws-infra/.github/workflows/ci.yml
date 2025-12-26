@@ -127,6 +127,8 @@ jobs:
       - name: Terraform apply (gated)
         run: |
           make -C $WORKDIR terraform-apply STATE_BUCKET=${TF_STATE_BUCKET} LOCK_TABLE=${TF_LOCK_TABLE} AWS_REGION=${AWS_REGION}
+        env:
+          CI: 'true'
 
       - name: Execute approved change set
         run: |
