@@ -32,7 +32,7 @@ echo "🧹 Closing ${count} PRs..."
 # Loop through and close them
 for pr in ${prs}; do
   echo "   Closing PR #${pr}..."
-  gh pr close "${pr}" --comment "Auto-closing as part of Q4 2025 Portfolio Consolidation."
+  gh pr close "${pr}" --comment "${CLOSING_COMMENT}"
 done
 
 echo "🎉 Cleanup complete! Repository is clean."
