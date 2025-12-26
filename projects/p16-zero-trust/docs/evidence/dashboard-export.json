@@ -1,0 +1,11 @@
+{
+  "project": "p16-zero-trust",
+  "exported_at": "2025-11-13T00:00:00Z",
+  "dashboards": [
+    {
+      "title": "Operational Overview",
+      "panels": 6,
+      "notes": "Baseline dashboard export placeholder for evidence tracking."
+    }
+  ]
+}
