@@ -39,7 +39,7 @@ This guide walks through **setting up AWS from scratch** in **us-west-2**, using
 ## Step 4: Create groups and standard IAM roles
 1. Create groups:
    - `portfolio-admins-SamSJPortfolio` → AdministratorAccess
-   - `portfolio-devs-SamSJPortfolio` → scoped policy (S3 + ECS + CloudWatch)
+   - `portfolio-devs-SamSJPortfolio` → Attach a custom policy with specific permissions for S3, ECS, and CloudWatch. For example, a developer might need `s3:GetObject`, `ecs:UpdateService`, and `logs:GetLogEvents` on specific resources.
 2. Add users to appropriate groups.
 3. Create roles for services:
    - `ecsTaskExecutionRole-SamSJPortfolio` → AmazonECSTaskExecutionRolePolicy
