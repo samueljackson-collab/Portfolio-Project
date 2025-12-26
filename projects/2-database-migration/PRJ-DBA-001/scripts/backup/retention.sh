@@ -4,6 +4,10 @@ set -euo pipefail
 : "${BACKUP_ROOT:=./backups}"
 : "${BACKUP_RETENTION_DAYS:=14}"
 
+if [[ -z "${BACKUP_ROOT}" || ! -d "${BACKUP_ROOT}" || "${BACKUP_ROOT}" == "/" ]]; then
+  echo "Error: BACKUP_ROOT is not set to a valid directory." >&2
+  exit 1
+fi
 find "${BACKUP_ROOT}" -mindepth 1 -maxdepth 1 -type d -mtime "+${BACKUP_RETENTION_DAYS}" -print -exec rm -rf {} \;
 
 if [[ -n "${S3_BUCKET:-}" ]]; then
