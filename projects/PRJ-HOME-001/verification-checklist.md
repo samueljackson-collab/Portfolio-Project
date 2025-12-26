@@ -2,7 +2,7 @@
 
 ## Core
 - [ ] UDM-Pro firmware up to date; WAN online with expected public IP.
-- [ ] Controller backups enabled and last backup timestamp <24h.
+- [ ] Controller backups enabled and last backup timestamp `<24h`.
 
 ## Switching
 - [ ] LACP on 10G uplinks shows `active` on both ends.
