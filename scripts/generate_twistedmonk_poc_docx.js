@@ -613,7 +613,7 @@ const doc = new Document({
 });
 
 const outputDir = path.resolve(process.cwd(), "outputs");
-const outputPath = path.join(outputDir, "TwistedMonk_POC_REAL_FULL_45Pages.docx");
+const outputPath = path.join(outputDir, "TwistedMonk_POC_Implementation_Plan.docx");
 
 const main = async () => {
   try {
