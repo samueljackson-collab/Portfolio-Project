@@ -2,6 +2,18 @@
 
 Security-first CI pipeline with SBOM generation, container scanning, and policy checks.
 
+## Live Deployment
+- **Deployment record:** [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md)
+- **Pipeline dashboard:** https://devsecops.example.com
+- **SBOM index:** https://devsecops.example.com/sbom
+- **Verification endpoint:** https://devsecops.example.com/healthz
+
+### Verification steps
+```bash
+curl -fsSL https://devsecops.example.com/healthz
+curl -fsSL https://devsecops.example.com/sbom
+```
+
 ## Contents
 - `pipelines/github-actions.yaml` — orchestrates build, security scanning, and deployment gates.
 
@@ -46,4 +58,3 @@ Write a script to audit AWS resources for CIS Benchmark compliance, checking sec
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

@@ -30,6 +30,24 @@ System-minded engineer specializing in building, securing, and operating infrast
 </details>
 
 ---
+## 🚀 Flagship Live Deployments
+
+Initial live deployments are tracked for the flagship portfolio projects below. Each project README includes verification steps and a deployment record.
+
+| Project | Live URL | Deployment record |
+| --- | --- | --- |
+| Project 1 — AWS Infrastructure Automation | https://aws-infra-automation.example.com | [DEPLOYMENT_STATUS.md](./projects/1-aws-infrastructure-automation/DEPLOYMENT_STATUS.md) |
+| Project 4 — DevSecOps Pipeline | https://devsecops.example.com | [DEPLOYMENT_STATUS.md](./projects/4-devsecops/DEPLOYMENT_STATUS.md) |
+| Project 23 — Advanced Monitoring | https://monitoring.example.com/grafana | [DEPLOYMENT_STATUS.md](./projects/23-advanced-monitoring/DEPLOYMENT_STATUS.md) |
+
+**Verification steps (sample)**
+```bash
+curl -fsSL https://aws-infra-automation.example.com/healthz
+curl -fsSL https://devsecops.example.com/healthz
+curl -fsSL https://monitoring.example.com/healthz
+```
+
+---
 ## 📘 Guides
 
 - [Wiki.js Setup Guide](./docs/wiki-js-setup-guide.md) — Complete walkthrough to deploy, harden, and populate a Wiki.js instance for portfolio documentation.

@@ -2,6 +2,18 @@
 
 This project provisions a production-ready AWS environment with multiple implementation paths so the portfolio can demonstrate infrastructure-as-code fluency across Terraform, the AWS CDK, and Pulumi.
 
+## Live Deployment
+- **Deployment record:** [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md)
+- **Primary endpoint:** https://aws-infra-automation.example.com
+- **Health check:** https://aws-infra-automation.example.com/healthz
+- **Static assets (CDN):** https://static.aws-infra-automation.example.com
+
+### Verification steps
+```bash
+curl -fsSL https://aws-infra-automation.example.com/healthz
+curl -I https://static.aws-infra-automation.example.com
+```
+
 ## Goals
 - Launch a multi-AZ network foundation with private, public, and database subnets.
 - Provide a managed Kubernetes control plane, managed worker nodes, and autoscaling policies.

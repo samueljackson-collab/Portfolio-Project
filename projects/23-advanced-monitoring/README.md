@@ -6,6 +6,19 @@
 
 Enterprise-grade monitoring and observability stack featuring Prometheus, Grafana, Alertmanager, Loki, Thanos, and custom application metrics. This project demonstrates production-ready monitoring patterns including SLO tracking, intelligent alerting, long-term storage, and comprehensive application metrics.
 
+## Live Deployment
+- **Deployment record:** [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md)
+- **Grafana:** https://monitoring.example.com/grafana
+- **Prometheus:** https://monitoring.example.com/prometheus
+- **Alertmanager:** https://monitoring.example.com/alertmanager
+- **Health check:** https://monitoring.example.com/healthz
+
+### Verification steps
+```bash
+curl -fsSL https://monitoring.example.com/healthz
+curl -fsSL https://monitoring.example.com/grafana/api/health
+```
+
 ## 🎯 Features
 
 ### Core Components
