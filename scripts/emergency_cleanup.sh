@@ -26,11 +26,12 @@ if [[ -z "${prs}" ]]; then
   exit 0
 fi
 
-count=$(echo "${prs}" | wc -w | tr -d '[:space:]')
+read -ra pr_array <<< "${prs}"
+count=${#pr_array[@]}
 echo "🧹 Closing ${count} PRs..."
 
 # Loop through and close them
-for pr in ${prs}; do
+for pr in "${pr_array[@]}"; do
   echo "   Closing PR #${pr}..."
   gh pr close "${pr}" --comment "${CLOSING_COMMENT}"
 done
