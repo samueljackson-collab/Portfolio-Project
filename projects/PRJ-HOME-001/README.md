@@ -8,7 +8,7 @@ Artifacts for deploying a segmented UniFi-based home network with management, tr
 - Diagrams
   - [Physical topology](assets/diagrams/physical-topology.md)
   - [Logical topology](assets/diagrams/logical-topology.md)
-  - [Wi‑Fi coverage and SSID mapping](assets/diagrams/wifi-coverage.md)
+  - [Wi-Fi coverage and SSID mapping](assets/diagrams/wifi-coverage.md)
 
 ## Guides
 - [Installation guide](installation-guide.md)
