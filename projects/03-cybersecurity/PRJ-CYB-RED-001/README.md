@@ -203,11 +203,10 @@ class AtomicRunner:
         # Cleanup logic here
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python atomic_runner.py <technique_id>")
-        sys.exit(1)
-    
-    ttp = sys.argv[1]
+    parser = argparse.ArgumentParser(description="A safe runner for Atomic Red Team techniques.")
+    parser.add_argument("technique_id", help="The MITRE ATT&CK technique ID to execute (e.g., T1059.001).")
+    args = parser.parse_args()
+    ttp = args.technique_id
     runner = AtomicRunner(ttp)
     if runner.check_prereqs():
         runner.execute_test()
