@@ -34,6 +34,10 @@ For questions about this project, please reach out via [GitHub](https://github.c
 
 This directory contains supporting materials for the Virtualization & Core Services project.
 
+## Links
+- [Diagrams](./diagrams/README.md)
+- [Project Overview](../README.md)
+
 ## What Goes Here
 
 ### 📊 diagrams/
@@ -42,12 +46,12 @@ Architecture and design diagrams:
 - Data flow diagrams (user → proxy → services)
 - Network connectivity diagrams
 
-**Format:** PNG, SVG (with editable source files)
+**Format:** PNG, SVG, Mermaid (`.mmd`), Markdown overlays
 
 ### ⚙️ configs/
 Service configuration files:
-- Docker Compose files (Wiki.js, Home Assistant, Immich)
-- Proxmox VM/LXC configurations
+- Docker Compose bundles (Wiki.js, Home Assistant, Immich, PostgreSQL)
+- Proxmox VM/LXC definitions and backup policies
 - Nginx Proxy Manager configs (sanitized)
 - TrueNAS dataset/share configurations
 
@@ -57,10 +61,9 @@ Service configuration files:
 
 ### 📝 docs/
 Written documentation:
-- Backup strategy document
-- Service deployment runbook
-- Disaster recovery procedures
-- Restore testing results
+- Deployment and DR playbooks
+- Backup strategy and retention notes
+- Troubleshooting and lessons learned
 
 **Format:** Markdown (.md)
 
