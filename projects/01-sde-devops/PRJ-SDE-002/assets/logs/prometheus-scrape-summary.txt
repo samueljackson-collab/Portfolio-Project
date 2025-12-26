@@ -1,0 +1,6 @@
+[2025-11-10 08:55:00] scrape_interval=15s evaluation_interval=30s
+[2025-11-10 08:55:00] targets_up=28 targets_down=0
+[2025-11-10 08:55:01] job=node-exporter samples=1280 duration=42ms
+[2025-11-10 08:55:01] job=proxmox-exporter samples=220 duration=38ms
+[2025-11-10 08:55:01] job=blackbox-http samples=140 duration=55ms
+[2025-11-10 08:55:02] rules_evaluated=22 alerts_firing=0

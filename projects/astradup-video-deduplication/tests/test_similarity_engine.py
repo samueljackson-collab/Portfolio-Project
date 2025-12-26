@@ -6,11 +6,6 @@ import pytest
 import numpy as np
 from unittest.mock import Mock, patch, MagicMock
 
-# Import the module to test
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from src.engine.similarity_engine import SimilarityEngine, SimilarityResult
 
 

@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import os
-import sys
 import time
-from pathlib import Path
 from typing import Dict
 from unittest.mock import MagicMock, patch
 
@@ -15,10 +13,6 @@ try:
     import psycopg2
 except ModuleNotFoundError:  # pragma: no cover - handled by pytest skip
     psycopg2 = None
-
-PROJECT_SRC = Path(__file__).resolve().parents[2] / "projects" / "2-database-migration" / "src"
-if str(PROJECT_SRC) not in sys.path:
-    sys.path.insert(0, str(PROJECT_SRC))
 
 pytest.importorskip("psycopg2")
 

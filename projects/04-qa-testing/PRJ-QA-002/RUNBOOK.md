@@ -354,25 +354,25 @@ open test-results/latest/report.html
 
 #### Severity Classification
 
-**P0: Complete Test Failure**
+### P0: Complete Test Failure
 - All UI tests failing (100% failure rate)
 - CI pipeline completely broken
 - Application completely inaccessible
 - Browser driver failures
 
-**P1: Critical Path Failure**
+### P1: Critical Path Failure
 - Login tests failing
 - Checkout/payment flow broken
 - > 50% test failure rate
 - Multiple consecutive CI failures
 
-**P2: Partial Failure**
+### P2: Partial Failure
 - Single feature tests failing
 - Flaky test rate > 10%
 - Test execution time doubled
 - 10-50% test failure rate
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual test failing
 - Single selector update needed
 - Performance within acceptable limits
@@ -565,6 +565,11 @@ gh run view <run-id> --log | grep -E "error|fatal|failed"
 
 - name: Install ChromeDriver
   run: |
+    # Use the new JSON endpoints to find the correct ChromeDriver URL for the latest stable version.
+    CHROMEDRIVER_URL=$(curl -s https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json | jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux64") | .url')
+    wget -q "$CHROMEDRIVER_URL" -O chromedriver-linux64.zip
+    unzip chromedriver-linux64.zip
+    sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
     CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+')
     CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION%.*}")
     wget -q "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"

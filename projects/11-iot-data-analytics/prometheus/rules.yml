@@ -1,0 +1,75 @@
+# Alert Rules for IoT Data Analytics
+
+groups:
+  - name: iot_alerts
+    interval: 30s
+    rules:
+      - alert: DeviceOffline
+        expr: iot_device_last_seen_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: devices
+        annotations:
+          summary: "IoT device {{ $labels.device_id }} is offline"
+          description: "Last seen {{ $value }}s ago"
+
+      - alert: HighDeviceTemperature
+        expr: iot_device_temperature_celsius > 80
+        for: 10m
+        labels:
+          severity: critical
+          component: devices
+        annotations:
+          summary: "High temperature on device {{ $labels.device_id }}"
+          description: "Temperature: {{ $value }}°C"
+
+      - alert: MQTTBrokerConnectionsHigh
+        expr: mqtt_broker_connections > 10000
+        for: 15m
+        labels:
+          severity: warning
+          component: mqtt
+        annotations:
+          summary: "High number of MQTT connections"
+          description: "{{ $value }} active connections"
+
+      - alert: DataIngestionRateLow
+        expr: rate(iot_data_points_ingested_total[5m]) < 100
+        for: 10m
+        labels:
+          severity: warning
+          component: ingestion
+        annotations:
+          summary: "Low data ingestion rate"
+          description: "Only {{ $value }} data points/sec"
+
+      - alert: EdgeNodeUnreachable
+        expr: up{job="edge-nodes"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: edge
+        annotations:
+          summary: "Edge node {{ $labels.instance }} is unreachable"
+          description: "Edge processing may be impacted"
+
+      - alert: DeviceBatteryLow
+        expr: iot_device_battery_percent < 20
+        for: 1h
+        labels:
+          severity: warning
+          component: devices
+        annotations:
+          summary: "Low battery on device {{ $labels.device_id }}"
+          description: "Battery level: {{ $value }}%"
+
+      - alert: DataAnomalyDetected
+        expr: iot_anomaly_score > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: analytics
+        annotations:
+          summary: "Data anomaly detected for {{ $labels.device_id }}"
+          description: "Anomaly score: {{ $value }}"

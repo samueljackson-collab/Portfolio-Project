@@ -7,11 +7,6 @@ import numpy as np
 from unittest.mock import Mock, patch, MagicMock
 import cv2
 
-# Import the module to test
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from src.features.perceptual_hash import PerceptualHasher
 
 

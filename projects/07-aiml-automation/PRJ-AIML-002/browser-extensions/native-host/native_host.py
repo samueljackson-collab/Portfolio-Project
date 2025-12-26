@@ -115,6 +115,10 @@ class NativeMessagingHost:
             # Request to organize tabs
             await self.forward_to_app(message)
 
+        elif msg_type == 'open_app':
+            # Request to open the desktop app
+            await self.forward_to_app(message)
+
         else:
             logger.warning(f"Unknown message type: {msg_type}")
 
