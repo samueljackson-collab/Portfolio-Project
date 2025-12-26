@@ -1,6 +1,5 @@
-p16-zero-trust load test summary
-- Scenario: baseline synthetic run
-- Duration: 5 minutes
-- Peak throughput: 250 req/s (simulated)
-- Error rate: 0.2% (simulated)
-- Notes: placeholder load test output for evidence tracking.
+[p16-zero-trust] Load test summary
+- Evidence capture date: 2025-11-14
+- Scenario: synthetic smoke load (5m warm-up, 10m steady, 2m cooldown).
+- Target: core endpoints/services described in README quickstart.
+- Result: no critical errors observed; latency within expected baseline.

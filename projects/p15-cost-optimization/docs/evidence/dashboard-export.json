@@ -1,11 +1,12 @@
 {
   "project": "p15-cost-optimization",
-  "exported_at": "2025-11-13T00:00:00Z",
-  "dashboards": [
+  "capture_date": "2025-11-14",
+  "summary": "Baseline dashboard export for quickstart verification.",
+  "panels": [
     {
-      "title": "Operational Overview",
-      "panels": 6,
-      "notes": "Baseline dashboard export placeholder for evidence tracking."
+      "id": 1,
+      "title": "Service health overview",
+      "description": "Placeholder export representing core metrics panels."
     }
   ]
 }

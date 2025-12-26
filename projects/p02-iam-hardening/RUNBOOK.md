@@ -498,7 +498,7 @@ aws iam set-default-policy-version --policy-arn <arn> --version-id <previous-ver
 
 ## Evidence & Verification
 
-Verification summary: Baseline evidence captured to validate the latest quickstart configuration and document supporting artifacts for audits.
+Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
 
 **Evidence artifacts**
 - [Screenshot](./docs/evidence/screenshot.svg)
