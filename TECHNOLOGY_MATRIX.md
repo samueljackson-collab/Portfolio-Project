@@ -134,8 +134,7 @@ npx hardhat test
 ---
 
 ### Infrastructure/IaC Projects
-
-**Projects**: 1, 9, 17
+**Projects (3 total)**: 1, 9, 17
 **Key Technologies**:
 
 - Terraform/HCL

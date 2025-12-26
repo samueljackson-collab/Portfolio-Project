@@ -16,7 +16,7 @@ This comprehensive analysis covers all 25 enterprise portfolio projects, documen
 Total Projects:                    25
 Average Completion:               52%
 Python-based Projects:            19 (76%)
-Infrastructure/IaC Projects:       4 (16%)
+Infrastructure/IaC Projects:       3 (12%)
 Blockchain Projects:               2 (8%)
 
 Projects 70%+ Complete:            3 (Projects 1, 10, 23)
