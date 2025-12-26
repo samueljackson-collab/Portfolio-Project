@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 
 import '../config/app_config.dart';
@@ -14,6 +15,11 @@ class SyncService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final EncryptionService _encryption = EncryptionService();
   final Logger _logger = Logger();
+
+  static const String _tabBoxName = 'tabs';
+  static const String _tabGroupBoxName = 'tab_groups';
+  static const String _syncMetadataBoxName = 'sync_metadata';
+  static const String _lastSyncKey = 'last_sync';
 
   Timer? _syncTimer;
   bool _isSyncing = false;
@@ -59,6 +65,8 @@ class SyncService {
       final tabsUploaded = await _syncTabs(user.uid);
       final tabsDownloaded = await _downloadTabs(user.uid);
 
+      await _updateLastSyncTime(DateTime.now());
+
       final duration = DateTime.now().difference(startTime);
       _logger.i('Sync completed in ${duration.inMilliseconds}ms');
 
@@ -79,19 +87,57 @@ class SyncService {
 
   /// Upload modified tab groups to cloud
   Future<int> _syncTabGroups(String userId) async {
-    // TODO: Implement actual sync logic with local database
-    // This is a placeholder implementation
-    return 0;
+    try {
+      final box = await Hive.openBox<Map>(_tabGroupBoxName);
+      final lastSync = await _getLastSyncTime();
+      int uploaded = 0;
+
+      for (final entry in box.toMap().entries) {
+        final data = Map<String, dynamic>.from(entry.value);
+        final updatedAt = _parseTimestamp(data['updatedAt']);
+        if (updatedAt.isBefore(lastSync)) {
+          continue;
+        }
+
+        final groupId = (data['id'] ?? entry.key).toString();
+        data['id'] = groupId;
+        data['updatedAt'] = updatedAt.toIso8601String();
+
+        final encryptedData = await _encryption.encrypt(data);
+
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('tabGroups')
+            .doc(groupId)
+            .set({
+          'name': data['name'] ?? 'Untitled',
+          'category': data['category'] ?? 'other',
+          'createdAt': _parseTimestamp(data['createdAt']),
+          'updatedAt': DateTime.now(),
+          'encryptedData': encryptedData,
+        }, SetOptions(merge: true));
+
+        uploaded++;
+      }
+
+      return uploaded;
+    } catch (e) {
+      _logger.e('Failed to upload tab groups: $e');
+      return 0;
+    }
   }
 
   /// Download tab groups from cloud
   Future<int> _downloadTabGroups(String userId) async {
     try {
+      final box = await Hive.openBox<Map>(_tabGroupBoxName);
+      final lastSync = await _getLastSyncTime();
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('tabGroups')
-          .where('updatedAt', isGreaterThan: _getLastSyncTime())
+          .where('updatedAt', isGreaterThan: lastSync)
           .get();
 
       int count = 0;
@@ -103,7 +149,12 @@ class SyncService {
           data['encryptedData'] as String,
         );
 
-        // TODO: Save to local database
+        final updatedAt = _parseTimestamp(data['updatedAt']);
+        final groupId = (decryptedData['id'] ?? doc.id).toString();
+        decryptedData['id'] = groupId;
+        decryptedData['updatedAt'] = updatedAt.toIso8601String();
+
+        await box.put(groupId, Map<String, dynamic>.from(decryptedData));
         count++;
       }
 
@@ -116,20 +167,122 @@ class SyncService {
 
   /// Upload modified tabs to cloud
   Future<int> _syncTabs(String userId) async {
-    // TODO: Implement actual sync logic
-    return 0;
+    try {
+      final box = await Hive.openBox<Map>(_tabBoxName);
+      final lastSync = await _getLastSyncTime();
+      int uploaded = 0;
+
+      for (final entry in box.toMap().entries) {
+        final data = Map<String, dynamic>.from(entry.value);
+        final updatedAt = _parseTimestamp(data['updatedAt']);
+        if (updatedAt.isBefore(lastSync)) {
+          continue;
+        }
+
+        final tabId = (data['id'] ?? entry.key).toString();
+        data['id'] = tabId;
+        data['updatedAt'] = updatedAt.toIso8601String();
+
+        final encryptedData = await _encryption.encrypt(data);
+
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('tabs')
+            .doc(tabId)
+            .set({
+          'title': data['title'] ?? 'Untitled',
+          'url': data['url'] ?? '',
+          'category': data['category'] ?? 'other',
+          'createdAt': _parseTimestamp(data['createdAt']),
+          'updatedAt': DateTime.now(),
+          'encryptedData': encryptedData,
+        }, SetOptions(merge: true));
+
+        uploaded++;
+      }
+
+      return uploaded;
+    } catch (e) {
+      _logger.e('Failed to upload tabs: $e');
+      return 0;
+    }
   }
 
   /// Download tabs from cloud
   Future<int> _downloadTabs(String userId) async {
-    // TODO: Implement actual sync logic
-    return 0;
+    try {
+      final box = await Hive.openBox<Map>(_tabBoxName);
+      final lastSync = await _getLastSyncTime();
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('tabs')
+          .where('updatedAt', isGreaterThan: lastSync)
+          .get();
+
+      int count = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final decryptedData = await _encryption.decrypt(
+          data['encryptedData'] as String,
+        );
+        final updatedAt = _parseTimestamp(data['updatedAt']);
+        final tabId = (decryptedData['id'] ?? doc.id).toString();
+        decryptedData['id'] = tabId;
+        decryptedData['updatedAt'] = updatedAt.toIso8601String();
+
+        await box.put(tabId, Map<String, dynamic>.from(decryptedData));
+        count++;
+      }
+
+      return count;
+    } catch (e) {
+      _logger.e('Failed to download tabs: $e');
+      return 0;
+    }
   }
 
   /// Get last sync timestamp
-  DateTime _getLastSyncTime() {
-    // TODO: Retrieve from local storage
-    return DateTime.now().subtract(AppConfig.syncInterval);
+  Future<DateTime> _getLastSyncTime() async {
+    try {
+      final box = Hive.isBoxOpen(_syncMetadataBoxName)
+          ? Hive.box<Map>(_syncMetadataBoxName)
+          : await Hive.openBox<Map>(_syncMetadataBoxName);
+      final stored = box.get(_lastSyncKey);
+      if (stored == null) {
+        return DateTime.now().subtract(AppConfig.syncInterval);
+      }
+      return _parseTimestamp(stored['value']);
+    } catch (_) {
+      return DateTime.now().subtract(AppConfig.syncInterval);
+    }
+  }
+
+  Future<void> _updateLastSyncTime(DateTime timestamp) async {
+    final box = await Hive.openBox<Map>(_syncMetadataBoxName);
+    await box.put(_lastSyncKey, {'value': timestamp.toIso8601String()});
+  }
+
+  DateTime _parseTimestamp(dynamic value) {
+    if (value == null) {
+      return DateTime.fromMillisecondsSinceEpoch(0);
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    if (value is String) {
+      return DateTime.tryParse(value) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   /// Upload a single tab group

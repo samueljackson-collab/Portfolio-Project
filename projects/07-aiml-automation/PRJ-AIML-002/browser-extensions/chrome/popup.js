@@ -107,8 +107,16 @@ function setupEventListeners() {
 
   openApp.addEventListener('click', (e) => {
     e.preventDefault();
-    // TODO: Implement deep link to desktop app
-    alert('Desktop app integration coming soon!');
+    openApp.textContent = 'Opening...';
+    chrome.runtime.sendMessage({ type: 'open_desktop_app' }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('Failed to open app:', chrome.runtime.lastError);
+        alert('Unable to reach the desktop app.');
+      } else if (!response?.success) {
+        alert('Desktop app not available.');
+      }
+      openApp.textContent = 'Open Desktop App';
+    });
   });
 }
 
