@@ -15,14 +15,22 @@ Previously built and managed: resort booking site; high-SKU flooring store; tour
 - [Architecture & ERD](./assets/diagrams/architecture.md)
 - [Sanitized Code Samples](./assets/code/)
 
-## Next Steps
+## Recovery Status
 
 - Capture sanitized screenshots for catalog, booking calendar, and checkout flows.
 - Add final evidence of deployment rehearsal using the rebuilt runbooks.
 
-## Contact
+### Completed in this drop
+- Backup catalog drafted with storage locations and verification checks.
+- Reconstructed database ERD and data workflows for booking, catalog, and pricing updates.
+- Deployment and content operations runbooks recreated with recovery-safe procedures.
+- Published sanitized SQL/PHP excerpts plus anonymized screenshot index.
+- Documented lessons learned, anonymization guardrails, and case-study narrative.
 
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
+### Upcoming
+- Add redacted performance metrics and monitoring snapshots.
+- Publish additional PHP plugin excerpts for discount logic and feed integrations.
+- Produce video walkthroughs for the deployment and rollback flows.
 
 ---
 ## Code Generation Prompts
@@ -138,8 +146,6 @@ Between 2015-2022, I designed, built, and managed multiple data-heavy commercial
 - **Case Studies:** Issue → remediation → outcome narratives ([recovery-case-studies.md](./assets/docs/case-studies/recovery-case-studies.md)).
 - **Visuals:** Screenshot plan documented ([assets/screenshots/README.md](./assets/screenshots/README.md)); captures to follow.
 
----
-
 ## Lessons from Data Loss
 
 This experience taught valuable lessons about:
@@ -164,8 +170,6 @@ This experience taught valuable lessons about:
 
 These are now core practices in my current work and homelab projects.
 
----
-
 ## Skills Demonstrated (Once Recovered)
 
 - **WordPress & WooCommerce** - Custom plugin development, theme customization
@@ -177,8 +181,6 @@ These are now core practices in my current work and homelab projects.
 - **Booking Systems** - Availability calendars, pricing logic, reservations
 - **SEO** - On-page optimization, structured data, content strategy
 - **Documentation** - Runbooks, process docs, technical writing
-
----
 
 ## Timeline
 
@@ -200,4 +202,4 @@ For questions about this project or the recovery process, reach out via:
 
 ---
 
-**Note:** Client names and proprietary code will not be published. All examples will be sanitized, anonymized, or recreated for demonstration purposes.
+**Last Updated:** December 6, 2025

@@ -3,8 +3,7 @@
 **Status:** 🔄 Recovery — sanitized artifacts published for review.
 
 ## Description
-
-Previously built and managed: resort booking site; high-SKU flooring store; tours site with complex variations. Code and process docs are being rebuilt for publication.
+Supporting materials for the recovery of legacy e-commerce and booking systems. All content is sanitized and client-agnostic.
 
 ## Links
 
