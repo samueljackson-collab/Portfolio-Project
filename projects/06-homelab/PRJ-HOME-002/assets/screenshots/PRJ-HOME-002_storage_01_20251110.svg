@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450">
+  <rect width="100%" height="100%" fill="#0f172a"/>
+  <text x="40" y="70" font-family="Arial, sans-serif" font-size="26" fill="#f8fafc">PRJ-HOME-002 TrueNAS Storage Pools</text>
+  <text x="40" y="110" font-family="Arial, sans-serif" font-size="16" fill="#cbd5f5">Sanitized storage view • Captured 2025-11-10</text>
+  <rect x="40" y="150" width="720" height="240" rx="16" fill="#1e293b"/>
+  <text x="60" y="195" font-family="Arial, sans-serif" font-size="15" fill="#e2e8f0">Pools: core (RAIDZ2) · backups (RAIDZ1) · media (mirror)</text>
+  <text x="60" y="225" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8">Snapshots: hourly/daily · Replication: nightly to PBS</text>
+  <text x="60" y="255" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8">SMB shares: 3 · NFS exports: 2</text>
+  <text x="60" y="300" font-family="Arial, sans-serif" font-size="13" fill="#64748b">Artifact: assets/screenshots/PRJ-HOME-002_storage_01_20251110.svg</text>
+</svg>

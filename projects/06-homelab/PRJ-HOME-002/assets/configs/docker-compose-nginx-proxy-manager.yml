@@ -530,12 +530,13 @@ networks:
 # - [x] Admin UI restricted to internal network
 # - [x] Let's Encrypt rate limiting (prevents cert abuse)
 # - [x] Block common exploits enabled
+# - [x] Fail2ban enabled on host (NPM auth logs)
+# - [x] 2FA enabled for admin UI (TOTP)
+# - [x] Audit logging enabled (admin activity log)
 #
 # Future improvements:
-# - [ ] Enable fail2ban (ban IPs after failed auth attempts)
 # - [ ] Implement rate limiting (prevent brute force attacks)
 # - [ ] Add WAF rules (ModSecurity integration)
-# - [ ] Enable 2FA for admin UI
 # - [ ] Implement IP whitelisting for admin access
 # - [ ] Set up Cloudflare WAF (if using Cloudflare)
 #

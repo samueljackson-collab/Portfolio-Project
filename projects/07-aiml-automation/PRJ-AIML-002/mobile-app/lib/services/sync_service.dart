@@ -51,6 +51,12 @@ class SyncService {
     try {
       _logger.i('Starting sync...');
 
+      final syncEnabled = await _isCloudSyncEnabled();
+      if (!syncEnabled) {
+        _logger.w('Cloud sync disabled in settings, skipping');
+        return SyncResult.failed('Cloud sync disabled');
+      }
+
       final user = _auth.currentUser;
       if (user == null) {
         _logger.w('User not authenticated, skipping sync');
@@ -283,6 +289,15 @@ class SyncService {
           DateTime.fromMillisecondsSinceEpoch(0);
     }
     return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  Future<bool> _isCloudSyncEnabled() async {
+    try {
+      final settings = await Hive.openBox('settings');
+      return settings.get('cloudSyncEnabled', defaultValue: true) as bool;
+    } catch (_) {
+      return true;
+    }
   }
 
   /// Upload a single tab group

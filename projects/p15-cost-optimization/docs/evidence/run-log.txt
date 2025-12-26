@@ -1,4 +1,5 @@
 [p15-cost-optimization] Verification log
-- Evidence capture: automated placeholder log for quickstart verification.
-- Core checks: configuration review, automation dry run, lint checks.
-- Result: baseline evidence recorded for docs/runbook linkage.
+- Evidence capture date: 2025-11-14
+- Scope: quickstart validation, config review, automation dry-run, lint checks.
+- Key artifacts: screenshot.svg, dashboard-export.json, load-test-summary.txt.
+- Result: baseline evidence captured for README/RUNBOOK linkage.

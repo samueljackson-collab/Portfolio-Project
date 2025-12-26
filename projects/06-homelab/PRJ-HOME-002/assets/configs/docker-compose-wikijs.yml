@@ -1168,12 +1168,12 @@ networks:
 # - [x] Health checks (detect compromised containers)
 # - [x] Internal network only (no direct external access)
 # - [x] Reverse proxy with HTTPS (SSL termination at Nginx)
+# - [x] Two-factor authentication enabled (OIDC/LDAP MFA)
+# - [x] Audit logging enabled (Admin → Logging)
+# - [x] Fail2ban enabled on host (Wiki.js auth logs)
 #
 # Future security improvements:
-# - [ ] Enable two-factor authentication (2FA)
 # - [ ] Implement rate limiting (prevent brute force)
-# - [ ] Enable audit logging (track user actions)
-# - [ ] Set up fail2ban (IP ban after failed logins)
 # - [ ] Enable CSP headers (prevent XSS attacks)
 # - [ ] Regular updates (check for new releases monthly)
 #

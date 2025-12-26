@@ -12,6 +12,8 @@ Comprehensive monitoring, logging, alerting, and backup automation for the homel
 - [Alert Runbooks](./assets/runbooks/ALERT_RESPONSES.md)
 - [Operational Runbook](./assets/runbooks/OPERATIONAL_RUNBOOK.md)
 - [Grafana Dashboards](./assets/grafana/dashboards)
+- [Screenshots](./assets/screenshots)
+- [Log Samples](./assets/logs)
 - [Prometheus/Alertmanager/Loki/Promtail Configs](./assets/configs)
 - [PBS Jobs & Retention Evidence](./assets/backups)
 - [Parent Documentation](../../../README.md)

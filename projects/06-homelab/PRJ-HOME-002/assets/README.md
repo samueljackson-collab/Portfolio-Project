@@ -16,7 +16,8 @@ Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a revers
 - **Diagrams:** Cluster + storage topology in `diagrams/` (PNG/SVG with editable sources).
 - **Observability:** Prometheus/Grafana/Loki excerpts in `configs/monitoring/observability-evidence.md`.
 - **Backups:** PBS nightly report in `configs/truenas/pbs-backup-report.md`.
-- **Screenshots:** Sanitized Proxmox and TrueNAS dashboards stored externally (not committed as binaries).
+- **Screenshots:** Sanitized Proxmox, TrueNAS, and service proxy snapshots stored in `screenshots/`.
+- **Logs:** Sanitized cluster health and PBS backup summaries stored in `logs/`.
 
 ## Contact
 
@@ -64,7 +65,7 @@ Written documentation:
 **Format:** Markdown (.md)
 
 ### 📷 screenshots/
-Visual evidence (stored externally to avoid binary artifacts in repo):
+Visual evidence:
 - Proxmox dashboard
 - Service interfaces
 - Backup logs/status
