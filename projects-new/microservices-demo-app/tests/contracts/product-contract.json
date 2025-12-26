@@ -1,0 +1,16 @@
+{
+  "consumer": "order-service",
+  "provider": "product-service",
+  "request": {
+    "method": "GET",
+    "path": "/products/sku-1"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "product_id": "sku-1",
+      "name": "Demo Laptop",
+      "price": 1299.0
+    }
+  }
+}

@@ -1,0 +1,65 @@
+# Scheduler Configuration for Portfolio Report Generator
+
+# Email Configuration
+email:
+  enabled: true
+  smtp_server: smtp.gmail.com
+  smtp_port: 587
+  smtp_user: your-email@gmail.com
+  smtp_password: your-app-password  # Use app-specific password for Gmail
+  from_address: your-email@gmail.com
+  from_name: Portfolio Report Generator
+  use_tls: true
+
+  # Weekly report recipients
+  weekly_recipients:
+    - team@example.com
+    - manager@example.com
+
+  # Monthly report recipients (can include executives)
+  monthly_recipients:
+    - executives@example.com
+    - stakeholders@example.com
+
+# Schedule Configuration
+schedules:
+  # Weekly report - every Monday at 9 AM
+  weekly:
+    day_of_week: mon
+    hour: 9
+    minute: 0
+
+  # Monthly summary - 1st of each month at 9 AM
+  monthly:
+    day: 1
+    hour: 9
+    minute: 0
+
+  # Daily statistics - every day at 8 AM
+  daily:
+    hour: 8
+    minute: 0
+
+  # Enable test mode for debugging (runs every 5 minutes)
+  test_mode: false
+
+# Report Configuration
+reports:
+  output_dir: ./reports
+  formats: [html, pdf]
+
+  # Templates to generate
+  templates:
+    weekly:
+      - weekly.html
+
+    monthly:
+      - executive_summary.html
+      - project_status.html
+      - technical_documentation.html
+
+# Historical Comparison
+history:
+  enabled: true
+  history_dir: ./history
+  snapshot_frequency_days: 7  # Save snapshot every 7 days

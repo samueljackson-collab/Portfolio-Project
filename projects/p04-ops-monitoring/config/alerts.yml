@@ -1,0 +1,292 @@
+groups:
+  # Infrastructure Alerts
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "Instance {{ $labels.instance }} (job: {{ $labels.job }}) has been unreachable for more than 1 minute."
+          runbook_url: "https://wiki.company.com/runbooks/instance-down"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+      - alert: HighCPUUsage
+        expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% on {{ $labels.instance }} for the past 5 minutes. Current value: {{ $value }}%"
+          runbook_url: "https://wiki.company.com/runbooks/high-cpu"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+      - alert: HighMemoryUsage
+        expr: ((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% on {{ $labels.instance }}. Current value: {{ $value }}%"
+          runbook_url: "https://wiki.company.com/runbooks/high-memory"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs|squashfs"} / node_filesystem_size_bytes) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is below 15% on {{ $labels.instance }} at {{ $labels.mountpoint }}. Current value: {{ $value }}%"
+          runbook_url: "https://wiki.company.com/runbooks/disk-space-low"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs|squashfs"} / node_filesystem_size_bytes) * 100 < 5
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Disk space is critically low ({{ $value }}%) on {{ $labels.instance }} at {{ $labels.mountpoint }}. Immediate action required."
+          runbook_url: "https://wiki.company.com/runbooks/disk-space-critical"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+  # Application Alerts
+  - name: application_alerts
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: (sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          category: application
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% (current value: {{ $value | humanizePercentage }}) across all services."
+          runbook_url: "https://wiki.company.com/runbooks/high-error-rate"
+          dashboard_url: "http://grafana:3000/d/p04-application"
+
+      - alert: ApplicationErrorRate
+        expr: (sum(rate(http_requests_total{service=~"backend|frontend",status=~"5.."}[5m])) by (service) / sum(rate(http_requests_total{service=~"backend|frontend"}[5m])) by (service)) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "Error rate above threshold for {{ $labels.service }}"
+          description: "{{ $labels.service }} service error rate is above 1% (current: {{ $value | humanizePercentage }})."
+          runbook_url: "https://wiki.company.com/runbooks/app-error-rate"
+          dashboard_url: "http://grafana:3000/d/p04-application"
+
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service=~"backend|frontend"}[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "Slow response time for {{ $labels.service }}"
+          description: "P95 response time is above 500ms (current: {{ $value | humanizeDuration }})."
+          runbook_url: "https://wiki.company.com/runbooks/slow-response"
+          dashboard_url: "http://grafana:3000/d/p04-application"
+
+      - alert: HighLatencyP99
+        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{service=~"backend|frontend"}[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High P99 latency for {{ $labels.service }}"
+          description: "P99 latency exceeds 1 second (current: {{ $value | humanizeDuration }})."
+          runbook_url: "https://wiki.company.com/runbooks/high-latency"
+          dashboard_url: "http://grafana:3000/d/p04-application"
+
+      - alert: ServiceDown
+        expr: up{service=~"backend|frontend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: application
+        annotations:
+          summary: "{{ $labels.service }} service is down"
+          description: "{{ $labels.service }} service at {{ $labels.instance }} has been unreachable for 2 minutes."
+          runbook_url: "https://wiki.company.com/runbooks/service-down"
+          dashboard_url: "http://grafana:3000/d/p04-application"
+
+  # Database Alerts
+  - name: database_alerts
+    interval: 30s
+    rules:
+      - alert: RDSConnectionPoolExhausted
+        expr: db_available_connections < 5
+        for: 2m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "RDS connection pool exhausted on {{ $labels.instance }}"
+          description: "Only {{ $value }} database connections remaining. Connection pool exhaustion imminent."
+          runbook_url: "https://wiki.company.com/runbooks/rds-connections"
+          dashboard_url: "http://grafana:3000/d/p04-business"
+
+      - alert: RDSConnectionPoolHigh
+        expr: (db_connections_used / db_connections_max) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "RDS connection pool usage high on {{ $labels.instance }}"
+          description: "Database connection pool is {{ $value | humanizePercentage }} utilized."
+          runbook_url: "https://wiki.company.com/runbooks/rds-connections"
+          dashboard_url: "http://grafana:3000/d/p04-business"
+
+      - alert: RDSHighCPU
+        expr: aws_rds_cpu_utilization > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High CPU utilization on RDS instance {{ $labels.instance }}"
+          description: "RDS CPU is above 80% (current: {{ $value }}%)."
+          runbook_url: "https://wiki.company.com/runbooks/rds-cpu"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+      - alert: RDSHighMemory
+        expr: aws_rds_freeable_memory_bytes < 1073741824
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Low available memory on RDS instance {{ $labels.instance }}"
+          description: "RDS has less than 1GB of freeable memory (current: {{ $value | humanize1024 }})."
+          runbook_url: "https://wiki.company.com/runbooks/rds-memory"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+      - alert: RDSReplicationLag
+        expr: aws_rds_replica_lag > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High replication lag on RDS replica {{ $labels.instance }}"
+          description: "RDS replica lag is {{ $value }}s (threshold: 10s)."
+          runbook_url: "https://wiki.company.com/runbooks/rds-replica-lag"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+      - alert: RDSFailoverDetected
+        expr: aws_rds_db_instance_status != 1
+        for: 1m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "RDS failover or status change detected on {{ $labels.instance }}"
+          description: "RDS instance {{ $labels.instance }} status changed. Check AWS console."
+          runbook_url: "https://wiki.company.com/runbooks/rds-failover"
+          dashboard_url: "http://grafana:3000/d/p04-infrastructure"
+
+  # Business SLO Alerts
+  - name: slo_alerts
+    interval: 60s
+    rules:
+      - alert: SLOBudgetBurnRateCritical
+        expr: (1 - (sum(rate(http_requests_total{status!~"5.."}[1h])) / sum(rate(http_requests_total[1h])))) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          category: slo
+        annotations:
+          summary: "SLO error budget burn rate critical"
+          description: "Service is burning through error budget at a critical rate. Availability is {{ $value | humanizePercentage }}."
+          runbook_url: "https://wiki.company.com/runbooks/slo-burn"
+          dashboard_url: "http://grafana:3000/d/p04-business"
+
+      - alert: SLOBudgetBurnRateHigh
+        expr: (1 - (sum(rate(http_requests_total{status!~"5.."}[5m])) / sum(rate(http_requests_total[5m])))) > 0.05
+        for: 15m
+        labels:
+          severity: warning
+          category: slo
+        annotations:
+          summary: "SLO error budget burn rate elevated"
+          description: "Service is burning error budget faster than expected. Availability is {{ $value | humanizePercentage }}."
+          runbook_url: "https://wiki.company.com/runbooks/slo-burn"
+          dashboard_url: "http://grafana:3000/d/p04-business"
+
+      - alert: AvailabilityBelowSLO
+        expr: (1 - (sum(rate(http_requests_total{status=~"5.."}[30m])) / sum(rate(http_requests_total[30m])))) < 0.995
+        for: 10m
+        labels:
+          severity: warning
+          category: slo
+        annotations:
+          summary: "Availability below 99.5% SLO target"
+          description: "Current availability is {{ $value | humanizePercentage }} (SLO: 99.5%)."
+          runbook_url: "https://wiki.company.com/runbooks/availability-slo"
+          dashboard_url: "http://grafana:3000/d/p04-business"
+
+  # Alertmanager and Prometheus Health
+  - name: monitoring_stack_alerts
+    interval: 30s
+    rules:
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: monitoring
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus monitoring system is unreachable."
+          runbook_url: "https://wiki.company.com/runbooks/prometheus-down"
+
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: monitoring
+        annotations:
+          summary: "Alertmanager is down"
+          description: "Alertmanager is unreachable. Alerts may not be delivered."
+          runbook_url: "https://wiki.company.com/runbooks/alertmanager-down"
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "Grafana is down"
+          description: "Grafana dashboard service is unreachable."
+          runbook_url: "https://wiki.company.com/runbooks/grafana-down"
+
+      - alert: PrometheusRuleEvaluationFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "Prometheus rule evaluation failures detected"
+          description: "Prometheus is failing to evaluate {{ $value }} rules."
+          runbook_url: "https://wiki.company.com/runbooks/prometheus-rules"

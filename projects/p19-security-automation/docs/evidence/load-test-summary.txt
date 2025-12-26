@@ -1,0 +1,6 @@
+p19-security-automation load test summary
+- Scenario: baseline synthetic run
+- Duration: 5 minutes
+- Peak throughput: 250 req/s (simulated)
+- Error rate: 0.2% (simulated)
+- Notes: placeholder load test output for evidence tracking.

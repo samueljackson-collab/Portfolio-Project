@@ -20,20 +20,17 @@ env:
   TF_VERSION: '1.5.0'
   AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
   TFSTATE_BUCKET: ${{ secrets.TFSTATE_BUCKET }}
+  TFSTATE_DDB_TABLE: ${{ secrets.TFSTATE_DDB_TABLE }}
   TERRAFORM_DIR: terraform
-
-# OIDC Configuration:
-# To use OIDC authentication instead of access keys:
-# 1. Create an OIDC provider in AWS IAM (see terraform/README.md)
-# 2. Create an IAM role with the trust policy from terraform/iam/github_oidc_trust_policy.json
-# 3. Attach the policy from terraform/iam/github_actions_ci_policy.json to the role
-# 4. Set the role ARN in GitHub secrets as AWS_ROLE_ARN_PLAN and AWS_ROLE_ARN_APPLY
-# 5. Uncomment the OIDC permission and role-to-assume lines below
 
 permissions:
   id-token: write  # Required for OIDC token generation
   contents: read
   pull-requests: write
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   terraform-plan:
@@ -42,21 +39,24 @@ jobs:
     defaults:
       run:
         working-directory: ${{ env.TERRAFORM_DIR }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # OIDC Authentication (uncomment when ready)
-      # - name: Configure AWS credentials via OIDC
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN_PLAN }}
-      #     aws-region: ${{ env.AWS_REGION }}
-      #     role-session-name: GitHubActions-TerraformPlan
+      # OIDC Authentication (preferred)
+      - name: Configure AWS credentials via OIDC
+        id: oidc_creds
+        uses: aws-actions/configure-aws-credentials@v2
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_PLAN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-TerraformPlan
 
-      # Legacy authentication (using access keys)
-      - name: Configure AWS credentials
+      # Legacy authentication (fallback if OIDC secrets are not configured)
+      - name: Configure AWS credentials (fallback)
+        if: steps.oidc_creds.outcome == 'failure'
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -71,18 +71,25 @@ jobs:
       - name: Terraform Format Check
         id: fmt
         run: terraform fmt -check -recursive
-        continue-on-error: true
 
       - name: Terraform Init
         id: init
         run: |
-          terraform init \
-            -backend-config="bucket=${{ env.TFSTATE_BUCKET }}" \
-            -backend-config="region=${{ env.AWS_REGION }}"
+          INIT_ARGS="-backend-config=\"bucket=${TFSTATE_BUCKET}\" -backend-config=\"region=${AWS_REGION}\""
+          if [ -n "${TFSTATE_DDB_TABLE}" ]; then
+            INIT_ARGS+=" -backend-config=\"dynamodb_table=${TFSTATE_DDB_TABLE}\""
+          fi
+          terraform init ${INIT_ARGS}
 
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: ${{ env.TERRAFORM_DIR }}
+          additional_args: "--minimum-severity=MEDIUM"
 
       - name: Install TFLint
         run: |
@@ -95,21 +102,9 @@ jobs:
           tflint --init
           tflint --format compact
 
-      - name: Install Checkov
-        run: |
-          pip install checkov
-          checkov --version
-
-      - name: Run Checkov
-        id: checkov
-        run: |
-          checkov -d . --quiet --compact --framework terraform
-        continue-on-error: true
-
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -out=tfplan
-        continue-on-error: true
 
       - name: Comment PR with Plan
         if: github.event_name == 'pull_request'
@@ -121,7 +116,6 @@ jobs:
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
             #### TFLint 🔍\`${{ steps.tflint.outcome }}\`
-            #### Checkov 🔒\`${{ steps.checkov.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
             <details><summary>Show Plan</summary>
@@ -141,10 +135,6 @@ jobs:
               body: output
             });
 
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
-
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -161,26 +151,17 @@ jobs:
     defaults:
       run:
         working-directory: ${{ env.TERRAFORM_DIR }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # OIDC Authentication (uncomment when ready)
-      # - name: Configure AWS credentials via OIDC
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN_APPLY }}
-      #     aws-region: ${{ env.AWS_REGION }}
-      #     role-session-name: GitHubActions-TerraformApply
-
-      # Legacy authentication (using access keys)
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_APPLY }}
           aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-TerraformApply
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -189,9 +170,11 @@ jobs:
 
       - name: Terraform Init
         run: |
-          terraform init \
-            -backend-config="bucket=${{ env.TFSTATE_BUCKET }}" \
-            -backend-config="region=${{ env.AWS_REGION }}"
+          INIT_ARGS="-backend-config=\"bucket=${TFSTATE_BUCKET}\" -backend-config=\"region=${AWS_REGION}\""
+          if [ -n "${TFSTATE_DDB_TABLE}" ]; then
+            INIT_ARGS+=" -backend-config=\"dynamodb_table=${TFSTATE_DDB_TABLE}\""
+          fi
+          terraform init ${INIT_ARGS}
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v3

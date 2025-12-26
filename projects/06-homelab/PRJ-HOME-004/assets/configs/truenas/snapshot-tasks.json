@@ -1,0 +1,84 @@
+{
+  "snapshot_tasks": [
+    {
+      "name": "Hourly Snapshots - Critical Data",
+      "dataset": "tank/homelab/databases",
+      "recursive": false,
+      "lifetime_value": 24,
+      "lifetime_unit": "HOUR",
+      "naming_schema": "auto-%Y%m%d-%H%M-hourly",
+      "schedule": {
+        "minute": "0",
+        "hour": "*",
+        "dom": "*",
+        "month": "*",
+        "dow": "*"
+      },
+      "enabled": true
+    },
+    {
+      "name": "Daily Snapshots - All Homelab Data",
+      "dataset": "tank/homelab",
+      "recursive": true,
+      "lifetime_value": 7,
+      "lifetime_unit": "DAY",
+      "naming_schema": "auto-%Y%m%d-daily",
+      "schedule": {
+        "minute": "0",
+        "hour": "1",
+        "dom": "*",
+        "month": "*",
+        "dow": "*"
+      },
+      "enabled": true
+    },
+    {
+      "name": "Weekly Snapshots - Long-term Retention",
+      "dataset": "tank/homelab",
+      "recursive": true,
+      "lifetime_value": 4,
+      "lifetime_unit": "WEEK",
+      "naming_schema": "auto-%Y%m%d-weekly",
+      "schedule": {
+        "minute": "0",
+        "hour": "2",
+        "dom": "*",
+        "month": "*",
+        "dow": "0"
+      },
+      "enabled": true
+    },
+    {
+      "name": "Monthly Snapshots - Archival",
+      "dataset": "tank/homelab",
+      "recursive": true,
+      "lifetime_value": 6,
+      "lifetime_unit": "MONTH",
+      "naming_schema": "auto-%Y%m-monthly",
+      "schedule": {
+        "minute": "0",
+        "hour": "3",
+        "dom": "1",
+        "month": "*",
+        "dow": "*"
+      },
+      "enabled": true
+    }
+  ],
+  "scrub_tasks": [
+    {
+      "name": "Monthly ZFS Scrub",
+      "pool": "tank",
+      "threshold": 35,
+      "description": "Monthly integrity check for data corruption",
+      "schedule": {
+        "minute": "0",
+        "hour": "0",
+        "dom": "1",
+        "month": "*",
+        "dow": "*"
+      },
+      "enabled": true
+    }
+  ]
+}

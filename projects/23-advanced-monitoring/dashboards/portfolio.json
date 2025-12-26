@@ -1,0 +1,14 @@
+{
+  "title": "Portfolio SLO Overview",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Availability",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"portfolio\",status=~\"2..\"}[5m])) / sum(rate(http_requests_total{job=\"portfolio\"}[5m]))"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+default:
+  user: "root@pam"
+  password: "${PROXMOX_PASSWORD}"
+  verify_ssl: false
+  node: "proxmox-01"
+
+instances:
+  - url: "https://192.168.40.10:8006"
+  - url: "https://192.168.40.11:8006"
+  - url: "https://192.168.40.12:8006"

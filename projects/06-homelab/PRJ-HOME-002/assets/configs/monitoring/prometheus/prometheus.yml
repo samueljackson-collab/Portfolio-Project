@@ -1,0 +1,238 @@
+# Prometheus Configuration - Complete Production Setup
+# =====================================================
+# Version: Prometheus 2.48
+# Purpose: Central metrics collection and alerting for homelab infrastructure
+# Last Updated: November 6, 2025
+#
+# Configuration Philosophy:
+# ------------------------
+# This Prometheus configuration is designed for a homelab environment with:
+# - 10-15 monitored targets (VMs, containers, physical hosts)
+# - 15-second scrape intervals (balance between granularity and storage)
+# - 15-day retention (sufficient for weekly trending, not excessive storage)
+# - Multi-label organization (environment, service, team, criticality)
+# - Defense-in-depth monitoring (infrastructure + application + business metrics)
+#
+# Key Design Decisions:
+# ---------------------
+# 1. Scrape Interval: 15 seconds
+#    - Short enough for real-time alerting (detect issues within 30-60 seconds)
+#    - Long enough to avoid overwhelming targets (1,000 samples/target/day = manageable)
+#    - Industry standard for non-high-frequency monitoring
+#
+# 2. Evaluation Interval: 15 seconds
+#    - Matches scrape interval for consistent alert evaluation
+#    - Allows rules to evaluate on fresh data immediately
+#    - Prevents alert flapping from stale data
+#
+# 3. External Labels:
+#    - environment=homelab: Distinguishes this Prometheus instance from others
+#    - cluster=primary: Allows future expansion to multi-cluster setup
+#    - Used by Alertmanager for routing and by federation for aggregation
+#
+# 4. Scrape Timeout: 10 seconds (default)
+#    - Gives targets ample time to respond (10s is very generous)
+#    - Prevents false "target down" alerts from slow responses
+#    - Can be overridden per job if needed
+#
+# =====================================================
+
+# =====================================================
+# GLOBAL CONFIGURATION
+# =====================================================
+# Prometheus Configuration - Production Homelab Setup
+# ===================================================
+# Last Updated: November 6, 2025
+# Version: 2.48
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+  
+  external_labels:
+    environment: 'homelab'
+    cluster: 'primary'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - '192.168.40.30:9093'
+      timeout: 10s
+      api_version: v2
+
+# =====================================================
+# RULE FILES
+# =====================================================
+rule_files:
+  - 'alerts/*.yml'
+  - 'alerts/infrastructure/*.yml'
+  - 'alerts/application/*.yml'
+  - 'recording_rules/*.yml'
+
+# =====================================================
+# SCRAPE CONFIGURATIONS
+# =====================================================
+scrape_configs:
+
+  # =====================================================
+  # JOB: Prometheus Self-Monitoring
+  # =====================================================
+  - job_name: 'prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+        labels:
+          service: 'prometheus'
+          tier: 'monitoring'
+          criticality: 'high'
+          team: 'platform'
+    metrics_path: '/metrics'
+    scheme: http
+
+  # =====================================================
+  # JOB: Node Exporter (System Metrics)
+  # =====================================================
+  - job_name: 'node_exporter'
+    scrape_interval: 15s
+    static_configs:
+      # Wiki.js VM
+      - targets:
+          - '192.168.40.20:9100'
+        labels:
+          instance: 'wikijs-vm'
+          service: 'wiki.js'
+          tier: 'application'
+          criticality: 'medium'
+          team: 'platform'
+          os: 'ubuntu-22.04'
+          vlan: 'lab'
+
+      # Home Assistant VM
+      - targets:
+          - '192.168.40.21:9100'
+        labels:
+          instance: 'homeassistant-vm'
+          service: 'home-assistant'
+          tier: 'application'
+          criticality: 'high'
+          team: 'platform'
+          os: 'haos-11.1'
+          vlan: 'iot'
+
+      # Immich VM
+      - targets:
+          - '192.168.40.22:9100'
+        labels:
+          instance: 'immich-vm'
+          service: 'immich'
+          tier: 'application'
+          criticality: 'medium'
+      
+      - targets: ['192.168.40.23:9100']
+        labels:
+          instance: 'postgres-vm'
+          service: 'postgresql'
+          tier: 'database'
+          criticality: 'critical'
+      
+      - targets: ['192.168.40.25:9100']
+        labels:
+          instance: 'nginx-vm'
+          service: 'nginx-proxy-manager'
+          tier: 'infrastructure'
+          criticality: 'critical'
+
+  # Proxmox Exporter - Hypervisor metrics
+  - job_name: 'proxmox_exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - '192.168.40.10:9221'
+          - '192.168.40.11:9221'
+          - '192.168.40.12:9221'
+        labels:
+          service: 'proxmox'
+          tier: 'infrastructure'
+          criticality: 'high'
+
+  # TrueNAS Exporter - Storage metrics
+  - job_name: 'truenas_exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - '192.168.40.20:9108'
+        labels:
+          service: 'truenas'
+          tier: 'storage'
+          criticality: 'high'
+
+  # SNMP Exporter - Network devices
+  - job_name: 'snmp_exporter'
+    scrape_interval: 60s
+    static_configs:
+      - targets:
+          - '192.168.40.2' # UniFi switch
+          - '192.168.40.3' # UniFi gateway
+        labels:
+          service: 'network'
+          tier: 'infrastructure'
+    metrics_path: /snmp
+    params:
+      module: [unifi_switch]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: '192.168.40.30:9116'
+
+  # PostgreSQL Exporter
+  - job_name: 'postgres_exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['192.168.40.23:9187']
+        labels:
+          instance: 'postgres-vm'
+          service: 'postgresql'
+          tier: 'database'
+          criticality: 'critical'
+
+  # Blackbox Exporter - HTTP monitoring
+  - job_name: 'blackbox_http'
+    scrape_interval: 30s
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://wiki.homelab.local
+          - https://homeassistant.homelab.local
+          - https://immich.homelab.local
+          - https://grafana.homelab.local
+        labels:
+          check_type: 'http'
+          tier: 'application'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: '192.168.40.30:9115'
+
+  # cAdvisor - Container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets:
+          - '192.168.40.20:8080'
+          - '192.168.40.22:8080'
+          - '192.168.40.23:8080'
+          - '192.168.40.30:8080'
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'container_(cpu|memory|network|fs).*'
+        action: keep

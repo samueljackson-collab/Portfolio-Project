@@ -1,0 +1,322 @@
+# Ansible Inventory - Production Homelab Environment
+# ===================================================
+# This inventory defines all infrastructure hosts and their group memberships
+# for automated configuration management and orchestration
+#
+# Usage:
+#   ansible-playbook -i production.yml playbook.yml
+#   ansible -i production.yml all -m ping
+#   ansible-inventory -i production.yml --list
+#
+# Variables:
+#   - Group vars defined in group_vars/
+#   - Host vars defined in host_vars/
+#   - Vault-encrypted secrets in vault.yml
+
+---
+all:
+  vars:
+    # Global variables for all hosts
+    ansible_user: admin
+    ansible_become: true
+    ansible_become_method: sudo
+    ansible_python_interpreter: /usr/bin/python3
+
+    # Network settings
+    dns_servers:
+      - 192.168.10.2  # Pi-hole
+      - 192.168.1.1   # Backup DNS
+
+    ntp_servers:
+      - 192.168.10.105  # Local NTP
+      - pool.ntp.org
+
+    # Monitoring endpoints
+    prometheus_server: 192.168.10.103
+    loki_server: 192.168.10.103
+    grafana_server: 192.168.10.103
+
+  children:
+    # ===========================================================================
+    # HYPERVISORS - Proxmox cluster nodes
+    # ===========================================================================
+    hypervisors:
+      hosts:
+        pve-node1.homelab.local:
+          ansible_host: 192.168.10.10
+          node_id: 1
+          cluster_ip: 192.168.10.10
+          storage_ip: 192.168.10.10
+
+        pve-node2.homelab.local:
+          ansible_host: 192.168.10.11
+          node_id: 2
+          cluster_ip: 192.168.10.11
+          storage_ip: 192.168.10.11
+
+        pve-node3.homelab.local:
+          ansible_host: 192.168.10.12
+          node_id: 3
+          cluster_ip: 192.168.10.12
+          storage_ip: 192.168.10.12
+
+      vars:
+        ansible_user: root
+        cluster_name: homelab-cluster
+        datacenter: homelab
+
+    # ===========================================================================
+    # STORAGE - NAS and backup servers
+    # ===========================================================================
+    storage:
+      hosts:
+        truenas.homelab.local:
+          ansible_host: 192.168.10.20
+          storage_role: primary
+          nfs_exports: true
+          smb_shares: true
+
+        pbs.homelab.local:
+          ansible_host: 192.168.10.21
+          storage_role: backup
+          datastore_path: /mnt/datastore
+
+      vars:
+        backup_schedule: "0 2 * * *"  # 2 AM daily
+
+    # ===========================================================================
+    # PRODUCTION VMs - Application and service VMs
+    # ===========================================================================
+    production_vms:
+      children:
+        web_services:
+          hosts:
+            wikijs.homelab.local:
+              ansible_host: 192.168.10.100
+              vm_id: 100
+              service_port: 3000
+
+            nginx-proxy.homelab.local:
+              ansible_host: 192.168.10.104
+              vm_id: 104
+              service_port: 80
+
+        home_automation:
+          hosts:
+            homeassistant.homelab.local:
+              ansible_host: 192.168.10.101
+              vm_id: 101
+              service_port: 8123
+
+        media_services:
+          hosts:
+            immich.homelab.local:
+              ansible_host: 192.168.10.102
+              vm_id: 102
+              service_port: 2283
+
+        monitoring:
+          hosts:
+            monitoring.homelab.local:
+              ansible_host: 192.168.10.103
+              vm_id: 103
+              services:
+                - prometheus
+                - grafana
+                - loki
+                - alertmanager
+
+      vars:
+        backup_enabled: true
+        monitoring_enabled: true
+        auto_updates: true
+
+    # ===========================================================================
+    # INFRASTRUCTURE SERVICES - Core network services
+    # ===========================================================================
+    infrastructure:
+      hosts:
+        pihole.homelab.local:
+          ansible_host: 192.168.10.2
+          vm_id: 102
+          service_type: dns
+
+        ntp.homelab.local:
+          ansible_host: 192.168.10.105
+          vm_id: 105
+          service_type: time
+
+        freeipa.homelab.local:
+          ansible_host: 192.168.10.106
+          vm_id: 106
+          service_type: identity
+
+      vars:
+        critical_services: true
+        high_availability: false
+
+    # ===========================================================================
+    # NETWORK GEAR - Switches, routers, firewalls
+    # ===========================================================================
+    network_devices:
+      hosts:
+        pfsense.homelab.local:
+          ansible_host: 192.168.1.1
+          device_type: firewall
+          ansible_connection: network_cli
+          ansible_network_os: pfsense
+
+        unifi-controller.homelab.local:
+          ansible_host: 192.168.1.10
+          device_type: controller
+          api_port: 8443
+
+        core-switch.homelab.local:
+          ansible_host: 192.168.1.2
+          device_type: switch
+          management_vlan: 1
+
+      vars:
+        ansible_user: admin
+        config_backup: true
+        vlan_config:
+          - { id: 1, name: "Management" }
+          - { id: 10, name: "Trusted" }
+          - { id: 20, name: "IoT" }
+          - { id: 30, name: "Guest" }
+
+    # ===========================================================================
+    # DATABASES - Database servers
+    # ===========================================================================
+    databases:
+      hosts:
+        postgresql.homelab.local:
+          ansible_host: 192.168.10.107
+          vm_id: 107
+          db_type: postgresql
+          db_version: "15"
+
+      vars:
+        backup_enabled: true
+        backup_retention: 30  # days
+        replication_enabled: false
+
+    # ===========================================================================
+    # DEVELOPMENT - Development and testing VMs
+    # ===========================================================================
+    development:
+      hosts:
+        dev-server.homelab.local:
+          ansible_host: 192.168.10.200
+          vm_id: 200
+          environment: dev
+
+      vars:
+        auto_updates: false  # Manual updates for dev
+        monitoring_enabled: true
+        backup_enabled: false
+
+    # ===========================================================================
+    # LOGICAL GROUPINGS - Group hosts by function
+    # ===========================================================================
+
+    # All Linux hosts
+    linux:
+      children:
+        - production_vms
+        - infrastructure
+        - databases
+        - development
+      vars:
+        os_family: linux
+
+    # Docker hosts
+    docker_hosts:
+      children:
+        - production_vms
+      vars:
+        docker_edition: ce
+        docker_compose_version: "2.23.0"
+
+    # Monitored hosts (all except network devices)
+    monitored:
+      children:
+        - hypervisors
+        - storage
+        - production_vms
+        - infrastructure
+        - databases
+      vars:
+        node_exporter_port: 9100
+        promtail_enabled: true
+
+# ===========================================================================
+# NOTES
+# ===========================================================================
+#
+# Inventory Structure:
+#   all/
+#   ├── hypervisors/          - Proxmox cluster nodes
+#   ├── storage/              - NAS and backup servers
+#   ├── production_vms/       - Production application VMs
+#   │   ├── web_services/     - Web applications
+#   │   ├── home_automation/  - Smart home services
+#   │   ├── media_services/   - Media management
+#   │   └── monitoring/       - Observability stack
+#   ├── infrastructure/       - Core network services
+#   ├── network_devices/      - Routers, switches, firewalls
+#   ├── databases/            - Database servers
+#   ├── development/          - Dev/test environments
+#   ├── linux/                - All Linux hosts (logical)
+#   ├── docker_hosts/         - Hosts running Docker (logical)
+#   └── monitored/            - Hosts with monitoring agents (logical)
+#
+# Variable Precedence (highest to lowest):
+#   1. --extra-vars (command line)
+#   2. host_vars/hostname.yml
+#   3. group_vars/groupname.yml
+#   4. Inventory host vars
+#   5. Inventory group vars
+#   6. Playbook group vars
+#   7. Role defaults
+#
+# Best Practices:
+#   - Use FQDN for hostnames
+#   - Group hosts by function and environment
+#   - Use group_vars for shared config
+#   - Use host_vars for host-specific config
+#   - Encrypt secrets with ansible-vault
+#   - Test inventory with: ansible-inventory --list
+#
+# Common Commands:
+#   # Ping all hosts
+#   ansible -i production.yml all -m ping
+#
+#   # List inventory
+#   ansible-inventory -i production.yml --list
+#
+#   # Graph inventory
+#   ansible-inventory -i production.yml --graph
+#
+#   # Run playbook
+#   ansible-playbook -i production.yml playbooks/site.yml
+#
+#   # Target specific group
+#   ansible-playbook -i production.yml playbooks/update.yml --limit production_vms
+#
+#   # Check mode (dry run)
+#   ansible-playbook -i production.yml playbooks/deploy.yml --check
+#
+# Vault Integration:
+#   # Encrypt sensitive file
+#   ansible-vault encrypt group_vars/all/vault.yml
+#
+#   # Run with vault password
+#   ansible-playbook -i production.yml playbook.yml --ask-vault-pass
+#
+# Dynamic Inventory:
+#   For cloud environments, consider dynamic inventory scripts:
+#   - AWS: aws_ec2
+#   - Azure: azure_rm
+#   - VMware: vmware_vm_inventory
+#   - Proxmox: proxmox (community plugin)

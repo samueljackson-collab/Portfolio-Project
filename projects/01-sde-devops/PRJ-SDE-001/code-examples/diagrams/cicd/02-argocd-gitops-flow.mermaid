@@ -1,0 +1,240 @@
+```mermaid
+graph TB
+    subgraph "Developer Workflow"
+        DEV[Developer] --> COMMIT[Commit Code Changes]
+        COMMIT --> PR[Create Pull Request]
+        PR --> REVIEW[Code Review]
+        REVIEW --> MERGE[Merge to main]
+    end
+
+    subgraph "CI Pipeline - GitHub Actions"
+        MERGE --> CI_BUILD[Build & Test]
+        CI_BUILD --> CI_IMAGE[Build Docker Image]
+        CI_IMAGE --> CI_PUSH[Push to GHCR]
+        CI_PUSH --> CI_UPDATE[Update GitOps Repo<br/>Update image tag]
+    end
+
+    subgraph "GitOps Repository"
+        CI_UPDATE --> GITOPS_REPO[(GitOps Repo<br/>portfolio-gitops)]
+        GITOPS_REPO --> K8S_BASE[k8s/base/<br/>Deployment<br/>Service<br/>Ingress<br/>HPA<br/>PDB]
+        GITOPS_REPO --> K8S_OVERLAY_DEV[k8s/overlays/dev/<br/>kustomization.yaml]
+        GITOPS_REPO --> K8S_OVERLAY_STAGING[k8s/overlays/staging/<br/>kustomization.yaml]
+        GITOPS_REPO --> K8S_OVERLAY_PROD[k8s/overlays/production/<br/>kustomization.yaml]
+    end
+
+    subgraph "ArgoCD"
+        subgraph "ArgoCD Server"
+            ARGO_API[ArgoCD API Server]
+            ARGO_REPO[Repository Server]
+            ARGO_CONTROLLER[Application Controller]
+        end
+
+        ARGO_CONTROLLER --> SYNC_CHECK{Sync Status?}
+        SYNC_CHECK -->|Out of Sync| DETECT[Detect Drift]
+        SYNC_CHECK -->|In Sync| HEALTHY[Healthy]
+
+        DETECT --> AUTO_SYNC{Auto-Sync<br/>Enabled?}
+        AUTO_SYNC -->|Yes| APPLY[Apply Changes]
+        AUTO_SYNC -->|No| MANUAL[Wait for Manual Sync]
+    end
+
+    subgraph "Kubernetes Cluster - Production"
+        APPLY --> K8S_APPLY[kubectl apply]
+        K8S_APPLY --> DEPLOYMENT[Update Deployment]
+        DEPLOYMENT --> ROLLING[Rolling Update<br/>maxSurge: 1<br/>maxUnavailable: 0]
+
+        ROLLING --> POD_NEW[New Pods<br/>Image: v1.2.3]
+        POD_NEW --> HEALTH_CHECK{Health Checks<br/>Pass?}
+
+        HEALTH_CHECK -->|Pass| POD_READY[Pods Ready]
+        HEALTH_CHECK -->|Fail| POD_RESTART[Restart Pod]
+
+        POD_READY --> TERMINATE_OLD[Terminate Old Pods]
+        POD_RESTART --> HEALTH_CHECK
+
+        TERMINATE_OLD --> SERVICE[Update Service<br/>Traffic to New Pods]
+        SERVICE --> DEPLOYED[Successfully Deployed]
+    end
+
+    subgraph "Self-Healing"
+        DEPLOYED --> DRIFT_DETECT[Drift Detection]
+        DRIFT_DETECT --> MANUAL_CHANGE{Manual<br/>Changes?}
+        MANUAL_CHANGE -->|Detected| REVERT[Auto-Revert to Git]
+        MANUAL_CHANGE -->|None| MAINTAIN[Maintain State]
+        REVERT --> DRIFT_DETECT
+    end
+
+    subgraph "Monitoring & Notifications"
+        DEPLOYED --> METRICS[Collect Metrics<br/>Prometheus]
+        METRICS --> ALERTS{Metrics<br/>Healthy?}
+
+        ALERTS -->|Yes| SLACK_SUCCESS[Slack: Deployment Success]
+        ALERTS -->|No| PAGERDUTY[PagerDuty: Alert]
+
+        ARGO_CONTROLLER --> SYNC_HOOK[Sync Hooks<br/>PreSync<br/>Sync<br/>PostSync<br/>SyncFail]
+
+        SYNC_HOOK --> NOTIF_SLACK[Slack Notifications]
+        SYNC_HOOK --> NOTIF_EMAIL[Email Notifications]
+    end
+
+    subgraph "Rollback Scenarios"
+        PAGERDUTY --> ROLLBACK_DECISION{Rollback<br/>Needed?}
+        ROLLBACK_DECISION -->|Yes| GIT_REVERT[Revert Git Commit]
+        GIT_REVERT --> ARGO_SYNC[ArgoCD Auto-Sync]
+        ARGO_SYNC --> PREVIOUS_VERSION[Deploy Previous Version]
+        ROLLBACK_DECISION -->|No| DEBUG[Debug & Fix]
+    end
+
+    K8S_OVERLAY_PROD --> ARGO_REPO
+    ARGO_REPO --> ARGO_CONTROLLER
+
+    style CI_IMAGE fill:#99ff99
+    style GITOPS_REPO fill:#ffff99
+    style ARGO_CONTROLLER fill:#ff99ff
+    style DEPLOYED fill:#99ccff
+    style REVERT fill:#ff9999
+    style SLACK_SUCCESS fill:#00ff00
+    style PAGERDUTY fill:#ff0000,color:#ffffff
+```
+
+## ArgoCD GitOps Workflow
+
+### GitOps Principles:
+1. **Git as Single Source of Truth**: All desired state in Git
+2. **Declarative Configuration**: Kubernetes manifests in GitOps repo
+3. **Automated Sync**: ArgoCD continuously monitors Git
+4. **Self-Healing**: Automatic drift correction
+
+### Application Sync Flow:
+
+#### 1. Code Change → GitOps Update
+- Developer merges PR
+- CI pipeline builds and tests
+- New Docker image pushed to registry
+- GitOps repo updated with new image tag
+
+#### 2. ArgoCD Detection
+- **Polling Interval**: Every 3 minutes (default)
+- **Webhook**: Instant notification (if configured)
+- **Comparison**: Desired state (Git) vs Actual state (K8s)
+
+#### 3. Sync Strategies:
+
+**Automated Sync:**
+```yaml
+syncPolicy:
+  automated:
+    prune: true        # Delete resources not in Git
+    selfHeal: true     # Revert manual changes
+    allowEmpty: false  # Don't sync empty applications
+```
+
+**Manual Sync:**
+- Requires explicit approval
+- Useful for production deployments
+- Review changes before applying
+
+#### 4. Sync Phases:
+
+**PreSync Hooks:**
+- Database migrations
+- Health checks
+- Backup creation
+
+**Sync:**
+- Apply Kubernetes manifests
+- Rolling update execution
+- Health check validation
+
+**PostSync Hooks:**
+- Smoke tests
+- Cache warming
+- Metric initialization
+
+**SyncFail Hooks:**
+- Rollback execution
+- Alert notifications
+- Incident creation
+
+### Self-Healing Process:
+
+#### Drift Detection:
+1. ArgoCD detects manual kubectl changes
+2. Compares with Git repository
+3. Identifies drift
+
+#### Auto-Correction:
+- **Enabled**: Reverts to Git state (recommended)
+- **Disabled**: Alerts team of drift
+
+#### Example Scenarios:
+- Manual scaling (kubectl scale)
+- ConfigMap edits
+- Service port changes
+- Image tag modifications
+
+### Multi-Environment Strategy:
+
+#### Kustomize Overlays:
+```
+k8s/
+├── base/              # Common manifests
+├── overlays/
+    ├── dev/           # Development overrides
+    ├── staging/       # Staging overrides
+    └── production/    # Production overrides
+```
+
+#### Environment Progression:
+1. **Dev**: Automatic sync, fast feedback
+2. **Staging**: Automatic sync, pre-production testing
+3. **Production**: Manual approval (optional), canary deployments
+
+### Monitoring & Observability:
+
+#### Sync Status:
+- **Synced**: Git matches Kubernetes
+- **OutOfSync**: Changes detected
+- **Progressing**: Sync in progress
+- **Degraded**: Deployment issues
+
+#### Health Status:
+- **Healthy**: All resources running
+- **Progressing**: Deployment ongoing
+- **Degraded**: Some resources unhealthy
+- **Suspended**: Deployment paused
+
+#### Notifications:
+- **Slack**: Sync success/failure
+- **PagerDuty**: Critical failures
+- **Email**: Sync status reports
+- **Webhook**: Custom integrations
+
+### Rollback Strategies:
+
+#### Git-Based Rollback:
+```bash
+# Revert to previous commit
+git revert HEAD
+git push origin main
+
+# ArgoCD auto-syncs to previous version
+```
+
+#### ArgoCD Rollback:
+```bash
+# Rollback to previous revision
+argocd app rollback portfolio-production
+
+# Or via UI
+# Applications → portfolio-production → History → Rollback
+```
+
+### Benefits:
+
+✅ **Audit Trail**: All changes tracked in Git
+✅ **Disaster Recovery**: Entire cluster state in Git
+✅ **Consistency**: Same deployment process across environments
+✅ **Collaboration**: GitOps workflow familiar to developers
+✅ **Security**: No kubectl access needed
+✅ **Compliance**: Approvals via Git PRs

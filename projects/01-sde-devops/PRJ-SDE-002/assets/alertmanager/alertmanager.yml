@@ -1,11 +1,24 @@
+# Alertmanager Configuration for Homelab Observability Stack
+# Project: PRJ-SDE-002 - Observability & Monitoring Implementation
+# Location: projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/alertmanager.yml
+#
+# IMPORTANT: This is a TEMPLATE file. Before deploying:
+# 1. Copy this to alertmanager-production.yml
+# 2. Replace {{ VARIABLE }} placeholders with actual values from your .env file
+# 3. Use envsubst or similar tool: envsubst < alertmanager.yml > alertmanager-production.yml
+# 4. Deploy the production file, NOT this template
+# 5. Add alertmanager-production.yml to .gitignore
+
 global:
   resolve_timeout: 5m
   # Email configuration (example - replace with actual SMTP settings)
   smtp_smarthost: 'smtp.gmail.com:587'
   smtp_from: 'alerts@homelab.local'
-  smtp_auth_username: 'your-email@gmail.com'
-  smtp_auth_password: 'your-app-password'
+  smtp_auth_username: 'alerts@homelab.local'
+  smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD}'
   smtp_require_tls: true
+  slack_api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
 
 # Templates for custom notification formatting
 templates:
@@ -71,9 +84,23 @@ receivers:
         headers:
           subject: '[Homelab Alert] {{ .GroupLabels.alertname }}'
         html: |
-          <h2>Alert: {{ .GroupLabels.alertname }}</h2>
-          <p><strong>Summary:</strong> {{ .CommonAnnotations.summary }}</p>
-          <p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>
+          <h2>Critical Alert Firing</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Instance:</strong> {{ .GroupLabels.instance }}</p>
+          <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+          <p><strong>Time:</strong> {{ .Alerts.StartsAt }}</p>
+    slack_configs:
+      - channel: '#homelab-alerts'
+        title: '🚨 CRITICAL Alert'
+        text: |
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Instance:* {{ .GroupLabels.instance }}
+          *Description:* {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
+          *Runbook:* {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}
+        color: 'danger'
+    pagerduty_configs:
+      - service_key: '${ALERTMANAGER_PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .GroupLabels.alertname }} - {{ .GroupLabels.instance }}'
 
   # Critical alerts - multiple notification channels
   - name: 'critical-alerts'

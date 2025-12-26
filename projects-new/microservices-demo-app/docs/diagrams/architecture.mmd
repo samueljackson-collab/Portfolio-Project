@@ -1,0 +1,30 @@
+flowchart LR
+  client((Client)) --> nginx[Nginx]
+  nginx --> gateway[API Gateway]
+
+  gateway --> user[User Service]
+  gateway --> product[Product Service]
+  gateway --> order[Order Service]
+  gateway --> payment[Payment Service]
+  gateway --> notification[Notification Service]
+
+  order -->|gRPC| product
+  order -->|RabbitMQ| rabbit[(RabbitMQ)]
+  notification --> rabbit
+
+  user --> postgres[(Postgres)]
+  product --> postgres
+  order --> postgres
+  product --> elastic[(Elasticsearch)]
+  user --> redis[(Redis)]
+
+  gateway --> otel[OpenTelemetry Collector]
+  user --> otel
+  product --> otel
+  order --> otel
+  payment --> otel
+  notification --> otel
+  otel --> jaeger[Jaeger]
+  gateway --> prometheus[Prometheus]
+  logstash[Logstash] --> elastic
+  elastic --> kibana[Kibana]

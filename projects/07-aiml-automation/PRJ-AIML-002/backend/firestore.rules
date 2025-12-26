@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read and write their own profile
+      allow read, write: if isOwner(userId);
+
+      // User profile
+      match /profile/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // User devices
+      match /devices/{deviceId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Tab groups
+      match /tabGroups/{groupId} {
+        allow read, write: if isOwner(userId);
+
+        // Tabs within groups
+        match /tabs/{tabId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+
+      // Sync queue
+      match /syncQueue/{syncId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Settings
+      match /settings/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

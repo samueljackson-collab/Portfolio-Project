@@ -1,0 +1,11 @@
+{
+  "project": "p02-iam-hardening",
+  "exported_at": "2025-11-13T00:00:00Z",
+  "dashboards": [
+    {
+      "title": "Operational Overview",
+      "panels": 6,
+      "notes": "Baseline dashboard export placeholder for evidence tracking."
+    }
+  ]
+}

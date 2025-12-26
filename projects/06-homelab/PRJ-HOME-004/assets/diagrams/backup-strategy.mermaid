@@ -1,0 +1,21 @@
+graph TB
+    subgraph "3 Copies"
+        PRIMARY[Primary Data] --> LOCAL[Local Backups]
+        PRIMARY --> OFFSITE[Offsite Copy]
+    end
+
+    subgraph "2 Media Types"
+        LOCAL --> DISK[Disk - ZFS Snapshots]
+        LOCAL --> OBJECT[Object Storage]
+    end
+
+    subgraph "1 Offsite"
+        OFFSITE --> CLOUD[Cloud Storage]
+        OFFSITE --> PHYSICAL[Physical Media]
+    end
+
+    subgraph "Verification"
+        DISK --> VERIFY[Weekly Automated]
+        OBJECT --> VERIFY
+        CLOUD --> MANUAL[Monthly Manual]
+    end

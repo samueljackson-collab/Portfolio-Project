@@ -1,0 +1,124 @@
+# Disaster Recovery Flow
+
+This diagram is rendered using Mermaid syntax. GitHub will render it automatically when viewing this file.
+
+## Diagram
+
+```mermaid
+flowchart TD
+    Start([= Disaster Event Detected]) --> Assess{Assess Damage<br/>Severity?}
+
+    %% Minor failures
+    Assess -->|Minor<br/>Single Service| Minor[Minor Service Failure]
+    Minor --> CheckMonitoring[Check Monitoring<br/>Grafana + Prometheus]
+    CheckMonitoring --> RestartService[Restart Service<br/>docker-compose restart]
+    RestartService --> VerifyMinor{Service<br/>Recovered?}
+    VerifyMinor -->|Yes| DocMinor[Document Incident<br/>Wiki.js Runbook]
+    VerifyMinor -->|No| EscalateMajor[Escalate to<br/>VM Recovery]
+    DocMinor --> End([ Recovery Complete])
+
+    %% VM failure
+    Assess -->|Moderate<br/>Single VM| VM[VM Failure<br/>Service Down]
+    EscalateMajor --> VM
+    VM --> CheckBackup[Check Latest Backup<br/>Proxmox Backup Server]
+    CheckBackup --> BackupAge{Backup Age?}
+
+    BackupAge -->|< 24 hours| GoodBackup[Use Latest Backup<br/>RTO: 30 min]
+    BackupAge -->|> 24 hours| StaleBackup[Data Loss Risk<br/>Notify Admin]
+
+    GoodBackup --> RestoreVM[Restore VM from PBS<br/>qmrestore command]
+    StaleBackup --> RestoreVM
+
+    RestoreVM --> VMBoot[Boot Restored VM<br/>Verify Startup]
+    VMBoot --> TestService[Test Service<br/>Health Checks]
+    TestService --> VerifyVM{VM Functional?}
+
+    VerifyVM -->|Yes| CheckDataIntegrity[Verify Data Integrity<br/>Database queries]
+    VerifyVM -->|No| Troubleshoot[Troubleshoot<br/>Check Logs]
+    Troubleshoot --> ManualFix{Can Fix?}
+    ManualFix -->|Yes| TestService
+    ManualFix -->|No| EscalateHost[Escalate to<br/>Host Recovery]
+
+    CheckDataIntegrity --> DataOK{Data<br/>Intact?}
+    DataOK -->|Yes| DocVM[Document Recovery<br/>Update RTO/RPO Metrics]
+    DataOK -->|No| RestoreDB[Restore Database<br/>from PostgreSQL Dump]
+    RestoreDB --> DocVM
+    DocVM --> End
+
+    %% Host failure
+    Assess -->|Critical<br/>Proxmox Host| Host[Proxmox Host Failure<br/>All VMs Down]
+    EscalateHost --> Host
+    Host --> HostHealth{Host<br/>Recoverable?}
+
+    HostHealth -->|Yes<br/>Hardware OK| RebootHost[Reboot Proxmox Host<br/>IPMI/ILO]
+    HostHealth -->|No<br/>Hardware Failed| NewHost[Deploy New<br/>Proxmox Host]
+
+    RebootHost --> HostUp{Host<br/>Online?}
+    HostUp -->|Yes| StartVMs[Start All VMs<br/>Staggered Boot]
+    HostUp -->|No| NewHost
+
+    NewHost --> InstallProxmox[Install Proxmox VE<br/>from ISO]
+    InstallProxmox --> JoinCluster[Join Cluster<br/>or Create New]
+    JoinCluster --> ConfigureNetwork[Configure Network<br/>VLANs + Bridges]
+    ConfigureNetwork --> ConfigureStorage[Configure Storage<br/>NFS to TrueNAS]
+    ConfigureStorage --> ConnectPBS[Connect to PBS<br/>Backup Datastore]
+    ConnectPBS --> RestoreAllVMs[Restore All VMs<br/>from PBS Backups]
+
+    RestoreAllVMs --> StartVMs
+    StartVMs --> VerifyAll[Verify All Services<br/>Monitoring Dashboard]
+    VerifyAll --> AllOK{All<br/>Services Up?}
+
+    AllOK -->|Yes| DocHost[Document Incident<br/>Post-Mortem Analysis]
+    AllOK -->|No| DebugServices[Debug Individual<br/>Services]
+    DebugServices --> AllOK
+
+    DocHost --> UpdateDocs[Update Recovery<br/>Procedures]
+    UpdateDocs --> End
+
+    %% Total infrastructure loss
+    Assess -->|Catastrophic<br/>All Infrastructure| Catastrophic[Complete Data Center Loss<br/>Fire/Flood/Theft]
+    Catastrophic --> CheckOffsite[Access Offsite Backups<br/>Cloud Storage]
+    CheckOffsite --> OffsiteAvailable{Offsite<br/>Backup OK?}
+
+    OffsiteAvailable -->|Yes| AcquireHardware[Acquire New Hardware<br/>Emergency Purchase]
+    OffsiteAvailable -->|No| DataLoss[L Permanent Data Loss<br/>Restore from Git Sync]
+
+    AcquireHardware --> BuildInfra[Rebuild Infrastructure<br/>4-8 hours]
+    BuildInfra --> InstallProxmoxNew[Install Proxmox<br/>Configure Network]
+    InstallProxmoxNew --> InstallTrueNAS[Install TrueNAS<br/>Configure Storage]
+    InstallTrueNAS --> RestoreFromCloud[Restore from Cloud<br/>Download Backups]
+    RestoreFromCloud --> RestoreAllVMs
+
+    DataLoss --> RecoverGit[Clone Git Repos<br/>Wiki Content]
+    RecoverGit --> ManualRebuild[Manual Service<br/>Rebuild]
+    ManualRebuild --> DocCatastrophic[Document Lessons<br/>Improve DR Plan]
+    DocCatastrophic --> End
+
+    %% Styling
+    classDef minor fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef moderate fill:#ffecb3,stroke:#ff8f00,stroke-width:2px,color:#000
+    classDef critical fill:#ffcdd2,stroke:#d32f2f,stroke-width:3px,color:#000
+    classDef catastrophic fill:#f44336,stroke:#b71c1c,stroke-width:4px,color:#fff
+    classDef success fill:#c8e6c9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef decision fill:#e1bee7,stroke:#7b1fa2,stroke-width:2px,color:#000
+
+    class Minor,RestartService,CheckMonitoring minor
+    class VM,RestoreVM,VMBoot,TestService moderate
+    class Host,NewHost,RestoreAllVMs critical
+    class Catastrophic,DataLoss catastrophic
+    class End,DocMinor,DocVM,DocHost,UpdateDocs success
+    class Assess,VerifyMinor,VerifyVM,BackupAge,HostHealth,AllOK,OffsiteAvailable,DataOK,ManualFix decision
+```
+
+## Source File
+
+Original: `disaster-recovery-flow.mmd`
+
+## Viewing Options
+
+1. **GitHub Web Interface**: View this .md file on GitHub - the diagram will render automatically
+2. **VS Code**: Install the "Markdown Preview Mermaid Support" extension
+3. **Export to PNG**: Use <https://mermaid.live> to paste the code and export
+
+---
+*Auto-generated to enable GitHub native rendering*

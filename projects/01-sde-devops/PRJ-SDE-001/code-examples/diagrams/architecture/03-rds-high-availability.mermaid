@@ -1,0 +1,174 @@
+```mermaid
+graph TB
+    subgraph "AWS Region - us-east-1"
+        subgraph "Availability Zone A"
+            subgraph "Database Subnet A"
+                PRIMARY[RDS PostgreSQL Primary<br/>db.r6g.large<br/>PostgreSQL 15.4<br/>100 GB gp3 Storage]
+                EBS_A[EBS Volume<br/>Encrypted with KMS]
+            end
+        end
+
+        subgraph "Availability Zone B"
+            subgraph "Database Subnet B"
+                STANDBY[RDS PostgreSQL Standby<br/>db.r6g.large<br/>PostgreSQL 15.4<br/>100 GB gp3 Storage]
+                EBS_B[EBS Volume<br/>Encrypted with KMS]
+            end
+        end
+
+        subgraph "Availability Zone C"
+            subgraph "Database Subnet C"
+                REPLICA[Read Replica<br/>db.r6g.large<br/>PostgreSQL 15.4<br/>100 GB gp3 Storage]
+                EBS_C[EBS Volume<br/>Encrypted with KMS]
+            end
+        end
+
+        subgraph "Security & Encryption"
+            KMS[KMS Key<br/>Encryption at Rest]
+            SG[Security Group<br/>Port 5432<br/>Application Access Only]
+            PARAM[Parameter Group<br/>PostgreSQL 15 Tuning]
+            SUBNET[DB Subnet Group<br/>Multi-AZ]
+        end
+
+        subgraph "Backup & Recovery"
+            AUTO_BACKUP[Automated Backups<br/>30-day Retention<br/>Daily @ 3:00 AM]
+            MANUAL_SNAP[Manual Snapshots]
+            PITR[Point-in-Time Recovery<br/>5-minute RPO]
+            FINAL_SNAP[Final Snapshot<br/>on Delete]
+        end
+
+        subgraph "Monitoring & Alerting"
+            CW_LOGS[CloudWatch Logs<br/>PostgreSQL Logs<br/>Upgrade Logs]
+            PI[Performance Insights<br/>Query Performance<br/>Wait Events]
+
+            subgraph "CloudWatch Alarms"
+                ALARM_CPU[High CPU Alarm<br/>> 80% for 10 min]
+                ALARM_STORAGE[Low Storage Alarm<br/>< 10 GB free]
+                ALARM_CONN[High Connections<br/>> 80 connections]
+                ALARM_REPL[Replication Lag<br/>> 30 seconds]
+            end
+
+            SNS[SNS Topic<br/>Alert Notifications]
+        end
+
+        subgraph "Application Access"
+            APP_1[Application Pod 1<br/>Private Subnet A]
+            APP_2[Application Pod 2<br/>Private Subnet B]
+            APP_3[Application Pod 3<br/>Private Subnet C]
+        end
+
+        subgraph "Secrets Management"
+            SM[AWS Secrets Manager]
+            SECRET[Database Credentials<br/>- Username<br/>- Password<br/>- Host<br/>- Port<br/>- Database]
+        end
+    end
+
+    PRIMARY --> EBS_A
+    STANDBY --> EBS_B
+    REPLICA --> EBS_C
+
+    PRIMARY -.Synchronous Replication.-> STANDBY
+    PRIMARY -.Asynchronous Replication.-> REPLICA
+
+    PRIMARY --> KMS
+    STANDBY --> KMS
+    REPLICA --> KMS
+
+    PRIMARY --> AUTO_BACKUP
+    AUTO_BACKUP --> PITR
+    PRIMARY --> MANUAL_SNAP
+    PRIMARY --> FINAL_SNAP
+
+    PRIMARY --> CW_LOGS
+    PRIMARY --> PI
+
+    PRIMARY --> ALARM_CPU
+    PRIMARY --> ALARM_STORAGE
+    PRIMARY --> ALARM_CONN
+    PRIMARY --> ALARM_REPL
+
+    ALARM_CPU --> SNS
+    ALARM_STORAGE --> SNS
+    ALARM_CONN --> SNS
+    ALARM_REPL --> SNS
+
+    APP_1 -.Write/Read.-> PRIMARY
+    APP_2 -.Write/Read.-> PRIMARY
+    APP_3 -.Write/Read.-> PRIMARY
+
+    APP_1 -.Read Only.-> REPLICA
+    APP_2 -.Read Only.-> REPLICA
+    APP_3 -.Read Only.-> REPLICA
+
+    SG --> PRIMARY
+    SG --> STANDBY
+    SG --> REPLICA
+
+    PARAM --> PRIMARY
+    SUBNET --> PRIMARY
+    SUBNET --> STANDBY
+    SUBNET --> REPLICA
+
+    SM --> SECRET
+    APP_1 --> SM
+    APP_2 --> SM
+    APP_3 --> SM
+
+    style PRIMARY fill:#ff6b6b
+    style STANDBY fill:#ffd93d
+    style REPLICA fill:#6bcf7f
+    style KMS fill:#a8e6cf
+    style SM fill:#a8e6cf
+    style SNS fill:#ff9ff3
+    style PI fill:#95e1d3
+```
+
+## RDS High Availability Architecture
+
+### Multi-AZ Deployment:
+- **Primary Instance**: Active database in AZ-A
+- **Standby Instance**: Synchronous replica in AZ-B
+- **Read Replica**: Asynchronous replica in AZ-C
+
+### Automatic Failover:
+- **RTO**: ~60-120 seconds
+- **RPO**: Near-zero data loss (synchronous replication)
+- **DNS Failover**: Automatic endpoint update
+- **No Application Changes**: Same connection string
+
+### Data Durability:
+- **Synchronous Replication**: Primary → Standby
+- **Asynchronous Replication**: Primary → Read Replica
+- **Storage**: 3x replication within AZ (EBS)
+- **Encryption**: KMS encryption at rest
+
+### Backup Strategy:
+- **Automated Backups**: Daily at 3:00 AM UTC
+- **Retention**: 30 days (configurable 7-35)
+- **Point-in-Time Recovery**: 5-minute intervals
+- **Manual Snapshots**: On-demand backups
+- **Final Snapshot**: Protection against accidental deletion
+
+### Performance Optimization:
+- **Read Replica**: Offload read-heavy queries
+- **Performance Insights**: Query-level analysis
+- **Connection Pooling**: Application-level pooling
+- **Parameter Group**: Custom PostgreSQL tuning
+
+### Security:
+- **Encryption at Rest**: AWS KMS
+- **Encryption in Transit**: SSL/TLS
+- **Network Isolation**: Private subnets only
+- **Security Groups**: Port 5432, application access only
+- **Secrets Manager**: Credential rotation
+
+### Monitoring & Alerting:
+- **CPU Utilization**: Alert at >80%
+- **Storage Space**: Alert at <10 GB
+- **Connections**: Alert at >80 connections
+- **Replication Lag**: Alert at >30 seconds
+- **Notifications**: SNS → Email/Slack/PagerDuty
+
+### Cost Optimization:
+- **Development**: db.t3.micro, Single-AZ, 7-day backups
+- **Staging**: db.t3.small, Multi-AZ, 14-day backups
+- **Production**: db.r6g.large, Multi-AZ, 30-day backups, Read Replica

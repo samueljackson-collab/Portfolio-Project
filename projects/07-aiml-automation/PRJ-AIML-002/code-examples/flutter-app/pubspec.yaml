@@ -1,0 +1,102 @@
+name: tab_organizer
+description: AI-powered cross-platform tab organization app
+version: 1.0.0+1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  provider: ^6.1.1
+  riverpod: ^2.4.9
+
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.1
+
+  # Cloud Sync
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.13.6
+  firebase_auth: ^4.15.3
+
+  # AI/ML
+  tflite_flutter: ^0.10.4
+  tflite_flutter_helper: ^0.3.1
+
+  # HTTP & Networking
+  http: ^1.1.2
+  dio: ^5.4.0
+
+  # Platform Integration
+  desktop_window: ^0.4.0
+  window_manager: ^0.3.7
+
+  # Native Messaging
+  process_run: ^0.14.2
+
+  # UI Components
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.9
+  lottie: ^2.7.0
+
+  # Utils
+  intl: ^0.18.1
+  uuid: ^4.2.2
+  crypto: ^3.0.3
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.2.2
+
+  # Search & Filtering
+  fuzzywuzzy: ^1.1.6
+
+  # JSON
+  json_annotation: ^4.8.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+  # Code Generation
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  hive_generator: ^2.0.1
+
+  # Testing
+  mockito: ^5.4.4
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/models/
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    - family: TabOrganizer
+      fonts:
+        - asset: assets/fonts/TabOrganizer.ttf
+
+# Platform Configuration
+flutter:
+  platforms:
+    android:
+      minSdkVersion: 21
+      targetSdkVersion: 34
+    ios:
+      deploymentTarget: 12.0
+    macos:
+      deploymentTarget: 10.14
+    windows:
+      minimumVersion: 10.0.17763.0
+    linux:
+      minimumVersion: ''
