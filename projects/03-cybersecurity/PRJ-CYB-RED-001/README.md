@@ -173,11 +173,18 @@ class AtomicRunner:
         logging.info(f"Executing TTP: {self.technique_id}")
         
         # Example mapping for T1059.001 (PowerShell)
-        if self.technique_id == "T1059.001" and self.os_type == "windows":
-            cmd = ["powershell", "-Command", "Write-Host 'Simulating Malicious PowerShell'"]
-        elif self.technique_id == "T1059.004" and self.os_type == "linux":
-            cmd = ["bash", "-c", "echo 'Simulating Malicious Bash Script'"]
-        else:
+        # A dictionary-based approach is more scalable than if/elif chains.
+        commands = {
+            "windows": {
+                "T1059.001": ["powershell", "-Command", "Write-Host 'Simulating Malicious PowerShell'"],
+            },
+            "linux": {
+                "T1059.004": ["bash", "-c", "echo 'Simulating Malicious Bash Script'"],
+            }
+        }
+        cmd = commands.get(self.os_type, {}).get(self.technique_id)
+
+        if not cmd:
             logging.warning(f"No test defined for {self.technique_id} on {self.os_type}")
             return
 
