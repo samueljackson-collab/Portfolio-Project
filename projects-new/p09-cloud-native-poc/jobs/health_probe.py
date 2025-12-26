@@ -21,8 +21,23 @@ from datetime import datetime, timezone
 
 
 def probe(url: str, timeout: int, expected_status: int) -> dict:
-    """Perform a single HTTP probe and return a structured result."""
+    """Perform a single HTTP probe and return a structured result.
 
+    Args:
+        url: The HTTP endpoint to probe
+        timeout: Request timeout in seconds
+        expected_status: HTTP status code considered successful
+
+    Returns:
+        dict: A structured result with keys:
+            - timestamp (str): ISO 8601 timestamp
+            - url (str): The probed URL
+            - expected_status (int): The expected HTTP status
+            - status (int | None): Actual HTTP status or None if error
+            - latency_ms (float): Request latency in milliseconds
+            - ok (bool): True if status matches expected and no errors
+            - error (str | None): Error message if request failed
+    """
     start = time.monotonic()
     status: int | None = None
     error: str | None = None
