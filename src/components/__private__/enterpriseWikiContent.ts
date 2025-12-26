@@ -25,7 +25,7 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 1,
         title: 'Infrastructure Foundations',
-        duration: '5-7 days',
+        duration: DEFAULT_WEEK_DURATION,
         status: 'completed',
         topics: [
           'Terraform AWS Setup',
