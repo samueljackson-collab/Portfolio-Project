@@ -8,6 +8,70 @@ locals {
       Tier        = "application"
     }
   )
+  create_instance_profile = var.create_instance_profile && var.iam_instance_profile == null
+  log_group_name          = var.cloudwatch_log_group_name != null ? var.cloudwatch_log_group_name : "/${var.project_name}/${var.environment}/app"
+  instance_profile_name   = var.iam_instance_profile != null ? var.iam_instance_profile : local.create_instance_profile ? aws_iam_instance_profile.app[0].name : null
+  user_data_base64 = var.user_data_base64 != null ? var.user_data_base64 : base64encode(
+    templatefile("${path.module}/user-data.sh", {
+      log_group_name = local.log_group_name
+      app_log_path   = var.app_log_path
+    })
+  )
+}
+
+data "aws_iam_policy_document" "ec2_assume_role" {
+  statement {
+    effect = "Allow"
+
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "app" {
+  count              = local.create_instance_profile ? 1 : 0
+  name               = "${var.project_name}-${var.environment}-app-role"
+  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
+
+  tags = merge(local.tags, { Name = "${var.project_name}-${var.environment}-app-role" })
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent" {
+  count      = local.create_instance_profile ? 1 : 0
+  role       = aws_iam_role.app[0].name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_core" {
+  count      = local.create_instance_profile ? 1 : 0
+  role       = aws_iam_role.app[0].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_role_policy_attachment" "ecr_readonly" {
+  count      = local.create_instance_profile ? 1 : 0
+  role       = aws_iam_role.app[0].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+resource "aws_iam_instance_profile" "app" {
+  count = local.create_instance_profile ? 1 : 0
+  name  = "${var.project_name}-${var.environment}-app-profile"
+  role  = aws_iam_role.app[0].name
+
+  tags = merge(local.tags, { Name = "${var.project_name}-${var.environment}-app-profile" })
+}
+
+resource "aws_cloudwatch_log_group" "app" {
+  name              = local.log_group_name
+  retention_in_days = var.cloudwatch_log_retention_days
+  kms_key_id        = null
+
+  tags = merge(local.tags, { Name = local.log_group_name })
 }
 
 resource "aws_lb" "app" {
@@ -62,10 +126,10 @@ resource "aws_launch_template" "app" {
   update_default_version = true
 
   vpc_security_group_ids = [var.app_security_group_id]
-  user_data              = var.user_data_base64
+  user_data              = local.user_data_base64
 
   dynamic "iam_instance_profile" {
-    for_each = var.iam_instance_profile == null ? [] : [var.iam_instance_profile]
+    for_each = local.instance_profile_name == null ? [] : [local.instance_profile_name]
     content {
       name = iam_instance_profile.value
     }
