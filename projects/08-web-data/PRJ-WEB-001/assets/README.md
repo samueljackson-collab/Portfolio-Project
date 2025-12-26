@@ -1,113 +1,40 @@
-# Commercial E-commerce & Booking Systems
+# Commercial E-commerce & Booking Systems — Assets
 
-**Status:** 🔄 Recovery
+**Status:** 🔄 Recovery (Phase 1 artifacts published)
 
 ## Description
-
-Previously built and managed: resort booking site; high-SKU flooring store; tours site with complex variations. Code and process docs are being rebuilt for publication.
+Supporting materials for the recovery of legacy e-commerce and booking systems. All content is sanitized and client-agnostic.
 
 ## Links
+- [Project README](../README.md)
+- [Recovery Timeline](../RECOVERY_TIMELINE.md)
+- [Backup Catalog](./docs/recovery-backup-catalog.md)
+- [Schema & ERD](./docs/schema-and-erd.md)
+- [Runbooks](./docs/runbooks)
+- [Case Studies](./docs/case-studies)
+- [Lessons & Anonymization](./docs/lessons-and-anonymization.md)
+- [Sanitized Code](./code)
+- [Screenshots](./screenshots)
 
-- [Parent Documentation](../README.md)
-
-## Next Steps
-
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
-
-## Contact
-
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
-
----
-*Placeholder — Documentation pending*
-# PRJ-WEB-001 Assets
-
-This directory contains supporting materials for the Commercial E-commerce & Booking Systems project.
-
-**Note:** This project is in recovery mode. Assets will be added as they are recovered and sanitized.
-
-## What Goes Here
+## Directory Guide
 
 ### 💻 code/
-Code examples and scripts (all sanitized/anonymized):
+Sanitized examples only:
+- **sql/** — bulk import/upsert scripts (e.g., `catalog_price_update.sql`).
+- **php/** — plugin excerpts and booking helpers (e.g., `booking_availability_example.php`).
+- **scripts/** — auxiliary utilities (add future backup/check scripts here).
 
-#### code/sql/
-- Price update scripts
-- Bulk import/export scripts
-- Data validation queries
-- Reporting queries
-
-**Format:** .sql files with comments
-
-#### code/php/
-- WordPress plugin excerpts
-- Custom functionality samples
-- Booking system logic
-- Integration code
-
-**Format:** .php files with explanatory comments
-
-#### code/scripts/
-- Automation scripts
-- Deployment scripts
-- Maintenance tasks
-
-**Format:** .sh, .ps1, or other script formats
-
-**Critical:** Remove ALL client-specific code, names, and data
-
-### 📊 diagrams/
-Architecture and design diagrams:
-- System architecture (WP → DB → integrations)
-- Database ERD
-- Data flow diagrams (booking, catalog updates)
-- Deployment pipeline
-
-**Format:** PNG, SVG
-
-### 📝 docs/
-Written documentation:
-
-#### docs/runbooks/
-- Price update procedures
-- New product addition process
-- Deployment procedures
-- Troubleshooting guides
-
-#### docs/case-studies/
-- Problem → Solution narratives
-- Performance optimization stories
-- Before/After metrics
-- Lessons learned
-
-**Format:** Markdown (.md)
+### 📊 docs/
+- **recovery-backup-catalog.md** — backup inventory and verification steps.
+- **schema-and-erd.md** — ERD diagram and data workflows.
+- **runbooks/** — deployment and content operations runbooks.
+- **case-studies/** — narratives (e.g., catalog recovery).
+- **lessons-and-anonymization.md** — lessons learned and publication checklist.
 
 ### 📷 screenshots/
-Visual evidence (all anonymized):
-- Admin dashboard views
-- Product catalog examples
-- Booking interface
-- Management tools
-
-**Format:** PNG
-
-**Critical:** Blur/remove ALL client identifying information
-
----
-
-## Quick Upload Guide
-
-See [QUICK_START_GUIDE.md](../../../../QUICK_START_GUIDE.md) for instructions on how to upload your files to GitHub.
+Sanitized image index and guidelines for preparing blurred/redacted assets.
 
 ## Security & Privacy Reminder
-
-This project involves commercial work. Before uploading:
-- [ ] Remove ALL client names and company information
-- [ ] Anonymize ALL database names, table names, field names
-- [ ] Remove real URLs, domains, email addresses
-- [ ] Sanitize code to be generic/educational only
-- [ ] Get client permission if including any recognizable work
-- [ ] Blur/redact ALL identifying information in screenshots
-- [ ] Replace real data with fake/example data
-
-**When in doubt, don't include it.** Protect client confidentiality.
+- Remove ALL client identifiers before adding files.
+- Use synthetic data; never commit raw backups or credentials.
+- Run the anonymization checklist before pushing updates.

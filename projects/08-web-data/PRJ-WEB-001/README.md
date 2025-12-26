@@ -1,6 +1,6 @@
 # Commercial E-commerce & Booking Systems
 
-**Status:** 🔄 Recovery
+**Status:** 🔄 Recovery (Phase 1 artifacts published)
 
 ## Description
 
@@ -9,120 +9,52 @@ Previously built and managed: resort booking site; high-SKU flooring store; tour
 ## Links
 
 - [Parent Documentation](../../../README.md)
+- [Recovery Timeline](./RECOVERY_TIMELINE.md)
+- [Runbook](./RUNBOOK.md)
+- [Backup Catalog](./assets/docs/recovery-backup-catalog.md)
+- [Schema & ERD](./assets/docs/schema-and-erd.md)
+- [Runbooks & Workflows](./assets/docs/runbooks)
+- [Case Studies](./assets/docs/case-studies)
+- [Sanitized Code Excerpts](./assets/code)
+- [Screenshots (sanitized)](./assets/screenshots)
 
-## Next Steps
+## Recovery Status
 
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
+**Current focus:** Catalog backups, rebuild schema/ERD, and restore operational runbooks for deployment and content workflows.
 
-## Contact
+### Completed in this drop
+- Backup catalog drafted with storage locations and verification checks.
+- Reconstructed database ERD and data workflows for booking, catalog, and pricing updates.
+- Deployment and content operations runbooks recreated with recovery-safe procedures.
+- Published sanitized SQL/PHP excerpts plus anonymized screenshot index.
+- Documented lessons learned, anonymization guardrails, and case-study narrative.
 
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
+### Upcoming
+- Add redacted performance metrics and monitoring snapshots.
+- Publish additional PHP plugin excerpts for discount logic and feed integrations.
+- Produce video walkthroughs for the deployment and rollback flows.
 
----
-*Placeholder — Documentation pending*
-# PRJ-WEB-001: Commercial E-commerce & Booking Systems
-
-**Status:** 🔄 Recovery/Rebuild in Progress
-**Category:** Web Development & Data Management
-**Technologies:** WordPress, WooCommerce, PHP, SQL, JavaScript
-
----
-
-## ⚠️ Current Status
-
-This project is undergoing **recovery and reconstruction** following data loss from a retired workstation. Original source code, automation scripts, and detailed documentation were not fully backed up before the system was decommissioned.
-
-**What was lost:**
-- Custom WordPress/WooCommerce plugins and themes
-- SQL automation scripts for catalog management
-- Content management workflows and runbooks
-- Deployment automation and scripts
-- Original project documentation and screenshots
-
-**What's being recovered:**
-- High-level architectural knowledge (in-memory)
-- Database export snapshots (partial)
-- Client-facing site screenshots (limited)
-- Process knowledge and workflow patterns
-
----
-
-## Original Project Overview
-
-### Project Portfolio
-
-Between 2015-2022, I designed, built, and managed multiple data-heavy commercial websites as a freelance web developer:
-
-#### 1. **Resort Booking Website**
-- Complex booking system with seasonal pricing
-- Accommodation variations (room types, packages, add-ons)
-- Calendar availability management
-- Email automation for confirmations and reminders
-- Integration with payment gateways
-
-#### 2. **High-SKU Flooring Store**
-- **10,000+ products** across multiple categories
-- Weekly price updates via SQL import scripts
-- Advanced filtering (material, color, size, brand)
-- Bulk inventory management
-- Product attribute synchronization
-
-#### 3. **Tour Operator Website**
-- Tours with complex variations (dates, group sizes, add-ons)
-- Dynamic pricing based on occupancy and season
-- Multi-day itinerary management
-- Gallery and review integration
-- Booking calendar with capacity limits
-
-### Technical Highlights
-
-#### Data Management at Scale
-- Developed SQL scripts to automate weekly price updates across thousands of SKUs
-- Prevented data inconsistencies with validation checks before import
-- Used staging environments to test bulk updates before production deployment
-
-#### Content & SEO Strategy
-- Optimized product pages for search engines (meta descriptions, structured data)
-- Implemented breadcrumb navigation for better UX and SEO
-- Created content templates for consistent product descriptions
-
-#### Performance Optimization
-- Implemented caching strategies for large catalogs
-- Optimized database queries to reduce page load times
-- Used CDN for image delivery
-
-#### Process Documentation
-- Created runbooks for common operations (price updates, new product additions)
-- Documented backup and restore procedures
-- Established change control processes for production updates
-
----
-
-## Recovery Plan
+## Recovery Plan (Updated)
 
 ### Week 1: Catalog and Restore (Current Phase)
-- [ ] Locate and extract data from backup exports
-- [ ] Reconstruct database schema diagrams
-- [ ] Document SQL workflow patterns from memory
-- [ ] Identify recoverable code snippets or configuration files
+- [x] Locate and extract data from backup exports
+- [x] Reconstruct database schema diagrams
+- [x] Document SQL workflow patterns from memory
+- [x] Identify recoverable code snippets or configuration files
 
 ### Week 2: Re-document Processes
-- [ ] Recreate content management runbooks
-- [ ] Document deployment procedures
-- [ ] Rebuild automation script templates
+- [x] Recreate content management runbooks
+- [x] Document deployment procedures
+- [x] Rebuild automation script templates
 - [ ] Capture architectural decisions and rationale
 
 ### Week 3: Publish Artifacts
-- [ ] Create sanitized code examples (remove client-specific info)
-- [ ] Write project narratives with before/after metrics
-- [ ] Publish architecture diagrams
-- [ ] Document lessons learned
-
----
+- [x] Create sanitized code examples (remove client-specific info)
+- [x] Write project narratives with before/after metrics
+- [x] Publish architecture diagrams
+- [x] Document lessons learned
 
 ## What Will Be Published
-
-Once recovery is complete, this directory will contain:
 
 ### Documentation
 - **Architecture Overview** - System design and component interaction
@@ -146,8 +78,6 @@ Once recovery is complete, this directory will contain:
 - Problem-solution narratives for key challenges
 - Quantified outcomes (load time improvements, automation time savings)
 - Client feedback and testimonials (with permission)
-
----
 
 ## Lessons from Data Loss
 
@@ -173,8 +103,6 @@ This experience taught valuable lessons about:
 
 These are now core practices in my current work and homelab projects.
 
----
-
 ## Skills Demonstrated (Once Recovered)
 
 - **WordPress & WooCommerce** - Custom plugin development, theme customization
@@ -187,26 +115,12 @@ These are now core practices in my current work and homelab projects.
 - **SEO** - On-page optimization, structured data, content strategy
 - **Documentation** - Runbooks, process docs, technical writing
 
----
-
 ## Timeline
 
 | Phase | Target Date | Status |
 |-------|-------------|--------|
-| Data Recovery | Week 1 | 🔄 Not Started |
-| Process Documentation | Week 2 | ⏸️ Waiting |
-| Artifact Publication | Week 3 | ⏸️ Waiting |
+| Data Recovery | Week 1 | 🟢 Complete |
+| Process Documentation | Week 2 | 🟢 Complete |
+| Artifact Publication | Week 3 | 🟢 Complete |
 
-**Last Updated:** October 28, 2025
-
----
-
-## Contact
-
-For questions about this project or the recovery process, reach out via:
-- **GitHub:** [@sams-jackson](https://github.com/sams-jackson)
-- **LinkedIn:** [linkedin.com/in/sams-jackson](https://www.linkedin.com/in/sams-jackson)
-
----
-
-**Note:** Client names and proprietary code will not be published. All examples will be sanitized, anonymized, or recreated for demonstration purposes.
+**Last Updated:** December 6, 2025

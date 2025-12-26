@@ -21,6 +21,13 @@ Production operations runbook for Commercial E-commerce & Booking Systems - a po
 - Resort Booking Website
 - Tour Operator Website
 
+**Recovery Artifacts Published:**
+- [Backup Catalog](./assets/docs/recovery-backup-catalog.md) — sources, hashes, and verification workflow.
+- [Schema & ERD](./assets/docs/schema-and-erd.md) — reconstructed tables plus catalog/booking workflows.
+- [Deployment Runbook](./assets/docs/runbooks/deployment-runbook.md) — sanitized deployment/rollback steps.
+- [Content Operations Runbook](./assets/docs/runbooks/content-operations-runbook.md) — catalog, pricing, and booking updates.
+- [Case Study: Catalog Recovery](./assets/docs/case-studies/catalog-recovery.md) — outcomes and lessons.
+
 ---
 
 ## SLOs/SLIs
