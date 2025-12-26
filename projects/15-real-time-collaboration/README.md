@@ -1,5 +1,12 @@
 # Project 15: Real-time Collaborative Platform
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Operational transform (OT) collaboration server enabling low-latency document editing with CRDT backup for offline resilience.
 
@@ -55,4 +62,3 @@ Write comprehensive tests for [component], covering normal operations, edge case
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

@@ -1,5 +1,12 @@
 # Project 10: Blockchain Smart Contract Platform
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Implements a decentralized finance (DeFi) protocol with modular smart contracts, Hardhat tooling, and CI pipelines that enforce linting, testing, and static analysis.
 
@@ -62,4 +69,3 @@ Write a deployment script that deploys smart contracts to multiple networks (loc
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

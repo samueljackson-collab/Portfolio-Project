@@ -42,31 +42,31 @@ System-minded engineer specializing in building, securing, and operating infrast
 
 ## 📦 Portfolio Blueprints
 
-- [Project 1: AWS Infrastructure Automation](./projects/1-aws-infrastructure-automation) — Multi-tool infrastructure-as-code implementation covering Terraform, AWS CDK, and Pulumi with reusable deploy scripts.
-- [Project 2: Database Migration Platform](./projects/2-database-migration) — Change data capture pipelines and automation for zero-downtime migrations.
-- [Project 3: Kubernetes CI/CD Pipeline](./projects/3-kubernetes-cicd) — GitOps, progressive delivery, and environment promotion policies.
-- [Project 4: DevSecOps Pipeline](./projects/4-devsecops) — Security scanning, SBOM publishing, and policy-as-code enforcement.
-- [Project 5: Real-time Data Streaming](./projects/5-real-time-data-streaming) — Kafka, Flink, and schema registry patterns for resilient stream processing.
-- [Project 6: Machine Learning Pipeline](./projects/6-mlops-platform) — End-to-end MLOps workflows with experiment tracking and automated promotion.
-- [Project 7: Serverless Data Processing](./projects/7-serverless-data-processing) — Event-driven analytics built on AWS Lambda, Step Functions, and DynamoDB.
-- [Project 8: Advanced AI Chatbot](./projects/8-advanced-ai-chatbot) — Retrieval-augmented assistant with vector search, tool execution, and streaming responses.
-- [Project 9: Multi-Region Disaster Recovery](./projects/9-multi-region-disaster-recovery) — Automated failover, replication validation, and DR runbooks.
-- [Project 10: Blockchain Smart Contract Platform](./projects/10-blockchain-smart-contract-platform) — Hardhat-based DeFi stack with staking contracts and security tooling.
-- [Project 11: IoT Data Ingestion & Analytics](./projects/11-iot-data-analytics) — Edge telemetry simulation, ingestion, and real-time dashboards.
-- [Project 12: Quantum Computing Integration](./projects/12-quantum-computing) — Hybrid quantum/classical optimization workflows using Qiskit.
-- [Project 13: Advanced Cybersecurity Platform](./projects/13-advanced-cybersecurity) — SOAR engine with enrichment adapters and automated response playbooks.
-- [Project 14: Edge AI Inference Platform](./projects/14-edge-ai-inference) — ONNX Runtime service optimized for Jetson-class devices.
-- [Project 15: Real-time Collaborative Platform](./projects/15-real-time-collaboration) — Operational transform collaboration server with CRDT reconciliation.
-- [Project 16: Advanced Data Lake & Analytics](./projects/16-advanced-data-lake) — Medallion architecture transformations and Delta Lake patterns.
-- [Project 17: Multi-Cloud Service Mesh](./projects/17-multi-cloud-service-mesh) — Istio multi-cluster configuration with mTLS and network overlays.
-- [Project 18: GPU-Accelerated Computing](./projects/18-gpu-accelerated-computing) — CuPy-powered Monte Carlo simulations and GPU workload orchestration.
-- [Project 19: Advanced Kubernetes Operators](./projects/19-advanced-kubernetes-operators) — Kopf-based operator managing portfolio stack lifecycles.
-- [Project 20: Blockchain Oracle Service](./projects/20-blockchain-oracle-service) — Chainlink adapter and consumer contracts for on-chain metrics.
-- [Project 21: Quantum-Safe Cryptography](./projects/21-quantum-safe-cryptography) — Hybrid Kyber + ECDH key exchange prototype.
-- [Project 22: Autonomous DevOps Platform](./projects/22-autonomous-devops-platform) — Event-driven remediation workflows and runbooks-as-code.
-- [Project 23: Advanced Monitoring & Observability](./projects/23-advanced-monitoring) — Grafana dashboards, alerting rules, and distributed tracing config.
-- [Project 24: Portfolio Report Generator](./projects/24-report-generator) — Automated report templating with Jinja2.
-- [Project 25: Portfolio Website & Documentation Hub](./projects/25-portfolio-website) — VitePress-powered portal aggregating all documentation and guides.
+- 🟢 [Project 1: AWS Infrastructure Automation](./projects/1-aws-infrastructure-automation) — Multi-tool infrastructure-as-code implementation covering Terraform, AWS CDK, and Pulumi with reusable deploy scripts.
+- 🟢 [Project 2: Database Migration Platform](./projects/2-database-migration) — Change data capture pipelines and automation for zero-downtime migrations.
+- 🟢 [Project 3: Kubernetes CI/CD Pipeline](./projects/3-kubernetes-cicd) — GitOps, progressive delivery, and environment promotion policies.
+- 🟢 [Project 4: DevSecOps Pipeline](./projects/4-devsecops) — Security scanning, SBOM publishing, and policy-as-code enforcement.
+- 🟢 [Project 5: Real-time Data Streaming](./projects/5-real-time-data-streaming) — Kafka, Flink, and schema registry patterns for resilient stream processing.
+- 🟢 [Project 6: Machine Learning Pipeline](./projects/6-mlops-platform) — End-to-end MLOps workflows with experiment tracking and automated promotion.
+- 🟢 [Project 7: Serverless Data Processing](./projects/7-serverless-data-processing) — Event-driven analytics built on AWS Lambda, Step Functions, and DynamoDB.
+- 🟢 [Project 8: Advanced AI Chatbot](./projects/8-advanced-ai-chatbot) — Retrieval-augmented assistant with vector search, tool execution, and streaming responses.
+- 🟢 [Project 9: Multi-Region Disaster Recovery](./projects/9-multi-region-disaster-recovery) — Automated failover, replication validation, and DR runbooks.
+- 🟢 [Project 10: Blockchain Smart Contract Platform](./projects/10-blockchain-smart-contract-platform) — Hardhat-based DeFi stack with staking contracts and security tooling.
+- 🟢 [Project 11: IoT Data Ingestion & Analytics](./projects/11-iot-data-analytics) — Edge telemetry simulation, ingestion, and real-time dashboards.
+- 🟢 [Project 12: Quantum Computing Integration](./projects/12-quantum-computing) — Hybrid quantum/classical optimization workflows using Qiskit.
+- 🟢 [Project 13: Advanced Cybersecurity Platform](./projects/13-advanced-cybersecurity) — SOAR engine with enrichment adapters and automated response playbooks.
+- 🟢 [Project 14: Edge AI Inference Platform](./projects/14-edge-ai-inference) — ONNX Runtime service optimized for Jetson-class devices.
+- 🟢 [Project 15: Real-time Collaborative Platform](./projects/15-real-time-collaboration) — Operational transform collaboration server with CRDT reconciliation.
+- 🟢 [Project 16: Advanced Data Lake & Analytics](./projects/16-advanced-data-lake) — Medallion architecture transformations and Delta Lake patterns.
+- 🟢 [Project 17: Multi-Cloud Service Mesh](./projects/17-multi-cloud-service-mesh) — Istio multi-cluster configuration with mTLS and network overlays.
+- 🟢 [Project 18: GPU-Accelerated Computing](./projects/18-gpu-accelerated-computing) — CuPy-powered Monte Carlo simulations and GPU workload orchestration.
+- 🟢 [Project 19: Advanced Kubernetes Operators](./projects/19-advanced-kubernetes-operators) — Kopf-based operator managing portfolio stack lifecycles.
+- 🟢 [Project 20: Blockchain Oracle Service](./projects/20-blockchain-oracle-service) — Chainlink adapter and consumer contracts for on-chain metrics.
+- 🟢 [Project 21: Quantum-Safe Cryptography](./projects/21-quantum-safe-cryptography) — Hybrid Kyber + ECDH key exchange prototype.
+- 🟢 [Project 22: Autonomous DevOps Platform](./projects/22-autonomous-devops-platform) — Event-driven remediation workflows and runbooks-as-code.
+- 🟢 [Project 23: Advanced Monitoring & Observability](./projects/23-advanced-monitoring) — Grafana dashboards, alerting rules, and distributed tracing config.
+- 🟢 [Project 24: Portfolio Report Generator](./projects/24-report-generator) — Automated report templating with Jinja2.
+- 🟢 [Project 25: Portfolio Website & Documentation Hub](./projects/25-portfolio-website) — VitePress-powered portal aggregating all documentation and guides.
 
 ---
 ## 📊 Portfolio Status Board

@@ -1,5 +1,7 @@
 # Portfolio Gap Analysis
 
+> **Historical snapshot:** This report reflects gaps at the time it was written and is retained for reference only. For current portfolio status, see [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md).
+
 This document highlights outstanding operational and documentation gaps for the monitoring and deployment tooling introduced in the latest iteration.
 
 ## Observability Enhancements
