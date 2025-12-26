@@ -6,6 +6,19 @@ The authoritative, current status table for Projects 1–25 lives in
 [PORTFOLIO_STATUS_UPDATED.md](PORTFOLIO_STATUS_UPDATED.md). This report is a
 historical snapshot from 2025-11-10 and should not be used for current planning.
 
+## Reconciliation Addendum (2025-12-26)
+To prevent future drift, the status table has been centralized in
+[PORTFOLIO_STATUS_UPDATED.md](PORTFOLIO_STATUS_UPDATED.md) with timestamps and
+evidence links. Specific mismatches between this historical report and the
+current project directories were verified and reconciled in that table:
+- Projects **1–3**: tests + CI + infra/deploy assets verified.
+- Projects **6–7**: tests + CI + infra/deploy assets verified.
+- Project **9**: tests + CI + Terraform verified.
+- Projects **23–24**: tests + CI verified (Project 23 includes docker-compose).
+
+Use this report only for historical narrative and recommendations, not for
+current status planning.
+
 ## Executive Summary
 - **Total Projects Analyzed**: 25
 - **Complete/Production-Ready**: ~2
