@@ -15,4 +15,4 @@ Deepen your Git expertise with history rewriting, advanced branching strategies,
 
 ## 🔜 Up Next
 
-Wrap up with [Next Steps](../07-next-steps/00-index.md) to turn your skills into career momentum.
+Wrap up with [Next Steps](/next-steps) to turn your skills into career momentum.
