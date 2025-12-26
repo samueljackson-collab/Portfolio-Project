@@ -228,6 +228,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       timestamp: Date.now(),
     });
     sendResponse({ success: true });
+  } else if (message.type === 'open_desktop_app') {
+    if (isConnected) {
+      sendToNativeHost({
+        type: 'open_app',
+        source: 'extension',
+        timestamp: Date.now(),
+      });
+      sendResponse({ success: true });
+    } else {
+      chrome.tabs.create({ url: 'taborganizer://open' }, () => {
+        sendResponse({ success: true });
+      });
+    }
   }
 
   return true;
