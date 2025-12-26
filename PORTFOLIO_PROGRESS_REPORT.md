@@ -1,5 +1,7 @@
 # Portfolio Progress Report
 
+> **Historical snapshot:** This report reflects progress as of its session date and is retained for reference only. For current portfolio status, see [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md).
+
 **Session Date:** November 6, 2025
 **Branch:** `claude/review-cloud-sources-011CUrx5G2XwPk7LDbNeNViR`
 **Objective:** Review cloud sources and fill missing portfolio components

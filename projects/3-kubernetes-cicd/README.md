@@ -1,5 +1,12 @@
 # Project 3: Kubernetes CI/CD Pipeline
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 Declarative delivery pipeline with GitHub Actions, ArgoCD, and progressive delivery strategies.
 
 ## Contents

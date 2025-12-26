@@ -1,5 +1,12 @@
 # Project 16: Advanced Data Lake & Analytics
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Implements a medallion architecture on Databricks with Delta Lake, structured streaming, and dbt transformations.
 
@@ -55,4 +62,3 @@ Write a data validation framework that checks for schema compliance, null values
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

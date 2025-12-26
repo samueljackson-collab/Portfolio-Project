@@ -1,5 +1,12 @@
 # Project 4: DevSecOps Pipeline
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 Security-first CI pipeline with SBOM generation, container scanning, and policy checks.
 
 ## Contents
@@ -46,4 +53,3 @@ Write a script to audit AWS resources for CIS Benchmark compliance, checking sec
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-

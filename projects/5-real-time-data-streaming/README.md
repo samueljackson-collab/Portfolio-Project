@@ -1,5 +1,12 @@
 # Project 5: Real-time Data Streaming
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 High-throughput real-time event streaming and processing pipeline using Apache Kafka and Apache Flink with exactly-once semantics and comprehensive analytics.
 
 ## Overview

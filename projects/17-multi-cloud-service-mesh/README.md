@@ -1,5 +1,12 @@
 # Project 17: Multi-Cloud Service Mesh
 
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+
 ## Overview
 Istio service mesh spanning AWS and GKE clusters with Consul service discovery and mTLS across regions.
 
@@ -49,4 +56,3 @@ Write a Kubernetes operator in Go that watches for a custom CRD and automaticall
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-
