@@ -12,6 +12,10 @@ variable "instance_type" { type = string default = "t3.micro" }
 variable "ssh_key_name" { type = string default = null }
 variable "iam_instance_profile" { type = string default = null }
 variable "user_data_base64" { type = string default = null }
+variable "create_instance_profile" { type = bool default = true }
+variable "cloudwatch_log_group_name" { type = string default = null }
+variable "cloudwatch_log_retention_days" { type = number default = 30 }
+variable "app_log_path" { type = string default = "/var/log/app/app.log" }
 variable "root_volume_size" { type = number default = 30 }
 variable "root_volume_type" { type = string default = "gp3" }
 variable "root_volume_device" { type = string default = "/dev/xvda" }
