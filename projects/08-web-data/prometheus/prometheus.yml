@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 08-web-data
+    environment: production
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - alertmanager:9093
+rule_files:
+- rules.yml
+scrape_configs:
+- job_name: 08-web-data
+  static_configs:
+  - targets:
+    - app:8080
+  metrics_path: /metrics

@@ -16,7 +16,8 @@ import {
   HomeAssistant,
   EnterprisePortfolio,
   PhotosPage,
-  OrchestrationConsole
+  OrchestrationConsole,
+  SecuritySimulators
 } from './pages'
 
 const App: React.FC = () => {
@@ -55,6 +56,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <OrchestrationConsole />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/security-simulators"
+              element={
+                <ProtectedRoute>
+                  <SecuritySimulators />
                 </ProtectedRoute>
               }
             />

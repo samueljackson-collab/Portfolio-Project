@@ -4,12 +4,7 @@ Tests for Database Migration Orchestrator
 
 import pytest
 from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime
-
-# Import the module under test
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+from datetime import datetime, timezone
 
 from migration_orchestrator import (
     DatabaseMigrationOrchestrator,
@@ -58,7 +53,7 @@ class TestMigrationMetrics:
 
     def test_metrics_creation(self):
         """Test creating migration metrics"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         metrics = MigrationMetrics(
             replication_lag_seconds=2.5,
             rows_migrated=1000,

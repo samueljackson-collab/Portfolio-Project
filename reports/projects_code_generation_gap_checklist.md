@@ -461,4 +461,3 @@ This checklist flags whether each project README contains a 'Code Generation Pro
 - [x] Observability configs
 - [x] Tests (tests/)
 - [x] ADRs or runbooks
-

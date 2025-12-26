@@ -1,0 +1,265 @@
+name: Kubernetes CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'projects/3-kubernetes-cicd/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'projects/3-kubernetes-cicd/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/k8s-cicd-demo
+  PROJECT_DIR: projects/3-kubernetes-cicd
+
+jobs:
+  # Job 1: Lint and validate
+  lint:
+    name: Lint Code and Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          pip install flake8 black
+          pip install -r app/requirements.txt
+
+      - name: Run Black formatter check
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          black --check app/
+
+      - name: Run Flake8 linter
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          flake8 app/ --max-line-length=100
+
+      - name: Validate Kubernetes manifests
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          kubectl --dry-run=client apply -k k8s/base
+
+  # Job 2: Test application
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          pip install pytest pytest-cov
+          pip install -r app/requirements.txt
+
+      - name: Run tests
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ${{ env.PROJECT_DIR }}/coverage.xml
+          flags: k8s-cicd-demo
+
+  # Job 3: Build and push Docker image
+  build:
+    name: Build and Push Image
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.PROJECT_DIR }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # Job 4: Security scan
+  security-scan:
+    name: Security Scan
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Job 5: Deploy to dev (auto on develop branch)
+  deploy-dev:
+    name: Deploy to Development
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+      url: https://dev-k8s-demo.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update image tag in Kustomization
+        run: |
+          cd ${{ env.PROJECT_DIR }}/k8s/overlays/dev
+          kustomize edit set image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop-${{ github.sha }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          # This would typically use kubectl with kubeconfig
+          echo "kubectl apply -k ${{ env.PROJECT_DIR }}/k8s/overlays/dev"
+          # In real scenario: kubectl --kubeconfig $KUBECONFIG apply -k ...
+
+      - name: Wait for rollout
+        run: |
+          echo "kubectl rollout status deployment/k8s-cicd-demo -n development --timeout=5m"
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against dev environment"
+          # curl https://dev-k8s-demo.example.com/health
+
+  # Job 6: Deploy to staging (manual approval)
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging-k8s-demo.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Sync with ArgoCD
+        run: |
+          echo "argocd app sync k8s-cicd-demo-staging --revision ${{ github.sha }}"
+          # argocd app wait k8s-cicd-demo-staging --health
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging"
+
+  # Job 7: Deploy to production (ArgoCD, manual approval required)
+  deploy-production:
+    name: Deploy to Production
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://k8s-demo.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update production manifest
+        run: |
+          cd ${{ env.PROJECT_DIR }}/k8s/overlays/production
+          kustomize edit set image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}
+
+      - name: Commit updated manifests
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add ${{ env.PROJECT_DIR }}/k8s/overlays/production/kustomization.yaml
+          git commit -m "Update production image to ${{ github.sha }}"
+          git push
+
+      - name: Sync with ArgoCD
+        run: |
+          echo "argocd app sync k8s-cicd-demo --revision ${{ github.sha }}"
+          # argocd app wait k8s-cicd-demo --health --timeout 600
+
+      - name: Verify deployment
+        run: |
+          echo "kubectl get pods -n production -l app=k8s-cicd-demo"
+          echo "kubectl rollout status deployment/k8s-cicd-demo -n production"
+
+      - name: Run production smoke tests
+        run: |
+          echo "Running production smoke tests"
+          # curl https://k8s-demo.example.com/health
+          # Run comprehensive health checks
+
+  # Job 8: Rollback on failure
+  rollback:
+    name: Rollback Production
+    needs: [deploy-production]
+    if: failure() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rollback deployment
+        run: |
+          echo "Rolling back production deployment"
+          # kubectl rollout undo deployment/k8s-cicd-demo -n production
+          # argocd app rollback k8s-cicd-demo
+
+      - name: Notify team
+        run: |
+          echo "Production deployment failed and was rolled back"
+          # Send Slack/email notification

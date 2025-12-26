@@ -2,9 +2,50 @@
 
 This document contains detailed prompts for generating realistic screenshot mockups of homelab infrastructure dashboards and UIs. These can be used with AI image generators (Midjourney, DALL-E 3, Stable Diffusion) or as reference for manual mockup creation.
 
+## Interactive HTML Dashboards
+
+Three **interactive HTML mockups** are available in this directory for live demonstrations:
+
+### 1. Grafana Homelab Infrastructure Dashboard
+- **File:** `grafana-homelab-dashboard.html`
+- **Features:**
+  - Fully functional Grafana-style UI with dark theme
+  - Real-time clock and animated metrics
+  - Interactive charts using Chart.js (CPU, Memory, Network, Disk I/O)
+  - Service status table showing all homelab services
+  - Responsive dashboard panels with sparklines and progress bars
+- **Usage:** Open in any modern web browser for a live demo
+- **Screenshot:** Can be used to capture high-quality dashboard screenshots
+
+### 2. Nginx Proxy Manager Dashboard
+- **File:** `nginx-proxy-manager-dashboard.html`
+- **Features:**
+  - Modern light-theme UI with gradient header
+  - 8 configured proxy hosts with detailed statistics
+  - SSL certificate management panel
+  - Real-time metrics: requests, data transfer, latency
+  - Activity log showing recent changes
+  - Filter and search functionality
+- **Usage:** Open in any modern web browser for a live demo
+- **Screenshot:** Can be used to capture high-quality dashboard screenshots
+
+### 3. Proxmox VE Dashboard
+- **File:** `proxmox-ve-dashboard.html`
+- **Features:**
+  - Authentic Proxmox VE 8.x interface design
+  - Interactive tree navigation with collapsible nodes
+  - 6 running VMs with detailed resource metrics
+  - Node summary with CPU, Memory, Swap, and Filesystem usage
+  - SVG resource charts (CPU and Memory over time)
+  - VM table with VMID, status, and per-VM statistics
+  - Server information panel
+  - Tabbed interface (Summary, VMs, Containers, Storage, Network, Shell)
+- **Usage:** Open in any modern web browser for a live demo
+- **Screenshot:** Can be used to capture high-quality dashboard screenshots
+
 ---
 
-## =Ê 1. Grafana Dashboard - Homelab Overview
+## =ï¿½ 1. Grafana Dashboard - Homelab Overview
 
 ### AI Image Generation Prompt (Midjourney/DALL-E)
 
@@ -73,7 +114,7 @@ The time range selector in top right shows "Last 24 hours". Overall dark theme w
   - Peaks during backup hours (02:00-04:00)
 
 **Lower Panels (Row 3):**
-- **VM Status Table:** 5 rows × 4 columns
+- **VM Status Table:** 5 rows ï¿½ 4 columns
   - Columns: Name, IP, Status, RAM Usage
   - Status icons: Green checkmarks
   - Font: Roboto Mono, 12px
@@ -103,12 +144,12 @@ The main content area shows a table titled "Proxy Hosts" with 6 rows:
 
 Headers: Domain Name | Forward To | SSL | Status | Actions
 
-Row 1: wiki.homelab.local ’ http://192.168.40.20:3000 ’ Green SSL badge "Active" ’ Green "Online" badge ’ Edit/Delete buttons
-Row 2: homeassistant.homelab.local ’ http://192.168.40.21:8123 ’ Green SSL badge "Active" ’ Green "Online" badge ’ Edit/Delete buttons
-Row 3: photos.homelab.local ’ http://192.168.40.22:2283 ’ Green SSL badge "Active" ’ Green "Online" badge ’ Edit/Delete buttons
-Row 4: grafana.homelab.local ’ http://192.168.40.30:3000 ’ Green SSL badge "Active" ’ Green "Online" badge ’ Edit/Delete buttons
-Row 5: wiki.example.com ’ http://192.168.40.20:3000 ’ Green SSL badge "Let's Encrypt" ’ Green "Online" badge ’ Edit/Delete buttons
-Row 6: photos.example.com ’ http://192.168.40.22:2283 ’ Green SSL badge "Let's Encrypt" ’ Green "Online" badge ’ Edit/Delete buttons
+Row 1: wiki.homelab.local ï¿½ http://192.168.40.20:3000 ï¿½ Green SSL badge "Active" ï¿½ Green "Online" badge ï¿½ Edit/Delete buttons
+Row 2: homeassistant.homelab.local ï¿½ http://192.168.40.21:8123 ï¿½ Green SSL badge "Active" ï¿½ Green "Online" badge ï¿½ Edit/Delete buttons
+Row 3: photos.homelab.local ï¿½ http://192.168.40.22:2283 ï¿½ Green SSL badge "Active" ï¿½ Green "Online" badge ï¿½ Edit/Delete buttons
+Row 4: grafana.homelab.local ï¿½ http://192.168.40.30:3000 ï¿½ Green SSL badge "Active" ï¿½ Green "Online" badge ï¿½ Edit/Delete buttons
+Row 5: wiki.example.com ï¿½ http://192.168.40.20:3000 ï¿½ Green SSL badge "Let's Encrypt" ï¿½ Green "Online" badge ï¿½ Edit/Delete buttons
+Row 6: photos.example.com ï¿½ http://192.168.40.22:2283 ï¿½ Green SSL badge "Let's Encrypt" ï¿½ Green "Online" badge ï¿½ Edit/Delete buttons
 
 Left sidebar shows menu items: Dashboard (active), Proxy Hosts, SSL Certificates, Access Lists, Settings.
 
@@ -138,7 +179,7 @@ Clean, professional SaaS application design, light mode, blue (#0D6EFD) primary 
 
 ---
 
-## =¾ 3. TrueNAS Storage Dashboard
+## =ï¿½ 3. TrueNAS Storage Dashboard
 
 ### AI Image Generation Prompt
 
@@ -148,7 +189,7 @@ A TrueNAS storage management dashboard with dark blue professional theme. The in
 TOP SECTION: System overview cards
 - Card 1: "System Health:  Healthy" (green checkmark)
 - Card 2: "Uptime: 87 days 14 hours"
-- Card 3: "Temperature: 42°C / 108°F" (blue thermometer icon)
+- Card 3: "Temperature: 42ï¿½C / 108ï¿½F" (blue thermometer icon)
 - Card 4: "Services: 12 Running" (green indicator)
 
 MIDDLE SECTION: Two large pool status cards side by side
@@ -175,31 +216,31 @@ RIGHT CARD - "Pool: backup"
 
 BOTTOM SECTION: Active shares table
 Columns: Share Name | Type | Path | Status
-Row 1: media ’ SMB ’ /mnt/tank/media ’ Active (green)
-Row 2: backups ’ SMB ’ /mnt/tank/backups ’ Active (green)
-Row 3: immich ’ NFS ’ /mnt/tank/immich ’ Active (green)
-Row 4: pbs ’ NFS ’ /mnt/backup/pbs ’ Active (green)
+Row 1: media ï¿½ SMB ï¿½ /mnt/tank/media ï¿½ Active (green)
+Row 2: backups ï¿½ SMB ï¿½ /mnt/tank/backups ï¿½ Active (green)
+Row 3: immich ï¿½ NFS ï¿½ /mnt/tank/immich ï¿½ Active (green)
+Row 4: pbs ï¿½ NFS ï¿½ /mnt/backup/pbs ï¿½ Active (green)
 
 Professional dark blue theme (#1e3a5f background), modern data center aesthetic. --ar 16:9 --v 6
 ```
 
 ---
 
-## <à 4. Home Assistant Dashboard
+## <ï¿½ 4. Home Assistant Dashboard
 
 ### AI Image Generation Prompt
 
 ```
 A modern Home Assistant smart home dashboard with dark theme showing room controls and device status.
 
-TOP BAR: "Home" title, weather widget showing "72°F Sunny" with sun icon, time "2:45 PM"
+TOP BAR: "Home" title, weather widget showing "72ï¿½F Sunny" with sun icon, time "2:45 PM"
 
 MAIN GRID LAYOUT (3x3 cards):
 
 Row 1:
-- "Living Room" card: 3 lights on (yellow bulb icons), temperature 72°F, toggle switches
-- "Bedroom" card: 1 light on, temperature 68°F, climate control widget
-- "Office" card: 2 lights on, temperature 70°F, desk lamp control
+- "Living Room" card: 3 lights on (yellow bulb icons), temperature 72ï¿½F, toggle switches
+- "Bedroom" card: 1 light on, temperature 68ï¿½F, climate control widget
+- "Office" card: 2 lights on, temperature 70ï¿½F, desk lamp control
 
 Row 2:
 - "Energy Monitor" card: Real-time power usage graph showing 2.4 kW, line chart with green area
@@ -208,7 +249,7 @@ Row 2:
 
 Row 3:
 - "Automations" card: 12 active automations, last triggered "Sunset Lights" 1h ago
-- "Climate" card: Thermostat set to 70°F, current 72°F, mode "Cool", fan auto
+- "Climate" card: Thermostat set to 70ï¿½F, current 72ï¿½F, mode "Cool", fan auto
 - "Cameras" card: 2 cameras online, thumbnail previews, "Front Door" and "Backyard"
 
 BOTTOM: Quick actions bar with icons for:
@@ -222,7 +263,7 @@ Modern dark UI (#1e1e1e background), colorful accent cards (blue, green, orange,
 
 ---
 
-## =ø 5. Immich Photo Library View
+## =ï¿½ 5. Immich Photo Library View
 
 ### AI Image Generation Prompt
 
@@ -241,7 +282,7 @@ LEFT SIDEBAR:
 MAIN CONTENT AREA: Photo grid layout
 
 Date header: "November 6, 2025 - 24 photos"
-Grid of 24 photo thumbnails (4 columns × 6 rows) showing:
+Grid of 24 photo thumbnails (4 columns ï¿½ 6 rows) showing:
 - Landscape photos
 - Family photos
 - Pet photos
@@ -267,7 +308,7 @@ Clean, modern photo app design, dark theme (#1a1a1a background), white text, blu
 
 ---
 
-## =¥ 6. Proxmox VE Cluster View
+## =ï¿½ 6. Proxmox VE Cluster View
 
 ### AI Image Generation Prompt
 
@@ -301,11 +342,11 @@ RIGHT: "Memory Usage" - Bar showing 64GB / 128GB (50% used)
 Bottom section - Resource allocation table:
 Columns: VM ID | Name | Status | CPU | Memory | Disk | Node
 
-Row 1: 100 ’ wiki-js ’ Running (green) ’ 12% (4 cores) ’ 2.1GB / 8GB ’ 18GB / 50GB ’ pve-01
-Row 2: 101 ’ homeassistant ’ Running (green) ’ 8% (2 cores) ’ 1.5GB / 4GB ’ 12GB / 32GB ’ pve-01
-Row 3: 102 ’ immich ’ Running (green) ’ 45% (4 cores) ’ 8.2GB / 16GB ’ 42GB / 100GB ’ pve-01
-Row 4: 103 ’ postgresql ’ Running (green) ’ 18% (4 cores) ’ 4.8GB / 16GB ’ 78GB / 200GB ’ pve-01
-Row 5: 105 ’ nginx-proxy ’ Running (green) ’ 5% (2 cores) ’ 0.5GB / 2GB ’ 6GB / 20GB ’ pve-01
+Row 1: 100 ï¿½ wiki-js ï¿½ Running (green) ï¿½ 12% (4 cores) ï¿½ 2.1GB / 8GB ï¿½ 18GB / 50GB ï¿½ pve-01
+Row 2: 101 ï¿½ homeassistant ï¿½ Running (green) ï¿½ 8% (2 cores) ï¿½ 1.5GB / 4GB ï¿½ 12GB / 32GB ï¿½ pve-01
+Row 3: 102 ï¿½ immich ï¿½ Running (green) ï¿½ 45% (4 cores) ï¿½ 8.2GB / 16GB ï¿½ 42GB / 100GB ï¿½ pve-01
+Row 4: 103 ï¿½ postgresql ï¿½ Running (green) ï¿½ 18% (4 cores) ï¿½ 4.8GB / 16GB ï¿½ 78GB / 200GB ï¿½ pve-01
+Row 5: 105 ï¿½ nginx-proxy ï¿½ Running (green) ï¿½ 5% (2 cores) ï¿½ 0.5GB / 2GB ï¿½ 6GB / 20GB ï¿½ pve-01
 
 Professional datacenter management interface, dark theme, green/blue/orange accent colors. --ar 16:9 --v 6
 ```
@@ -358,7 +399,7 @@ Technical monitoring interface, dark theme (#1a1a1a background), Prometheus oran
 
 ---
 
-## =à Non-AI Mockup Tools
+## =ï¿½ Non-AI Mockup Tools
 
 If AI generation isn't producing realistic enough results, use these browser-based tools:
 
@@ -406,7 +447,7 @@ If you have access to a demo/test environment:
 - https://play.grafana.org/
 - Login: admin / admin
 - Create custom dashboard
-- Screenshot with browser DevTools (F12 ’ Ctrl+Shift+P ’ "Capture screenshot")
+- Screenshot with browser DevTools (F12 ï¿½ Ctrl+Shift+P ï¿½ "Capture screenshot")
 
 **TrueNAS Demo:**
 - Download TrueNAS CORE as VM
@@ -420,13 +461,13 @@ If you have access to a demo/test environment:
 
 ---
 
-## =ø Screenshot Best Practices
+## =ï¿½ Screenshot Best Practices
 
 ### Resolution & Quality
 ```
-- Minimum: 1920×1080 (Full HD)
-- Recommended: 2560×1440 (2K)
-- Portfolio: 3840×2160 (4K)
+- Minimum: 1920ï¿½1080 (Full HD)
+- Recommended: 2560ï¿½1440 (2K)
+- Portfolio: 3840ï¿½2160 (4K)
 - Format: PNG (lossless) not JPEG
 - DPI: 144 or 300 for print
 ```
@@ -434,13 +475,13 @@ If you have access to a demo/test environment:
 ### Browser Screenshot Tools
 ```bash
 # Chrome DevTools (F12)
-Ctrl+Shift+P ’ "Capture full size screenshot"
+Ctrl+Shift+P ï¿½ "Capture full size screenshot"
 
 # Firefox
-Shift+F2 ’ :screenshot --fullpage
+Shift+F2 ï¿½ :screenshot --fullpage
 
 # Mac Safari
-Cmd+Shift+4 ’ Drag to select area
+Cmd+Shift+4 ï¿½ Drag to select area
 ```
 
 ### Post-Processing (Optional)
@@ -460,7 +501,7 @@ Cmd+Shift+4 ’ Drag to select area
 
 ---
 
-## <¯ Portfolio Usage Guidelines
+## <ï¿½ Portfolio Usage Guidelines
 
 ### DO:
  Use consistent theme (all dark or all light)

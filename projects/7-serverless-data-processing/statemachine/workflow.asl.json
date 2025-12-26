@@ -1,0 +1,143 @@
+{
+  "Comment": "Serverless Data Processing Workflow",
+  "StartAt": "ValidateInput",
+  "States": {
+    "ValidateInput": {
+      "Type": "Task",
+      "Resource": "${ValidateFunction}",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandleValidationError"
+        }
+      ],
+      "Next": "ProcessData"
+    },
+    "HandleValidationError": {
+      "Type": "Task",
+      "Resource": "${ErrorHandlerFunction}",
+      "Next": "NotifyFailure"
+    },
+    "ProcessData": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "Transform",
+          "States": {
+            "Transform": {
+              "Type": "Task",
+              "Resource": "${TransformFunction}",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Enrich",
+          "States": {
+            "Enrich": {
+              "Type": "Task",
+              "Resource": "${EnrichFunction}",
+              "End": true
+            }
+          }
+        }
+      ],
+      "ResultPath": "$.processed",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "HandleProcessingError"
+        }
+      ],
+      "Next": "AggregateResults"
+    },
+    "HandleProcessingError": {
+      "Type": "Task",
+      "Resource": "${ErrorHandlerFunction}",
+      "Next": "NotifyFailure"
+    },
+    "AggregateResults": {
+      "Type": "Task",
+      "Resource": "${AggregateFunction}",
+      "Next": "CheckQuality"
+    },
+    "CheckQuality": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.quality_score",
+          "NumericGreaterThan": 0.8,
+          "Next": "StoreResults"
+        },
+        {
+          "Variable": "$.quality_score",
+          "NumericLessThan": 0.5,
+          "Next": "RejectData"
+        }
+      ],
+      "Default": "ManualReview"
+    },
+    "StoreResults": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Parameters": {
+        "TableName": "${MetricsTable}",
+        "Item": {
+          "metric_id": {
+            "S.$": "$.id"
+          },
+          "timestamp": {
+            "S.$": "$.timestamp"
+          },
+          "data": {
+            "S.$": "States.JsonToString($.processed)"
+          },
+          "quality_score": {
+            "N.$": "States.Format('{}', $.quality_score)"
+          }
+        }
+      },
+      "ResultPath": "$.store_result",
+      "Next": "NotifySuccess"
+    },
+    "RejectData": {
+      "Type": "Task",
+      "Resource": "${RejectFunction}",
+      "Next": "NotifyFailure"
+    },
+    "ManualReview": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+      "Parameters": {
+        "TopicArn": "${NotificationTopic}",
+        "Message": {
+          "TaskToken.$": "$$.Task.Token",
+          "Data.$": "$"
+        }
+      },
+      "Next": "StoreResults"
+    },
+    "NotifySuccess": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${NotificationTopic}",
+        "Subject": "Data Processing Successful",
+        "Message.$": "States.JsonToString($)"
+      },
+      "End": true
+    },
+    "NotifyFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${NotificationTopic}",
+        "Subject": "Data Processing Failed",
+        "Message.$": "States.JsonToString($.error)"
+      },
+      "End": true
+    }
+  }
+}
