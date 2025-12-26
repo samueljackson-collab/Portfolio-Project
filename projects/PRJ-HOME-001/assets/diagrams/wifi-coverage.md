@@ -1,4 +1,4 @@
-# Wi‑Fi Coverage and SSID Mapping
+# Wi-Fi Coverage and SSID Mapping
 
 ```mermaid
 graph LR
