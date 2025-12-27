@@ -1,0 +1,16 @@
+backlog:
+  - id: FEAT-001
+    title: Expand content tagging
+    status: planned
+    owner: sam
+    description: Add tag model and filter endpoints for portfolio items.
+  - id: FEAT-002
+    title: Protected dashboard
+    status: planned
+    owner: sam
+    description: Create authenticated dashboard showing content analytics.
+  - id: CHORE-001
+    title: Harden CI secrets
+    status: in-progress
+    owner: sam
+    description: Rotate GitHub Actions secrets and enable OIDC deployments.
