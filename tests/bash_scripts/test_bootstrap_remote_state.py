@@ -25,13 +25,32 @@ def script_path():
     return Path("scripts/bootstrap_remote_state.sh")
 
 
+@pytest.fixture(scope="session")
+def bash_executable():
+    """Return the path to the bash binary used for running the script."""
+    path = shutil.which("bash")
+    assert path, "bash not found on PATH"
+    return path
+
+
 @pytest.fixture
-def mock_env(monkeypatch):
-    """Provide a clean environment without AWS credentials."""
-    # Remove AWS credentials if present to test error handling
-    for key in ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]:
-        monkeypatch.delenv(key, raising=False)
-    return monkeypatch
+def run_script(bash_executable, script_path):
+    """Run the bootstrap script with DRY_RUN enabled by default."""
+
+    def _run(*args, env=None):
+        test_env = os.environ.copy()
+        test_env.setdefault("DRY_RUN", "1")
+        if env:
+            test_env.update(env)
+        return subprocess.run(  # noqa: S603
+            [bash_executable, str(script_path), *args],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env=test_env,
+        )
+
+    return _run
 
 
 class TestScriptExistence:
@@ -60,11 +79,10 @@ class TestScriptExistence:
 class TestScriptSyntax:
     """Test bash script syntax and structure."""
 
-    def test_bash_syntax_valid(self, script_path):
+    def test_bash_syntax_valid(self, script_path, bash_executable):
         """Verify bash syntax is valid using bash -n."""
-        bash_path = shutil.which("bash")
         result = subprocess.run(  # noqa: S603
-            [bash_path, "-n", str(script_path)],
+            [bash_executable, "-n", str(script_path)],
             capture_output=True,
             text=True
         )
@@ -81,65 +99,60 @@ class TestScriptSyntax:
 class TestArgumentParsing:
     """Test argument parsing and default values."""
 
-    def test_script_accepts_no_arguments(self, script_path):
+    def test_script_accepts_no_arguments(self, run_script):
         """Test script runs with default values when no args provided."""
-        # This will fail without AWS credentials, but we're testing arg parsing
-        bash_path = shutil.which("bash")
-        result = subprocess.run(  # noqa: S603
-            [bash_path, str(script_path)],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        result = run_script()
         # Script should attempt to run, showing bucket name
         assert "Bootstrapping remote state" in result.stdout or "Bucket:" in result.stdout
 
-    def test_script_accepts_custom_bucket_name(self, script_path):
+    def test_script_accepts_custom_bucket_name(self, run_script):
         """Test script accepts custom bucket name as first argument."""
-        bash_path = shutil.which("bash")
-        result = subprocess.run(  # noqa: S603
-            [bash_path, str(script_path), "test-bucket-custom"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        result = run_script("test-bucket-custom")
         assert "test-bucket-custom" in result.stdout
 
-    def test_script_accepts_custom_dynamodb_table(self, script_path):
+    def test_script_accepts_custom_dynamodb_table(self, run_script):
         """Test script accepts custom DynamoDB table name."""
-        bash_path = shutil.which("bash")
-        result = subprocess.run(  # noqa: S603
-            [bash_path, str(script_path), "test-bucket", "test-table"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        result = run_script("test-bucket", "test-table")
         assert "test-table" in result.stdout
 
-    def test_script_accepts_custom_region(self, script_path):
+    def test_script_accepts_custom_region(self, run_script):
         """Test script accepts custom AWS region."""
-        bash_path = shutil.which("bash")
-        result = subprocess.run(  # noqa: S603
-            [bash_path, str(script_path), "test-bucket", "test-table", "eu-west-1"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        result = run_script("test-bucket", "test-table", "eu-west-1")
         assert "eu-west-1" in result.stdout
 
-    def test_default_values_in_output(self, script_path):
+    def test_default_values_in_output(self, run_script):
         """Verify default values are shown in output."""
-        bash_path = shutil.which("bash")
-        result = subprocess.run(  # noqa: S603
-            [bash_path, str(script_path)],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        result = run_script()
         # Check for default bucket name pattern
         assert "twisted-monk-terraform-state" in result.stdout or "Bucket:" in result.stdout
         # Check for default DynamoDB table
         assert "twisted-monk-terraform-locks" in result.stdout or "DynamoDB table:" in result.stdout
+
+
+class TestDryRunBehavior:
+    """Validate the non-destructive dry-run mode."""
+
+    def test_dry_run_announced_and_commands_logged(self, run_script):
+        """The script should announce dry run mode and show AWS commands."""
+        result = run_script("demo-bucket", "demo-table", "eu-west-1")
+        assert "Dry run mode enabled" in result.stdout
+        assert "[DRY RUN] aws s3api create-bucket" in result.stdout
+        assert "demo-bucket" in result.stdout
+
+    def test_dry_run_refuses_destructive_commands(self, run_script, tmp_path):
+        """Regression test ensuring AWS CLI invocations are skipped in dry run."""
+        log_file = tmp_path / "aws.log"
+        aws_stub = tmp_path / "aws"
+        aws_stub.write_text(
+            f"#!/usr/bin/env bash\nset -e\necho \"$@\" >> \"{log_file}\"\n"
+        )
+        aws_stub.chmod(0o755)
+
+        env = {"PATH": f"{tmp_path}:{os.environ['PATH']}"}
+        result = run_script(env=env)
+        assert result.returncode == 0
+        assert "Dry run mode enabled" in result.stdout
+        assert not log_file.exists(), "aws CLI should not be invoked during dry run"
 
 
 class TestS3BucketLogic:
@@ -149,7 +162,10 @@ class TestS3BucketLogic:
         """Verify script contains S3 bucket creation commands."""
         with open(script_path, 'r') as f:
             content = f.read()
-        assert "aws s3api create-bucket" in content, "Missing S3 bucket creation"
+        assert (
+            "aws s3api create-bucket" in content
+            or "aws_cli s3api create-bucket" in content
+        ), "Missing S3 bucket creation"
         assert "head-bucket" in content, "Missing bucket existence check"
 
     def test_script_handles_us_east_1_region_special_case(self, script_path):
@@ -181,7 +197,10 @@ class TestDynamoDBLogic:
         """Verify script contains DynamoDB table creation."""
         with open(script_path, 'r') as f:
             content = f.read()
-        assert "aws dynamodb create-table" in content, "Missing DynamoDB table creation"
+        assert (
+            "aws dynamodb create-table" in content
+            or "aws_cli dynamodb create-table" in content
+        ), "Missing DynamoDB table creation"
         assert "describe-table" in content, "Missing table existence check"
 
     def test_dynamodb_table_has_lock_id_key(self, script_path):
@@ -259,7 +278,7 @@ class TestAWSCLIUsage:
         """Verify script uses AWS CLI commands."""
         with open(script_path, 'r') as f:
             content = f.read()
-        assert "aws s3api" in content or "aws dynamodb" in content
+        assert "aws_cli" in content or "aws s3api" in content or "aws dynamodb" in content
 
     def test_script_passes_region_to_aws_commands(self, script_path):
         """Verify script passes region parameter to AWS commands."""
