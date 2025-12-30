@@ -47,50 +47,27 @@ jobs:
         npm install -g markdownlint-cli
 
     - name: Validate Markdown
-      run: |
-        markdownlint '**/*.md' --ignore node_modules || true
-
-    - name: Check Python formatting
-      run: black --check . || true
-
-    - name: Lint Python code
-      run: ruff check . || true
-
-    - name: Run tests
-      run: |
-        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-          pytest
-        else
-          pytest || true
-        fi
       run: markdownlint '**/*.md' --ignore node_modules
+      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
 
     - name: Check Python formatting
       run: black --check .
+      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
 
     - name: Lint Python code
       run: ruff check .
+      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
 
     - name: Run unit tests with coverage
       run: |
-        if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" != "refs/heads/main" ]]; then
-          echo "Running unit tests in diagnostics mode for non-main push"
-          pytest \
-            --cov=projects/2-database-migration/src \
-            --cov-report=xml \
-            --cov-report=term \
-            -m "not integration" \
-            --maxfail=1 \
-            --durations=10 || true
-        else
-          pytest \
-            --cov=projects/2-database-migration/src \
-            --cov-report=xml \
-            --cov-report=term \
-            -m "not integration" \
-            --maxfail=1 \
-            --durations=10
-        fi
+        pytest \
+          --cov=projects/2-database-migration/src \
+          --cov-report=xml \
+          --cov-report=term \
+          -m "not integration" \
+          --maxfail=1 \
+          --durations=10
+      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
 
     - name: Run PostgreSQL integration tests
       env:
@@ -100,13 +77,8 @@ jobs:
         POSTGRES_PASSWORD: postgres
         POSTGRES_SOURCE_DB: migration_source
         POSTGRES_TARGET_DB: migration_target
-      run: |
-        if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" != "refs/heads/main" ]]; then
-          echo "Running integration tests in diagnostics mode for non-main push"
-          pytest tests/integration -m integration --maxfail=1 --durations=10 || true
-        else
-          pytest tests/integration -m integration --maxfail=1 --durations=10
-        fi
+      run: pytest tests/integration -m integration --maxfail=1 --durations=10
+      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
