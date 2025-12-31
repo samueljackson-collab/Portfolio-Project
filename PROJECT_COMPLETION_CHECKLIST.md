@@ -1,6 +1,6 @@
 # Project Completion Checklist
 
-**Roadmap note:** This checklist is a forward-looking roadmap for remaining and planned work. For current, authoritative project status, refer to `PORTFOLIO_STATUS_UPDATED.md`.
+**Roadmap note:** This checklist is a forward-looking roadmap for remaining and planned work. For current, authoritative project status, refer to [`PORTFOLIO_STATUS_UPDATED.md`](PORTFOLIO_STATUS_UPDATED.md).
 
 Use this checklist to track completion status for each project in your portfolio. Each project is broken into **Completed**, **Current**, and **Future** phases with detailed checkpoints that can be tracked on GitHub.
 
