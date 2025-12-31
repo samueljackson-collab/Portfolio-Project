@@ -302,7 +302,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
 **Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets) · [Screenshots/Logs](./projects/01-sde-devops/PRJ-SDE-002/assets/screenshots)
-**Evidence status:** Assets uploaded: Yes — [Evidence index](./projects/01-sde-devops/PRJ-SDE-002/assets/README.md)
+**Evidence:** Assets uploaded: Yes — [Evidence index](./projects/01-sde-devops/PRJ-SDE-002/assets/README.md)
 
 ---
 
