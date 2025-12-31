@@ -1,5 +1,9 @@
 # Custom Prometheus Exporter
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 A configurable Prometheus exporter written in Go that polls APIs, parses files, and executes SQL queries to expose custom metrics.
 
 ## Features

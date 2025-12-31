@@ -1,5 +1,9 @@
 # P16: Zero-Trust Architecture
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Policy-driven access controls with mutual TLS enforcement and service posture checks.
 
 ## What this pack includes

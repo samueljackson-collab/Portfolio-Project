@@ -1,5 +1,9 @@
 # PostgreSQL DBA Toolkit
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 A practical PostgreSQL Database Administration toolkit focused on backup/recovery, monitoring, maintenance, security, and migration workflows. The toolkit is designed for RDS-compatible deployments (PROMPT 3 dependency) while remaining usable on self-managed PostgreSQL.
 
 ## Quick Start

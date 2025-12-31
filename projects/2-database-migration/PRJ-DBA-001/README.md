@@ -1,5 +1,9 @@
 # PRJ-DBA-001: PostgreSQL Database Administration Toolkit
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟡 **IN PROGRESS**  
 **Category:** Database / Administration  
 **Priority:** P2 - Medium  

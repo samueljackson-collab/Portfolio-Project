@@ -1,5 +1,9 @@
 # P10 Multi-Region Architecture Pack
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 End-to-end documentation and runnable samples for active/passive AWS deployment demonstrations. Mirrors the P06 prompt-pack structure with architecture, testing, operations, and governance artifacts.
 
 ## Scope

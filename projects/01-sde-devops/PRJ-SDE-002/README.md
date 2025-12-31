@@ -1,5 +1,9 @@
 # PRJ-SDE-002: Observability & Backups Stack
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 Completed  
 **Category:** System Development Engineering / DevOps  
 **Technologies:** Prometheus, Grafana, Loki, Alertmanager, Proxmox Backup Server

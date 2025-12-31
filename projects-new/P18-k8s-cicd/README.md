@@ -1,5 +1,9 @@
 # P18: CI/CD + Kubernetes
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 GitOps-style deployment pipeline with container builds and manifest promotion.
 
 ## What this pack includes

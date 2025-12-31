@@ -1,4 +1,8 @@
 # AstraDup - AI Video De-duplication System
+
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
 **Intelligent Multi-Modal Video Similarity Detection**
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)

@@ -1,5 +1,9 @@
 # Incident Response Playbook: Ransomware Detection & Response
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** ✅ Production-Ready
 **Last Updated:** 2025-12-15
 **Classification:** Internal Use

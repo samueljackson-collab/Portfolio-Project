@@ -1,5 +1,9 @@
 # P20: Observability Engineering
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Prometheus/Grafana/Loki signals with synthetic checks and tracing stubs.
 
 ## What this pack includes

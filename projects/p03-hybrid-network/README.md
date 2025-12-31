@@ -1,5 +1,9 @@
 # P03 — Hybrid Network Connectivity Lab
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Design and test hybrid cloud networking between on-premises infrastructure and AWS using VPN tunnels, WireGuard, and IPsec. Demonstrates network architecture, routing protocols, latency optimization, and secure site-to-site connectivity for enterprise environments.
 

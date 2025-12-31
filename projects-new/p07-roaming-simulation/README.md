@@ -1,5 +1,9 @@
 # P07 International Roaming Simulation
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 This pack provides production-grade documentation and runnable assets for simulating cross-carrier roaming events. It includes a comprehensive roaming simulator with HLR/VLR lookups, network handoffs, call flow state transitions, and network latency simulation.
 
 ## Overview

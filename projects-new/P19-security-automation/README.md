@@ -1,5 +1,9 @@
 # P19: Cloud Security Automation
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 CIS scanning, drift detection, and remediation hooks.
 
 ## What this pack includes

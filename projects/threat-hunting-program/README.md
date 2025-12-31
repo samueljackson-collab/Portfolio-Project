@@ -1,5 +1,9 @@
 # Proactive Threat Hunting Program
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Capture hunt hypotheses, findings, and promoted detection rules with a simple FastAPI + React workflow.
 
 ## Highlights

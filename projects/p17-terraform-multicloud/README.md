@@ -1,5 +1,9 @@
 # P17 — Terraform Multi-Cloud Deployment
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Multi-cloud infrastructure deployment using Terraform with AWS and Azure providers, shared modules, and consistent provisioning patterns. Demonstrates IaC best practices, multi-cloud strategy, and cloud-agnostic design.
 

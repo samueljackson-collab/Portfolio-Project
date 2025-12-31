@@ -1,5 +1,9 @@
 # Security Operations Center (SOC) Portal
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 A lightweight SOC experience with alert intake, case management, playbooks, and deterministic alert generation for demos.
 
 ## Highlights

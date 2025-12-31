@@ -1,5 +1,9 @@
 # P09 — Cloud-Native POC Deployment
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Cloud-native proof-of-concept application using FastAPI, SQLite, and Docker containerization. Demonstrates modern microservice architecture, 12-factor app principles, container orchestration, and production-ready deployment practices.
 

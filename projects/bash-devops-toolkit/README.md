@@ -1,5 +1,9 @@
 # Bash DevOps Toolkit
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 A collection of Bash automation scripts for infrastructure, backups, deployments, and operational utilities.
 
 ## Features

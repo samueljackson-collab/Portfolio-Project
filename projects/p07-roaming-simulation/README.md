@@ -1,5 +1,9 @@
 # P07 — International Roaming Test Simulation
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Telecom roaming test simulation framework with mock HLR/HSS, location update state machine, and comprehensive test scenarios for international roaming. Demonstrates understanding of mobile network protocols, state management, and telecommunications testing practices.
 

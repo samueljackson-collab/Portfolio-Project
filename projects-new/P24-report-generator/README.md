@@ -1,5 +1,9 @@
 # P24: Report Generator Platform
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Composable reporting jobs with templated outputs and schedulable runs.
 
 ## What this pack includes

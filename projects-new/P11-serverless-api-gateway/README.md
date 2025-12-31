@@ -1,5 +1,9 @@
 # P11: API Gateway & Serverless
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Build a production-ready REST API using AWS Lambda, API Gateway, and DynamoDB. This project implements a complete serverless CRUD API with authentication, comprehensive testing, and infrastructure as code.
 
 ## What's Implemented

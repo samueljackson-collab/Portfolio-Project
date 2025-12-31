@@ -1,5 +1,9 @@
 # P19 — Cloud Security Automation
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Automated cloud security compliance framework with CIS benchmark checks, vulnerability scanning, security posture assessment, and automated remediation. Demonstrates security automation, compliance monitoring, and DevSecOps practices.
 

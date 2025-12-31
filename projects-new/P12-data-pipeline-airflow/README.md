@@ -1,5 +1,9 @@
 # P12: Data Pipeline (Airflow)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Containerized Airflow ETL with sample DAGs and data quality checks.
 
 ## What this pack includes

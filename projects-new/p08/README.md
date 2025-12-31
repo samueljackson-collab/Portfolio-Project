@@ -1,5 +1,9 @@
 # P08 — Serverless Data Processing Platform with AWS Lambda and Step Functions
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 **Tagline:** Event-driven ETL platform leveraging AWS Lambda, Step Functions, and S3 for cost-efficient batch and real-time data processing with automatic retries and error handling.
 
 ## Executive Summary: Serverless Advantages

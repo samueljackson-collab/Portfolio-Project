@@ -1,5 +1,9 @@
 # P06 — Web App Automated Testing (E2E)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 End-to-end testing framework using Playwright for web application testing, with parallel execution, visual regression testing, and CI/CD integration via GitHub Actions. Demonstrates modern QA automation practices, cross-browser testing, and comprehensive test reporting.
 

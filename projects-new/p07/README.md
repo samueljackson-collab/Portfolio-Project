@@ -1,5 +1,9 @@
 # P07 — Enterprise Machine Learning Pipeline with Kubeflow and MLflow
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 **Tagline:** Production-grade MLOps platform delivering retail demand forecasting with automated retraining, model governance, and multi-stage deployment.
 
 ## Executive Summary: MLOps Philosophy

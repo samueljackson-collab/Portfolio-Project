@@ -1,5 +1,9 @@
 # P12 Airflow DAG Demo
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Run a minimal Airflow-inspired ETL flow (extract → transform → load) to verify the pipeline steps complete in order.
 
 ## Run locally

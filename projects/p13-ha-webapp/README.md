@@ -1,5 +1,9 @@
 # P13 — High-Availability Web App
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 High-availability web application with NGINX load balancer, multiple app instances, database replication, and comprehensive health checks. Demonstrates HA architecture, load balancing, and zero-downtime deployment.
 

@@ -1,5 +1,9 @@
 # P10 — Data Lake & Analytics Platform with Apache Iceberg
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 **Tagline:** Modern lakehouse delivering ACID tables, time travel, and governed analytics with Apache Iceberg, Spark, AWS Glue, and Athena.
 
 ## Executive Summary

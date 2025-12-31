@@ -1,5 +1,9 @@
 # Document Packaging Pipeline
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🔵 Planned
 
 ## Description
