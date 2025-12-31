@@ -1,5 +1,9 @@
 # P14: Disaster Recovery
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Backup/restore workflows with automated failover drills.
 
 ## What this pack includes

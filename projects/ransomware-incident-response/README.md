@@ -1,5 +1,9 @@
 # Ransomware Incident Response & Recovery Simulator
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Model the full ransomware lifecycle with deterministic sequencing, JWT-protected mutations, and a React dashboard section for analysts.
 
 ## Highlights

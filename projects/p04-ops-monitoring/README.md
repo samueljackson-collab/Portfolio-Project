@@ -1,5 +1,9 @@
 # P04 — Operational Monitoring & Automation
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 
 Build a comprehensive monitoring and automation system using Prometheus, Grafana, Alertmanager, and

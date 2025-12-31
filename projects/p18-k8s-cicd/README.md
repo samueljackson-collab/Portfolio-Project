@@ -1,5 +1,9 @@
 # P18 — CI/CD Pipeline with Kubernetes
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Complete CI/CD pipeline with Kubernetes deployment using kind cluster, GitHub Actions, kubectl rollout strategies, and automated testing. Demonstrates DevOps automation, containerization, and cloud-native deployment practices.
 

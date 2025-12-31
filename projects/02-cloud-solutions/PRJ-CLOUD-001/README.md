@@ -1,5 +1,9 @@
 # Serverless Data API (PRJ-CLOUD-001)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 Planned
 
 ## Overview

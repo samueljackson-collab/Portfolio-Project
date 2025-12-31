@@ -1,5 +1,9 @@
 # P09 Cloud-Native POC Pack
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Artifacts for demonstrating a minimal FastAPI service with cloud-native patterns. Includes architecture docs, testing plans, operational guides, and runnable manifests mirroring the P06 prompt-pack layout.
 
 ## Scope

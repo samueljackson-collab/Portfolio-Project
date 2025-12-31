@@ -1,5 +1,9 @@
 # Homelab & Secure Network Build
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 Done
 
 ## Description

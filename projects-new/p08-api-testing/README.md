@@ -1,5 +1,9 @@
 # P08 Backend API Testing Pack
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Complete artifact bundle for API regression and contract testing. Designed to align with the P06 prompt-pack layout and ready for Postman/Newman CI, Kubernetes smoke tests, and on-call operations.
 
 ## Overview

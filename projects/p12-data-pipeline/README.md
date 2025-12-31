@@ -1,5 +1,9 @@
 # P12 — Data Pipeline (Airflow DAGs)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Apache Airflow data pipeline with DAGs for ETL workflows, task dependencies, and scheduling. Demonstrates workflow orchestration, data engineering, and production pipeline practices.
 

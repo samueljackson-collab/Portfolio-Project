@@ -1,5 +1,9 @@
 # P17: Terraform Multi-Cloud
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Modular Terraform targeting AWS/Azure with shared variables and CI validation.
 
 ## What this pack includes

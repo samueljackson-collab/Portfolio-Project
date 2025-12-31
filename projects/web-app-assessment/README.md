@@ -1,5 +1,9 @@
 # Web App Assessment
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 A simulated assessment platform with a FastAPI backend, React dashboard, infrastructure as code, and CI automation. The project demonstrates authenticated CRUD over application assets, a deterministic vulnerability scan, and a responsive UI for reviewing results.
 
 ## Features

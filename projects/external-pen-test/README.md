@@ -1,5 +1,9 @@
 # External Pen Test
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 A small penetration-testing portal that combines a FastAPI + PostgreSQL backend with a React/Vite analyst UI. The stack also includes container builds, Terraform blueprints for AWS, and CI automation.
 
 ## Quickstart

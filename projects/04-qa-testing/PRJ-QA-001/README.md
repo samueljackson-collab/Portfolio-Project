@@ -1,5 +1,9 @@
 # Web Application Login Test Plan
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 Complete | **Priority:** High | **Complexity:** Intermediate
 
 [![Testing](https://img.shields.io/badge/Testing-Comprehensive-4CAF50)](https://github.com/samueljackson-collab)

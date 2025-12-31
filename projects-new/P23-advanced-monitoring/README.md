@@ -1,5 +1,9 @@
 # P23: Advanced Monitoring
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 SLO-first monitoring stack with anomaly detection hooks.
 
 ## What this pack includes

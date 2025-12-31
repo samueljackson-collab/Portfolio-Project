@@ -1,5 +1,9 @@
 # P09 — Advanced AI Chatbot with Retrieval-Augmented Generation (RAG)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 **Tagline:** Enterprise knowledge assistant with FastAPI backend, vector database retrieval, and LLM generation for grounded, low-hallucination responses.
 
 ## Executive Summary

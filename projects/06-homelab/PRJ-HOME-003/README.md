@@ -1,5 +1,9 @@
 # Homelab Service Runbooks & Operations Guide
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 Complete | **Priority:** High | **Complexity:** Intermediate
 
 [![Homelab](https://img.shields.io/badge/Homelab-Production-4CAF50)](https://github.com/samueljackson-collab)

@@ -1,5 +1,9 @@
 # P15: Cloud Cost Optimization
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 CUR-backed analytics with tagging compliance and savings plan insights.
 
 ## What this pack includes

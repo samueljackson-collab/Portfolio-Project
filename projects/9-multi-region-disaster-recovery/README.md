@@ -1,5 +1,9 @@
 # Project 9: Multi-Region Disaster Recovery Automation
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## 📊 Portfolio Status Board
 
 🟢 Done · 🟠 In Progress · 🔵 Planned

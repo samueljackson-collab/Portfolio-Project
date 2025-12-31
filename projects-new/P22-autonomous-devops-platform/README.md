@@ -1,5 +1,9 @@
 # P22: Autonomous DevOps Platform
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Self-healing pipelines with policy gates and feedback loops.
 
 ## What this pack includes

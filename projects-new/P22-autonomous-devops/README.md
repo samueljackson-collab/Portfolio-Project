@@ -1,5 +1,9 @@
 # P22 Autonomous DevOps Demo
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Detects a mock incident and triggers an automated remediation to represent closed-loop operations.
 
 ## Run locally
