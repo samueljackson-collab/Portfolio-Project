@@ -1,5 +1,9 @@
 # PRJ-HOME-001: Home Network Modernization
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Artifacts for deploying a segmented UniFi-based home network with management, trusted, IoT, and guest zones.
 
 ## Assets

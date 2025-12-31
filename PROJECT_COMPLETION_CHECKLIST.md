@@ -1,5 +1,7 @@
 # Project Completion Checklist
 
+**Roadmap note:** This checklist is a forward-looking roadmap for remaining and planned work. For current, authoritative project status, refer to [`PORTFOLIO_STATUS_UPDATED.md`](PORTFOLIO_STATUS_UPDATED.md).
+
 Use this checklist to track completion status for each project in your portfolio. Each project is broken into **Completed**, **Current**, and **Future** phases with detailed checkpoints that can be tracked on GitHub.
 
 ---
@@ -134,17 +136,15 @@ Use this checklist to track completion status for each project in your portfolio
 
 ## Project 5: Real-time Data Streaming
 
-**Status:** 🔵 Planned
+**Status:** 🟢 Done
 
 ### Completed
 - [x] Project directory created
 - [x] Project README present
-
-### Current
-- [ ] Kafka/Flink cluster configuration
-- [ ] Schema registry and sample schemas
-- [ ] Producer/consumer demo services
-- [ ] Stream validation tests
+- [x] Kafka/Flink cluster configuration
+- [x] Schema registry and sample schemas
+- [x] Producer/consumer demo services
+- [x] Stream validation tests
 
 ### Future
 - [ ] Backpressure/retry handling documented
@@ -155,18 +155,16 @@ Use this checklist to track completion status for each project in your portfolio
 
 ## Project 6: MLOps Platform
 
-**Status:** 🟠 In Progress
+**Status:** 🟢 Done
 
 ### Completed
 - [x] Project directory created
 - [x] Project README present
-
-### Current
-- [ ] Training pipeline (data → model)
-- [ ] MLflow tracking + artifact store
-- [ ] Model registry + promotion rules
-- [ ] Docker images for train/serve
-- [ ] CI tests for data validation and model eval
+- [x] Training pipeline (data → model)
+- [x] MLflow tracking + artifact store
+- [x] Model registry + promotion rules
+- [x] Docker images for train/serve
+- [x] CI tests for data validation and model eval
 
 ### Future
 - [ ] Deployment manifests (K8s/ECS)
@@ -178,18 +176,16 @@ Use this checklist to track completion status for each project in your portfolio
 
 ## Project 7: Serverless Data Processing
 
-**Status:** 🟠 In Progress
+**Status:** 🟢 Done
 
 ### Completed
 - [x] Project directory created
 - [x] Project README present
-
-### Current
-- [ ] Lambda + Step Functions IaC
-- [ ] Event source definitions (S3/Kinesis)
-- [ ] DynamoDB or data store wired
-- [ ] Retry/backoff policies
-- [ ] Unit tests for handlers
+- [x] Lambda + Step Functions IaC
+- [x] Event source definitions (S3/Kinesis)
+- [x] DynamoDB or data store wired
+- [x] Retry/backoff policies
+- [x] Unit tests for handlers
 
 ### Future
 - [ ] DLQ and failure handling

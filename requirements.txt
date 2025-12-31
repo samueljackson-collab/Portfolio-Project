@@ -1,1 +1,1 @@
-<append pydantic==2.5.0 to end of requirements.txt; use base SHA as requested for safe update>
+pydantic==2.5.0

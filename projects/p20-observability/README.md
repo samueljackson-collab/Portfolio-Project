@@ -1,5 +1,9 @@
 # P20 — Observability Engineering (Full Stack)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Complete observability stack with Prometheus for metrics, Grafana for visualization, and Loki for log aggregation. Demonstrates monitoring best practices, distributed tracing, and operational insights.
 

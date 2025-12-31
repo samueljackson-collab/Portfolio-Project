@@ -1,5 +1,9 @@
 # PRJ-AIML-002: AI-Powered Cross-Platform Tab Organization App
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 **COMPLETE**
 **Category:** AI/ML Automation / Cross-Platform Development
 **Technologies:** Flutter, TensorFlow Lite, Firebase, WebExtensions, NLP, React Native

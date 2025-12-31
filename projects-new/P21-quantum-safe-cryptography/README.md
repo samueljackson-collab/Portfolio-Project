@@ -1,5 +1,9 @@
 # P21: Quantum-Safe Cryptography
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 PQ-safe key exchange demo with hybrid TLS posture checks.
 
 ## What this pack includes

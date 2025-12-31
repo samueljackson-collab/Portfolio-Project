@@ -1,5 +1,9 @@
 # Homelab Program — Final Proposal & Implementation Plan (v6.0)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟠 In Progress
 **Category:** Homelab & Enterprise Infrastructure
 **Technologies:** Proxmox VE, TrueNAS, UniFi, WireGuard, Nginx Proxy Manager, Prometheus, Grafana, Loki, Immich

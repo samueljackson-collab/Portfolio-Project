@@ -1,5 +1,9 @@
 # PRJ-AWS-001 · AWS Three-Tier Terraform Platform
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 Production-ready AWS landing zone for a highly available three-tier web application. The project highlights enterprise patterns including secure network segmentation, autoscaling compute, managed database services, observability, disaster recovery, and cost governance.
 
 ## Highlights

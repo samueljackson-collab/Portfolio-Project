@@ -1,5 +1,9 @@
 # P05 — Mobile App Manual Testing
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 
 Comprehensive manual testing approach for mobile applications (iOS/Android) covering functional,

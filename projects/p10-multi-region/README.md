@@ -1,5 +1,9 @@
 # P10 — Multi-Region Architecture
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Active-passive multi-region AWS architecture with Route 53 DNS failover, cross-region RDS read replicas, and automated disaster recovery. Demonstrates global infrastructure design, high availability, and business continuity planning.
 

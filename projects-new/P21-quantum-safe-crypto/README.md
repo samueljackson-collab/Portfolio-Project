@@ -1,5 +1,9 @@
 # P21 Quantum-Safe Cryptography Demo
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Generates a mock Kyber-style keypair to illustrate post-quantum readiness.
 
 ## Run locally

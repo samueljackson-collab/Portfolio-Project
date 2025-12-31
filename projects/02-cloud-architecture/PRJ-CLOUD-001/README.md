@@ -1,5 +1,9 @@
 # AWS Landing Zone (Multi-Account Organizations + SSO)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 Complete | **Priority:** High | **Complexity:** Advanced
 
 [![AWS](https://img.shields.io/badge/AWS-Organizations-FF9900?logo=amazonaws)](https://aws.amazon.com/organizations/)

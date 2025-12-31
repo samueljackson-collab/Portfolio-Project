@@ -1,5 +1,9 @@
 # P15 — Cloud Cost Optimization Lab
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 AWS cost optimization framework with Cost and Usage Reports (CUR) analysis, rightsizing recommendations, reserved instance planning, and cost anomaly detection. Demonstrates FinOps practices and cloud cost management.
 

@@ -1,5 +1,9 @@
 # P11 API Gateway + Lambda Demo
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 This lightweight example simulates an API Gateway request invoking a Lambda handler and returning a JSON payload.
 
 ## Run locally

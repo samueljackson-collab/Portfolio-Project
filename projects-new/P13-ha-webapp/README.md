@@ -1,5 +1,9 @@
 # P13: High-Availability Web App
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 NGINX front-end with replicated app tier and resilient session handling.
 
 ## What this pack includes

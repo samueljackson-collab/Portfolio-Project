@@ -1,5 +1,9 @@
 # P01 — AWS Infrastructure Automation (CloudFormation)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Automate AWS infrastructure provisioning using CloudFormation templates, with least-privilege IAM roles, VPC networking, and multi-AZ RDS deployment. Demonstrates infrastructure-as-code best practices, disaster recovery automation, and operational tooling for production-grade cloud environments.
 

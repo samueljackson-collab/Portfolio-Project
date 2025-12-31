@@ -1,5 +1,9 @@
 # P11 — API Gateway & Serverless Integration
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Serverless API using AWS SAM, Lambda functions, API Gateway with authentication, and DynamoDB. Demonstrates event-driven architecture, serverless patterns, and production-grade API design.
 

@@ -1,5 +1,9 @@
 # Enterprise EDR Platform Simulation
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Simulate endpoint registration, policy toggling, and deployment coverage with FastAPI and a React admin console.
 
 ## Highlights

@@ -1,5 +1,9 @@
 # Full-Scope Red Team Operation Simulator
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Simulate a 90-day advanced persistent threat (APT) campaign with day-by-day logging, detection tracking, and a companion React dashboard. This project is intentionally educational and **not** a real C2 framework.
 
 ## Highlights

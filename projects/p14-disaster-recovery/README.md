@@ -1,5 +1,9 @@
 # P14 — Disaster Recovery (DR) Design
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Comprehensive disaster recovery plan with backup/restore automation, RPO/RTO documentation, failover procedures, and DR testing framework. Demonstrates business continuity planning and operational resilience.
 

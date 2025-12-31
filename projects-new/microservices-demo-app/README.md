@@ -1,5 +1,9 @@
 # Microservices Demo App
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 A portfolio-ready microservices architecture demonstrating API gateway routing, service-to-service communication (REST + gRPC), async messaging, and observability.
 
 ## What is included

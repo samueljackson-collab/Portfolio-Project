@@ -1,5 +1,9 @@
 # P16 — Zero-Trust Cloud Architecture
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Zero-trust security architecture with mTLS, JWT policies, network segmentation, and comprehensive threat modeling. Demonstrates modern security practices, identity-based access, and defense-in-depth strategies.
 

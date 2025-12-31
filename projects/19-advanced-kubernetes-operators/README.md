@@ -1,5 +1,9 @@
 # Project 19: Advanced Kubernetes Operators
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## 📊 Portfolio Status Board
 
 🟢 Done · 🟠 In Progress · 🔵 Planned

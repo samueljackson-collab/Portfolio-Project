@@ -1,5 +1,9 @@
 # P25: Portfolio Website Experience
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 Static+API hybrid site with content build pipeline and uptime probes.
 
 ## What this pack includes

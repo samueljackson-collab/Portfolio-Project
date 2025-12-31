@@ -1,3 +1,6 @@
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
 Adversary Emulation & Red Team Operations
 Status: ✅ Production-Ready | Priority: High | Complexity: Advanced
 ![alt text](https://img.shields.io/badge/Framework-MITRE_ATT&CK-red)

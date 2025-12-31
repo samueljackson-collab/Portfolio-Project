@@ -1,5 +1,9 @@
 # Commercial E-commerce & Booking Systems
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🔄 Recovery (artifacts published; screenshots pending)
 
 ## Description

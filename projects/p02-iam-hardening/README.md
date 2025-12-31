@@ -1,5 +1,9 @@
 # P02 — IAM Security Hardening
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Implement least-privilege IAM policies, automated access reviews, and security best practices for AWS accounts. Demonstrates IAM policy design, AWS IAM Access Analyzer integration, and automated compliance checking for production-grade identity and access management.
 
