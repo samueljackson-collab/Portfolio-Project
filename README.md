@@ -104,7 +104,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 | 20 | Blockchain Oracle Service | Implemented (tests + CI) | [tests](projects/20-blockchain-oracle-service/tests) · [CI](projects/20-blockchain-oracle-service/.github/workflows/ci.yml) |
 | 21 | Quantum-Safe Cryptography | Implemented (tests + CI) | [tests](projects/21-quantum-safe-cryptography/tests) · [CI](projects/21-quantum-safe-cryptography/.github/workflows/ci.yml) |
 | 22 | Autonomous DevOps Platform | Implemented (tests + CI) | [tests](projects/22-autonomous-devops-platform/tests) · [CI](projects/22-autonomous-devops-platform/.github/workflows/ci.yml) |
-| 23 | Advanced Monitoring & Observability | Implemented (tests + CI + deploy) | [tests](projects/23-advanced-monitoring/tests) · [CI](projects/23-advanced-monitoring/.github/workflows/monitoring.yml) · [docker-compose](projects/23-advanced-monitoring/docker-compose.yml) |
+| 23 | Advanced Monitoring & Observability | Implemented (tests + CI + deploy) | [tests](projects/23-advanced-monitoring/tests) · [CI](projects/23-advanced-monitoring/.github/workflows/monitoring.yml) · [docker-compose.yml](projects/23-advanced-monitoring/docker-compose.yml) |
 | 24 | Report Generator | Implemented (tests + CI) | [tests](projects/24-report-generator/tests) · [CI](projects/24-report-generator/.github/workflows/ci.yml) |
 | 25 | Portfolio Website | Implemented (tests + CI) | [tests](projects/25-portfolio-website/tests) · [CI](projects/25-portfolio-website/.github/workflows/ci.yml) |
 
