@@ -192,18 +192,21 @@ Latest updates: [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md)
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
 **Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-001/assets/screenshots)
+**Evidence:** Assets uploaded: Yes — [Evidence index](./projects/06-homelab/PRJ-HOME-001/assets/README.md)
 
 ### Virtualization & Core Services
 
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
 **Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Evidence Assets](./projects/06-homelab/PRJ-HOME-002/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-002/assets/screenshots)
+**Evidence:** Assets uploaded: Yes — [Evidence index](./projects/06-homelab/PRJ-HOME-002/assets/README.md)
 
 ### Observability & Backups Stack
 
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
 **Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets) · [Screenshots/Logs](./projects/01-sde-devops/PRJ-SDE-002/assets/screenshots)
+**Evidence:** Assets uploaded: Yes — [Evidence index](./projects/01-sde-devops/PRJ-SDE-002/assets/README.md)
 
 ---
 
