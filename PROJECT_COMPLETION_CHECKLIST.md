@@ -146,7 +146,7 @@ Use this checklist to track completion status for each project in your portfolio
 - [x] Producer/consumer demo services
 - [x] Stream validation tests
 
-### Current
+### Future
 - [ ] Backpressure/retry handling documented
 - [ ] Monitoring dashboard for lag/throughput
 - [ ] Architecture diagram + runbook for partition scaling
