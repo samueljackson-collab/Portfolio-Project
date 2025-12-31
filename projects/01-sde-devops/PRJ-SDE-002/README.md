@@ -24,13 +24,14 @@ Comprehensive monitoring, logging, alerting, and backup automation for the homel
 
 **Sanitization:** All artifacts use placeholder hosts/webhooks and demo data. Screenshots are scrubbed; configs omit credentials.
 
----
+Monitoring, logging, alerting, and backup stack built with Prometheus, Grafana, Loki, Alertmanager, Promtail, and Proxmox Backup Server (PBS). All assets are sanitized for portfolio sharing.
 
 ## Overview
 Implemented a comprehensive monitoring, logging, and alerting stack to observe homelab infrastructure and ensure data resilience through automated backups.
 
 ## Architecture
 
+## Architecture Snapshot
 ### Monitoring (Prometheus)
 - Metrics collection from multiple targets
 - Node exporter for system metrics (CPU, memory, disk, network)
@@ -71,16 +72,16 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 2. **Deploy Grafana** once Prometheus is scraping data to verify dashboards render correctly.
 3. **Configure Loki and Promtail** to begin ingesting logs alongside metrics.
 4. **Set up Alertmanager** with notification channels and connect it to Prometheus.
-5. **Integrate PBS** nightly jobs and mount TrueNAS NFS shares for resilient storage.
+5. **Integrate PBS** nightly jobs and mount NAS shares for resilient storage.
 
-**Configuration Locations**
-- Prometheus: `/etc/prometheus/prometheus.yml`, alert rules in `/etc/prometheus/alerts/`
-- Grafana dashboards: `/etc/grafana/provisioning/dashboards/`
-- Loki: `/etc/loki/loki-config.yml`
-- Promtail: `/etc/promtail/promtail-config.yml`
-- Alertmanager: `/etc/alertmanager/alertmanager.yml`
+**Configuration Locations (portfolio mirrors)**:
+- Prometheus: [`assets/configs/prometheus.yml`](./assets/configs/prometheus.yml), alert rules in [`assets/configs/alerts/`](./assets/configs/alerts/)
+- Grafana dashboards: [`assets/grafana/dashboards/`](./assets/grafana/dashboards/)
+- Loki: [`assets/loki/loki-config.yml`](./assets/loki/loki-config.yml)
+- Promtail: [`assets/loki/promtail-config.yml`](./assets/loki/promtail-config.yml)
+- Alertmanager: [`assets/alertmanager/alertmanager.yml`](./assets/alertmanager/alertmanager.yml)
 
-**Service Management**
+**Service Management (example)**:
 - `sudo systemctl enable --now prometheus`
 - `sudo systemctl enable --now grafana-server`
 - `sudo systemctl enable --now loki`
@@ -88,7 +89,7 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - `sudo systemctl enable --now alertmanager`
 - `sudo systemctl enable --now proxmox-backup`
 
-**Network Flow Architecture**
+**Network Flow Architecture**:
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   Targets   │────▶│  Exporters  │────▶│ Prometheus  │
@@ -120,7 +121,6 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 7. **Backup**: PBS runs nightly at 02:00, snapshots are stored on TrueNAS NFS share at <NFS_SERVER>:/mnt/<DATASTORE>/backups.
 
 ## Key Dashboards
-
 ### Infrastructure Overview
 - Cluster resource utilization
 - Network throughput
@@ -140,7 +140,6 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - Mean time to resolve (MTTR)
 
 ## Alert Examples
-
 ### Critical Alerts
 - Host down or unreachable
 - Disk usage >90%
@@ -154,17 +153,16 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - Backup job duration increasing
 - Log error rate spike
 
-## Alert Examples and Responses
-
+## Alert Examples and Responses (Sanitized)
 | Alert Name | Trigger Condition | Severity | Response Time | Runbook |
 |------------|-------------------|----------|---------------|---------|
-| HostDown | `up == 0` for 2 minutes | Critical | 5 minutes | [HostDown](https://runbooks.homelab.local/HostDown) |
-| HighCPUUsage | CPU >80% for 15 minutes | Warning | 30 minutes | [HighCPUUsage](https://runbooks.homelab.local/HighCPUUsage) |
-| DiskSpaceLow | Free space <15% | Warning | 1 hour | [DiskSpaceLow](https://runbooks.homelab.local/DiskSpaceLow) |
-| BackupJobFailed | `proxmox_backup_job_last_status != 0` | Critical | 15 minutes | [BackupJobFailed](https://runbooks.homelab.local/BackupJobFailed) |
-| ServiceUnreachable | `probe_success == 0` for 5 minutes | Critical | 10 minutes | [ServiceUnreachable](https://runbooks.homelab.local/ServiceUnreachable) |
+| HostDown | `up == 0` for 2 minutes | Critical | 5 minutes | [HostDown](./assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-hostdown) |
+| HighCPUUsage | CPU >80% for 15 minutes | Warning | 30 minutes | [HighCPUUsage](./assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-highcpuusage) |
+| DiskSpaceLow | Free space <15% | Warning | 1 hour | [DiskSpaceLow](./assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-diskspacelow) |
+| BackupJobFailed | `proxmox_backup_job_last_status != 0` | Critical | 15 minutes | [BackupJobFailed](./assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-backupjobfailed) |
+| ServiceUnreachable | `probe_success == 0` for 5 minutes | Critical | 10 minutes | [Service Recovery](./assets/runbooks/OPERATIONAL_RUNBOOK.md#service-recovery) |
 
-**Example Slack Payload**
+**Example Slack Payload (Sanitized)**
 ```json
 {
   "status": "firing",
@@ -173,13 +171,13 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
     {
       "labels": {
         "alertname": "HostDown",
-        "instance": "192.168.1.21:9100",
+        "instance": "demo-vm-01:9100",
         "severity": "critical"
       },
       "annotations": {
-        "summary": "Host 192.168.1.21:9100 is unreachable",
-        "description": "Prometheus has not scraped 192.168.1.21:9100 for over two minutes. Investigate network connectivity or system health.",
-        "runbook": "https://runbooks.homelab.local/HostDown"
+        "summary": "Host demo-vm-01:9100 is unreachable",
+        "description": "Prometheus has not scraped demo-vm-01:9100 for over two minutes. Investigate network connectivity or system health.",
+        "runbook": "assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-hostdown"
       }
     }
   ],
@@ -193,8 +191,16 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 }
 ```
 
-## Backup Configuration
+## Configurations
+- **Prometheus:** [`assets/configs/prometheus.yml`](./assets/configs/prometheus.yml) plus [`configs/alerts/demo-alerts.yml`](./assets/configs/alerts/demo-alerts.yml) and recording rules.
+- **Alertmanager:** [`assets/alertmanager/alertmanager.yml`](./assets/alertmanager/alertmanager.yml) uses environment variables for secrets and generic notification channels.
+- **Loki & Promtail:** [`assets/loki/loki-config.yml`](./assets/loki/loki-config.yml) and [`assets/loki/promtail-config.yml`](./assets/loki/promtail-config.yml) with log scrubbing and tenant labels.
 
+## Backups & PBS Evidence
+- Job manifest, retention report, and restore checklist under [`assets/pbs/`](./assets/pbs) with supporting guidance in [`backups-and-lessons.md`](./assets/docs/backups-and-lessons.md).
+- Metrics and alerts surface backup success ratios and retention drift (see `alerting-backup-overview.json`).
+
+## Backup Configuration
 ### Schedule
 - **Daily:** All VMs and containers (incremental)
 - **Weekly:** Full backup verification
@@ -211,34 +217,30 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - Documentation of restore procedures
 
 ## Backup and Recovery Procedures
-
 **Schedule**
 - Nightly backups at 02:00 via Proxmox Backup Server job schedule.
 - Weekly verification tasks run on Sundays to validate snapshot integrity.
 - Monthly restore rehearsals verify end-to-end recovery steps.
 
 **Scope of Backups**
-- VMs: 192.168.1.20-24 (Wiki.js, Home Assistant, Immich, database, utility).
-- Containers: 192.168.1.30-32 (supporting services).
-- Configuration directories exported from `/etc/` for Prometheus, Grafana, Loki, and Alertmanager.
+- VMs and containers in the homelab cluster (sanitized inventory in [`pbs-job-manifest.yml`](./assets/pbs/pbs-job-manifest.yml)).
+- Configuration directories exported from `/etc/` for Prometheus, Grafana, Loki, and Alertmanager (represented in this repo as configs).
 
 **Retention Policy**
 - 7 daily restore points, 4 weekly rollups, 3 monthly archives retained on PBS.
 
 **Recovery Steps**
-1. Log in to PBS web UI at `https://192.168.1.15:8007`.
+1. Log in to PBS web UI (sanitized).
 2. Select the desired snapshot for the VM or container.
 3. Restore to the original ID or clone to a staging ID for validation.
 4. Power on the restored workload and confirm service availability.
 5. Re-run Prometheus `ServiceUnreachable` probes to ensure monitoring reflects the recovered service.
 
 **Automation Support**
-- Backup verification script: [`verify-pbs-backups.sh`](./assets/scripts/verify-pbs-backups.sh).
+- Backup verification script: [`verify-pbs-backups.sh`](./assets/scripts/verify-pbs-backups.sh) (see notes in `backups-and-lessons.md`).
 
 ## Metrics Cheat Sheet
-
 ### Essential PromQL Queries
-
 | Metric Goal | Prometheus Query | Expected Result |
 |-------------|------------------|-----------------|
 | CPU usage per host | `100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)` | Percentage utilization |
@@ -255,7 +257,6 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 | Service uptime | `time() - process_start_time_seconds` | Seconds since start |
 
 ### Recording Rules (Pre-computed Metrics)
-
 ```yaml
 # /etc/prometheus/recording_rules.yml
 groups:
@@ -311,67 +312,33 @@ And the **RED Method** (Rate, Errors, Duration) for services:
 ## Lessons Learned
 
 ### Technical Insights
-
 1. **Metrics Backend Selection**: Started with InfluxDB but migrated to Prometheus for richer querying (PromQL), better alerting integration, and stronger community support. The migration took 3 days but improved query performance by ~40%.
-
 2. **Scrape Interval Optimization**: Initial 5-second scrape interval filled disk quickly (80GB in 2 weeks). Settled on 15-second intervals which balanced granularity with 30-day retention, reducing storage to 12GB for the same period.
-
-3. **Alert Fatigue Mitigation**: Experienced 50+ alerts per day initially. Reduced to <5 daily by:
-   - Tuning thresholds based on historical data (e.g., disk alerts from 85% → 90%)
-   - Adding inhibition rules (e.g., HostDown suppresses all other alerts from that host)
-   - Implementing alert grouping windows (5 minutes) to batch related alerts
-   - Creating detailed runbooks for each alert to reduce investigation time
-
-4. **Backup Verification Critical**: The backup verification script (`verify-pbs-backups.sh`) discovered that PBS UI showed "OK" for 3 snapshots that were actually incomplete due to network timeouts. Now run verification within 1 hour of each backup completion.
-
-5. **Dashboard Standardization**: Created a dashboard template with consistent color schemes, panel layouts, and naming conventions. This reduced dashboard creation time from 2 hours to 20 minutes and accelerated onboarding for new homelab contributors.
+3. **Alert Fatigue Mitigation**: Experienced 50+ alerts per day initially. Reduced to <5 daily by tuning thresholds, adding inhibition rules, grouping alerts, and creating detailed runbooks.
+4. **Backup Verification Critical**: The verification script discovered that PBS UI showed "OK" for snapshots that were incomplete due to network timeouts. Now run verification within 1 hour of each backup completion.
+5. **Dashboard Standardization**: Created a dashboard template with consistent color schemes, panel layouts, and naming conventions to cut new dashboard creation time from 2 hours to 20 minutes.
 
 ### Operational Insights
-
-6. **Log Volume Management**: Application logs initially consumed 200GB/month. Implemented selective logging (error/warn only in production) and reduced retention from 30 to 14 days, cutting storage to 40GB/month.
-
-7. **Cardinality Awareness**: Added a label for every container ID in metrics, causing cardinality explosion (>100k series). Removed unnecessary labels and now maintain <50k series, improving query performance dramatically.
-
-8. **Alertmanager Routing Complexity**: Single Slack channel became noisy. Now route: Critical → #incidents + PagerDuty, Warning → #monitoring, Info → #homelab-events. Clear separation improved response time by 60%.
-
-9. **Grafana Access Control**: Initially gave all homelab users Admin rights. After accidental dashboard deletions, implemented role-based access: Viewers for most users, Editors for infra team, Admin for ops lead only.
-
-10. **Backup Testing Discipline**: Implemented monthly restore drills. Discovered that recovering PostgreSQL required WAL replay knowledge that wasn't documented. Now maintain detailed restore runbooks for each service type (database, application, stateful services).
+6. **Log Volume Management**: Reduced log retention from 30 to 14 days and trimmed logging levels to shrink log volume by ~80%.
+7. **Cardinality Awareness**: Removed high-cardinality container labels to keep time series under control and improve query performance.
+8. **Alertmanager Routing Complexity**: Routed Critical → incident channel + on-call, Warning → monitoring channel, Info → events channel for clearer response paths.
+9. **Grafana Access Control**: Replaced broad Admin access with Viewer/Editor roles and a small Admin group.
+10. **Backup Testing Discipline**: Monthly restore drills uncovered service-specific restore steps that now live in runbooks.
 
 ## Future Enhancements
-
 - Distributed tracing with Tempo or Jaeger
 - Synthetic monitoring (uptime checks)
-- Anomaly detection with machine learning
+- Anomaly detection
 - Cost tracking dashboards
 - SLO tracking and error budgets
 
 ## 📸 Screenshots and Evidence
+Binary screenshots are intentionally excluded from this repo to keep PRs text-only and review-friendly. See `assets/README.md` for guidance on capturing screenshots locally.
 
-### Monitoring & Visualization
+## Documentation Status
+✅ Dashboard exports, Prometheus configurations, alert rule examples, and backup artifacts are available in [`assets/`](./assets/README.md).
 
-![Infrastructure Overview Dashboard](./assets/screenshots/grafana-infrastructure-dashboard.png)
-*Grafana infrastructure dashboard showing CPU, memory, disk, and network metrics across all 9 homelab hosts (192.168.1.20-32). Displays real-time resource utilization with 15-second granularity, captured during normal operation with ~40% average CPU load.*
+## Sanitization
+All configs, dashboards, and PBS artifacts use placeholder hosts, tenant IDs, and credentials. Screenshots and sample data are synthetic to avoid exposing production details. README links point to sanitized assets inside this repo only.
 
-![Active Alerts Panel](./assets/screenshots/grafana-alerts-panel.png)
-*Grafana alerting panel showing current firing alerts with severity levels (Critical/Warning/Info). Screenshot captured during maintenance window showing 2 intentional warnings: DiskSpaceLow on database VM and scheduled backup job in progress.*
-
-![Prometheus Targets Page](./assets/screenshots/prometheus-targets.png)
-*Prometheus targets page (http://192.168.1.11:9090/targets) showing all 15 scrape endpoints with UP status. Includes Node Exporters (9100), Proxmox Exporter (9221), PostgreSQL Exporter (9187), and custom application exporters. All targets healthy with <100ms scrape duration.*
-
-### Logging & Alerting
-
-![Loki Log Explorer](./assets/screenshots/loki-log-explorer.png)
-*Loki log aggregation interface in Grafana showing log streams from 12 sources. LogQL query `{job="systemd-journal"} |= "error"` filtered across last 24 hours, displaying centralized error tracking from all VMs. Demonstrates log correlation during incident investigation.*
-
-![Alertmanager UI](./assets/screenshots/alertmanager-ui.png)
-*Alertmanager web interface (http://192.168.1.11:9093) showing alert grouping, silences, and inhibition rules. Screenshot shows 3 active silences for planned maintenance and alert routing configuration with Slack integration status.*
-
-### Backup & Recovery
-
-![Proxmox Backup Server Dashboard](./assets/screenshots/pbs-dashboard.png)
-*Proxmox Backup Server (PBS) web UI at https://192.168.1.15:8007 showing backup summary. Displays 63 total snapshots across 7 VMs, 28.4TB total backup size with deduplication ratio of 3.2:1 (effective storage 8.9TB). Backup verification status showing 100% integrity for all snapshots with retention policy enforcement active.*
-
----
-
-**Last Updated:** October 28, 2025
+**Last Updated:** November 14, 2025

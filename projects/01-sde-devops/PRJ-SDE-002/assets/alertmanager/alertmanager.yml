@@ -1,13 +1,5 @@
-# Alertmanager Configuration for Homelab Observability Stack
-# Project: PRJ-SDE-002 - Observability & Monitoring Implementation
-# Location: projects/01-sde-devops/PRJ-SDE-002/assets/alertmanager/alertmanager.yml
-#
-# IMPORTANT: This is a TEMPLATE file. Before deploying:
-# 1. Copy this to alertmanager-production.yml
-# 2. Replace {{ VARIABLE }} placeholders with actual values from your .env file
-# 3. Use envsubst or similar tool: envsubst < alertmanager.yml > alertmanager-production.yml
-# 4. Deploy the production file, NOT this template
-# 5. Add alertmanager-production.yml to .gitignore
+# Alertmanager Configuration - Sanitized Example for PRJ-SDE-002
+# Replace environment variables before deployment.
 
 global:
   resolve_timeout: 5m
@@ -18,7 +10,6 @@ global:
   smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD}'
   smtp_require_tls: true
   slack_api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
-  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
 
 # Templates for custom notification formatting
 templates:
@@ -27,7 +18,7 @@ templates:
 # Route tree for alert distribution
 route:
   group_by: ['alertname', 'cluster', 'service']
-  group_wait: 10s
+  group_wait: 15s
   group_interval: 10s
   repeat_interval: 12h
   receiver: 'default'
@@ -80,7 +71,7 @@ receivers:
   # Default receiver (fallback)
   - name: 'default'
     email_configs:
-      - to: 'admin@homelab.local'
+      - to: 'oncall@example.internal'
         headers:
           subject: '[Homelab Alert] {{ .GroupLabels.alertname }}'
         html: |
@@ -88,19 +79,13 @@ receivers:
           <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
           <p><strong>Instance:</strong> {{ .GroupLabels.instance }}</p>
           <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
-          <p><strong>Time:</strong> {{ .Alerts.StartsAt }}</p>
+          <p><strong>Runbook:</strong> {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}</p>
     slack_configs:
-      - channel: '#homelab-alerts'
-        title: '🚨 CRITICAL Alert'
-        text: |
-          *Alert:* {{ .GroupLabels.alertname }}
-          *Instance:* {{ .GroupLabels.instance }}
-          *Description:* {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
-          *Runbook:* {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}
+      - channel: '#portfolio-alerts'
+        title: '🚨 Critical Alert'
+        text: |-
+          *Alert:* {{ .GroupLabels.alertname }}\n*Instance:* {{ .GroupLabels.instance }}\n*Runbook:* {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}
         color: 'danger'
-    pagerduty_configs:
-      - service_key: '${ALERTMANAGER_PAGERDUTY_SERVICE_KEY}'
-        description: '{{ .GroupLabels.alertname }} - {{ .GroupLabels.instance }}'
 
   # Critical alerts - multiple notification channels
   - name: 'critical-alerts'
