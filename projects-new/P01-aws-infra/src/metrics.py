@@ -54,5 +54,6 @@ async def metrics_middleware(request: Request, call_next: Callable[[Request], Aw
     start_time = time.perf_counter()
     response = await call_next(request)
     elapsed = time.perf_counter() - start_time
-    record_request_metrics(request.method, request.url.path, response.status_code, elapsed)
+    route = getattr(request.scope.get("route"), "path", request.url.path)
+    record_request_metrics(request.method, route, response.status_code, elapsed)
     return response
