@@ -32,7 +32,8 @@ data:
       jaeger:
         endpoint: jaeger-collector:14250
         tls:
-          insecure: true
+          # TLS verification is enabled for production. Do not set insecure: true in production!
+          insecure: false
       otlp:
         endpoint: otel-backend:4317
         # NOTE: The 'insecure: true' setting disables TLS verification and should NOT be used in production.
