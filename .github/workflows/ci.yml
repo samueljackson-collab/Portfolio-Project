@@ -108,7 +108,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push migration orchestrator image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: projects/2-database-migration
         file: projects/2-database-migration/Dockerfile
