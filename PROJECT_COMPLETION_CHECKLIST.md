@@ -166,7 +166,7 @@ Use this checklist to track completion status for each project in your portfolio
 - [x] Docker images for train/serve
 - [x] CI tests for data validation and model eval
 
-### Current
+### Future
 - [ ] Deployment manifests (K8s/ECS)
 - [ ] Feature store integration notes
 - [ ] Sample dataset + golden evaluation set
