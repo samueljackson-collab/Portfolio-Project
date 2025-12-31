@@ -33,8 +33,9 @@ def test_metrics_endpoint(fake_service):  # fake_service unused but keeps fixtur
 
 def test_secret_metadata_endpoint(fake_service):
     result = secret_metadata("my-secret", "test-key", fake_service)
-    assert result.body
-    assert "my-secret" in result.body.decode()
+    assert result.status_code == 200
+    payload = json.loads(result.body)
+    assert payload["name"] == "my-secret"
 
 
 def test_publish_metric(fake_service):
