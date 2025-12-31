@@ -295,7 +295,7 @@ System-minded engineer specializing in building, securing, and operating infrast
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
 **Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Evidence Assets](./projects/06-homelab/PRJ-HOME-002/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-002/assets/screenshots)
-**Evidence status:** Assets uploaded: Yes — [Evidence index](./projects/06-homelab/PRJ-HOME-002/assets/README.md)
+**Evidence:** Assets uploaded: Yes — [Evidence index](./projects/06-homelab/PRJ-HOME-002/assets/README.md)
 
 ### Observability & Backups Stack
 
