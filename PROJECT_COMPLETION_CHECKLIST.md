@@ -187,7 +187,7 @@ Use this checklist to track completion status for each project in your portfolio
 - [x] Retry/backoff policies
 - [x] Unit tests for handlers
 
-### Current
+### Future
 - [ ] DLQ and failure handling
 - [ ] Local test setup (SAM/LocalStack)
 - [ ] Sequence diagram + runbook for event replay
