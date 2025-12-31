@@ -1,25 +1,77 @@
+# Observability & Backups Stack Assets
+
+**Status:** 🟢 Complete (sanitized for sharing)
+
+## Overview
+Evidence and configurations for PRJ-SDE-002, covering Prometheus, Alertmanager, Grafana, Loki/Promtail, and Proxmox Backup Server (PBS). All hostnames, IPs, and secrets are placeholders.
+
+## Documentation
+- [Monitoring & Observability Philosophy](./docs/monitoring-observability.md) — USE/RED approach, alert/runbook wiring, backup strategy, lessons learned.
+- [Project README](../README.md) — Parent project context.
+
+## Dashboards (Grafana JSON)
+- Infrastructure USE view: [`grafana/dashboards/infrastructure-overview.json`](./grafana/dashboards/infrastructure-overview.json)
+- Application RED view: [`grafana/dashboards/application-metrics.json`](./grafana/dashboards/application-metrics.json)
+- Backup/PBS health: [`grafana/dashboards/backup-health.json`](./grafana/dashboards/backup-health.json)
+
+## Configurations
+- Prometheus: [`configs/prometheus.yml`](./configs/prometheus.yml) and alert rules [`configs/alert-rules.yml`](./configs/alert-rules.yml), [`configs/alerts/demo-alerts.yml`](./configs/alerts/demo-alerts.yml)
+- Alertmanager: [`alertmanager/alertmanager.yml`](./alertmanager/alertmanager.yml) (use `.env.example` for secrets)
+- Loki/Promtail: [`loki/loki-config.yml`](./loki/loki-config.yml), [`loki/promtail-config.yml`](./loki/promtail-config.yml)
+
+## Backups (PBS)
+- Job definitions: [`pbs/pbs-jobs.yaml`](./pbs/pbs-jobs.yaml)
+- Retention policy: [`pbs/pbs-retention-policy.yaml`](./pbs/pbs-retention-policy.yaml)
+- Verification report & lessons: [`pbs/pbs-report.md`](./pbs/pbs-report.md)
+- Verification script: [`scripts/verify-pbs-backups.sh`](./scripts/verify-pbs-backups.sh)
+
+## Runbooks
+- Core operations: [`runbooks/OPERATIONAL_RUNBOOK.md`](./runbooks/OPERATIONAL_RUNBOOK.md)
+- Incident management: [`runbooks/PRODUCTION_RUNBOOKS_INCIDENT_RESPONSE.md`](./runbooks/PRODUCTION_RUNBOOKS_INCIDENT_RESPONSE.md)
+- Backup alerts: [`runbooks/ALERTING_BACKUP_FAILURE.md`](./runbooks/ALERTING_BACKUP_FAILURE.md)
+
+## Evidence / Screenshots
+Sanitized SVG snapshots are stored in [`./screenshots/`](./screenshots/) for quick review. Import the Grafana JSON dashboards above into a lab Grafana instance and export PNGs if higher-fidelity captures are required.
+
+## Sanitization Checklist
+- ✅ Dummy hostnames/URLs (`demo-api`, `pbs.example.internal`)
+- ✅ Secrets referenced via env vars/templates only
+- ✅ Screenshots redact tenant data and use demo labels
+- ✅ README links updated to all new artifacts
+
+## Quick Import Notes
+- Import dashboards via Grafana **Dashboard → Import → Upload JSON** and map to your Prometheus/Loki datasources.
+- Apply Prometheus/Alertmanager/Loki configs to your environment after replacing placeholders and loading secrets from `.env` or a secret manager.
+- Sync PBS YAML into your Proxmox Backup Server, validate retention with a dry-run prune, and schedule verification using `verify-pbs-backups.sh`.
 # PRJ-SDE-002 Assets
 
-Sanitized evidence for the observability and backup stack. Use these exports, configs, and screenshots to reproduce or review the deployment without exposing private infrastructure.
+Supporting materials for the Observability & Backups Stack. Dashboards, configs, backups, and runbooks are sanitized: secrets removed, hostnames/IPs replaced with placeholders, and screenshots captured with demo data.
 
 ## Contents
-- `grafana/dashboards/` — exportable JSON for infrastructure, application, and alert/backup views.
-- `configs/` — Prometheus config, recording rules, and demo alerts; add your own secrets separately.
-- `alertmanager/alertmanager.yml` — notification routing template with environment variable placeholders.
-- `loki/` — Loki and Promtail configs with scrubbed endpoints and label sets.
-- `pbs/` — PBS job manifest, retention report, and restore checklist.
-- `docs/` — monitoring philosophy (USE/RED), dashboard rationale, backups, and lessons learned.
-- `runbooks/` — operational playbooks plus an alert index tying alerts to actions.
-- `screenshots/` — (not included in repo) local-only visuals of Grafana dashboards and PBS retention status.
+- **docs/** — [Monitoring philosophy](./docs/monitoring-philosophy.md) (USE/RED), dashboard rationale, alert mapping, backups approach, and lessons learned.
+- **runbooks/** — [Alert responses](./runbooks/ALERT_RESPONSES.md) and [operational playbook](./runbooks/OPERATIONAL_RUNBOOK.md) for triage and recovery.
+- **grafana/dashboards/** — JSON exports for Infrastructure Overview, Application Metrics, Alert Operations, and PBS Backups.
+- **screenshots/** — Sanitized dashboard, targets, and alert snapshots (SVG placeholders).
+- **configs/** — Prometheus, Alertmanager, Loki, and Promtail example configs (placeholders for endpoints/webhooks).
+- **backups/** — PBS job plan and retention report summarizing backup posture.
+- **scripts/** — Helpers such as `verify-pbs-backups.sh` for sandbox restore checks.
+- **diagrams/** — Architecture diagrams for topology context.
+- **logs/**, **prometheus/**, **loki/** — Sample exports and placeholders for evidence organization.
 
-## Usage & Sanitization
-- Replace `${VAR}` placeholders with real secrets at deploy time.
-- Hostnames, IPs, and datastore IDs are intentionally generic (e.g., `demo-vm-01`, `loki:3100`).
-- Screenshots (when captured locally) and JSON exports contain no production identifiers.
+## Usage
+1. Import the dashboard JSON files into Grafana via **Dashboards → Import**.
+2. Drop the configs into your lab for testing; replace placeholder endpoints, webhooks, and emails.
+3. Follow `ALERT_RESPONSES.md` for first-response steps and escalation paths.
+4. Confirm PBS schedules with `backups/pbs-job-plan.yaml` and review `pbs-retention-report.md` before enabling jobs.
+5. Run `scripts/verify-pbs-backups.sh` after snapshot completion to validate integrity.
 
-## Screenshot Capture (Local Only)
-Binary image assets are intentionally excluded from this repo to keep PRs text-only and review-friendly. If you need screenshots, capture them locally and store outside the repo or in a separate artifact bundle.
+## Sanitization Checklist
+- Webhooks/emails use example values; tokens and passwords removed.
+- IPs and hostnames use non-routable or generic placeholders.
+- Screenshots generated with demo data and no tenant identifiers.
+- Backup exports omit datastore credentials; only schedules and retention values are shown.
 
-## Helpful Links
-- Project overview: [`../README.md`](../README.md)
-- Quick start for contributions: [`../../../../QUICK_START_GUIDE.md`](../../../../QUICK_START_GUIDE.md)
+## References
+- [Project Overview](../README.md)
+- [QUICK_START_GUIDE.md](../../../../QUICK_START_GUIDE.md) for upload instructions.
+- [SCREENSHOT_GUIDE.md](../../../../SCREENSHOT_GUIDE.md) for evidence hygiene.

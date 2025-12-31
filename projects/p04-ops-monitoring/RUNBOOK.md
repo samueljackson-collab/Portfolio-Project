@@ -2,9 +2,12 @@
 
 ## Overview
 
-Production operations runbook for the Prometheus/Grafana monitoring stack. This runbook covers monitoring infrastructure management, alert handling, dashboard maintenance, and troubleshooting procedures for production observability platform.
+Production operations runbook for the Prometheus/Grafana monitoring stack. This runbook covers
+monitoring infrastructure management, alert handling, dashboard maintenance, and troubleshooting
+procedures for production observability platform.
 
 **System Components:**
+
 - Prometheus (metrics storage and queries)
 - Grafana (visualization and dashboards)
 - Alertmanager (alert routing and notifications)
@@ -29,15 +32,18 @@ Production operations runbook for the Prometheus/Grafana monitoring stack. This 
 
 ### Dashboards
 
-Access Grafana at: http://localhost:3000
+Access Grafana at: <http://localhost:3000>
 
 **Core Dashboards:**
+
 1. **System Overview** - Node health, CPU, memory, disk, network
 2. **Golden Signals** - Latency, traffic, errors, saturation
 3. **SLO Dashboard** - Error budget tracking, burn rates
 4. **Prometheus Health** - Scrape duration, rule evaluation time
+5. **Backend & Frontend Service Overview** - API and web tier request/latency/availability
 
 #### Quick Health Check
+
 ```bash
 # Check Prometheus targets
 curl -s http://localhost:9090/api/v1/targets | \
@@ -65,11 +71,13 @@ curl -f http://localhost:3000/api/health
 #### Alert Queries (PromQL)
 
 **Service Down:**
+
 ```promql
 up == 0
 ```
 
 **High Error Rate:**
+
 ```promql
 (
   rate(http_requests_total{status=~"5.."}[5m])
@@ -79,6 +87,7 @@ up == 0
 ```
 
 **High Latency:**
+
 ```promql
 histogram_quantile(0.95,
   rate(http_request_duration_seconds_bucket[5m])
@@ -86,6 +95,7 @@ histogram_quantile(0.95,
 ```
 
 **Disk Space:**
+
 ```promql
 (
   node_filesystem_avail_bytes{mountpoint="/"}
@@ -101,6 +111,7 @@ histogram_quantile(0.95,
 ### Monitoring Stack Management
 
 #### Start Monitoring Stack
+
 ```bash
 # Start all services
 make run
@@ -115,7 +126,47 @@ curl -f http://localhost:3000/api/health  # Grafana
 curl -f http://localhost:9093/-/healthy  # Alertmanager
 ```
 
+### Backend & Frontend Metrics Setup
+
+#### Backend API (FastAPI) Metrics
+The portfolio backend exposes Prometheus metrics at `/metrics` via
+`prometheus_fastapi_instrumentator`.
+
+```bash
+# From repo root, start the backend API (example)
+cd backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Validate metrics endpoint
+curl -f http://localhost:8000/metrics
+```
+
+#### Frontend (Nginx) Metrics via Sidecar Exporter
+The frontend container exposes `/stub_status` and the monitoring stack runs
+`nginx-prometheus-exporter` to translate it into Prometheus metrics.
+
+```bash
+# Build/run the frontend container (example)
+cd frontend
+docker build -t portfolio-frontend .
+docker run -p 80:80 portfolio-frontend
+
+# Validate stub status endpoint
+curl -f http://localhost/stub_status
+
+# Validate exporter metrics (from monitoring stack)
+curl -f http://localhost:9113/metrics | head -n 20
+```
+
+#### Prometheus Target Validation
+```bash
+# Check backend + frontend targets are UP
+curl -s http://localhost:9090/api/v1/targets | \
+  jq '.data.activeTargets[] | select(.labels.job | test(\"backend-api|frontend-nginx\")) | {job: .labels.job, health: .health, scrapeUrl: .scrapeUrl}'
+```
+
 #### Stop Monitoring Stack
+
 ```bash
 # Stop gracefully
 make stop
@@ -128,6 +179,7 @@ docker-compose down --volumes  # ⚠️ This deletes all metrics!
 ```
 
 #### Restart Services
+
 ```bash
 # Restart specific service
 docker-compose restart prometheus
@@ -143,6 +195,7 @@ curl -X POST http://localhost:9093/-/reload
 ### Alert Management
 
 #### View Active Alerts
+
 ```bash
 # Via Alertmanager API
 curl -s http://localhost:9093/api/v2/alerts | \
@@ -157,6 +210,7 @@ curl -s http://localhost:9090/api/v1/alerts | \
 ```
 
 #### Silence Alert
+
 ```bash
 # Create 2-hour silence
 curl -X POST http://localhost:9093/api/v2/silences \
@@ -178,6 +232,7 @@ curl -s http://localhost:9093/api/v2/silences | jq '.'
 ### Dashboard Management
 
 #### Export Dashboard
+
 ```bash
 # Get dashboard JSON
 DASHBOARD_UID="system-overview"
@@ -186,6 +241,7 @@ curl -s "http://admin:${GRAFANA_PASSWORD}@localhost:3000/api/dashboards/uid/${DA
 ```
 
 #### Import Dashboard
+
 ```bash
 # Import from JSON
 curl -X POST http://admin:${GRAFANA_PASSWORD}@localhost:3000/api/dashboards/db \
@@ -201,6 +257,7 @@ curl -X POST http://admin:${GRAFANA_PASSWORD}@localhost:3000/api/dashboards/impo
 ### Query and Analysis
 
 #### Run PromQL Query
+
 ```bash
 # Instant query
 curl -G http://localhost:9090/api/v1/query \
@@ -215,6 +272,7 @@ curl -G http://localhost:9090/api/v1/query_range \
 ```
 
 #### Analyze Cardinality
+
 ```bash
 # Check metric cardinality (high cardinality = memory issues)
 curl -s http://localhost:9090/api/v1/label/__name__/values | \
@@ -232,6 +290,7 @@ curl -s http://localhost:9090/api/v1/targets/metadata | \
 ### P0: Prometheus Down
 
 **Immediate Actions (0-5 minutes):**
+
 ```bash
 # 1. Check if Prometheus is running
 docker-compose ps prometheus
@@ -250,6 +309,7 @@ curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[].health'
 ```
 
 **If Still Down:**
+
 ```bash
 # Check disk space
 df -h
@@ -265,6 +325,7 @@ docker-compose exec prometheus promtool tsdb analyze /prometheus
 ```
 
 **Recovery:**
+
 ```bash
 # If config invalid, fix and reload
 vi config/prometheus.yml
@@ -280,6 +341,7 @@ docker-compose up -d
 ### P0: High Error Rate Alert
 
 **Investigation:**
+
 ```bash
 # 1. Check which service has errors
 curl -s http://localhost:9090/api/v1/query \
@@ -297,6 +359,7 @@ docker stats <service-name>
 ```
 
 **Mitigation:**
+
 ```bash
 # If recent deployment caused it
 # Rollback deployment (see deployment runbook)
@@ -311,6 +374,7 @@ docker-compose up -d --scale <service-name>=3
 ### P1: High Memory Usage
 
 **Investigation:**
+
 ```bash
 # Check memory usage by container
 docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}"
@@ -325,6 +389,7 @@ curl -s http://localhost:9090/api/v1/status/tsdb | jq '.data.seriesCountByMetric
 ```
 
 **Mitigation:**
+
 ```bash
 # Drop high-cardinality metrics
 # Edit prometheus.yml, add metric_relabel_configs:
@@ -349,6 +414,7 @@ docker-compose up -d prometheus
 #### Issue: Targets showing as "DOWN"
 
 **Diagnosis:**
+
 ```bash
 # Check target details
 curl -s http://localhost:9090/api/v1/targets | \
@@ -361,6 +427,7 @@ curl -s http://localhost:9090/api/v1/targets | \
 ```
 
 **Solution:**
+
 ```bash
 # Verify service is running and /metrics endpoint works
 curl http://<target-host>:9100/metrics
@@ -377,6 +444,7 @@ curl -X POST http://localhost:9090/-/reload
 #### Issue: Grafana dashboard shows "No Data"
 
 **Diagnosis:**
+
 ```bash
 # Check if Prometheus datasource is configured
 curl -u admin:${GRAFANA_PASSWORD} \
@@ -392,6 +460,7 @@ curl -s http://localhost:9090/api/v1/query --data-urlencode 'query=up'
 ```
 
 **Solution:**
+
 ```bash
 # Re-add Prometheus datasource
 curl -X POST -u admin:${GRAFANA_PASSWORD} \
@@ -411,6 +480,7 @@ curl -X POST -u admin:${GRAFANA_PASSWORD} \
 ## Maintenance Procedures
 
 ### Daily Tasks
+
 ```bash
 # Check alert status
 make check-alerts
@@ -423,6 +493,7 @@ df -h prometheus-data/
 ```
 
 ### Weekly Tasks
+
 ```bash
 # Review alert firing history
 # Grafana → Alerting → Alert Rules → History
@@ -441,6 +512,7 @@ curl -X POST http://localhost:9093/api/v2/alerts \
 ```
 
 ### Monthly Tasks
+
 ```bash
 # Review and optimize PromQL queries
 # Check slow queries in Prometheus logs
@@ -461,6 +533,7 @@ docker-compose up -d
 ## Quick Reference
 
 ### Common Commands
+
 ```bash
 # Start stack
 make run
@@ -477,6 +550,7 @@ curl -G http://localhost:9090/api/v1/query --data-urlencode 'query=up'
 ```
 
 ### Emergency Response
+
 ```bash
 # P0: Restart Prometheus
 docker-compose restart prometheus
@@ -491,8 +565,28 @@ docker exec prometheus rm -rf /prometheus/wal/*
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** SRE Team
 - **Review Schedule:** Quarterly
 - **Feedback:** Submit PR with updates
+
+## Evidence & Verification
+
+Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
+
+**Evidence artifacts**
+- [Screenshot](./docs/evidence/screenshot.svg)
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

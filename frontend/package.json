@@ -12,7 +12,10 @@
     "type-check": "tsc --noEmit",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -45,7 +48,9 @@
     "@testing-library/react": "^14.1.2",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/user-event": "^14.5.1",
-    "jsdom": "^23.0.1"
+    "jsdom": "^23.0.1",
+    "@playwright/test": "^1.40.1",
+    "@vitest/coverage-v8": "^1.0.4"
   },
   "engines": {
     "node": ">=18.0.0",

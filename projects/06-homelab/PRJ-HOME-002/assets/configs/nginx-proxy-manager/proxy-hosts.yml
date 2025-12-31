@@ -1,0 +1,49 @@
+# Sanitized Nginx Proxy Manager proxy hosts
+# Replace example.com with your domain and update internal IPs as needed.
+
+proxy_hosts:
+  - name: proxmox
+    domain_names: ["proxmox.example.com"]
+    upstreams:
+      - { scheme: "https", host: "192.168.40.10", port: 8006 }
+    certificate: "Let's Encrypt - wildcard.example.com"
+    force_ssl: true
+    websocket_support: true
+    access_list: "admin-only"
+  - name: wikijs
+    domain_names: ["wiki.example.com"]
+    upstreams:
+      - { scheme: "http", host: "192.168.40.70", port: 3000 }
+    certificate: "Let's Encrypt - wildcard.example.com"
+    force_ssl: true
+    advanced_config: |
+      proxy_set_header X-Forwarded-Proto https;
+      proxy_set_header X-Forwarded-Ssl on;
+  - name: home-assistant
+    domain_names: ["home.example.com"]
+    upstreams:
+      - { scheme: "http", host: "192.168.40.71", port: 8123 }
+    certificate: "Let's Encrypt - wildcard.example.com"
+    force_ssl: true
+    websocket_support: true
+  - name: immich
+    domain_names: ["photos.example.com"]
+    upstreams:
+      - { scheme: "http", host: "192.168.40.72", port: 2283 }
+    certificate: "Let's Encrypt - wildcard.example.com"
+    force_ssl: true
+    websocket_support: true
+  - name: grafana
+    domain_names: ["grafana.example.com"]
+    upstreams:
+      - { scheme: "http", host: "192.168.40.60", port: 3000 }
+    certificate: "Let's Encrypt - wildcard.example.com"
+    force_ssl: true
+    basic_auth: true
+
+access_lists:
+  - name: admin-only
+    ips:
+      - "192.168.40.0/24"
+      - "10.10.10.0/24"
+    satisfy_any: false

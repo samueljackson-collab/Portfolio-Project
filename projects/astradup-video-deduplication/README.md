@@ -1,4 +1,8 @@
 # AstraDup - AI Video De-duplication System
+
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
 **Intelligent Multi-Modal Video Similarity Detection**
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
@@ -567,3 +571,46 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Team Size**: Lead ML Engineer + 2 supporting engineers + 1 data scientist
 **Status**: ✅ Production - Processing 10M+ videos monthly
 **Awards**: Best Innovation Project Award (Company Hackathon 2023)
+
+
+## Code Generation Prompts
+
+This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
+
+### Machine Learning Components
+
+#### 1. Training Pipeline
+```
+Create a PyTorch training pipeline with data loaders, model checkpointing, TensorBoard logging, and early stopping for a classification task
+```
+
+#### 2. Model Serving
+```
+Generate a FastAPI service that serves ML model predictions with request validation, batch inference support, and Prometheus metrics for latency/throughput
+```
+
+#### 3. Feature Engineering
+```
+Write a feature engineering pipeline that handles missing values, encodes categorical variables, normalizes numerical features, and creates interaction terms
+```
+
+### How to Use These Prompts
+
+1. **Copy the prompt** from the code block above
+2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
+3. **Provide context** to your AI assistant about:
+   - Your development environment and tech stack
+   - Existing code patterns and conventions in this project
+   - Any constraints or requirements specific to your use case
+4. **Review and adapt** the generated code before using it
+5. **Test thoroughly** and adjust as needed for your specific scenario
+
+### Best Practices
+
+- Always review AI-generated code for security vulnerabilities
+- Ensure generated code follows your project's coding standards
+- Add appropriate error handling and logging
+- Write tests for AI-generated components
+- Document any assumptions or limitations
+- Keep sensitive information (credentials, keys) in environment variables
+

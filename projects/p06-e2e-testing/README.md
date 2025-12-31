@@ -1,5 +1,9 @@
 # P06 — Web App Automated Testing (E2E)
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 End-to-end testing framework using Playwright for web application testing, with parallel execution, visual regression testing, and CI/CD integration via GitHub Actions. Demonstrates modern QA automation practices, cross-browser testing, and comprehensive test reporting.
 
@@ -58,6 +62,8 @@ make report
 
 ## Configuration
 
+**Target URL**: Set `BASE_URL` to the application under test. Local default is `http://localhost:3000`; staging example: `https://staging.example.com`.
+
 | Env Var | Purpose | Example | Required |
 |---------|---------|---------|----------|
 | `BASE_URL` | Target application URL | `https://example.com` | Yes |
@@ -73,6 +79,11 @@ make report
 cp .env.example .env
 # Edit .env with your test credentials
 ```
+
+**CI Secrets (GitHub Actions)**:
+- `P06_BASE_URL` (target URL)
+- `P06_TEST_USER`
+- `P06_TEST_PASSWORD`
 
 ## Testing
 
@@ -99,10 +110,11 @@ npx playwright test --update-snapshots
 ## Operations
 
 ### Logs, Metrics, Traces
-- **Test Reports**: `playwright-report/index.html` (generated after test run)
+- **Test Reports**: `reports/playwright-html/index.html` (generated after test run)
+- **Machine-readable Reports**: `reports/playwright-report.json`, `reports/playwright-junit.xml`
 - **Trace Viewer**: `npx playwright show-trace trace.zip`
-- **Screenshots**: `test-results/` directory (on failure)
-- **Videos**: `test-results/` directory (configurable)
+- **Screenshots**: `reports/test-results/` directory (on failure)
+- **Videos**: `reports/test-results/` directory (configurable)
 
 ### Common Issues & Fixes
 
@@ -141,3 +153,64 @@ npx playwright test --update-snapshots
 - [Page Object Model Pattern](https://playwright.dev/docs/pom)
 - [Visual Comparisons](https://playwright.dev/docs/test-snapshots)
 - [CI/CD Integration](https://playwright.dev/docs/ci)
+
+
+## Code Generation Prompts
+
+This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
+
+### Test Automation
+
+#### 1. End-to-End Tests
+```
+Create Playwright tests for a login flow, including form validation, authentication error handling, and successful redirect to dashboard
+```
+
+#### 2. API Tests
+```
+Generate pytest-based API tests that verify REST endpoints for CRUD operations, including request/response validation, error cases, and authentication
+```
+
+#### 3. Performance Tests
+```
+Write a Locust load test that simulates 100 concurrent users performing read/write operations, measures response times, and identifies bottlenecks
+```
+
+### How to Use These Prompts
+
+1. **Copy the prompt** from the code block above
+2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
+3. **Provide context** to your AI assistant about:
+   - Your development environment and tech stack
+   - Existing code patterns and conventions in this project
+   - Any constraints or requirements specific to your use case
+4. **Review and adapt** the generated code before using it
+5. **Test thoroughly** and adjust as needed for your specific scenario
+
+### Best Practices
+
+- Always review AI-generated code for security vulnerabilities
+- Ensure generated code follows your project's coding standards
+- Add appropriate error handling and logging
+- Write tests for AI-generated components
+- Document any assumptions or limitations
+- Keep sensitive information (credentials, keys) in environment variables
+
+## Evidence & Verification
+
+Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
+
+**Evidence artifacts**
+- [Screenshot](./docs/evidence/screenshot.svg)
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

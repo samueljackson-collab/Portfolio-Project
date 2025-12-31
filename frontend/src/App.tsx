@@ -7,7 +7,7 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context'
-import { Navbar, ProtectedRoute } from './components'
+import { Navbar, ProtectedRoute, ErrorBoundary } from './components'
 import {
   Home,
   Login,
@@ -16,15 +16,17 @@ import {
   HomeAssistant,
   EnterprisePortfolio,
   PhotosPage,
-  OrchestrationConsole
+  OrchestrationConsole,
+  SecuritySimulators
 } from './pages'
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <div className="min-h-screen bg-gray-50">
-          <Navbar />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <div className="min-h-screen bg-gray-50">
+            <Navbar />
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
@@ -58,13 +60,22 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/security-simulators"
+              element={
+                <ProtectedRoute>
+                  <SecuritySimulators />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Catch-all redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </div>
-      </AuthProvider>
-    </BrowserRouter>
+          </div>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

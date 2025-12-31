@@ -5,6 +5,12 @@ This directory contains sanitized sample logs from homelab virtualization operat
 
 ## Available Log Samples
 
+### proxmox-cluster-health.txt
+**Purpose:** Proxmox cluster status summary with Ceph health and node utilization.
+
+### pbs-backup-job.txt
+**Purpose:** Nightly Proxmox Backup Server job summary with verification status.
+
 ### vm-deployment-sample.log
 **Purpose:** Complete VM deployment walkthrough using Proxmox and cloud-init
 **Content:**

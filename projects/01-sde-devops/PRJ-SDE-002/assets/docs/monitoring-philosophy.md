@@ -1,29 +1,47 @@
-# Monitoring Philosophy (USE + RED)
+# Monitoring & Alerting Philosophy (USE/RED)
 
-This stack applies the **USE** and **RED** methodologies to keep signals aligned to resource health and user experience while remaining noise-aware.
-
-## USE (Utilization, Saturation, Errors)
-- **Utilization:** Track how busy each resource is (CPU, memory, disk, network) with per-instance and fleet rollups.
-- **Saturation:** Measure queued work and contention (run-queue length, disk I/O wait, TCP retransmits) to catch pressure before failure.
-- **Errors:** Surface systemic faults (filesystem errors, exporter scrape failures, backup job non-zero exits) with explicit severities.
-
-### USE Implementation Map
-- **Prometheus** collects node-level metrics with 15s scrape intervals and 30s rule evaluations.
-- **Recording rules** pre-aggregate CPU, memory, disk, and network ratios to cut dashboard latency.
-- **Alert rules** distinguish critical saturation (95%+) from early-warning (80-90%) to minimize alert fatigue.
-
-## RED (Rate, Errors, Duration)
-- **Rate:** Request throughput and log ingest volume are sampled to spot unexpected traffic shifts.
-- **Errors:** HTTP 5xx, gRPC failures, and log-derived error counts drive service reliability alerts.
-- **Duration:** Response time percentiles (p50/p95/p99) power SLO tracking and regression detection.
-
-### RED Implementation Map
-- **Blackbox probes** track external availability for key URLs (staging and production).
-- **Application dashboards** chart request rate vs. error rate to surface outliers.
-- **Alertmanager routes** map RED-derived alerts to runbooks with explicit acknowledgement targets.
+This document explains the monitoring strategy used in PRJ-SDE-002, pairing the **USE** (Utilization, Saturation, Errors) method for infrastructure components with the **RED** (Rate, Errors, Duration) method for request-driven services.
 
 ## Guiding Principles
-1. **Actionable by default:** Every alert links to a runbook entry with first-response steps.
-2. **Dashboards support decisions:** Visuals pair saturation with dependency health (e.g., CPU vs. queue depth) to prevent single-signal bias.
-3. **Backups are part of observability:** PBS job status and retention drift are surfaced like any other SLI to keep recovery guarantees visible.
-4. **Sanitized evidence:** All shared artifacts remove sensitive hostnames, IP addresses, and credentials; any value that looks real is a placeholder.
+- **Simplicity first:** Default to a handful of golden signals per component; only add panels when they answer a recurring question.
+- **Actionability:** Every alert maps to a runbook link and an expected response time.
+- **Separation of concerns:** Metrics, logs, and traces remain isolated but are correlated through consistent labels (`project="PRJ-SDE-002"`, `service`, `instance`).
+- **Sanitized by design:** Configs and screenshots remove customer data, tokens, and routable IPs.
+
+## USE: Infrastructure
+- **Utilization:** CPU, memory, and disk usage from Node Exporter and cAdvisor panels (`infrastructure-overview.json`).
+- **Saturation:** Disk I/O wait, network saturation, and queue depth panels help catch headroom issues before errors appear.
+- **Errors:** Filesystem errors, failed scrapes, and service restarts feed into the `Infrastructure Availability` panel and `HostDown` alert.
+
+## RED: Services
+- **Rate:** HTTP request volume, gRPC QPS, and job throughput appear in `application-metrics.json` and `alert-operations.json`.
+- **Errors:** 4xx/5xx ratios and retry rates are routed to the `Error Budget` panel and `HighErrorRate` alert.
+- **Duration:** p50/p95 latency heatmaps backstop SLO monitoring; budget burn alerts fire when sustained latency exceeds SLOs.
+
+## Dashboard Rationale
+- **Infrastructure Overview:** Immediate health via golden signals and exporter uptime; aligns to USE.
+- **Application Metrics:** Request patterns, error ratios, and worker saturation; aligns to RED.
+- **Alert Operations:** Combines alert volume, MTTA/MTTR, and silences to validate alert hygiene.
+- **PBS Backups:** Tracks backup duration, throughput, dedup ratio, and retention horizon to ensure RPO/RTO.
+
+## Alert Runbooks
+- Alerts map to runbooks in `assets/runbooks/` with quick links embedded in Alertmanager templates.
+- Each runbook contains: symptoms, validation commands, a decision tree, and rollback guidance.
+- Critical alerts (`HostDown`, `BackupJobFailed`, `LogErrorRate`) page on-call; warnings generate tickets for follow-up.
+
+## Backups & Recovery
+- PBS job definitions are in `backups/pbs-job-plan.yaml`; retention validation is captured in `pbs-retention-report.md`.
+- Backup verification uses `scripts/verify-pbs-backups.sh` to test restores in a sandbox.
+- Grafana and Prometheus volumes are captured as part of the `observability-stack` job to maintain dashboards and TSDB continuity.
+
+## Lessons Learned
+- Align dashboards to questions operators actually ask; prune noisy panels monthly.
+- Budget burn alerts outperformed raw error counts for catching partial outages.
+- Stagger PBS jobs to avoid NFS saturation and to keep Prometheus I/O headroom stable.
+- Always export dashboards and configs immediately after an incident while context is fresh.
+
+## Sanitization Checklist
+- [x] Webhooks and email addresses replaced with placeholders.
+- [x] IPs/hostnames reduced to non-routable examples.
+- [x] Screenshots rendered with demo data only.
+- [x] Backups and job exports omit credentials and tokens.

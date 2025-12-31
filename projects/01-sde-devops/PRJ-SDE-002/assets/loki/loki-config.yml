@@ -1,38 +1,64 @@
 auth_enabled: false
+
 server:
   http_listen_port: 3100
+  grpc_listen_port: 9096
 
-ingester:
-  lifecycler:
-    ring:
-      kvstore:
-        store: memberlist
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
 
 schema_config:
   configs:
-    - from: 1970-01-01
+    - from: 2023-01-01
       store: boltdb-shipper
       object_store: filesystem
-      schema: v12
+      schema: v11
       index:
         prefix: index_
         period: 24h
 
 storage_config:
   boltdb_shipper:
-    active_index_directory: /data/loki/index
-    cache_location: /data/loki/cache
+    active_index_directory: /loki/boltdb-shipper-active
+    cache_location: /loki/boltdb-shipper-cache
+    cache_ttl: 24h
+    shared_store: filesystem
   filesystem:
-    directory: /data/loki/chunks
+    directory: /loki/chunks
 
 compactor:
-  retention_enabled: true
+  working_directory: /loki/boltdb-shipper-compactor
+  shared_store: filesystem
 
 limits_config:
-  retention_period: 720h
+  retention_period: 30d
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  ingestion_rate_mb: 16
+  ingestion_burst_size_mb: 24
+  max_query_series: 100000
+  max_query_parallelism: 32
+
+chunk_store_config:
+  max_look_back_period: 30d
 
 ruler:
-  alertmanager:
-    url: http://alertmanager:9093
-
-# Sanitized example: filesystem paths and endpoints are portfolio-safe defaults.
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /loki/rules-temp
+  alertmanager_url: http://alertmanager:9093
+  ring:
+    kvstore:
+      store: inmemory
+  enable_api: true

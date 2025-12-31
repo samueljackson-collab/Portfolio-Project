@@ -1,0 +1,52 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: demand-forecast
+  namespace: mlops
+  annotations:
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 10
+    scaleTarget: 80
+    scaleMetric: concurrency
+    canaryTrafficPercent: 10
+    serviceAccountName: kserve-sa
+    containers:
+    - name: kserve-container
+      image: your-registry/demand-forecast-predictor:v1
+      env:
+      - name: MLFLOW_TRACKING_URI
+        value: "http://mlflow-server.mlops.svc.cluster.local:5000"
+      - name: MODEL_NAME
+        value: "demand-forecast"
+      - name: MODEL_VERSION
+        value: "1"
+      - name: FEAST_REPO_PATH
+        value: "/feast/feature_repo"
+      resources:
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+        limits:
+          cpu: "4"
+          memory: "8Gi"
+      ports:
+      - containerPort: 8080
+        protocol: TCP
+      livenessProbe:
+        httpGet:
+          path: /v1/models/demand-forecast
+          port: 8080
+        initialDelaySeconds: 30
+      readinessProbe:
+        httpGet:
+          path: /v1/models/demand-forecast
+          port: 8080
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kserve-sa
+  namespace: mlops

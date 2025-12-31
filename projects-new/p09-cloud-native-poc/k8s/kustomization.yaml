@@ -1,0 +1,53 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: poc-api
+  namespace: poc-api
+
+# Resources
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - rbac.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+# Namespace
+namespace: poc-api
+
+# Common labels applied to all resources
+commonLabels:
+  app: poc-api
+  project: poc
+
+# Images configuration
+images:
+  - name: poc-api
+    newName: poc-api
+    newTag: latest
+
+# Replicas (can be overridden by overlays)
+replicas:
+  - name: poc-api
+    count: 3
+
+# Patches for customization
+patches:
+  - target:
+      kind: Deployment
+      name: poc-api
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+
+# ConfigMap generator (alternative to committed files)
+# configMapGenerator:
+#   - name: poc-api-config
+#     behavior: merge
+#     literals:
+#       - APP_NAME="POC API"

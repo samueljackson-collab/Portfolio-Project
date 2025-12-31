@@ -1,0 +1,14 @@
+version: '3.9'
+services:
+  producer:
+    build: ../
+    command: python producer/main.py --profile urban --events 200
+    volumes:
+      - ../:/app
+  consumer:
+    build: ../
+    command: python consumer/main.py --ingest-file out/events.jsonl
+    volumes:
+      - ../:/app
+    depends_on:
+      - producer

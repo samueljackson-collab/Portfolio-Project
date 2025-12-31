@@ -1,5 +1,9 @@
 # PRJ-CYB-BLUE-001: AWS SIEM Pipeline with OpenSearch
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 **COMPLETE**
 **Category:** Cybersecurity / Blue Team / Security Engineering
 **Technologies:** AWS OpenSearch, Kinesis Firehose, Lambda, GuardDuty, VPC Flow Logs, CloudTrail, Python

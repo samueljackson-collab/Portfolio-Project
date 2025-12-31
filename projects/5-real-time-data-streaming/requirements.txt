@@ -1,0 +1,8 @@
+kafka-python>=2.0.2
+apache-flink>=1.17.0
+apache-flink-libraries>=1.17.0
+confluent-kafka>=2.1.0
+avro-python3>=1.10.2
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0

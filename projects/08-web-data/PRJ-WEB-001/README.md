@@ -1,6 +1,10 @@
 # Commercial E-commerce & Booking Systems
 
-**Status:** 🔄 Recovery
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
+**Status:** 🔄 Recovery (artifacts published; screenshots pending)
 
 ## Description
 
@@ -9,14 +13,33 @@ Previously built and managed: resort booking site; high-SKU flooring store; tour
 ## Links
 
 - [Parent Documentation](../../../README.md)
+- [Recovery Log](./RECOVERY.md)
+- [Runbooks](./assets/docs/runbooks/)
+- [Case Studies](./assets/docs/case-studies/recovery-case-studies.md)
+- [Architecture & ERD](./assets/diagrams/architecture.md)
+- [Sanitized Code Samples](./assets/code/)
 
-## Next Steps
+## Recovery Status
 
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
+- Capture sanitized screenshots for catalog, booking calendar, and checkout flows.
+- Add final evidence of deployment rehearsal using the rebuilt runbooks.
 
-## Contact
+### Completed in this drop
+- Backup catalog drafted with storage locations and verification checks.
+- Reconstructed database ERD and data workflows for booking, catalog, and pricing updates.
+- Deployment and content operations runbooks recreated with recovery-safe procedures.
+- Published sanitized SQL/PHP excerpts plus anonymized screenshot index.
+- Documented lessons learned, anonymization guardrails, and case-study narrative.
 
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
+### Upcoming
+- Add redacted performance metrics and monitoring snapshots.
+- Publish additional PHP plugin excerpts for discount logic and feed integrations.
+- Produce video walkthroughs for the deployment and rollback flows.
+
+---
+## Code Generation Prompts
+- [x] README scaffold produced from the [Project README generation prompt](../../../AI_PROMPT_LIBRARY.md#project-readme-baseline).
+- [x] Recovery checklist aligned to the [Prompt Execution Framework workflow](../../../AI_PROMPT_EXECUTION_FRAMEWORK.md#workflow).
 
 ---
 *Placeholder — Documentation pending*
@@ -100,54 +123,32 @@ Between 2015-2022, I designed, built, and managed multiple data-heavy commercial
 
 ## Recovery Plan
 
-### Week 1: Catalog and Restore (Current Phase)
-- [ ] Locate and extract data from backup exports
-- [ ] Reconstruct database schema diagrams
-- [ ] Document SQL workflow patterns from memory
-- [ ] Identify recoverable code snippets or configuration files
+### Week 1: Catalog and Restore (Complete)
+- [x] Locate and extract data from backup exports
+- [x] Reconstruct database schema diagrams
+- [x] Document SQL workflow patterns from memory
+- [x] Identify recoverable code snippets or configuration files
 
-### Week 2: Re-document Processes
-- [ ] Recreate content management runbooks
-- [ ] Document deployment procedures
-- [ ] Rebuild automation script templates
-- [ ] Capture architectural decisions and rationale
+### Week 2: Re-document Processes (Complete)
+- [x] Recreate content management runbooks
+- [x] Document deployment procedures
+- [x] Rebuild automation script templates
+- [x] Capture architectural decisions and rationale
 
-### Week 3: Publish Artifacts
-- [ ] Create sanitized code examples (remove client-specific info)
-- [ ] Write project narratives with before/after metrics
-- [ ] Publish architecture diagrams
+### Week 3: Publish Artifacts (In Progress)
+- [x] Create sanitized code examples (remove client-specific info)
+- [x] Write project narratives with before/after metrics
+- [x] Publish architecture diagrams
 - [ ] Document lessons learned
 
 ---
 
-## What Will Be Published
+## Published Evidence (Current)
 
-Once recovery is complete, this directory will contain:
-
-### Documentation
-- **Architecture Overview** - System design and component interaction
-- **Data Workflows** - How catalog updates, bookings, and inventory were managed
-- **Operational Runbooks** - Step-by-step procedures for common tasks
-- **Lessons Learned** - What worked, what didn't, and what I'd do differently
-
-### Code Examples (Sanitized)
-- SQL scripts for bulk operations (anonymized)
-- WordPress plugin snippets for custom functionality
-- Automation examples for scheduled tasks
-- API integration patterns
-
-### Visual Evidence
-- Architecture diagrams showing system components
-- Database ERD (entity-relationship diagrams)
-- Screenshots of admin interfaces (if available)
-- Performance metrics and analytics data
-
-### Case Studies
-- Problem-solution narratives for key challenges
-- Quantified outcomes (load time improvements, automation time savings)
-- Client feedback and testimonials (with permission)
-
----
+- **Documentation:** Architecture + ERD walkthrough ([architecture.md](./assets/diagrams/architecture.md)), recovery log ([RECOVERY.md](./RECOVERY.md)), deployment and content runbooks ([assets/docs/runbooks/](./assets/docs/runbooks/)).
+- **Sanitized Code:** SQL backup and validation workflows ([assets/code/sql/](./assets/code/sql/)) and PHP booking calculator excerpt ([assets/code/php/](./assets/code/php/)).
+- **Case Studies:** Issue → remediation → outcome narratives ([recovery-case-studies.md](./assets/docs/case-studies/recovery-case-studies.md)).
+- **Visuals:** Screenshot plan documented ([assets/screenshots/README.md](./assets/screenshots/README.md)); captures to follow.
 
 ## Lessons from Data Loss
 
@@ -173,8 +174,6 @@ This experience taught valuable lessons about:
 
 These are now core practices in my current work and homelab projects.
 
----
-
 ## Skills Demonstrated (Once Recovered)
 
 - **WordPress & WooCommerce** - Custom plugin development, theme customization
@@ -187,17 +186,15 @@ These are now core practices in my current work and homelab projects.
 - **SEO** - On-page optimization, structured data, content strategy
 - **Documentation** - Runbooks, process docs, technical writing
 
----
-
 ## Timeline
 
 | Phase | Target Date | Status |
 |-------|-------------|--------|
-| Data Recovery | Week 1 | 🔄 Not Started |
-| Process Documentation | Week 2 | ⏸️ Waiting |
-| Artifact Publication | Week 3 | ⏸️ Waiting |
+| Data Recovery | Week 1 | ✅ Complete |
+| Process Documentation | Week 2 | ✅ Complete |
+| Artifact Publication | Week 3 | 🔄 In Progress (screenshots pending) |
 
-**Last Updated:** October 28, 2025
+**Last Updated:** November 13, 2025
 
 ---
 
@@ -209,4 +206,4 @@ For questions about this project or the recovery process, reach out via:
 
 ---
 
-**Note:** Client names and proprietary code will not be published. All examples will be sanitized, anonymized, or recreated for demonstration purposes.
+**Last Updated:** December 6, 2025

@@ -3,35 +3,79 @@
 
 global:
   resolve_timeout: 5m
-  smtp_smarthost: 'smtp.example.internal:587'
-  smtp_from: 'alerts@example.internal'
-  smtp_auth_username: '${ALERTMANAGER_SMTP_USERNAME}'
+  # Email configuration (example - replace with actual SMTP settings)
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@homelab.local'
+  smtp_auth_username: 'alerts@homelab.local'
   smtp_auth_password: '${ALERTMANAGER_SMTP_PASSWORD}'
   smtp_require_tls: true
   slack_api_url: '${ALERTMANAGER_SLACK_WEBHOOK_URL}'
 
+# Templates for custom notification formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alert distribution
 route:
   group_by: ['alertname', 'cluster', 'service']
   group_wait: 15s
   group_interval: 10s
-  repeat_interval: 6h
-  receiver: 'critical-all'
+  repeat_interval: 12h
+  receiver: 'default'
+  
   routes:
-    - matchers: ['severity="critical"']
-      receiver: 'critical-all'
-    - matchers: ['severity="warning"']
-      receiver: 'warning-slack'
-    - matchers: ['category="backup"']
-      receiver: 'backup-team'
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: false
+      group_wait: 0s
+      repeat_interval: 5m
 
+    # Infrastructure alerts
+    - match:
+        category: infrastructure
+      receiver: 'infrastructure-team'
+      continue: true
+      
+    # Application alerts
+    - match:
+        category: application
+      receiver: 'application-team'
+      continue: true
+
+    # Security alerts
+    - match:
+        category: security
+      receiver: 'security-team'
+      continue: false
+
+# Inhibition rules - suppress certain alerts when others are firing
+inhibit_rules:
+  # Suppress warning alerts if critical alert is firing for same service
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance', 'service']
+
+  # Suppress all alerts if instance is down
+  - source_match:
+      alertname: 'NodeExporterDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['instance']
+
+# Receiver configurations
 receivers:
-  - name: 'critical-all'
+  # Default receiver (fallback)
+  - name: 'default'
     email_configs:
       - to: 'oncall@example.internal'
         headers:
-          Subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }} - {{ .GroupLabels.instance }}'
-        html: |-
-          <h3>Critical Alert</h3>
+          subject: '[Homelab Alert] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Critical Alert Firing</h2>
           <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
           <p><strong>Instance:</strong> {{ .GroupLabels.instance }}</p>
           <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
@@ -43,29 +87,40 @@ receivers:
           *Alert:* {{ .GroupLabels.alertname }}\n*Instance:* {{ .GroupLabels.instance }}\n*Runbook:* {{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}
         color: 'danger'
 
-  - name: 'warning-slack'
-    slack_configs:
-      - channel: '#portfolio-monitoring'
-        title: '⚠️ Warning Alert'
-        text: |-
-          *Alert:* {{ .GroupLabels.alertname }}\n*Instance:* {{ .GroupLabels.instance }}\n*Details:* {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
-        color: 'warning'
-
-  - name: 'backup-team'
+  # Critical alerts - multiple notification channels
+  - name: 'critical-alerts'
     email_configs:
-      - to: 'backup-team@example.internal'
+      - to: 'admin@homelab.local'
         headers:
-          Subject: '💾 Backup Alert: {{ .GroupLabels.alertname }}'
-        html: |-
-          <p>Backup-related alert firing.</p>
-          <p>{{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+          subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+        send_resolved: true
+    # Uncomment and configure for other notification methods:
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    #     channel: '#alerts-critical'
+    #     title: 'Critical Alert: {{ .GroupLabels.alertname }}'
+    #     text: '{{ .CommonAnnotations.description }}'
+    # pagerduty_configs:
+    #   - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
 
-inhibit_rules:
-  - source_matchers: ['severity="critical"']
-    target_matchers: ['severity="warning"']
-    equal: ['alertname', 'instance']
-  - source_matchers: ['alertname="HostDown"']
-    target_matchers: ['alertname=~"HighCPUUsage|HighMemoryUsage|DiskSpaceWarning"']
-    equal: ['instance']
+  # Infrastructure team alerts
+  - name: 'infrastructure-team'
+    email_configs:
+      - to: 'infra@homelab.local'
+        headers:
+          subject: '[Infrastructure] {{ .GroupLabels.alertname }}'
 
-# Sanitized placeholders only; configure real URLs and secrets via environment variables.
+  # Application team alerts
+  - name: 'application-team'
+    email_configs:
+      - to: 'apps@homelab.local'
+        headers:
+          subject: '[Application] {{ .GroupLabels.alertname }}'
+
+  # Security team alerts
+  - name: 'security-team'
+    email_configs:
+      - to: 'security@homelab.local'
+        headers:
+          subject: '[SECURITY] {{ .GroupLabels.alertname }}'
+        send_resolved: true

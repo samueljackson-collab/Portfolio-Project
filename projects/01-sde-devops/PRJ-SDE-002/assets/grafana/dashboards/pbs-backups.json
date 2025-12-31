@@ -1,0 +1,61 @@
+{
+  "id": null,
+  "uid": "pbs-backups",
+  "title": "PBS Backups",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "1m",
+  "time": {"from": "now-7d", "to": "now"},
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Backup Duration",
+      "id": 1,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "rate(pbs_job_duration_seconds_sum[5m]) / rate(pbs_job_duration_seconds_count[5m])", "legendFormat": "avg duration"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []}
+    },
+    {
+      "type": "stat",
+      "title": "Dedup Ratio (Rolling 24h)",
+      "id": 2,
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "avg(pbs_dedup_ratio{job=\"pbs\"})", "legendFormat": "dedup"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []}
+    },
+    {
+      "type": "bargauge",
+      "title": "Retention Horizon",
+      "id": 3,
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 8},
+      "options": {"displayMode": "gradient", "orientation": "horizontal"},
+      "targets": [
+        {"expr": "pbs_restore_points_retained_days", "legendFormat": "{{job}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "d"}, "overrides": []}
+    },
+    {
+      "type": "table",
+      "title": "Job Status (Last Run)",
+      "id": 4,
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {"expr": "pbs_job_last_status", "legendFormat": "{{job}}"}
+      ],
+      "options": {
+        "showHeader": true,
+        "columns": []
+      },
+      "fieldConfig": {
+        "defaults": {"custom": {"displayMode": "color-background"}},
+        "overrides": []
+      }
+    }
+  ],
+  "templating": {"list": []},
+  "annotations": {"list": []}
+}

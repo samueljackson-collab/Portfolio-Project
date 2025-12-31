@@ -1,21 +1,35 @@
 # PRJ-SDE-002: Observability & Backups Stack
 
-**Status:** 🟢 Complete | **Category:** System Development Engineering / DevOps
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
+**Status:** 🟢 Completed  
+**Category:** System Development Engineering / DevOps  
+**Technologies:** Prometheus, Grafana, Loki, Alertmanager, Proxmox Backup Server
+
+Comprehensive monitoring, logging, alerting, and backup automation for the homelab portfolio. The stack is designed around the USE/RED philosophies, emphasizes alert hygiene with linked runbooks, and documents PBS backup posture with verification evidence.
+
+## Quick Links
+- [Assets Index](./assets/README.md)
+- [Monitoring Philosophy (USE/RED)](./assets/docs/monitoring-philosophy.md)
+- [Alert Runbooks](./assets/runbooks/ALERT_RESPONSES.md)
+- [Operational Runbook](./assets/runbooks/OPERATIONAL_RUNBOOK.md)
+- [Grafana Dashboards](./assets/grafana/dashboards)
+- [Screenshots](./assets/screenshots)
+- [Log Samples](./assets/logs)
+- [Prometheus/Alertmanager/Loki/Promtail Configs](./assets/configs)
+- [PBS Jobs & Retention Evidence](./assets/backups)
+- [Parent Documentation](../../../README.md)
+
+**Sanitization:** All artifacts use placeholder hosts/webhooks and demo data. Screenshots are scrubbed; configs omit credentials.
 
 Monitoring, logging, alerting, and backup stack built with Prometheus, Grafana, Loki, Alertmanager, Promtail, and Proxmox Backup Server (PBS). All assets are sanitized for portfolio sharing.
 
-## Quick Links
-- **Assets hub:** [`assets/`](./assets/README.md)
-- **Monitoring philosophy:** [`monitoring-philosophy.md`](./assets/docs/monitoring-philosophy.md)
-- **Dashboard rationale:** [`dashboard-rationale.md`](./assets/docs/dashboard-rationale.md)
-- **Runbook index:** [`ALERT_RUNBOOK_INDEX.md`](./assets/runbooks/ALERT_RUNBOOK_INDEX.md)
-- **PBS artifacts & lessons:** [`backups-and-lessons.md`](./assets/docs/backups-and-lessons.md)
-- **Grafana dashboards:** [`grafana/dashboards/`](./assets/grafana/dashboards)
-- **Configs:** [`configs/`](./assets/configs) & [`alertmanager.yml`](./assets/alertmanager/alertmanager.yml) & [`loki/promtail-config.yml`](./assets/loki/promtail-config.yml)
-- **Screenshots:** [`screenshots/`](./assets/screenshots)
-
 ## Overview
-Implemented a comprehensive monitoring, logging, alerting, and backup stack to observe homelab infrastructure and ensure data resilience through automated backups. Assets in this repo mirror the real deployment but are sanitized (placeholders, redacted identifiers, synthetic screenshots).
+Implemented a comprehensive monitoring, logging, and alerting stack to observe homelab infrastructure and ensure data resilience through automated backups.
+
+## Architecture
 
 ## Architecture Snapshot
 ### Monitoring (Prometheus)
@@ -81,20 +95,20 @@ Implemented a comprehensive monitoring, logging, alerting, and backup stack to o
 │   Targets   │────▶│  Exporters  │────▶│ Prometheus  │
 │ (VMs/Hosts) │     │ (Port 9100+)│     │ (Port 9090) │
 └─────────────┘     └─────────────┘     └──────┬──────┘
-                                               │
-                    ┌──────────────────────────┼──────────────────────────┐
-                    │                          │                          │
-                    ▼                          ▼                          ▼
-            ┌───────────────┐         ┌──────────────┐         ┌─────────────┐
-            │ Alertmanager  │         │   Grafana    │         │    Loki     │
-            │  (Port 9093)  │         │ (Port 3000)  │         │ (Port 3100) │
-            └───────┬───────┘         └──────────────┘         └──────┬──────┘
-                    │                                                  │
-                    ▼                                                  ▼
-            ┌───────────────┐                                  ┌─────────────┐
-            │ Slack/Email   │                                  │  Promtail   │
-            │ Notifications │                                  │  (Logs)     │
-            └───────────────┘                                  └─────────────┘
+                                              │
+                   ┌──────────────────────────┼──────────────────────────┐
+                   │                          │                          │
+                   ▼                          ▼                          ▼
+           ┌───────────────┐         ┌──────────────┐         ┌─────────────┐
+           │ Alertmanager  │         │   Grafana    │         │    Loki     │
+           │  (Port 9093)  │         │ (Port 3000)  │         │ (Port 3100) │
+           └───────┬───────┘         └──────────────┘         └──────┬──────┘
+                   │                                                  │
+                   ▼                                                  ▼
+           ┌───────────────┐                                  ┌─────────────┐
+           │ Slack/Email   │                                  │  Promtail   │
+           │ Notifications │                                  │  (Logs)     │
+           └───────────────┘                                  └─────────────┘
 ```
 
 **Data Flow Overview**
@@ -102,20 +116,9 @@ Implemented a comprehensive monitoring, logging, alerting, and backup stack to o
 2. **Log Shipping**: Promtail agents tail log files and push to Loki (port 3100).
 3. **Scraping**: Prometheus scrapes all exporters every 15 seconds, evaluates alert rules every 30 seconds.
 4. **Storage**: Prometheus stores metrics locally with 30-day retention; Loki stores logs with 14-day retention.
-5. **Alerting**: Alertmanager receives alerts from Prometheus, groups/routes them to notification channels.
+5. **Alerting**: Alertmanager receives alerts from Prometheus, groups/routes them to Slack channel #homelab-alerts.
 6. **Visualization**: Grafana queries Prometheus and Loki, renders dashboards on port 3000.
-7. **Backup**: PBS runs nightly at 02:00; snapshots are stored on NAS-backed storage (sanitized).
-
-## Monitoring Philosophy (USE + RED)
-- **USE:** Utilization, Saturation, and Errors across CPU, memory, disk, and network; saturation thresholds aligned to alert severities.
-- **RED:** Request Rate, Errors, and Duration for applications; probes plus service metrics power reliability views.
-- Details and mapping to dashboards/alerts live in [`monitoring-philosophy.md`](./assets/docs/monitoring-philosophy.md).
-
-## Dashboards & Runbooks
-- Exportable Grafana JSON for infrastructure, application reliability, and alert/backup overviews inside [`grafana/dashboards/`](./assets/grafana/dashboards).
-- Dashboard design choices and sanitization details in [`dashboard-rationale.md`](./assets/docs/dashboard-rationale.md).
-- Alert-to-runbook mapping: see [`ALERT_RUNBOOK_INDEX.md`](./assets/runbooks/ALERT_RUNBOOK_INDEX.md); runbooks point to local sanitized procedures instead of private URLs.
-- Screenshots for portfolio evidence reside in [`assets/screenshots`](./assets/screenshots) (generated from synthetic sample data).
+7. **Backup**: PBS runs nightly at 02:00, snapshots are stored on TrueNAS NFS share at <NFS_SERVER>:/mnt/<DATASTORE>/backups.
 
 ## Key Dashboards
 ### Infrastructure Overview
@@ -281,10 +284,32 @@ groups:
 - Stored with 5-minute granularity for 90 days.
 - Used in high-traffic dashboards and alerting rules.
 
-## Lessons Learned (Highlights)
-- Recording rules and templated dashboards keep Grafana responsive while retaining USE/RED fidelity.
-- Alert inhibition and routing reduced noise and tightened response expectations for critical vs. warning issues.
-- Backup verification and scheduled restore drills caught retention drift early and shortened recovery time.
+## Skills Demonstrated
+
+- Metrics collection and time-series databases
+- Dashboard design and visualization
+- Log aggregation and analysis
+- Alert design and tuning (reducing noise)
+- Backup automation and verification
+- Observability best practices (SLIs, SLOs, SLAs)
+
+## Observability Philosophy
+
+Following the **USE Method** (Utilization, Saturation, Errors):
+- **Utilization:** How busy is the resource?
+- **Saturation:** How much extra work is queued?
+- **Errors:** What errors are occurring?
+
+And the **RED Method** (Rate, Errors, Duration) for services:
+- **Rate:** Requests per second
+- **Errors:** Failed requests per second
+- **Duration:** Response time distribution
+
+## Documentation Status
+
+📝 Dashboard exports, Prometheus configurations, alert rule examples, and backup evidence are provided in the `assets/` directory, including sanitized configs, screenshots, and PBS retention artifacts.
+
+## Lessons Learned
 
 ### Technical Insights
 1. **Metrics Backend Selection**: Started with InfluxDB but migrated to Prometheus for richer querying (PromQL), better alerting integration, and stronger community support. The migration took 3 days but improved query performance by ~40%.

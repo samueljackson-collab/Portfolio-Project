@@ -1,12 +1,12 @@
-# Prometheus Configuration - Portfolio Demo Stack (Sanitized)
-# Collects metrics from demo services for PRJ-SDE-002
+# Prometheus Configuration - PRJ-SDE-002 Demo Stack
+# Sanitized: hostnames/IPs replaced with placeholders, webhooks removed
 
 global:
   scrape_interval: 15s
   evaluation_interval: 30s
   external_labels:
     cluster: 'portfolio-demo'
-    environment: 'demo'
+    environment: 'lab'
 
 rule_files:
   - '/etc/prometheus/alerts/*.yml'
@@ -15,8 +15,7 @@ rule_files:
 alerting:
   alertmanagers:
     - static_configs:
-        - targets:
-            - alertmanager:9093
+        - targets: ['alertmanager:9093']
 
 scrape_configs:
   - job_name: 'prometheus'
@@ -49,6 +48,31 @@ scrape_configs:
           service: 'demo-api'
           project: 'PRJ-SDE-002'
           application: 'portfolio-api'
+
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://status.example.com/health
+        labels:
+          project: 'PRJ-SDE-002'
+          probe: 'synthetic'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: 'pbs-exporter'
+    static_configs:
+      - targets: ['pbs-exporter:9220']
+        labels:
+          service: 'pbs'
+          project: 'PRJ-SDE-002'
 
   - job_name: 'grafana'
     static_configs:

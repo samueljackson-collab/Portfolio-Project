@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: disaster-recovery-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: disaster-recovery-worker
+  template:
+    metadata:
+      labels:
+        app: disaster-recovery-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: worker
+          image: ghcr.io/example/disaster-recovery:latest
+          command: ["python", "consumer/worker.py"]
+          volumeMounts:
+            - name: artifacts
+              mountPath: /app/artifacts
+          securityContext:
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: artifacts
+          emptyDir: {}
