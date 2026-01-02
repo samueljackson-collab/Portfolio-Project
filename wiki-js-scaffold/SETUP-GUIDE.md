@@ -33,6 +33,7 @@ node scripts/import-to-wikijs.js
 ```
 
 **Cleanup:**
+
 ```bash
 docker stop wikijs-dev
 docker rm wikijs-dev
@@ -45,6 +46,7 @@ docker rm wikijs-dev
 **Use case:** Public-facing wiki with custom domain
 
 ### Prerequisites
+
 - Domain name pointing to your server (A record)
 - Server with Docker installed
 - Ports 80, 443, and 3000 open
@@ -202,6 +204,7 @@ git push
 ```
 
 **Team Workflow:**
+
 ```bash
 # Developer workflow
 git clone https://github.com/yourorg/wiki-content.git
