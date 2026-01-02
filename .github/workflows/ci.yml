@@ -15,7 +15,7 @@ jobs:
       packages: write
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}/migration-orchestrator
+      IMAGE_NAME: ${{ github.repository_owner }}/portfolio-project/migration-orchestrator
       IMAGE_TAG: ${{ github.sha }}
     services:
       postgres:
