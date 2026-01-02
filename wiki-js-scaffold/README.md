@@ -420,6 +420,7 @@ CACHE_TTL=3600
 ```
 
 **Database tuning:**
+
 ```sql
 -- Increase connection pool
 ALTER SYSTEM SET max_connections = 200;
@@ -429,6 +430,7 @@ ALTER SYSTEM SET shared_buffers = '256MB';
 ```
 
 **Nginx optimization:**
+
 ```nginx
 # Add to nginx.conf
 gzip on;
@@ -459,8 +461,8 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 - **Issues:** [GitHub Issues](https://github.com/your-repo/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/your-repo/discussions)
-- **Email:** support@example.com
+- **Email:** <support@example.com>
 
 ---
 
-**Made with ❤️ for the GitHub Fundamentals course**
+Made with ❤️ for the GitHub Fundamentals course
