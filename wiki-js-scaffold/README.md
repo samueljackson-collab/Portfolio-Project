@@ -1,17 +1,18 @@
 # GitHub Fundamentals Wiki.js
 
-Complete Wiki.js deployment scaffold for the GitHub Fundamentals course with 32 lessons plus navigation pages covering Git, GitHub, and professional development workflows.
+Complete Wiki.js deployment scaffold for the GitHub Fundamentals course with 32 lessons plus navigation pages
+covering Git, GitHub, and professional development workflows.
 
 ## 📚 Table of Contents
 
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Deployment Methods](#deployment-methods)
-- [Project Structure](#project-structure)
-- [Configuration](#configuration)
-- [Content Management](#content-management)
-- [Backup & Maintenance](#backup--maintenance)
-- [Troubleshooting](#troubleshooting)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Deployment Methods](#️-deployment-methods)
+- [Project Structure](#-project-structure)
+- [Configuration](#️-configuration)
+- [Content Management](#-content-management)
+- [Backup & Maintenance](#-backup--maintenance)
+- [Troubleshooting](#-troubleshooting)
 
 ## ✨ Features
 
@@ -85,6 +86,7 @@ docker-compose up -d
 ```
 
 **Includes:**
+
 - Wiki.js application
 - PostgreSQL database
 - Nginx reverse proxy
@@ -105,6 +107,7 @@ node scripts/import-to-wikijs.js
 ```
 
 **Features:**
+
 - Automated page creation
 - Hierarchical structure
 - Tag generation
@@ -115,11 +118,13 @@ node scripts/import-to-wikijs.js
 **Best for:** Custom installations or learning
 
 1. Install Wiki.js:
+
    ```bash
    npm install -g @requarks/wiki
    ```
 
 2. Initialize:
+
    ```bash
    wiki start
    ```
@@ -139,7 +144,7 @@ node scripts/import-to-wikijs.js
 
 ## 📁 Project Structure
 
-```
+```text
 wiki-js-scaffold/
 ├── content/                    # All wiki pages
 │   ├── 00-home.md
@@ -238,18 +243,20 @@ GOOGLE_ANALYTICS_ID=UA-XXXXXXXXX-X
 ### SSL Configuration
 
 **Automatic (Let's Encrypt):**
+
 ```bash
-# Configure domain in .env
+## Configure domain in .env
 DOMAIN=wiki.example.com
 CERTBOT_EMAIL=admin@example.com
 
-# Start services
+## Start services
 docker-compose up -d
 ```
 
 **Manual:**
+
 ```bash
-# Place certificates in docker/ssl/
+## Place certificates in docker/ssl/
 docker/ssl/
 ├── fullchain.pem
 └── privkey.pem
@@ -259,22 +266,25 @@ docker/ssl/
 
 ### Adding New Pages
 
-**Method 1: Through Web Interface**
+#### Method 1: Through Web Interface
+
 1. Login as admin
 2. Click **New Page**
 3. Enter content and metadata
 4. Publish
 
-**Method 2: Add to content/ directory**
+#### Method 2: Add to content/ directory
+
 ```bash
-# Add new markdown file
+## Add new markdown file
 echo "# New Page" > content/01-setup-fundamentals/07-new-topic.md
 
-# Re-import
+## Re-import
 npm run import
 ```
 
-**Method 3: Use API**
+#### Method 3: Use API
+
 ```javascript
 const axios = require('axios');
 
@@ -307,6 +317,7 @@ Create section landing pages to improve navigation and search:
 Edit navigation in **Administration** → **Navigation**
 
 Or use `navigation-config.json`:
+
 ```json
 [
   {
@@ -367,70 +378,77 @@ npm run import
 ### Common Issues
 
 **Problem:** Cannot connect to Wiki.js
+
 ```bash
-# Check if services are running
+## Check if services are running
 docker-compose ps
 
-# Check logs
+## Check logs
 docker-compose logs wiki
 
-# Restart services
+## Restart services
 docker-compose restart
 ```
 
 **Problem:** Import fails
+
 ```bash
-# Verify API token
+## Verify API token
 echo $WIKIJS_TOKEN
 
-# Test API connection
+## Test API connection
 curl -H "Authorization: Bearer $WIKIJS_TOKEN" \
   ${WIKIJS_URL:-http://localhost:3000}/graphql
 
-# Check content files
+## Check content files
 find content/ -name "*.md"
 ```
 
 **Problem:** Database connection error
+
 ```bash
-# Check database status
+## Check database status
 docker-compose exec db pg_isready -U wikijs
 
-# Reset database (WARNING: deletes data)
+## Reset database (WARNING: deletes data)
 docker-compose down -v
 docker-compose up -d
 ```
 
 **Problem:** SSL certificate issues
+
 ```bash
-# Renew Let's Encrypt certificate
+## Renew Let's Encrypt certificate
 docker-compose run --rm certbot renew
 
-# Check certificate expiry
+## Check certificate expiry
 openssl x509 -in docker/ssl/fullchain.pem -noout -dates
 ```
 
 ### Performance Optimization
 
 **Enable caching:**
+
 ```bash
-# In .env
+## In .env
 CACHE_ENABLED=true
 CACHE_TTL=3600
 ```
 
 **Database tuning:**
+
 ```sql
--- Increase connection pool
+## Increase connection pool
 ALTER SYSTEM SET max_connections = 200;
 
--- Enable query optimization
+## Enable query optimization
 ALTER SYSTEM SET shared_buffers = '256MB';
 ```
 
 **Nginx optimization:**
+
 ```nginx
-# Add to nginx.conf
+## Add to nginx.conf
 gzip on;
 gzip_comp_level 6;
 client_max_body_size 50M;
@@ -459,8 +477,8 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 - **Issues:** [GitHub Issues](https://github.com/your-repo/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/your-repo/discussions)
-- **Email:** support@example.com
+- **Email:** <support@example.com>
 
 ---
 
-**Made with ❤️ for the GitHub Fundamentals course**
+### Made with ❤️ for the GitHub Fundamentals course
