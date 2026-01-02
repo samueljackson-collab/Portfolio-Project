@@ -178,6 +178,10 @@
             font-size: 1.25rem;
         }
 
+        .project-summary {
+            margin-bottom: 0.75rem;
+        }
+
         .project-status {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -191,10 +195,134 @@
         .status-progress { background: #fef9c3; color: #854d0e; }
         .status-planned { background: #fee2e2; color: #991b1b; }
 
+        .project-evidence {
+            margin-top: 0.75rem;
+            padding-left: 1rem;
+        }
+
+        .project-evidence li {
+            margin-bottom: 0.35rem;
+        }
+
+        .project-diagram {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .diagram-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .project-chart {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            height: 90px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            border-radius: 8px 8px 4px 4px;
+            position: relative;
+            background: var(--primary);
+        }
+
+        .chart-bar span {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .chart-bar .bar-label {
+            bottom: 0.35rem;
+        }
+
+        .chart-bar .bar-value {
+            top: 0.35rem;
+        }
+
+        .bar-accent { background: var(--accent); }
+        .bar-secondary { background: var(--secondary); }
+        .bar-40 { height: 40%; }
+        .bar-55 { height: 55%; }
+        .bar-65 { height: 65%; }
+        .bar-75 { height: 75%; }
+        .bar-85 { height: 85%; }
+        .bar-95 { height: 95%; }
+
+        .diagram-legend {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 0.5rem;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-primary { background: var(--primary); }
+        .dot-accent { background: var(--accent); }
+        .dot-secondary { background: var(--secondary); }
+
+        .project-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .metric-card {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .metric-card strong {
+            display: block;
+            font-size: 0.95rem;
+            color: var(--secondary);
+        }
+
+        .project-card.compact {
+            padding: 1.5rem;
+        }
+
         .project-links {
             margin-top: 1rem;
             display: flex;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .project-links a {
@@ -202,6 +330,13 @@
             text-decoration: none;
             font-weight: 500;
             font-size: 0.875rem;
+        }
+
+        .portfolio-insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
         }
 
         /* Skills Section */
@@ -292,6 +427,7 @@
             <ul class="nav-links">
                 <li><a href="#projects">Projects</a></li>
                 <li><a href="#skills">Skills</a></li>
+                <li><a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/docs" target="_blank">Docs Hub</a></li>
                 <li><a href="#contact">Contact</a></li>
                 <li><a href="https://github.com/samueljackson-collab/Portfolio-Project" target="_blank">GitHub</a></li>
             </ul>
@@ -302,7 +438,7 @@
         <div class="container">
             <div class="hero-content">
                 <h1>Enterprise Infrastructure & DevOps Portfolio</h1>
-                <p>22+ production-grade projects showcasing cloud architecture, automation, and system design</p>
+                <p>25 production-grade projects showcasing cloud architecture, automation, observability, and secure system design</p>
                 <a href="#projects" class="btn">Explore Projects</a>
             </div>
         </div>
@@ -312,20 +448,20 @@
         <div class="container">
             <div class="stats-grid">
                 <div class="stat-item">
-                    <h3>22+</h3>
+                    <h3>25</h3>
                     <p>Portfolio Projects</p>
                 </div>
                 <div class="stat-item">
-                    <h3>8</h3>
-                    <p>Completed Projects</p>
+                    <h3>25</h3>
+                    <p>Implemented Blueprints</p>
                 </div>
                 <div class="stat-item">
-                    <h3>6</h3>
-                    <p>In Progress</p>
+                    <h3>25</h3>
+                    <p>CI + Test Suites</p>
                 </div>
                 <div class="stat-item">
-                    <h3>65%</h3>
-                    <p>Overall Completion</p>
+                    <h3>9</h3>
+                    <p>Infra/Deploy Stacks</p>
                 </div>
             </div>
         </div>
@@ -338,60 +474,983 @@
                 <div class="project-card">
                     <span class="project-status status-complete">Complete</span>
                     <h3>Homelab Infrastructure (PRJ-HOME-002)</h3>
-                    <p>Production-grade homelab with Proxmox, Docker, monitoring stack, and automated backups. Features Wiki.js, Home Assistant, and Immich behind reverse proxy with TLS.</p>
+                    <p class="project-summary">Production-grade homelab with Proxmox, Docker, monitoring stack, and automated backups. Features Wiki.js, Home Assistant, and Immich behind reverse proxy with TLS.</p>
                     <p><strong>Tech:</strong> Proxmox, Docker, Grafana, PostgreSQL, Nginx</p>
+                    <ul class="project-evidence">
+                        <li>Reverse proxy + TLS termination for home services</li>
+                        <li>Automation runbooks for upgrades and snapshots</li>
+                        <li>Operational dashboards for storage and health checks</li>
+                    </ul>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Homelab Service Topology</div>
+                        <svg viewBox="0 0 260 90" width="100%" height="90" role="img" aria-label="Homelab topology diagram">
+                            <rect x="10" y="10" width="80" height="30" rx="6" fill="#2563eb" opacity="0.9"></rect>
+                            <rect x="170" y="10" width="80" height="30" rx="6" fill="#06b6d4" opacity="0.9"></rect>
+                            <rect x="90" y="50" width="80" height="30" rx="6" fill="#1e293b" opacity="0.9"></rect>
+                            <line x1="90" y1="25" x2="170" y2="25" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="50" y1="40" x2="130" y2="50" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="210" y1="40" x2="130" y2="50" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="50" y="30" text-anchor="middle" fill="white" font-size="10">TLS Proxy</text>
+                            <text x="210" y="30" text-anchor="middle" fill="white" font-size="10">Services</text>
+                            <text x="130" y="70" text-anchor="middle" fill="white" font-size="10">Backups</text>
+                        </svg>
+                        <div class="diagram-legend">
+                            <span class="legend-item"><span class="legend-dot dot-primary"></span>Ingress</span>
+                            <span class="legend-item"><span class="legend-dot dot-accent"></span>Services</span>
+                            <span class="legend-item"><span class="legend-dot dot-secondary"></span>Data</span>
+                        </div>
+                    </div>
+                    <div class="project-chart">
+                        <div class="diagram-title">Ops Coverage</div>
+                        <div class="chart-bars" role="img" aria-label="Homelab operations coverage chart">
+                            <div class="chart-bar bar-85"><span class="bar-value">85%</span><span class="bar-label">Uptime</span></div>
+                            <div class="chart-bar bar-accent bar-75"><span class="bar-value">75%</span><span class="bar-label">Automation</span></div>
+                            <div class="chart-bar bar-secondary bar-65"><span class="bar-value">65%</span><span class="bar-label">Monitoring</span></div>
+                        </div>
+                    </div>
                     <div class="project-links">
                         <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/06-homelab/PRJ-HOME-002">View Project →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/HOME_ASSISTANT_DASHBOARD.md">Dashboard Docs →</a>
                     </div>
                 </div>
 
                 <div class="project-card">
-                    <span class="project-status status-progress">In Progress</span>
+                    <span class="project-status status-complete">Implemented</span>
                     <h3>AWS Terraform Platform (PRJ-CLOUD-001)</h3>
-                    <p>Infrastructure as Code platform for multi-environment AWS deployments with VPC, RDS, ALB, and auto-scaling groups.</p>
+                    <p class="project-summary">Infrastructure as Code platform for multi-environment AWS deployments with VPC, RDS, ALB, and auto-scaling groups.</p>
                     <p><strong>Tech:</strong> Terraform, AWS, CloudFormation, GitHub Actions</p>
+                    <ul class="project-evidence">
+                        <li>Reusable modules for VPC, compute, and monitoring</li>
+                        <li>Policy-enforced CI pipelines for plan/apply</li>
+                        <li>Documented architecture diagrams and runbooks</li>
+                    </ul>
+                    <div class="project-diagram">
+                        <div class="diagram-title">AWS Landing Zone Blueprint</div>
+                        <svg viewBox="0 0 260 90" width="100%" height="90" role="img" aria-label="AWS landing zone diagram">
+                            <rect x="10" y="15" width="70" height="25" rx="6" fill="#2563eb"></rect>
+                            <rect x="95" y="15" width="70" height="25" rx="6" fill="#06b6d4"></rect>
+                            <rect x="180" y="15" width="70" height="25" rx="6" fill="#1e293b"></rect>
+                            <rect x="95" y="55" width="70" height="25" rx="6" fill="#2563eb" opacity="0.8"></rect>
+                            <line x1="80" y1="27" x2="95" y2="27" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="165" y1="27" x2="180" y2="27" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="130" y1="40" x2="130" y2="55" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="32" text-anchor="middle" fill="white" font-size="10">VPC</text>
+                            <text x="130" y="32" text-anchor="middle" fill="white" font-size="10">Compute</text>
+                            <text x="215" y="32" text-anchor="middle" fill="white" font-size="10">Database</text>
+                            <text x="130" y="72" text-anchor="middle" fill="white" font-size="10">Ops</text>
+                        </svg>
+                        <div class="diagram-legend">
+                            <span class="legend-item"><span class="legend-dot dot-primary"></span>Network</span>
+                            <span class="legend-item"><span class="legend-dot dot-accent"></span>Compute</span>
+                            <span class="legend-item"><span class="legend-dot dot-secondary"></span>Data</span>
+                        </div>
+                    </div>
+                    <div class="project-chart">
+                        <div class="diagram-title">Platform Readiness</div>
+                        <div class="chart-bars" role="img" aria-label="AWS platform readiness chart">
+                            <div class="chart-bar bar-95"><span class="bar-value">95%</span><span class="bar-label">IaC</span></div>
+                            <div class="chart-bar bar-accent bar-85"><span class="bar-value">85%</span><span class="bar-label">Security</span></div>
+                            <div class="chart-bar bar-secondary bar-75"><span class="bar-value">75%</span><span class="bar-label">Ops</span></div>
+                        </div>
+                    </div>
                     <div class="project-links">
                         <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/1-aws-infrastructure-automation">View Project →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/docs/diagrams/terraform-network.md">Architecture Diagrams →</a>
                     </div>
                 </div>
 
                 <div class="project-card">
                     <span class="project-status status-complete">Complete</span>
                     <h3>Enterprise Observability Stack</h3>
-                    <p>Complete monitoring solution with Prometheus, Grafana, Loki, and Alertmanager for golden signals tracking and SLO monitoring.</p>
+                    <p class="project-summary">Complete monitoring solution with Prometheus, Grafana, Loki, and Alertmanager for golden signals tracking and SLO monitoring.</p>
                     <p><strong>Tech:</strong> Prometheus, Grafana, Loki, Alertmanager</p>
+                    <ul class="project-evidence">
+                        <li>Dashboards for latency, error rate, traffic, saturation</li>
+                        <li>Alert routing and runbook references included</li>
+                        <li>Tracing + log correlation across services</li>
+                    </ul>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Metrics, Logs, Traces Flow</div>
+                        <svg viewBox="0 0 260 90" width="100%" height="90" role="img" aria-label="Observability flow diagram">
+                            <rect x="10" y="15" width="70" height="25" rx="6" fill="#2563eb"></rect>
+                            <rect x="95" y="15" width="70" height="25" rx="6" fill="#06b6d4"></rect>
+                            <rect x="180" y="15" width="70" height="25" rx="6" fill="#1e293b"></rect>
+                            <line x1="80" y1="27" x2="95" y2="27" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="165" y1="27" x2="180" y2="27" stroke="#94a3b8" stroke-width="2"></line>
+                            <rect x="95" y="55" width="70" height="20" rx="6" fill="#2563eb" opacity="0.8"></rect>
+                            <line x1="130" y1="40" x2="130" y2="55" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="32" text-anchor="middle" fill="white" font-size="10">Agents</text>
+                            <text x="130" y="32" text-anchor="middle" fill="white" font-size="10">Pipelines</text>
+                            <text x="215" y="32" text-anchor="middle" fill="white" font-size="10">Grafana</text>
+                            <text x="130" y="69" text-anchor="middle" fill="white" font-size="10">Alerts</text>
+                        </svg>
+                        <div class="diagram-legend">
+                            <span class="legend-item"><span class="legend-dot dot-primary"></span>Ingest</span>
+                            <span class="legend-item"><span class="legend-dot dot-accent"></span>Process</span>
+                            <span class="legend-item"><span class="legend-dot dot-secondary"></span>Visualize</span>
+                        </div>
+                    </div>
+                    <div class="project-chart">
+                        <div class="diagram-title">Signal Coverage</div>
+                        <div class="chart-bars" role="img" aria-label="Observability signal coverage chart">
+                            <div class="chart-bar bar-85"><span class="bar-value">85%</span><span class="bar-label">Metrics</span></div>
+                            <div class="chart-bar bar-accent bar-75"><span class="bar-value">75%</span><span class="bar-label">Logs</span></div>
+                            <div class="chart-bar bar-secondary bar-65"><span class="bar-value">65%</span><span class="bar-label">Traces</span></div>
+                        </div>
+                    </div>
                     <div class="project-links">
                         <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/23-advanced-monitoring">View Project →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/docs/runbooks/observability-runbook.md">Observability Runbook →</a>
                     </div>
                 </div>
 
                 <div class="project-card">
-                    <span class="project-status status-progress">In Progress</span>
+                    <span class="project-status status-complete">Implemented</span>
                     <h3>Kubernetes CI/CD Pipeline</h3>
-                    <p>GitOps pipeline with ArgoCD, Helm, and progressive deployment strategies for cloud-native applications.</p>
+                    <p class="project-summary">GitOps pipeline with ArgoCD, Helm, and progressive deployment strategies for cloud-native applications.</p>
                     <p><strong>Tech:</strong> Kubernetes, ArgoCD, Helm, Istio</p>
+                    <ul class="project-evidence">
+                        <li>Helm validation + policy guardrails in CI</li>
+                        <li>Progressive delivery with automated rollbacks</li>
+                        <li>Golden path templates for new services</li>
+                    </ul>
+                    <div class="project-diagram">
+                        <div class="diagram-title">GitOps Delivery Loop</div>
+                        <svg viewBox="0 0 260 90" width="100%" height="90" role="img" aria-label="GitOps delivery loop">
+                            <rect x="10" y="15" width="70" height="25" rx="6" fill="#2563eb"></rect>
+                            <rect x="95" y="15" width="70" height="25" rx="6" fill="#06b6d4"></rect>
+                            <rect x="180" y="15" width="70" height="25" rx="6" fill="#1e293b"></rect>
+                            <path d="M215 40 L130 65 L45 40" fill="none" stroke="#94a3b8" stroke-width="2"></path>
+                            <text x="45" y="32" text-anchor="middle" fill="white" font-size="10">Git</text>
+                            <text x="130" y="32" text-anchor="middle" fill="white" font-size="10">ArgoCD</text>
+                            <text x="215" y="32" text-anchor="middle" fill="white" font-size="10">Runtime</text>
+                            <text x="130" y="75" text-anchor="middle" fill="#475569" font-size="9">Feedback & Rollbacks</text>
+                        </svg>
+                        <div class="diagram-legend">
+                            <span class="legend-item"><span class="legend-dot dot-primary"></span>Source</span>
+                            <span class="legend-item"><span class="legend-dot dot-accent"></span>Delivery</span>
+                            <span class="legend-item"><span class="legend-dot dot-secondary"></span>Runtime</span>
+                        </div>
+                    </div>
+                    <div class="project-chart">
+                        <div class="diagram-title">Pipeline Quality</div>
+                        <div class="chart-bars" role="img" aria-label="Kubernetes pipeline quality chart">
+                            <div class="chart-bar bar-85"><span class="bar-value">85%</span><span class="bar-label">Validation</span></div>
+                            <div class="chart-bar bar-accent bar-75"><span class="bar-value">75%</span><span class="bar-label">Delivery</span></div>
+                            <div class="chart-bar bar-secondary bar-55"><span class="bar-value">55%</span><span class="bar-label">Telemetry</span></div>
+                        </div>
+                    </div>
                     <div class="project-links">
                         <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/3-kubernetes-cicd">View Project →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/3-kubernetes-cicd/k8s">K8s Manifests →</a>
                     </div>
                 </div>
 
                 <div class="project-card">
                     <span class="project-status status-complete">Complete</span>
                     <h3>AstraDup - AI Video De-duplication</h3>
-                    <p>AI-powered video de-duplication system with perceptual hashing, ML-based scene detection, and automated processing pipelines.</p>
+                    <p class="project-summary">AI-powered video de-duplication system with perceptual hashing, ML-based scene detection, and automated processing pipelines.</p>
                     <p><strong>Tech:</strong> Python, OpenCV, PyTorch, FastAPI</p>
+                    <ul class="project-evidence">
+                        <li>Scene segmentation and feature vector extraction</li>
+                        <li>Batch pipeline orchestration with queuing</li>
+                        <li>Detailed evaluation reports in docs</li>
+                    </ul>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Media Processing Pipeline</div>
+                        <svg viewBox="0 0 260 90" width="100%" height="90" role="img" aria-label="Media processing pipeline diagram">
+                            <rect x="10" y="20" width="60" height="25" rx="6" fill="#2563eb"></rect>
+                            <rect x="90" y="20" width="60" height="25" rx="6" fill="#06b6d4"></rect>
+                            <rect x="170" y="20" width="80" height="25" rx="6" fill="#1e293b"></rect>
+                            <line x1="70" y1="32" x2="90" y2="32" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="150" y1="32" x2="170" y2="32" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="36" text-anchor="middle" fill="white" font-size="10">Ingest</text>
+                            <text x="120" y="36" text-anchor="middle" fill="white" font-size="10">Detect</text>
+                            <text x="210" y="36" text-anchor="middle" fill="white" font-size="10">Dedup</text>
+                        </svg>
+                        <div class="diagram-legend">
+                            <span class="legend-item"><span class="legend-dot dot-primary"></span>Input</span>
+                            <span class="legend-item"><span class="legend-dot dot-accent"></span>ML</span>
+                            <span class="legend-item"><span class="legend-dot dot-secondary"></span>Output</span>
+                        </div>
+                    </div>
+                    <div class="project-chart">
+                        <div class="diagram-title">Pipeline Efficiency</div>
+                        <div class="chart-bars" role="img" aria-label="AstraDup pipeline efficiency chart">
+                            <div class="chart-bar bar-75"><span class="bar-value">75%</span><span class="bar-label">Recall</span></div>
+                            <div class="chart-bar bar-accent bar-85"><span class="bar-value">85%</span><span class="bar-label">Precision</span></div>
+                            <div class="chart-bar bar-secondary bar-65"><span class="bar-value">65%</span><span class="bar-label">Throughput</span></div>
+                        </div>
+                    </div>
                     <div class="project-links">
                         <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/astradup-video-deduplication">View Project →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/astradup-video-deduplication/docs">Evaluation Docs →</a>
                     </div>
                 </div>
 
                 <div class="project-card">
                     <span class="project-status status-complete">Complete</span>
                     <h3>Home Assistant Smart Home Dashboard</h3>
-                    <p>Interactive smart home automation platform with device control, energy monitoring, and custom integrations.</p>
+                    <p class="project-summary">Interactive smart home automation platform with device control, energy monitoring, and custom integrations.</p>
                     <p><strong>Tech:</strong> Home Assistant, YAML, Python, MQTT</p>
+                    <ul class="project-evidence">
+                        <li>Energy and HVAC telemetry overlays</li>
+                        <li>Automation scripts for occupancy + alerts</li>
+                        <li>UI dashboards for mobile and wall displays</li>
+                    </ul>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Automation Flow</div>
+                        <svg viewBox="0 0 260 90" width="100%" height="90" role="img" aria-label="Smart home automation flow">
+                            <rect x="10" y="20" width="70" height="25" rx="6" fill="#2563eb"></rect>
+                            <rect x="95" y="20" width="70" height="25" rx="6" fill="#06b6d4"></rect>
+                            <rect x="180" y="20" width="70" height="25" rx="6" fill="#1e293b"></rect>
+                            <line x1="80" y1="32" x2="95" y2="32" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="165" y1="32" x2="180" y2="32" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="36" text-anchor="middle" fill="white" font-size="10">Sensors</text>
+                            <text x="130" y="36" text-anchor="middle" fill="white" font-size="10">Logic</text>
+                            <text x="215" y="36" text-anchor="middle" fill="white" font-size="10">Devices</text>
+                        </svg>
+                        <div class="diagram-legend">
+                            <span class="legend-item"><span class="legend-dot dot-primary"></span>Input</span>
+                            <span class="legend-item"><span class="legend-dot dot-accent"></span>Logic</span>
+                            <span class="legend-item"><span class="legend-dot dot-secondary"></span>Action</span>
+                        </div>
+                    </div>
+                    <div class="project-chart">
+                        <div class="diagram-title">Automation Coverage</div>
+                        <div class="chart-bars" role="img" aria-label="Home assistant automation coverage chart">
+                            <div class="chart-bar bar-85"><span class="bar-value">85%</span><span class="bar-label">Energy</span></div>
+                            <div class="chart-bar bar-accent bar-65"><span class="bar-value">65%</span><span class="bar-label">Comfort</span></div>
+                            <div class="chart-bar bar-secondary bar-75"><span class="bar-value">75%</span><span class="bar-label">Security</span></div>
+                        </div>
+                    </div>
                     <div class="project-links">
                         <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/HOME_ASSISTANT_DASHBOARD.md">View Project →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/ELDERPHOTO_README.md">Home Lab Case Study →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="projects">
+        <div class="container">
+            <h2 class="section-title">Portfolio Project Index (1–25)</h2>
+            <div class="portfolio-insights">
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Portfolio Snapshot</span>
+                    <h3>Delivery Coverage Overview</h3>
+                    <p class="project-summary">Highlights the breadth of CI, testing, and infrastructure assets across the portfolio.</p>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Lifecycle Coverage</div>
+                        <svg viewBox="0 0 260 90" width="100%" height="90" role="img" aria-label="Portfolio lifecycle coverage diagram">
+                            <rect x="10" y="20" width="70" height="25" rx="6" fill="#2563eb"></rect>
+                            <rect x="95" y="20" width="70" height="25" rx="6" fill="#06b6d4"></rect>
+                            <rect x="180" y="20" width="70" height="25" rx="6" fill="#1e293b"></rect>
+                            <line x1="80" y1="32" x2="95" y2="32" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="165" y1="32" x2="180" y2="32" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="36" text-anchor="middle" fill="white" font-size="10">Build</text>
+                            <text x="130" y="36" text-anchor="middle" fill="white" font-size="10">Validate</text>
+                            <text x="215" y="36" text-anchor="middle" fill="white" font-size="10">Operate</text>
+                        </svg>
+                    </div>
+                    <div class="project-chart">
+                        <div class="diagram-title">Portfolio Coverage</div>
+                        <div class="chart-bars" role="img" aria-label="Portfolio coverage chart">
+                            <div class="chart-bar bar-95"><span class="bar-value">95%</span><span class="bar-label">CI</span></div>
+                            <div class="chart-bar bar-accent bar-85"><span class="bar-value">85%</span><span class="bar-label">Tests</span></div>
+                            <div class="chart-bar bar-secondary bar-75"><span class="bar-value">75%</span><span class="bar-label">Infra</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Documentation Reach</span>
+                    <h3>Evidence & Runbook Map</h3>
+                    <p class="project-summary">Quick look at the documentation footprint for architecture, security, and operations.</p>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Docs Touchpoints</div>
+                        <svg viewBox="0 0 260 90" width="100%" height="90" role="img" aria-label="Documentation touchpoints diagram">
+                            <rect x="10" y="20" width="70" height="25" rx="6" fill="#2563eb"></rect>
+                            <rect x="95" y="20" width="70" height="25" rx="6" fill="#06b6d4"></rect>
+                            <rect x="180" y="20" width="70" height="25" rx="6" fill="#1e293b"></rect>
+                            <line x1="80" y1="32" x2="95" y2="32" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="165" y1="32" x2="180" y2="32" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="36" text-anchor="middle" fill="white" font-size="10">Diagrams</text>
+                            <text x="130" y="36" text-anchor="middle" fill="white" font-size="10">Runbooks</text>
+                            <text x="215" y="36" text-anchor="middle" fill="white" font-size="10">Evidence</text>
+                        </svg>
+                    </div>
+                    <div class="project-chart">
+                        <div class="diagram-title">Docs Distribution</div>
+                        <div class="chart-bars" role="img" aria-label="Documentation distribution chart">
+                            <div class="chart-bar bar-85"><span class="bar-value">85%</span><span class="bar-label">Design</span></div>
+                            <div class="chart-bar bar-accent bar-75"><span class="bar-value">75%</span><span class="bar-label">Ops</span></div>
+                            <div class="chart-bar bar-secondary bar-65"><span class="bar-value">65%</span><span class="bar-label">QA</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="projects-grid">
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 1: AWS Infrastructure Automation</h3>
+                    <p class="project-summary">Terraform, CDK, and Pulumi automation delivering repeatable AWS landing zones.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>CI</strong>Terraform + Security</div>
+                        <div class="metric-card"><strong>Infra</strong>VPC, RDS, ALB</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Landing Zone Flow</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Landing zone flow">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Plan</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Apply</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Ops</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/1-aws-infrastructure-automation">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/docs/diagrams/terraform-network.md">Diagrams →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 2: Database Migration Platform</h3>
+                    <p class="project-summary">Zero-downtime migration pipelines with CDC orchestration and validation.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>CDC</strong>Debezium + DMS</div>
+                        <div class="metric-card"><strong>QA</strong>Unit + Smoke</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Migration Pipeline</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Migration pipeline diagram">
+                            <rect x="10" y="20" width="70" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="90" y="20" width="50" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="150" y="20" width="60" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="80" y1="31" x2="90" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="140" y1="31" x2="150" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="35" text-anchor="middle" fill="white" font-size="9">Source</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">CDC</text>
+                            <text x="180" y="35" text-anchor="middle" fill="white" font-size="9">Target</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/2-database-migration">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/projects/2-database-migration/compose.demo.yml">Demo Stack →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 3: Kubernetes CI/CD Pipeline</h3>
+                    <p class="project-summary">GitOps-ready workflows with progressive delivery gates and rollback logic.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>GitOps</strong>ArgoCD Sync</div>
+                        <div class="metric-card"><strong>Deploy</strong>Blue/Green</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">K8s Delivery</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Kubernetes delivery diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">CI</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Helm</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Cluster</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/3-kubernetes-cicd">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/3-kubernetes-cicd/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 4: DevSecOps Pipeline</h3>
+                    <p class="project-summary">Security-first pipeline covering SAST, SCA, SBOM, and DAST.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Security</strong>SBOM + SCA</div>
+                        <div class="metric-card"><strong>DAST</strong>ZAP Checks</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Security Gates</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Security gate diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Build</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Scan</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Ship</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/4-devsecops">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/4-devsecops/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 5: Real-time Data Streaming</h3>
+                    <p class="project-summary">Kafka + Flink streaming with schema registry patterns.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Streaming</strong>Kafka + Flink</div>
+                        <div class="metric-card"><strong>Infra</strong>K8s Deploy</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Streaming Topology</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Streaming topology diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Producers</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Flink</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Sinks</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/5-real-time-data-streaming">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/5-real-time-data-streaming/k8s">Deploy →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 6: Machine Learning Pipeline</h3>
+                    <p class="project-summary">End-to-end MLOps pipeline with training, registry, and promotion gates.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>MLOps</strong>Model Registry</div>
+                        <div class="metric-card"><strong>CI</strong>Training Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Model Lifecycle</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Model lifecycle diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Train</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Track</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Deploy</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/6-mlops-platform">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/6-mlops-platform/k8s">Deploy →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 7: Serverless Data Processing</h3>
+                    <p class="project-summary">Event-driven analytics with Lambda, Step Functions, and DynamoDB.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Serverless</strong>Lambda + SFN</div>
+                        <div class="metric-card"><strong>Infra</strong>IaC Packs</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Event Pipeline</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Event pipeline diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Events</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Orch</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Store</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/7-serverless-data-processing">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/7-serverless-data-processing/infrastructure">Infra →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 8: Advanced AI Chatbot</h3>
+                    <p class="project-summary">RAG assistant with vector search, tool execution, and evaluation harness.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>RAG</strong>Vector Search</div>
+                        <div class="metric-card"><strong>QA</strong>Eval Harness</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">RAG Flow</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="RAG flow diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Query</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Retrieve</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Answer</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/8-advanced-ai-chatbot">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/8-advanced-ai-chatbot/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 9: Multi-Region Disaster Recovery</h3>
+                    <p class="project-summary">Automated failover, replication validation, and DR runbooks.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>DR</strong>Multi-Region</div>
+                        <div class="metric-card"><strong>Infra</strong>Terraform</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Active/Standby</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="DR diagram">
+                            <rect x="10" y="20" width="80" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="130" y="20" width="80" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="90" y1="31" x2="130" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="50" y="35" text-anchor="middle" fill="white" font-size="9">Primary</text>
+                            <text x="170" y="35" text-anchor="middle" fill="white" font-size="9">Standby</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/9-multi-region-disaster-recovery">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/9-multi-region-disaster-recovery/terraform">Terraform →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 10: Blockchain Smart Contract Platform</h3>
+                    <p class="project-summary">Hardhat-based DeFi stack with audits and deployment automation.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Solidity</strong>Hardhat</div>
+                        <div class="metric-card"><strong>QA</strong>Contract Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Contract Lifecycle</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Contract lifecycle diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Build</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Test</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Deploy</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/10-blockchain-smart-contract-platform">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/10-blockchain-smart-contract-platform/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 11: IoT Data Analytics</h3>
+                    <p class="project-summary">Edge telemetry simulation, ingestion, and analytics dashboards.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>IoT</strong>Telemetry</div>
+                        <div class="metric-card"><strong>Infra</strong>Provisioned</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">IoT Data Flow</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="IoT data flow diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Devices</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Ingest</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Dash</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/11-iot-data-analytics">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/11-iot-data-analytics/infrastructure">Infra →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 12: Quantum Computing Integration</h3>
+                    <p class="project-summary">Hybrid quantum/classical optimization workflows with Qiskit.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Quantum</strong>Qiskit</div>
+                        <div class="metric-card"><strong>CI</strong>Notebook Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Hybrid Workflow</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Hybrid workflow diagram">
+                            <rect x="10" y="20" width="80" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="120" y="20" width="80" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="90" y1="31" x2="120" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="50" y="35" text-anchor="middle" fill="white" font-size="9">Classical</text>
+                            <text x="160" y="35" text-anchor="middle" fill="white" font-size="9">Quantum</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/12-quantum-computing">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/12-quantum-computing/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 13: Advanced Cybersecurity Platform</h3>
+                    <p class="project-summary">SOAR engine with enrichment adapters and response playbooks.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>SOAR</strong>Automations</div>
+                        <div class="metric-card"><strong>CI</strong>Policy Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Incident Response</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Incident response diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Detect</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Enrich</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Respond</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/13-advanced-cybersecurity">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/13-advanced-cybersecurity/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 14: Edge AI Inference Platform</h3>
+                    <p class="project-summary">ONNX Runtime service optimized for Jetson-class devices.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Edge</strong>ONNX Runtime</div>
+                        <div class="metric-card"><strong>CI</strong>Inference Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Edge Inference</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Edge inference diagram">
+                            <rect x="10" y="20" width="70" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="95" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="165" y="20" width="45" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="80" y1="31" x2="95" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="155" y1="31" x2="165" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="35" text-anchor="middle" fill="white" font-size="9">Sensors</text>
+                            <text x="125" y="35" text-anchor="middle" fill="white" font-size="9">Inference</text>
+                            <text x="187" y="35" text-anchor="middle" fill="white" font-size="9">Action</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/14-edge-ai-inference">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/14-edge-ai-inference/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 15: Real-time Collaboration</h3>
+                    <p class="project-summary">CRDT-based collaboration server with operational transform flows.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Collab</strong>CRDT</div>
+                        <div class="metric-card"><strong>CI</strong>Concurrency Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Collaboration Mesh</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Collaboration mesh diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Client</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Sync</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Server</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/15-real-time-collaboration">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/15-real-time-collaboration/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 16: Advanced Data Lake</h3>
+                    <p class="project-summary">Medallion architecture transformations and Delta Lake patterns.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Lakehouse</strong>Medallion</div>
+                        <div class="metric-card"><strong>CI</strong>Pipeline Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Medallion Layers</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Medallion architecture diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Bronze</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Silver</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Gold</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/16-advanced-data-lake">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/16-advanced-data-lake/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 17: Multi-Cloud Service Mesh</h3>
+                    <p class="project-summary">Istio multi-cluster configuration with mTLS and overlays.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Mesh</strong>Istio</div>
+                        <div class="metric-card"><strong>CI</strong>Config Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Mesh Connections</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Service mesh diagram">
+                            <rect x="10" y="20" width="80" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="130" y="20" width="80" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="90" y1="31" x2="130" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="50" y="35" text-anchor="middle" fill="white" font-size="9">Cluster A</text>
+                            <text x="170" y="35" text-anchor="middle" fill="white" font-size="9">Cluster B</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/17-multi-cloud-service-mesh">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/17-multi-cloud-service-mesh/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 18: GPU-Accelerated Computing</h3>
+                    <p class="project-summary">CuPy-powered Monte Carlo simulations and orchestration.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>GPU</strong>CuPy</div>
+                        <div class="metric-card"><strong>CI</strong>Perf Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Compute Pipeline</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="GPU compute pipeline diagram">
+                            <rect x="10" y="20" width="70" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="95" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="165" y="20" width="45" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="80" y1="31" x2="95" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="155" y1="31" x2="165" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="35" text-anchor="middle" fill="white" font-size="9">Data</text>
+                            <text x="125" y="35" text-anchor="middle" fill="white" font-size="9">GPU</text>
+                            <text x="187" y="35" text-anchor="middle" fill="white" font-size="9">Results</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/18-gpu-accelerated-computing">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/18-gpu-accelerated-computing/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 19: Advanced Kubernetes Operators</h3>
+                    <p class="project-summary">Kopf-based operators managing portfolio stack lifecycles.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Ops</strong>CRDs</div>
+                        <div class="metric-card"><strong>CI</strong>Operator Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Operator Loop</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Operator loop diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">CRDs</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Reconcile</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">State</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/19-advanced-kubernetes-operators">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/19-advanced-kubernetes-operators/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 20: Blockchain Oracle Service</h3>
+                    <p class="project-summary">Chainlink adapter and consumer contracts for on-chain metrics.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Oracle</strong>Chainlink</div>
+                        <div class="metric-card"><strong>CI</strong>Contract Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Oracle Flow</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Oracle flow diagram">
+                            <rect x="10" y="20" width="70" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="95" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="165" y="20" width="45" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="80" y1="31" x2="95" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="155" y1="31" x2="165" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="35" text-anchor="middle" fill="white" font-size="9">Source</text>
+                            <text x="125" y="35" text-anchor="middle" fill="white" font-size="9">Oracle</text>
+                            <text x="187" y="35" text-anchor="middle" fill="white" font-size="9">Chain</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/20-blockchain-oracle-service">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/20-blockchain-oracle-service/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 21: Quantum-Safe Cryptography</h3>
+                    <p class="project-summary">Hybrid Kyber + ECDH key exchange prototype with validation.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Crypto</strong>Kyber + ECDH</div>
+                        <div class="metric-card"><strong>CI</strong>Security Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Key Exchange</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Key exchange diagram">
+                            <rect x="10" y="20" width="80" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="130" y="20" width="80" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="90" y1="31" x2="130" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="50" y="35" text-anchor="middle" fill="white" font-size="9">Client</text>
+                            <text x="170" y="35" text-anchor="middle" fill="white" font-size="9">Server</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/21-quantum-safe-cryptography">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/21-quantum-safe-cryptography/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 22: Autonomous DevOps Platform</h3>
+                    <p class="project-summary">Event-driven remediation workflows and runbooks-as-code.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>AutoOps</strong>Remediation</div>
+                        <div class="metric-card"><strong>CI</strong>Runbook Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Autonomous Loop</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Autonomous loop diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Detect</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Decide</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Act</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/22-autonomous-devops-platform">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/22-autonomous-devops-platform/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 23: Advanced Monitoring & Observability</h3>
+                    <p class="project-summary">Grafana dashboards, alerting rules, and tracing configuration.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Observability</strong>Metrics + Logs</div>
+                        <div class="metric-card"><strong>Deploy</strong>Compose Stack</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Telemetry Stack</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Telemetry stack diagram">
+                            <rect x="10" y="20" width="60" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="85" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="160" y="20" width="50" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="70" y1="31" x2="85" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="145" y1="31" x2="160" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="40" y="35" text-anchor="middle" fill="white" font-size="9">Collect</text>
+                            <text x="115" y="35" text-anchor="middle" fill="white" font-size="9">Store</text>
+                            <text x="185" y="35" text-anchor="middle" fill="white" font-size="9">Alert</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/23-advanced-monitoring">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/blob/main/docs/runbooks/observability-runbook.md">Runbook →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 24: Portfolio Report Generator</h3>
+                    <p class="project-summary">Jinja2-based report templating with automated evidence capture.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Reports</strong>Automated</div>
+                        <div class="metric-card"><strong>CI</strong>Template Tests</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Report Pipeline</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Report pipeline diagram">
+                            <rect x="10" y="20" width="70" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="95" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="165" y="20" width="45" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="80" y1="31" x2="95" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="155" y1="31" x2="165" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="35" text-anchor="middle" fill="white" font-size="9">Inputs</text>
+                            <text x="125" y="35" text-anchor="middle" fill="white" font-size="9">Render</text>
+                            <text x="187" y="35" text-anchor="middle" fill="white" font-size="9">Publish</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/24-report-generator">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/24-report-generator/tests">Tests →</a>
+                    </div>
+                </div>
+
+                <div class="project-card compact">
+                    <span class="project-status status-complete">Implemented</span>
+                    <h3>Project 25: Portfolio Website & Documentation Hub</h3>
+                    <p class="project-summary">VitePress-powered portal aggregating documentation and guides.</p>
+                    <div class="project-metrics">
+                        <div class="metric-card"><strong>Docs</strong>VitePress</div>
+                        <div class="metric-card"><strong>CI</strong>Build + Lint</div>
+                    </div>
+                    <div class="project-diagram">
+                        <div class="diagram-title">Documentation Hub</div>
+                        <svg viewBox="0 0 220 70" width="100%" height="70" role="img" aria-label="Documentation hub diagram">
+                            <rect x="10" y="20" width="70" height="22" rx="5" fill="#2563eb"></rect>
+                            <rect x="95" y="20" width="60" height="22" rx="5" fill="#06b6d4"></rect>
+                            <rect x="165" y="20" width="45" height="22" rx="5" fill="#1e293b"></rect>
+                            <line x1="80" y1="31" x2="95" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <line x1="155" y1="31" x2="165" y2="31" stroke="#94a3b8" stroke-width="2"></line>
+                            <text x="45" y="35" text-anchor="middle" fill="white" font-size="9">Docs</text>
+                            <text x="125" y="35" text-anchor="middle" fill="white" font-size="9">Build</text>
+                            <text x="187" y="35" text-anchor="middle" fill="white" font-size="9">Publish</text>
+                        </svg>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/25-portfolio-website">Blueprint →</a>
+                        <a href="https://github.com/samueljackson-collab/Portfolio-Project/tree/main/docs">Docs Hub →</a>
                     </div>
                 </div>
             </div>
