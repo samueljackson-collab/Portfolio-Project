@@ -16,6 +16,38 @@
 
 ---
 
+## 📈 GitHub Status Snapshot (Local Repository)
+
+**Repository Pulse (local Git snapshot)**
+- **Active branch:** `work`
+- **Last update:** 2026-01-05
+- **Commits:** 777 total revisions
+- **Tracked files:** 3,062 assets
+- **Projects:** 25 portfolio showcases
+- **READMEs:** 46 published guides
+
+**Documentation & Infra Inventory**
+- **Markdown files:** 407 references · **Total words:** 506,150
+- **Docker compose files:** 25 · **Terraform files:** 81 · **Config packs:** 54
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  A[Commit] --> B[CI Workflows]
+  B --> C[Security Checks]
+  C --> D[Docs + Evidence]
+  D --> E[Release Artifacts]
+  E --> F[GitHub Pages]
+```
+
+```mermaid
+pie title Repository Evidence Mix
+  "Docs + Runbooks" : 46
+  "Infrastructure as Code" : 25
+  "Validation + Tests" : 23
+  "Blueprints" : 25
+```
+
 ## 🧭 Reviewer Fast Reference
 
 - **Reviewer Checklist:** For a detailed validation checklist covering top metrics, interview workflow, and file map, please see [**PORTFOLIO_VALIDATION.md**](./PORTFOLIO_VALIDATION.md). This file serves as the single source of truth for validation runs.
@@ -72,6 +104,562 @@ System-minded engineer specializing in building, securing, and operating infrast
 - 🟢 [Project 23: Advanced Monitoring & Observability](./projects/23-advanced-monitoring) — Grafana dashboards, alerting rules, and distributed tracing config.
 - 🟢 [Project 24: Portfolio Report Generator](./projects/24-report-generator) — Automated report templating with Jinja2.
 - 🟢 [Project 25: Portfolio Website & Documentation Hub](./projects/25-portfolio-website) — VitePress-powered portal aggregating all documentation and guides.
+
+---
+
+## 🧩 Project Visuals (Charts + Diagrams)
+
+> Tip: Diagrams are collapsed by default for faster GitHub rendering. Expand a project to view detailed flowcharts and coverage pies.
+
+<details>
+<summary><strong>Project 1: AWS Infrastructure Automation</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Plan]
+  N2[Provision]
+  N3[Harden]
+  N4[Operate]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: AWS Infrastructure Automation
+  "IaC Modules" : 40
+  "CI Validation" : 30
+  "Ops Runbooks" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 2: Database Migration Platform</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Source DB]
+  N2[CDC]
+  N3[Validate]
+  N4[Target DB]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Database Migration Platform
+  "CDC Pipelines" : 35
+  "Validation" : 35
+  "Rollback" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 3: Kubernetes CI/CD Pipeline</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Commit]
+  N2[CI Gates]
+  N3[ArgoCD Sync]
+  N4[Runtime]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Kubernetes CI/CD Pipeline
+  "Policy Gates" : 35
+  "Delivery" : 35
+  "Telemetry" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 4: DevSecOps Pipeline</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Build]
+  N2[Scan]
+  N3[Policy Gate]
+  N4[Release]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: DevSecOps Pipeline
+  "SAST/SCA" : 40
+  "DAST" : 30
+  "SBOM" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 5: Real-time Data Streaming</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Producers]
+  N2[Kafka/Flink]
+  N3[Enrich]
+  N4[Sinks]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Real-time Data Streaming
+  "Throughput" : 35
+  "Latency" : 35
+  "Recovery" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 6: Machine Learning Pipeline</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Train]
+  N2[Track]
+  N3[Approve]
+  N4[Deploy]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Machine Learning Pipeline
+  "Training" : 35
+  "Registry" : 35
+  "Promotion" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 7: Serverless Data Processing</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Events]
+  N2[Orchestrate]
+  N3[Persist]
+  N4[Observe]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Serverless Data Processing
+  "Orchestration" : 35
+  "Reliability" : 35
+  "Security" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 8: Advanced AI Chatbot</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Query]
+  N2[Retrieve]
+  N3[Tooling]
+  N4[Answer]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Advanced AI Chatbot
+  "Retrieval" : 35
+  "Tooling" : 35
+  "Evaluation" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 9: Multi-Region Disaster Recovery</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Primary]
+  N2[Replicate]
+  N3[Failover]
+  N4[Validate]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Multi-Region Disaster Recovery
+  "Failover" : 35
+  "Validation" : 35
+  "Runbooks" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 10: Blockchain Smart Contract Platform</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Develop]
+  N2[Test]
+  N3[Audit]
+  N4[Deploy]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Blockchain Smart Contract Platform
+  "Tests" : 35
+  "Audit" : 35
+  "Release" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 11: IoT Data Ingestion & Analytics</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Devices]
+  N2[Ingest]
+  N3[Analyze]
+  N4[Dashboards]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: IoT Data Ingestion & Analytics
+  "Ingest" : 35
+  "Storage" : 35
+  "Visualization" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 12: Quantum Computing Integration</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Classical]
+  N2[QPU]
+  N3[Analyze]
+  N4[Iterate]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Quantum Computing Integration
+  "Experiments" : 35
+  "Simulation" : 35
+  "Docs" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 13: Advanced Cybersecurity Platform</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Detect]
+  N2[Enrich]
+  N3[Automate]
+  N4[Respond]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Advanced Cybersecurity Platform
+  "SOAR" : 35
+  "Playbooks" : 35
+  "Automation" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 14: Edge AI Inference Platform</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Sensors]
+  N2[Inference]
+  N3[Optimize]
+  N4[Actions]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Edge AI Inference Platform
+  "Latency" : 35
+  "Accuracy" : 35
+  "Ops" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 15: Real-time Collaborative Platform</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Clients]
+  N2[Sync]
+  N3[Resolve]
+  N4[Persist]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Real-time Collaborative Platform
+  "Sync" : 35
+  "Conflict Resolution" : 35
+  "Latency" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 16: Advanced Data Lake & Analytics</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Bronze]
+  N2[Silver]
+  N3[Gold]
+  N4[Serve]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Advanced Data Lake & Analytics
+  "Ingest" : 35
+  "Quality" : 35
+  "Curate" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 17: Multi-Cloud Service Mesh</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Cluster A]
+  N2[mTLS Mesh]
+  N3[Policy]
+  N4[Cluster B]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Multi-Cloud Service Mesh
+  "Routing" : 35
+  "Security" : 35
+  "Observability" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 18: GPU-Accelerated Computing</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Data]
+  N2[GPU Compute]
+  N3[Tune]
+  N4[Results]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: GPU-Accelerated Computing
+  "Performance" : 35
+  "Testing" : 35
+  "Docs" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 19: Advanced Kubernetes Operators</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[CRDs]
+  N2[Reconcile]
+  N3[Automate]
+  N4[State]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Advanced Kubernetes Operators
+  "Lifecycle" : 35
+  "Automation" : 35
+  "Testing" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 20: Blockchain Oracle Service</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Data Feeds]
+  N2[Verify]
+  N3[Publish]
+  N4[On-chain]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Blockchain Oracle Service
+  "Feeds" : 35
+  "Verification" : 35
+  "SLAs" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 21: Quantum-Safe Cryptography</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[ECDH]
+  N2[Kyber]
+  N3[Combine]
+  N4[Validate]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Quantum-Safe Cryptography
+  "Keygen" : 35
+  "Exchange" : 35
+  "Validation" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 22: Autonomous DevOps Platform</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Detect]
+  N2[Decide]
+  N3[Runbook]
+  N4[Verify]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Autonomous DevOps Platform
+  "Signals" : 35
+  "Runbooks" : 35
+  "Verification" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 23: Advanced Monitoring & Observability</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Collect]
+  N2[Store]
+  N3[Alert]
+  N4[Improve]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Advanced Monitoring & Observability
+  "Metrics" : 35
+  "Logs" : 35
+  "Traces" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 24: Portfolio Report Generator</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Inputs]
+  N2[Render]
+  N3[Review]
+  N4[Publish]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Portfolio Report Generator
+  "Templates" : 35
+  "Evidence" : 35
+  "Export" : 30
+```
+</details>
+
+<details>
+<summary><strong>Project 25: Portfolio Website & Documentation Hub</strong></summary>
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+flowchart LR
+  N1[Docs]
+  N2[Build]
+  N3[QA]
+  N4[Publish]
+  N1 --> N2
+  N2 --> N3
+  N3 --> N4
+```
+```mermaid
+pie title Coverage: Portfolio Website & Documentation Hub
+  "Docs" : 35
+  "Build" : 35
+  "QA" : 30
+```
+</details>
 
 ---
 ## 📊 Portfolio Status Board
