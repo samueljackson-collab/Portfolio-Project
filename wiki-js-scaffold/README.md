@@ -245,18 +245,18 @@ GOOGLE_ANALYTICS_ID=UA-XXXXXXXXX-X
 **Automatic (Let's Encrypt):**
 
 ```bash
-## Configure domain in .env
+# Configure domain in .env
 DOMAIN=wiki.example.com
 CERTBOT_EMAIL=admin@example.com
 
-## Start services
+# Start services
 docker-compose up -d
 ```
 
 **Manual:**
 
 ```bash
-## Place certificates in docker/ssl/
+# Place certificates in docker/ssl/
 docker/ssl/
 ├── fullchain.pem
 └── privkey.pem
@@ -276,10 +276,10 @@ docker/ssl/
 #### Method 2: Add to content/ directory
 
 ```bash
-## Add new markdown file
+# Add new markdown file
 echo "# New Page" > content/01-setup-fundamentals/07-new-topic.md
 
-## Re-import
+# Re-import
 npm run import
 ```
 
@@ -380,37 +380,37 @@ npm run import
 **Problem:** Cannot connect to Wiki.js
 
 ```bash
-## Check if services are running
+# Check if services are running
 docker-compose ps
 
-## Check logs
+# Check logs
 docker-compose logs wiki
 
-## Restart services
+# Restart services
 docker-compose restart
 ```
 
 **Problem:** Import fails
 
 ```bash
-## Verify API token
+# Verify API token
 echo $WIKIJS_TOKEN
 
-## Test API connection
+# Test API connection
 curl -H "Authorization: Bearer $WIKIJS_TOKEN" \
   ${WIKIJS_URL:-http://localhost:3000}/graphql
 
-## Check content files
+# Check content files
 find content/ -name "*.md"
 ```
 
 **Problem:** Database connection error
 
 ```bash
-## Check database status
+# Check database status
 docker-compose exec db pg_isready -U wikijs
 
-## Reset database (WARNING: deletes data)
+# Reset database (WARNING: deletes data)
 docker-compose down -v
 docker-compose up -d
 ```
@@ -418,10 +418,10 @@ docker-compose up -d
 **Problem:** SSL certificate issues
 
 ```bash
-## Renew Let's Encrypt certificate
+# Renew Let's Encrypt certificate
 docker-compose run --rm certbot renew
 
-## Check certificate expiry
+# Check certificate expiry
 openssl x509 -in docker/ssl/fullchain.pem -noout -dates
 ```
 
@@ -430,7 +430,7 @@ openssl x509 -in docker/ssl/fullchain.pem -noout -dates
 **Enable caching:**
 
 ```bash
-## In .env
+# In .env
 CACHE_ENABLED=true
 CACHE_TTL=3600
 ```
@@ -438,17 +438,17 @@ CACHE_TTL=3600
 **Database tuning:**
 
 ```sql
-## Increase connection pool
+-- Increase connection pool
 ALTER SYSTEM SET max_connections = 200;
 
-## Enable query optimization
+-- Enable query optimization
 ALTER SYSTEM SET shared_buffers = '256MB';
 ```
 
 **Nginx optimization:**
 
 ```nginx
-## Add to nginx.conf
+# Add to nginx.conf
 gzip on;
 gzip_comp_level 6;
 client_max_body_size 50M;
