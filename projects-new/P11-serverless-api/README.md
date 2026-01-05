@@ -13,4 +13,4 @@ This service fronts a Lambda-based backend with Amazon API Gateway, DynamoDB per
 - `template.yaml`: API Gateway, Lambda handlers, DynamoDB table, and X-Ray sampling rules.
 - `src/handlers/`: Python handlers with structured logging and idempotent writes.
 - `scripts/load_test.py`: k6 wrapper for burst and sustained traffic profiles.
-- `docs/runbooks.md`: incident procedures for 5xx spikes or throttle events.
+- `RUNBOOKS.md`: incident procedures for 5xx spikes or throttle events.
