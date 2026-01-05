@@ -1,4 +1,5 @@
 """Tests for recommendation generation in portfolio-metrics script."""
+
 from importlib import util
 from pathlib import Path
 

@@ -29,7 +29,7 @@ TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
     # Default to SQLite for faster, dependency-free test execution. A Postgres
     # URL can still be provided via TEST_DATABASE_URL when running in CI.
-    "sqlite+aiosqlite:///./test.db"
+    "sqlite+aiosqlite:///./test.db",
 )
 
 
@@ -96,7 +96,9 @@ async def db_override(test_db: AsyncSession):
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client(test_db: AsyncSession, db_override) -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    test_db: AsyncSession, db_override
+) -> AsyncGenerator[AsyncClient, None]:
     """Create an unauthenticated test client."""
 
     transport = ASGITransport(app=app)
@@ -116,7 +118,7 @@ async def test_user(test_db: AsyncSession) -> User:
     user = User(
         email="testuser@example.com",
         hashed_password=get_password_hash("testpassword123"),
-        is_active=True
+        is_active=True,
     )
     test_db.add(user)
     await test_db.commit()
@@ -137,11 +139,7 @@ async def test_user_token(client: AsyncClient, test_user: User) -> str:
         str: JWT access token
     """
     response = await client.post(
-        "/auth/login",
-        data={
-            "username": test_user.email,
-            "password": "testpassword123"
-        }
+        "/auth/login", data={"username": test_user.email, "password": "testpassword123"}
     )
     assert response.status_code == 200
     return response.json()["access_token"]
@@ -157,15 +155,14 @@ async def authenticated_client(
 
     transport = ASGITransport(app=app)
     headers = {"Authorization": f"Bearer {test_user_token}"}
-    async with AsyncClient(transport=transport, base_url="http://test", headers=headers) as ac:
+    async with AsyncClient(
+        transport=transport, base_url="http://test", headers=headers
+    ) as ac:
         yield ac
 
 
 @pytest_asyncio.fixture
-async def test_content(
-    test_db: AsyncSession,
-    test_user: User
-) -> Content:
+async def test_content(test_db: AsyncSession, test_user: User) -> Content:
     """
     Create test content item.
 
@@ -180,7 +177,7 @@ async def test_content(
         title="Test Content",
         body="This is test content body",
         owner_id=test_user.id,
-        is_published=True
+        is_published=True,
     )
     test_db.add(content)
     await test_db.commit()
@@ -191,10 +188,7 @@ async def test_content(
 @pytest.fixture
 def sample_user_data() -> dict:
     """Sample user registration data."""
-    return {
-        "email": "newuser@example.com",
-        "password": "securepassword123"
-    }
+    return {"email": "newuser@example.com", "password": "securepassword123"}
 
 
 @pytest.fixture
@@ -203,5 +197,5 @@ def sample_content_data() -> dict:
     return {
         "title": "New Content Item",
         "body": "This is the body of the new content",
-        "is_published": False
+        "is_published": False,
     }

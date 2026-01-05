@@ -26,8 +26,14 @@ router = APIRouter(prefix="/edr", tags=["EDR Simulation"])
 
 
 DEFAULT_POLICIES = [
-    EndpointPolicy(name="Ransomware Guard", description="Block unsigned encryptors", enabled=True),
-    EndpointPolicy(name="PowerShell Constrained Mode", description="Force ConstrainedLanguageMode", enabled=True),
+    EndpointPolicy(
+        name="Ransomware Guard", description="Block unsigned encryptors", enabled=True
+    ),
+    EndpointPolicy(
+        name="PowerShell Constrained Mode",
+        description="Force ConstrainedLanguageMode",
+        enabled=True,
+    ),
 ]
 
 
@@ -40,8 +46,12 @@ async def ensure_policies(db: DatabaseSession) -> None:
     await db.flush()
 
 
-@router.post("/endpoints", response_model=EndpointResponse, status_code=status.HTTP_201_CREATED)
-async def register_endpoint(payload: EndpointCreate, db: DatabaseSession, _: CurrentUser) -> EndpointAsset:
+@router.post(
+    "/endpoints", response_model=EndpointResponse, status_code=status.HTTP_201_CREATED
+)
+async def register_endpoint(
+    payload: EndpointCreate, db: DatabaseSession, _: CurrentUser
+) -> EndpointAsset:
     endpoint = EndpointAsset(**payload.model_dump())
     db.add(endpoint)
     await db.flush()
@@ -63,7 +73,9 @@ async def list_endpoints(db: DatabaseSession) -> list[EndpointAsset]:
 
 
 @router.post("/endpoints/{endpoint_id}/checkin", response_model=EndpointResponse)
-async def endpoint_checkin(endpoint_id: str, payload: EndpointCheckin, db: DatabaseSession, _: CurrentUser) -> EndpointAsset:
+async def endpoint_checkin(
+    endpoint_id: str, payload: EndpointCheckin, db: DatabaseSession, _: CurrentUser
+) -> EndpointAsset:
     endpoint = await db.get(EndpointAsset, uuid.UUID(str(endpoint_id)))
     if not endpoint:
         raise_not_found("Endpoint")
@@ -87,8 +99,12 @@ async def list_alerts(db: DatabaseSession) -> list[EndpointAlert]:
     return result.scalars().all()
 
 
-@router.post("/alerts", response_model=EndpointAlertResponse, status_code=status.HTTP_201_CREATED)
-async def create_alert(payload: EndpointAlertCreate, db: DatabaseSession, _: CurrentUser) -> EndpointAlert:
+@router.post(
+    "/alerts", response_model=EndpointAlertResponse, status_code=status.HTTP_201_CREATED
+)
+async def create_alert(
+    payload: EndpointAlertCreate, db: DatabaseSession, _: CurrentUser
+) -> EndpointAlert:
     alert = EndpointAlert(**payload.model_dump())
     db.add(alert)
     await db.flush()
@@ -104,7 +120,9 @@ async def list_policies(db: DatabaseSession) -> list[EndpointPolicy]:
 
 
 @router.patch("/policies/{policy_id}", response_model=EndpointPolicyResponse)
-async def toggle_policy(policy_id: str, payload: EndpointPolicyUpdate, db: DatabaseSession, _: CurrentUser) -> EndpointPolicy:
+async def toggle_policy(
+    policy_id: str, payload: EndpointPolicyUpdate, db: DatabaseSession, _: CurrentUser
+) -> EndpointPolicy:
     policy = await db.get(EndpointPolicy, uuid.UUID(str(policy_id)))
     if not policy:
         raise_not_found("Policy")

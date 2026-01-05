@@ -39,7 +39,9 @@ STEALTH_TACTICS = [
 ]
 
 
-def detection_roll(stealth_factor: float, detection_confidence: float, seed: Optional[int] = None) -> bool:
+def detection_roll(
+    stealth_factor: float, detection_confidence: float, seed: Optional[int] = None
+) -> bool:
     """Return True when an action is detected.
 
     The probability is inverted from the stealth factor (higher stealth means
@@ -54,7 +56,9 @@ def detection_roll(stealth_factor: float, detection_confidence: float, seed: Opt
     return rng.random() < probability
 
 
-def build_operation_event(operation: Operation, day: int, seed: Optional[int] = None) -> OperationEvent:
+def build_operation_event(
+    operation: Operation, day: int, seed: Optional[int] = None
+) -> OperationEvent:
     """Create a simulated event for the requested day.
 
     The timestamp is derived from the operation start date, and the category is
@@ -62,7 +66,9 @@ def build_operation_event(operation: Operation, day: int, seed: Optional[int] = 
     """
 
     rng = random.Random(seed)
-    category = rng.choice(["Initial Access", "Lateral Movement", "Persistence", "Command and Control"])
+    category = rng.choice(
+        ["Initial Access", "Lateral Movement", "Persistence", "Command and Control"]
+    )
     description = rng.choice(STEALTH_TACTICS)
     detection_confidence = rng.uniform(0.35, 0.85)
     detected = detection_roll(operation.stealth_factor, detection_confidence, seed=seed)
@@ -103,7 +109,9 @@ INCIDENT_SEQUENCE = [
 ]
 
 
-def simulated_incident_events(incident: Incident, start_index: int = 0) -> List[IncidentEvent]:
+def simulated_incident_events(
+    incident: Incident, start_index: int = 0
+) -> List[IncidentEvent]:
     """Build a deterministic sequence of lifecycle events.
 
     Each event is spaced thirty minutes apart to make ordering obvious in
@@ -112,7 +120,9 @@ def simulated_incident_events(incident: Incident, start_index: int = 0) -> List[
 
     events: List[IncidentEvent] = []
     base_time = incident.created_at or datetime.utcnow()
-    for offset, (event_type, detail) in enumerate(INCIDENT_SEQUENCE[start_index:], start=start_index):
+    for offset, (event_type, detail) in enumerate(
+        INCIDENT_SEQUENCE[start_index:], start=start_index
+    ):
         events.append(
             IncidentEvent(
                 type=event_type,
@@ -124,7 +134,9 @@ def simulated_incident_events(incident: Incident, start_index: int = 0) -> List[
     return events
 
 
-def validate_incident_order(existing_events: Iterable[IncidentEvent], new_type: str) -> Optional[str]:
+def validate_incident_order(
+    existing_events: Iterable[IncidentEvent], new_type: str
+) -> Optional[str]:
     """Return a warning string when events arrive out of order."""
 
     expected_next = len(list(existing_events))
@@ -162,8 +174,8 @@ def simulated_analysis(sample: MalwareSample) -> AnalysisReport:
     iocs = [f"domain-{hash_hint}.example.com", f"C2/{family}/{hash_hint}"]
     rule_name = sample.name.replace(" ", "_").lower()
     yara_rule = (
-        f"rule {rule_name} \n{{\n  meta:\n    author = \"portfolio-lab\"\n"
-        f"    family = \"{family}\"\n  strings:\n    $hash = \"{hash_hint}\"\n"
+        f'rule {rule_name} \n{{\n  meta:\n    author = "portfolio-lab"\n'
+        f'    family = "{family}"\n  strings:\n    $hash = "{hash_hint}"\n'
         "  condition:\n    all of them\n}"
     )
 
@@ -180,7 +192,9 @@ def simulated_analysis(sample: MalwareSample) -> AnalysisReport:
 # ---------------------------------------------------------------------------
 
 
-def maybe_outdated_alert(endpoint: EndpointAsset, minimum_version: str = "1.5.0") -> Optional[EndpointAlert]:
+def maybe_outdated_alert(
+    endpoint: EndpointAsset, minimum_version: str = "1.5.0"
+) -> Optional[EndpointAlert]:
     """Create an alert when the agent version lags behind the baseline."""
 
     def version_tuple(value: str) -> tuple[int, int, int]:
@@ -196,7 +210,9 @@ def maybe_outdated_alert(endpoint: EndpointAsset, minimum_version: str = "1.5.0"
     return None
 
 
-def deployment_summary(endpoints: List[EndpointAsset], policies: List[EndpointPolicy]) -> dict:
+def deployment_summary(
+    endpoints: List[EndpointAsset], policies: List[EndpointPolicy]
+) -> dict:
     """Compute aggregate deployment coverage statistics."""
 
     total = len(endpoints)

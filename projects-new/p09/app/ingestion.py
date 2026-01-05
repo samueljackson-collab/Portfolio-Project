@@ -1,4 +1,5 @@
 """Document ingestion pipeline with chunking and embedding."""
+
 import asyncio
 from pathlib import Path
 from typing import List, Dict
@@ -6,12 +7,13 @@ import hashlib
 from sentence_transformers import SentenceTransformer
 import tiktoken
 
+
 class DocumentIngestion:
     def __init__(
         self,
         embedding_model: str = "all-MiniLM-L6-v2",
         chunk_size: int = 512,
-        chunk_overlap: int = 50
+        chunk_overlap: int = 50,
     ):
         self.model = SentenceTransformer(embedding_model)
         self.chunk_size = chunk_size
@@ -30,18 +32,20 @@ class DocumentIngestion:
             chunk_text = self.tokenizer.decode(chunk_tokens)
 
             chunk_id = hashlib.sha256(
-                (metadata['source'] + str(start)).encode()
+                (metadata["source"] + str(start)).encode()
             ).hexdigest()[:16]
 
-            chunks.append({
-                'id': chunk_id,
-                'text': chunk_text,
-                'metadata': {
-                    **metadata,
-                    'chunk_index': len(chunks),
-                    'start_char': start
+            chunks.append(
+                {
+                    "id": chunk_id,
+                    "text": chunk_text,
+                    "metadata": {
+                        **metadata,
+                        "chunk_index": len(chunks),
+                        "start_char": start,
+                    },
                 }
-            })
+            )
 
             start += self.chunk_size - self.chunk_overlap
 
@@ -49,35 +53,29 @@ class DocumentIngestion:
 
     async def embed_chunks(self, chunks: List[Dict]) -> List[Dict]:
         """Generate embeddings for text chunks."""
-        texts = [c['text'] for c in chunks]
+        texts = [c["text"] for c in chunks]
 
         # Batch embedding for efficiency
         embeddings = self.model.encode(
-            texts,
-            batch_size=32,
-            show_progress_bar=True,
-            convert_to_numpy=True
+            texts, batch_size=32, show_progress_bar=True, convert_to_numpy=True
         )
 
         for chunk, embedding in zip(chunks, embeddings):
-            chunk['embedding'] = embedding.tolist()
+            chunk["embedding"] = embedding.tolist()
 
         return chunks
 
     async def ingest_document(
-        self,
-        file_path: Path,
-        vector_db_client,
-        collection_name: str = "knowledge_base"
+        self, file_path: Path, vector_db_client, collection_name: str = "knowledge_base"
     ):
         """Full ingestion pipeline for a single document."""
         # Read document
-        text = file_path.read_text(encoding='utf-8')
+        text = file_path.read_text(encoding="utf-8")
 
         metadata = {
-            'source': str(file_path),
-            'filename': file_path.name,
-            'type': file_path.suffix
+            "source": str(file_path),
+            "filename": file_path.name,
+            "type": file_path.suffix,
         }
 
         # Chunk
@@ -92,13 +90,13 @@ class DocumentIngestion:
             collection_name=collection_name,
             documents=[
                 {
-                    'id': c['id'],
-                    'embedding': c['embedding'],
-                    'text': c['text'],
-                    'metadata': c['metadata']
+                    "id": c["id"],
+                    "embedding": c["embedding"],
+                    "text": c["text"],
+                    "metadata": c["metadata"],
                 }
                 for c in chunks_with_embeddings
-            ]
+            ],
         )
 
         return len(chunks)
@@ -107,13 +105,10 @@ class DocumentIngestion:
         self,
         dir_path: Path,
         vector_db_client,
-        extensions: List[str] = ['.txt', '.md', '.pdf']
+        extensions: List[str] = [".txt", ".md", ".pdf"],
     ):
         """Ingest all documents in a directory."""
-        files = [
-            f for f in dir_path.rglob('*')
-            if f.suffix in extensions
-        ]
+        files = [f for f in dir_path.rglob("*") if f.suffix in extensions]
 
         total_chunks = 0
         for file_path in files:

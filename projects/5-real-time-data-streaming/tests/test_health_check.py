@@ -1,4 +1,5 @@
 """Health check tests for 5-real-time-data-streaming."""
+
 from src.health_check import check_health
 
 

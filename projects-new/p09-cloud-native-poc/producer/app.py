@@ -18,6 +18,7 @@ def check_api_key(x_api_key: Optional[str]):
 
 import os
 
+
 @app.on_event("startup")
 async def load_key():
     global API_KEY
