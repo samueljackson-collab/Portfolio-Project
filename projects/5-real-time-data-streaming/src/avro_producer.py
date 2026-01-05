@@ -18,8 +18,7 @@ from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.serialization import StringSerializer
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -34,10 +33,10 @@ class AvroEventProducer:
 
     def __init__(
         self,
-        bootstrap_servers: str = 'localhost:9092',
-        schema_registry_url: str = 'http://localhost:8081',
-        topic: str = 'user-events-avro',
-        producer_id: Optional[str] = None
+        bootstrap_servers: str = "localhost:9092",
+        schema_registry_url: str = "http://localhost:8081",
+        topic: str = "user-events-avro",
+        producer_id: Optional[str] = None,
     ):
         """
         Initialize Avro producer.
@@ -53,32 +52,27 @@ class AvroEventProducer:
 
         # Initialize Schema Registry client
         logger.info(f"Connecting to Schema Registry: {schema_registry_url}")
-        self.schema_registry_client = SchemaRegistryClient({
-            'url': schema_registry_url
-        })
+        self.schema_registry_client = SchemaRegistryClient({"url": schema_registry_url})
 
         # Load Avro schema
-        schema_path = Path(__file__).parent.parent / 'schemas' / 'user_event.avsc'
-        with open(schema_path, 'r') as f:
+        schema_path = Path(__file__).parent.parent / "schemas" / "user_event.avsc"
+        with open(schema_path, "r") as f:
             schema_str = f.read()
 
         # Create Avro serializer
-        self.avro_serializer = AvroSerializer(
-            self.schema_registry_client,
-            schema_str
-        )
+        self.avro_serializer = AvroSerializer(self.schema_registry_client, schema_str)
 
         # Configure producer
         producer_config = {
-            'bootstrap.servers': bootstrap_servers,
-            'key.serializer': StringSerializer('utf_8'),
-            'value.serializer': self.avro_serializer,
-            'acks': 'all',
-            'enable.idempotence': True,
-            'max.in.flight.requests.per.connection': 5,
-            'compression.type': 'snappy',
-            'batch.size': 16384,
-            'linger.ms': 10,
+            "bootstrap.servers": bootstrap_servers,
+            "key.serializer": StringSerializer("utf_8"),
+            "value.serializer": self.avro_serializer,
+            "acks": "all",
+            "enable.idempotence": True,
+            "max.in.flight.requests.per.connection": 5,
+            "compression.type": "snappy",
+            "batch.size": 16384,
+            "linger.ms": 10,
         }
 
         self.producer = SerializingProducer(producer_config)
@@ -102,7 +96,7 @@ class AvroEventProducer:
         user_id: str,
         event_type: str,
         session_id: Optional[str] = None,
-        properties: Optional[Dict[str, str]] = None
+        properties: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         Create an event dictionary conforming to Avro schema.
@@ -117,8 +111,14 @@ class AvroEventProducer:
             Event dictionary
         """
         event_types = [
-            'PAGE_VIEW', 'CLICK', 'PURCHASE', 'ADD_TO_CART',
-            'SEARCH', 'LOGIN', 'LOGOUT', 'REGISTRATION'
+            "PAGE_VIEW",
+            "CLICK",
+            "PURCHASE",
+            "ADD_TO_CART",
+            "SEARCH",
+            "LOGIN",
+            "LOGOUT",
+            "REGISTRATION",
         ]
 
         if event_type.upper() not in event_types:
@@ -128,43 +128,43 @@ class AvroEventProducer:
 
         # Generate event
         event = {
-            'event_id': str(uuid.uuid4()),
-            'user_id': user_id,
-            'session_id': session_id,
-            'event_type': event_type,
-            'timestamp': int(datetime.now().timestamp() * 1000),
-            'page_url': f"/page/{random.randint(1, 10)}",
-            'referrer': None,
-            'user_agent': 'Mozilla/5.0 (compatible; AvroProducer/1.0)',
-            'ip_address': f"192.168.1.{random.randint(1, 255)}",
-            'device_type': random.choice(['DESKTOP', 'MOBILE', 'TABLET']),
-            'properties': properties or {},
-            'metadata': {
-                'producer_id': self.producer_id,
-                'schema_version': '1.0.0',
-                'environment': 'PRODUCTION'
-            }
+            "event_id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "session_id": session_id,
+            "event_type": event_type,
+            "timestamp": int(datetime.now().timestamp() * 1000),
+            "page_url": f"/page/{random.randint(1, 10)}",
+            "referrer": None,
+            "user_agent": "Mozilla/5.0 (compatible; AvroProducer/1.0)",
+            "ip_address": f"192.168.1.{random.randint(1, 255)}",
+            "device_type": random.choice(["DESKTOP", "MOBILE", "TABLET"]),
+            "properties": properties or {},
+            "metadata": {
+                "producer_id": self.producer_id,
+                "schema_version": "1.0.0",
+                "environment": "PRODUCTION",
+            },
         }
 
         # Add event-specific properties
-        if event_type == 'PURCHASE':
-            event['properties']['amount'] = str(random.uniform(10.0, 500.0))
-            event['properties']['currency'] = 'USD'
-            event['properties']['product_id'] = f"prod-{random.randint(1, 100)}"
+        if event_type == "PURCHASE":
+            event["properties"]["amount"] = str(random.uniform(10.0, 500.0))
+            event["properties"]["currency"] = "USD"
+            event["properties"]["product_id"] = f"prod-{random.randint(1, 100)}"
 
-        elif event_type == 'SEARCH':
-            search_terms = ['laptop', 'phone', 'headphones', 'camera', 'watch']
-            event['properties']['query'] = random.choice(search_terms)
-            event['properties']['results_count'] = str(random.randint(0, 100))
+        elif event_type == "SEARCH":
+            search_terms = ["laptop", "phone", "headphones", "camera", "watch"]
+            event["properties"]["query"] = random.choice(search_terms)
+            event["properties"]["results_count"] = str(random.randint(0, 100))
 
         return event
 
     def produce_event(
         self,
         user_id: str,
-        event_type: str = 'PAGE_VIEW',
+        event_type: str = "PAGE_VIEW",
         session_id: Optional[str] = None,
-        properties: Optional[Dict[str, str]] = None
+        properties: Optional[Dict[str, str]] = None,
     ):
         """
         Produce a single event to Kafka.
@@ -183,7 +183,7 @@ class AvroEventProducer:
                 topic=self.topic,
                 key=user_id,
                 value=event,
-                on_delivery=self._delivery_callback
+                on_delivery=self._delivery_callback,
             )
 
             # Trigger callbacks
@@ -193,12 +193,7 @@ class AvroEventProducer:
             logger.error(f"Error producing event: {e}")
             raise
 
-    def produce_batch(
-        self,
-        count: int = 100,
-        num_users: int = 10,
-        delay: float = 0.1
-    ):
+    def produce_batch(self, count: int = 100, num_users: int = 10, delay: float = 0.1):
         """
         Produce a batch of events.
 
@@ -211,8 +206,12 @@ class AvroEventProducer:
 
         users = [f"user-{i}" for i in range(num_users)]
         event_types = [
-            'PAGE_VIEW', 'CLICK', 'PURCHASE', 'ADD_TO_CART',
-            'SEARCH', 'LOGIN'
+            "PAGE_VIEW",
+            "CLICK",
+            "PURCHASE",
+            "ADD_TO_CART",
+            "SEARCH",
+            "LOGIN",
         ]
 
         produced = 0
@@ -268,45 +267,25 @@ class AvroEventProducer:
 def main():
     """CLI for Avro event producer."""
     parser = argparse.ArgumentParser(
-        description='Avro Event Producer with Schema Registry'
+        description="Avro Event Producer with Schema Registry"
     )
     parser.add_argument(
-        '--bootstrap-servers',
-        default='localhost:9092',
-        help='Kafka bootstrap servers'
+        "--bootstrap-servers", default="localhost:9092", help="Kafka bootstrap servers"
     )
     parser.add_argument(
-        '--schema-registry',
-        default='http://localhost:8081',
-        help='Schema Registry URL'
+        "--schema-registry", default="http://localhost:8081", help="Schema Registry URL"
+    )
+    parser.add_argument("--topic", default="user-events-avro", help="Kafka topic")
+    parser.add_argument(
+        "--count", type=int, default=100, help="Number of events to produce"
     )
     parser.add_argument(
-        '--topic',
-        default='user-events-avro',
-        help='Kafka topic'
+        "--users", type=int, default=10, help="Number of unique users to simulate"
     )
     parser.add_argument(
-        '--count',
-        type=int,
-        default=100,
-        help='Number of events to produce'
+        "--delay", type=float, default=0.1, help="Delay between events (seconds)"
     )
-    parser.add_argument(
-        '--users',
-        type=int,
-        default=10,
-        help='Number of unique users to simulate'
-    )
-    parser.add_argument(
-        '--delay',
-        type=float,
-        default=0.1,
-        help='Delay between events (seconds)'
-    )
-    parser.add_argument(
-        '--producer-id',
-        help='Producer identifier'
-    )
+    parser.add_argument("--producer-id", help="Producer identifier")
 
     args = parser.parse_args()
 
@@ -320,14 +299,10 @@ def main():
             bootstrap_servers=args.bootstrap_servers,
             schema_registry_url=args.schema_registry,
             topic=args.topic,
-            producer_id=args.producer_id
+            producer_id=args.producer_id,
         )
 
-        producer.produce_batch(
-            count=args.count,
-            num_users=args.users,
-            delay=args.delay
-        )
+        producer.produce_batch(count=args.count, num_users=args.users, delay=args.delay)
 
         producer.close()
 
@@ -338,5 +313,5 @@ def main():
         exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

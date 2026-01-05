@@ -499,7 +499,9 @@ async def list_albums(
     current_user: User = Depends(get_current_user),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    album_type: Optional[str] = Query(None, description="Filter by type: location, date, custom"),
+    album_type: Optional[str] = Query(
+        None, description="Filter by type: location, date, custom"
+    ),
 ) -> AlbumListResponse:
     """
     List albums with pagination.

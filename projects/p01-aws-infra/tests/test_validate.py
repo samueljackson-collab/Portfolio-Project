@@ -1,4 +1,5 @@
 """Validation tests for CloudFormation templates and governance docs."""
+
 from pathlib import Path
 
 import pytest
@@ -39,7 +40,12 @@ def test_master_factory_document_exists(project_root: Path):
     assert doc.exists(), "MASTER_FACTORY.md should describe the pipeline contract"
 
     content = doc.read_text()
-    for stage in ["Lint", "Terraform Plan", "CloudFormation Change Sets", "Gated Apply"]:
+    for stage in [
+        "Lint",
+        "Terraform Plan",
+        "CloudFormation Change Sets",
+        "Gated Apply",
+    ]:
         assert stage in content, f"Missing stage reference: {stage}"
 
 
@@ -81,5 +87,10 @@ def test_rds_template_outputs_surface_identifiers(project_root: Path):
     data = _load_template(project_root, "rds.yaml")
 
     outputs = data.get("Outputs", {})
-    for key in ["DBInstanceIdentifier", "DBEndpoint", "RdsSecurityGroupId", "DbSubnetGroupName"]:
+    for key in [
+        "DBInstanceIdentifier",
+        "DBEndpoint",
+        "RdsSecurityGroupId",
+        "DbSubnetGroupName",
+    ]:
         assert key in outputs, f"Expected output {key}"

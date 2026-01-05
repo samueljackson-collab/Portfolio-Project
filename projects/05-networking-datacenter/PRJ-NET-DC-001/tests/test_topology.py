@@ -1,4 +1,5 @@
 """Tests for the datacenter topology scaffold."""
+
 import os
 import sys
 

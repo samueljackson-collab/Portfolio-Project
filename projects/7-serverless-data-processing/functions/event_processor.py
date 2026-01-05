@@ -15,19 +15,19 @@ from botocore.exceptions import ClientError
 
 # Configure logging
 logger = logging.getLogger()
-logger.setLevel(os.getenv('LOG_LEVEL', 'INFO'))
+logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
 
 # AWS clients
-s3_client = boto3.client('s3')
-sqs_client = boto3.client('sqs')
-dynamodb = boto3.resource('dynamodb')
-sns_client = boto3.client('sns')
+s3_client = boto3.client("s3")
+sqs_client = boto3.client("sqs")
+dynamodb = boto3.resource("dynamodb")
+sns_client = boto3.client("sns")
 
 # Environment variables
-OUTPUT_BUCKET = os.getenv('OUTPUT_BUCKET')
-DLQ_URL = os.getenv('DLQ_URL')
-METRICS_TABLE = os.getenv('METRICS_TABLE')
-NOTIFICATION_TOPIC = os.getenv('NOTIFICATION_TOPIC')
+OUTPUT_BUCKET = os.getenv("OUTPUT_BUCKET")
+DLQ_URL = os.getenv("DLQ_URL")
+METRICS_TABLE = os.getenv("METRICS_TABLE")
+NOTIFICATION_TOPIC = os.getenv("NOTIFICATION_TOPIC")
 
 
 class EventValidator:
@@ -36,14 +36,14 @@ class EventValidator:
     @staticmethod
     def validate_structure(event: Dict) -> bool:
         """Validate event has required fields."""
-        required_fields = ['event_type', 'timestamp', 'data']
+        required_fields = ["event_type", "timestamp", "data"]
         return all(field in event for field in required_fields)
 
     @staticmethod
     def validate_timestamp(timestamp: str) -> bool:
         """Validate timestamp format."""
         try:
-            datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             return True
         except (ValueError, AttributeError):
             return False
@@ -52,11 +52,11 @@ class EventValidator:
     def validate_event_type(event_type: str) -> bool:
         """Validate event type is allowed."""
         allowed_types = [
-            'user_action',
-            'system_event',
-            'metric_update',
-            'error_event',
-            'audit_log'
+            "user_action",
+            "system_event",
+            "metric_update",
+            "error_event",
+            "audit_log",
         ]
         return event_type in allowed_types
 
@@ -68,22 +68,22 @@ class EventTransformer:
     def transform(event: Dict) -> Dict:
         """Transform event to standard schema."""
         transformed = {
-            'event_id': event.get('event_id', generate_event_id()),
-            'event_type': event['event_type'],
-            'timestamp': event['timestamp'],
-            'processed_at': datetime.now(timezone.utc).isoformat(),
-            'data': event['data'],
-            'metadata': {
-                'source': event.get('source', 'unknown'),
-                'version': event.get('version', '1.0'),
-                'environment': os.getenv('ENVIRONMENT', 'production')
-            }
+            "event_id": event.get("event_id", generate_event_id()),
+            "event_type": event["event_type"],
+            "timestamp": event["timestamp"],
+            "processed_at": datetime.now(timezone.utc).isoformat(),
+            "data": event["data"],
+            "metadata": {
+                "source": event.get("source", "unknown"),
+                "version": event.get("version", "1.0"),
+                "environment": os.getenv("ENVIRONMENT", "production"),
+            },
         }
 
         # Add enrichment data
-        if event['event_type'] == 'user_action':
-            transformed['data']['enriched'] = True
-            transformed['data']['processed_by'] = 'lambda-processor'
+        if event["event_type"] == "user_action":
+            transformed["data"]["enriched"] = True
+            transformed["data"]["processed_by"] = "lambda-processor"
 
         return transformed
 
@@ -96,6 +96,7 @@ class EventTransformer:
 def generate_event_id() -> str:
     """Generate unique event ID."""
     import uuid
+
     return str(uuid.uuid4())
 
 
@@ -103,16 +104,13 @@ def send_to_dlq(event: Dict, error: str):
     """Send failed event to Dead Letter Queue."""
     try:
         message = {
-            'original_event': event,
-            'error': error,
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'retry_count': event.get('retry_count', 0) + 1
+            "original_event": event,
+            "error": error,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "retry_count": event.get("retry_count", 0) + 1,
         }
 
-        sqs_client.send_message(
-            QueueUrl=DLQ_URL,
-            MessageBody=json.dumps(message)
-        )
+        sqs_client.send_message(QueueUrl=DLQ_URL, MessageBody=json.dumps(message))
 
         logger.warning(f"Sent event to DLQ: {error}")
 
@@ -129,19 +127,20 @@ def record_metric(metric_name: str, value: float, event_type: str):
         table = dynamodb.Table(METRICS_TABLE)
         table.put_item(
             Item={
-                'metric_id': f"{metric_name}#{datetime.now(timezone.utc).isoformat()}",
-                'metric_name': metric_name,
-                'value': value,
-                'event_type': event_type,
-                'timestamp': datetime.now(timezone.utc).isoformat(),
-                'ttl': int(datetime.now(timezone.utc).timestamp()) + (7 * 24 * 3600)  # 7 days
+                "metric_id": f"{metric_name}#{datetime.now(timezone.utc).isoformat()}",
+                "metric_name": metric_name,
+                "value": value,
+                "event_type": event_type,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "ttl": int(datetime.now(timezone.utc).timestamp())
+                + (7 * 24 * 3600),  # 7 days
             }
         )
     except Exception as e:
         logger.error(f"Failed to record metric: {e}")
 
 
-def save_to_s3(data: Dict, prefix: str = 'processed'):
+def save_to_s3(data: Dict, prefix: str = "processed"):
     """Save processed data to S3."""
     if not OUTPUT_BUCKET:
         logger.warning("OUTPUT_BUCKET not configured")
@@ -156,7 +155,7 @@ def save_to_s3(data: Dict, prefix: str = 'processed'):
             Bucket=OUTPUT_BUCKET,
             Key=key,
             Body=json.dumps(data),
-            ContentType='application/json'
+            ContentType="application/json",
         )
 
         logger.info(f"Saved to S3: s3://{OUTPUT_BUCKET}/{key}")
@@ -174,9 +173,7 @@ def send_notification(subject: str, message: str):
 
     try:
         sns_client.publish(
-            TopicArn=NOTIFICATION_TOPIC,
-            Subject=subject,
-            Message=message
+            TopicArn=NOTIFICATION_TOPIC, Subject=subject, Message=message
         )
     except Exception as e:
         logger.error(f"Failed to send notification: {e}")
@@ -184,15 +181,15 @@ def send_notification(subject: str, message: str):
 
 def process_s3_event(record: Dict) -> Dict:
     """Process S3 event notification."""
-    bucket = record['s3']['bucket']['name']
-    key = record['s3']['object']['key']
+    bucket = record["s3"]["bucket"]["name"]
+    key = record["s3"]["object"]["key"]
 
     logger.info(f"Processing S3 object: s3://{bucket}/{key}")
 
     # Download and process object
     try:
         response = s3_client.get_object(Bucket=bucket, Key=key)
-        data = json.loads(response['Body'].read())
+        data = json.loads(response["Body"].read())
 
         # Validate and transform
         validator = EventValidator()
@@ -209,7 +206,7 @@ def process_s3_event(record: Dict) -> Dict:
 
 def process_sqs_event(record: Dict) -> Dict:
     """Process SQS message."""
-    message_body = record['body']
+    message_body = record["body"]
 
     try:
         data = json.loads(message_body)
@@ -219,10 +216,10 @@ def process_sqs_event(record: Dict) -> Dict:
         if not validator.validate_structure(data):
             raise ValueError("Invalid event structure")
 
-        if not validator.validate_timestamp(data['timestamp']):
+        if not validator.validate_timestamp(data["timestamp"]):
             raise ValueError("Invalid timestamp")
 
-        if not validator.validate_event_type(data['event_type']):
+        if not validator.validate_event_type(data["event_type"]):
             raise ValueError(f"Invalid event type: {data['event_type']}")
 
         # Transform
@@ -255,20 +252,20 @@ def lambda_handler(event: Dict, context: Any) -> Dict:
 
     try:
         # Determine event source
-        if 'Records' in event:
-            records = event['Records']
+        if "Records" in event:
+            records = event["Records"]
 
             for record in records:
                 try:
                     # S3 Event
-                    if 's3' in record:
+                    if "s3" in record:
                         processed = process_s3_event(record)
                         results.append(processed)
                         save_to_s3(processed)
                         processed_count += 1
 
                     # SQS Event
-                    elif 'eventSource' in record and record['eventSource'] == 'aws:sqs':
+                    elif "eventSource" in record and record["eventSource"] == "aws:sqs":
                         processed = process_sqs_event(record)
                         results.append(processed)
                         save_to_s3(processed)
@@ -297,32 +294,32 @@ def lambda_handler(event: Dict, context: Any) -> Dict:
                 failed_count += 1
 
         # Record metrics
-        record_metric('events_processed', processed_count, 'batch')
-        record_metric('events_failed', failed_count, 'batch')
+        record_metric("events_processed", processed_count, "batch")
+        record_metric("events_failed", failed_count, "batch")
 
         # Send notification if there were failures
         if failed_count > 0:
             send_notification(
-                'Event Processing Failures',
-                f"Failed to process {failed_count} events. Check DLQ for details."
+                "Event Processing Failures",
+                f"Failed to process {failed_count} events. Check DLQ for details.",
             )
 
         return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'processed': processed_count,
-                'failed': failed_count,
-                'results': results[:10]  # Return first 10 results
-            })
+            "statusCode": 200,
+            "body": json.dumps(
+                {
+                    "processed": processed_count,
+                    "failed": failed_count,
+                    "results": results[:10],  # Return first 10 results
+                }
+            ),
         }
 
     except Exception as e:
         logger.error(f"Handler error: {e}")
         return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'error': str(e),
-                'processed': processed_count,
-                'failed': failed_count
-            })
+            "statusCode": 500,
+            "body": json.dumps(
+                {"error": str(e), "processed": processed_count, "failed": failed_count}
+            ),
         }

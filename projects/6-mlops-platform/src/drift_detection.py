@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DriftResult:
     """Results from drift detection analysis."""
+
     feature: str
     drift_detected: bool
     test_statistic: float
@@ -40,7 +41,7 @@ class DriftDetector:
         reference_data: pd.DataFrame,
         feature_columns: Optional[List[str]] = None,
         categorical_features: Optional[List[str]] = None,
-        threshold: float = 0.05
+        threshold: float = 0.05,
     ):
         """
         Initialize drift detector with reference (baseline) data.
@@ -57,8 +58,9 @@ class DriftDetector:
         # Auto-detect feature columns
         if feature_columns is None:
             self.feature_columns = [
-                col for col in reference_data.columns
-                if col not in ['target', 'timestamp', 'sample_id']
+                col
+                for col in reference_data.columns
+                if col not in ["target", "timestamp", "sample_id"]
             ]
         else:
             self.feature_columns = feature_columns
@@ -68,7 +70,9 @@ class DriftDetector:
         # Compute reference statistics
         self.reference_stats = self._compute_statistics(reference_data)
 
-        logger.info(f"DriftDetector initialized with {len(self.feature_columns)} features")
+        logger.info(
+            f"DriftDetector initialized with {len(self.feature_columns)} features"
+        )
         logger.info(f"Threshold: {threshold}")
 
     def _compute_statistics(self, data: pd.DataFrame) -> Dict:
@@ -79,21 +83,21 @@ class DriftDetector:
             if col in self.categorical_features:
                 # For categorical: frequency distribution
                 stats_dict[col] = {
-                    'type': 'categorical',
-                    'value_counts': data[col].value_counts(normalize=True).to_dict(),
-                    'unique_values': data[col].nunique()
+                    "type": "categorical",
+                    "value_counts": data[col].value_counts(normalize=True).to_dict(),
+                    "unique_values": data[col].nunique(),
                 }
             else:
                 # For continuous: descriptive statistics
                 stats_dict[col] = {
-                    'type': 'continuous',
-                    'mean': data[col].mean(),
-                    'std': data[col].std(),
-                    'min': data[col].min(),
-                    'max': data[col].max(),
-                    'median': data[col].median(),
-                    'q25': data[col].quantile(0.25),
-                    'q75': data[col].quantile(0.75)
+                    "type": "continuous",
+                    "mean": data[col].mean(),
+                    "std": data[col].std(),
+                    "min": data[col].min(),
+                    "max": data[col].max(),
+                    "median": data[col].median(),
+                    "q25": data[col].quantile(0.25),
+                    "q75": data[col].quantile(0.75),
                 }
 
         return stats_dict
@@ -113,8 +117,8 @@ class DriftDetector:
             test_statistic=statistic,
             p_value=p_value,
             drift_score=statistic,
-            method='ks_test',
-            threshold=self.threshold
+            method="ks_test",
+            threshold=self.threshold,
         )
 
     def chi_square_test(self, feature: str, current_data: pd.DataFrame) -> DriftResult:
@@ -142,11 +146,13 @@ class DriftDetector:
             test_statistic=statistic,
             p_value=p_value,
             drift_score=statistic,
-            method='chi_square',
-            threshold=self.threshold
+            method="chi_square",
+            threshold=self.threshold,
         )
 
-    def calculate_psi(self, feature: str, current_data: pd.DataFrame, bins: int = 10) -> DriftResult:
+    def calculate_psi(
+        self, feature: str, current_data: pd.DataFrame, bins: int = 10
+    ) -> DriftResult:
         """
         Calculate Population Stability Index (PSI).
 
@@ -185,11 +191,13 @@ class DriftDetector:
             test_statistic=psi,
             p_value=1.0 - min(psi / 0.2, 1.0),  # Pseudo p-value
             drift_score=psi,
-            method='psi',
-            threshold=0.1
+            method="psi",
+            threshold=0.1,
         )
 
-    def jensen_shannon_divergence(self, feature: str, current_data: pd.DataFrame, bins: int = 10) -> DriftResult:
+    def jensen_shannon_divergence(
+        self, feature: str, current_data: pd.DataFrame, bins: int = 10
+    ) -> DriftResult:
         """Calculate Jensen-Shannon divergence between distributions."""
         ref_values = self.reference_data[feature].dropna()
         curr_values = current_data[feature].dropna()
@@ -222,14 +230,12 @@ class DriftDetector:
             test_statistic=jsd,
             p_value=1.0 - jsd,
             drift_score=jsd,
-            method='jsd',
-            threshold=0.1
+            method="jsd",
+            threshold=0.1,
         )
 
     def detect_drift(
-        self,
-        current_data: pd.DataFrame,
-        methods: Optional[List[str]] = None
+        self, current_data: pd.DataFrame, methods: Optional[List[str]] = None
     ) -> Dict[str, List[DriftResult]]:
         """
         Detect drift across all features using specified methods.
@@ -243,7 +249,7 @@ class DriftDetector:
             Dictionary mapping feature names to list of drift results
         """
         if methods is None:
-            methods = ['ks_test', 'psi']
+            methods = ["ks_test", "psi"]
 
         results = {}
 
@@ -252,16 +258,18 @@ class DriftDetector:
 
             if feature in self.categorical_features:
                 # Use chi-square for categorical
-                if 'chi_square' in methods:
+                if "chi_square" in methods:
                     feature_results.append(self.chi_square_test(feature, current_data))
             else:
                 # Use multiple methods for continuous features
-                if 'ks_test' in methods:
+                if "ks_test" in methods:
                     feature_results.append(self.ks_test(feature, current_data))
-                if 'psi' in methods:
+                if "psi" in methods:
                     feature_results.append(self.calculate_psi(feature, current_data))
-                if 'jsd' in methods:
-                    feature_results.append(self.jensen_shannon_divergence(feature, current_data))
+                if "jsd" in methods:
+                    feature_results.append(
+                        self.jensen_shannon_divergence(feature, current_data)
+                    )
 
             results[feature] = feature_results
 
@@ -284,26 +292,26 @@ class DriftDetector:
 
         # Create detailed report
         report = {
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'summary': {
-                'total_features': total_features,
-                'drifted_features': len(drifted_features),
-                'drift_percentage': drift_percentage,
-                'drift_detected': len(drifted_features) > 0
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "summary": {
+                "total_features": total_features,
+                "drifted_features": len(drifted_features),
+                "drift_percentage": drift_percentage,
+                "drift_detected": len(drifted_features) > 0,
             },
-            'drifted_features': drifted_features,
-            'detailed_results': {}
+            "drifted_features": drifted_features,
+            "detailed_results": {},
         }
 
         # Add detailed results for drifted features
         for feature in drifted_features:
-            report['detailed_results'][feature] = [
+            report["detailed_results"][feature] = [
                 {
-                    'method': r.method,
-                    'drift_detected': r.drift_detected,
-                    'drift_score': r.drift_score,
-                    'p_value': r.p_value,
-                    'test_statistic': r.test_statistic
+                    "method": r.method,
+                    "drift_detected": r.drift_detected,
+                    "drift_score": r.drift_score,
+                    "p_value": r.p_value,
+                    "test_statistic": r.test_statistic,
                 }
                 for r in drift_results[feature]
             ]
@@ -324,14 +332,16 @@ class DriftDetector:
         output.append(f"Drift Percentage: {report['summary']['drift_percentage']:.2f}%")
         output.append("")
 
-        if report['summary']['drift_detected']:
+        if report["summary"]["drift_detected"]:
             output.append("⚠️  DRIFT DETECTED")
             output.append("")
             output.append("Drifted Features:")
-            for feature in report['drifted_features']:
+            for feature in report["drifted_features"]:
                 output.append(f"  - {feature}")
-                for result in report['detailed_results'][feature]:
-                    output.append(f"      {result['method']}: score={result['drift_score']:.4f}, p={result['p_value']:.4f}")
+                for result in report["detailed_results"][feature]:
+                    output.append(
+                        f"      {result['method']}: score={result['drift_score']:.4f}, p={result['p_value']:.4f}"
+                    )
         else:
             output.append("✅ NO DRIFT DETECTED")
 
@@ -341,14 +351,14 @@ class DriftDetector:
 
 
 # Example usage
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pathlib import Path
 
     # Load sample data
-    data_dir = Path(__file__).parent.parent / 'data' / 'samples'
+    data_dir = Path(__file__).parent.parent / "data" / "samples"
 
-    train_df = pd.read_parquet(data_dir / 'classification_train.parquet')
-    drifted_df = pd.read_parquet(data_dir / 'classification_drifted.parquet')
+    train_df = pd.read_parquet(data_dir / "classification_train.parquet")
+    drifted_df = pd.read_parquet(data_dir / "classification_drifted.parquet")
 
     # Initialize detector with training data as baseline
     detector = DriftDetector(train_df, threshold=0.05)
@@ -360,4 +370,6 @@ if __name__ == '__main__':
     # Get detailed report
     report = detector.get_drift_report(drifted_df)
 
-    print(f"\nDrift detected in {report['summary']['drift_percentage']:.1f}% of features")
+    print(
+        f"\nDrift detected in {report['summary']['drift_percentage']:.1f}% of features"
+    )

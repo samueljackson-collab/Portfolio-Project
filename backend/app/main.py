@@ -36,7 +36,7 @@ from app.routers import (
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -121,10 +121,7 @@ async def log_requests(request: Request, call_next):
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request,
-    exc: RequestValidationError
-):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle Pydantic validation errors."""
     raw_errors = exc.errors()
     logger.warning(f"Validation error: {raw_errors}")
@@ -140,39 +137,29 @@ async def validation_exception_handler(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "detail": sanitized_errors,
-        }
+        },
     )
 
 
 @app.exception_handler(SQLAlchemyError)
-async def sqlalchemy_exception_handler(
-    request: Request,
-    exc: SQLAlchemyError
-):
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
     """Handle database errors."""
     logger.error(f"Database error: {str(exc)}", exc_info=True)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "detail": "An internal error occurred. Please try again later."
-        }
+        content={"detail": "An internal error occurred. Please try again later."},
     )
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(
-    request: Request,
-    exc: Exception
-):
+async def general_exception_handler(request: Request, exc: Exception):
     """Catch-all handler for unexpected errors."""
     logger.error(f"Unexpected error: {str(exc)}", exc_info=True)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "detail": "An unexpected error occurred. Please contact support."
-        }
+        content={"detail": "An unexpected error occurred. Please contact support."},
     )
 
 
@@ -196,7 +183,7 @@ app.include_router(edr.router)
     "/",
     tags=["Root"],
     summary="API Root",
-    description="Get API information and available endpoints"
+    description="Get API information and available endpoints",
 )
 async def root() -> dict:
     """API root endpoint."""
@@ -212,7 +199,7 @@ async def root() -> dict:
             "backup": "/backup (backup status and management)",
             "health": "/health (status check)",
             "orchestration": "/orchestration (plans, runs)",
-        }
+        },
     }
 
 

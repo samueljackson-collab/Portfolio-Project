@@ -149,13 +149,17 @@ class TestMultiNetworkRoamingJourney(unittest.TestCase):
         initial_session_id = session.session_id
 
         # Handoff to Spain
-        self.assertTrue(self.simulator.execute_handoff(session.session_id, self.spain_plmn.plmn_id))
+        self.assertTrue(
+            self.simulator.execute_handoff(session.session_id, self.spain_plmn.plmn_id)
+        )
         session = self.simulator.get_call_session(initial_session_id)
         self.assertEqual(session.visited_network.plmn_id, self.spain_plmn.plmn_id)
         self.assertEqual(len(session.handoffs), 1)
 
         # Handoff to Italy
-        self.assertTrue(self.simulator.execute_handoff(session.session_id, self.italy_plmn.plmn_id))
+        self.assertTrue(
+            self.simulator.execute_handoff(session.session_id, self.italy_plmn.plmn_id)
+        )
         session = self.simulator.get_call_session(initial_session_id)
         self.assertEqual(session.visited_network.plmn_id, self.italy_plmn.plmn_id)
         self.assertEqual(len(session.handoffs), 2)
@@ -383,7 +387,9 @@ class TestPerformanceAndLatency(unittest.TestCase):
         self.assertGreater(session.call_setup_time, 0)
 
         # Sum of components should be less than or close to total setup time
-        total_latency = session.hlr_lookup_time + session.vlr_lookup_time + session.call_setup_time
+        total_latency = (
+            session.hlr_lookup_time + session.vlr_lookup_time + session.call_setup_time
+        )
         self.assertGreater(total_latency, 0)
 
     def test_multiple_sessions_latency_distribution(self):

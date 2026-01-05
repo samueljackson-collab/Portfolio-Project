@@ -27,7 +27,7 @@ class MockHLR:
             "home_network": home_network,
             "ki": ki,  # Authentication key (K)
             "active": True,
-            "roaming_enabled": True
+            "roaming_enabled": True,
         }
         logger.info(f"Subscriber added: IMSI={imsi}, MSISDN={msisdn}")
 
@@ -62,7 +62,9 @@ class MockHLR:
 
         allowed_networks = self.roaming_agreements.get(home_network, [])
         if visited_network in allowed_networks:
-            logger.info(f"Roaming agreement exists: {home_network} -> {visited_network}")
+            logger.info(
+                f"Roaming agreement exists: {home_network} -> {visited_network}"
+            )
             return True
         else:
             logger.error(f"No roaming agreement: {home_network} -> {visited_network}")
@@ -77,7 +79,7 @@ class MockHLR:
         ki = subscriber["ki"]
 
         # Generate random challenge (RAND)
-        rand = ''.join([f'{random.randint(0, 255):02x}' for _ in range(16)])
+        rand = "".join([f"{random.randint(0, 255):02x}" for _ in range(16)])
 
         # Compute SRES (Signed Response) - simplified simulation
         sres = hashlib.md5((ki + rand).encode()).hexdigest()[:8]

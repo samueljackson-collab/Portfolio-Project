@@ -9,7 +9,11 @@ ARTIFACT.parent.mkdir(exist_ok=True)
 def generate_pages() -> list[dict]:
     return [
         {"path": "/", "title": "Home", "content": "Welcome to the portfolio."},
-        {"path": "/projects", "title": "Projects", "content": "Project listing placeholder."},
+        {
+            "path": "/projects",
+            "title": "Projects",
+            "content": "Project listing placeholder.",
+        },
     ]
 
 

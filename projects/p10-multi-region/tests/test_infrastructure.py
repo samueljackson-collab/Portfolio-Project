@@ -1,5 +1,7 @@
 """Test multi-region infrastructure."""
+
 import pytest
+
 
 def test_regions_defined():
     """Test that regions are properly defined."""
@@ -8,6 +10,7 @@ def test_regions_defined():
     assert primary != secondary
     assert primary in ["us-east-1", "us-west-1", "us-west-2"]
     assert secondary in ["us-east-1", "us-west-1", "us-west-2"]
+
 
 def test_rto_rpo_realistic():
     """Test RTO/RPO values are realistic."""

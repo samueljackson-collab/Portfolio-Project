@@ -1,4 +1,5 @@
 """Lambda handler for DELETE operations."""
+
 import json
 import logging
 from typing import Dict, Any
@@ -51,6 +52,6 @@ if __name__ == "__main__":
         "httpMethod": "DELETE",
         "path": "/items/123",
         "pathParameters": {"item_id": "123"},
-        "requestContext": {"requestId": "test-999"}
+        "requestContext": {"requestId": "test-999"},
     }
     print(json.dumps(lambda_handler(test_event, None), indent=2))

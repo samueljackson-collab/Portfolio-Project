@@ -31,6 +31,7 @@ def compile_sqlite_uuid(type_, compiler, **kw):
     """Render UUID columns as CHAR(36) for SQLite-based tests."""
     return "CHAR(36)"
 
+
 from app.database import Base
 
 
@@ -47,6 +48,7 @@ class User(Base):
         updated_at: Last modification timestamp
         content_items: Related Content items (relationship)
     """
+
     __tablename__ = "users"
 
     # Primary key with UUID
@@ -54,7 +56,7 @@ class User(Base):
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-        comment="User unique identifier"
+        comment="User unique identifier",
     )
 
     # Authentication fields
@@ -63,21 +65,16 @@ class User(Base):
         unique=True,
         nullable=False,
         index=True,  # Index for faster lookups
-        comment="User email address"
+        comment="User email address",
     )
 
     hashed_password = Column(
-        String(255),
-        nullable=False,
-        comment="Bcrypt hashed password"
+        String(255), nullable=False, comment="Bcrypt hashed password"
     )
 
     # Status fields
     is_active = Column(
-        Boolean,
-        default=True,
-        nullable=False,
-        comment="Account active status"
+        Boolean, default=True, nullable=False, comment="Account active status"
     )
 
     # Timestamps with automatic updates
@@ -85,7 +82,7 @@ class User(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
-        comment="Account creation timestamp"
+        comment="Account creation timestamp",
     )
 
     updated_at = Column(
@@ -93,7 +90,7 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
-        comment="Last update timestamp"
+        comment="Last update timestamp",
     )
 
     # Relationship to Content (one-to-many)
@@ -101,23 +98,17 @@ class User(Base):
         "Content",
         back_populates="owner",
         cascade="all, delete-orphan",  # Delete content when user is deleted
-        lazy="selectin"  # Eager load content items
+        lazy="selectin",  # Eager load content items
     )
 
     # Relationship to Photos (one-to-many)
     photos = relationship(
-        "Photo",
-        back_populates="owner",
-        cascade="all, delete-orphan",
-        lazy="selectin"
+        "Photo", back_populates="owner", cascade="all, delete-orphan", lazy="selectin"
     )
 
     # Relationship to Albums (one-to-many)
     albums = relationship(
-        "Album",
-        back_populates="owner",
-        cascade="all, delete-orphan",
-        lazy="selectin"
+        "Album", back_populates="owner", cascade="all, delete-orphan", lazy="selectin"
     )
 
     def __repr__(self) -> str:
@@ -138,6 +129,7 @@ class Content(Base):
         updated_at: Last modification timestamp
         owner: Related User (relationship)
     """
+
     __tablename__ = "content"
 
     # Primary key
@@ -145,21 +137,13 @@ class Content(Base):
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-        comment="Content unique identifier"
+        comment="Content unique identifier",
     )
 
     # Content fields
-    title = Column(
-        String(255),
-        nullable=False,
-        comment="Content title"
-    )
+    title = Column(String(255), nullable=False, comment="Content title")
 
-    body = Column(
-        Text,
-        nullable=True,
-        comment="Content body text"
-    )
+    body = Column(Text, nullable=True, comment="Content body text")
 
     # Foreign key to User
     owner_id = Column(
@@ -167,15 +151,12 @@ class Content(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,  # Index for faster joins
-        comment="Content owner user ID"
+        comment="Content owner user ID",
     )
 
     # Status fields
     is_published = Column(
-        Boolean,
-        default=False,
-        nullable=False,
-        comment="Publication status"
+        Boolean, default=False, nullable=False, comment="Publication status"
     )
 
     # Timestamps
@@ -184,7 +165,7 @@ class Content(Base):
         server_default=func.now(),
         nullable=False,
         index=True,  # Index for sorting by date
-        comment="Content creation timestamp"
+        comment="Content creation timestamp",
     )
 
     updated_at = Column(
@@ -192,19 +173,14 @@ class Content(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
-        comment="Last update timestamp"
+        comment="Last update timestamp",
     )
 
     # Relationship to User (many-to-one)
-    owner = relationship(
-        "User",
-        back_populates="content_items"
-    )
+    owner = relationship("User", back_populates="content_items")
 
     # Composite index for common queries
-    __table_args__ = (
-        Index("ix_content_owner_created", "owner_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_content_owner_created", "owner_id", "created_at"),)
 
     def __repr__(self) -> str:
         return f"<Content(id={self.id}, title={self.title})>"
@@ -229,13 +205,14 @@ class Album(Base):
         owner: Related User (relationship)
         photos: Related Photos (relationship)
     """
+
     __tablename__ = "albums"
 
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-        comment="Album unique identifier"
+        comment="Album unique identifier",
     )
 
     owner_id = Column(
@@ -243,41 +220,34 @@ class Album(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="Album owner user ID"
+        comment="Album owner user ID",
     )
 
-    name = Column(
-        String(255),
-        nullable=False,
-        comment="Album name"
-    )
+    name = Column(String(255), nullable=False, comment="Album name")
 
     type = Column(
         String(50),
         nullable=False,
         default="custom",
-        comment="Album type: location, date, or custom"
+        comment="Album type: location, date, or custom",
     )
 
     photo_count = Column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="Cached count of photos in album"
+        Integer, default=0, nullable=False, comment="Cached count of photos in album"
     )
 
     cover_photo_id = Column(
         UUID(as_uuid=True),
         ForeignKey("photos.id", ondelete="SET NULL"),
         nullable=True,
-        comment="Cover photo ID"
+        comment="Cover photo ID",
     )
 
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
-        comment="Album creation timestamp"
+        comment="Album creation timestamp",
     )
 
     updated_at = Column(
@@ -285,21 +255,15 @@ class Album(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
-        comment="Last update timestamp"
+        comment="Last update timestamp",
     )
 
     # Relationships
     owner = relationship("User", back_populates="albums")
     photos = relationship(
-        "Photo",
-        back_populates="album",
-        foreign_keys="Photo.album_id"
+        "Photo", back_populates="album", foreign_keys="Photo.album_id"
     )
-    cover_photo = relationship(
-        "Photo",
-        foreign_keys=[cover_photo_id],
-        post_update=True
-    )
+    cover_photo = relationship("Photo", foreign_keys=[cover_photo_id], post_update=True)
 
     __table_args__ = (
         Index("ix_albums_owner_type", "owner_id", "type"),
@@ -343,13 +307,14 @@ class Photo(Base):
         owner: Related User (relationship)
         album: Related Album (relationship)
     """
+
     __tablename__ = "photos"
 
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-        comment="Photo unique identifier"
+        comment="Photo unique identifier",
     )
 
     owner_id = Column(
@@ -357,7 +322,7 @@ class Photo(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="Photo owner user ID"
+        comment="Photo owner user ID",
     )
 
     album_id = Column(
@@ -365,122 +330,70 @@ class Photo(Base):
         ForeignKey("albums.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
-        comment="Album ID (auto-organized)"
+        comment="Album ID (auto-organized)",
     )
 
     # File information
-    filename = Column(
-        String(255),
-        nullable=False,
-        comment="Original filename"
-    )
+    filename = Column(String(255), nullable=False, comment="Original filename")
 
     file_path = Column(
-        String(512),
-        nullable=False,
-        unique=True,
-        comment="Storage path on server"
+        String(512), nullable=False, unique=True, comment="Storage path on server"
     )
 
     thumbnail_path = Column(
-        String(512),
-        nullable=True,
-        comment="Thumbnail storage path"
+        String(512), nullable=True, comment="Thumbnail storage path"
     )
 
-    file_size = Column(
-        Integer,
-        nullable=False,
-        comment="File size in bytes"
-    )
+    file_size = Column(Integer, nullable=False, comment="File size in bytes")
 
     mime_type = Column(
-        String(50),
-        nullable=False,
-        default="image/jpeg",
-        comment="Image MIME type"
+        String(50), nullable=False, default="image/jpeg", comment="Image MIME type"
     )
 
     # Image dimensions
-    width = Column(
-        Integer,
-        nullable=True,
-        comment="Image width in pixels"
-    )
+    width = Column(Integer, nullable=True, comment="Image width in pixels")
 
-    height = Column(
-        Integer,
-        nullable=True,
-        comment="Image height in pixels"
-    )
+    height = Column(Integer, nullable=True, comment="Image height in pixels")
 
     # Date information
     capture_date = Column(
         DateTime(timezone=True),
         nullable=True,
         index=True,
-        comment="Date photo was taken (from EXIF)"
+        comment="Date photo was taken (from EXIF)",
     )
 
     upload_date = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
-        comment="Date photo was uploaded"
+        comment="Date photo was uploaded",
     )
 
     # GPS and location data
-    latitude = Column(
-        Float,
-        nullable=True,
-        comment="GPS latitude"
-    )
+    latitude = Column(Float, nullable=True, comment="GPS latitude")
 
-    longitude = Column(
-        Float,
-        nullable=True,
-        comment="GPS longitude"
-    )
+    longitude = Column(Float, nullable=True, comment="GPS longitude")
 
     city = Column(
-        String(255),
-        nullable=True,
-        index=True,
-        comment="City name (reverse geocoded)"
+        String(255), nullable=True, index=True, comment="City name (reverse geocoded)"
     )
 
-    state = Column(
-        String(255),
-        nullable=True,
-        comment="State/region name"
-    )
+    state = Column(String(255), nullable=True, comment="State/region name")
 
-    country = Column(
-        String(255),
-        nullable=True,
-        index=True,
-        comment="Country name"
-    )
+    country = Column(String(255), nullable=True, index=True, comment="Country name")
 
     # Camera information
-    camera_make = Column(
-        String(100),
-        nullable=True,
-        comment="Camera manufacturer"
-    )
+    camera_make = Column(String(100), nullable=True, comment="Camera manufacturer")
 
-    camera_model = Column(
-        String(100),
-        nullable=True,
-        comment="Camera model"
-    )
+    camera_model = Column(String(100), nullable=True, comment="Camera model")
 
     # Timestamps
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
-        comment="Record creation timestamp"
+        comment="Record creation timestamp",
     )
 
     updated_at = Column(
@@ -488,7 +401,7 @@ class Photo(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
-        comment="Last update timestamp"
+        comment="Last update timestamp",
     )
 
     # Relationships
@@ -519,16 +432,30 @@ class Operation(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(120), nullable=False)
     objective = Column(String(255), nullable=True)
-    start_date = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    start_date = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     stealth_factor = Column(Float, default=0.6, nullable=False)
     days_elapsed = Column(Integer, default=0, nullable=False)
     undetected_streak = Column(Integer, default=0, nullable=False)
     first_detection_at = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(50), default="in_progress", nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
-    events = relationship("OperationEvent", back_populates="operation", cascade="all, delete-orphan", lazy="selectin")
+    events = relationship(
+        "OperationEvent",
+        back_populates="operation",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     def __repr__(self) -> str:
         return f"<Operation(id={self.id}, name={self.name}, stealth={self.stealth_factor})>"
@@ -540,8 +467,14 @@ class OperationEvent(Base):
     __tablename__ = "operation_events"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    operation_id = Column(UUID(as_uuid=True), ForeignKey("operations.id", ondelete="CASCADE"), nullable=False)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    operation_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("operations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    timestamp = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     day = Column(Integer, default=1, nullable=False)
     description = Column(Text, nullable=False)
     category = Column(String(100), nullable=False)
@@ -550,9 +483,7 @@ class OperationEvent(Base):
 
     operation = relationship("Operation", back_populates="events")
 
-    __table_args__ = (
-        Index("ix_operation_event_day", "operation_id", "day"),
-    )
+    __table_args__ = (Index("ix_operation_event_day", "operation_id", "day"),)
 
     def __repr__(self) -> str:
         return f"<OperationEvent(op={self.operation_id}, day={self.day}, detected={self.detected})>"
@@ -572,10 +503,17 @@ class Incident(Base):
     name = Column(String(150), nullable=False)
     status = Column(String(50), default="ongoing", nullable=False)
     severity = Column(String(30), default="high", nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     resolved_at = Column(DateTime(timezone=True), nullable=True)
 
-    events = relationship("IncidentEvent", back_populates="incident", cascade="all, delete-orphan", lazy="selectin")
+    events = relationship(
+        "IncidentEvent",
+        back_populates="incident",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     def __repr__(self) -> str:
         return f"<Incident(id={self.id}, status={self.status})>"
@@ -587,17 +525,21 @@ class IncidentEvent(Base):
     __tablename__ = "incident_events"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    incident_id = Column(UUID(as_uuid=True), ForeignKey("incidents.id", ondelete="CASCADE"), nullable=False)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    incident_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    timestamp = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     type = Column(String(50), nullable=False)
     details = Column(Text, nullable=False)
     sequence = Column(Integer, default=0, nullable=False)
 
     incident = relationship("Incident", back_populates="events")
 
-    __table_args__ = (
-        Index("ix_incident_event_sequence", "incident_id", "sequence"),
-    )
+    __table_args__ = (Index("ix_incident_event_sequence", "incident_id", "sequence"),)
 
 
 # =============================================================================
@@ -627,12 +569,25 @@ class SocCase(Base):
     title = Column(String(160), nullable=False)
     status = Column(String(40), default="open", nullable=False)
     assigned_to = Column(String(100), nullable=True)
-    playbook_id = Column(UUID(as_uuid=True), ForeignKey("soc_playbooks.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    playbook_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("soc_playbooks.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
     playbook = relationship("SocPlaybook", back_populates="cases")
-    alerts = relationship("SocAlert", back_populates="case", cascade="all", lazy="selectin")
+    alerts = relationship(
+        "SocAlert", back_populates="case", cascade="all", lazy="selectin"
+    )
 
 
 class SocAlert(Base):
@@ -646,15 +601,24 @@ class SocAlert(Base):
     severity = Column(String(20), default="medium", nullable=False)
     status = Column(String(40), default="open", nullable=False)
     source = Column(String(80), default="sensor", nullable=False)
-    case_id = Column(UUID(as_uuid=True), ForeignKey("soc_cases.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    case_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("soc_cases.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
     case = relationship("SocCase", back_populates="alerts")
 
-    __table_args__ = (
-        Index("ix_soc_alert_status", "status"),
-    )
+    __table_args__ = (Index("ix_soc_alert_status", "status"),)
 
 
 # =============================================================================
@@ -671,10 +635,22 @@ class HuntHypothesis(Base):
     title = Column(String(180), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(40), default="open", nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
-    findings = relationship("HuntFinding", back_populates="hypothesis", cascade="all, delete-orphan", lazy="selectin")
+    findings = relationship(
+        "HuntFinding",
+        back_populates="hypothesis",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
 
 class HuntFinding(Base):
@@ -683,14 +659,22 @@ class HuntFinding(Base):
     __tablename__ = "hunt_findings"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    hypothesis_id = Column(UUID(as_uuid=True), ForeignKey("hunt_hypotheses.id", ondelete="CASCADE"), nullable=False)
+    hypothesis_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("hunt_hypotheses.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     severity = Column(String(30), default="medium", nullable=False)
     details = Column(Text, nullable=False)
     status = Column(String(40), default="new", nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     hypothesis = relationship("HuntHypothesis", back_populates="findings")
-    detection_rule = relationship("DetectionRule", back_populates="source_finding", uselist=False)
+    detection_rule = relationship(
+        "DetectionRule", back_populates="source_finding", uselist=False
+    )
 
 
 class DetectionRule(Base):
@@ -702,8 +686,14 @@ class DetectionRule(Base):
     name = Column(String(180), nullable=False)
     query = Column(Text, nullable=False)
     status = Column(String(30), default="Draft", nullable=False)
-    source_finding_id = Column(UUID(as_uuid=True), ForeignKey("hunt_findings.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    source_finding_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("hunt_findings.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     source_finding = relationship("HuntFinding", back_populates="detection_rule")
 
@@ -724,9 +714,16 @@ class MalwareSample(Base):
     sample_type = Column(String(80), default="unknown", nullable=False)
     family = Column(String(120), nullable=True)
     status = Column(String(40), default="pending", nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
-    report = relationship("AnalysisReport", back_populates="sample", uselist=False, cascade="all, delete-orphan")
+    report = relationship(
+        "AnalysisReport",
+        back_populates="sample",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class AnalysisReport(Base):
@@ -735,12 +732,18 @@ class AnalysisReport(Base):
     __tablename__ = "analysis_reports"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    sample_id = Column(UUID(as_uuid=True), ForeignKey("malware_samples.id", ondelete="CASCADE"), nullable=False)
+    sample_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("malware_samples.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     static_analysis = Column(Text, nullable=False)
     dynamic_analysis = Column(Text, nullable=False)
     iocs = Column(JSON, nullable=True)
     yara_rule = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     sample = relationship("MalwareSample", back_populates="report")
 
@@ -759,12 +762,26 @@ class EndpointAsset(Base):
     hostname = Column(String(120), nullable=False, unique=True)
     operating_system = Column(String(80), nullable=False)
     agent_version = Column(String(40), nullable=False)
-    last_checkin = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_checkin = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     online = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
-    alerts = relationship("EndpointAlert", back_populates="endpoint", cascade="all, delete-orphan", lazy="selectin")
+    alerts = relationship(
+        "EndpointAlert",
+        back_populates="endpoint",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
 
 class EndpointPolicy(Base):
@@ -784,14 +801,18 @@ class EndpointAlert(Base):
     __tablename__ = "endpoint_alerts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("endpoint_assets.id", ondelete="CASCADE"), nullable=True)
+    endpoint_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("endpoint_assets.id", ondelete="CASCADE"),
+        nullable=True,
+    )
     severity = Column(String(20), default="medium", nullable=False)
     status = Column(String(40), default="open", nullable=False)
     description = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     endpoint = relationship("EndpointAsset", back_populates="alerts")
 
-    __table_args__ = (
-        Index("ix_endpoint_alert_status", "status"),
-    )
+    __table_args__ = (Index("ix_endpoint_alert_status", "status"),)

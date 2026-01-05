@@ -1,4 +1,5 @@
 """Health check tests for 4-devsecops."""
+
 from src.health_check import check_health
 
 
