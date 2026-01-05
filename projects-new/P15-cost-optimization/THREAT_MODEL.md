@@ -2,7 +2,7 @@
 
 Threats:
 - Access to billing data by unauthorized users
-- Automation mis-tagging resources
+- Automation mistagging resources
 - Runaway spend from unbounded services
 
 Mitigations:
