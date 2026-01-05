@@ -28,24 +28,24 @@ A brief description of your project. Explain what it does, why it exists, and wh
 ### Installation
 
 ```bash
-## Clone the repository
+# Clone the repository
 git clone <https://github.com/yourusername/yourrepo.git>
 
-## Navigate to project directory
+# Navigate to project directory
 cd yourrepo
 
-## Install dependencies
+# Install dependencies
 npm install
-## or
+# or
 pip install -r requirements.txt
 ```
 
 ## Usage
 
 ```bash
-## Run the application
+# Run the application
 npm start
-## or
+# or
 python main.py
 ```
 
@@ -56,10 +56,10 @@ For detailed documentation, visit [link to docs].
 ## Configuration
 
 ```bash
-## Copy example config
+# Copy example config
 cp .env.example .env
 
-## Edit configuration
+# Edit configuration
 nano .env
 ```
 
