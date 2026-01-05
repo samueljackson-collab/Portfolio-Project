@@ -33,7 +33,7 @@ faker==20.1.0
 
 # Code Quality
 ruff==0.14.10
-black==23.11.0
+black==25.12.0
 mypy==1.19.1
 
 # Testing
