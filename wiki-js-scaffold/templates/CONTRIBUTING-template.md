@@ -56,30 +56,30 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Setup Steps
 
 ```bash
-## Clone your fork
+# Clone your fork
 git clone <https://github.com/yourusername/projectname.git>
 cd projectname
 
-## Install dependencies
+# Install dependencies
 npm install
 
-## Copy environment variables
+# Copy environment variables
 cp .env.example .env
 
-## Run development server
+# Run development server
 npm run dev
 ```
 
 ## Running Tests
 
 ```bash
-## Run all tests
+# Run all tests
 npm test
 
-## Run tests in watch mode
+# Run tests in watch mode
 npm run test:watch
 
-## Run tests with coverage
+# Run tests with coverage
 npm run test:coverage
 ```
 
