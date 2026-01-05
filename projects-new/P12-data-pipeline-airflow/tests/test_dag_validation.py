@@ -11,7 +11,7 @@ import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import DAGs
 from src.dags.etl_extract_data import dag as extract_dag
@@ -47,24 +47,13 @@ class TestDAGValidation(unittest.TestCase):
         ]
 
         for dag_name, dag in self.dags.items():
-            self.assertEqual(
-                dag.dag_id,
-                dag_name,
-                f"DAG ID mismatch for {dag_name}"
-            )
+            self.assertEqual(dag.dag_id, dag_name, f"DAG ID mismatch for {dag_name}")
 
     def test_dag_owners(self):
         """Test that DAGs have owners defined."""
         for dag_name, dag in self.dags.items():
-            self.assertIsNotNone(
-                dag.owner,
-                f"DAG {dag_name} has no owner"
-            )
-            self.assertNotEqual(
-                dag.owner,
-                "",
-                f"DAG {dag_name} has empty owner"
-            )
+            self.assertIsNotNone(dag.owner, f"DAG {dag_name} has no owner")
+            self.assertNotEqual(dag.owner, "", f"DAG {dag_name} has empty owner")
 
     def test_dag_schedules(self):
         """Test that DAGs have schedule intervals defined."""
@@ -80,63 +69,48 @@ class TestDAGValidation(unittest.TestCase):
                 self.assertEqual(
                     str(dag.schedule_interval),
                     expected_schedules[dag_name],
-                    f"Schedule interval mismatch for {dag_name}"
+                    f"Schedule interval mismatch for {dag_name}",
                 )
 
     def test_dag_descriptions(self):
         """Test that DAGs have descriptions."""
         for dag_name, dag in self.dags.items():
-            self.assertIsNotNone(
-                dag.description,
-                f"DAG {dag_name} has no description"
-            )
+            self.assertIsNotNone(dag.description, f"DAG {dag_name} has no description")
             self.assertGreater(
-                len(dag.description),
-                0,
-                f"DAG {dag_name} has empty description"
+                len(dag.description), 0, f"DAG {dag_name} has empty description"
             )
 
     def test_dag_catchup_disabled(self):
         """Test that catchup is disabled for all DAGs."""
         for dag_name, dag in self.dags.items():
-            self.assertFalse(
-                dag.catchup,
-                f"DAG {dag_name} has catchup enabled"
-            )
+            self.assertFalse(dag.catchup, f"DAG {dag_name} has catchup enabled")
 
     def test_dag_max_active_runs(self):
         """Test that max_active_runs is set to prevent overlaps."""
         for dag_name, dag in self.dags.items():
             self.assertEqual(
-                dag.max_active_runs,
-                1,
-                f"DAG {dag_name} max_active_runs is not 1"
+                dag.max_active_runs, 1, f"DAG {dag_name} max_active_runs is not 1"
             )
 
     def test_dag_start_date_valid(self):
         """Test that DAGs have valid start dates."""
         for dag_name, dag in self.dags.items():
-            self.assertIsNotNone(
-                dag.start_date,
-                f"DAG {dag_name} has no start_date"
-            )
+            self.assertIsNotNone(dag.start_date, f"DAG {dag_name} has no start_date")
             self.assertIsInstance(
-                dag.start_date,
-                datetime,
-                f"DAG {dag_name} start_date is not a datetime"
+                dag.start_date, datetime, f"DAG {dag_name} start_date is not a datetime"
             )
 
     def test_dag_default_view(self):
         """Test that DAGs have default_view set."""
         for dag_name, dag in self.dags.items():
             # default_view should be either not set or valid
-            if hasattr(dag, 'default_view'):
-                valid_views = ['tree', 'graph', 'calendar']
+            if hasattr(dag, "default_view"):
+                valid_views = ["tree", "graph", "calendar"]
                 if dag.default_view is not None:
                     self.assertIn(
                         dag.default_view,
                         valid_views,
-                        f"DAG {dag_name} has invalid default_view"
+                        f"DAG {dag_name} has invalid default_view",
                     )
 
     def test_extract_dag_structure(self):
@@ -151,9 +125,7 @@ class TestDAGValidation(unittest.TestCase):
         task_ids = [task.task_id for task in dag.tasks]
         for task_id in expected_tasks:
             self.assertIn(
-                task_id,
-                task_ids,
-                f"Expected task {task_id} not found in extract DAG"
+                task_id, task_ids, f"Expected task {task_id} not found in extract DAG"
             )
 
     def test_transform_dag_structure(self):
@@ -171,9 +143,7 @@ class TestDAGValidation(unittest.TestCase):
         task_ids = [task.task_id for task in dag.tasks]
         for task_id in expected_tasks:
             self.assertIn(
-                task_id,
-                task_ids,
-                f"Expected task {task_id} not found in transform DAG"
+                task_id, task_ids, f"Expected task {task_id} not found in transform DAG"
             )
 
     def test_load_dag_structure(self):
@@ -191,9 +161,7 @@ class TestDAGValidation(unittest.TestCase):
         task_ids = [task.task_id for task in dag.tasks]
         for task_id in expected_tasks:
             self.assertIn(
-                task_id,
-                task_ids,
-                f"Expected task {task_id} not found in load DAG"
+                task_id, task_ids, f"Expected task {task_id} not found in load DAG"
             )
 
     def test_analytics_dag_structure(self):
@@ -212,9 +180,7 @@ class TestDAGValidation(unittest.TestCase):
         task_ids = [task.task_id for task in dag.tasks]
         for task_id in expected_tasks:
             self.assertIn(
-                task_id,
-                task_ids,
-                f"Expected task {task_id} not found in analytics DAG"
+                task_id, task_ids, f"Expected task {task_id} not found in analytics DAG"
             )
 
 
@@ -225,6 +191,7 @@ class TestDAGImports(unittest.TestCase):
         """Test that extract DAG imports successfully."""
         try:
             from src.dags.etl_extract_data import dag
+
             self.assertIsNotNone(dag)
         except ImportError as e:
             self.fail(f"Failed to import etl_extract_data: {str(e)}")
@@ -233,6 +200,7 @@ class TestDAGImports(unittest.TestCase):
         """Test that transform DAG imports successfully."""
         try:
             from src.dags.etl_transform_data import dag
+
             self.assertIsNotNone(dag)
         except ImportError as e:
             self.fail(f"Failed to import etl_transform_data: {str(e)}")
@@ -241,6 +209,7 @@ class TestDAGImports(unittest.TestCase):
         """Test that load DAG imports successfully."""
         try:
             from src.dags.etl_load_warehouse import dag
+
             self.assertIsNotNone(dag)
         except ImportError as e:
             self.fail(f"Failed to import etl_load_warehouse: {str(e)}")
@@ -249,6 +218,7 @@ class TestDAGImports(unittest.TestCase):
         """Test that analytics DAG imports successfully."""
         try:
             from src.dags.daily_analytics import dag
+
             self.assertIsNotNone(dag)
         except ImportError as e:
             self.fail(f"Failed to import daily_analytics: {str(e)}")

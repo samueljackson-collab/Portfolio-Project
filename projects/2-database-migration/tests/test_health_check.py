@@ -1,4 +1,5 @@
 """Health check tests for 2-database-migration."""
+
 from src.health_check import check_health
 
 

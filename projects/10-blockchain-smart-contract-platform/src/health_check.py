@@ -1,4 +1,5 @@
 """Health check for Blockchain Smart Contract Platform."""
+
 from __future__ import annotations
 
 import json
@@ -14,7 +15,9 @@ def run_health_check() -> dict:
         base_dir / "hardhat.config.ts",
         base_dir / "package.json",
     ]
-    missing = [str(path.relative_to(base_dir)) for path in required_paths if not path.exists()]
+    missing = [
+        str(path.relative_to(base_dir)) for path in required_paths if not path.exists()
+    ]
     status = "ok" if not missing else "failed"
     return {"status": status, "missing": missing}
 

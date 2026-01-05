@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class RemediationEngine:
     """Autonomous remediation for common DevOps incidents."""
 
-    def __init__(self, prometheus_url='http://localhost:9090'):
+    def __init__(self, prometheus_url="http://localhost:9090"):
         """Initialize remediation engine."""
         self.prometheus_url = prometheus_url
         self.remediation_history = []
@@ -28,8 +28,7 @@ class RemediationEngine:
         """Query Prometheus for metrics."""
         try:
             response = requests.get(
-                f"{self.prometheus_url}/api/v1/query",
-                params={'query': query}
+                f"{self.prometheus_url}/api/v1/query", params={"query": query}
             )
             return response.json()
         except Exception as e:
@@ -42,35 +41,39 @@ class RemediationEngine:
         result = self.query_prometheus(query)
 
         incidents = []
-        if result.get('status') == 'success':
-            for item in result['data']['result']:
-                instance = item['metric'].get('instance', 'unknown')
-                value = float(item['value'][1])
-                incidents.append({
-                    'type': 'high_cpu',
-                    'instance': instance,
-                    'value': value,
-                    'threshold': threshold
-                })
+        if result.get("status") == "success":
+            for item in result["data"]["result"]:
+                instance = item["metric"].get("instance", "unknown")
+                value = float(item["value"][1])
+                incidents.append(
+                    {
+                        "type": "high_cpu",
+                        "instance": instance,
+                        "value": value,
+                        "threshold": threshold,
+                    }
+                )
 
         return incidents
 
     def check_high_memory(self, threshold=90) -> List[Dict]:
         """Check for high memory usage."""
-        query = f'100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > {threshold}'
+        query = f"100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > {threshold}"
         result = self.query_prometheus(query)
 
         incidents = []
-        if result.get('status') == 'success':
-            for item in result['data']['result']:
-                instance = item['metric'].get('instance', 'unknown')
-                value = float(item['value'][1])
-                incidents.append({
-                    'type': 'high_memory',
-                    'instance': instance,
-                    'value': value,
-                    'threshold': threshold
-                })
+        if result.get("status") == "success":
+            for item in result["data"]["result"]:
+                instance = item["metric"].get("instance", "unknown")
+                value = float(item["value"][1])
+                incidents.append(
+                    {
+                        "type": "high_memory",
+                        "instance": instance,
+                        "value": value,
+                        "threshold": threshold,
+                    }
+                )
 
         return incidents
 
@@ -80,15 +83,13 @@ class RemediationEngine:
         result = self.query_prometheus(query)
 
         incidents = []
-        if result.get('status') == 'success':
-            for item in result['data']['result']:
-                job = item['metric'].get('job', 'unknown')
-                instance = item['metric'].get('instance', 'unknown')
-                incidents.append({
-                    'type': 'failed_health_check',
-                    'job': job,
-                    'instance': instance
-                })
+        if result.get("status") == "success":
+            for item in result["data"]["result"]:
+                job = item["metric"].get("job", "unknown")
+                instance = item["metric"].get("instance", "unknown")
+                incidents.append(
+                    {"type": "failed_health_check", "job": job, "instance": instance}
+                )
 
         return incidents
 
@@ -98,16 +99,18 @@ class RemediationEngine:
         result = self.query_prometheus(query)
 
         incidents = []
-        if result.get('status') == 'success':
-            for item in result['data']['result']:
-                service = item['metric'].get('service', 'unknown')
-                value = float(item['value'][1])
-                incidents.append({
-                    'type': 'high_error_rate',
-                    'service': service,
-                    'value': value,
-                    'threshold': threshold
-                })
+        if result.get("status") == "success":
+            for item in result["data"]["result"]:
+                service = item["metric"].get("service", "unknown")
+                value = float(item["value"][1])
+                incidents.append(
+                    {
+                        "type": "high_error_rate",
+                        "service": service,
+                        "value": value,
+                        "threshold": threshold,
+                    }
+                )
 
         return incidents
 
@@ -124,10 +127,10 @@ class RemediationEngine:
 
             # Simulate remediation
             remediation = {
-                'timestamp': datetime.now().isoformat(),
-                'incident': incident,
-                'action': 'restart_services',
-                'status': 'simulated'
+                "timestamp": datetime.now().isoformat(),
+                "incident": incident,
+                "action": "restart_services",
+                "status": "simulated",
             }
 
             self.remediation_history.append(remediation)
@@ -146,10 +149,10 @@ class RemediationEngine:
             logger.info(f"  Memory usage: {incident['value']:.2f}%")
 
             remediation = {
-                'timestamp': datetime.now().isoformat(),
-                'incident': incident,
-                'action': 'clear_caches',
-                'status': 'simulated'
+                "timestamp": datetime.now().isoformat(),
+                "incident": incident,
+                "action": "clear_caches",
+                "status": "simulated",
             }
 
             self.remediation_history.append(remediation)
@@ -172,11 +175,11 @@ class RemediationEngine:
             logger.info(f"  Command: {command}")
 
             remediation = {
-                'timestamp': datetime.now().isoformat(),
-                'incident': incident,
-                'action': 'restart_deployment',
-                'command': command,
-                'status': 'simulated'
+                "timestamp": datetime.now().isoformat(),
+                "incident": incident,
+                "action": "restart_deployment",
+                "command": command,
+                "status": "simulated",
             }
 
             self.remediation_history.append(remediation)
@@ -199,11 +202,11 @@ class RemediationEngine:
             logger.info(f"  Command: {command}")
 
             remediation = {
-                'timestamp': datetime.now().isoformat(),
-                'incident': incident,
-                'action': 'scale_up',
-                'command': command,
-                'status': 'simulated'
+                "timestamp": datetime.now().isoformat(),
+                "incident": incident,
+                "action": "scale_up",
+                "command": command,
+                "status": "simulated",
             }
 
             self.remediation_history.append(remediation)
@@ -214,9 +217,9 @@ class RemediationEngine:
 
     def run_once(self):
         """Run a single remediation cycle."""
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info("Running remediation cycle...")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         # Check for incidents
         incidents = []
@@ -233,15 +236,15 @@ class RemediationEngine:
 
         # Remediate incidents
         for incident in incidents:
-            incident_type = incident['type']
+            incident_type = incident["type"]
 
-            if incident_type == 'high_cpu':
+            if incident_type == "high_cpu":
                 self.remediate_high_cpu(incident)
-            elif incident_type == 'high_memory':
+            elif incident_type == "high_memory":
                 self.remediate_high_memory(incident)
-            elif incident_type == 'failed_health_check':
+            elif incident_type == "failed_health_check":
                 self.remediate_failed_health_check(incident)
-            elif incident_type == 'high_error_rate':
+            elif incident_type == "high_error_rate":
                 self.remediate_high_error_rate(incident)
 
         logger.info(f"Remediation cycle completed")
@@ -260,9 +263,9 @@ class RemediationEngine:
 
     def print_summary(self):
         """Print remediation summary."""
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("REMEDIATION SUMMARY")
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info(f"Total remediations: {len(self.remediation_history)}")
 
         for i, remediation in enumerate(self.remediation_history, 1):
@@ -276,13 +279,16 @@ def main():
     """Main entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Autonomous DevOps Remediation Engine')
-    parser.add_argument('--prometheus-url', default='http://localhost:9090',
-                        help='Prometheus server URL')
-    parser.add_argument('--interval', type=int, default=60,
-                        help='Check interval in seconds')
-    parser.add_argument('--once', action='store_true',
-                        help='Run once and exit')
+    parser = argparse.ArgumentParser(description="Autonomous DevOps Remediation Engine")
+    parser.add_argument(
+        "--prometheus-url",
+        default="http://localhost:9090",
+        help="Prometheus server URL",
+    )
+    parser.add_argument(
+        "--interval", type=int, default=60, help="Check interval in seconds"
+    )
+    parser.add_argument("--once", action="store_true", help="Run once and exit")
 
     args = parser.parse_args()
 
@@ -294,5 +300,5 @@ def main():
         engine.run_continuously(interval=args.interval)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

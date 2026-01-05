@@ -30,10 +30,10 @@ class TestTerraformPlan:
     def test_terraform_init(self, terraform_env_dir):
         """Test that terraform init succeeds."""
         result = subprocess.run(
-            ['terraform', 'init', '-backend=false'],
+            ["terraform", "init", "-backend=false"],
             cwd=terraform_env_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
         assert result.returncode == 0, f"Init failed: {result.stderr}"
         assert "Terraform has been successfully initialized" in result.stdout
@@ -42,16 +42,16 @@ class TestTerraformPlan:
         """Test that terraform validate succeeds."""
         # Initialize first
         subprocess.run(
-            ['terraform', 'init', '-backend=false'],
+            ["terraform", "init", "-backend=false"],
             cwd=terraform_env_dir,
-            capture_output=True
+            capture_output=True,
         )
 
         result = subprocess.run(
-            ['terraform', 'validate'],
+            ["terraform", "validate"],
             cwd=terraform_env_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
         assert result.returncode == 0, f"Validate failed: {result.stderr}"
         assert "Success" in result.stdout
@@ -60,9 +60,9 @@ class TestTerraformPlan:
         """Test that terraform plan succeeds with example vars."""
         # Initialize first
         subprocess.run(
-            ['terraform', 'init', '-backend=false'],
+            ["terraform", "init", "-backend=false"],
             cwd=terraform_env_dir,
-            capture_output=True
+            capture_output=True,
         )
 
         # Create example tfvars
@@ -77,10 +77,10 @@ vpc_cidr     = "10.0.0.0/16"
 
         try:
             result = subprocess.run(
-                ['terraform', 'plan', f'-var-file={tfvars_path}', '-out=tfplan'],
+                ["terraform", "plan", f"-var-file={tfvars_path}", "-out=tfplan"],
                 cwd=terraform_env_dir,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             # Plan may fail without AWS credentials, but should at least parse
@@ -99,12 +99,14 @@ vpc_cidr     = "10.0.0.0/16"
     def test_terraform_fmt_check(self, terraform_dir):
         """Test that all Terraform files are properly formatted."""
         result = subprocess.run(
-            ['terraform', 'fmt', '-check', '-recursive'],
+            ["terraform", "fmt", "-check", "-recursive"],
             cwd=terraform_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
-        assert result.returncode == 0, f"Terraform files need formatting: {result.stdout}"
+        assert (
+            result.returncode == 0
+        ), f"Terraform files need formatting: {result.stdout}"
 
 
 class TestAWSCredentials:
@@ -113,10 +115,10 @@ class TestAWSCredentials:
     def test_aws_credentials_configured(self):
         """Verify that AWS credentials are configured."""
         try:
-            sts = boto3.client('sts')
+            sts = boto3.client("sts")
             identity = sts.get_caller_identity()
-            assert 'Account' in identity
-            assert 'Arn' in identity
+            assert "Account" in identity
+            assert "Arn" in identity
             print(f"AWS Account: {identity['Account']}")
         except Exception as e:
             pytest.skip(f"AWS credentials not configured: {e}")
@@ -158,7 +160,14 @@ class TestTerraformModules:
 
     def test_module_validate(self, terraform_dir):
         """Validate each module independently."""
-        modules = ['compute', 'networking', 'database', 'storage', 'security', 'monitoring']
+        modules = [
+            "compute",
+            "networking",
+            "database",
+            "storage",
+            "security",
+            "monitoring",
+        ]
 
         for module_name in modules:
             module_dir = terraform_dir / "modules" / module_name
@@ -167,19 +176,21 @@ class TestTerraformModules:
 
             # Initialize
             subprocess.run(
-                ['terraform', 'init', '-backend=false'],
+                ["terraform", "init", "-backend=false"],
                 cwd=module_dir,
-                capture_output=True
+                capture_output=True,
             )
 
             # Validate
             result = subprocess.run(
-                ['terraform', 'validate'],
+                ["terraform", "validate"],
                 cwd=module_dir,
                 capture_output=True,
-                text=True
+                text=True,
             )
-            assert result.returncode == 0, f"Module {module_name} validation failed: {result.stderr}"
+            assert (
+                result.returncode == 0
+            ), f"Module {module_name} validation failed: {result.stderr}"
 
 
 class TestDeploymentScripts:
@@ -225,38 +236,36 @@ class TestFullDeployment:
         """Test full apply and destroy cycle."""
         # Initialize
         result = subprocess.run(
-            ['terraform', 'init'],
-            cwd=terraform_env_dir,
-            capture_output=True
+            ["terraform", "init"], cwd=terraform_env_dir, capture_output=True
         )
         assert result.returncode == 0
 
         # Apply
         result = subprocess.run(
-            ['terraform', 'apply', '-auto-approve'],
+            ["terraform", "apply", "-auto-approve"],
             cwd=terraform_env_dir,
             capture_output=True,
             text=True,
-            timeout=600
+            timeout=600,
         )
         assert result.returncode == 0, f"Apply failed: {result.stderr}"
 
         # Get outputs
         result = subprocess.run(
-            ['terraform', 'output', '-json'],
+            ["terraform", "output", "-json"],
             cwd=terraform_env_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
         outputs = json.loads(result.stdout)
         assert len(outputs) > 0
 
         # Destroy
         result = subprocess.run(
-            ['terraform', 'destroy', '-auto-approve'],
+            ["terraform", "destroy", "-auto-approve"],
             cwd=terraform_env_dir,
             capture_output=True,
-            timeout=600
+            timeout=600,
         )
         assert result.returncode == 0, f"Destroy failed: {result.stderr}"
 
@@ -279,10 +288,7 @@ class TestCDKImplementation:
             pytest.skip("CDK implementation not present")
 
         result = subprocess.run(
-            ['cdk', 'synth', '--no-color'],
-            cwd=cdk_dir,
-            capture_output=True,
-            text=True
+            ["cdk", "synth", "--no-color"], cwd=cdk_dir, capture_output=True, text=True
         )
 
         # May fail without AWS credentials, but should parse
@@ -308,20 +314,20 @@ class TestPulumiImplementation:
             pytest.skip("Pulumi implementation not present")
 
         # Check if pulumi is installed
-        result = subprocess.run(
-            ['pulumi', 'version'],
-            capture_output=True
-        )
+        result = subprocess.run(["pulumi", "version"], capture_output=True)
         if result.returncode != 0:
             pytest.skip("Pulumi CLI not installed")
 
         # Preview may fail without credentials but should parse
         result = subprocess.run(
-            ['pulumi', 'preview', '--non-interactive'],
+            ["pulumi", "preview", "--non-interactive"],
             cwd=pulumi_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
 
         # Check that it at least parses the program
-        assert "error: could not load plugin" not in result.stderr.lower() or result.returncode == 0
+        assert (
+            "error: could not load plugin" not in result.stderr.lower()
+            or result.returncode == 0
+        )

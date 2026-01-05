@@ -1,4 +1,5 @@
 """Unit tests for roaming state machine."""
+
 import pytest
 
 from state_machine import RoamingStateMachine, SubscriberState

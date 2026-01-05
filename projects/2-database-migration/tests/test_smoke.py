@@ -1,4 +1,5 @@
 """Smoke tests for Database Migration Platform."""
+
 from src.health_check import run_health_check
 
 

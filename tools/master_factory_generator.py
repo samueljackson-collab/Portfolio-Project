@@ -308,7 +308,9 @@ jobs:
 """,
         ),
         iac=ArtifactSpec(
-            path=Path("projects/p07-roaming-simulation/infrastructure/terraform/main.tf"),
+            path=Path(
+                "projects/p07-roaming-simulation/infrastructure/terraform/main.tf"
+            ),
             prompt=(
                 "Terraform skeleton for ephemeral roaming lab (VPC, subnet, and EC2 runner) "
                 "to execute packet-capture simulations."
@@ -413,7 +415,9 @@ services:
 """,
         ),
         tests=ArtifactSpec(
-            path=Path("projects/p08-api-testing/tests/contract_smoke.postman_collection.json"),
+            path=Path(
+                "projects/p08-api-testing/tests/contract_smoke.postman_collection.json"
+            ),
             prompt="Postman collection focused on schema/contract validation for auth and core resources.",
             template="""{
   "info": {"name": "Contract Smoke", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
@@ -490,7 +494,9 @@ jobs:
 """,
         ),
         iac=ArtifactSpec(
-            path=Path("projects/p09-cloud-native-poc/infrastructure/kubernetes/deployment.yaml"),
+            path=Path(
+                "projects/p09-cloud-native-poc/infrastructure/kubernetes/deployment.yaml"
+            ),
             prompt="Kubernetes manifest for deploying the FastAPI service with liveness/readiness probes.",
             template="""apiVersion: apps/v1
 kind: Deployment
@@ -579,7 +585,9 @@ jobs:
 """,
         ),
         iac=ArtifactSpec(
-            path=Path("projects/p10-multi-region/infrastructure/cloudformation/stack-set.yaml"),
+            path=Path(
+                "projects/p10-multi-region/infrastructure/cloudformation/stack-set.yaml"
+            ),
             prompt="CloudFormation StackSet defining primary/secondary region resources with Route 53 health checks.",
             template="""AWSTemplateFormatVersion: '2010-09-09'
 Description: Multi-region stack set skeleton
@@ -689,7 +697,13 @@ def test_health_handler_returns_ok():
         slug="projects/p12-data-pipeline",
         name="Data Pipeline (Airflow)",
         description="Dockerized Apache Airflow stack with ETL DAGs and promotion-ready QA artifacts.",
-        tech_stack=["Apache Airflow", "Docker Compose", "PostgreSQL", "pytest", "GitHub Actions"],
+        tech_stack=[
+            "Apache Airflow",
+            "Docker Compose",
+            "PostgreSQL",
+            "pytest",
+            "GitHub Actions",
+        ],
         ci=ArtifactSpec(
             path=Path(".github/workflows/p12-data-pipeline.yml"),
             prompt=(
@@ -772,7 +786,14 @@ REQUIRED_SECTIONS = [
 ]
 
 
-def generate_master_factory(project: ProjectSpec, base_dir: Path, scaffold_ci: bool, scaffold_iac: bool, scaffold_tests: bool, overwrite: bool) -> Path:
+def generate_master_factory(
+    project: ProjectSpec,
+    base_dir: Path,
+    scaffold_ci: bool,
+    scaffold_iac: bool,
+    scaffold_tests: bool,
+    overwrite: bool,
+) -> Path:
     """
     Generate a MASTER_FACTORY.md playbook for a given project, and optionally scaffold CI, IaC, and test artifacts.
 
@@ -797,7 +818,9 @@ def generate_master_factory(project: ProjectSpec, base_dir: Path, scaffold_ci: b
 
     content = _render_master_factory_content(project)
     if master_factory_path.exists() and not overwrite:
-        print(f"Skipping write for {master_factory_path} (exists, use --overwrite to replace)")
+        print(
+            f"Skipping write for {master_factory_path} (exists, use --overwrite to replace)"
+        )
     else:
         master_factory_path.write_text(content)
         print(f"Wrote {master_factory_path}")
@@ -871,7 +894,9 @@ def validate_projects(projects: Iterable[ProjectSpec], base_dir: Path) -> int:
     return failures
 
 
-def _validate_project(master_factory_path: Path, project: ProjectSpec, base_dir: Path) -> List[str]:
+def _validate_project(
+    master_factory_path: Path, project: ProjectSpec, base_dir: Path
+) -> List[str]:
     issues: List[str] = []
     if not master_factory_path.exists():
         issues.append(f"Missing {MASTER_FACTORY_FILENAME} at {master_factory_path}")
@@ -886,7 +911,9 @@ def _validate_project(master_factory_path: Path, project: ProjectSpec, base_dir:
     expected_paths = [project.ci.path, project.iac.path, project.tests.path]
     for expected_path in expected_paths:
         if str(expected_path) not in content:
-            issues.append(f"Path '{expected_path}' not referenced in {master_factory_path}")
+            issues.append(
+                f"Path '{expected_path}' not referenced in {master_factory_path}"
+            )
 
     artifacts = [project.ci, project.iac, project.tests]
     for artifact in artifacts:
@@ -897,7 +924,9 @@ def _validate_project(master_factory_path: Path, project: ProjectSpec, base_dir:
 
 
 def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate or validate MASTER_FACTORY assets.")
+    parser = argparse.ArgumentParser(
+        description="Generate or validate MASTER_FACTORY assets."
+    )
     parser.add_argument(
         "--base-dir",
         type=Path,
@@ -910,15 +939,37 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         dest="projects",
         help="Limit generation/validation to specific project slugs (matches 'slug' field).",
     )
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing files when scaffolding.")
-    parser.add_argument("--scaffold-ci", action="store_true", help="Generate CI workflow files during creation.")
-    parser.add_argument("--scaffold-iac", action="store_true", help="Generate IaC skeletons during creation.")
-    parser.add_argument("--scaffold-tests", action="store_true", help="Generate test harness files during creation.")
-    parser.add_argument("--validate", action="store_true", help="Run validation mode instead of generation.")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing files when scaffolding.",
+    )
+    parser.add_argument(
+        "--scaffold-ci",
+        action="store_true",
+        help="Generate CI workflow files during creation.",
+    )
+    parser.add_argument(
+        "--scaffold-iac",
+        action="store_true",
+        help="Generate IaC skeletons during creation.",
+    )
+    parser.add_argument(
+        "--scaffold-tests",
+        action="store_true",
+        help="Generate test harness files during creation.",
+    )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Run validation mode instead of generation.",
+    )
     return parser.parse_args(argv)
 
 
-def _filter_projects(projects: List[ProjectSpec], selected: Optional[List[str]]) -> List[ProjectSpec]:
+def _filter_projects(
+    projects: List[ProjectSpec], selected: Optional[List[str]]
+) -> List[ProjectSpec]:
     if not selected:
         return projects
     selected_set = set(selected)

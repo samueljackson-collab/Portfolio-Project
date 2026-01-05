@@ -27,10 +27,7 @@ class PerceptualHasher:
         logger.info(f"Initialized PerceptualHasher with hash_size={hash_size}")
 
     def extract_key_frames(
-        self,
-        video_path: str,
-        fps: float = 1.0,
-        max_frames: Optional[int] = None
+        self, video_path: str, fps: float = 1.0, max_frames: Optional[int] = None
     ) -> List[np.ndarray]:
         """
         Extract key frames from video at specified FPS
@@ -64,9 +61,11 @@ class PerceptualHasher:
             frame_count = 0
             extracted_count = 0
 
-            logger.debug(f"Extracting frames from {video_path}: "
-                        f"video_fps={video_fps}, interval={frame_interval}, "
-                        f"total_frames={total_frames}")
+            logger.debug(
+                f"Extracting frames from {video_path}: "
+                f"video_fps={video_fps}, interval={frame_interval}, "
+                f"total_frames={total_frames}"
+            )
 
             while True:
                 ret, frame = cap.read()
@@ -116,10 +115,7 @@ class PerceptualHasher:
             raise
 
     def compute_video_signature(
-        self,
-        video_path: str,
-        fps: float = 1.0,
-        max_frames: Optional[int] = None
+        self, video_path: str, fps: float = 1.0, max_frames: Optional[int] = None
     ) -> List[str]:
         """
         Generate video signature as list of frame hashes
@@ -171,13 +167,10 @@ class PerceptualHasher:
 
         except Exception as e:
             logger.error(f"Error computing Hamming distance: {e}")
-            return self.hash_size ** 2  # Return maximum distance on error
+            return self.hash_size**2  # Return maximum distance on error
 
     def compare_videos(
-        self,
-        video1_hashes: List[str],
-        video2_hashes: List[str],
-        method: str = 'dtw'
+        self, video1_hashes: List[str], video2_hashes: List[str], method: str = "dtw"
     ) -> float:
         """
         Compare two videos using their perceptual hash signatures
@@ -196,7 +189,7 @@ class PerceptualHasher:
 
         # Build similarity matrix
         similarity_matrix = np.zeros((len(video1_hashes), len(video2_hashes)))
-        max_distance = self.hash_size ** 2  # Maximum possible Hamming distance
+        max_distance = self.hash_size**2  # Maximum possible Hamming distance
 
         for i, h1 in enumerate(video1_hashes):
             for j, h2 in enumerate(video2_hashes):
@@ -204,14 +197,14 @@ class PerceptualHasher:
                 similarity = 1.0 - (distance / max_distance)
                 similarity_matrix[i][j] = similarity
 
-        if method == 'dtw':
+        if method == "dtw":
             # Use diagonal of similarity matrix (simple DTW approximation)
             # In production, use proper DTW implementation
             min_len = min(len(video1_hashes), len(video2_hashes))
             diagonal_sim = np.mean([similarity_matrix[i][i] for i in range(min_len)])
             return float(diagonal_sim)
 
-        elif method == 'topk':
+        elif method == "topk":
             # Average of top k similarities (robust to minor edits)
             top_k = min(10, similarity_matrix.size)
             top_similarities = np.sort(similarity_matrix.flatten())[-top_k:]
@@ -226,18 +219,27 @@ def main():
     """Example usage of PerceptualHasher"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Compare two videos using perceptual hashing')
-    parser.add_argument('video1', help='Path to first video')
-    parser.add_argument('video2', help='Path to second video')
-    parser.add_argument('--hash-size', type=int, default=16, help='Hash size (default: 16)')
-    parser.add_argument('--fps', type=float, default=1.0, help='Frames per second to sample (default: 1.0)')
+    parser = argparse.ArgumentParser(
+        description="Compare two videos using perceptual hashing"
+    )
+    parser.add_argument("video1", help="Path to first video")
+    parser.add_argument("video2", help="Path to second video")
+    parser.add_argument(
+        "--hash-size", type=int, default=16, help="Hash size (default: 16)"
+    )
+    parser.add_argument(
+        "--fps",
+        type=float,
+        default=1.0,
+        help="Frames per second to sample (default: 1.0)",
+    )
 
     args = parser.parse_args()
 
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Initialize hasher
@@ -251,7 +253,7 @@ def main():
     hashes2 = hasher.compute_video_signature(args.video2, fps=args.fps)
 
     # Compare
-    similarity = hasher.compare_videos(hashes1, hashes2, method='topk')
+    similarity = hasher.compare_videos(hashes1, hashes2, method="topk")
 
     print(f"\n{'='*60}")
     print(f"Similarity Score: {similarity:.2%}")

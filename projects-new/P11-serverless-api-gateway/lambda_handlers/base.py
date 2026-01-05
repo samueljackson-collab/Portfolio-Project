@@ -1,4 +1,5 @@
 """Base utilities for Lambda handlers."""
+
 import json
 import logging
 import os
@@ -19,7 +20,9 @@ def _get_dynamodb():
     """Get or initialize DynamoDB resource (lazy initialization)."""
     global _dynamodb
     if _dynamodb is None:
-        _dynamodb = boto3.resource("dynamodb", region_name=os.environ.get("AWS_REGION", "us-east-1"))
+        _dynamodb = boto3.resource(
+            "dynamodb", region_name=os.environ.get("AWS_REGION", "us-east-1")
+        )
     return _dynamodb
 
 
@@ -28,7 +31,9 @@ def get_table():
     return _get_dynamodb().Table(TABLE_NAME)
 
 
-def response(status_code: int, body: Dict[str, Any], headers: Optional[Dict[str, str]] = None) -> Dict:
+def response(
+    status_code: int, body: Dict[str, Any], headers: Optional[Dict[str, str]] = None
+) -> Dict:
     """Format Lambda response for API Gateway."""
     default_headers = {
         "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 """Health check tests for 9-multi-region-disaster-recovery."""
+
 from src.health_check import check_health
 
 

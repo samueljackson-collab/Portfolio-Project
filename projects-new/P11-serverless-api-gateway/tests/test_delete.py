@@ -1,4 +1,5 @@
 """Unit tests for DELETE Lambda handler."""
+
 import json
 import sys
 import os

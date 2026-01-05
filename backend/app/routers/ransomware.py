@@ -16,7 +16,10 @@ from app.schemas import (
     IncidentEventResponse,
     IncidentResponse,
 )
-from app.services.security_simulations import simulated_incident_events, validate_incident_order
+from app.services.security_simulations import (
+    simulated_incident_events,
+    validate_incident_order,
+)
 
 
 router = APIRouter(prefix="/incidents", tags=["Ransomware Response"])
@@ -30,7 +33,9 @@ async def _get_incident(db: AsyncSession, incident_id: str) -> Incident:
     return incident
 
 
-def _serialize_incident(incident: Incident, warning: Optional[str] = None) -> IncidentResponse:
+def _serialize_incident(
+    incident: Incident, warning: Optional[str] = None
+) -> IncidentResponse:
     return IncidentResponse.model_validate(
         {
             "id": incident.id,
@@ -46,7 +51,9 @@ def _serialize_incident(incident: Incident, warning: Optional[str] = None) -> In
 
 
 @router.post("", response_model=IncidentResponse, status_code=status.HTTP_201_CREATED)
-async def create_incident(payload: IncidentCreate, db: DatabaseSession, _: CurrentUser) -> IncidentResponse:
+async def create_incident(
+    payload: IncidentCreate, db: DatabaseSession, _: CurrentUser
+) -> IncidentResponse:
     incident = Incident(name=payload.name, severity=payload.severity)
     db.add(incident)
     await db.flush()
@@ -91,7 +98,9 @@ async def add_incident_event(
 
 
 @router.post("/{incident_id}/simulate", response_model=IncidentResponse)
-async def simulate_incident(incident_id: str, db: DatabaseSession, _: CurrentUser) -> IncidentResponse:
+async def simulate_incident(
+    incident_id: str, db: DatabaseSession, _: CurrentUser
+) -> IncidentResponse:
     incident = await _get_incident(db, incident_id)
     await db.refresh(incident, attribute_names=["events"])
     start_index = len(incident.events)
@@ -105,7 +114,9 @@ async def simulate_incident(incident_id: str, db: DatabaseSession, _: CurrentUse
 
 
 @router.post("/{incident_id}/resolve", response_model=IncidentResponse)
-async def resolve_incident(incident_id: str, db: DatabaseSession, _: CurrentUser) -> IncidentResponse:
+async def resolve_incident(
+    incident_id: str, db: DatabaseSession, _: CurrentUser
+) -> IncidentResponse:
     incident = await _get_incident(db, incident_id)
     incident.status = "resolved"
     incident.resolved_at = incident.resolved_at or datetime.utcnow()
@@ -119,6 +130,8 @@ async def get_timeline(incident_id: str, db: DatabaseSession) -> list[IncidentEv
     incident_uuid = uuid.UUID(str(incident_id))
     await _get_incident(db, incident_uuid)
     result = await db.execute(
-        select(IncidentEvent).where(IncidentEvent.incident_id == incident_uuid).order_by(IncidentEvent.sequence)
+        select(IncidentEvent)
+        .where(IncidentEvent.incident_id == incident_uuid)
+        .order_by(IncidentEvent.sequence)
     )
     return result.scalars().all()

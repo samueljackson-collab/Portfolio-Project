@@ -1,4 +1,5 @@
 """Lambda handler for CREATE operations."""
+
 import json
 import logging
 import uuid
@@ -89,11 +90,9 @@ if __name__ == "__main__":
     test_event = {
         "httpMethod": "POST",
         "path": "/items",
-        "body": json.dumps({
-            "name": "Test Item",
-            "description": "A test item",
-            "price": 29.99
-        }),
-        "requestContext": {"requestId": "test-123"}
+        "body": json.dumps(
+            {"name": "Test Item", "description": "A test item", "price": 29.99}
+        ),
+        "requestContext": {"requestId": "test-123"},
     }
     print(json.dumps(lambda_handler(test_event, None), indent=2))

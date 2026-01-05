@@ -1,4 +1,5 @@
 """Unit tests for monitoring stack configuration."""
+
 from pathlib import Path
 
 import pytest
@@ -31,6 +32,7 @@ def test_alerts_config_exists(project_root):
 def test_prometheus_config_valid_yaml(project_root):
     """Verify Prometheus config is valid YAML."""
     import yaml
+
     config_file = project_root / "config" / "prometheus.yml"
     with open(config_file) as f:
         data = yaml.safe_load(f)
@@ -42,6 +44,7 @@ def test_prometheus_config_valid_yaml(project_root):
 def test_alerts_has_instance_down_rule(project_root):
     """Verify alerts include InstanceDown rule."""
     import yaml
+
     alerts_file = project_root / "config" / "alerts.yml"
     with open(alerts_file) as f:
         data = yaml.safe_load(f)

@@ -21,7 +21,10 @@ from app.schemas import (
     OperationEventResponse,
     OperationResponse,
 )
-from app.services.security_simulations import build_operation_event, update_operation_status
+from app.services.security_simulations import (
+    build_operation_event,
+    update_operation_status,
+)
 
 
 router = APIRouter(prefix="/red-team", tags=["Red Team Simulator"])
@@ -35,7 +38,9 @@ async def _get_operation(db: AsyncSession, operation_id: str) -> Operation:
     return operation
 
 
-@router.post("/operations", response_model=OperationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/operations", response_model=OperationResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_operation(
     payload: OperationCreate,
     db: DatabaseSession,
@@ -84,12 +89,16 @@ async def add_operation_event(
     # Determine day sequencing. Operations are capped to 90 days to stay within
     # the requested APT length while still allowing deterministic tests.
     result = await db.execute(
-        select(func.max(OperationEvent.day)).where(OperationEvent.operation_id == operation.id)
+        select(func.max(OperationEvent.day)).where(
+            OperationEvent.operation_id == operation.id
+        )
     )
     max_day = result.scalar() or 0
     day = payload.day or max_day + 1
     if day > 90:
-        raise HTTPException(status_code=400, detail="Operation timeline exceeds 90 days")
+        raise HTTPException(
+            status_code=400, detail="Operation timeline exceeds 90 days"
+        )
 
     timestamp = payload.timestamp or (operation.start_date + timedelta(days=day))
     event = OperationEvent(
@@ -109,12 +118,17 @@ async def add_operation_event(
     return event
 
 
-@router.post("/operations/{operation_id}/simulate-next-day", response_model=OperationEventResponse)
+@router.post(
+    "/operations/{operation_id}/simulate-next-day",
+    response_model=OperationEventResponse,
+)
 async def simulate_next_day(
     operation_id: str,
     db: DatabaseSession,
     _: CurrentUser,
-    seed: Optional[int] = Query(None, description="Optional seed for deterministic tests"),
+    seed: Optional[int] = Query(
+        None, description="Optional seed for deterministic tests"
+    ),
 ) -> OperationEvent:
     """Automatically create a stealthy action for the next day.
 
@@ -124,11 +138,15 @@ async def simulate_next_day(
 
     operation = await _get_operation(db, operation_id)
     result = await db.execute(
-        select(func.max(OperationEvent.day)).where(OperationEvent.operation_id == operation.id)
+        select(func.max(OperationEvent.day)).where(
+            OperationEvent.operation_id == operation.id
+        )
     )
     day = (result.scalar() or 0) + 1
     if day > 90:
-        raise HTTPException(status_code=400, detail="Operation timeline exceeds 90 days")
+        raise HTTPException(
+            status_code=400, detail="Operation timeline exceeds 90 days"
+        )
 
     event = build_operation_event(operation, day=day, seed=seed)
     event.operation_id = operation.id
@@ -140,8 +158,12 @@ async def simulate_next_day(
     return event
 
 
-@router.post("/operations/{operation_id}/mark-detected", response_model=OperationResponse)
-async def mark_detected(operation_id: str, db: DatabaseSession, _: CurrentUser) -> Operation:
+@router.post(
+    "/operations/{operation_id}/mark-detected", response_model=OperationResponse
+)
+async def mark_detected(
+    operation_id: str, db: DatabaseSession, _: CurrentUser
+) -> Operation:
     """Mark an operation as detected without creating a new event."""
 
     operation = await _get_operation(db, operation_id)
@@ -153,7 +175,9 @@ async def mark_detected(operation_id: str, db: DatabaseSession, _: CurrentUser) 
     return operation
 
 
-@router.get("/operations/{operation_id}/timeline", response_model=list[OperationEventResponse])
+@router.get(
+    "/operations/{operation_id}/timeline", response_model=list[OperationEventResponse]
+)
 async def get_timeline(
     operation_id: str,
     db: DatabaseSession,
