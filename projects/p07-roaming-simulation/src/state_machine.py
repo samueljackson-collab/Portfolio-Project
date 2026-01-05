@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 class SubscriberState(Enum):
     """Subscriber roaming states."""
+
     IDLE = "idle"
     LOCATION_UPDATE = "location_update"
     AUTHENTICATING = "authenticating"
@@ -62,10 +63,14 @@ class RoamingStateMachine:
         else:
             if self.auth_attempts >= self.max_auth_attempts:
                 self.state = SubscriberState.REJECTED
-                logger.error(f"IMSI {self.imsi}: Authentication rejected after {self.auth_attempts} attempts")
+                logger.error(
+                    f"IMSI {self.imsi}: Authentication rejected after {self.auth_attempts} attempts"
+                )
             else:
                 self.state = SubscriberState.LOCATION_UPDATE
-                logger.warning(f"IMSI {self.imsi}: Authentication failed, retry {self.auth_attempts}/{self.max_auth_attempts}")
+                logger.warning(
+                    f"IMSI {self.imsi}: Authentication failed, retry {self.auth_attempts}/{self.max_auth_attempts}"
+                )
             return False
 
     def activate_roaming(self) -> bool:

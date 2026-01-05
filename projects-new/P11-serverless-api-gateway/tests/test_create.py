@@ -1,4 +1,5 @@
 """Unit tests for CREATE Lambda handler."""
+
 import json
 import sys
 import os
@@ -30,11 +31,9 @@ def test_create_item_success(api_event_base, sample_item):
     event = api_event_base.copy()
     event["httpMethod"] = "POST"
     event["path"] = "/items"
-    event["body"] = json.dumps({
-        "name": "Test Item",
-        "description": "A test item",
-        "price": 29.99
-    })
+    event["body"] = json.dumps(
+        {"name": "Test Item", "description": "A test item", "price": 29.99}
+    )
 
     # Execute
     response = lambda_handler(event, None)
@@ -67,10 +66,7 @@ def test_create_item_missing_name(api_event_base):
 
     event = api_event_base.copy()
     event["httpMethod"] = "POST"
-    event["body"] = json.dumps({
-        "description": "Missing name",
-        "price": 19.99
-    })
+    event["body"] = json.dumps({"description": "Missing name", "price": 19.99})
 
     # Execute
     response = lambda_handler(event, None)
@@ -97,11 +93,9 @@ def test_create_item_invalid_price(api_event_base):
 
     event = api_event_base.copy()
     event["httpMethod"] = "POST"
-    event["body"] = json.dumps({
-        "name": "Test Item",
-        "description": "Test",
-        "price": "not-a-number"
-    })
+    event["body"] = json.dumps(
+        {"name": "Test Item", "description": "Test", "price": "not-a-number"}
+    )
 
     # Execute
     response = lambda_handler(event, None)

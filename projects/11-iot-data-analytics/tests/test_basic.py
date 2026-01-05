@@ -15,7 +15,12 @@ def test_basic():
 
 def test_project_structure():
     """Test that project structure contains required files."""
-    required_files = ["README.md", "Dockerfile", "docker-compose.yml", "requirements.txt"]
+    required_files = [
+        "README.md",
+        "Dockerfile",
+        "docker-compose.yml",
+        "requirements.txt",
+    ]
     for filename in required_files:
         assert (PROJECT_ROOT / filename).exists(), f"Missing required file: {filename}"
 

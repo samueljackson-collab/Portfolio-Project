@@ -19,9 +19,9 @@ class DeepFeatureExtractor:
 
     def __init__(
         self,
-        model_name: str = 'resnet50',
+        model_name: str = "resnet50",
         device: Optional[str] = None,
-        use_clip: bool = False
+        use_clip: bool = False,
     ):
         """
         Initialize feature extractor with pre-trained model
@@ -31,25 +31,28 @@ class DeepFeatureExtractor:
             device: Device for inference ('cuda' or 'cpu')
             use_clip: Whether to use CLIP model (requires separate installation)
         """
-        self.device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model_name = model_name
         self.use_clip = use_clip
 
-        logger.info(f"Initializing DeepFeatureExtractor: model={model_name}, "
-                   f"device={self.device}, clip={use_clip}")
+        logger.info(
+            f"Initializing DeepFeatureExtractor: model={model_name}, "
+            f"device={self.device}, clip={use_clip}"
+        )
 
         if use_clip:
             try:
                 import clip
+
                 self.model, self.preprocess = self._load_clip()
                 logger.info("Loaded CLIP model successfully")
             except ImportError:
                 logger.warning("CLIP not available, falling back to ResNet")
                 self.use_clip = False
                 self.model = self._load_resnet()
-        elif model_name == 'resnet50':
+        elif model_name == "resnet50":
             self.model = self._load_resnet()
-        elif model_name == 'vgg16':
+        elif model_name == "vgg16":
             self.model = self._load_vgg()
         else:
             raise ValueError(f"Unsupported model: {model_name}")
@@ -100,15 +103,16 @@ class DeepFeatureExtractor:
         if self.use_clip:
             return self.preprocess
 
-        return transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225]
-            )
-        ])
+        return transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
 
     def extract_frame_features(self, frame: np.ndarray) -> np.ndarray:
         """
@@ -150,9 +154,7 @@ class DeepFeatureExtractor:
             raise
 
     def extract_video_features(
-        self,
-        frames: List[np.ndarray],
-        aggregation: str = 'mean'
+        self, frames: List[np.ndarray], aggregation: str = "mean"
     ) -> np.ndarray:
         """
         Extract features from multiple frames and aggregate
@@ -167,8 +169,10 @@ class DeepFeatureExtractor:
         if not frames:
             raise ValueError("Empty frames list provided")
 
-        logger.debug(f"Extracting features from {len(frames)} frames "
-                    f"with {aggregation} aggregation")
+        logger.debug(
+            f"Extracting features from {len(frames)} frames "
+            f"with {aggregation} aggregation"
+        )
 
         frame_features = []
 
@@ -186,11 +190,11 @@ class DeepFeatureExtractor:
         frame_features = np.array(frame_features)
 
         # Aggregate features
-        if aggregation == 'mean':
+        if aggregation == "mean":
             video_features = np.mean(frame_features, axis=0)
-        elif aggregation == 'max':
+        elif aggregation == "max":
             video_features = np.max(frame_features, axis=0)
-        elif aggregation == 'concat':
+        elif aggregation == "concat":
             # Flatten all features (warning: can be large)
             video_features = frame_features.flatten()
         else:
@@ -201,8 +205,10 @@ class DeepFeatureExtractor:
         if norm > 0:
             video_features = video_features / norm
 
-        logger.debug(f"Extracted video features: shape={video_features.shape}, "
-                    f"norm={np.linalg.norm(video_features):.4f}")
+        logger.debug(
+            f"Extracted video features: shape={video_features.shape}, "
+            f"norm={np.linalg.norm(video_features):.4f}"
+        )
 
         return video_features
 
@@ -250,7 +256,7 @@ class DeepFeatureExtractor:
 
         except Exception as e:
             logger.error(f"Error computing Euclidean distance: {e}")
-            return float('inf')
+            return float("inf")
 
 
 def main():
@@ -258,28 +264,34 @@ def main():
     import argparse
     import cv2
 
-    parser = argparse.ArgumentParser(description='Extract deep features from video')
-    parser.add_argument('video', help='Path to video file')
-    parser.add_argument('--model', default='resnet50', choices=['resnet50', 'vgg16'],
-                       help='Model to use (default: resnet50)')
-    parser.add_argument('--clip', action='store_true', help='Use CLIP model')
-    parser.add_argument('--fps', type=float, default=1.0,
-                       help='Frames per second to sample (default: 1.0)')
-    parser.add_argument('--device', default=None, help='Device (cuda/cpu)')
+    parser = argparse.ArgumentParser(description="Extract deep features from video")
+    parser.add_argument("video", help="Path to video file")
+    parser.add_argument(
+        "--model",
+        default="resnet50",
+        choices=["resnet50", "vgg16"],
+        help="Model to use (default: resnet50)",
+    )
+    parser.add_argument("--clip", action="store_true", help="Use CLIP model")
+    parser.add_argument(
+        "--fps",
+        type=float,
+        default=1.0,
+        help="Frames per second to sample (default: 1.0)",
+    )
+    parser.add_argument("--device", default=None, help="Device (cuda/cpu)")
 
     args = parser.parse_args()
 
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Initialize extractor
     extractor = DeepFeatureExtractor(
-        model_name=args.model,
-        device=args.device,
-        use_clip=args.clip
+        model_name=args.model, device=args.device, use_clip=args.clip
     )
 
     # Extract frames

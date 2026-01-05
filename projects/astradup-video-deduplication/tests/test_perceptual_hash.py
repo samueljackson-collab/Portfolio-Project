@@ -46,8 +46,7 @@ class TestPerceptualHasher:
         # Create two similar frames
         frame1 = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
         frame2 = np.clip(
-            frame1.astype(int) + np.random.randint(-10, 10, frame1.shape),
-            0, 255
+            frame1.astype(int) + np.random.randint(-10, 10, frame1.shape), 0, 255
         ).astype(np.uint8)
 
         hash1 = hasher.compute_phash(frame1)
@@ -103,7 +102,7 @@ class TestPerceptualHasher:
         # Should still work and return a valid similarity score
         assert 0.0 <= similarity <= 1.0
 
-    @patch('cv2.VideoCapture')
+    @patch("cv2.VideoCapture")
     def test_extract_key_frames_success(self, mock_cv2, hasher):
         """Test successful key frame extraction"""
         # Mock video capture
@@ -113,9 +112,9 @@ class TestPerceptualHasher:
 
         # Mock frames
         test_frame = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
-        mock_cap.read.side_effect = [
-            (True, test_frame) for _ in range(10)
-        ] + [(False, None)]
+        mock_cap.read.side_effect = [(True, test_frame) for _ in range(10)] + [
+            (False, None)
+        ]
 
         mock_cv2.return_value = mock_cap
 
@@ -125,7 +124,7 @@ class TestPerceptualHasher:
         assert len(frames) > 0
         assert all(isinstance(f, np.ndarray) for f in frames)
 
-    @patch('cv2.VideoCapture')
+    @patch("cv2.VideoCapture")
     def test_extract_key_frames_cannot_open(self, mock_cv2, hasher):
         """Test key frame extraction when video cannot be opened"""
         mock_cap = MagicMock()
@@ -141,11 +140,11 @@ class TestPerceptualHasher:
         hashes2 = ["abc123"] * 5
 
         # Test DTW method
-        sim_dtw = hasher.compare_videos(hashes1, hashes2, method='dtw')
+        sim_dtw = hasher.compare_videos(hashes1, hashes2, method="dtw")
         assert 0.0 <= sim_dtw <= 1.0
 
         # Test topk method
-        sim_topk = hasher.compare_videos(hashes1, hashes2, method='topk')
+        sim_topk = hasher.compare_videos(hashes1, hashes2, method="topk")
         assert 0.0 <= sim_topk <= 1.0
 
         # Test default method
@@ -164,8 +163,7 @@ class TestPerceptualHasherIntegration:
         """Test complete workflow from frames to similarity"""
         # Create two sets of similar frames
         frames1 = [
-            np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
-            for _ in range(5)
+            np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8) for _ in range(5)
         ]
         frames2 = frames1.copy()  # Identical frames
 
@@ -183,8 +181,7 @@ class TestPerceptualHasherIntegration:
         """Test detection of different content"""
         # Create two sets of very different frames
         frames1 = [
-            np.zeros((100, 100, 3), dtype=np.uint8)  # Black frames
-            for _ in range(5)
+            np.zeros((100, 100, 3), dtype=np.uint8) for _ in range(5)  # Black frames
         ]
         frames2 = [
             np.ones((100, 100, 3), dtype=np.uint8) * 255  # White frames
@@ -202,5 +199,5 @@ class TestPerceptualHasherIntegration:
         assert similarity < 0.5
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -31,13 +31,11 @@
 - **Docker compose files:** 25 · **Terraform files:** 81 · **Config packs:** 54
 
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
   A[Commit] --> B[CI Workflows]
-  B --> C[Security Checks]
-  C --> D[Docs + Evidence]
-  D --> E[Release Artifacts]
-  E --> F[GitHub Pages]
+  B --> C[Docs + Evidence]
+  C --> D[Release Artifacts]
+  D --> E[GitHub Pages]
 ```
 
 ```mermaid
@@ -109,557 +107,330 @@ System-minded engineer specializing in building, securing, and operating infrast
 
 ## 🧩 Project Visuals (Charts + Diagrams)
 
-> Tip: Diagrams are collapsed by default for faster GitHub rendering. Expand a project to view detailed flowcharts and coverage pies.
-
-<details>
-<summary><strong>Project 1: AWS Infrastructure Automation</strong></summary>
-
+### Project 1: AWS Infrastructure Automation
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Plan]
-  N2[Provision]
-  N3[Harden]
-  N4[Operate]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Plan] --> B[Apply]
+  B --> C[Operate]
 ```
 ```mermaid
-pie title Coverage: AWS Infrastructure Automation
+pie title Coverage: AWS Infra
   "IaC Modules" : 40
   "CI Validation" : 30
   "Ops Runbooks" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 2: Database Migration Platform</strong></summary>
-
+### Project 2: Database Migration Platform
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Source DB]
-  N2[CDC]
-  N3[Validate]
-  N4[Target DB]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Source DB] --> B[CDC]
+  B --> C[Target DB]
 ```
 ```mermaid
-pie title Coverage: Database Migration Platform
+pie title Coverage: Migration
   "CDC Pipelines" : 35
   "Validation" : 35
   "Rollback" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 3: Kubernetes CI/CD Pipeline</strong></summary>
-
+### Project 3: Kubernetes CI/CD Pipeline
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Commit]
-  N2[CI Gates]
-  N3[ArgoCD Sync]
-  N4[Runtime]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Commit] --> B[CI Gates]
+  B --> C[ArgoCD Sync]
 ```
 ```mermaid
-pie title Coverage: Kubernetes CI/CD Pipeline
+pie title Coverage: K8s CI/CD
   "Policy Gates" : 35
   "Delivery" : 35
   "Telemetry" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 4: DevSecOps Pipeline</strong></summary>
-
+### Project 4: DevSecOps Pipeline
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Build]
-  N2[Scan]
-  N3[Policy Gate]
-  N4[Release]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Build] --> B[Scan]
+  B --> C[Release]
 ```
 ```mermaid
-pie title Coverage: DevSecOps Pipeline
+pie title Coverage: DevSecOps
   "SAST/SCA" : 40
   "DAST" : 30
   "SBOM" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 5: Real-time Data Streaming</strong></summary>
-
+### Project 5: Real-time Data Streaming
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Producers]
-  N2[Kafka/Flink]
-  N3[Enrich]
-  N4[Sinks]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Producers] --> B[Kafka/Flink]
+  B --> C[Sinks]
 ```
 ```mermaid
-pie title Coverage: Real-time Data Streaming
+pie title Coverage: Streaming
   "Throughput" : 35
   "Latency" : 35
   "Recovery" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 6: Machine Learning Pipeline</strong></summary>
-
+### Project 6: Machine Learning Pipeline
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Train]
-  N2[Track]
-  N3[Approve]
-  N4[Deploy]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Train] --> B[Track]
+  B --> C[Deploy]
 ```
 ```mermaid
-pie title Coverage: Machine Learning Pipeline
+pie title Coverage: MLOps
   "Training" : 35
   "Registry" : 35
   "Promotion" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 7: Serverless Data Processing</strong></summary>
-
+### Project 7: Serverless Data Processing
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Events]
-  N2[Orchestrate]
-  N3[Persist]
-  N4[Observe]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Events] --> B[Step Functions]
+  B --> C[DynamoDB]
 ```
 ```mermaid
-pie title Coverage: Serverless Data Processing
+pie title Coverage: Serverless
   "Orchestration" : 35
   "Reliability" : 35
   "Security" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 8: Advanced AI Chatbot</strong></summary>
-
+### Project 8: Advanced AI Chatbot
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Query]
-  N2[Retrieve]
-  N3[Tooling]
-  N4[Answer]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Query] --> B[RAG Retrieve]
+  B --> C[Answer + Tools]
 ```
 ```mermaid
-pie title Coverage: Advanced AI Chatbot
+pie title Coverage: AI Assistant
   "Retrieval" : 35
   "Tooling" : 35
   "Evaluation" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 9: Multi-Region Disaster Recovery</strong></summary>
-
+### Project 9: Multi-Region Disaster Recovery
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Primary]
-  N2[Replicate]
-  N3[Failover]
-  N4[Validate]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Primary] --> B[Replication]
+  B --> C[Standby]
 ```
 ```mermaid
-pie title Coverage: Multi-Region Disaster Recovery
+pie title Coverage: DR
   "Failover" : 35
   "Validation" : 35
   "Runbooks" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 10: Blockchain Smart Contract Platform</strong></summary>
-
+### Project 10: Blockchain Smart Contract Platform
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Develop]
-  N2[Test]
-  N3[Audit]
-  N4[Deploy]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Develop] --> B[Test]
+  B --> C[Deploy]
 ```
 ```mermaid
-pie title Coverage: Blockchain Smart Contract Platform
+pie title Coverage: Smart Contracts
   "Tests" : 35
   "Audit" : 35
   "Release" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 11: IoT Data Ingestion & Analytics</strong></summary>
-
+### Project 11: IoT Data Ingestion & Analytics
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Devices]
-  N2[Ingest]
-  N3[Analyze]
-  N4[Dashboards]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Devices] --> B[Ingest]
+  B --> C[Dashboards]
 ```
 ```mermaid
-pie title Coverage: IoT Data Ingestion & Analytics
+pie title Coverage: IoT Analytics
   "Ingest" : 35
   "Storage" : 35
   "Visualization" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 12: Quantum Computing Integration</strong></summary>
-
+### Project 12: Quantum Computing Integration
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Classical]
-  N2[QPU]
-  N3[Analyze]
-  N4[Iterate]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Classical] --> B[QPU]
+  B --> C[Analysis]
 ```
 ```mermaid
-pie title Coverage: Quantum Computing Integration
+pie title Coverage: Quantum
   "Experiments" : 35
   "Simulation" : 35
   "Docs" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 13: Advanced Cybersecurity Platform</strong></summary>
-
+### Project 13: Advanced Cybersecurity Platform
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Detect]
-  N2[Enrich]
-  N3[Automate]
-  N4[Respond]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Detect] --> B[Enrich]
+  B --> C[Respond]
 ```
 ```mermaid
-pie title Coverage: Advanced Cybersecurity Platform
+pie title Coverage: Cybersecurity
   "SOAR" : 35
   "Playbooks" : 35
   "Automation" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 14: Edge AI Inference Platform</strong></summary>
-
+### Project 14: Edge AI Inference Platform
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Sensors]
-  N2[Inference]
-  N3[Optimize]
-  N4[Actions]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Sensors] --> B[Inference]
+  B --> C[Actions]
 ```
 ```mermaid
-pie title Coverage: Edge AI Inference Platform
+pie title Coverage: Edge AI
   "Latency" : 35
   "Accuracy" : 35
   "Ops" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 15: Real-time Collaborative Platform</strong></summary>
-
+### Project 15: Real-time Collaborative Platform
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Clients]
-  N2[Sync]
-  N3[Resolve]
-  N4[Persist]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Clients] --> B[CRDT Sync]
+  B --> C[Server]
 ```
 ```mermaid
-pie title Coverage: Real-time Collaborative Platform
+pie title Coverage: Collaboration
   "Sync" : 35
   "Conflict Resolution" : 35
   "Latency" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 16: Advanced Data Lake & Analytics</strong></summary>
-
+### Project 16: Advanced Data Lake & Analytics
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Bronze]
-  N2[Silver]
-  N3[Gold]
-  N4[Serve]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Bronze] --> B[Silver]
+  B --> C[Gold]
 ```
 ```mermaid
-pie title Coverage: Advanced Data Lake & Analytics
+pie title Coverage: Data Lake
   "Ingest" : 35
   "Quality" : 35
   "Curate" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 17: Multi-Cloud Service Mesh</strong></summary>
-
+### Project 17: Multi-Cloud Service Mesh
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Cluster A]
-  N2[mTLS Mesh]
-  N3[Policy]
-  N4[Cluster B]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Cluster A] --> B[mTLS Mesh]
+  B --> C[Cluster B]
 ```
 ```mermaid
-pie title Coverage: Multi-Cloud Service Mesh
+pie title Coverage: Service Mesh
   "Routing" : 35
   "Security" : 35
   "Observability" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 18: GPU-Accelerated Computing</strong></summary>
-
+### Project 18: GPU-Accelerated Computing
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Data]
-  N2[GPU Compute]
-  N3[Tune]
-  N4[Results]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Data] --> B[GPU Compute]
+  B --> C[Results]
 ```
 ```mermaid
-pie title Coverage: GPU-Accelerated Computing
+pie title Coverage: GPU Computing
   "Performance" : 35
   "Testing" : 35
   "Docs" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 19: Advanced Kubernetes Operators</strong></summary>
-
+### Project 19: Advanced Kubernetes Operators
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[CRDs]
-  N2[Reconcile]
-  N3[Automate]
-  N4[State]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[CRDs] --> B[Reconcile]
+  B --> C[State]
 ```
 ```mermaid
-pie title Coverage: Advanced Kubernetes Operators
+pie title Coverage: Operators
   "Lifecycle" : 35
   "Automation" : 35
   "Testing" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 20: Blockchain Oracle Service</strong></summary>
-
+### Project 20: Blockchain Oracle Service
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Data Feeds]
-  N2[Verify]
-  N3[Publish]
-  N4[On-chain]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Data Feeds] --> B[Oracle]
+  B --> C[On-chain]
 ```
 ```mermaid
-pie title Coverage: Blockchain Oracle Service
+pie title Coverage: Oracles
   "Feeds" : 35
   "Verification" : 35
   "SLAs" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 21: Quantum-Safe Cryptography</strong></summary>
-
+### Project 21: Quantum-Safe Cryptography
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[ECDH]
-  N2[Kyber]
-  N3[Combine]
-  N4[Validate]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[ECDH] --> B[Kyber]
+  B --> C[Hybrid Key]
 ```
 ```mermaid
-pie title Coverage: Quantum-Safe Cryptography
+pie title Coverage: Crypto
   "Keygen" : 35
   "Exchange" : 35
   "Validation" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 22: Autonomous DevOps Platform</strong></summary>
-
+### Project 22: Autonomous DevOps Platform
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Detect]
-  N2[Decide]
-  N3[Runbook]
-  N4[Verify]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Detect] --> B[Decide]
+  B --> C[Act]
 ```
 ```mermaid
-pie title Coverage: Autonomous DevOps Platform
+pie title Coverage: AutoOps
   "Signals" : 35
   "Runbooks" : 35
   "Verification" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 23: Advanced Monitoring & Observability</strong></summary>
-
+### Project 23: Advanced Monitoring & Observability
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Collect]
-  N2[Store]
-  N3[Alert]
-  N4[Improve]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Collect] --> B[Store]
+  B --> C[Alert]
 ```
 ```mermaid
-pie title Coverage: Advanced Monitoring & Observability
+pie title Coverage: Observability
   "Metrics" : 35
   "Logs" : 35
   "Traces" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 24: Portfolio Report Generator</strong></summary>
-
+### Project 24: Portfolio Report Generator
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Inputs]
-  N2[Render]
-  N3[Review]
-  N4[Publish]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Inputs] --> B[Render]
+  B --> C[Publish]
 ```
 ```mermaid
-pie title Coverage: Portfolio Report Generator
+pie title Coverage: Reporting
   "Templates" : 35
   "Evidence" : 35
   "Export" : 30
 ```
-</details>
 
-<details>
-<summary><strong>Project 25: Portfolio Website & Documentation Hub</strong></summary>
-
+### Project 25: Portfolio Website & Documentation Hub
 ```mermaid
-%%{init: {'flowchart': {'curve': 'linear'}}}%%
 flowchart LR
-  N1[Docs]
-  N2[Build]
-  N3[QA]
-  N4[Publish]
-  N1 --> N2
-  N2 --> N3
-  N3 --> N4
+  A[Docs] --> B[Build]
+  B --> C[Publish]
 ```
 ```mermaid
-pie title Coverage: Portfolio Website & Documentation Hub
+pie title Coverage: Website
   "Docs" : 35
   "Build" : 35
   "QA" : 30
 ```
-</details>
 
 ---
 ## 📊 Portfolio Status Board

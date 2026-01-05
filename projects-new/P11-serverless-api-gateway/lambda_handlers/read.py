@@ -1,4 +1,5 @@
 """Lambda handler for READ operations."""
+
 import json
 import logging
 from typing import Dict, Any
@@ -81,7 +82,7 @@ if __name__ == "__main__":
     test_event = {
         "httpMethod": "GET",
         "path": "/items",
-        "requestContext": {"requestId": "test-456"}
+        "requestContext": {"requestId": "test-456"},
     }
     print(json.dumps(lambda_handler(test_event, None), indent=2))
 
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         "httpMethod": "GET",
         "path": "/items/123",
         "pathParameters": {"item_id": "123"},
-        "requestContext": {"requestId": "test-457"}
+        "requestContext": {"requestId": "test-457"},
     }
     print("\n---\n")
     print(json.dumps(lambda_handler(test_event_single, None), indent=2))

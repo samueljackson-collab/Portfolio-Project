@@ -1,4 +1,5 @@
 """Analytics queries and anomaly detection for IoT telemetry data."""
+
 from __future__ import annotations
 
 import logging
@@ -38,22 +39,21 @@ class IoTAnalytics:
         """
         cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT *
             FROM device_telemetry
             WHERE device_id = %s
             ORDER BY time DESC
             LIMIT 1
-        """, (device_id,))
+        """,
+            (device_id,),
+        )
 
         result = cursor.fetchone()
         return dict(result) if result else {}
 
-    def get_device_statistics(
-        self,
-        device_id: str,
-        hours: int = 24
-    ) -> Dict[str, Any]:
+    def get_device_statistics(self, device_id: str, hours: int = 24) -> Dict[str, Any]:
         """
         Get statistical summary for a device.
 
@@ -66,7 +66,8 @@ class IoTAnalytics:
         """
         cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 COUNT(*) as reading_count,
                 AVG(temperature) as avg_temperature,
@@ -81,7 +82,9 @@ class IoTAnalytics:
             FROM device_telemetry
             WHERE device_id = %s
               AND time > NOW() - INTERVAL '%s hours'
-        """, (device_id, hours))
+        """,
+            (device_id, hours),
+        )
 
         result = cursor.fetchone()
         return dict(result) if result else {}
@@ -95,7 +98,8 @@ class IoTAnalytics:
         """
         cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 device_id,
                 MAX(time) as last_seen,
@@ -108,14 +112,13 @@ class IoTAnalytics:
             WHERE time > NOW() - INTERVAL '24 hours'
             GROUP BY device_id
             ORDER BY last_seen DESC
-        """)
+        """
+        )
 
         return [dict(row) for row in cursor.fetchall()]
 
     def detect_temperature_anomalies(
-        self,
-        threshold_stddev: float = 2.0,
-        hours: int = 24
+        self, threshold_stddev: float = 2.0, hours: int = 24
     ) -> List[Dict[str, Any]]:
         """
         Detect temperature anomalies using z-score method.
@@ -129,7 +132,8 @@ class IoTAnalytics:
         """
         cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             WITH device_stats AS (
                 SELECT
                     device_id,
@@ -153,11 +157,15 @@ class IoTAnalytics:
               AND s.stddev_temp > 0
             ORDER BY time DESC
             LIMIT 100
-        """, (hours, hours, threshold_stddev))
+        """,
+            (hours, hours, threshold_stddev),
+        )
 
         return [dict(row) for row in cursor.fetchall()]
 
-    def detect_low_battery_devices(self, threshold: float = 20.0) -> List[Dict[str, Any]]:
+    def detect_low_battery_devices(
+        self, threshold: float = 20.0
+    ) -> List[Dict[str, Any]]:
         """
         Find devices with low battery.
 
@@ -169,7 +177,8 @@ class IoTAnalytics:
         """
         cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DISTINCT ON (device_id)
                 device_id,
                 time as last_reading,
@@ -179,7 +188,9 @@ class IoTAnalytics:
             WHERE time > NOW() - INTERVAL '1 hour'
               AND battery < %s
             ORDER BY device_id, time DESC
-        """, (threshold,))
+        """,
+            (threshold,),
+        )
 
         return [dict(row) for row in cursor.fetchall()]
 
@@ -196,19 +207,24 @@ class IoTAnalytics:
         cursor = self.db_conn.cursor()
 
         # Get all devices that have ever reported
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DISTINCT device_id
             FROM device_telemetry
-        """)
+        """
+        )
 
         all_devices = {row[0] for row in cursor.fetchall()}
 
         # Get active devices
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DISTINCT device_id
             FROM device_telemetry
             WHERE time > NOW() - INTERVAL '%s hours'
-        """, (hours,))
+        """,
+            (hours,),
+        )
 
         active_devices = {row[0] for row in cursor.fetchall()}
 
@@ -218,9 +234,9 @@ class IoTAnalytics:
     def get_time_series(
         self,
         device_id: str,
-        metric: str = 'temperature',
-        interval: str = '5 minutes',
-        hours: int = 24
+        metric: str = "temperature",
+        interval: str = "5 minutes",
+        hours: int = 24,
     ) -> List[Dict[str, Any]]:
         """
         Get time-series data for a device metric.
@@ -255,9 +271,7 @@ class IoTAnalytics:
         return [dict(row) for row in cursor.fetchall()]
 
     def get_aggregated_metrics(
-        self,
-        interval: str = '1 hour',
-        hours: int = 24
+        self, interval: str = "1 hour", hours: int = 24
     ) -> List[Dict[str, Any]]:
         """
         Get aggregated metrics across all devices.
@@ -271,7 +285,8 @@ class IoTAnalytics:
         """
         cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 time_bucket(%s, time) AS bucket,
                 COUNT(DISTINCT device_id) as active_devices,
@@ -283,7 +298,9 @@ class IoTAnalytics:
             WHERE time > NOW() - INTERVAL '%s hours'
             GROUP BY bucket
             ORDER BY bucket DESC
-        """, (interval, hours))
+        """,
+            (interval, hours),
+        )
 
         return [dict(row) for row in cursor.fetchall()]
 
@@ -307,11 +324,11 @@ def main():
     import os
 
     postgres_config = {
-        'host': os.getenv('POSTGRES_HOST', 'localhost'),
-        'port': int(os.getenv('POSTGRES_PORT', '5432')),
-        'database': os.getenv('POSTGRES_DB', 'iot_analytics'),
-        'user': os.getenv('POSTGRES_USER', 'iot'),
-        'password': os.getenv('POSTGRES_PASSWORD', 'iot_password')
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": int(os.getenv("POSTGRES_PORT", "5432")),
+        "database": os.getenv("POSTGRES_DB", "iot_analytics"),
+        "user": os.getenv("POSTGRES_USER", "iot"),
+        "password": os.getenv("POSTGRES_PASSWORD", "iot_password"),
     }
 
     with IoTAnalytics(postgres_config) as analytics:
@@ -344,5 +361,5 @@ def main():
             print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

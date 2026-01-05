@@ -75,7 +75,9 @@ def demo_basic_roaming():
         print(f"  HLR Lookup: {session.hlr_lookup_time:.2f}ms")
         print(f"  VLR Registration: {session.vlr_lookup_time:.2f}ms")
         print(f"  Call Setup: {session.call_setup_time:.2f}ms")
-        print(f"  Total Setup: {session.hlr_lookup_time + session.vlr_lookup_time + session.call_setup_time:.2f}ms")
+        print(
+            f"  Total Setup: {session.hlr_lookup_time + session.vlr_lookup_time + session.call_setup_time:.2f}ms"
+        )
 
         # Terminate call
         terminated = sim.terminate_call(session.session_id)
@@ -154,8 +156,10 @@ def demo_multi_network_handoff():
     stats = sim.get_session_statistics(session.session_id)
     print(f"  Total Handoffs: {stats['handoff_count']}")
     print(f"  Journey: France -> Spain -> Italy")
-    for i, handoff in enumerate(stats['handoffs'], 1):
-        print(f"  Handoff {i}: {handoff['from_network']} -> {handoff['to_network']} ({handoff['duration_ms']:.2f}ms)")
+    for i, handoff in enumerate(stats["handoffs"], 1):
+        print(
+            f"  Handoff {i}: {handoff['from_network']} -> {handoff['to_network']} ({handoff['duration_ms']:.2f}ms)"
+        )
 
     # Terminate call
     sim.terminate_call(session.session_id)
@@ -248,6 +252,7 @@ def main():
     except Exception as e:
         print(f"\nError during demo: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

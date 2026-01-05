@@ -18,7 +18,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Base storage directory (configurable via environment variable)
-STORAGE_BASE = os.getenv("PRIMARY_STORAGE_PATH", os.getenv("PHOTO_STORAGE_PATH", "/tmp/elderphoto_storage"))
+STORAGE_BASE = os.getenv(
+    "PRIMARY_STORAGE_PATH", os.getenv("PHOTO_STORAGE_PATH", "/tmp/elderphoto_storage")
+)
 
 # Enable/disable automatic backups
 AUTO_BACKUP_ENABLED = os.getenv("AUTO_BACKUP_ENABLED", "true").lower() == "true"

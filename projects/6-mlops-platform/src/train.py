@@ -1,4 +1,5 @@
 """Model training pipeline with MLflow tracking and experiment management."""
+
 from __future__ import annotations
 
 import argparse
@@ -15,8 +16,13 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    roc_auc_score, confusion_matrix, classification_report
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    confusion_matrix,
+    classification_report,
 )
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
@@ -32,7 +38,7 @@ class ModelTrainingPipeline:
         self,
         experiment_name: str = "mlops-model-training",
         tracking_uri: str = "http://localhost:5000",
-        artifact_location: str = "./mlruns"
+        artifact_location: str = "./mlruns",
     ):
         """
         Initialize training pipeline.
@@ -65,11 +71,11 @@ class ModelTrainingPipeline:
         """
         logger.info(f"Loading data from {data_path}")
 
-        if data_path.endswith('.csv'):
+        if data_path.endswith(".csv"):
             df = pd.read_csv(data_path)
-            X = df.drop('target', axis=1).values
-            y = df['target'].values
-        elif data_path.endswith('.npy'):
+            X = df.drop("target", axis=1).values
+            y = df["target"].values
+        elif data_path.endswith(".npy"):
             data = np.load(data_path)
             X = data[:, :-1]
             y = data[:, -1]
@@ -84,7 +90,7 @@ class ModelTrainingPipeline:
         X: np.ndarray,
         y: np.ndarray,
         test_size: float = 0.2,
-        random_state: int = 42
+        random_state: int = 42,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, StandardScaler]:
         """
         Preprocess and split data.
@@ -120,7 +126,7 @@ class ModelTrainingPipeline:
         X_train: np.ndarray,
         y_train: np.ndarray,
         model_type: str = "random_forest",
-        hyperparameters: Dict[str, Any] = None
+        hyperparameters: Dict[str, Any] = None,
     ) -> Any:
         """
         Train a model with specified configuration.
@@ -142,23 +148,23 @@ class ModelTrainingPipeline:
         # Select model
         if model_type == "random_forest":
             model = RandomForestClassifier(
-                n_estimators=hyperparameters.get('n_estimators', 100),
-                max_depth=hyperparameters.get('max_depth', 10),
-                min_samples_split=hyperparameters.get('min_samples_split', 2),
-                random_state=42
+                n_estimators=hyperparameters.get("n_estimators", 100),
+                max_depth=hyperparameters.get("max_depth", 10),
+                min_samples_split=hyperparameters.get("min_samples_split", 2),
+                random_state=42,
             )
         elif model_type == "gradient_boosting":
             model = GradientBoostingClassifier(
-                n_estimators=hyperparameters.get('n_estimators', 100),
-                max_depth=hyperparameters.get('max_depth', 5),
-                learning_rate=hyperparameters.get('learning_rate', 0.1),
-                random_state=42
+                n_estimators=hyperparameters.get("n_estimators", 100),
+                max_depth=hyperparameters.get("max_depth", 5),
+                learning_rate=hyperparameters.get("learning_rate", 0.1),
+                random_state=42,
             )
         elif model_type == "logistic_regression":
             model = LogisticRegression(
-                C=hyperparameters.get('C', 1.0),
-                max_iter=hyperparameters.get('max_iter', 1000),
-                random_state=42
+                C=hyperparameters.get("C", 1.0),
+                max_iter=hyperparameters.get("max_iter", 1000),
+                random_state=42,
             )
         else:
             raise ValueError(f"Unknown model type: {model_type}")
@@ -170,10 +176,7 @@ class ModelTrainingPipeline:
         return model
 
     def evaluate_model(
-        self,
-        model: Any,
-        X_test: np.ndarray,
-        y_test: np.ndarray
+        self, model: Any, X_test: np.ndarray, y_test: np.ndarray
     ) -> Dict[str, float]:
         """
         Evaluate model performance.
@@ -194,11 +197,11 @@ class ModelTrainingPipeline:
 
         # Calculate metrics
         metrics = {
-            'accuracy': accuracy_score(y_test, y_pred),
-            'precision': precision_score(y_test, y_pred, average='weighted'),
-            'recall': recall_score(y_test, y_pred, average='weighted'),
-            'f1_score': f1_score(y_test, y_pred, average='weighted'),
-            'roc_auc': roc_auc_score(y_test, y_pred_proba)
+            "accuracy": accuracy_score(y_test, y_pred),
+            "precision": precision_score(y_test, y_pred, average="weighted"),
+            "recall": recall_score(y_test, y_pred, average="weighted"),
+            "f1_score": f1_score(y_test, y_pred, average="weighted"),
+            "roc_auc": roc_auc_score(y_test, y_pred_proba),
         }
 
         # Log metrics
@@ -211,7 +214,7 @@ class ModelTrainingPipeline:
         self,
         X_train: np.ndarray,
         y_train: np.ndarray,
-        model_type: str = "random_forest"
+        model_type: str = "random_forest",
     ) -> Tuple[Any, Dict[str, Any]]:
         """
         Perform hyperparameter tuning with grid search.
@@ -229,16 +232,16 @@ class ModelTrainingPipeline:
         # Define parameter grids
         if model_type == "random_forest":
             param_grid = {
-                'n_estimators': [50, 100, 200],
-                'max_depth': [5, 10, 15],
-                'min_samples_split': [2, 5, 10]
+                "n_estimators": [50, 100, 200],
+                "max_depth": [5, 10, 15],
+                "min_samples_split": [2, 5, 10],
             }
             model = RandomForestClassifier(random_state=42)
         elif model_type == "gradient_boosting":
             param_grid = {
-                'n_estimators': [50, 100, 150],
-                'max_depth': [3, 5, 7],
-                'learning_rate': [0.01, 0.1, 0.2]
+                "n_estimators": [50, 100, 150],
+                "max_depth": [3, 5, 7],
+                "learning_rate": [0.01, 0.1, 0.2],
             }
             model = GradientBoostingClassifier(random_state=42)
         else:
@@ -246,7 +249,7 @@ class ModelTrainingPipeline:
 
         # Grid search
         grid_search = GridSearchCV(
-            model, param_grid, cv=5, scoring='f1_weighted', n_jobs=-1, verbose=1
+            model, param_grid, cv=5, scoring="f1_weighted", n_jobs=-1, verbose=1
         )
         grid_search.fit(X_train, y_train)
 
@@ -260,7 +263,7 @@ class ModelTrainingPipeline:
         data_path: str,
         model_type: str = "random_forest",
         tune_hyperparameters: bool = False,
-        register_model: bool = True
+        register_model: bool = True,
     ) -> str:
         """
         Run complete training experiment with MLflow tracking.
@@ -293,7 +296,9 @@ class ModelTrainingPipeline:
 
             # Train model
             if tune_hyperparameters:
-                model, best_params = self.hyperparameter_tuning(X_train, y_train, model_type)
+                model, best_params = self.hyperparameter_tuning(
+                    X_train, y_train, model_type
+                )
                 mlflow.log_params(best_params)
             else:
                 model = self.train_model(X_train, y_train, model_type)
@@ -306,7 +311,9 @@ class ModelTrainingPipeline:
             mlflow.sklearn.log_model(
                 model,
                 "model",
-                registered_model_name=f"{model_type}_classifier" if register_model else None
+                registered_model_name=(
+                    f"{model_type}_classifier" if register_model else None
+                ),
             )
 
             # Log scaler
@@ -317,7 +324,7 @@ class ModelTrainingPipeline:
             cm = confusion_matrix(y_test, y_pred)
 
             cm_path = self.artifact_location / f"confusion_matrix_{run.info.run_id}.txt"
-            with open(cm_path, 'w') as f:
+            with open(cm_path, "w") as f:
                 f.write(f"Confusion Matrix:\n{cm}\n\n")
                 f.write(classification_report(y_test, y_pred))
 
@@ -332,30 +339,24 @@ def main():
     """CLI for training pipeline."""
     parser = argparse.ArgumentParser(description="MLOps Training Pipeline")
     parser.add_argument(
-        "--data",
-        required=True,
-        help="Path to training data (CSV or NPY)"
+        "--data", required=True, help="Path to training data (CSV or NPY)"
     )
     parser.add_argument(
         "--model-type",
         choices=["random_forest", "gradient_boosting", "logistic_regression"],
         default="random_forest",
-        help="Model type to train"
+        help="Model type to train",
     )
     parser.add_argument(
-        "--tune",
-        action="store_true",
-        help="Perform hyperparameter tuning"
+        "--tune", action="store_true", help="Perform hyperparameter tuning"
     )
     parser.add_argument(
-        "--no-register",
-        action="store_true",
-        help="Don't register model in MLflow"
+        "--no-register", action="store_true", help="Don't register model in MLflow"
     )
     parser.add_argument(
         "--experiment-name",
         default="mlops-model-training",
-        help="MLflow experiment name"
+        help="MLflow experiment name",
     )
 
     args = parser.parse_args()
@@ -368,7 +369,7 @@ def main():
         data_path=args.data,
         model_type=args.model_type,
         tune_hyperparameters=args.tune,
-        register_model=not args.no_register
+        register_model=not args.no_register,
     )
 
     print(f"\n✅ Training complete! Run ID: {run_id}")

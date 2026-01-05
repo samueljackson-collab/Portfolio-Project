@@ -50,7 +50,9 @@ def verify_backend_setup() -> bool:
     # Check Docker files
     print("\n🐳 Docker Files:")
     all_checks_passed &= check_file_exists("Dockerfile", "Docker image definition")
-    all_checks_passed &= check_file_exists("docker-compose.yml", "Docker Compose config")
+    all_checks_passed &= check_file_exists(
+        "docker-compose.yml", "Docker Compose config"
+    )
 
     # Check application structure
     print("\n📦 Application Structure:")
@@ -76,8 +78,12 @@ def verify_backend_setup() -> bool:
     print("\n🗄️  Database Migrations:")
     all_checks_passed &= check_directory_exists("alembic", "Alembic directory")
     all_checks_passed &= check_file_exists("alembic/env.py", "Alembic environment")
-    all_checks_passed &= check_file_exists("alembic/script.py.mako", "Migration template")
-    all_checks_passed &= check_directory_exists("alembic/versions", "Migrations directory")
+    all_checks_passed &= check_file_exists(
+        "alembic/script.py.mako", "Migration template"
+    )
+    all_checks_passed &= check_directory_exists(
+        "alembic/versions", "Migrations directory"
+    )
 
     # Check if there are any migration files
     versions_dir = Path("alembic/versions")
@@ -137,8 +143,8 @@ def verify_python_syntax() -> bool:
     all_valid = True
     for py_file in python_files:
         try:
-            with open(py_file, 'r') as f:
-                compile(f.read(), py_file, 'exec')
+            with open(py_file, "r") as f:
+                compile(f.read(), py_file, "exec")
             print(f"✓ {py_file}")
         except SyntaxError as e:
             print(f"✗ {py_file}: {e}")

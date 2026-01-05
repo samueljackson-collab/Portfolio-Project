@@ -26,8 +26,12 @@ class Target(Base):
     url = Column(String(255), nullable=False)
     environment = Column(String(50), default="production")
 
-    findings = relationship("Finding", back_populates="target", cascade="all, delete-orphan")
-    exploitations = relationship("Exploitation", back_populates="target", cascade="all, delete-orphan")
+    findings = relationship(
+        "Finding", back_populates="target", cascade="all, delete-orphan"
+    )
+    exploitations = relationship(
+        "Exploitation", back_populates="target", cascade="all, delete-orphan"
+    )
 
 
 class Finding(Base):

@@ -20,14 +20,14 @@ from botocore.exceptions import ClientError
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 class MigrationPhase(Enum):
     """Migration phases"""
+
     INIT = "initialization"
     REPLICATION = "replication"
     VALIDATION = "validation"
@@ -40,6 +40,7 @@ class MigrationPhase(Enum):
 @dataclass
 class DatabaseConfig:
     """Database connection configuration"""
+
     host: str
     port: int
     database: str
@@ -51,6 +52,7 @@ class DatabaseConfig:
 @dataclass
 class MigrationMetrics:
     """Migration performance metrics"""
+
     replication_lag_seconds: float
     rows_migrated: int
     errors_count: int
@@ -85,7 +87,7 @@ class DatabaseMigrationOrchestrator:
         validation_sample_size: int = 1000,
         load_balancer_arn: Optional[str] = None,
         target_group_arn: Optional[str] = None,
-        parameter_store_path: Optional[str] = None
+        parameter_store_path: Optional[str] = None,
     ):
         """
         Initialize the migration orchestrator.
@@ -114,14 +116,14 @@ class DatabaseMigrationOrchestrator:
             replication_lag_seconds=0.0,
             rows_migrated=0,
             errors_count=0,
-            start_time=datetime.now(timezone.utc)
+            start_time=datetime.now(timezone.utc),
         )
 
         # AWS clients
-        self.dms_client = boto3.client('dms') if dms_replication_instance_arn else None
-        self.cloudwatch = boto3.client('cloudwatch')
-        self.ssm_client = boto3.client('ssm') if parameter_store_path else None
-        self.elbv2_client = boto3.client('elbv2') if load_balancer_arn else None
+        self.dms_client = boto3.client("dms") if dms_replication_instance_arn else None
+        self.cloudwatch = boto3.client("cloudwatch")
+        self.ssm_client = boto3.client("ssm") if parameter_store_path else None
+        self.elbv2_client = boto3.client("elbv2") if load_balancer_arn else None
 
         logger.info("Migration orchestrator initialized")
 
@@ -135,7 +137,7 @@ class DatabaseMigrationOrchestrator:
                 user=config.username,
                 password=config.password,
                 sslmode=config.ssl_mode,
-                connect_timeout=10
+                connect_timeout=10,
             )
             return conn
         except psycopg2.Error as e:
@@ -198,21 +200,20 @@ class DatabaseMigrationOrchestrator:
         # Create replication task
         response = self.dms_client.create_replication_task(
             ReplicationTaskIdentifier=f'migration-{datetime.now(timezone.utc).strftime("%Y%m%d%H%M")}',
-            SourceEndpointArn=self._create_dms_endpoint(self.source_config, 'source'),
-            TargetEndpointArn=self._create_dms_endpoint(self.target_config, 'target'),
+            SourceEndpointArn=self._create_dms_endpoint(self.source_config, "source"),
+            TargetEndpointArn=self._create_dms_endpoint(self.target_config, "target"),
             ReplicationInstanceArn=self.dms_arn,
-            MigrationType='full-load-and-cdc',
+            MigrationType="full-load-and-cdc",
             TableMappings=self._get_table_mappings(),
-            ReplicationTaskSettings=self._get_replication_settings()
+            ReplicationTaskSettings=self._get_replication_settings(),
         )
 
-        task_arn = response['ReplicationTask']['ReplicationTaskArn']
+        task_arn = response["ReplicationTask"]["ReplicationTaskArn"]
         logger.info(f"DMS replication task created: {task_arn}")
 
         # Start replication
         self.dms_client.start_replication_task(
-            ReplicationTaskArn=task_arn,
-            StartReplicationTaskType='start-replication'
+            ReplicationTaskArn=task_arn, StartReplicationTaskType="start-replication"
         )
 
     def _setup_debezium_replication(self) -> None:
@@ -233,7 +234,9 @@ class DatabaseMigrationOrchestrator:
             self.metrics.replication_lag_seconds = lag
 
             if lag > self.max_lag:
-                logger.warning(f"⚠ Replication lag ({lag}s) exceeds threshold ({self.max_lag}s)")
+                logger.warning(
+                    f"⚠ Replication lag ({lag}s) exceeds threshold ({self.max_lag}s)"
+                )
                 return False
 
             # Validate data consistency
@@ -262,21 +265,25 @@ class DatabaseMigrationOrchestrator:
         try:
             # Get latest timestamp from source
             with source_conn.cursor() as cur:
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT EXTRACT(EPOCH FROM NOW()) as source_time;
-                """)
+                """
+                )
                 source_time = cur.fetchone()[0]
 
             # Get latest replicated timestamp from target
             with target_conn.cursor() as cur:
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT EXTRACT(EPOCH FROM MAX(updated_at)) as target_time
                     FROM (
                         SELECT updated_at FROM pg_stat_replication
                         UNION ALL
                         SELECT NOW() as updated_at
                     ) t;
-                """)
+                """
+                )
                 result = cur.fetchone()
                 target_time = result[0] if result else source_time
 
@@ -298,12 +305,14 @@ class DatabaseMigrationOrchestrator:
         try:
             # Get list of tables
             with source_conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT tablename FROM pg_tables
                     WHERE schemaname = 'public'
                     ORDER BY tablename;
-                """)
-                tables = [row['tablename'] for row in cur.fetchall()]
+                """
+                )
+                tables = [row["tablename"] for row in cur.fetchall()]
 
             # Sample and compare data from each table
             for table in tables:
@@ -322,29 +331,35 @@ class DatabaseMigrationOrchestrator:
         self,
         source_conn: psycopg2.extensions.connection,
         target_conn: psycopg2.extensions.connection,
-        table: str
+        table: str,
     ) -> bool:
         """Compare sample data from a table"""
         try:
             with source_conn.cursor(cursor_factory=RealDictCursor) as source_cur:
-                source_cur.execute(f"""
+                source_cur.execute(
+                    f"""
                     SELECT * FROM {table}
                     ORDER BY RANDOM()
                     LIMIT {self.validation_sample_size};
-                """)
+                """
+                )
                 source_rows = source_cur.fetchall()
 
             with target_conn.cursor(cursor_factory=RealDictCursor) as target_cur:
-                target_cur.execute(f"""
+                target_cur.execute(
+                    f"""
                     SELECT * FROM {table}
                     ORDER BY RANDOM()
                     LIMIT {self.validation_sample_size};
-                """)
+                """
+                )
                 target_rows = target_cur.fetchall()
 
             # Compare samples (simplified check)
             if len(source_rows) != len(target_rows):
-                logger.warning(f"Row count mismatch in {table}: {len(source_rows)} vs {len(target_rows)}")
+                logger.warning(
+                    f"Row count mismatch in {table}: {len(source_rows)} vs {len(target_rows)}"
+                )
                 return False
 
             return True
@@ -362,11 +377,13 @@ class DatabaseMigrationOrchestrator:
 
         try:
             with source_conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT tablename FROM pg_tables
                     WHERE schemaname = 'public';
-                """)
-                tables = [row['tablename'] for row in cur.fetchall()]
+                """
+                )
+                tables = [row["tablename"] for row in cur.fetchall()]
 
             total_rows = 0
             for table in tables:
@@ -379,7 +396,9 @@ class DatabaseMigrationOrchestrator:
                     target_count = target_cur.fetchone()[0]
 
                 if source_count != target_count:
-                    logger.error(f"✗ Row count mismatch in {table}: {source_count} vs {target_count}")
+                    logger.error(
+                        f"✗ Row count mismatch in {table}: {source_count} vs {target_count}"
+                    )
                     return False
 
                 total_rows += source_count
@@ -425,10 +444,14 @@ class DatabaseMigrationOrchestrator:
                 raise Exception("Target database verification failed")
 
             cutover_end = datetime.now(timezone.utc)
-            self.metrics.downtime_seconds = (cutover_end - cutover_start).total_seconds()
+            self.metrics.downtime_seconds = (
+                cutover_end - cutover_start
+            ).total_seconds()
 
             logger.info("=" * 60)
-            logger.info(f"✓ CUTOVER COMPLETE (downtime: {self.metrics.downtime_seconds:.2f}s)")
+            logger.info(
+                f"✓ CUTOVER COMPLETE (downtime: {self.metrics.downtime_seconds:.2f}s)"
+            )
             logger.info("=" * 60)
 
             self.phase = MigrationPhase.COMPLETE
@@ -457,7 +480,7 @@ class DatabaseMigrationOrchestrator:
                     Name=f"{self.parameter_store_path}/db_mode",
                     Value="read-only",
                     Type="String",
-                    Overwrite=True
+                    Overwrite=True,
                 )
                 logger.info("✓ Application writes paused via SSM Parameter Store")
             except ClientError as e:
@@ -465,8 +488,12 @@ class DatabaseMigrationOrchestrator:
                 raise
         else:
             # Fallback: Log the action for manual intervention
-            logger.warning("SSM Parameter Store not configured - manual write pause required")
-            logger.info("ACTION REQUIRED: Manually pause application writes to source database")
+            logger.warning(
+                "SSM Parameter Store not configured - manual write pause required"
+            )
+            logger.info(
+                "ACTION REQUIRED: Manually pause application writes to source database"
+            )
 
         # Brief pause to allow in-flight transactions to complete
         time.sleep(2)
@@ -504,7 +531,7 @@ class DatabaseMigrationOrchestrator:
                     Name=f"{self.parameter_store_path}/database_url",
                     Value=target_conn_string,
                     Type="SecureString",
-                    Overwrite=True
+                    Overwrite=True,
                 )
 
                 # Update database mode to read-write
@@ -512,7 +539,7 @@ class DatabaseMigrationOrchestrator:
                     Name=f"{self.parameter_store_path}/db_mode",
                     Value="read-write",
                     Type="String",
-                    Overwrite=True
+                    Overwrite=True,
                 )
 
                 logger.info("✓ Application traffic switched to target database")
@@ -522,8 +549,12 @@ class DatabaseMigrationOrchestrator:
                 raise
         else:
             # Fallback: Log the action for manual intervention
-            logger.warning("SSM Parameter Store not configured - manual traffic switch required")
-            logger.info(f"ACTION REQUIRED: Update connection strings to target: {self.target_config.host}:{self.target_config.port}")
+            logger.warning(
+                "SSM Parameter Store not configured - manual traffic switch required"
+            )
+            logger.info(
+                f"ACTION REQUIRED: Update connection strings to target: {self.target_config.host}:{self.target_config.port}"
+            )
 
         # Brief pause to allow DNS/config propagation
         time.sleep(2)
@@ -534,8 +565,12 @@ class DatabaseMigrationOrchestrator:
             target_conn = self._get_connection(self.target_config)
             with target_conn.cursor() as cur:
                 # Perform test write
-                cur.execute("CREATE TABLE IF NOT EXISTS migration_test (id SERIAL PRIMARY KEY, test_data TEXT);")
-                cur.execute("INSERT INTO migration_test (test_data) VALUES ('migration_verification');")
+                cur.execute(
+                    "CREATE TABLE IF NOT EXISTS migration_test (id SERIAL PRIMARY KEY, test_data TEXT);"
+                )
+                cur.execute(
+                    "INSERT INTO migration_test (test_data) VALUES ('migration_verification');"
+                )
                 cur.execute("SELECT COUNT(*) FROM migration_test;")
                 # Verify at least one row exists
                 result = cur.fetchone()
@@ -606,7 +641,7 @@ class DatabaseMigrationOrchestrator:
                     Name=f"{self.parameter_store_path}/database_url",
                     Value=source_conn_string,
                     Type="SecureString",
-                    Overwrite=True
+                    Overwrite=True,
                 )
 
                 # Update database mode to read-write
@@ -614,7 +649,7 @@ class DatabaseMigrationOrchestrator:
                     Name=f"{self.parameter_store_path}/db_mode",
                     Value="read-write",
                     Type="String",
-                    Overwrite=True
+                    Overwrite=True,
                 )
 
                 logger.info("✓ Traffic switched back to source database")
@@ -624,8 +659,12 @@ class DatabaseMigrationOrchestrator:
                 raise
         else:
             # Fallback: Log the action for manual intervention
-            logger.warning("SSM Parameter Store not configured - manual rollback required")
-            logger.info(f"ACTION REQUIRED: Revert connection strings to source: {self.source_config.host}:{self.source_config.port}")
+            logger.warning(
+                "SSM Parameter Store not configured - manual rollback required"
+            )
+            logger.info(
+                f"ACTION REQUIRED: Revert connection strings to source: {self.source_config.host}:{self.source_config.port}"
+            )
 
     def _stop_replication(self) -> None:
         """Stop replication tasks"""
@@ -639,29 +678,29 @@ class DatabaseMigrationOrchestrator:
         """Publish migration metrics to CloudWatch"""
         try:
             self.cloudwatch.put_metric_data(
-                Namespace='DatabaseMigration',
+                Namespace="DatabaseMigration",
                 MetricData=[
                     {
-                        'MetricName': 'ReplicationLag',
-                        'Value': self.metrics.replication_lag_seconds,
-                        'Unit': 'Seconds'
+                        "MetricName": "ReplicationLag",
+                        "Value": self.metrics.replication_lag_seconds,
+                        "Unit": "Seconds",
                     },
                     {
-                        'MetricName': 'RowsMigrated',
-                        'Value': self.metrics.rows_migrated,
-                        'Unit': 'Count'
+                        "MetricName": "RowsMigrated",
+                        "Value": self.metrics.rows_migrated,
+                        "Unit": "Count",
                     },
                     {
-                        'MetricName': 'Downtime',
-                        'Value': self.metrics.downtime_seconds,
-                        'Unit': 'Seconds'
+                        "MetricName": "Downtime",
+                        "Value": self.metrics.downtime_seconds,
+                        "Unit": "Seconds",
                     },
                     {
-                        'MetricName': 'ErrorCount',
-                        'Value': self.metrics.errors_count,
-                        'Unit': 'Count'
-                    }
-                ]
+                        "MetricName": "ErrorCount",
+                        "Value": self.metrics.errors_count,
+                        "Unit": "Count",
+                    },
+                ],
             )
             logger.info("✓ Metrics published to CloudWatch")
         except Exception as e:
@@ -720,7 +759,7 @@ class DatabaseMigrationOrchestrator:
 
     def _get_table_mappings(self) -> str:
         """Get table mapping rules for DMS"""
-        return '''{
+        return """{
             "rules": [{
                 "rule-type": "selection",
                 "rule-id": "1",
@@ -731,11 +770,11 @@ class DatabaseMigrationOrchestrator:
                 },
                 "rule-action": "include"
             }]
-        }'''
+        }"""
 
     def _get_replication_settings(self) -> str:
         """Get replication settings for DMS"""
-        return '''{
+        return """{
             "TargetMetadata": {
                 "SupportLobs": true,
                 "LobChunkSize": 64,
@@ -751,7 +790,7 @@ class DatabaseMigrationOrchestrator:
                     "Severity": "LOGGER_SEVERITY_DEFAULT"
                 }]
             }
-        }'''
+        }"""
 
 
 def main():
@@ -762,7 +801,7 @@ def main():
         port=5432,
         database="production",
         username="postgres",
-        password="source_password"
+        password="source_password",
     )
 
     target = DatabaseConfig(
@@ -770,14 +809,12 @@ def main():
         port=5432,
         database="production",
         username="postgres",
-        password="target_password"
+        password="target_password",
     )
 
     # Create orchestrator
     orchestrator = DatabaseMigrationOrchestrator(
-        source_config=source,
-        target_config=target,
-        max_replication_lag_seconds=5
+        source_config=source, target_config=target, max_replication_lag_seconds=5
     )
 
     # Run migration
@@ -793,4 +830,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())
