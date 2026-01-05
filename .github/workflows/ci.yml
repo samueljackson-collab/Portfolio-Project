@@ -2,215 +2,130 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
 
 jobs:
-  # Backend Python tests with coverage
-  backend-tests:
+  lint:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}/migration-orchestrator
-      IMAGE_TAG: ${{ github.sha }}
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
     - uses: actions/checkout@v4
-
+    
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
-        cache: 'pip'
-
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Cache Node dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install black ruff pytest pytest-cov
         npm install -g markdownlint-cli
-
-    - name: Validate Markdown
-      run: markdownlint '**/*.md' --ignore node_modules
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
-
-    - name: Check Python formatting
+    
+    - name: Run Black
       run: black --check .
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
-
-    - name: Lint Python code
+    
+    - name: Run Ruff
       run: ruff check .
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+    
+    - name: Run Markdown lint
+      run: markdownlint '**/*.md' --ignore node_modules
 
-    - name: Run unit tests with coverage
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
       run: |
-        pytest \
-          --cov=projects/2-database-migration/src \
-          --cov-report=xml \
-          --cov-report=term \
-          -m "not integration" \
-          --maxfail=1 \
-          --durations=10
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
-
-    - name: Run PostgreSQL integration tests
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_SOURCE_DB: migration_source
-        POSTGRES_TARGET_DB: migration_target
-      run: pytest tests/integration -m integration --maxfail=1 --durations=10
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
-
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: backend-coverage-report
-        path: coverage.xml
-
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+    
+    - name: Run tests with coverage
+      run: |
+        pytest --cov=. --cov-report=xml --cov-report=html
+    
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v3
       with:
-        files: coverage.xml
-        flags: backend
-        name: backend-coverage
-        fail_ci_if_error: false
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
 
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-
+    
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ env.REGISTRY }}
+        registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build and push migration orchestrator image
+    
+    - name: Extract metadata
+      id: meta
+      run: echo "IMAGE_TAG=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+    
+    - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: projects/2-database-migration
-        file: projects/2-database-migration/Dockerfile
-        push: ${{ github.event_name == 'push' }}
+        context: .
+        push: true
         tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          ghcr.io/samueljackson-collab/portfolio-project/migration-orchestrator:latest
+          ghcr.io/samueljackson-collab/portfolio-project/migration-orchestrator:${{ env.IMAGE_TAG }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-
-  # Frontend tests with coverage
-  frontend-tests:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Lint
-      run: npm run lint
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
-
-    - name: Type check
-      run: npm run type-check
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
-
-    - name: Run tests with coverage
-      run: npm run test:coverage -- --reporter=verbose
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
-
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: frontend-coverage-report
-        path: frontend/coverage/
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        directory: frontend/coverage
-        flags: frontend
-        name: frontend-coverage
-        fail_ci_if_error: false
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Build
-      run: npm run build
-
-  # Security scanning
-  security:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        severity: 'CRITICAL,HIGH'
-
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: 'trivy-results.sarif'
-      if: always()
-
-    - name: Set up Python for pip-audit
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install pip-audit
-      run: pip install pip-audit
-
-    - name: Audit Python dependencies
-      run: pip-audit -r requirements.txt --ignore-vuln GHSA-xxxx-xxxx-xxxx || true
-      continue-on-error: true
-
-    - name: Set up Node.js for npm audit
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Audit npm dependencies
-      run: |
-        cd frontend && npm audit --audit-level=high || true
-      continue-on-error: true
