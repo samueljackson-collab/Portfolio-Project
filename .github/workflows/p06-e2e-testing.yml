@@ -17,7 +17,7 @@ jobs:
       TEST_USER: ${{ secrets.P06_TEST_USER || 'test@example.com' }}
       TEST_PASSWORD: ${{ secrets.P06_TEST_PASSWORD || 'ChangeMe123!' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
