@@ -35,7 +35,8 @@ def test_health_endpoint():
 
 def test_auth_and_target_flow():
     register = client.post(
-        "/auth/register", json={"username": "analyst", "password": "password123", "role": "admin"}
+        "/auth/register",
+        json={"username": "analyst", "password": "password123", "role": "admin"},
     )
     assert register.status_code == 200
 
@@ -49,7 +50,12 @@ def test_auth_and_target_flow():
 
     target_resp = client.post(
         "/targets",
-        json={"name": "API", "description": "Test", "url": "https://example.com", "environment": "dev"},
+        json={
+            "name": "API",
+            "description": "Test",
+            "url": "https://example.com",
+            "environment": "dev",
+        },
         headers={"Authorization": f"Bearer {token}"},
     )
     assert target_resp.status_code == 200
@@ -57,13 +63,20 @@ def test_auth_and_target_flow():
 
     finding_resp = client.post(
         "/findings",
-        json={"title": "SQLi", "description": "Possible injection", "severity": "high", "target_id": target_id},
+        json={
+            "title": "SQLi",
+            "description": "Possible injection",
+            "severity": "high",
+            "target_id": target_id,
+        },
         headers={"Authorization": f"Bearer {token}"},
     )
     assert finding_resp.status_code == 200
 
     scan_resp = client.post(
-        "/scan", json={"target_id": target_id}, headers={"Authorization": f"Bearer {token}"}
+        "/scan",
+        json={"target_id": target_id},
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert scan_resp.status_code == 200
     assert scan_resp.json()["findings"]

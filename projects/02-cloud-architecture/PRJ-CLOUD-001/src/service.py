@@ -3,6 +3,7 @@
 Provides metadata and configuration-aware health checks for the landing zone
 control plane.
 """
+
 from __future__ import annotations
 
 import os
@@ -35,6 +36,7 @@ class ServiceMetadata:
             "data_classification": self.data_classification,
             "dependencies": list(self.dependencies),
         }
+
 
 @dataclass(frozen=True)
 class ServiceConfig:

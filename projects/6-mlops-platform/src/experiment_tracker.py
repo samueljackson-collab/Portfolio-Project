@@ -1,4 +1,5 @@
 """Enhanced experiment tracking and model registry management."""
+
 from __future__ import annotations
 
 import json
@@ -40,12 +41,14 @@ class ExperimentTracker:
 
         results = []
         for exp in experiments:
-            results.append({
-                'experiment_id': exp.experiment_id,
-                'name': exp.name,
-                'artifact_location': exp.artifact_location,
-                'lifecycle_stage': exp.lifecycle_stage
-            })
+            results.append(
+                {
+                    "experiment_id": exp.experiment_id,
+                    "name": exp.name,
+                    "artifact_location": exp.artifact_location,
+                    "lifecycle_stage": exp.lifecycle_stage,
+                }
+            )
 
         return results
 
@@ -53,7 +56,7 @@ class ExperimentTracker:
         self,
         experiment_name: str,
         max_results: int = 100,
-        order_by: str = "metrics.accuracy DESC"
+        order_by: str = "metrics.accuracy DESC",
     ) -> List[Dict[str, Any]]:
         """
         Get runs for an experiment.
@@ -75,28 +78,31 @@ class ExperimentTracker:
         runs = self.client.search_runs(
             experiment_ids=[experiment.experiment_id],
             max_results=max_results,
-            order_by=[order_by]
+            order_by=[order_by],
         )
 
         results = []
         for run in runs:
-            results.append({
-                'run_id': run.info.run_id,
-                'start_time': datetime.fromtimestamp(run.info.start_time / 1000),
-                'end_time': datetime.fromtimestamp(run.info.end_time / 1000) if run.info.end_time else None,
-                'status': run.info.status,
-                'params': run.data.params,
-                'metrics': run.data.metrics,
-                'tags': run.data.tags
-            })
+            results.append(
+                {
+                    "run_id": run.info.run_id,
+                    "start_time": datetime.fromtimestamp(run.info.start_time / 1000),
+                    "end_time": (
+                        datetime.fromtimestamp(run.info.end_time / 1000)
+                        if run.info.end_time
+                        else None
+                    ),
+                    "status": run.info.status,
+                    "params": run.data.params,
+                    "metrics": run.data.metrics,
+                    "tags": run.data.tags,
+                }
+            )
 
         return results
 
     def get_best_run(
-        self,
-        experiment_name: str,
-        metric: str = "accuracy",
-        maximize: bool = True
+        self, experiment_name: str, metric: str = "accuracy", maximize: bool = True
     ) -> Optional[Dict[str, Any]]:
         """
         Get best run from an experiment.
@@ -113,15 +119,13 @@ class ExperimentTracker:
         runs = self.get_experiment_runs(
             experiment_name,
             max_results=1,
-            order_by=f"metrics.{metric} {order_direction}"
+            order_by=f"metrics.{metric} {order_direction}",
         )
 
         return runs[0] if runs else None
 
     def compare_runs(
-        self,
-        run_ids: List[str],
-        metrics: List[str] = None
+        self, run_ids: List[str], metrics: List[str] = None
     ) -> Dict[str, Dict[str, Any]]:
         """
         Compare multiple runs.
@@ -139,13 +143,18 @@ class ExperimentTracker:
             run = self.client.get_run(run_id)
 
             run_data = {
-                'params': run.data.params,
-                'metrics': run.data.metrics if metrics is None else {
-                    k: v for k, v in run.data.metrics.items() if k in metrics
-                },
-                'start_time': datetime.fromtimestamp(run.info.start_time / 1000),
-                'duration_seconds': (run.info.end_time - run.info.start_time) / 1000
-                                   if run.info.end_time else None
+                "params": run.data.params,
+                "metrics": (
+                    run.data.metrics
+                    if metrics is None
+                    else {k: v for k, v in run.data.metrics.items() if k in metrics}
+                ),
+                "start_time": datetime.fromtimestamp(run.info.start_time / 1000),
+                "duration_seconds": (
+                    (run.info.end_time - run.info.start_time) / 1000
+                    if run.info.end_time
+                    else None
+                ),
             }
 
             comparison[run_id] = run_data
@@ -186,18 +195,23 @@ class ExperimentTracker:
         run = self.client.get_run(run_id)
 
         data = {
-            'run_id': run.info.run_id,
-            'experiment_id': run.info.experiment_id,
-            'status': run.info.status,
-            'start_time': datetime.fromtimestamp(run.info.start_time / 1000).isoformat(),
-            'end_time': datetime.fromtimestamp(run.info.end_time / 1000).isoformat()
-                       if run.info.end_time else None,
-            'params': run.data.params,
-            'metrics': run.data.metrics,
-            'tags': run.data.tags
+            "run_id": run.info.run_id,
+            "experiment_id": run.info.experiment_id,
+            "status": run.info.status,
+            "start_time": datetime.fromtimestamp(
+                run.info.start_time / 1000
+            ).isoformat(),
+            "end_time": (
+                datetime.fromtimestamp(run.info.end_time / 1000).isoformat()
+                if run.info.end_time
+                else None
+            ),
+            "params": run.data.params,
+            "metrics": run.data.metrics,
+            "tags": run.data.tags,
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(data, f, indent=2)
 
         logger.info(f"Exported run to {output_path}")
@@ -230,20 +244,26 @@ class ModelRegistry:
         for model in models:
             latest_versions = self.client.get_latest_versions(model.name)
 
-            results.append({
-                'name': model.name,
-                'creation_time': datetime.fromtimestamp(model.creation_timestamp / 1000),
-                'last_updated': datetime.fromtimestamp(model.last_updated_timestamp / 1000),
-                'description': model.description,
-                'latest_versions': [
-                    {
-                        'version': v.version,
-                        'stage': v.current_stage,
-                        'run_id': v.run_id
-                    }
-                    for v in latest_versions
-                ]
-            })
+            results.append(
+                {
+                    "name": model.name,
+                    "creation_time": datetime.fromtimestamp(
+                        model.creation_timestamp / 1000
+                    ),
+                    "last_updated": datetime.fromtimestamp(
+                        model.last_updated_timestamp / 1000
+                    ),
+                    "description": model.description,
+                    "latest_versions": [
+                        {
+                            "version": v.version,
+                            "stage": v.current_stage,
+                            "run_id": v.run_id,
+                        }
+                        for v in latest_versions
+                    ],
+                }
+            )
 
         return results
 
@@ -261,24 +281,26 @@ class ModelRegistry:
 
         results = []
         for v in versions:
-            results.append({
-                'version': v.version,
-                'stage': v.current_stage,
-                'run_id': v.run_id,
-                'creation_time': datetime.fromtimestamp(v.creation_timestamp / 1000),
-                'last_updated': datetime.fromtimestamp(v.last_updated_timestamp / 1000),
-                'description': v.description,
-                'status': v.status
-            })
+            results.append(
+                {
+                    "version": v.version,
+                    "stage": v.current_stage,
+                    "run_id": v.run_id,
+                    "creation_time": datetime.fromtimestamp(
+                        v.creation_timestamp / 1000
+                    ),
+                    "last_updated": datetime.fromtimestamp(
+                        v.last_updated_timestamp / 1000
+                    ),
+                    "description": v.description,
+                    "status": v.status,
+                }
+            )
 
         return results
 
     def transition_model_stage(
-        self,
-        model_name: str,
-        version: int,
-        stage: str,
-        archive_existing: bool = True
+        self, model_name: str, version: int, stage: str, archive_existing: bool = True
     ):
         """
         Transition model version to a new stage.
@@ -293,7 +315,7 @@ class ModelRegistry:
             name=model_name,
             version=version,
             stage=stage,
-            archive_existing_versions=archive_existing
+            archive_existing_versions=archive_existing,
         )
 
         logger.info(f"Transitioned {model_name} v{version} to {stage}")
@@ -320,12 +342,7 @@ class ModelRegistry:
         self.client.delete_model_version(model_name, version)
         logger.info(f"Deleted {model_name} v{version}")
 
-    def add_model_description(
-        self,
-        model_name: str,
-        version: int,
-        description: str
-    ):
+    def add_model_description(self, model_name: str, version: int, description: str):
         """
         Add description to model version.
 
@@ -335,9 +352,7 @@ class ModelRegistry:
             description: Description text
         """
         self.client.update_model_version(
-            name=model_name,
-            version=version,
-            description=description
+            name=model_name, version=version, description=description
         )
 
         logger.info(f"Updated description for {model_name} v{version}")
@@ -360,10 +375,10 @@ class ModelRegistry:
 
         v = versions[0]
         return {
-            'version': v.version,
-            'run_id': v.run_id,
-            'creation_time': datetime.fromtimestamp(v.creation_timestamp / 1000),
-            'description': v.description
+            "version": v.version,
+            "run_id": v.run_id,
+            "creation_time": datetime.fromtimestamp(v.creation_timestamp / 1000),
+            "description": v.description,
         }
 
 
@@ -381,7 +396,7 @@ def main():
     # Get best run from an experiment
     print("\n=== Best Run ===")
     if experiments:
-        exp_name = experiments[0]['name']
+        exp_name = experiments[0]["name"]
         best_run = tracker.get_best_run(exp_name, metric="accuracy")
         if best_run:
             print(f"Run ID: {best_run['run_id']}")
@@ -395,13 +410,13 @@ def main():
     models = registry.list_registered_models()
     for model in models:
         print(f"- {model['name']}")
-        for v in model['latest_versions']:
+        for v in model["latest_versions"]:
             print(f"  v{v['version']} ({v['stage']})")
 
     # Get production model
     print("\n=== Production Models ===")
     for model in models:
-        prod = registry.get_production_model(model['name'])
+        prod = registry.get_production_model(model["name"])
         if prod:
             print(f"{model['name']}: v{prod['version']}")
 

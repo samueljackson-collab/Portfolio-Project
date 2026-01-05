@@ -1,4 +1,5 @@
 """Email delivery for portfolio reports."""
+
 from __future__ import annotations
 
 import logging
@@ -33,13 +34,13 @@ class EmailSender:
                 - use_tls: Whether to use TLS (default: True)
         """
         self.config = config
-        self.smtp_server = config.get('smtp_server', 'smtp.gmail.com')
-        self.smtp_port = config.get('smtp_port', 587)
-        self.smtp_user = config.get('smtp_user')
-        self.smtp_password = config.get('smtp_password')
-        self.from_address = config.get('from_address', self.smtp_user)
-        self.from_name = config.get('from_name', 'Portfolio Report Generator')
-        self.use_tls = config.get('use_tls', True)
+        self.smtp_server = config.get("smtp_server", "smtp.gmail.com")
+        self.smtp_port = config.get("smtp_port", 587)
+        self.smtp_user = config.get("smtp_user")
+        self.smtp_password = config.get("smtp_password")
+        self.from_address = config.get("from_address", self.smtp_user)
+        self.from_name = config.get("from_name", "Portfolio Report Generator")
+        self.use_tls = config.get("use_tls", True)
 
         if not self.smtp_user or not self.smtp_password:
             raise ValueError("SMTP credentials not configured")
@@ -51,7 +52,7 @@ class EmailSender:
         to_addresses: List[str],
         subject: str,
         body_html: str,
-        body_text: Optional[str] = None
+        body_text: Optional[str] = None,
     ) -> MIMEMultipart:
         """
         Create email message.
@@ -65,19 +66,19 @@ class EmailSender:
         Returns:
             MIMEMultipart message
         """
-        msg = MIMEMultipart('alternative')
-        msg['From'] = f"{self.from_name} <{self.from_address}>"
-        msg['To'] = ', '.join(to_addresses)
-        msg['Subject'] = subject
-        msg['Date'] = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
+        msg = MIMEMultipart("alternative")
+        msg["From"] = f"{self.from_name} <{self.from_address}>"
+        msg["To"] = ", ".join(to_addresses)
+        msg["Subject"] = subject
+        msg["Date"] = datetime.now().strftime("%a, %d %b %Y %H:%M:%S %z")
 
         # Add text part (fallback)
         if body_text:
-            text_part = MIMEText(body_text, 'plain')
+            text_part = MIMEText(body_text, "plain")
             msg.attach(text_part)
 
         # Add HTML part
-        html_part = MIMEText(body_html, 'html')
+        html_part = MIMEText(body_html, "html")
         msg.attach(html_part)
 
         return msg
@@ -91,13 +92,12 @@ class EmailSender:
             file_path: Path to file to attach
         """
         try:
-            with open(file_path, 'rb') as f:
-                attachment = MIMEBase('application', 'octet-stream')
+            with open(file_path, "rb") as f:
+                attachment = MIMEBase("application", "octet-stream")
                 attachment.set_payload(f.read())
                 encoders.encode_base64(attachment)
                 attachment.add_header(
-                    'Content-Disposition',
-                    f'attachment; filename="{file_path.name}"'
+                    "Content-Disposition", f'attachment; filename="{file_path.name}"'
                 )
                 msg.attach(attachment)
                 logger.debug(f"Attached file: {file_path.name}")
@@ -113,7 +113,9 @@ class EmailSender:
             to_addresses: List of recipient addresses
         """
         try:
-            logger.info(f"Connecting to SMTP server: {self.smtp_server}:{self.smtp_port}")
+            logger.info(
+                f"Connecting to SMTP server: {self.smtp_server}:{self.smtp_port}"
+            )
 
             # Connect to SMTP server
             if self.use_tls:
@@ -143,11 +145,7 @@ class EmailSender:
             logger.error(f"Error sending email: {e}")
             raise
 
-    def send_weekly_report(
-        self,
-        report_paths: List[Path],
-        recipients: List[str]
-    ):
+    def send_weekly_report(self, report_paths: List[Path], recipients: List[str]):
         """
         Send weekly portfolio report.
 
@@ -158,7 +156,7 @@ class EmailSender:
         logger.info("Preparing weekly report email...")
 
         # Email subject
-        week_num = datetime.now().strftime('%U')
+        week_num = datetime.now().strftime("%U")
         subject = f"Weekly Portfolio Report - Week {week_num} ({datetime.now().strftime('%Y-%m-%d')})"
 
         # Email body
@@ -248,11 +246,7 @@ This is an automated report.
         # Send email
         self._send_message(msg, recipients)
 
-    def send_monthly_summary(
-        self,
-        report_paths: List[Path],
-        recipients: List[str]
-    ):
+    def send_monthly_summary(self, report_paths: List[Path], recipients: List[str]):
         """
         Send monthly executive summary.
 
@@ -263,7 +257,7 @@ This is an automated report.
         logger.info("Preparing monthly summary email...")
 
         # Email subject
-        month = datetime.now().strftime('%B %Y')
+        month = datetime.now().strftime("%B %Y")
         subject = f"Monthly Portfolio Executive Summary - {month}"
 
         # Email body
@@ -364,7 +358,7 @@ Automated Monthly Report
         report_paths: List[Path],
         recipients: List[str],
         subject: str,
-        message: str
+        message: str,
     ):
         """
         Send custom report email.
@@ -425,24 +419,24 @@ def main():
     """Test email sender functionality."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Test email sender')
-    parser.add_argument('--smtp-server', required=True, help='SMTP server')
-    parser.add_argument('--smtp-port', type=int, default=587, help='SMTP port')
-    parser.add_argument('--smtp-user', required=True, help='SMTP username')
-    parser.add_argument('--smtp-password', required=True, help='SMTP password')
-    parser.add_argument('--from-address', help='From email address')
-    parser.add_argument('--to', required=True, nargs='+', help='Recipient(s)')
-    parser.add_argument('--reports', nargs='+', help='Report files to attach')
+    parser = argparse.ArgumentParser(description="Test email sender")
+    parser.add_argument("--smtp-server", required=True, help="SMTP server")
+    parser.add_argument("--smtp-port", type=int, default=587, help="SMTP port")
+    parser.add_argument("--smtp-user", required=True, help="SMTP username")
+    parser.add_argument("--smtp-password", required=True, help="SMTP password")
+    parser.add_argument("--from-address", help="From email address")
+    parser.add_argument("--to", required=True, nargs="+", help="Recipient(s)")
+    parser.add_argument("--reports", nargs="+", help="Report files to attach")
 
     args = parser.parse_args()
 
     config = {
-        'smtp_server': args.smtp_server,
-        'smtp_port': args.smtp_port,
-        'smtp_user': args.smtp_user,
-        'smtp_password': args.smtp_password,
-        'from_address': args.from_address or args.smtp_user,
-        'from_name': 'Portfolio Report Generator (Test)'
+        "smtp_server": args.smtp_server,
+        "smtp_port": args.smtp_port,
+        "smtp_user": args.smtp_user,
+        "smtp_password": args.smtp_password,
+        "from_address": args.from_address or args.smtp_user,
+        "from_name": "Portfolio Report Generator (Test)",
     }
 
     sender = EmailSender(config)
@@ -453,5 +447,5 @@ def main():
     logger.info("Test email sent successfully!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

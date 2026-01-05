@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 import os
 
+
 class DRDrillRunner:
     """Manages disaster recovery drill execution and reporting."""
 
@@ -23,7 +24,7 @@ class DRDrillRunner:
             "start_time": datetime.now().isoformat(),
             "steps": [],
             "metrics": {},
-            "status": "in_progress"
+            "status": "in_progress",
         }
         self.drill_start = time.time()
 
@@ -34,20 +35,26 @@ class DRDrillRunner:
             "test_db_host": os.getenv("TEST_DB_HOST", "localhost"),
             "test_db_name": os.getenv("TEST_DB_NAME", "dr_test"),
             "test_db_user": os.getenv("TEST_DB_USER", "postgres"),
-            "app_health_url": os.getenv("APP_HEALTH_URL", "http://localhost:8080/health"),
+            "app_health_url": os.getenv(
+                "APP_HEALTH_URL", "http://localhost:8080/health"
+            ),
             "rto_target_seconds": int(os.getenv("RTO_TARGET_SECONDS", "300")),  # 5 min
-            "rpo_target_seconds": int(os.getenv("RPO_TARGET_SECONDS", "3600")),  # 1 hour
-            "report_dir": os.getenv("REPORT_DIR", "./dr-reports")
+            "rpo_target_seconds": int(
+                os.getenv("RPO_TARGET_SECONDS", "3600")
+            ),  # 1 hour
+            "report_dir": os.getenv("REPORT_DIR", "./dr-reports"),
         }
 
-    def log_step(self, step_name: str, status: str, details: str = "", duration: float = 0):
+    def log_step(
+        self, step_name: str, status: str, details: str = "", duration: float = 0
+    ):
         """Log drill step results."""
         step_result = {
             "name": step_name,
             "status": status,
             "details": details,
             "duration_seconds": round(duration, 2),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.results["steps"].append(step_result)
 
@@ -69,7 +76,11 @@ class DRDrillRunner:
             return False, details
 
         # Find most recent backup file
-        backup_files = sorted(backup_dir.glob("db_backup_*.sql.gz"), key=lambda p: p.stat().st_mtime, reverse=True)
+        backup_files = sorted(
+            backup_dir.glob("db_backup_*.sql.gz"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
 
         if not backup_files:
             duration = time.time() - step_start
@@ -85,10 +96,12 @@ class DRDrillRunner:
         rpo_compliant = backup_age_seconds <= self.config["rpo_target_seconds"]
 
         duration = time.time() - step_start
-        details = (f"Found {len(backup_files)} backup(s). "
-                  f"Latest: {latest_backup.name} "
-                  f"(age: {int(backup_age_seconds/60)} min, size: {backup_size_mb:.2f} MB, "
-                  f"RPO {'✓' if rpo_compliant else '✗'})")
+        details = (
+            f"Found {len(backup_files)} backup(s). "
+            f"Latest: {latest_backup.name} "
+            f"(age: {int(backup_age_seconds/60)} min, size: {backup_size_mb:.2f} MB, "
+            f"RPO {'✓' if rpo_compliant else '✗'})"
+        )
 
         self.results["metrics"]["latest_backup"] = str(latest_backup)
         self.results["metrics"]["backup_age_seconds"] = int(backup_age_seconds)
@@ -104,7 +117,11 @@ class DRDrillRunner:
         step_start = time.time()
 
         backup_dir = Path(self.config["backup_location"])
-        backup_files = sorted(backup_dir.glob("db_backup_*.sql.gz"), key=lambda p: p.stat().st_mtime, reverse=True)
+        backup_files = sorted(
+            backup_dir.glob("db_backup_*.sql.gz"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
 
         if not backup_files:
             duration = time.time() - step_start
@@ -118,9 +135,7 @@ class DRDrillRunner:
             # Test: Decompress backup to verify integrity
             test_output = Path("/tmp/dr_drill_test.sql")
             result = subprocess.run(
-                ["gunzip", "-c", str(latest_backup)],
-                capture_output=True,
-                timeout=30
+                ["gunzip", "-c", str(latest_backup)], capture_output=True, timeout=30
             )
 
             if result.returncode != 0:
@@ -133,19 +148,25 @@ class DRDrillRunner:
             sql_content = result.stdout.decode()
             if len(sql_content) < 100:  # Suspiciously small
                 duration = time.time() - step_start
-                details = f"Backup file appears corrupt (size: {len(sql_content)} bytes)"
+                details = (
+                    f"Backup file appears corrupt (size: {len(sql_content)} bytes)"
+                )
                 self.log_step("Restore Test", "failed", details, duration)
                 return False, details
 
             # Check for common SQL patterns
-            has_tables = "CREATE TABLE" in sql_content or "create table" in sql_content.lower()
+            has_tables = (
+                "CREATE TABLE" in sql_content or "create table" in sql_content.lower()
+            )
             has_data = "INSERT INTO" in sql_content or "COPY" in sql_content
 
             duration = time.time() - step_start
-            details = (f"Backup validated successfully. "
-                      f"Size: {len(sql_content)/1024:.1f} KB, "
-                      f"Tables: {'✓' if has_tables else '✗'}, "
-                      f"Data: {'✓' if has_data else '✗'}")
+            details = (
+                f"Backup validated successfully. "
+                f"Size: {len(sql_content)/1024:.1f} KB, "
+                f"Tables: {'✓' if has_tables else '✗'}, "
+                f"Data: {'✓' if has_data else '✗'}"
+            )
 
             self.results["metrics"]["backup_size_kb"] = len(sql_content) // 1024
             self.results["metrics"]["has_schema"] = has_tables
@@ -172,16 +193,19 @@ class DRDrillRunner:
         step_start = time.time()
 
         # Check if psql or mysql client is available for connection test
-        db_client = "psql" if "postgres" in self.config.get("test_db_user", "") else "mysql"
-        client_available = subprocess.run(
-            ["which", db_client],
-            capture_output=True
-        ).returncode == 0
+        db_client = (
+            "psql" if "postgres" in self.config.get("test_db_user", "") else "mysql"
+        )
+        client_available = (
+            subprocess.run(["which", db_client], capture_output=True).returncode == 0
+        )
 
         if not client_available:
             duration = time.time() - step_start
-            details = (f"Database client '{db_client}' not available. "
-                      f"Install {db_client} for full health checks. Assuming healthy.")
+            details = (
+                f"Database client '{db_client}' not available. "
+                f"Install {db_client} for full health checks. Assuming healthy."
+            )
             self.log_step("Application Health", "warning", details, duration)
             return True, details
 
@@ -190,33 +214,50 @@ class DRDrillRunner:
             if db_client == "psql":
                 # Test PostgreSQL connection
                 result = subprocess.run(
-                    ["psql", "-h", self.config["test_db_host"],
-                     "-U", self.config["test_db_user"],
-                     "-d", "postgres",  # Connect to default postgres db
-                     "-c", "SELECT 1;"],
+                    [
+                        "psql",
+                        "-h",
+                        self.config["test_db_host"],
+                        "-U",
+                        self.config["test_db_user"],
+                        "-d",
+                        "postgres",  # Connect to default postgres db
+                        "-c",
+                        "SELECT 1;",
+                    ],
                     capture_output=True,
                     timeout=10,
-                    env={**os.environ, "PGPASSWORD": os.getenv("PGPASSWORD", "")}
+                    env={**os.environ, "PGPASSWORD": os.getenv("PGPASSWORD", "")},
                 )
             else:
                 # Test MySQL connection
                 result = subprocess.run(
-                    ["mysql", "-h", self.config["test_db_host"],
-                     "-u", self.config["test_db_user"],
-                     "-e", "SELECT 1;"],
+                    [
+                        "mysql",
+                        "-h",
+                        self.config["test_db_host"],
+                        "-u",
+                        self.config["test_db_user"],
+                        "-e",
+                        "SELECT 1;",
+                    ],
                     capture_output=True,
-                    timeout=10
+                    timeout=10,
                 )
 
             duration = time.time() - step_start
 
             if result.returncode == 0:
-                details = f"Database connection successful ({self.config['test_db_host']})"
+                details = (
+                    f"Database connection successful ({self.config['test_db_host']})"
+                )
                 self.results["metrics"]["db_connection"] = "healthy"
                 self.log_step("Application Health", "passed", details, duration)
                 return True, details
             else:
-                error_msg = result.stderr.decode()[:200] if result.stderr else "Unknown error"
+                error_msg = (
+                    result.stderr.decode()[:200] if result.stderr else "Unknown error"
+                )
                 details = f"Database connection failed: {error_msg}"
                 self.results["metrics"]["db_connection"] = "failed"
                 self.log_step("Application Health", "warning", details, duration)
@@ -243,9 +284,11 @@ class DRDrillRunner:
         rto_compliant = total_drill_time <= rto_target
 
         duration = time.time() - step_start
-        details = (f"Total recovery time: {int(total_drill_time)} seconds "
-                  f"(target: {rto_target}s, "
-                  f"{'✓ PASS' if rto_compliant else '✗ FAIL'})")
+        details = (
+            f"Total recovery time: {int(total_drill_time)} seconds "
+            f"(target: {rto_target}s, "
+            f"{'✓ PASS' if rto_compliant else '✗ FAIL'})"
+        )
 
         self.results["metrics"]["total_recovery_time_seconds"] = int(total_drill_time)
         self.results["metrics"]["rto_target_seconds"] = rto_target
@@ -279,16 +322,18 @@ class DRDrillRunner:
 
         # Save JSON report
         json_report_path = report_dir / f"{self.results['drill_id']}.json"
-        with open(json_report_path, 'w') as f:
+        with open(json_report_path, "w") as f:
             json.dump(self.results, f, indent=2)
 
         # Generate markdown summary
         md_report_path = report_dir / f"{self.results['drill_id']}.md"
-        with open(md_report_path, 'w') as f:
+        with open(md_report_path, "w") as f:
             f.write(f"# DR Drill Report: {self.results['drill_id']}\n\n")
             f.write(f"**Status:** {self.results['status'].upper()}\n\n")
             f.write(f"**Started:** {self.results['start_time']}\n\n")
-            f.write(f"**Duration:** {self.results['total_duration_seconds']} seconds\n\n")
+            f.write(
+                f"**Duration:** {self.results['total_duration_seconds']} seconds\n\n"
+            )
 
             f.write("## Key Metrics\n\n")
             for key, value in self.results["metrics"].items():
@@ -296,7 +341,11 @@ class DRDrillRunner:
 
             f.write("\n## Drill Steps\n\n")
             for step in self.results["steps"]:
-                icon = "✓" if step["status"] == "passed" else "✗" if step["status"] == "failed" else "⚠"
+                icon = (
+                    "✓"
+                    if step["status"] == "passed"
+                    else "✗" if step["status"] == "failed" else "⚠"
+                )
                 f.write(f"### {icon} {step['name']}\n")
                 f.write(f"- **Status:** {step['status']}\n")
                 f.write(f"- **Duration:** {step['duration_seconds']}s\n")
@@ -328,7 +377,7 @@ class DRDrillRunner:
             self.test_restore_procedures,
             self.validate_application_health,
             self.check_rto_compliance,
-            self.generate_drill_report
+            self.generate_drill_report,
         ]
 
         for step_func in steps:
@@ -341,7 +390,9 @@ class DRDrillRunner:
         print("=" * 60)
         print(f"Overall Status: {self.results['status'].upper()}")
         print(f"Total Duration: {self.results['total_duration_seconds']} seconds")
-        print(f"Steps Passed: {sum(1 for s in self.results['steps'] if s['status'] == 'passed')}/{len(self.results['steps'])}")
+        print(
+            f"Steps Passed: {sum(1 for s in self.results['steps'] if s['status'] == 'passed')}/{len(self.results['steps'])}"
+        )
 
         if self.results["status"] == "failed":
             print("\n❌ DR drill FAILED - Review report for details")

@@ -28,11 +28,9 @@ router = APIRouter(
     response_model=HealthResponse,
     status_code=status.HTTP_200_OK,
     summary="Health Check",
-    description="Check if the API and its dependencies are operational"
+    description="Check if the API and its dependencies are operational",
 )
-async def health_check(
-    db: AsyncSession = Depends(get_db)
-) -> HealthResponse:
+async def health_check(db: AsyncSession = Depends(get_db)) -> HealthResponse:
     """
     Perform health check of the API and its dependencies.
 
@@ -59,7 +57,7 @@ async def health_check(
     "/liveness",
     status_code=status.HTTP_200_OK,
     summary="Liveness Probe",
-    description="Simple liveness check without dependency verification"
+    description="Simple liveness check without dependency verification",
 )
 async def liveness() -> dict:
     """
@@ -74,11 +72,9 @@ async def liveness() -> dict:
     "/readiness",
     status_code=status.HTTP_200_OK,
     summary="Readiness Probe",
-    description="Check if service is ready to accept traffic"
+    description="Check if service is ready to accept traffic",
 )
-async def readiness(
-    db: AsyncSession = Depends(get_db)
-) -> dict:
+async def readiness(db: AsyncSession = Depends(get_db)) -> dict:
     """
     Kubernetes readiness probe.
 

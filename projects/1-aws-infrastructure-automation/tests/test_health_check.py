@@ -1,4 +1,5 @@
 """Health check tests for 1-aws-infrastructure-automation."""
+
 from src.health_check import check_health
 
 

@@ -17,46 +17,66 @@ PROJECTS_DIR = PROJECT_ROOT / "projects"
 # Project type classifications
 PROJECT_TYPES = {
     "infrastructure": [
-        "1-aws-infrastructure-automation", "9-multi-region-disaster-recovery",
-        "p01-aws-infra", "p03-hybrid-network", "p10-multi-region", "p14-disaster-recovery",
-        "p15-cost-optimization", "p17-terraform-multicloud"
+        "1-aws-infrastructure-automation",
+        "9-multi-region-disaster-recovery",
+        "p01-aws-infra",
+        "p03-hybrid-network",
+        "p10-multi-region",
+        "p14-disaster-recovery",
+        "p15-cost-optimization",
+        "p17-terraform-multicloud",
     ],
     "data_processing": [
-        "5-real-time-data-streaming", "7-serverless-data-processing",
-        "11-iot-data-analytics", "16-advanced-data-lake", "p11-serverless", "p12-data-pipeline"
+        "5-real-time-data-streaming",
+        "7-serverless-data-processing",
+        "11-iot-data-analytics",
+        "16-advanced-data-lake",
+        "p11-serverless",
+        "p12-data-pipeline",
     ],
     "application": [
-        "2-database-migration", "8-advanced-ai-chatbot", "15-real-time-collaboration",
-        "p13-ha-webapp", "24-report-generator", "25-portfolio-website"
+        "2-database-migration",
+        "8-advanced-ai-chatbot",
+        "15-real-time-collaboration",
+        "p13-ha-webapp",
+        "24-report-generator",
+        "25-portfolio-website",
     ],
     "kubernetes": [
-        "3-kubernetes-cicd", "19-advanced-kubernetes-operators",
-        "17-multi-cloud-service-mesh", "p09-cloud-native-poc", "p18-k8s-cicd"
+        "3-kubernetes-cicd",
+        "19-advanced-kubernetes-operators",
+        "17-multi-cloud-service-mesh",
+        "p09-cloud-native-poc",
+        "p18-k8s-cicd",
     ],
     "security": [
-        "4-devsecops", "13-advanced-cybersecurity", "p02-iam-hardening",
-        "p16-zero-trust", "p19-security-automation"
+        "4-devsecops",
+        "13-advanced-cybersecurity",
+        "p02-iam-hardening",
+        "p16-zero-trust",
+        "p19-security-automation",
     ],
     "testing": [
-        "p05-mobile-testing", "p06-e2e-testing", "p07-roaming-simulation", "p08-api-testing"
+        "p05-mobile-testing",
+        "p06-e2e-testing",
+        "p07-roaming-simulation",
+        "p08-api-testing",
     ],
     "ml_ai": [
-        "6-mlops-platform", "14-edge-ai-inference", "18-gpu-accelerated-computing",
-        "astradup-video-deduplication"
+        "6-mlops-platform",
+        "14-edge-ai-inference",
+        "18-gpu-accelerated-computing",
+        "astradup-video-deduplication",
     ],
     "blockchain": [
-        "10-blockchain-smart-contract-platform", "20-blockchain-oracle-service"
+        "10-blockchain-smart-contract-platform",
+        "20-blockchain-oracle-service",
     ],
-    "monitoring": [
-        "23-advanced-monitoring", "p04-ops-monitoring", "p20-observability"
-    ],
-    "quantum": [
-        "12-quantum-computing", "21-quantum-safe-cryptography"
-    ],
-    "devops": [
-        "22-autonomous-devops-platform"
-    ]
+    "monitoring": ["23-advanced-monitoring", "p04-ops-monitoring", "p20-observability"],
+    "quantum": ["12-quantum-computing", "21-quantum-safe-cryptography"],
+    "devops": ["22-autonomous-devops-platform"],
 }
+
 
 def create_prometheus_config(project_name: str, project_type: str) -> str:
     """Generate Prometheus configuration based on project type."""
@@ -64,18 +84,13 @@ def create_prometheus_config(project_name: str, project_type: str) -> str:
         "global": {
             "scrape_interval": "15s",
             "evaluation_interval": "15s",
-            "external_labels": {
-                "cluster": project_name,
-                "environment": "production"
-            }
+            "external_labels": {"cluster": project_name, "environment": "production"},
         },
         "alerting": {
-            "alertmanagers": [{
-                "static_configs": [{"targets": ["alertmanager:9093"]}]
-            }]
+            "alertmanagers": [{"static_configs": [{"targets": ["alertmanager:9093"]}]}]
         },
         "rule_files": ["rules.yml"],
-        "scrape_configs": []
+        "scrape_configs": [],
     }
 
     # Add scrape configs based on project type
@@ -83,30 +98,27 @@ def create_prometheus_config(project_name: str, project_type: str) -> str:
         base_config["scrape_configs"] = [
             {
                 "job_name": "cloudwatch-exporter",
-                "static_configs": [{"targets": ["cloudwatch-exporter:9106"]}]
+                "static_configs": [{"targets": ["cloudwatch-exporter:9106"]}],
             },
             {
                 "job_name": "node-exporter",
-                "static_configs": [{"targets": ["node-exporter:9100"]}]
-            }
+                "static_configs": [{"targets": ["node-exporter:9100"]}],
+            },
         ]
     elif project_type == "kubernetes":
         base_config["scrape_configs"] = [
             {
                 "job_name": "kubernetes-nodes",
-                "kubernetes_sd_configs": [{"role": "node"}]
+                "kubernetes_sd_configs": [{"role": "node"}],
             },
-            {
-                "job_name": "kubernetes-pods",
-                "kubernetes_sd_configs": [{"role": "pod"}]
-            }
+            {"job_name": "kubernetes-pods", "kubernetes_sd_configs": [{"role": "pod"}]},
         ]
     elif project_type == "data_processing":
         base_config["scrape_configs"] = [
             {
                 "job_name": "pipeline-metrics",
                 "static_configs": [{"targets": ["pipeline:8080"]}],
-                "metrics_path": "/metrics"
+                "metrics_path": "/metrics",
             }
         ]
     else:
@@ -114,11 +126,12 @@ def create_prometheus_config(project_name: str, project_type: str) -> str:
             {
                 "job_name": f"{project_name}",
                 "static_configs": [{"targets": ["app:8080"]}],
-                "metrics_path": "/metrics"
+                "metrics_path": "/metrics",
             }
         ]
 
     return yaml.dump(base_config, default_flow_style=False, sort_keys=False)
+
 
 def create_prometheus_rules(project_name: str, project_type: str) -> str:
     """Generate Prometheus alert rules based on project type."""
@@ -157,6 +170,7 @@ groups:
           description: "95th percentile latency: {{{{ $value }}}}s"
 """
 
+
 def create_grafana_dashboard(project_name: str, project_type: str) -> Dict:
     """Generate Grafana dashboard JSON based on project type."""
     return {
@@ -169,36 +183,45 @@ def create_grafana_dashboard(project_name: str, project_type: str) -> Dict:
                     "id": 1,
                     "title": "Request Rate",
                     "type": "graph",
-                    "targets": [{
-                        "expr": f'rate(http_requests_total{{job="{project_name}"}}[5m])',
-                        "legendFormat": "{{{{ method }}}} - {{{{ status }}}}"
-                    }]
+                    "targets": [
+                        {
+                            "expr": f'rate(http_requests_total{{job="{project_name}"}}[5m])',
+                            "legendFormat": "{{{{ method }}}} - {{{{ status }}}}",
+                        }
+                    ],
                 },
                 {
                     "id": 2,
                     "title": "Error Rate",
                     "type": "graph",
-                    "targets": [{
-                        "expr": f'rate(http_requests_total{{job="{project_name}",status=~"5.."}}[5m])',
-                        "legendFormat": "5xx errors"
-                    }]
+                    "targets": [
+                        {
+                            "expr": f'rate(http_requests_total{{job="{project_name}",status=~"5.."}}[5m])',
+                            "legendFormat": "5xx errors",
+                        }
+                    ],
                 },
                 {
                     "id": 3,
                     "title": "Latency (p95)",
                     "type": "graph",
-                    "targets": [{
-                        "expr": f'histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{{job="{project_name}"}}[5m]))',
-                        "legendFormat": "p95"
-                    }]
-                }
+                    "targets": [
+                        {
+                            "expr": f'histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{{job="{project_name}"}}[5m]))',
+                            "legendFormat": "p95",
+                        }
+                    ],
+                },
             ],
             "refresh": "30s",
-            "time": {"from": "now-1h", "to": "now"}
+            "time": {"from": "now-1h", "to": "now"},
         }
     }
 
-def create_observability_configs(project_path: Path, project_name: str, project_type: str):
+
+def create_observability_configs(
+    project_path: Path, project_name: str, project_type: str
+):
     """Create Prometheus and Grafana configurations for a project."""
     # Create directories
     prom_dir = project_path / "prometheus"
@@ -209,7 +232,9 @@ def create_observability_configs(project_path: Path, project_name: str, project_
     # Create Prometheus config
     prom_config_file = prom_dir / "prometheus.yml"
     if not prom_config_file.exists():
-        prom_config_file.write_text(create_prometheus_config(project_name, project_type))
+        prom_config_file.write_text(
+            create_prometheus_config(project_name, project_type)
+        )
         print(f"✓ Created {prom_config_file}")
 
     # Create Prometheus rules
@@ -221,8 +246,11 @@ def create_observability_configs(project_path: Path, project_name: str, project_
     # Create Grafana dashboard
     dashboard_file = grafana_dir / f"{project_name}-dashboard.json"
     if not dashboard_file.exists():
-        dashboard_file.write_text(json.dumps(create_grafana_dashboard(project_name, project_type), indent=2))
+        dashboard_file.write_text(
+            json.dumps(create_grafana_dashboard(project_name, project_type), indent=2)
+        )
         print(f"✓ Created {dashboard_file}")
+
 
 def get_project_type(project_name: str) -> str:
     """Determine project type from project name."""
@@ -231,13 +259,18 @@ def get_project_type(project_name: str) -> str:
             return ptype
     return "application"  # default
 
+
 def main():
     """Generate all missing deliverables."""
     print("Generating missing deliverables for all projects...")
     print("=" * 80)
 
     # Get all project directories
-    all_projects = [d.name for d in PROJECTS_DIR.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    all_projects = [
+        d.name
+        for d in PROJECTS_DIR.iterdir()
+        if d.is_dir() and not d.name.startswith(".")
+    ]
 
     print(f"\nFound {len(all_projects)} projects")
     print("\nCreating observability configs...")
@@ -252,6 +285,7 @@ def main():
 
     print("\n" + "=" * 80)
     print("✓ All observability configs generated successfully!")
+
 
 if __name__ == "__main__":
     main()

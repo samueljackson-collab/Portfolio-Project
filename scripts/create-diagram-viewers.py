@@ -11,19 +11,20 @@ GitHub supports native Mermaid rendering in markdown code blocks.
 import os
 from pathlib import Path
 
+
 def create_markdown_viewer(mermaid_file):
     """Create a markdown file that GitHub can render"""
     # Read the mermaid content
     try:
-        with open(mermaid_file, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(mermaid_file, "r", encoding="utf-8", errors="ignore") as f:
             mermaid_content = f.read()
     except Exception as e:
         print(f"  ✗ Failed to read: {e}")
         return False
 
     # Create markdown wrapper
-    md_file = mermaid_file.with_suffix('.md')
-    diagram_name = mermaid_file.stem.replace('-', ' ').title()
+    md_file = mermaid_file.with_suffix(".md")
+    diagram_name = mermaid_file.stem.replace("-", " ").title()
 
     markdown_content = f"""# {diagram_name}
 
@@ -51,12 +52,13 @@ Original: `{mermaid_file.name}`
 
     # Write markdown file
     try:
-        with open(md_file, 'w', encoding='utf-8') as f:
+        with open(md_file, "w", encoding="utf-8") as f:
             f.write(markdown_content)
         return True
     except Exception as e:
         print(f"  ✗ Failed to write: {e}")
         return False
+
 
 def main():
     root_dir = Path(__file__).parent.parent
@@ -83,7 +85,7 @@ def main():
         print(f"Processing: {rel_path}")
 
         if create_markdown_viewer(mermaid_file):
-            md_file = mermaid_file.with_suffix('.md')
+            md_file = mermaid_file.with_suffix(".md")
             rel_md = md_file.relative_to(root_dir)
             print(f"  ✓ Created: {rel_md.name}")
             success += 1
@@ -103,6 +105,8 @@ def main():
 
     return 0 if failed == 0 else 1
 
+
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

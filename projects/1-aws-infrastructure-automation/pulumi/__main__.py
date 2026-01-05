@@ -1,13 +1,14 @@
 """Pulumi program that provisions the AWS footprint defined for Project 1."""
+
 import pulumi
 import pulumi_aws as aws
 
 STACK = pulumi.get_stack()
 CONFIG = pulumi.Config()
-ENVIRONMENT = CONFIG.get('environment') or 'dev'
-REGION = CONFIG.get('region') or 'us-west-2'
-DB_USERNAME = CONFIG.require('dbUsername')
-DB_PASSWORD = CONFIG.require_secret('dbPassword')
+ENVIRONMENT = CONFIG.get("environment") or "dev"
+REGION = CONFIG.get("region") or "us-west-2"
+DB_USERNAME = CONFIG.require("dbUsername")
+DB_PASSWORD = CONFIG.require_secret("dbPassword")
 
 aws.config.region = REGION
 
@@ -81,7 +82,7 @@ security_group = aws.ec2.SecurityGroup(
 
 cluster = aws.eks.Cluster(
     f"portfolio-eks-{ENVIRONMENT}",
-    role_arn=CONFIG.require('eksRoleArn'),
+    role_arn=CONFIG.require("eksRoleArn"),
     vpc_config=aws.eks.ClusterVpcConfigArgs(
         subnet_ids=[subnet.id for subnet in private_subnets],
         security_group_ids=[security_group.id],
@@ -91,7 +92,7 @@ cluster = aws.eks.Cluster(
 node_group = aws.eks.NodeGroup(
     f"portfolio-nodes-{ENVIRONMENT}",
     cluster_name=cluster.name,
-    node_role_arn=CONFIG.require('nodeRoleArn'),
+    node_role_arn=CONFIG.require("nodeRoleArn"),
     subnet_ids=[subnet.id for subnet in private_subnets],
     scaling_config=aws.eks.NodeGroupScalingConfigArgs(
         desired_size=3,

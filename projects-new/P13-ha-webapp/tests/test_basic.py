@@ -53,6 +53,7 @@ class TestNodeClass:
     def test_node_creation(self):
         """Test Node instantiation."""
         from app import Node
+
         node = Node("test-node", healthy=True)
         assert node.name == "test-node"
         assert node.healthy is True
@@ -60,12 +61,14 @@ class TestNodeClass:
     def test_node_heartbeat_healthy(self):
         """Test healthy node heartbeat."""
         from app import Node
+
         node = Node("primary", healthy=True)
         assert "healthy" in node.heartbeat()
 
     def test_node_heartbeat_unhealthy(self):
         """Test unhealthy node heartbeat."""
         from app import Node
+
         node = Node("primary", healthy=False)
         assert "unhealthy" in node.heartbeat()
 
@@ -76,6 +79,7 @@ class TestFailover:
     def test_failover_healthy_primary(self):
         """Test failover when primary is healthy."""
         from app import Node, simulate_failover
+
         primary = Node("primary", healthy=True)
         replica = Node("replica", healthy=True)
         log = simulate_failover(primary, replica)
@@ -84,6 +88,7 @@ class TestFailover:
     def test_failover_unhealthy_primary(self):
         """Test failover when primary fails."""
         from app import Node, simulate_failover
+
         primary = Node("primary", healthy=False)
         replica = Node("replica", healthy=False)
         log = simulate_failover(primary, replica)

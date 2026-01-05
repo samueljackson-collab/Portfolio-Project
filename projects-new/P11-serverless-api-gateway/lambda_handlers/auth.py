@@ -1,4 +1,5 @@
 """Lambda authorizer for API Gateway authentication."""
+
 import json
 import logging
 import os

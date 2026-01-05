@@ -6,7 +6,9 @@ from statistics import mean
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--report", required=True)
-    parser.add_argument("--expect", choices=["primary", "secondary", "either"], default="secondary")
+    parser.add_argument(
+        "--expect", choices=["primary", "secondary", "either"], default="secondary"
+    )
     args = parser.parse_args()
 
     with open(args.report, encoding="utf-8") as fh:
