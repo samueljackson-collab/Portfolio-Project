@@ -25,27 +25,29 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="MLOps Model Serving API",
     description="Production model serving with MLflow integration",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Global state
 loaded_models = {}
 prediction_cache = {}
-metrics_counter = {
-    'predictions': 0,
-    'errors': 0,
-    'cache_hits': 0
-}
+metrics_counter = {"predictions": 0, "errors": 0, "cache_hits": 0}
 
 
 class PredictionRequest(BaseModel):
     """Request schema for predictions."""
-    features: List[List[float]] = Field(..., description="Feature matrix for prediction")
-    model_version: Optional[str] = Field(None, description="Model version (default: latest)")
+
+    features: List[List[float]] = Field(
+        ..., description="Feature matrix for prediction"
+    )
+    model_version: Optional[str] = Field(
+        None, description="Model version (default: latest)"
+    )
 
 
 class PredictionResponse(BaseModel):
     """Response schema for predictions."""
+
     predictions: List[float]
     model_version: str
     model_name: str
@@ -55,6 +57,7 @@ class PredictionResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response."""
+
     status: str
     models_loaded: int
     total_predictions: int
@@ -63,6 +66,7 @@ class HealthResponse(BaseModel):
 
 class ModelInfo(BaseModel):
     """Model information."""
+
     name: str
     version: str
     stage: str
@@ -83,9 +87,13 @@ def load_model(model_name: str, version: Optional[str] = None):
         # Get model metadata
         client = mlflow.tracking.MlflowClient()
         if version:
-            model_versions = client.search_model_versions(f"name='{model_name}' and version='{version}'")
+            model_versions = client.search_model_versions(
+                f"name='{model_name}' and version='{version}'"
+            )
         else:
-            model_versions = client.search_model_versions(f"name='{model_name}' and current_stage='Production'")
+            model_versions = client.search_model_versions(
+                f"name='{model_name}' and current_stage='Production'"
+            )
 
         if model_versions:
             model_metadata = model_versions[0]
@@ -94,9 +102,9 @@ def load_model(model_name: str, version: Optional[str] = None):
             version_str = version or "latest"
 
         loaded_models[model_name] = {
-            'model': model,
-            'version': version_str,
-            'loaded_at': datetime.now(timezone.utc).isoformat()
+            "model": model,
+            "version": version_str,
+            "loaded_at": datetime.now(timezone.utc).isoformat(),
         }
 
         logger.info(f"Loaded model: {model_name} version {version_str}")
@@ -113,11 +121,11 @@ async def startup_event():
     logger.info("Starting MLOps Serving API...")
 
     # Set MLflow tracking URI
-    mlflow_uri = os.getenv('MLFLOW_TRACKING_URI', 'http://mlflow:5000')
+    mlflow_uri = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
     mlflow.set_tracking_uri(mlflow_uri)
 
     # Preload default model if specified
-    default_model = os.getenv('DEFAULT_MODEL_NAME')
+    default_model = os.getenv("DEFAULT_MODEL_NAME")
     if default_model:
         try:
             load_model(default_model)
@@ -130,14 +138,15 @@ async def startup_event():
 async def health_check():
     """Health check endpoint."""
     import time
-    start_time = float(os.getenv('START_TIME', time.time()))
+
+    start_time = float(os.getenv("START_TIME", time.time()))
     uptime = time.time() - start_time
 
     return HealthResponse(
         status="healthy",
         models_loaded=len(loaded_models),
-        total_predictions=metrics_counter['predictions'],
-        uptime_seconds=uptime
+        total_predictions=metrics_counter["predictions"],
+        uptime_seconds=uptime,
     )
 
 
@@ -147,13 +156,15 @@ async def list_models():
     models_info = []
 
     for model_name, model_data in loaded_models.items():
-        models_info.append(ModelInfo(
-            name=model_name,
-            version=model_data['version'],
-            stage="Production",  # Simplified
-            metrics={},
-            loaded_at=model_data['loaded_at']
-        ))
+        models_info.append(
+            ModelInfo(
+                name=model_name,
+                version=model_data["version"],
+                stage="Production",  # Simplified
+                metrics={},
+                loaded_at=model_data["loaded_at"],
+            )
+        )
 
     return models_info
 
@@ -162,22 +173,23 @@ async def list_models():
 async def predict(request: PredictionRequest, background_tasks: BackgroundTasks):
     """Make predictions using loaded model."""
     import time
+
     start_time = time.time()
 
     try:
         # Get model name from env or use default
-        model_name = os.getenv('MODEL_NAME', 'default-model')
+        model_name = os.getenv("MODEL_NAME", "default-model")
 
         # Load model if not already loaded
         if model_name not in loaded_models:
             model, version = load_model(model_name, request.model_version)
         else:
             model_data = loaded_models[model_name]
-            model = model_data['model']
-            version = model_data['version']
+            model = model_data["model"]
+            version = model_data["version"]
 
         # Convert features to DataFrame
-        feature_names = [f'feature_{i:02d}' for i in range(len(request.features[0]))]
+        feature_names = [f"feature_{i:02d}" for i in range(len(request.features[0]))]
         df = pd.DataFrame(request.features, columns=feature_names)
 
         # Make predictions
@@ -188,7 +200,7 @@ async def predict(request: PredictionRequest, background_tasks: BackgroundTasks)
             predictions = predictions.tolist()
 
         # Track metrics
-        metrics_counter['predictions'] += len(predictions)
+        metrics_counter["predictions"] += len(predictions)
 
         prediction_time_ms = (time.time() - start_time) * 1000
 
@@ -197,11 +209,11 @@ async def predict(request: PredictionRequest, background_tasks: BackgroundTasks)
             model_version=version,
             model_name=model_name,
             prediction_time_ms=round(prediction_time_ms, 2),
-            timestamp=datetime.now(timezone.utc).isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
     except Exception as e:
-        metrics_counter['errors'] += 1
+        metrics_counter["errors"] += 1
         logger.error(f"Prediction error: {e}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
@@ -243,7 +255,7 @@ async def load_model_endpoint(model_name: str, version: Optional[str] = None):
     return {
         "message": f"Model {model_name} version {version_str} loaded successfully",
         "model_name": model_name,
-        "version": version_str
+        "version": version_str,
     }
 
 
@@ -269,8 +281,8 @@ async def root():
             "predict": "/predict",
             "batch_predict": "/predict/batch",
             "models": "/models",
-            "metrics": "/metrics"
-        }
+            "metrics": "/metrics",
+        },
     }
 
 

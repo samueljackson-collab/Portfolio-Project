@@ -36,10 +36,10 @@ class PQCDemo:
         print(f"✓ Secret key generated ({len(secret_key)} bytes)")
 
         return {
-            'public_key': public_key.hex(),
-            'secret_key': secret_key.hex(),
-            'algorithm': self.algorithm,
-            'timestamp': datetime.now().isoformat()
+            "public_key": public_key.hex(),
+            "secret_key": secret_key.hex(),
+            "algorithm": self.algorithm,
+            "timestamp": datetime.now().isoformat(),
         }
 
     def encapsulate(self, public_key_hex: str):
@@ -57,10 +57,7 @@ class PQCDemo:
         print(f"✓ Ciphertext generated ({len(ciphertext)} bytes)")
         print(f"✓ Shared secret generated ({len(shared_secret)} bytes)")
 
-        return {
-            'ciphertext': ciphertext.hex(),
-            'shared_secret': shared_secret.hex()
-        }
+        return {"ciphertext": ciphertext.hex(), "shared_secret": shared_secret.hex()}
 
     def decapsulate(self, secret_key_hex: str, ciphertext_hex: str):
         """
@@ -73,9 +70,7 @@ class PQCDemo:
 
         print(f"✓ Shared secret recovered ({len(shared_secret)} bytes)")
 
-        return {
-            'shared_secret': shared_secret.hex()
-        }
+        return {"shared_secret": shared_secret.hex()}
 
     def demo_key_exchange(self):
         """Demonstrate quantum-safe key exchange."""
@@ -89,13 +84,12 @@ class PQCDemo:
 
         # Bob encapsulates using Alice's public key
         print("\n[Bob] Encapsulating shared secret...")
-        encap_result = self.encapsulate(alice_keys['public_key'])
+        encap_result = self.encapsulate(alice_keys["public_key"])
 
         # Alice decapsulates to get shared secret
         print("\n[Alice] Decapsulating shared secret...")
         decap_result = self.decapsulate(
-            alice_keys['secret_key'],
-            encap_result['ciphertext']
+            alice_keys["secret_key"], encap_result["ciphertext"]
         )
 
         print("\n" + "=" * 60)
@@ -104,14 +98,14 @@ class PQCDemo:
 
         # Save demo results
         results = {
-            'algorithm': self.algorithm,
-            'timestamp': datetime.now().isoformat(),
-            'alice_public_key_size': len(bytes.fromhex(alice_keys['public_key'])),
-            'ciphertext_size': len(bytes.fromhex(encap_result['ciphertext'])),
-            'shared_secret_size': len(bytes.fromhex(encap_result['shared_secret']))
+            "algorithm": self.algorithm,
+            "timestamp": datetime.now().isoformat(),
+            "alice_public_key_size": len(bytes.fromhex(alice_keys["public_key"])),
+            "ciphertext_size": len(bytes.fromhex(encap_result["ciphertext"])),
+            "shared_secret_size": len(bytes.fromhex(encap_result["shared_secret"])),
         }
 
-        with open('pqc_demo_results.json', 'w') as f:
+        with open("pqc_demo_results.json", "w") as f:
             json.dump(results, f, indent=2)
 
         print("\nResults saved to: pqc_demo_results.json")
@@ -131,5 +125,5 @@ def main():
     print("=" * 60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -70,7 +70,9 @@ def extract_from_source_db(**context):
         logger.info(f"Extraction completed. Stats: {extraction_stats}")
 
         # Push statistics to XCom for downstream tasks
-        context["task_instance"].xcom_push(key="extraction_stats", value=extraction_stats)
+        context["task_instance"].xcom_push(
+            key="extraction_stats", value=extraction_stats
+        )
 
         return extraction_stats
 
@@ -94,8 +96,7 @@ def validate_extracted_data(**context):
         # Retrieve extraction stats from previous task
         task_instance = context["task_instance"]
         extraction_stats = task_instance.xcom_pull(
-            task_ids="extract_from_source",
-            key="extraction_stats"
+            task_ids="extract_from_source", key="extraction_stats"
         )
 
         if not extraction_stats:
@@ -134,8 +135,7 @@ def notify_extraction_complete(**context):
     logger.info("Extraction phase completed successfully")
     task_instance = context["task_instance"]
     validation_result = task_instance.xcom_pull(
-        task_ids="validate_extracted_data",
-        key="validation_result"
+        task_ids="validate_extracted_data", key="validation_result"
     )
     logger.info(f"Validation result: {validation_result}")
 

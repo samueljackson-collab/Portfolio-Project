@@ -10,8 +10,7 @@ from state_machine import RoamingStateMachine, SubscriberState
 from hlr_mock import MockHLR
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -25,19 +24,21 @@ def setup_test_environment() -> MockHLR:
         imsi="310410123456789",
         msisdn="+15551234567",
         home_network="310-410",  # AT&T USA
-        ki="0123456789ABCDEF0123456789ABCDEF"
+        ki="0123456789ABCDEF0123456789ABCDEF",
     )
 
     hlr.add_subscriber(
         imsi="208011987654321",
         msisdn="+33612345678",
         home_network="208-01",  # Orange France
-        ki="FEDCBA9876543210FEDCBA9876543210"
+        ki="FEDCBA9876543210FEDCBA9876543210",
     )
 
     # Configure roaming agreements
     hlr.add_roaming_agreement("310-410", ["208-01", "234-15", "262-01"])  # AT&T roaming
-    hlr.add_roaming_agreement("208-01", ["310-410", "234-15", "262-01"])  # Orange roaming
+    hlr.add_roaming_agreement(
+        "208-01", ["310-410", "234-15", "262-01"]
+    )  # Orange roaming
 
     return hlr
 
@@ -54,7 +55,9 @@ def run_international_roaming_scenario(hlr: MockHLR):
     sm = RoamingStateMachine(imsi)
 
     # Step 1: Initiate roaming
-    assert sm.initiate_roaming(home_network, visited_network), "Failed to initiate roaming"
+    assert sm.initiate_roaming(
+        home_network, visited_network
+    ), "Failed to initiate roaming"
 
     # Step 2: Authenticate with HLR
     auth_success = hlr.authenticate(imsi, visited_network)
@@ -114,24 +117,24 @@ def run_no_roaming_agreement_scenario(hlr: MockHLR):
 
 def main():
     """Main simulation entry point."""
-    parser = argparse.ArgumentParser(description='Roaming simulation')
+    parser = argparse.ArgumentParser(description="Roaming simulation")
     parser.add_argument(
-        '--scenario',
-        choices=['international_roaming', 'failed_auth', 'no_roaming_agreement', 'all'],
-        default='all',
-        help='Scenario to run'
+        "--scenario",
+        choices=["international_roaming", "failed_auth", "no_roaming_agreement", "all"],
+        default="all",
+        help="Scenario to run",
     )
     args = parser.parse_args()
 
     hlr = setup_test_environment()
 
     scenarios = {
-        'international_roaming': run_international_roaming_scenario,
-        'failed_auth': run_failed_auth_scenario,
-        'no_roaming_agreement': run_no_roaming_agreement_scenario,
+        "international_roaming": run_international_roaming_scenario,
+        "failed_auth": run_failed_auth_scenario,
+        "no_roaming_agreement": run_no_roaming_agreement_scenario,
     }
 
-    if args.scenario == 'all':
+    if args.scenario == "all":
         for scenario_func in scenarios.values():
             scenario_func(hlr)
             logger.info("")

@@ -1,4 +1,5 @@
 """Smoke test for the cloud solutions scaffold."""
+
 import os
 import sys
 

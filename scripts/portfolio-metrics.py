@@ -62,10 +62,14 @@ class PortfolioMetrics:
             "project_details": [],
         }
 
-    def analyze_github_activity(self, repo: Optional[str] = None, token: Optional[str] = None) -> None:
+    def analyze_github_activity(
+        self, repo: Optional[str] = None, token: Optional[str] = None
+    ) -> None:
         """Populate GitHub metrics using the REST API."""
 
-        repository = repo or os.getenv("GITHUB_REPO", "samueljackson-collab/Portfolio-Project")
+        repository = repo or os.getenv(
+            "GITHUB_REPO", "samueljackson-collab/Portfolio-Project"
+        )
         github_token = token or os.getenv("GITHUB_TOKEN")
 
         try:
@@ -73,11 +77,19 @@ class PortfolioMetrics:
         except requests.HTTPError as exc:
             status_code = exc.response.status_code if exc.response else "unknown"
             if status_code == 403:
-                rate_remaining = exc.response.headers.get("X-RateLimit-Remaining") if exc.response else None
+                rate_remaining = (
+                    exc.response.headers.get("X-RateLimit-Remaining")
+                    if exc.response
+                    else None
+                )
                 if rate_remaining == "0":
-                    print("⚠️  GitHub API rate limit exceeded. Set GITHUB_TOKEN or wait for reset.")
+                    print(
+                        "⚠️  GitHub API rate limit exceeded. Set GITHUB_TOKEN or wait for reset."
+                    )
                 else:
-                    print("⚠️  GitHub API access forbidden. Verify token scopes or repository visibility.")
+                    print(
+                        "⚠️  GitHub API access forbidden. Verify token scopes or repository visibility."
+                    )
             elif status_code == 401:
                 print("⚠️  GitHub API authentication failed. Check your GITHUB_TOKEN.")
             else:
@@ -92,7 +104,9 @@ class PortfolioMetrics:
         self.metrics["github"]["total_commits"] = total_commits
         print(f"✅ GitHub commits analyzed for {repository}: {total_commits}")
 
-    def _analyze_via_rest_api(self, repository: str, token: Optional[str] = None) -> int:
+    def _analyze_via_rest_api(
+        self, repository: str, token: Optional[str] = None
+    ) -> int:
         """Return total commits using GitHub REST API with paging safeguards."""
 
         url = f"https://api.github.com/repos/{repository}/commits"
@@ -101,7 +115,9 @@ class PortfolioMetrics:
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
-        response = requests.get(url, headers=headers, params={"per_page": 1}, timeout=20)
+        response = requests.get(
+            url, headers=headers, params={"per_page": 1}, timeout=20
+        )
         self._raise_for_github_errors(response)
 
         total_commits = self._extract_total_from_headers(response)
@@ -132,10 +148,13 @@ class PortfolioMetrics:
             try:
                 return int(response.headers["X-Total-Count"])
             except ValueError:
-                logger.warning("Invalid X-Total-Count header: %s", response.headers["X-Total-Count"])
+                logger.warning(
+                    "Invalid X-Total-Count header: %s",
+                    response.headers["X-Total-Count"],
+                )
 
         link_header = response.headers.get("Link", "")
-        if "rel=\"last\"" in link_header:
+        if 'rel="last"' in link_header:
             match = re.search(r"[?&]page=(\d+)>; rel=\"last\"", link_header)
             if match:
                 return int(match.group(1))
@@ -235,7 +254,7 @@ class PortfolioMetrics:
 
             # Try to extract status and completion from README
             try:
-                content = readme_path.read_text(encoding='utf-8')
+                content = readme_path.read_text(encoding="utf-8")
                 metrics["status"], metrics["completion"] = self._extract_status(content)
             except Exception as e:
                 print(f"⚠️  Error reading {readme_path}: {e}")
@@ -337,7 +356,7 @@ class PortfolioMetrics:
         total_words = 0
         for md_file in md_files:
             try:
-                content = md_file.read_text(encoding='utf-8')
+                content = md_file.read_text(encoding="utf-8")
                 words = len(content.split())
                 total_words += words
             except Exception:
@@ -351,8 +370,9 @@ class PortfolioMetrics:
         print("🏗️  Scanning infrastructure files...")
 
         # Docker Compose
-        compose_files = list(self.base_dir.rglob("*compose*.yml")) + \
-                       list(self.base_dir.rglob("docker-compose*.yml"))
+        compose_files = list(self.base_dir.rglob("*compose*.yml")) + list(
+            self.base_dir.rglob("docker-compose*.yml")
+        )
         self.metrics["infrastructure"]["docker_compose_files"] = len(compose_files)
 
         # Terraform
@@ -360,8 +380,9 @@ class PortfolioMetrics:
         self.metrics["infrastructure"]["terraform_files"] = len(tf_files)
 
         # Kubernetes
-        k8s_files = list(self.base_dir.rglob("k8s/**/*.yml")) + \
-                   list(self.base_dir.rglob("k8s/**/*.yaml"))
+        k8s_files = list(self.base_dir.rglob("k8s/**/*.yml")) + list(
+            self.base_dir.rglob("k8s/**/*.yaml")
+        )
         self.metrics["infrastructure"]["kubernetes_manifests"] = len(k8s_files)
 
         # Config files
@@ -371,7 +392,9 @@ class PortfolioMetrics:
             config_count += len(list(self.base_dir.rglob(pattern)))
         self.metrics["infrastructure"]["config_files"] = config_count
 
-        print(f"✅ Found {len(compose_files)} Docker Compose, {len(tf_files)} Terraform files")
+        print(
+            f"✅ Found {len(compose_files)} Docker Compose, {len(tf_files)} Terraform files"
+        )
 
     def calculate_overall_completion(self):
         """Calculate overall portfolio completion percentage"""
@@ -405,10 +428,18 @@ class PortfolioMetrics:
 
         # Implementation Status
         print(f"\n💻 Implementation:")
-        print(f"   With Code:    {self.metrics['projects']['with_code']}/{self.metrics['projects']['total']}")
-        print(f"   With Docs:    {self.metrics['projects']['with_docs']}/{self.metrics['projects']['total']}")
-        print(f"   With Tests:   {self.metrics['projects']['with_tests']}/{self.metrics['projects']['total']}")
-        print(f"   With Demos:   {self.metrics['projects']['with_demos']}/{self.metrics['projects']['total']}")
+        print(
+            f"   With Code:    {self.metrics['projects']['with_code']}/{self.metrics['projects']['total']}"
+        )
+        print(
+            f"   With Docs:    {self.metrics['projects']['with_docs']}/{self.metrics['projects']['total']}"
+        )
+        print(
+            f"   With Tests:   {self.metrics['projects']['with_tests']}/{self.metrics['projects']['total']}"
+        )
+        print(
+            f"   With Demos:   {self.metrics['projects']['with_demos']}/{self.metrics['projects']['total']}"
+        )
 
         # Documentation
         print(f"\n📚 Documentation:")
@@ -418,16 +449,18 @@ class PortfolioMetrics:
 
         # Infrastructure
         print(f"\n🏗️  Infrastructure:")
-        print(f"   Docker Compose: {self.metrics['infrastructure']['docker_compose_files']}")
+        print(
+            f"   Docker Compose: {self.metrics['infrastructure']['docker_compose_files']}"
+        )
         print(f"   Terraform:      {self.metrics['infrastructure']['terraform_files']}")
-        print(f"   Kubernetes:     {self.metrics['infrastructure']['kubernetes_manifests']}")
+        print(
+            f"   Kubernetes:     {self.metrics['infrastructure']['kubernetes_manifests']}"
+        )
 
         # Top Projects
         print(f"\n⭐ Top Projects by Completion:")
         sorted_projects = sorted(
-            self.metrics["project_details"],
-            key=lambda p: p["completion"],
-            reverse=True
+            self.metrics["project_details"], key=lambda p: p["completion"], reverse=True
         )
         for i, project in enumerate(sorted_projects[:5], 1):
             status_emoji = {"complete": "🟢", "in_progress": "🟡", "planned": "🔵"}.get(
@@ -459,7 +492,7 @@ class PortfolioMetrics:
         """Save metrics to JSON file"""
         output_path = self.base_dir / output_file
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(self.metrics, f, indent=2)
 
         print(f"\n💾 Metrics saved to: {output_path}")
@@ -473,11 +506,11 @@ class PortfolioMetrics:
             "schemaVersion": 1,
             "label": "portfolio completion",
             "message": f"{completion}%",
-            "color": color
+            "color": color,
         }
 
         badge_path = self.base_dir / "portfolio-badge.json"
-        with open(badge_path, 'w', encoding='utf-8') as f:
+        with open(badge_path, "w", encoding="utf-8") as f:
             json.dump(badge_data, f, indent=2)
 
         print(f"🏆 Badge data saved to: {badge_path}")

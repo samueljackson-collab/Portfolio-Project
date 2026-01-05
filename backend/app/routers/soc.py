@@ -26,7 +26,11 @@ DEFAULT_PLAYBOOKS = [
     {
         "name": "Credential Theft Containment",
         "description": "Lock accounts, rotate secrets, and enable step-up MFA",
-        "steps": ["Disable affected accounts", "Force MFA re-enrollment", "Collect forensic artifacts"],
+        "steps": [
+            "Disable affected accounts",
+            "Force MFA re-enrollment",
+            "Collect forensic artifacts",
+        ],
     },
     {
         "name": "Webshell Eradication",
@@ -57,8 +61,12 @@ async def list_playbooks(db: DatabaseSession) -> list[SocPlaybook]:
     return result.scalars().all()
 
 
-@router.post("/alerts", response_model=SocAlertResponse, status_code=status.HTTP_201_CREATED)
-async def create_alert(payload: SocAlertCreate, db: DatabaseSession, _: CurrentUser) -> SocAlert:
+@router.post(
+    "/alerts", response_model=SocAlertResponse, status_code=status.HTTP_201_CREATED
+)
+async def create_alert(
+    payload: SocAlertCreate, db: DatabaseSession, _: CurrentUser
+) -> SocAlert:
     alert = SocAlert(**payload.model_dump())
     db.add(alert)
     await db.flush()
@@ -82,7 +90,9 @@ async def list_alerts(
 
 
 @router.patch("/alerts/{alert_id}", response_model=SocAlertResponse)
-async def update_alert(alert_id: str, payload: SocAlertCreate, db: DatabaseSession, _: CurrentUser) -> SocAlert:
+async def update_alert(
+    alert_id: str, payload: SocAlertCreate, db: DatabaseSession, _: CurrentUser
+) -> SocAlert:
     alert = await db.get(SocAlert, alert_id)
     if not alert:
         raise_not_found("Alert")
@@ -94,14 +104,24 @@ async def update_alert(alert_id: str, payload: SocAlertCreate, db: DatabaseSessi
     return alert
 
 
-@router.post("/cases", response_model=SocCaseResponse, status_code=status.HTTP_201_CREATED)
-async def create_case(payload: SocCaseCreate, db: DatabaseSession, _: CurrentUser) -> SocCase:
+@router.post(
+    "/cases", response_model=SocCaseResponse, status_code=status.HTTP_201_CREATED
+)
+async def create_case(
+    payload: SocCaseCreate, db: DatabaseSession, _: CurrentUser
+) -> SocCase:
     await ensure_playbooks(db)
-    case = SocCase(title=payload.title, assigned_to=payload.assigned_to, playbook_id=payload.playbook_id)
+    case = SocCase(
+        title=payload.title,
+        assigned_to=payload.assigned_to,
+        playbook_id=payload.playbook_id,
+    )
     db.add(case)
     await db.flush()
     if payload.alert_ids:
-        result = await db.execute(select(SocAlert).where(SocAlert.id.in_(payload.alert_ids)))
+        result = await db.execute(
+            select(SocAlert).where(SocAlert.id.in_(payload.alert_ids))
+        )
         for alert in result.scalars().all():
             alert.case_id = case.id
     await db.refresh(case, attribute_names=["alerts"])
@@ -118,7 +138,9 @@ async def list_cases(db: DatabaseSession) -> list[SocCase]:
 
 
 @router.patch("/cases/{case_id}", response_model=SocCaseResponse)
-async def update_case(case_id: str, payload: SocCaseUpdate, db: DatabaseSession, _: CurrentUser) -> SocCase:
+async def update_case(
+    case_id: str, payload: SocCaseUpdate, db: DatabaseSession, _: CurrentUser
+) -> SocCase:
     case = await db.get(SocCase, case_id)
     if not case:
         raise_not_found("Case")
@@ -135,9 +157,24 @@ async def generate_fake_alerts(db: DatabaseSession, _: CurrentUser) -> list[SocA
     """Generate deterministic alerts to demonstrate automation hooks."""
 
     demo_alerts = [
-        SocAlert(title="Brute force attempt", description="Multiple SSH failures", severity="high", status="open"),
-        SocAlert(title="Malware detection", description="Endpoint flagged suspicious DLL", severity="medium", status="open"),
-        SocAlert(title="Impossible travel", description="Login anomalies detected", severity="low", status="triage"),
+        SocAlert(
+            title="Brute force attempt",
+            description="Multiple SSH failures",
+            severity="high",
+            status="open",
+        ),
+        SocAlert(
+            title="Malware detection",
+            description="Endpoint flagged suspicious DLL",
+            severity="medium",
+            status="open",
+        ),
+        SocAlert(
+            title="Impossible travel",
+            description="Login anomalies detected",
+            severity="low",
+            status="triage",
+        ),
     ]
     for alert in demo_alerts:
         db.add(alert)

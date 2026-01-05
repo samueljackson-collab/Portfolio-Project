@@ -12,12 +12,15 @@ scrape_configs:
   # System logs
   - job_name: system
     static_configs:
-      - targets:
-          - localhost
+      - targets: [localhost]
         labels:
           job: varlogs
           host: homelab-host
           __path__: /var/log/*log
+    pipeline_stages:
+      - drop:
+          expression: "(?i)password|token"
+          source: message
 
   # Docker container logs
   - job_name: containers
@@ -34,16 +37,14 @@ scrape_configs:
   # Application-specific logs
   - job_name: homeassistant
     static_configs:
-      - targets:
-          - localhost
+      - targets: [localhost]
         labels:
           job: homeassistant
           __path__: /opt/homeassistant/home-assistant.log
 
   - job_name: nginx
     static_configs:
-      - targets:
-          - localhost
+      - targets: [localhost]
         labels:
           job: nginx-access
           __path__: /var/log/nginx/access.log

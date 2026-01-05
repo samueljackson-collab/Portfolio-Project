@@ -16,7 +16,9 @@ from constructs import Construct
 class PortfolioStack(Stack):
     """Defines the network, EKS, and database resources for the project."""
 
-    def __init__(self, scope: Construct, construct_id: str, *, environment_name: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, *, environment_name: str, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         vpc = ec2.Vpc(
@@ -66,16 +68,26 @@ class PortfolioStack(Stack):
         rds.DatabaseInstance(
             self,
             "PortfolioDatabase",
-            engine=rds.DatabaseInstanceEngine.postgres(version=rds.PostgresEngineVersion.VER_15_4),
+            engine=rds.DatabaseInstanceEngine.postgres(
+                version=rds.PostgresEngineVersion.VER_15_4
+            ),
             vpc=vpc,
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM),
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM
+            ),
             allocated_storage=20,
             max_allocated_storage=100,
             multi_az=True,
             deletion_protection=environment_name == "production",
-            removal_policy=RemovalPolicy.SNAPSHOT if environment_name == "production" else RemovalPolicy.DESTROY,
+            removal_policy=(
+                RemovalPolicy.SNAPSHOT
+                if environment_name == "production"
+                else RemovalPolicy.DESTROY
+            ),
             backup_retention=Duration.days(7),
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
+            ),
         )
 
 

@@ -26,19 +26,13 @@ class TestOrdersCRUD:
         """Sample order payload for testing"""
         return {
             "customer_id": "CUST001",
-            "items": [
-                {
-                    "product_id": "PROD001",
-                    "quantity": 2,
-                    "price": 29.99
-                }
-            ],
+            "items": [{"product_id": "PROD001", "quantity": 2, "price": 29.99}],
             "shipping_address": {
                 "street": "123 Main St",
                 "city": "Springfield",
                 "state": "IL",
-                "zip": "62701"
-            }
+                "zip": "62701",
+            },
         }
 
     def test_create_order_success(self, api_client, sample_order):
@@ -62,14 +56,14 @@ class TestOrdersCRUD:
             "items": [
                 {"product_id": "PROD001", "quantity": 1, "price": 29.99},
                 {"product_id": "PROD002", "quantity": 2, "price": 49.99},
-                {"product_id": "PROD003", "quantity": 3, "price": 19.99}
+                {"product_id": "PROD003", "quantity": 3, "price": 19.99},
             ],
             "shipping_address": {
                 "street": "456 Oak Ave",
                 "city": "Capital City",
                 "state": "CA",
-                "zip": "90210"
-            }
+                "zip": "90210",
+            },
         }
 
         response = api_client.post("/orders", json=order)
@@ -93,10 +87,7 @@ class TestOrdersCRUD:
 
     def test_list_orders_with_pagination(self, api_client):
         """Test listing orders with pagination parameters"""
-        params = {
-            "page": 1,
-            "pageSize": 5
-        }
+        params = {"page": 1, "pageSize": 5}
 
         response = api_client.get("/orders", params=params)
 
@@ -131,9 +122,7 @@ class TestOrdersCRUD:
         order_id = create_resp.json()["id"]
 
         # Update order status
-        update_data = {
-            "status": "confirmed"
-        }
+        update_data = {"status": "confirmed"}
         update_resp = api_client.put(f"/orders/{order_id}", json=update_data)
 
         assert update_resp.status_code == 200
@@ -149,11 +138,9 @@ class TestOrdersCRUD:
         # Update order items
         new_items = [
             {"product_id": "PROD001", "quantity": 1, "price": 29.99},
-            {"product_id": "PROD002", "quantity": 1, "price": 49.99}
+            {"product_id": "PROD002", "quantity": 1, "price": 49.99},
         ]
-        update_data = {
-            "items": new_items
-        }
+        update_data = {"items": new_items}
         update_resp = api_client.put(f"/orders/{order_id}", json=update_data)
 
         assert update_resp.status_code == 200
@@ -202,8 +189,10 @@ class TestOrdersErrorHandling:
 
         for invalid_order in invalid_orders:
             response = api_client.post("/orders", json=invalid_order)
-            assert response.status_code in [400, 422], \
-                f"Invalid payload should return 400 or 422, got {response.status_code}"
+            assert response.status_code in [
+                400,
+                422,
+            ], f"Invalid payload should return 400 or 422, got {response.status_code}"
 
     def test_update_nonexistent_order(self, api_client):
         """Test updating a non-existent order"""
@@ -225,15 +214,15 @@ class TestOrdersErrorHandling:
                 {
                     "product_id": "PROD001",
                     "quantity": -1,  # Invalid negative quantity
-                    "price": 29.99
+                    "price": 29.99,
                 }
             ],
             "shipping_address": {
                 "street": "123 Main St",
                 "city": "Springfield",
                 "state": "IL",
-                "zip": "62701"
-            }
+                "zip": "62701",
+            },
         }
 
         response = api_client.post("/orders", json=invalid_order)
@@ -262,8 +251,8 @@ class TestOrdersDataValidation:
                 "street": "123 Main St",
                 "city": "Springfield",
                 "state": "IL",
-                "zip": "62701"
-            }
+                "zip": "62701",
+            },
         }
 
     def test_response_content_type(self, api_client, sample_order):
@@ -326,14 +315,14 @@ class TestOrdersDataValidation:
             "customer_id": "CUST001",
             "items": [
                 {"product_id": "PROD001", "quantity": 2, "price": 10.00},
-                {"product_id": "PROD002", "quantity": 3, "price": 5.00}
+                {"product_id": "PROD002", "quantity": 3, "price": 5.00},
             ],
             "shipping_address": {
                 "street": "123 Main St",
                 "city": "Springfield",
                 "state": "IL",
-                "zip": "62701"
-            }
+                "zip": "62701",
+            },
         }
 
         response = api_client.post("/orders", json=order)
@@ -357,7 +346,9 @@ class TestOrdersResponseTime:
 
         assert response.status_code == 200
         response_time_ms = response.elapsed.total_seconds() * 1000
-        assert response_time_ms < 1000, f"Response took {response_time_ms}ms, should be < 1000ms"
+        assert (
+            response_time_ms < 1000
+        ), f"Response took {response_time_ms}ms, should be < 1000ms"
 
     def test_create_order_response_time(self, api_client):
         """Test create order response time is acceptable"""
@@ -368,15 +359,17 @@ class TestOrdersResponseTime:
                 "street": "123 Main St",
                 "city": "Springfield",
                 "state": "IL",
-                "zip": "62701"
-            }
+                "zip": "62701",
+            },
         }
 
         response = api_client.post("/orders", json=order)
 
         assert response.status_code == 201
         response_time_ms = response.elapsed.total_seconds() * 1000
-        assert response_time_ms < 2000, f"Response took {response_time_ms}ms, should be < 2000ms"
+        assert (
+            response_time_ms < 2000
+        ), f"Response took {response_time_ms}ms, should be < 2000ms"
 
 
 class APIClient:
@@ -386,10 +379,12 @@ class APIClient:
         self.base_url = base_url.rstrip("/")
         self.auth_token = auth_token
         self.session = requests.Session()
-        self.session.headers.update({
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {auth_token}"
-        })
+        self.session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {auth_token}",
+            }
+        )
 
     def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None):
         url = f"{self.base_url}{endpoint}"

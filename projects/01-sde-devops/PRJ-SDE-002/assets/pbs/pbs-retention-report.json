@@ -1,0 +1,20 @@
+{
+  "generated_at": "2025-11-14T00:05:00Z",
+  "job": "nightly-vm-backups",
+  "datastore": "demo-datastore",
+  "retention_policy": {
+    "daily": 7,
+    "weekly": 4,
+    "monthly": 3
+  },
+  "snapshots": [
+    {"name": "grafana", "status": "ok", "kept": true, "size_gb": 18.2, "created_at": "2025-11-13T02:08:00Z"},
+    {"name": "prometheus", "status": "ok", "kept": true, "size_gb": 22.5, "created_at": "2025-11-13T02:12:00Z"},
+    {"name": "log-collector", "status": "verify_passed", "kept": true, "size_gb": 12.1, "created_at": "2025-11-13T02:16:00Z"}
+  ],
+  "retention_checks": {
+    "pruning_required": false,
+    "notes": "All restore points are within policy limits; next pruning scheduled after weekly rollup."
+  },
+  "sanitized": true
+}

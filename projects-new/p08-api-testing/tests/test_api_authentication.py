@@ -27,7 +27,7 @@ class TestAuthentication:
         response = client.post(
             auth_url,
             json=valid_credentials,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 200
@@ -45,7 +45,7 @@ class TestAuthentication:
         response = client.post(
             auth_url,
             json=valid_credentials,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 200
@@ -59,15 +59,10 @@ class TestAuthentication:
     def test_invalid_client_id(self, client, base_url):
         """Test authentication with invalid client ID"""
         auth_url = f"{base_url}/auth/token"
-        credentials = {
-            "client_id": "invalid_client_id",
-            "client_secret": "secret"
-        }
+        credentials = {"client_id": "invalid_client_id", "client_secret": "secret"}
 
         response = client.post(
-            auth_url,
-            json=credentials,
-            headers={"Content-Type": "application/json"}
+            auth_url, json=credentials, headers={"Content-Type": "application/json"}
         )
 
         assert response.status_code == 401
@@ -79,13 +74,11 @@ class TestAuthentication:
         auth_url = f"{base_url}/auth/token"
         credentials = {
             "client_id": valid_credentials["client_id"],
-            "client_secret": "wrong_secret"
+            "client_secret": "wrong_secret",
         }
 
         response = client.post(
-            auth_url,
-            json=credentials,
-            headers={"Content-Type": "application/json"}
+            auth_url, json=credentials, headers={"Content-Type": "application/json"}
         )
 
         assert response.status_code == 401
@@ -93,14 +86,10 @@ class TestAuthentication:
     def test_missing_client_id(self, client, base_url):
         """Test authentication with missing client ID"""
         auth_url = f"{base_url}/auth/token"
-        credentials = {
-            "client_secret": "secret"
-        }
+        credentials = {"client_secret": "secret"}
 
         response = client.post(
-            auth_url,
-            json=credentials,
-            headers={"Content-Type": "application/json"}
+            auth_url, json=credentials, headers={"Content-Type": "application/json"}
         )
 
         assert response.status_code in [400, 401]
@@ -108,14 +97,10 @@ class TestAuthentication:
     def test_missing_client_secret(self, client, base_url):
         """Test authentication with missing client secret"""
         auth_url = f"{base_url}/auth/token"
-        credentials = {
-            "client_id": "demo"
-        }
+        credentials = {"client_id": "demo"}
 
         response = client.post(
-            auth_url,
-            json=credentials,
-            headers={"Content-Type": "application/json"}
+            auth_url, json=credentials, headers={"Content-Type": "application/json"}
         )
 
         assert response.status_code in [400, 401]
@@ -125,9 +110,7 @@ class TestAuthentication:
         auth_url = f"{base_url}/auth/token"
 
         response = client.post(
-            auth_url,
-            json={},
-            headers={"Content-Type": "application/json"}
+            auth_url, json={}, headers={"Content-Type": "application/json"}
         )
 
         assert response.status_code in [400, 401]
@@ -142,10 +125,7 @@ class TestAuthorization:
 
     def test_request_without_auth_token(self, client, base_url):
         """Test API request without authentication token"""
-        response = client.get(
-            f"{base_url}/orders",
-            headers={"Authorization": ""}
-        )
+        response = client.get(f"{base_url}/orders", headers={"Authorization": ""})
 
         assert response.status_code == 401
 
@@ -153,7 +133,7 @@ class TestAuthorization:
         """Test API request with invalid token"""
         response = client.get(
             f"{base_url}/orders",
-            headers={"Authorization": "Bearer invalid_token_12345"}
+            headers={"Authorization": "Bearer invalid_token_12345"},
         )
 
         assert response.status_code == 401
@@ -165,8 +145,7 @@ class TestAuthorization:
         expired_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
         response = client.get(
-            f"{base_url}/orders",
-            headers={"Authorization": f"Bearer {expired_token}"}
+            f"{base_url}/orders", headers={"Authorization": f"Bearer {expired_token}"}
         )
 
         assert response.status_code == 401
@@ -180,12 +159,11 @@ class TestAuthorization:
         ]
 
         for headers in invalid_headers:
-            response = client.get(
-                f"{base_url}/orders",
-                headers=headers
-            )
-            assert response.status_code in [400, 401], \
-                f"Malformed auth header should return 400/401, got {response.status_code}"
+            response = client.get(f"{base_url}/orders", headers=headers)
+            assert response.status_code in [
+                400,
+                401,
+            ], f"Malformed auth header should return 400/401, got {response.status_code}"
 
     def test_different_token_types(self, client, base_url, auth_token):
         """Test different authorization header formats"""
@@ -196,9 +174,7 @@ class TestAuthorization:
 
         for headers in valid_headers:
             response = client.get(
-                f"{base_url}/orders",
-                headers=headers,
-                params={"page": 1, "pageSize": 5}
+                f"{base_url}/orders", headers=headers, params={"page": 1, "pageSize": 5}
             )
             # Should accept both Bearer and bearer
             assert response.status_code in [200, 401]  # 200 if accepted, 401 if not
@@ -218,7 +194,7 @@ class TestTokenRefresh:
         response = client.post(
             refresh_url,
             json={"access_token": auth_token},
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         # Endpoint may or may not exist - just check response code
@@ -234,7 +210,7 @@ class TestTokenRefresh:
         response = client.post(
             refresh_url,
             json={"access_token": "invalid_token"},
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         # Should reject invalid token
@@ -259,7 +235,7 @@ class TestSessionManagement:
             response = client.post(
                 auth_url,
                 json=valid_credentials,
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
             assert response.status_code == 200
             tokens.append(response.json()["access_token"])
@@ -277,7 +253,7 @@ class TestSessionManagement:
             response = client.get(
                 f"{base_url}/orders",
                 headers={"Authorization": f"Bearer {auth_token}"},
-                params={"page": 1, "pageSize": 5}
+                params={"page": 1, "pageSize": 5},
             )
             assert response.status_code in [200, 401]
 
@@ -287,7 +263,7 @@ class TestSessionManagement:
         response = client.post(
             auth_url,
             json=valid_credentials,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         assert response.status_code == 200

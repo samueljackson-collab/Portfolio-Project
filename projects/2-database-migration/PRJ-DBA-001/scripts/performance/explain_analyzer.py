@@ -18,7 +18,9 @@ def summarize_node(node, depth=0, lines=None):
     total_cost = node.get("Total Cost", "?")
     plan_rows = node.get("Plan Rows", "?")
     actual_time = node.get("Actual Total Time", "?")
-    lines.append(f"{indent}- {node_type} | cost={total_cost} rows={plan_rows} time={actual_time}")
+    lines.append(
+        f"{indent}- {node_type} | cost={total_cost} rows={plan_rows} time={actual_time}"
+    )
 
     for child in node.get("Plans", []):
         summarize_node(child, depth + 1, lines)

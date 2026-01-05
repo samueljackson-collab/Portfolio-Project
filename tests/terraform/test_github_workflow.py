@@ -73,10 +73,10 @@ class TestWorkflowStructure:
         """Verify workflow has path filters for terraform files."""
         on_config = workflow["on"]
         has_path_filter = False
-        
+
         if "push" in on_config and isinstance(on_config["push"], dict):
             has_path_filter = "paths" in on_config["push"]
-        
+
         assert has_path_filter, "Workflow should filter on terraform path changes"
 
     def test_workflow_has_jobs(self, workflow):
@@ -179,7 +179,12 @@ class TestTerraformPlanJob:
         """Verify plan job runs terraform fmt."""
         job = workflow["jobs"]["terraform-plan"]
         steps = job.get("steps", [])
-        fmt_steps = [s for s in steps if "fmt" in s.get("name", "").lower() or "format" in s.get("name", "").lower()]
+        fmt_steps = [
+            s
+            for s in steps
+            if "fmt" in s.get("name", "").lower()
+            or "format" in s.get("name", "").lower()
+        ]
         assert len(fmt_steps) > 0
 
     def test_plan_job_runs_terraform_init(self, workflow):
@@ -200,7 +205,12 @@ class TestTerraformPlanJob:
         """Verify plan job runs terraform plan."""
         job = workflow["jobs"]["terraform-plan"]
         steps = job.get("steps", [])
-        plan_steps = [s for s in steps if "plan" in s.get("name", "").lower() and "terraform plan" in str(s.get("run", "")).lower()]
+        plan_steps = [
+            s
+            for s in steps
+            if "plan" in s.get("name", "").lower()
+            and "terraform plan" in str(s.get("run", "")).lower()
+        ]
         assert len(plan_steps) > 0
 
 
@@ -244,7 +254,10 @@ class TestPullRequestComment:
         job = workflow["jobs"]["terraform-plan"]
         steps = job.get("steps", [])
         for step in steps:
-            if "comment" in step.get("name", "").lower() and "pr" in step.get("name", "").lower():
+            if (
+                "comment" in step.get("name", "").lower()
+                and "pr" in step.get("name", "").lower()
+            ):
                 assert "if" in step
                 assert "pull_request" in step["if"]
 
@@ -277,14 +290,24 @@ class TestTerraformApplyJob:
         """Verify apply job downloads plan artifact."""
         job = workflow["jobs"]["terraform-apply"]
         steps = job.get("steps", [])
-        download_steps = [s for s in steps if "download" in s.get("name", "").lower() and "artifact" in s.get("name", "").lower()]
+        download_steps = [
+            s
+            for s in steps
+            if "download" in s.get("name", "").lower()
+            and "artifact" in s.get("name", "").lower()
+        ]
         assert len(download_steps) > 0
 
     def test_apply_job_runs_terraform_apply(self, workflow):
         """Verify apply job runs terraform apply."""
         job = workflow["jobs"]["terraform-apply"]
         steps = job.get("steps", [])
-        apply_steps = [s for s in steps if "apply" in s.get("name", "").lower() and "terraform apply" in str(s.get("run", "")).lower()]
+        apply_steps = [
+            s
+            for s in steps
+            if "apply" in s.get("name", "").lower()
+            and "terraform apply" in str(s.get("run", "")).lower()
+        ]
         assert len(apply_steps) > 0
 
 
@@ -295,7 +318,12 @@ class TestArtifacts:
         """Verify plan job uploads plan as artifact."""
         job = workflow["jobs"]["terraform-plan"]
         steps = job.get("steps", [])
-        upload_steps = [s for s in steps if "upload" in s.get("name", "").lower() and "artifact" in s.get("name", "").lower()]
+        upload_steps = [
+            s
+            for s in steps
+            if "upload" in s.get("name", "").lower()
+            and "artifact" in s.get("name", "").lower()
+        ]
         assert len(upload_steps) > 0
 
 
