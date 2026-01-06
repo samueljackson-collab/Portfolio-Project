@@ -56,7 +56,7 @@
       },
       {
         "type": "stat",
-        "title": "Alerts Acknowledged",
+        "title": "Pending Alerts",
         "datasource": "${DS_PROMETHEUS}",
         "targets": [
           {
