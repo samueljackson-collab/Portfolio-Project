@@ -37,8 +37,8 @@ if [ -z "$BUCKET_NAME" ] || [ -z "$TABLE_NAME" ] || [ -z "$ACCOUNT_ID" ] || [ -z
 fi
 
 # Validate AWS region format
-if ! echo "$AWS_REGION" | grep -qE '^[a-z]{2}-[a-z]+-[0-9]{1}$'; then
-  echo "❌ Error: Invalid AWS region format. Expected format like 'us-east-1'"
+if ! echo "$AWS_REGION" | grep -qE '^[a-z]{2}-[a-z]+-[0-9]+$'; then
+  echo "❌ Error: Invalid AWS region format. Expected format like 'us-east-1' or 'ap-southeast-1'"
   exit 1
 fi
 
@@ -63,7 +63,7 @@ echo "Processing template..."
 
 # Escape special characters for sed (/, &, \)
 escape_sed() {
-  echo "$1" | sed 's/[\/&]/\\&/g'
+  echo "$1" | sed 's/[\/&\\]/\\&/g'
 }
 
 BUCKET_NAME_ESCAPED=$(escape_sed "$BUCKET_NAME")

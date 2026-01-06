@@ -74,7 +74,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 extra={
                     'record_id': record['recordId'],
                     'error_type': 'JSONDecodeError',
-                    'data_sample': record['data'][:DATA_SAMPLE_LENGTH] if len(record['data']) > DATA_SAMPLE_LENGTH else record['data']
+                    'data_sample': record['data'][:DATA_SAMPLE_LENGTH]
                 }
             )
             output_records.append({
