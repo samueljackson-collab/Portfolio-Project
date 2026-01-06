@@ -1,6 +1,6 @@
 # Nginx Proxy Manager Configuration Summary
 
-Sanitized configuration overview for Nginx Proxy Manager (NPM). Full proxy host entries are stored in `proxy-hosts.yml`.
+Sanitized configuration overview for Nginx Proxy Manager (NPM). Full proxy host entries are stored in the original NPM backup/export (not committed to this repository).
 
 ## Core Settings
 - **Base URL:** `https://proxy.example.internal`
