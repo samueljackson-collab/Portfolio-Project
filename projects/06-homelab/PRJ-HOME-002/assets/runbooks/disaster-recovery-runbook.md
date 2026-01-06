@@ -57,6 +57,6 @@ Step-by-step guide for restoring core services after a cluster-impacting inciden
 4. Schedule follow-up review for root cause analysis.
 
 ## Reference
-- `assets/recovery/disaster-recovery-plan.md`
-- `assets/recovery/recovery-procedures/`
-- `assets/logs/backup-job-log.md`
+- Disaster Recovery Plan document
+- Detailed recovery procedures documentation
+- Backup and restore job logs
