@@ -118,6 +118,19 @@ This index guides you through the comprehensive analysis of the 25-project portf
 
 ---
 
+## Operational Guides (Canonical Sources)
+
+Use the documents below as the single source of truth for each operational area. Older, overlapping summaries are marked as historical snapshots in their files.
+
+- **Deployment**: [DEPLOYMENT.md](DEPLOYMENT.md)
+  - Historical snapshots: `DEPLOYMENT_READINESS.md`, `FOUNDATION_DEPLOYMENT_PLAN.md`
+- **Monitoring**: [docs/runbooks/observability-runbook.md](docs/runbooks/observability-runbook.md)
+  - Historical snapshot: `docs/adr/ADR-005-comprehensive-observability-strategy.md`
+- **Testing**: [TEST_SUMMARY.md](TEST_SUMMARY.md)
+  - Historical snapshots: `TEST_SUITE_SUMMARY.md`, `TEST_DOCUMENTATION_SUMMARY.md`, `TESTS_GENERATED.md`, `UNIT_TESTS_GENERATED.md`, `TEST_GENERATION_COMPLETE.md`
+
+---
+
 ## How to Use These Documents
 
 ### Scenario 1: "I need to explain the portfolio to someone"
@@ -372,4 +385,3 @@ All documents cross-reference each other with section names for easy navigation.
 **Total Pages (approx)**: 50+ pages  
 **Coverage**: All 25 projects  
 **Format**: Markdown (readable in any editor/viewer)
-
