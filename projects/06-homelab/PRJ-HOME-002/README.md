@@ -285,8 +285,6 @@ Creates production-ready VM template (ID 9000) with:
 ### Visuals & Evidence
 - [`service-screenshots.md`](assets/screenshots/service-screenshots.md) - Descriptions of captured Proxmox/NPM/TrueNAS views
 - [`reverse-proxy-dataflow.mmd`](assets/diagrams/reverse-proxy-dataflow.mmd) - TLS ingress and backend flow for core services
-- [`service-architecture.md`](assets/diagrams/service-architecture.md) - Service architecture diagram (Mermaid)
-- [`data-flow.md`](assets/diagrams/data-flow.md) - Request + data flow sequence diagram (Mermaid)
 
 ### Config Exports
 - [`vm-export-manifest.md`](assets/proxmox/exports/vm-export-manifest.md) - Proxmox VM export inventory
