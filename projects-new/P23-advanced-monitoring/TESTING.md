@@ -6,4 +6,7 @@ Automated commands:
 - pytest tests/test_otel_pipeline.py
 
 Manual validation:
-- Run domain-specific smoke check aligned to flow above.
+- Verify OpenTelemetry collector receives and forwards test metrics to backend
+- Validate canary alert thresholds fire correctly under simulated load
+- Confirm dashboards ingest and display test data end-to-end
+- Check that regional SLO burn-rate calculations match expected values
