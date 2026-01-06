@@ -37,8 +37,10 @@ if [ -z "$BUCKET_NAME" ] || [ -z "$TABLE_NAME" ] || [ -z "$ACCOUNT_ID" ] || [ -z
 fi
 
 # Validate AWS region format
-if ! echo "$AWS_REGION" | grep -qE '^[a-z]{2}-[a-z]+-[0-9]+$'; then
-  echo "❌ Error: Invalid AWS region format. Expected format like 'us-east-1' or 'ap-southeast-1'"
+# AWS regions follow pattern: 2-6 letters, one or more hyphen-separated words, hyphen, digits
+# Examples: us-east-1, us-gov-west-1, ap-northeast-1, me-south-1
+if ! echo "$AWS_REGION" | grep -qE '^[a-z]{2,6}(-[a-z]+)+-[0-9]+$'; then
+  echo "❌ Error: Invalid AWS region format. Expected format like 'us-east-1' or 'us-gov-west-1'"
   exit 1
 fi
 
@@ -72,13 +74,13 @@ ACCOUNT_ID_ESCAPED=$(escape_sed "$ACCOUNT_ID")
 TABLE_NAME_ESCAPED=$(escape_sed "$TABLE_NAME")
 PROJECT_NAME_ESCAPED=$(escape_sed "$PROJECT_NAME")
 
-sed "s/\${TFSTATE_BUCKET_NAME}/$BUCKET_NAME_ESCAPED/g" \
-    github_actions_ci_policy.json.template | \
-sed "s/\${AWS_REGION}/$AWS_REGION_ESCAPED/g" | \
-sed "s/\${AWS_ACCOUNT_ID}/$ACCOUNT_ID_ESCAPED/g" | \
-sed "s/\${TFSTATE_LOCK_TABLE}/$TABLE_NAME_ESCAPED/g" | \
-sed "s/\${PROJECT_NAME}/$PROJECT_NAME_ESCAPED/g" \
-    > github_actions_ci_policy.json
+# Process template with single sed command for efficiency
+sed -e "s/\${TFSTATE_BUCKET_NAME}/$BUCKET_NAME_ESCAPED/g" \
+    -e "s/\${AWS_REGION}/$AWS_REGION_ESCAPED/g" \
+    -e "s/\${AWS_ACCOUNT_ID}/$ACCOUNT_ID_ESCAPED/g" \
+    -e "s/\${TFSTATE_LOCK_TABLE}/$TABLE_NAME_ESCAPED/g" \
+    -e "s/\${PROJECT_NAME}/$PROJECT_NAME_ESCAPED/g" \
+    github_actions_ci_policy.json.template > github_actions_ci_policy.json
 
 echo "✓ Policy configured: github_actions_ci_policy.json"
 
