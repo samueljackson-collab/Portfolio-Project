@@ -23,7 +23,7 @@ Sanitized summary of Proxmox VM exports used for cold storage, migration validat
 ## Export Commands (Reference)
 ```bash
 # Export VM to NFS staging share
-vzdump 104 --compress zstd --storage truenas-nfs01 --mode stop 
+vzdump 104 --compress zstd --storage truenas-nfs01 --mode stop
 
 # Verify checksum
 sha256sum vm-104-wikijs-2025-10-28.vma.zst
