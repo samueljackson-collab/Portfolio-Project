@@ -51,7 +51,7 @@ Step-by-step guide for restoring core services after a cluster-impacting inciden
 - [ ] Monitoring dashboards show healthy state
 
 ## 6. Post-Recovery Actions
-1. Run `assets/automation/scripts/health-check.sh`.
+1. Run the platform health-check script (see automation tooling documentation).
 2. Document RTO/RPO results in `assets/logs/restore-test-results.md`.
 3. Capture incident summary in operations log.
 4. Schedule follow-up review for root cause analysis.
