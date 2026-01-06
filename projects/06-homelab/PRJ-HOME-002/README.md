@@ -285,6 +285,23 @@ Creates production-ready VM template (ID 9000) with:
 ### Visuals & Evidence
 - [`service-screenshots.md`](assets/screenshots/service-screenshots.md) - Descriptions of captured Proxmox/NPM/TrueNAS views
 - [`reverse-proxy-dataflow.mmd`](assets/diagrams/reverse-proxy-dataflow.mmd) - TLS ingress and backend flow for core services
+- [`service-architecture.md`](assets/diagrams/service-architecture.md) - Service architecture diagram (Mermaid)
+- [`data-flow.md`](assets/diagrams/data-flow.md) - Request + data flow sequence diagram (Mermaid)
+
+### Config Exports
+- [`vm-export-manifest.md`](assets/proxmox/exports/vm-export-manifest.md) - Proxmox VM export inventory
+- [`lxc-export-manifest.md`](assets/proxmox/exports/lxc-export-manifest.md) - Proxmox LXC export inventory
+- [`npm-config-summary.md`](assets/configs/nginx-proxy-manager/npm-config-summary.md) - Nginx Proxy Manager config summary
+- [`system-config-summary.md`](assets/configs/truenas/system-config-summary.md) - TrueNAS system config summary
+
+### Backup Evidence
+- [`backup-strategy.md`](assets/docs/backup-strategy.md) - 3-2-1 backup strategy and verification cadence
+- [`backup-sample-logs.md`](assets/logs/backup-sample-logs.md) - Sanitized backup/replication log excerpts
+- [`restore-test-results.md`](assets/logs/restore-test-results.md) - Quarterly restore test results
+
+### Runbooks
+- [`service-deployment-runbook.md`](assets/runbooks/service-deployment-runbook.md) - Service deployment steps
+- [`disaster-recovery-runbook.md`](assets/runbooks/disaster-recovery-runbook.md) - DR execution checklist
 
 ### Demo & Visualizations
 
