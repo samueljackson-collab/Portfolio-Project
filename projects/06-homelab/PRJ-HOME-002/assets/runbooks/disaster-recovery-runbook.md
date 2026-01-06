@@ -32,7 +32,7 @@ Step-by-step guide for restoring core services after a cluster-impacting inciden
    - Validate `ipa-healthcheck` and LDAP auth.
 2. **Nginx Proxy Manager**
    - Restore VM from PBS snapshot.
-   - Import proxy host config (`assets/configs/nginx-proxy-manager/proxy-hosts.yml`).
+   - Import proxy host config (see `assets/configs/nginx-proxy-manager/npm-config-summary.md`).
    - Confirm TLS certs and DNS resolution.
 3. **Wiki.js**
    - Restore VM from PBS snapshot.
