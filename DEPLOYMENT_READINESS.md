@@ -1,5 +1,7 @@
 # Deployment Readiness Report
 
+> **Historical snapshot**: This report captures Phase 1 readiness as of November 14, 2025. For the current deployment guidance, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 This guide validates the readiness of the portfolio platform (backend API, frontend, and monitoring stack) for deployment. It captures prerequisites, verification commands, and remediation checks gathered during Phase 1 of the deployment review.
 
 ## Prerequisites
