@@ -1,8 +1,8 @@
 # Testing
 
 Automated commands:
-- make lint-config
-- make test-rules
+- `make lint-config`
+- `make test-rules`
 - `python scripts/check_dashboards.py`
 
 Manual validation:
