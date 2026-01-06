@@ -37,9 +37,9 @@ if [ -z "$BUCKET_NAME" ] || [ -z "$TABLE_NAME" ] || [ -z "$ACCOUNT_ID" ] || [ -z
 fi
 
 # Validate AWS region format
-# AWS regions follow pattern: 2-6 letters, one or more hyphen-separated words, hyphen, digits
-# Examples: us-east-1, us-gov-west-1, ap-northeast-1, me-south-1
-if ! echo "$AWS_REGION" | grep -qE '^[a-z]{2,6}(-[a-z]+)+-[0-9]+$'; then
+# AWS regions follow pattern: exactly 2 letters, optional hyphen-separated parts with letters/numbers, hyphen, digits
+# Examples: us-east-1, us-gov-west-1, ap-northeast-1, cn-north-1
+if ! echo "$AWS_REGION" | grep -qE '^[a-z]{2}(-[a-z0-9]+)*-[0-9]+$'; then
   echo "❌ Error: Invalid AWS region format. Expected format like 'us-east-1' or 'us-gov-west-1'"
   exit 1
 fi
@@ -63,6 +63,13 @@ fi
 echo ""
 echo "Processing template..."
 
+# Check if template exists
+if [ ! -f "github_actions_ci_policy.json.template" ]; then
+  echo "❌ Error: Template file 'github_actions_ci_policy.json.template' not found"
+  echo "Please ensure you are running this script from the terraform/iam directory"
+  exit 1
+fi
+
 # Escape special characters for sed (/, &, \)
 escape_sed() {
   echo "$1" | sed 's/[\/&\\]/\\&/g'
@@ -75,12 +82,15 @@ TABLE_NAME_ESCAPED=$(escape_sed "$TABLE_NAME")
 PROJECT_NAME_ESCAPED=$(escape_sed "$PROJECT_NAME")
 
 # Process template with single sed command for efficiency
-sed -e "s/\${TFSTATE_BUCKET_NAME}/$BUCKET_NAME_ESCAPED/g" \
+if ! sed -e "s/\${TFSTATE_BUCKET_NAME}/$BUCKET_NAME_ESCAPED/g" \
     -e "s/\${AWS_REGION}/$AWS_REGION_ESCAPED/g" \
     -e "s/\${AWS_ACCOUNT_ID}/$ACCOUNT_ID_ESCAPED/g" \
     -e "s/\${TFSTATE_LOCK_TABLE}/$TABLE_NAME_ESCAPED/g" \
     -e "s/\${PROJECT_NAME}/$PROJECT_NAME_ESCAPED/g" \
-    github_actions_ci_policy.json.template > github_actions_ci_policy.json
+    github_actions_ci_policy.json.template > github_actions_ci_policy.json; then
+  echo "❌ Error: Failed to process template"
+  exit 1
+fi
 
 echo "✓ Policy configured: github_actions_ci_policy.json"
 
