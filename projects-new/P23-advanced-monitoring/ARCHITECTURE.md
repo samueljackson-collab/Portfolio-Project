@@ -9,4 +9,4 @@ Dependencies:
 - Grafana k6 Cloud account OR self-hosted Grafana for visualization.
 - OpenTelemetry Collector 0.88+ for trace/metric correlation.
 - Docker Compose or Kubernetes for collector deployment.
-- Env/config: see README for required secrets and endpoints.
+- Environment variables for k6 Cloud API tokens and target endpoints.
