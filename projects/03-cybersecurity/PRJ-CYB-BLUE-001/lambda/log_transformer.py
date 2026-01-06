@@ -19,6 +19,9 @@ from typing import Dict, List, Any
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Constants
+DATA_SAMPLE_LENGTH = 100  # Number of characters to include in error log samples
+
 # Common schema field names
 COMMON_SCHEMA = {
     "timestamp": "@timestamp",
@@ -71,7 +74,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 extra={
                     'record_id': record['recordId'],
                     'error_type': 'JSONDecodeError',
-                    'data_sample': record['data'][:100] if len(record['data']) > 100 else record['data']
+                    'data_sample': record['data'][:DATA_SAMPLE_LENGTH] if len(record['data']) > DATA_SAMPLE_LENGTH else record['data']
                 }
             )
             output_records.append({
