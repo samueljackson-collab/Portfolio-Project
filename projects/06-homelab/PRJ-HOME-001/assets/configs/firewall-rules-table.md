@@ -2,9 +2,9 @@
 
 | Rule ID | Source | Destination | Ports/Protocols | Action | Purpose |
 | --- | --- | --- | --- | --- | --- |
-| FW-001 | VLAN10 (Trusted) | WAN | 80, 443, 53 TCP/UDP | Allow | Standard internet access for trusted clients. |
-| FW-002 | VLAN20 (IoT) | WAN | 80, 443, 53 TCP/UDP | Allow | Restricted internet access for IoT devices. |
-| FW-003 | VLAN30 (Guest) | WAN | 80, 443, 53 TCP/UDP | Allow | Guest internet access only. |
+| FW-001 | VLAN10 (Trusted) | WAN | 80, 443 TCP, 53 TCP/UDP | Allow | Standard internet access for trusted clients. |
+| FW-002 | VLAN20 (IoT) | WAN | 80, 443 TCP, 53 TCP/UDP | Allow | Restricted internet access for IoT devices. |
+| FW-003 | VLAN30 (Guest) | WAN | 80, 443 TCP, 53 TCP/UDP | Allow | Guest internet access only. |
 | FW-004 | VLAN40 (Servers) | WAN | 80, 443, 123 TCP/UDP | Allow | Patch updates and time sync for servers. |
 | FW-005 | VLAN10 (Trusted) | VLAN40 (Servers) | 22, 443, 3389 TCP | Allow | Administrative access to server VLAN. |
 | FW-006 | VLAN10 (Trusted) | VLAN20 (IoT) | 5353 UDP, 443 TCP | Allow | mDNS + HTTPS control to IoT hubs only. |
