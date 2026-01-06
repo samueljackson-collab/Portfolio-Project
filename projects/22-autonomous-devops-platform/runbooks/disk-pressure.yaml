@@ -1,0 +1,66 @@
+# Disk Pressure Remediation Runbook
+# Handles disk pressure on Kubernetes nodes
+
+name: disk-pressure-remediation
+description: |
+  Remediates disk pressure alerts by:
+  1. Identifying large temporary files
+  2. Cleaning up unused container images
+  3. Purging old logs
+  4. Verifying disk space recovery
+
+triggers:
+  - "KubeNodeDiskPressure"
+  - "NodeDiskPressure"
+  - "DiskSpaceLow*"
+
+enabled: true
+cooldown: 600  # 10 minutes
+max_concurrent: 1
+
+labels:
+  category: infrastructure
+  severity: critical
+
+steps:
+  - name: check_disk_usage
+    type: shell
+    action:
+      command: "df -h / /var/lib/docker /var/lib/kubelet 2>/dev/null || df -h /"
+    timeout: 30
+
+  - name: identify_large_files
+    type: shell
+    action:
+      command: "find /var/log -type f -size +100M 2>/dev/null | head -20 || echo 'No large log files found'"
+    timeout: 60
+    continue_on_failure: true
+
+  - name: cleanup_old_logs
+    type: shell
+    action:
+      command: |
+        find /var/log -name '*.log' -mtime +7 -delete 2>/dev/null || true
+        find /var/log -name '*.gz' -mtime +3 -delete 2>/dev/null || true
+        journalctl --vacuum-time=3d 2>/dev/null || true
+    timeout: 120
+    continue_on_failure: true
+
+  - name: prune_docker_images
+    type: shell
+    action:
+      command: "docker system prune -af --filter 'until=24h' 2>/dev/null || crictl rmi --prune 2>/dev/null || echo 'Container cleanup skipped'"
+    timeout: 300
+    continue_on_failure: true
+
+  - name: verify_disk_space
+    type: shell
+    action:
+      command: "df -h / /var/lib/docker /var/lib/kubelet 2>/dev/null || df -h /"
+    timeout: 30
+
+  - name: notify_completion
+    type: notification
+    action:
+      channel: log
+      message: "Disk pressure remediation completed on node {{ event.labels.node }}"

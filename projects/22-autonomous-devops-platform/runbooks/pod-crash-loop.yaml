@@ -1,0 +1,68 @@
+# Pod CrashLoopBackOff Remediation Runbook
+# Handles pods stuck in CrashLoopBackOff
+
+name: pod-crash-loop-remediation
+description: |
+  Remediates pods in CrashLoopBackOff by:
+  1. Collecting pod logs for debugging
+  2. Deleting the problematic pod
+  3. Waiting for replacement
+  4. Verifying pod health
+  5. Escalating if issue persists
+
+triggers:
+  - "KubePodCrashLooping"
+  - "CrashLoopBackOff"
+  - "PodRestarting*"
+
+enabled: true
+cooldown: 180  # 3 minutes
+max_concurrent: 3
+
+labels:
+  category: availability
+  severity: high
+
+steps:
+  - name: collect_pod_logs
+    type: shell
+    action:
+      command: "kubectl logs {{ event.labels.pod }} -n {{ event.labels.namespace }} --tail=100 2>/dev/null || echo 'No logs available'"
+    timeout: 30
+    continue_on_failure: true
+
+  - name: describe_pod
+    type: shell
+    action:
+      command: "kubectl describe pod {{ event.labels.pod }} -n {{ event.labels.namespace }} 2>/dev/null || echo 'Pod not found'"
+    timeout: 30
+    continue_on_failure: true
+
+  - name: delete_crashing_pod
+    type: kubernetes
+    action:
+      operation: delete_pod
+      namespace: "{{ event.labels.namespace }}"
+      pod: "{{ event.labels.pod }}"
+    timeout: 60
+    retry: 1
+    retry_delay: 5
+
+  - name: wait_for_replacement
+    type: wait
+    action:
+      seconds: 30
+
+  - name: verify_new_pod
+    type: kubernetes
+    action:
+      operation: get_pods
+      namespace: "{{ event.labels.namespace }}"
+      selector: "app={{ event.labels.app }}"
+    timeout: 30
+
+  - name: notify_on_completion
+    type: notification
+    action:
+      channel: log
+      message: "Remediated CrashLoopBackOff for pod {{ event.labels.pod }} in {{ event.labels.namespace }}"

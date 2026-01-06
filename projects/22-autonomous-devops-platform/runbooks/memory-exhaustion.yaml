@@ -1,0 +1,76 @@
+# Memory Exhaustion Remediation Runbook
+# Handles OOMKilled and high memory usage
+
+name: memory-exhaustion-remediation
+description: |
+  Remediates memory exhaustion by:
+  1. Identifying memory-intensive pods
+  2. Restarting the affected deployment
+  3. Optionally scaling down non-critical workloads
+  4. Verifying memory recovery
+
+triggers:
+  - "KubeContainerOOMKilled"
+  - "ContainerOOMKilled"
+  - "HighMemoryUsage"
+  - "MemoryPressure*"
+
+enabled: true
+cooldown: 300
+max_concurrent: 2
+
+labels:
+  category: performance
+  severity: high
+
+steps:
+  - name: check_memory_usage
+    type: shell
+    action:
+      command: "kubectl top pods -n {{ event.labels.namespace }} --sort-by=memory 2>/dev/null | head -10 || echo 'Metrics unavailable'"
+    timeout: 30
+    continue_on_failure: true
+
+  - name: get_pod_events
+    type: shell
+    action:
+      command: "kubectl get events -n {{ event.labels.namespace }} --field-selector reason=OOMKilled --sort-by='.lastTimestamp' 2>/dev/null | tail -10"
+    timeout: 30
+    continue_on_failure: true
+
+  - name: restart_affected_deployment
+    type: kubernetes
+    action:
+      operation: restart
+      namespace: "{{ event.labels.namespace }}"
+      deployment: "{{ event.labels.deployment }}"
+    timeout: 120
+    retry: 1
+    retry_delay: 10
+    condition: "{{ event.labels.deployment }} is not None"
+
+  - name: wait_for_restart
+    type: wait
+    action:
+      seconds: 45
+
+  - name: verify_pod_health
+    type: kubernetes
+    action:
+      operation: get_pods
+      namespace: "{{ event.labels.namespace }}"
+      selector: "app={{ event.labels.app }}"
+    timeout: 30
+
+  - name: check_memory_after
+    type: shell
+    action:
+      command: "kubectl top pods -n {{ event.labels.namespace }} --sort-by=memory 2>/dev/null | head -5 || echo 'Metrics unavailable'"
+    timeout: 30
+    continue_on_failure: true
+
+  - name: notify_completion
+    type: notification
+    action:
+      channel: log
+      message: "Memory exhaustion remediation completed for {{ event.labels.deployment }} in {{ event.labels.namespace }}"
