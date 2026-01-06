@@ -3,10 +3,13 @@ kind: Kustomization
 
 resources:
   - serviceaccount.yaml
+  - configmap.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml
   - hpa.yaml
+  - pdb.yaml
+  - networkpolicy.yaml
 
 commonLabels:
   app: k8s-cicd-demo
