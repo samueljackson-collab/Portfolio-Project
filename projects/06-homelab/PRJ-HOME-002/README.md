@@ -293,12 +293,10 @@ Creates production-ready VM template (ID 9000) with:
 - [`system-config-summary.md`](assets/configs/truenas/system-config-summary.md) - TrueNAS system config summary
 
 ### Backup Evidence
-- [`backup-strategy.md`](assets/docs/backup-strategy.md) - 3-2-1 backup strategy and verification cadence
 - [`backup-sample-logs.md`](assets/logs/backup-sample-logs.md) - Sanitized backup/replication log excerpts
 - [`restore-test-results.md`](assets/logs/restore-test-results.md) - Quarterly restore test results
 
 ### Runbooks
-- [`service-deployment-runbook.md`](assets/runbooks/service-deployment-runbook.md) - Service deployment steps
 - [`disaster-recovery-runbook.md`](assets/runbooks/disaster-recovery-runbook.md) - DR execution checklist
 
 ### Demo & Visualizations
