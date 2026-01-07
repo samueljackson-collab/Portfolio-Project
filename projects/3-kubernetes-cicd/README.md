@@ -3,15 +3,153 @@
 ## Documentation
 For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
 
-
 ## 📊 Portfolio Status Board
 
 🟢 Done · 🟠 In Progress · 🔵 Planned
 
 **Current Status:** 🟢 Done (Implemented)
 
+---
 
-Declarative delivery pipeline with GitHub Actions, ArgoCD, and progressive delivery strategies.
+## 📋 Overview
+
+A production-ready CI/CD pipeline for deploying containerized applications to Kubernetes, featuring:
+
+- **Flask REST API** with health checks, metrics, and database connectivity
+- **GitHub Actions** for automated testing, building, and deployment
+- **ArgoCD** for GitOps-based continuous delivery
+- **Argo Rollouts** for canary deployments (10% → 30% → 60% → 100%)
+- **Security scanning** with Trivy (CVE detection) and Dockle (container best practices)
+- **Kustomize** for environment-specific configurations
+
+## 🚀 Quick Start
+
+### Run Locally
+
+```bash
+# Navigate to project directory
+cd projects/3-kubernetes-cicd
+
+# Install dependencies
+pip install -r app/requirements.txt
+
+# Initialize database (optional)
+python app/database.py
+
+# Run the application
+python app/main.py
+
+# Test endpoints
+curl http://localhost:8080/health
+curl http://localhost:8080/api/v1/status
+curl http://localhost:8080/api/v1/config
+```
+
+### Run with Docker
+
+```bash
+# Build image
+docker build -t k8s-cicd-demo .
+
+# Run container
+docker run -p 8080:8080 k8s-cicd-demo
+
+# Test
+curl http://localhost:8080/health
+```
+
+### Deploy to Kubernetes
+
+```bash
+# Using Kustomize
+kubectl apply -k k8s/base
+
+# Wait for deployment
+kubectl rollout status deployment/k8s-cicd-demo
+
+# Run smoke tests
+./scripts/smoke-test.sh http://localhost:8080
+```
+
+## 📁 Project Structure
+
+```
+projects/3-kubernetes-cicd/
+├── app/                          # Flask application
+│   ├── main.py                   # Main application with API endpoints
+│   ├── database.py               # SQLAlchemy models and CRUD operations
+│   └── requirements.txt          # Python dependencies
+├── k8s/                          # Kubernetes manifests
+│   ├── base/                     # Base Kustomize configuration
+│   │   ├── deployment.yaml       # Standard deployment
+│   │   ├── rollout.yaml          # Argo Rollouts (canary)
+│   │   ├── service.yaml          # ClusterIP service
+│   │   ├── ingress.yaml          # Ingress configuration
+│   │   ├── hpa.yaml              # Horizontal Pod Autoscaler
+│   │   ├── networkpolicy.yaml    # Network security policies
+│   │   ├── secret.yaml           # Secrets template
+│   │   └── kustomization.yaml    # Kustomize config
+│   └── overlays/                 # Environment-specific overlays
+│       └── production/           # Production configuration
+├── .github/workflows/
+│   └── ci-cd.yaml                # GitHub Actions pipeline
+├── scripts/
+│   ├── smoke-test.sh             # Post-deployment smoke tests
+│   └── load-test.py              # Locust load testing
+├── argocd/
+│   └── application.yaml          # ArgoCD application manifest
+├── tests/                        # Test suite
+├── Dockerfile                    # Multi-stage Docker build
+└── README.md                     # This file
+```
+
+## 🔌 API Endpoints
+
+### Health & Status
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Liveness probe - returns health status |
+| `/ready` | GET | Readiness probe - checks if app is ready |
+| `/metrics` | GET | Prometheus-format metrics |
+| `/api/v1/status` | GET | Application status, version, and system info |
+| `/api/v1/config` | GET | Non-sensitive configuration settings |
+
+### Core API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Home endpoint with pod info |
+| `/api/info` | GET | Application metadata |
+| `/api/echo` | POST | Echo back JSON payload |
+
+### Tasks API (Database Demo)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/tasks` | GET | List all tasks |
+| `/api/v1/tasks` | POST | Create a new task |
+| `/api/v1/tasks/<id>` | GET | Get task by ID |
+| `/api/v1/tasks/<id>` | PUT | Update task |
+| `/api/v1/tasks/<id>` | DELETE | Delete task |
+
+### Example Requests
+
+```bash
+# Get application status
+curl http://localhost:8080/api/v1/status | jq
+
+# Get configuration
+curl http://localhost:8080/api/v1/config | jq
+
+# Create a task
+curl -X POST http://localhost:8080/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Deploy to production", "priority": "high"}'
+
+# List tasks
+curl http://localhost:8080/api/v1/tasks | jq
+```
 
 ## Contents
 - `pipelines/github-actions.yaml` — build, test, scan, and progressive delivery workflow.
