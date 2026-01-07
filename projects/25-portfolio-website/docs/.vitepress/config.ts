@@ -3,10 +3,27 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Sam Jackson - Enterprise Portfolio',
   description: 'Technical portfolio showcasing 25 enterprise-grade projects across Infrastructure, AI/ML, Security, and Emerging Technologies',
+  lang: 'en-US',
+
+  // Sitemap generation
+  sitemap: {
+    hostname: 'https://portfolio.samjackson.dev'
+  },
 
   head: [
     ['meta', { name: 'author', content: 'Sam Jackson' }],
-    ['meta', { name: 'keywords', content: 'DevOps, Cloud Architecture, AWS, Kubernetes, Machine Learning, Cybersecurity, Portfolio' }]
+    ['meta', { name: 'keywords', content: 'DevOps, Cloud Architecture, AWS, Kubernetes, Machine Learning, Cybersecurity, Portfolio' }],
+    ['meta', { name: 'theme-color', content: '#3eaf7c' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: 'Sam Jackson - Enterprise Portfolio' }],
+    ['meta', { property: 'og:description', content: 'Technical portfolio showcasing 25 enterprise-grade projects' }],
+    ['meta', { property: 'og:image', content: '/portfolio-og.png' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
+    // Performance hints
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' }]
   ],
 
   themeConfig: {
@@ -116,6 +133,33 @@ export default defineConfig({
       light: 'github-light',
       dark: 'github-dark'
     },
-    lineNumbers: true
-  }
+    lineNumbers: true,
+    // Enable code copy button
+    config: (md) => {
+      // Custom markdown-it plugins can be added here
+    }
+  },
+
+  // Build configuration
+  vite: {
+    build: {
+      minify: 'terser',
+      chunkSizeWarningLimit: 1000
+    },
+    // Enable CSS code splitting
+    css: {
+      devSourcemap: true
+    }
+  },
+
+  // Last updated timestamp
+  lastUpdated: true,
+
+  // Clean URLs (no .html extension)
+  cleanUrls: true,
+
+  // Ignore dead links during build (for development)
+  ignoreDeadLinks: [
+    /^https?:\/\/localhost/,
+  ]
 })
