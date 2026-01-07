@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  quantum-optimizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quantum-optimizer
+    ports:
+      - "8000:8000"
+    environment:
+      - SOLVER_TYPE=hybrid
+      - QUANTUM_BACKEND=local_simulator
+      - QUANTUM_QUBITS=8
+      - QUANTUM_SHOTS=1024
+      - LOG_LEVEL=INFO
+      - IBM_QUANTUM_TOKEN=${IBM_QUANTUM_TOKEN:-}
+      - AWS_BATCH_ENABLED=false
+    volumes:
+      - ./config:/app/config:ro
+      - optimization-results:/app/results
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: quantum-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: quantum-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=quantum123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: quantum-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+volumes:
+  optimization-results:
+  prometheus-data:
+  grafana-data:
+  redis-data:
