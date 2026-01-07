@@ -1,5 +1,5 @@
 # Multi-stage build for production image
-FROM python:3.11-slim AS builder
+FROM python:3.14-slim AS builder
 WORKDIR /app
 
 # Install system dependencies
@@ -13,7 +13,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Final production image
-FROM python:3.11-slim
+FROM python:3.14-slim
 WORKDIR /app
 
 # Create non-root user for security
