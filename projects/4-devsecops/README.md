@@ -18,7 +18,7 @@ Security-first CI pipeline with SBOM generation, container scanning, and policy 
 | --- | --- |
 | Live URL | `https://4-devsecops.staging.portfolio.example.com` |
 | DNS | `4-devsecops.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
-| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `terraform/`, `infra/`, or `deploy/` for this project) |
+| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `pipelines/` for this project) |
 
 ### Deployment automation
 - **CI/CD:** GitHub Actions [`/.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`/.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
