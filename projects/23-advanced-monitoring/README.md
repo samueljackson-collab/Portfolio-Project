@@ -24,13 +24,16 @@ Enterprise-grade monitoring and observability stack featuring Prometheus, Grafan
 | DNS | `23-advanced-monitoring.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
 | Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `terraform/`, `infra/`, or `deploy/` for this project) |
 
+For detailed deployment status and verification steps, see [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md).
+
 ### Deployment automation
 - **CI/CD:** GitHub Actions [`/.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`/.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
 - **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
 
 ### Monitoring
-- **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)
-- **Grafana:** `https://grafana.staging.portfolio.example.com` (dashboard JSON: `grafana/dashboards/*.json`)
+- **Prometheus:** `https://monitoring.example.com/prometheus` (scrape config: `prometheus/prometheus.yml`)
+- **Grafana:** `https://monitoring.example.com/grafana` (dashboard JSON: `grafana/dashboards/*.json`)
+- **Alertmanager:** `https://monitoring.example.com/alertmanager` (routing config: `alertmanager/alertmanager.yml`)
 
 ### Live deployment screenshots
 ![Live deployment dashboard](../../assets/screenshots/live-deployment-placeholder.svg)
