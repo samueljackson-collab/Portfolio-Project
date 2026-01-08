@@ -86,3 +86,9 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "acm_certificate_arn" {
+  description = "ARN of the ACM certificate for HTTPS. Leave empty for HTTP only."
+  type        = string
+  default     = ""
+}
