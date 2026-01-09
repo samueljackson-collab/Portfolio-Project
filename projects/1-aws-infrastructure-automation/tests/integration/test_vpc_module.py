@@ -21,7 +21,6 @@ import pytest
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional
 
 
 # Test configuration
