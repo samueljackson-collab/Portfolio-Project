@@ -44,13 +44,197 @@ This project provisions a production-ready AWS environment with multiple impleme
 - Deliver static assets via S3 with global distribution through CloudFront.
 - Offer interchangeable infrastructure definitions so the same outcome can be reached with different toolchains.
 
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Public Subnets"
+        ALB[Application Load Balancer]
+        NAT[NAT Gateways]
+    end
+
+    subgraph "Private Subnets"
+        ASG[Auto Scaling Group]
+        EKS[EKS Cluster]
+    end
+
+    subgraph "Database Subnets"
+        RDS[(RDS PostgreSQL)]
+        RDS_REPLICA[(Read Replica)]
+    end
+
+    subgraph "Edge"
+        CF[CloudFront CDN]
+        S3[S3 Static Assets]
+        WAF[AWS WAF]
+    end
+
+    subgraph "Monitoring"
+        CW[CloudWatch]
+        SNS[SNS Alerts]
+    end
+
+    Internet((Internet)) --> WAF --> CF
+    CF --> S3
+    CF --> ALB
+    ALB --> ASG
+    ALB --> EKS
+    ASG --> NAT --> Internet
+    ASG --> RDS
+    EKS --> RDS
+    RDS --> RDS_REPLICA
+    ASG --> CW
+    RDS --> CW
+    CW --> SNS
+```
+
+## CLI Usage
+
+The project includes a Python CLI (`src/main.py`) for managing infrastructure deployments:
+
+```bash
+# Plan infrastructure changes
+./src/main.py plan --environment dev
+./src/main.py plan --environment staging --target module.networking
+
+# Apply infrastructure
+./src/main.py apply --environment production --auto-approve
+
+# Validate Terraform configuration
+./src/main.py validate
+
+# Estimate costs with Infracost
+./src/main.py cost --environment dev
+./src/main.py cost --environment staging --compare  # Compare to baseline
+
+# View deployment status
+./src/main.py status --environment production
+
+# Destroy infrastructure (with confirmation)
+./src/main.py destroy --environment dev
+```
+
+### CLI Commands
+
+| Command | Description | Key Options |
+|---------|-------------|-------------|
+| `plan` | Generate Terraform execution plan | `--environment`, `--target`, `--out` |
+| `apply` | Apply infrastructure changes | `--environment`, `--auto-approve`, `--target` |
+| `validate` | Validate Terraform configuration | None |
+| `cost` | Estimate infrastructure costs | `--environment`, `--compare`, `--save-baseline` |
+| `destroy` | Destroy infrastructure | `--environment`, `--auto-approve` |
+| `status` | Show deployment status | `--environment` |
+
 ## Contents
-- `terraform/` — Primary IaC implementation using community modules and environment-specific variables (VPC, ALB, Auto Scaling Group, EKS, RDS, S3 + CloudFront).
-- `cdk/` — Python-based AWS CDK app that mirrors the Terraform footprint and highlights programmatic constructs.
-- `pulumi/` — Pulumi project using Python for multi-cloud-friendly infrastructure authoring.
-- `scripts/` — Helper scripts for planning, deployment, validation, and teardown workflows.
+- `terraform/` — Primary IaC implementation with modular architecture (VPC, ALB, Auto Scaling Group, EKS, RDS, S3 + CloudFront).
+- `terraform/modules/` — Reusable Terraform modules (networking, compute, database, storage, security, monitoring).
+- `cloudwatch/` — CloudWatch dashboard JSON definitions and import scripts.
+- `cdk/` — Python-based AWS CDK app that mirrors the Terraform footprint.
+- `pulumi/` — Pulumi project using Python for multi-cloud-friendly infrastructure.
+- `src/` — Python CLI for infrastructure management.
+- `tests/` — Integration tests for infrastructure validation.
 
 Each implementation aligns with the runbooks described in the Wiki.js guide so the documentation, automation, and validation steps can be exercised end-to-end.
+
+## Terraform Modules
+
+The project uses a modular Terraform architecture:
+
+| Module | Description | Key Resources |
+|--------|-------------|---------------|
+| **networking** | VPC with multi-AZ subnets | VPC, Subnets, NAT Gateways, VPC Endpoints, Flow Logs |
+| **compute** | Application layer | ALB, Auto Scaling Group, Launch Template |
+| **database** | Data tier | RDS PostgreSQL, Read Replicas, CloudWatch Alarms |
+| **storage** | Static assets | S3, CloudFront, Origin Access Identity |
+| **security** | Security controls | IAM Roles, KMS Keys, WAF, Secrets Manager |
+| **monitoring** | Observability | CloudWatch Dashboards, Alarms, SNS Topics |
+
+### Module Usage Example
+
+```hcl
+module "networking" {
+  source = "./modules/networking"
+
+  environment         = "production"
+  vpc_cidr           = "10.0.0.0/16"
+  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  single_nat_gateway = false
+  enable_flow_logs   = true
+}
+
+module "database" {
+  source = "./modules/database"
+
+  environment          = "production"
+  vpc_id              = module.networking.vpc_id
+  database_subnet_ids = module.networking.database_subnet_ids
+  instance_class      = "db.r6g.large"
+  multi_az            = true
+  enable_read_replica = true
+}
+```
+
+## Integration Tests
+
+Run infrastructure validation tests:
+
+```bash
+# Run all integration tests
+pytest tests/integration/ -v
+
+# Run VPC module tests
+pytest tests/integration/test_vpc_module.py -v
+
+# Run RDS module tests
+pytest tests/integration/test_rds_module.py -v
+
+# Run with specific markers
+pytest tests/integration/ -m "not slow" -v
+```
+
+### Test Coverage
+
+- **VPC Module**: Subnet CIDR validation, NAT gateway configuration, route table setup
+- **RDS Module**: Multi-AZ deployment, encryption settings, security group rules
+- **Security Best Practices**: Flow logs enabled, no public subnets for databases
+
+## Cost Estimation
+
+Estimate infrastructure costs using Infracost:
+
+```bash
+# Basic cost estimate
+./terraform/scripts/cost-estimate.sh dev
+
+# Compare against baseline
+./terraform/scripts/cost-estimate.sh staging --compare
+
+# Save current costs as baseline
+./terraform/scripts/cost-estimate.sh production --save-baseline
+
+# Output in different formats
+./terraform/scripts/cost-estimate.sh dev --format json
+```
+
+Cost estimation is integrated into the CI/CD pipeline and posts cost diffs on pull requests.
+
+## CI/CD Pipeline
+
+The GitHub Actions workflow includes:
+
+1. **Terraform Validation** - Format check and validate
+2. **Security Scanning** - Checkov for IaC security analysis
+3. **Cost Estimation** - Infracost for cost impact analysis
+4. **Plan Generation** - Terraform plan with PR comments
+5. **Apply** - Automated apply on main branch (production)
+
+```yaml
+# Trigger workflow
+git push origin feature/my-change
+
+# View workflow status
+gh run list --workflow=terraform.yml
+```
 
 ## Footprint Highlights
 - Internet-facing Application Load Balancer with target group health checks and deregistration protections.
