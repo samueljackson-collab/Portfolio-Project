@@ -473,12 +473,12 @@ class DisasterRecoveryManager:
     def _promote_replica(self, target_region: str) -> bool:
         """Promote read replica in target region."""
         region = self.regions[target_region]
-        aws = AWSClient(region.region_code)
 
         db_identifier = region.rds_endpoint.split('.')[0]
         logger.info(f"Promoting read replica: {db_identifier}")
 
         # In production:
+        # aws = AWSClient(region.region_code)
         # aws.promote_read_replica(db_identifier)
 
         # Wait for promotion to complete
