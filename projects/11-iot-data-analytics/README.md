@@ -4,6 +4,25 @@
 For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
 
 
+## Live Deployment
+| Detail | Value |
+| --- | --- |
+| Live URL | `https://11-iot-data-analytics.staging.portfolio.example.com` |
+| DNS | `11-iot-data-analytics.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
+| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `terraform/`, `infra/`, or `deploy/` for this project) |
+
+### Deployment automation
+- **CI/CD:** GitHub Actions [`/.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`/.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
+- **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
+
+### Monitoring
+- **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)
+- **Grafana:** `https://grafana.staging.portfolio.example.com` (dashboard JSON: `grafana/dashboards/*.json`)
+
+### Live deployment screenshots
+![Live deployment dashboard](../../assets/screenshots/live-deployment-placeholder.svg)
+
+
 ## 📊 Portfolio Status Board
 
 🟢 Done · 🟠 In Progress · 🔵 Planned
