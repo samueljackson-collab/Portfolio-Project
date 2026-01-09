@@ -1,1 +1,14 @@
+# Kubernetes operator framework
 kopf>=1.37
+
+# Kubernetes client
+kubernetes>=28.1
+
+# Async support
+aiohttp>=3.9
+
+# Monitoring
+prometheus-client>=0.18
+
+# Utilities
+pyyaml>=6.0

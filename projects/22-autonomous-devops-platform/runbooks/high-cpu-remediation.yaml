@@ -1,0 +1,69 @@
+# High CPU Remediation Runbook
+# Automatically responds to high CPU alerts
+
+name: high-cpu-remediation
+description: |
+  Automatically remediates high CPU usage alerts by:
+  1. Checking current pod count
+  2. Scaling up the deployment
+  3. Verifying the scale operation
+  4. Sending notification
+
+triggers:
+  - "HighCPUUsage"
+  - "CPUThrottling"
+  - "ContainerCPUHigh*"
+
+enabled: true
+cooldown: 300  # 5 minutes
+max_concurrent: 2
+
+labels:
+  category: performance
+  severity: high
+
+steps:
+  - name: check_current_replicas
+    type: kubernetes
+    action:
+      operation: get_pods
+      namespace: "{{ event.labels.namespace }}"
+      selector: "app={{ event.labels.service }}"
+    timeout: 30
+
+  - name: scale_up_deployment
+    type: kubernetes
+    action:
+      operation: scale
+      namespace: "{{ event.labels.namespace }}"
+      deployment: "{{ event.labels.service }}"
+      replicas: 5
+    timeout: 60
+    retry: 2
+    retry_delay: 10
+    rollback:
+      type: kubernetes
+      action:
+        operation: scale
+        namespace: "{{ event.labels.namespace }}"
+        deployment: "{{ event.labels.service }}"
+        replicas: 3
+
+  - name: wait_for_scale
+    type: wait
+    action:
+      seconds: 30
+
+  - name: verify_scale
+    type: kubernetes
+    action:
+      operation: get_pods
+      namespace: "{{ event.labels.namespace }}"
+      selector: "app={{ event.labels.service }}"
+    timeout: 30
+
+  - name: send_notification
+    type: notification
+    action:
+      channel: log
+      message: "Scaled {{ event.labels.service }} in {{ event.labels.namespace }} due to high CPU"
