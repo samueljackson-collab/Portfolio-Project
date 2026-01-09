@@ -55,7 +55,9 @@ async def test_ransomware_simulation_sequence(authenticated_client):
     assert simulate.status_code == 200
     events = simulate.json()["events"]
     assert len(events) >= 5
-    assert [event["sequence"] for event in events] == sorted(event["sequence"] for event in events)
+    assert [event["sequence"] for event in events] == sorted(
+        event["sequence"] for event in events
+    )
 
 
 @pytest.mark.asyncio
@@ -67,7 +69,9 @@ async def test_malware_analysis_sets_status(authenticated_client):
     assert sample_resp.status_code == 201
     sample_id = sample_resp.json()["id"]
 
-    analyze_resp = await authenticated_client.post(f"/malware/samples/{sample_id}/analyze")
+    analyze_resp = await authenticated_client.post(
+        f"/malware/samples/{sample_id}/analyze"
+    )
     assert analyze_resp.status_code == 200
     body = analyze_resp.json()
     assert body["sample"]["status"] == "analyzed"
@@ -78,7 +82,10 @@ async def test_malware_analysis_sets_status(authenticated_client):
 async def test_threat_hunting_promotion_creates_rule(authenticated_client):
     hypothesis = await authenticated_client.post(
         "/threat-hunting/hypotheses",
-        json={"title": "Suspicious PowerShell", "description": "Investigate remote sessions"},
+        json={
+            "title": "Suspicious PowerShell",
+            "description": "Investigate remote sessions",
+        },
     )
     hypothesis_id = hypothesis.json()["id"]
     finding = await authenticated_client.post(
@@ -87,7 +94,9 @@ async def test_threat_hunting_promotion_creates_rule(authenticated_client):
     )
     finding_id = finding.json()["id"]
 
-    promoted = await authenticated_client.post(f"/threat-hunting/findings/{finding_id}/promote")
+    promoted = await authenticated_client.post(
+        f"/threat-hunting/findings/{finding_id}/promote"
+    )
     assert promoted.status_code == 200
     assert promoted.json()["source_finding_id"] == finding_id
 

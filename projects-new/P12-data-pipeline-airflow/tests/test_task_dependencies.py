@@ -11,7 +11,7 @@ import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import DAGs
 from src.dags.etl_extract_data import dag as extract_dag
@@ -40,7 +40,7 @@ class TestExtractDAGDependencies(unittest.TestCase):
         self.assertIn(
             "extract_from_source",
             upstream_ids,
-            "validate_extracted_data should depend on extract_from_source"
+            "validate_extracted_data should depend on extract_from_source",
         )
 
     def test_notify_task_depends_on_validate(self):
@@ -51,7 +51,7 @@ class TestExtractDAGDependencies(unittest.TestCase):
         self.assertIn(
             "validate_extracted_data",
             upstream_ids,
-            "notify_extraction_complete should depend on validate_extracted_data"
+            "notify_extraction_complete should depend on validate_extracted_data",
         )
 
     def test_linear_dependency_chain(self):
@@ -93,7 +93,7 @@ class TestTransformDAGDependencies(unittest.TestCase):
         self.assertIn(
             "clean_data",
             upstream_ids,
-            "apply_transformations should depend on clean_data"
+            "apply_transformations should depend on clean_data",
         )
 
     def test_quality_check_depends_on_transform(self):
@@ -104,7 +104,7 @@ class TestTransformDAGDependencies(unittest.TestCase):
         self.assertIn(
             "apply_transformations",
             upstream_ids,
-            "check_data_quality should depend on apply_transformations"
+            "check_data_quality should depend on apply_transformations",
         )
 
     def test_branch_depends_on_quality_check(self):
@@ -115,7 +115,7 @@ class TestTransformDAGDependencies(unittest.TestCase):
         self.assertIn(
             "check_data_quality",
             upstream_ids,
-            "decide_quality_branch should depend on check_data_quality"
+            "decide_quality_branch should depend on check_data_quality",
         )
 
     def test_branch_leads_to_two_paths(self):
@@ -127,7 +127,7 @@ class TestTransformDAGDependencies(unittest.TestCase):
         self.assertEqual(
             downstream_ids,
             expected_downstream,
-            "Branch task should lead to quality_alert and notify_transform_complete"
+            "Branch task should lead to quality_alert and notify_transform_complete",
         )
 
     def test_sequential_chain(self):
@@ -174,7 +174,7 @@ class TestLoadDAGDependencies(unittest.TestCase):
         self.assertEqual(
             upstream_ids,
             expected_upstream,
-            "refresh_warehouse_views should depend on both load tasks"
+            "refresh_warehouse_views should depend on both load tasks",
         )
 
     def test_validate_depends_on_refresh(self):
@@ -185,7 +185,7 @@ class TestLoadDAGDependencies(unittest.TestCase):
         self.assertIn(
             "refresh_warehouse_views",
             upstream_ids,
-            "validate_warehouse_load should depend on refresh_warehouse_views"
+            "validate_warehouse_load should depend on refresh_warehouse_views",
         )
 
     def test_notify_depends_on_validate(self):
@@ -196,7 +196,7 @@ class TestLoadDAGDependencies(unittest.TestCase):
         self.assertIn(
             "validate_warehouse_load",
             upstream_ids,
-            "notify_load_complete should depend on validate_warehouse_load"
+            "notify_load_complete should depend on validate_warehouse_load",
         )
 
     def test_fan_in_pattern(self):
@@ -231,7 +231,7 @@ class TestAnalyticsDAGDependencies(unittest.TestCase):
             self.assertEqual(
                 len(task.upstream_list),
                 0,
-                f"{task_id} should have no upstream dependencies"
+                f"{task_id} should have no upstream dependencies",
             )
 
     def test_trend_analysis_depends_on_kpis(self):
@@ -242,7 +242,7 @@ class TestAnalyticsDAGDependencies(unittest.TestCase):
         self.assertIn(
             "calculate_kpis",
             upstream_ids,
-            "generate_trend_analysis should depend on calculate_kpis"
+            "generate_trend_analysis should depend on calculate_kpis",
         )
 
     def test_trend_analysis_depends_on_other_analytics(self):
@@ -259,7 +259,7 @@ class TestAnalyticsDAGDependencies(unittest.TestCase):
         self.assertEqual(
             upstream_ids,
             expected_upstream,
-            "generate_trend_analysis should depend on all analytics tasks"
+            "generate_trend_analysis should depend on all analytics tasks",
         )
 
     def test_report_depends_on_trend_analysis(self):
@@ -270,7 +270,7 @@ class TestAnalyticsDAGDependencies(unittest.TestCase):
         self.assertIn(
             "generate_trend_analysis",
             upstream_ids,
-            "generate_report should depend on generate_trend_analysis"
+            "generate_report should depend on generate_trend_analysis",
         )
 
     def test_publish_depends_on_report(self):
@@ -281,7 +281,7 @@ class TestAnalyticsDAGDependencies(unittest.TestCase):
         self.assertIn(
             "generate_report",
             upstream_ids,
-            "publish_report should depend on generate_report"
+            "publish_report should depend on generate_report",
         )
 
     def test_notify_depends_on_publish(self):
@@ -292,7 +292,7 @@ class TestAnalyticsDAGDependencies(unittest.TestCase):
         self.assertIn(
             "publish_report",
             upstream_ids,
-            "send_completion_notification should depend on publish_report"
+            "send_completion_notification should depend on publish_report",
         )
 
     def test_fan_out_to_fan_in_pattern(self):
@@ -336,8 +336,7 @@ class TestDependencyConsistency(unittest.TestCase):
         for dag_name, dag in self.dags.items():
             for task in dag.tasks:
                 self.assertIsNotNone(
-                    task.owner,
-                    f"Task {task.task_id} in {dag_name} has no owner"
+                    task.owner, f"Task {task.task_id} in {dag_name} has no owner"
                 )
 
     def test_all_tasks_have_retries_configured(self):
@@ -348,7 +347,7 @@ class TestDependencyConsistency(unittest.TestCase):
                 self.assertGreaterEqual(
                     task.retries,
                     0,
-                    f"Task {task.task_id} in {dag_name} has invalid retries"
+                    f"Task {task.task_id} in {dag_name} has invalid retries",
                 )
 
 

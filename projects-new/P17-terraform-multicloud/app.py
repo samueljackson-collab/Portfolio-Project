@@ -17,7 +17,10 @@ def mock_plan() -> dict:
 
 
 def mock_apply(plan: dict) -> dict:
-    return {"status": "applied", "resources": sum(len(v["actions"]) for v in plan.values())}
+    return {
+        "status": "applied",
+        "resources": sum(len(v["actions"]) for v in plan.values()),
+    }
 
 
 def main():

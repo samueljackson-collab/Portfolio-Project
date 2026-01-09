@@ -13,7 +13,11 @@ POLICY = {
 
 
 def evaluate_request(role: str, mfa: bool, network: str) -> dict:
-    decision = role in POLICY["allowed_roles"] and mfa and network in POLICY["allowed_networks"]
+    decision = (
+        role in POLICY["allowed_roles"]
+        and mfa
+        and network in POLICY["allowed_networks"]
+    )
     return {
         "role": role,
         "mfa": mfa,

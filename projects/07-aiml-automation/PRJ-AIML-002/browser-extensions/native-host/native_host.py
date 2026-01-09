@@ -13,15 +13,15 @@ from typing import Dict, Any
 import websockets
 
 # Configuration
-WEBSOCKET_HOST = 'localhost'
+WEBSOCKET_HOST = "localhost"
 WEBSOCKET_PORT = 8765
-LOG_FILE = '/tmp/tab_organizer_native_host.log'
+LOG_FILE = "/tmp/tab_organizer_native_host.log"
 
 # Setup logging
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -53,10 +53,10 @@ class NativeMessagingHost:
             if not raw_length:
                 return None
 
-            message_length = struct.unpack('=I', raw_length)[0]
+            message_length = struct.unpack("=I", raw_length)[0]
 
             # Read message content
-            message = sys.stdin.buffer.read(message_length).decode('utf-8')
+            message = sys.stdin.buffer.read(message_length).decode("utf-8")
             return json.loads(message)
 
         except Exception as e:
@@ -66,8 +66,8 @@ class NativeMessagingHost:
     def send_message(self, message: Dict[str, Any]):
         """Send message to browser using native messaging protocol"""
         try:
-            encoded_content = json.dumps(message).encode('utf-8')
-            encoded_length = struct.pack('=I', len(encoded_content))
+            encoded_content = json.dumps(message).encode("utf-8")
+            encoded_length = struct.pack("=I", len(encoded_content))
 
             sys.stdout.buffer.write(encoded_length)
             sys.stdout.buffer.write(encoded_content)
@@ -92,30 +92,32 @@ class NativeMessagingHost:
 
     async def handle_browser_message(self, message: Dict[str, Any]):
         """Handle message from browser"""
-        msg_type = message.get('type')
+        msg_type = message.get("type")
         logger.info(f"Received from browser: {msg_type}")
 
-        if msg_type == 'connect':
+        if msg_type == "connect":
             # Browser is connecting
-            self.send_message({
-                'type': 'connected',
-                'status': 'ok',
-                'timestamp': message.get('timestamp')
-            })
+            self.send_message(
+                {
+                    "type": "connected",
+                    "status": "ok",
+                    "timestamp": message.get("timestamp"),
+                }
+            )
 
-        elif msg_type == 'tabs_update':
+        elif msg_type == "tabs_update":
             # Forward tab updates to app
             await self.forward_to_app(message)
 
-        elif msg_type == 'tab_closed':
+        elif msg_type == "tab_closed":
             # Forward tab closure to app
             await self.forward_to_app(message)
 
-        elif msg_type == 'organize_request':
+        elif msg_type == "organize_request":
             # Request to organize tabs
             await self.forward_to_app(message)
 
-        elif msg_type == 'open_app':
+        elif msg_type == "open_app":
             # Request to open the desktop app
             await self.forward_to_app(message)
 
@@ -130,7 +132,7 @@ class NativeMessagingHost:
         try:
             async for message in self.websocket:
                 data = json.loads(message)
-                msg_type = data.get('type')
+                msg_type = data.get("type")
                 logger.info(f"Received from app: {msg_type}")
 
                 # Forward to browser
@@ -189,5 +191,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

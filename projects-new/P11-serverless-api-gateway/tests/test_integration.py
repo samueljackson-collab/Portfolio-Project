@@ -1,4 +1,5 @@
 """Integration tests for P11 Serverless API Gateway."""
+
 import json
 import sys
 import os
@@ -13,7 +14,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "lambda_handlers"))
 os.environ["TABLE_NAME"] = "items-table-test"
 
 
-def create_api_event(method, path, body=None, path_parameters=None, query_parameters=None):
+def create_api_event(
+    method, path, body=None, path_parameters=None, query_parameters=None
+):
     """Helper to create API Gateway events."""
     return {
         "httpMethod": method,
@@ -54,7 +57,7 @@ def test_full_crud_workflow():
     create_event = create_api_event(
         "POST",
         "/items",
-        {"name": "Integration Test Item", "description": "Test item", "price": 99.99}
+        {"name": "Integration Test Item", "description": "Test item", "price": 99.99},
     )
     create_response = create_handler(create_event, None)
     assert create_response["statusCode"] == 201
@@ -64,9 +67,7 @@ def test_full_crud_workflow():
 
     # Step 2: READ (Get specific item)
     read_event = create_api_event(
-        "GET",
-        f"/items/{item_id}",
-        path_parameters={"item_id": item_id}
+        "GET", f"/items/{item_id}", path_parameters={"item_id": item_id}
     )
     read_response = read_handler(read_event, None)
     assert read_response["statusCode"] == 200
@@ -79,7 +80,7 @@ def test_full_crud_workflow():
         "PUT",
         f"/items/{item_id}",
         {"name": "Updated Integration Item", "price": 149.99},
-        path_parameters={"item_id": item_id}
+        path_parameters={"item_id": item_id},
     )
     update_response = update_handler(update_event, None)
     assert update_response["statusCode"] == 200
@@ -89,18 +90,14 @@ def test_full_crud_workflow():
 
     # Step 4: DELETE
     delete_event = create_api_event(
-        "DELETE",
-        f"/items/{item_id}",
-        path_parameters={"item_id": item_id}
+        "DELETE", f"/items/{item_id}", path_parameters={"item_id": item_id}
     )
     delete_response = delete_handler(delete_event, None)
     assert delete_response["statusCode"] == 204
 
     # Verify item is deleted
     verify_event = create_api_event(
-        "GET",
-        f"/items/{item_id}",
-        path_parameters={"item_id": item_id}
+        "GET", f"/items/{item_id}", path_parameters={"item_id": item_id}
     )
     verify_response = read_handler(verify_event, None)
     assert verify_response["statusCode"] == 404
@@ -126,11 +123,7 @@ def test_list_items_after_multiple_creates():
         event = create_api_event(
             "POST",
             "/items",
-            {
-                "name": f"Item {i}",
-                "description": f"Description {i}",
-                "price": 10.0 + i
-            }
+            {"name": f"Item {i}", "description": f"Description {i}", "price": 10.0 + i},
         )
         response = create_handler(event, None)
         assert response["statusCode"] == 201
@@ -161,36 +154,28 @@ def test_concurrent_operations():
 
     # Create first item
     event1 = create_api_event(
-        "POST",
-        "/items",
-        {"name": "Item 1", "description": "First", "price": 19.99}
+        "POST", "/items", {"name": "Item 1", "description": "First", "price": 19.99}
     )
     response1 = create_handler(event1, None)
     item1_id = json.loads(response1["body"])["id"]
 
     # Create second item
     event2 = create_api_event(
-        "POST",
-        "/items",
-        {"name": "Item 2", "description": "Second", "price": 29.99}
+        "POST", "/items", {"name": "Item 2", "description": "Second", "price": 29.99}
     )
     response2 = create_handler(event2, None)
     item2_id = json.loads(response2["body"])["id"]
 
     # Read first item
     read1_event = create_api_event(
-        "GET",
-        f"/items/{item1_id}",
-        path_parameters={"item_id": item1_id}
+        "GET", f"/items/{item1_id}", path_parameters={"item_id": item1_id}
     )
     read1_response = read_handler(read1_event, None)
     assert read1_response["statusCode"] == 200
 
     # Read second item
     read2_event = create_api_event(
-        "GET",
-        f"/items/{item2_id}",
-        path_parameters={"item_id": item2_id}
+        "GET", f"/items/{item2_id}", path_parameters={"item_id": item2_id}
     )
     read2_response = read_handler(read2_event, None)
     assert read2_response["statusCode"] == 200
@@ -198,7 +183,7 @@ def test_concurrent_operations():
     # Verify both items exist
     both_items = [
         json.loads(read1_response["body"]),
-        json.loads(read2_response["body"])
+        json.loads(read2_response["body"]),
     ]
     assert len(both_items) == 2
     assert both_items[0]["name"] == "Item 1"
@@ -223,18 +208,14 @@ def test_error_scenarios():
 
     # Test 1: Create with missing fields
     create_event = create_api_event(
-        "POST",
-        "/items",
-        {"name": "Incomplete Item"}  # Missing description and price
+        "POST", "/items", {"name": "Incomplete Item"}  # Missing description and price
     )
     create_response = create_handler(create_event, None)
     assert create_response["statusCode"] == 400
 
     # Test 2: Read non-existent item
     read_event = create_api_event(
-        "GET",
-        "/items/nonexistent",
-        path_parameters={"item_id": "nonexistent"}
+        "GET", "/items/nonexistent", path_parameters={"item_id": "nonexistent"}
     )
     read_response = read_handler(read_event, None)
     assert read_response["statusCode"] == 404
@@ -244,7 +225,7 @@ def test_error_scenarios():
         "PUT",
         "/items/nonexistent",
         {"name": "Updated"},
-        path_parameters={"item_id": "nonexistent"}
+        path_parameters={"item_id": "nonexistent"},
     )
     update_response = update_handler(update_event, None)
     assert update_response["statusCode"] == 404

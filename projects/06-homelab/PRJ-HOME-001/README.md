@@ -37,7 +37,13 @@ For questions about this project, please reach out via [GitHub](https://github.c
 ## Evidence Artifacts
 - **Network Topology:** `assets/diagrams/network-topology.mmd` (Mermaid source) depicts WAN → pfSense → UniFi → downstream gear.
 - **VLAN Segmentation:** `assets/diagrams/vlan-segmentation.mmd` captures the five-zone isolation model.
+- **Physical Rack Layout:** `assets/diagrams/physical-topology-rack-layout.mermaid` documents rack layout, cabling, and power.
+- **Logical Network Diagram:** `assets/diagrams/logical-network-vlans-firewall.mermaid` maps VLANs, subnets, and firewall rule intent.
 - **Monitoring Evidence:** `assets/configs/monitoring-snapshots.md` includes Prometheus, Grafana, and Loki excerpts with sensitive values redacted.
+- **Firewall Rules Table:** `assets/configs/firewall-rules-table.md` summarizes source, destination, ports, and purpose.
+- **UniFi Export (Redacted):** `assets/unifi/unifi-controller-export-redacted.json` provides a sanitized controller export.
+- **Installation Guide:** `assets/runbooks/installation-guide.md` documents the physical installation steps.
+- **Network Configuration Runbook:** `assets/runbooks/network-configuration-runbook.md` covers VLAN, DHCP, and firewall configuration.
 - **Screenshots:** `assets/screenshots/` includes sanitized UniFi, pfSense, and VLAN overview captures.
 - **Logs:** `assets/logs/` contains sanitized controller and firewall summary logs.
 
@@ -155,12 +161,16 @@ For detailed network architecture, see [Network Architecture Diagram](assets/doc
 
 - [`pfsense-config.xml`](assets/pfsense/pfsense-config.xml) - Complete pfSense configuration with all interfaces, firewall rules, DHCP, DNS, IPS, VPN, and traffic shaping
 - [`unifi-config.json`](assets/unifi/unifi-config.json) - UniFi Controller configuration including wireless networks, devices, port profiles, and security settings
+- [`unifi-controller-export-redacted.json`](assets/unifi/unifi-controller-export-redacted.json) - Redacted UniFi controller export for portfolio use
+- [`firewall-rules-table.md`](assets/configs/firewall-rules-table.md) - Firewall rules summary (source/destination/ports/purpose)
 
 ### Documentation
 
 - [`network-architecture.mermaid`](assets/documentation/network-architecture.mermaid) - Visual network topology with security zones and device placement
 - [`network-inventory.md`](assets/documentation/network-inventory.md) - Complete IP allocation tables, device inventory, switch port assignments, and hardware specifications
 - [`security-policies.md`](assets/documentation/security-policies.md) - Comprehensive security policies including firewall rules, access control, incident response, and maintenance procedures
+- [`installation-guide.md`](assets/runbooks/installation-guide.md) - Hardware installation and initial setup guide
+- [`network-configuration-runbook.md`](assets/runbooks/network-configuration-runbook.md) - VLAN, DHCP, and firewall configuration runbook
 
 ## Deployment Instructions
 

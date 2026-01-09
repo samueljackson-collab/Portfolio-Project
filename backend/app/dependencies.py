@@ -23,6 +23,7 @@ from app.models import User
 # Exception Helpers - Reduce code duplication across routers
 # =============================================================================
 
+
 def raise_not_found(resource: str = "Resource") -> None:
     """
     Raise a 404 Not Found HTTP exception.
@@ -31,8 +32,7 @@ def raise_not_found(resource: str = "Resource") -> None:
         resource: Name of the resource that was not found
     """
     raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"{resource} not found"
+        status_code=status.HTTP_404_NOT_FOUND, detail=f"{resource} not found"
     )
 
 
@@ -44,8 +44,7 @@ def raise_forbidden(action: str = "perform this action") -> None:
         action: Description of the forbidden action
     """
     raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail=f"Permission denied to {action}"
+        status_code=status.HTTP_403_FORBIDDEN, detail=f"Permission denied to {action}"
     )
 
 
@@ -56,10 +55,7 @@ def raise_bad_request(message: str) -> None:
     Args:
         message: Error message describing the bad request
     """
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=message
-    )
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
 
 def raise_conflict(message: str) -> None:
@@ -69,10 +65,7 @@ def raise_conflict(message: str) -> None:
     Args:
         message: Error message describing the conflict
     """
-    raise HTTPException(
-        status_code=status.HTTP_409_CONFLICT,
-        detail=message
-    )
+    raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
 
 
 def raise_server_error(message: str = "An internal error occurred") -> None:
@@ -83,12 +76,13 @@ def raise_server_error(message: str = "An internal error occurred") -> None:
         message: Error message
     """
     raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail=message
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=message
     )
 
 
-def check_ownership(resource, current_user: User, action: str = "access this resource") -> None:
+def check_ownership(
+    resource, current_user: User, action: str = "access this resource"
+) -> None:
     """
     Verify that the current user owns the resource.
 
@@ -108,7 +102,7 @@ def check_ownership(resource, current_user: User, action: str = "access this res
 security = HTTPBearer(
     scheme_name="Bearer Token",
     description="JWT access token from login endpoint",
-    auto_error=False
+    auto_error=False,
 )
 
 
@@ -124,7 +118,7 @@ optional_security = HTTPBearer(
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
     """
     Dependency to get the currently authenticated user.
@@ -169,9 +163,7 @@ async def get_current_user(
         raise credentials_exception from e
 
     # Look up user in database
-    result = await db.execute(
-        select(User).where(User.email == email)
-    )
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
     if user is None:
@@ -180,15 +172,14 @@ async def get_current_user(
     # Check if user account is active
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user account"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user account"
         )
 
     return user
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     """
     Dependency that requires an active user.
@@ -204,8 +195,7 @@ async def get_current_active_user(
     """
     if not current_user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
     return current_user
 
@@ -213,10 +203,9 @@ async def get_current_active_user(
 # Optional user dependency ---------------------------------------------------
 async def get_optional_user(
     credentials: Annotated[
-        Optional[HTTPAuthorizationCredentials],
-        Depends(optional_security)
+        Optional[HTTPAuthorizationCredentials], Depends(optional_security)
     ],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> Optional[User]:
     """Return the authenticated user if a token is provided, else ``None``."""
 

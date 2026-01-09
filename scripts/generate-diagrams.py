@@ -347,7 +347,7 @@ class DiagramGenerator:
     def _write_diagram(self, name, content):
         """Write diagram content to file"""
         filepath = self.output_dir / f"{name}.mmd"
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(content.strip())
         print(f"✅ Generated: {filepath}")
 

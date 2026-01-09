@@ -1,4 +1,5 @@
 """Machine learning pipeline with experiment tracking, hyperparameter tuning, and deployment utilities."""
+
 from __future__ import annotations
 
 import json
@@ -61,8 +62,16 @@ class ExperimentRunner:
 
         transformer = ColumnTransformer(
             transformers=[
-                ("categorical", OneHotEncoder(handle_unknown="ignore"), config.dataset.categorical_features),
-                ("numeric", Pipeline([("scaler", StandardScaler())]), config.dataset.numeric_features),
+                (
+                    "categorical",
+                    OneHotEncoder(handle_unknown="ignore"),
+                    config.dataset.categorical_features,
+                ),
+                (
+                    "numeric",
+                    Pipeline([("scaler", StandardScaler())]),
+                    config.dataset.numeric_features,
+                ),
             ],
         )
 
@@ -77,7 +86,12 @@ class ExperimentRunner:
             model = Pipeline(
                 steps=[
                     ("features", transformer),
-                    ("classifier", RandomForestClassifier(**params, random_state=config.random_state)),
+                    (
+                        "classifier",
+                        RandomForestClassifier(
+                            **params, random_state=config.random_state
+                        ),
+                    ),
                 ]
             )
 
@@ -89,7 +103,11 @@ class ExperimentRunner:
         study.optimize(
             objective,
             n_trials=config.n_trials,
-            callbacks=[MLflowCallback(tracking_uri=mlflow.get_tracking_uri(), metric_name="validation_auc")],
+            callbacks=[
+                MLflowCallback(
+                    tracking_uri=mlflow.get_tracking_uri(), metric_name="validation_auc"
+                )
+            ],
         )
 
         best_model = Pipeline(
@@ -97,7 +115,9 @@ class ExperimentRunner:
                 ("features", transformer),
                 (
                     "classifier",
-                    RandomForestClassifier(**study.best_params, random_state=config.random_state),
+                    RandomForestClassifier(
+                        **study.best_params, random_state=config.random_state
+                    ),
                 ),
             ]
         )
@@ -107,12 +127,22 @@ class ExperimentRunner:
             mlflow.log_params(study.best_params)
             y_pred = best_model.predict(X_test)
             metrics = classification_report(y_test, y_pred, output_dict=True)
-            mlflow.log_metric("validation_auc", roc_auc_score(y_test, best_model.predict_proba(X_test)[:, 1]))
+            mlflow.log_metric(
+                "validation_auc",
+                roc_auc_score(y_test, best_model.predict_proba(X_test)[:, 1]),
+            )
             mlflow.log_dict(metrics, "classification_report.json")
             mlflow.sklearn.log_model(best_model, artifact_path="model")
 
-            registered = mlflow.register_model(f"runs:/{run.info.run_id}/model", config.name)
-            self.client.set_model_version_tag(registered.name, registered.version, "registered_at", datetime.now(timezone.utc).isoformat())
+            registered = mlflow.register_model(
+                f"runs:/{run.info.run_id}/model", config.name
+            )
+            self.client.set_model_version_tag(
+                registered.name,
+                registered.version,
+                "registered_at",
+                datetime.now(timezone.utc).isoformat(),
+            )
             return registered.name
 
     def promote_model(self, name: str, stage: str) -> None:
@@ -125,7 +155,9 @@ class ExperimentRunner:
     def build_kubernetes_deployment(self, name: str, image: str) -> Dict[str, object]:
         version = self.client.get_latest_versions(name, stages=["Production"])
         if not version:
-            raise ValueError("Model must be in Production to generate deployment manifest")
+            raise ValueError(
+                "Model must be in Production to generate deployment manifest"
+            )
         version_info = version[0]
         return {
             "apiVersion": "apps/v1",
@@ -142,7 +174,10 @@ class ExperimentRunner:
                                 "name": "model-server",
                                 "image": image,
                                 "env": [
-                                    {"name": "MLFLOW_MODEL_URI", "value": version_info.source},
+                                    {
+                                        "name": "MLFLOW_MODEL_URI",
+                                        "value": version_info.source,
+                                    },
                                     {"name": "MODEL_NAME", "value": name},
                                 ],
                                 "ports": [{"containerPort": 8080}],
@@ -155,14 +190,24 @@ class ExperimentRunner:
 
     def _load_dataset(self, config: DatasetConfig) -> pd.DataFrame:
         df = pd.read_csv(config.path)
-        missing_columns = set([config.target_column, *config.categorical_features, *config.numeric_features]) - set(df.columns)
+        missing_columns = set(
+            [
+                config.target_column,
+                *config.categorical_features,
+                *config.numeric_features,
+            ]
+        ) - set(df.columns)
         if missing_columns:
             raise ValueError(f"Dataset missing columns: {sorted(missing_columns)}")
         return df
 
 
 def load_experiment_config(path: Path) -> ExperimentConfig:
-    data = json.loads(Path(path).read_text()) if path.suffix == ".json" else yaml_load(path)
+    data = (
+        json.loads(Path(path).read_text())
+        if path.suffix == ".json"
+        else yaml_load(path)
+    )
     dataset = DatasetConfig(
         path=Path(data["dataset"]["path"]),
         target_column=data["dataset"]["target_column"],
@@ -184,4 +229,9 @@ def yaml_load(path: Path) -> Dict[str, object]:
     return yaml.safe_load(Path(path).read_text())
 
 
-__all__ = ["DatasetConfig", "ExperimentConfig", "ExperimentRunner", "load_experiment_config"]
+__all__ = [
+    "DatasetConfig",
+    "ExperimentConfig",
+    "ExperimentRunner",
+    "load_experiment_config",
+]

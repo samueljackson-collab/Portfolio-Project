@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
     "/status",
     response_model=Dict[str, Any],
     summary="Get Backup Status",
-    description="Get current status of all backup locations"
+    description="Get current status of all backup locations",
 )
 async def backup_status(
     current_user: User = Depends(get_current_user),
@@ -61,7 +61,7 @@ async def backup_status(
 @router.get(
     "/report",
     summary="Get Backup Report",
-    description="Get a human-readable backup status report"
+    description="Get a human-readable backup status report",
 )
 async def backup_report(
     current_user: User = Depends(get_current_user),
@@ -82,7 +82,7 @@ async def backup_report(
 @router.post(
     "/sync",
     summary="Trigger Manual Backup Sync",
-    description="Manually trigger a full backup sync (admin only)"
+    description="Manually trigger a full backup sync (admin only)",
 )
 async def trigger_backup_sync(
     current_user: User = Depends(get_current_user),
@@ -113,14 +113,14 @@ async def trigger_backup_sync(
     return {
         "message": "Backup sync initiated",
         "note": "Use the status endpoint to check progress",
-        "recommendation": "For production, use the backup_sync.py script via cron"
+        "recommendation": "For production, use the backup_sync.py script via cron",
     }
 
 
 @router.get(
     "/health",
     summary="Backup Health Check",
-    description="Quick health check of backup system"
+    description="Quick health check of backup system",
 )
 async def backup_health() -> Dict[str, Any]:
     """
@@ -139,14 +139,10 @@ async def backup_health() -> Dict[str, Any]:
 
     # Count accessible backups
     accessible_backups = sum(
-        1 for b in status["backups"]
-        if b["enabled"] and b["accessible"]
+        1 for b in status["backups"] if b["enabled"] and b["accessible"]
     )
 
-    total_enabled_backups = sum(
-        1 for b in status["backups"]
-        if b["enabled"]
-    )
+    total_enabled_backups = sum(1 for b in status["backups"] if b["enabled"])
 
     # Determine overall health
     if not primary_ok:
@@ -157,7 +153,9 @@ async def backup_health() -> Dict[str, Any]:
         message = "No backup locations accessible"
     elif accessible_backups < total_enabled_backups:
         health = "degraded"
-        message = f"Only {accessible_backups}/{total_enabled_backups} backups accessible"
+        message = (
+            f"Only {accessible_backups}/{total_enabled_backups} backups accessible"
+        )
     else:
         health = "healthy"
         message = "All backup locations accessible"
@@ -167,5 +165,5 @@ async def backup_health() -> Dict[str, Any]:
         "message": message,
         "primary_accessible": primary_ok,
         "backups_accessible": f"{accessible_backups}/{total_enabled_backups}",
-        "timestamp": status["timestamp"]
+        "timestamp": status["timestamp"],
     }

@@ -1,4 +1,5 @@
 """Smoke tests for Real-time Data Streaming project."""
+
 from src.health_check import run_health_check
 
 

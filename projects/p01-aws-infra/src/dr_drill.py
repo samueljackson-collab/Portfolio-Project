@@ -26,11 +26,11 @@ from botocore.exceptions import ClientError
 class RDSFailoverDrill:
     """Manages RDS Multi-AZ failover drill operations."""
 
-    def __init__(self, region: str = 'us-east-1'):
+    def __init__(self, region: str = "us-east-1"):
         """Initialize AWS clients."""
         self.region = region
-        self.rds = boto3.client('rds', region_name=region)
-        self.cloudwatch = boto3.client('cloudwatch', region_name=region)
+        self.rds = boto3.client("rds", region_name=region)
+        self.cloudwatch = boto3.client("cloudwatch", region_name=region)
 
     def get_db_instance_info(self, db_instance_id: str) -> Dict:
         """
@@ -46,17 +46,17 @@ class RDSFailoverDrill:
             response = self.rds.describe_db_instances(
                 DBInstanceIdentifier=db_instance_id
             )
-            if not response['DBInstances']:
+            if not response["DBInstances"]:
                 raise ValueError(f"DB instance {db_instance_id} not found")
 
-            instance = response['DBInstances'][0]
+            instance = response["DBInstances"][0]
             return {
-                'identifier': instance['DBInstanceIdentifier'],
-                'status': instance['DBInstanceStatus'],
-                'availability_zone': instance['AvailabilityZone'],
-                'multi_az': instance['MultiAZ'],
-                'engine': instance['Engine'],
-                'endpoint': instance.get('Endpoint', {}).get('Address', 'N/A')
+                "identifier": instance["DBInstanceIdentifier"],
+                "status": instance["DBInstanceStatus"],
+                "availability_zone": instance["AvailabilityZone"],
+                "multi_az": instance["MultiAZ"],
+                "engine": instance["Engine"],
+                "endpoint": instance.get("Endpoint", {}).get("Address", "N/A"),
             }
         except ClientError as e:
             print(f"Error getting DB instance info: {e}")
@@ -80,11 +80,11 @@ class RDSFailoverDrill:
         print(f"  Multi-AZ: {info['multi_az']}")
         print(f"  Current AZ: {info['availability_zone']}")
 
-        if not info['multi_az']:
+        if not info["multi_az"]:
             print("ERROR: Multi-AZ is not enabled. Cannot perform failover.")
             return False
 
-        if info['status'] != 'available':
+        if info["status"] != "available":
             print(f"ERROR: Instance status is '{info['status']}', must be 'available'")
             return False
 
@@ -104,8 +104,7 @@ class RDSFailoverDrill:
         try:
             print(f"\nInitiating failover for {db_instance_id}...")
             self.rds.reboot_db_instance(
-                DBInstanceIdentifier=db_instance_id,
-                ForceFailover=True
+                DBInstanceIdentifier=db_instance_id, ForceFailover=True
             )
             print("Failover initiated successfully ✓")
             return True
@@ -126,7 +125,7 @@ class RDSFailoverDrill:
         """
         start_time = time.time()
         initial_info = self.get_db_instance_info(db_instance_id)
-        initial_az = initial_info['availability_zone']
+        initial_az = initial_info["availability_zone"]
 
         print(f"\nMonitoring failover progress...")
         print(f"Initial AZ: {initial_az}")
@@ -141,12 +140,12 @@ class RDSFailoverDrill:
 
             try:
                 info = self.get_db_instance_info(db_instance_id)
-                status = info['status']
-                current_az = info['availability_zone']
+                status = info["status"]
+                current_az = info["availability_zone"]
 
                 print(f"[{elapsed}s] Status: {status}, AZ: {current_az}")
 
-                if status == 'available' and current_az != initial_az:
+                if status == "available" and current_az != initial_az:
                     duration = time.time() - start_time
                     print(f"\n✓ Failover completed successfully!")
                     print(f"  Duration: {duration:.2f} seconds")
@@ -154,19 +153,19 @@ class RDSFailoverDrill:
                     print(f"  Final AZ: {current_az}")
 
                     return {
-                        'success': True,
-                        'duration': duration,
-                        'initial_az': initial_az,
-                        'final_az': current_az,
-                        'elapsed_time': elapsed
+                        "success": True,
+                        "duration": duration,
+                        "initial_az": initial_az,
+                        "final_az": current_az,
+                        "elapsed_time": elapsed,
                     }
 
-                if status == 'failed':
+                if status == "failed":
                     print(f"\n✗ Failover failed!")
                     return {
-                        'success': False,
-                        'error': 'Instance entered failed state',
-                        'elapsed_time': elapsed
+                        "success": False,
+                        "error": "Instance entered failed state",
+                        "elapsed_time": elapsed,
                     }
 
             except Exception as e:
@@ -174,13 +173,11 @@ class RDSFailoverDrill:
                 continue
 
         print(f"\n✗ Failover did not complete within {max_wait_time} seconds")
-        return {
-            'success': False,
-            'error': 'Timeout',
-            'elapsed_time': elapsed
-        }
+        return {"success": False, "error": "Timeout", "elapsed_time": elapsed}
 
-    def get_cloudwatch_metrics(self, db_instance_id: str, duration_minutes: int = 30) -> List[Dict]:
+    def get_cloudwatch_metrics(
+        self, db_instance_id: str, duration_minutes: int = 30
+    ) -> List[Dict]:
         """
         Get CloudWatch metrics during failover.
 
@@ -197,38 +194,44 @@ class RDSFailoverDrill:
 
             metrics = []
             metric_names = [
-                'CPUUtilization',
-                'DatabaseConnections',
-                'ReadLatency',
-                'WriteLatency'
+                "CPUUtilization",
+                "DatabaseConnections",
+                "ReadLatency",
+                "WriteLatency",
             ]
 
             for metric_name in metric_names:
                 response = self.cloudwatch.get_metric_statistics(
-                    Namespace='AWS/RDS',
+                    Namespace="AWS/RDS",
                     MetricName=metric_name,
                     Dimensions=[
-                        {'Name': 'DBInstanceIdentifier', 'Value': db_instance_id}
+                        {"Name": "DBInstanceIdentifier", "Value": db_instance_id}
                     ],
                     StartTime=start_time,
                     EndTime=end_time,
                     Period=300,  # 5 minutes
-                    Statistics=['Average', 'Maximum']
+                    Statistics=["Average", "Maximum"],
                 )
 
-                if response['Datapoints']:
-                    metrics.append({
-                        'metric': metric_name,
-                        'datapoints': len(response['Datapoints']),
-                        'latest': sorted(response['Datapoints'], key=lambda x: x['Timestamp'])[-1]
-                    })
+                if response["Datapoints"]:
+                    metrics.append(
+                        {
+                            "metric": metric_name,
+                            "datapoints": len(response["Datapoints"]),
+                            "latest": sorted(
+                                response["Datapoints"], key=lambda x: x["Timestamp"]
+                            )[-1],
+                        }
+                    )
 
             return metrics
         except Exception as e:
             print(f"Error getting CloudWatch metrics: {e}")
             return []
 
-    def generate_report(self, db_instance_id: str, result: Dict, output_file: Optional[str] = None):
+    def generate_report(
+        self, db_instance_id: str, result: Dict, output_file: Optional[str] = None
+    ):
         """
         Generate failover drill report.
 
@@ -238,11 +241,11 @@ class RDSFailoverDrill:
             output_file: Optional file path to save report
         """
         report = {
-            'drill_timestamp': datetime.now(timezone.utc).isoformat(),
-            'db_instance_id': db_instance_id,
-            'region': self.region,
-            'failover_result': result,
-            'metrics': self.get_cloudwatch_metrics(db_instance_id)
+            "drill_timestamp": datetime.now(timezone.utc).isoformat(),
+            "db_instance_id": db_instance_id,
+            "region": self.region,
+            "failover_result": result,
+            "metrics": self.get_cloudwatch_metrics(db_instance_id),
         }
 
         # Print report to console
@@ -254,13 +257,18 @@ class RDSFailoverDrill:
 
         # Save to file if specified
         if output_file:
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(report, f, indent=2, default=str)
             print(f"\nReport saved to: {output_file}")
 
         return report
 
-    def run_drill(self, db_instance_id: str, max_wait_time: int = 600, output_file: Optional[str] = None) -> Dict:
+    def run_drill(
+        self,
+        db_instance_id: str,
+        max_wait_time: int = 600,
+        output_file: Optional[str] = None,
+    ) -> Dict:
         """
         Execute complete DR drill.
 
@@ -281,20 +289,20 @@ class RDSFailoverDrill:
 
         # Check prerequisites
         if not self.check_prerequisites(db_instance_id):
-            result = {'success': False, 'error': 'Prerequisites not met'}
+            result = {"success": False, "error": "Prerequisites not met"}
             return self.generate_report(db_instance_id, result, output_file)
 
         # Confirm with user
         print("\nWARNING: This will trigger a production failover event.")
         response = input("Do you want to continue? (yes/no): ")
-        if response.lower() != 'yes':
+        if response.lower() != "yes":
             print("Drill cancelled by user.")
-            result = {'success': False, 'error': 'Cancelled by user'}
+            result = {"success": False, "error": "Cancelled by user"}
             return self.generate_report(db_instance_id, result, output_file)
 
         # Initiate failover
         if not self.initiate_failover(db_instance_id):
-            result = {'success': False, 'error': 'Failed to initiate failover'}
+            result = {"success": False, "error": "Failed to initiate failover"}
             return self.generate_report(db_instance_id, result, output_file)
 
         # Monitor failover
@@ -307,33 +315,28 @@ class RDSFailoverDrill:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description='RDS Multi-AZ Failover Drill Script',
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description="RDS Multi-AZ Failover Drill Script",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        '--db-instance-id',
-        required=True,
-        help='RDS instance identifier'
+        "--db-instance-id", required=True, help="RDS instance identifier"
     )
     parser.add_argument(
-        '--region',
-        default='us-east-1',
-        help='AWS region (default: us-east-1)'
+        "--region", default="us-east-1", help="AWS region (default: us-east-1)"
     )
     parser.add_argument(
-        '--max-wait-time',
+        "--max-wait-time",
         type=int,
         default=600,
-        help='Maximum time to wait for failover in seconds (default: 600)'
+        help="Maximum time to wait for failover in seconds (default: 600)",
     )
     parser.add_argument(
-        '--output-file',
-        help='Output file for drill report (JSON format)'
+        "--output-file", help="Output file for drill report (JSON format)"
     )
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Check prerequisites only, do not initiate failover'
+        "--dry-run",
+        action="store_true",
+        help="Check prerequisites only, do not initiate failover",
     )
 
     args = parser.parse_args()
@@ -355,10 +358,10 @@ def main():
             report = drill.run_drill(
                 db_instance_id=args.db_instance_id,
                 max_wait_time=args.max_wait_time,
-                output_file=args.output_file
+                output_file=args.output_file,
             )
 
-            if report['failover_result']['success']:
+            if report["failover_result"]["success"]:
                 sys.exit(0)
             else:
                 sys.exit(1)
@@ -368,5 +371,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

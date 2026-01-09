@@ -1,4 +1,5 @@
 """Sample producer for Prometheus/Grafana/Loki signals with synthetic checks and tracing stubs.."""
+
 from pathlib import Path
 import argparse
 import json
@@ -22,6 +23,7 @@ def run_pipeline(payload):
     raw = ARTIFACTS / "raw.json"
     raw.write_text(json.dumps(payload, indent=2))
     import importlib.util
+
     jobs_path = PROJECT_ROOT / "jobs" / "demo_job.py"
     spec = importlib.util.spec_from_file_location("demo_job", jobs_path)
     module = importlib.util.module_from_spec(spec)

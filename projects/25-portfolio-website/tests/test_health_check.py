@@ -1,4 +1,5 @@
 """Health check tests for 25-portfolio-website."""
+
 from src.health_check import check_health
 
 

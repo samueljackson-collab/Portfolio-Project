@@ -1,4 +1,5 @@
 """Enrichment stage shared across projects."""
+
 from pathlib import Path
 import json
 import hashlib
@@ -16,6 +17,7 @@ def enrich_payload(raw_path: Path) -> Path:
 
 def test_enrich_roundtrip():
     import tempfile
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir) / "demo_raw.json"
         tmp.write_text(json.dumps({"hello": "world"}))
