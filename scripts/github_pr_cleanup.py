@@ -142,10 +142,26 @@ def close_prs(
             close_pr(token, repo, pr)
 
 
+def validate_github_repo(repo: str) -> str:
+    """
+    Validate that the repository identifier is in the 'owner/repo' format.
+
+    Raises:
+        ValueError: If the repository string is not in the expected format.
+    """
+    owner, sep, name = repo.partition("/")
+    if sep != "/" or not owner or not name or "/" in name:
+        raise ValueError(
+            f"Invalid GITHUB_REPO value: {repo!r}. Expected format 'owner/repo'."
+        )
+    return repo
+
+
 def main() -> None:
     args = parse_args()
     token = get_env("GITHUB_TOKEN")
-    repo = get_env("GITHUB_REPO")
+    repo_raw = get_env("GITHUB_REPO")
+    repo = validate_github_repo(repo_raw)
 
     open_prs = fetch_open_prs(token, repo)
     open_prs.sort(key=lambda pr: pr.updated_at)
