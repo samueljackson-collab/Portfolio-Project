@@ -93,6 +93,12 @@ def make_github_request(
     **kwargs,
 ) -> requests.Response:
     """Make a GitHub API request with retry logic and rate limit handling."""
+    max_wait_time = 60  # Cap wait time at 60 seconds
+
+    def calculate_backoff(attempt: int) -> int:
+        """Calculate exponential backoff with a maximum cap."""
+        return min(2**attempt, max_wait_time)
+
     for attempt in range(max_retries):
         try:
             response = requests.request(method, url, headers=headers, **kwargs)
@@ -106,13 +112,13 @@ def make_github_request(
                     retry_after = response.headers.get("Retry-After")
                     if retry_after:
                         try:
-                            wait_time = int(retry_after)
+                            wait_time = min(int(retry_after), max_wait_time)
                         except (ValueError, TypeError):
                             # Fallback to exponential backoff if Retry-After is invalid
-                            wait_time = 2**attempt
+                            wait_time = calculate_backoff(attempt)
                     else:
-                        # Exponential backoff: 2^attempt seconds
-                        wait_time = 2**attempt
+                        # Exponential backoff: 2^attempt seconds (capped)
+                        wait_time = calculate_backoff(attempt)
 
                     reset_time = response.headers.get("X-RateLimit-Reset")
                     reset_info = ""
@@ -170,7 +176,7 @@ def make_github_request(
                 and exc.response is not None
                 and exc.response.status_code >= 500
             ):
-                wait_time = 2**attempt
+                wait_time = calculate_backoff(attempt)
                 print(
                     f"Server error ({exc.response.status_code}). "
                     f"Retrying in {wait_time} seconds..."
@@ -181,7 +187,7 @@ def make_github_request(
         except requests.exceptions.RequestException as exc:
             # Retry on network errors with exponential backoff
             if attempt < max_retries - 1:
-                wait_time = 2**attempt
+                wait_time = calculate_backoff(attempt)
                 print(f"Request failed: {exc}. Retrying in {wait_time} seconds...")
                 time.sleep(wait_time)
                 continue
