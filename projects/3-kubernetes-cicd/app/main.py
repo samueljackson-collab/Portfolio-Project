@@ -1,8 +1,8 @@
 """
 Sample Flask application for Kubernetes CI/CD demonstration.
 
-This application provides a simple REST API with health checks
-and metrics endpoints suitable for Kubernetes deployment.
+This application provides a simple REST API with health checks,
+metrics endpoints, and database connectivity suitable for Kubernetes deployment.
 """
 
 from flask import Flask, jsonify, request
@@ -10,6 +10,7 @@ import os
 import socket
 import time
 from datetime import datetime, timezone
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -17,6 +18,27 @@ app = Flask(__name__)
 APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
 APP_NAME = "k8s-cicd-demo"
 START_TIME = time.time()
+
+# Configuration settings (loaded from environment)
+APP_CONFIG = {
+    'debug': os.getenv('DEBUG', 'false').lower() == 'true',
+    'log_level': os.getenv('LOG_LEVEL', 'INFO'),
+    'database_url': os.getenv('DATABASE_URL', 'sqlite:///app.db'),
+    'cache_ttl': int(os.getenv('CACHE_TTL', '300')),
+    'max_connections': int(os.getenv('MAX_CONNECTIONS', '10')),
+    'enable_metrics': os.getenv('ENABLE_METRICS', 'true').lower() == 'true',
+    'cors_origins': os.getenv('CORS_ORIGINS', '*'),
+}
+
+# Feature flags
+FEATURE_FLAGS = {
+    'new_dashboard': os.getenv('FF_NEW_DASHBOARD', 'false').lower() == 'true',
+    'beta_api': os.getenv('FF_BETA_API', 'false').lower() == 'true',
+    'dark_mode': os.getenv('FF_DARK_MODE', 'true').lower() == 'true',
+}
+
+# Request counter for metrics
+request_count = 0
 
 
 @app.route("/health")
