@@ -198,18 +198,13 @@ def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
     prs: List[PullRequest] = []
     page = 1
     while True:
-        try:
-            response = make_github_request(
-                "GET",
-                f"https://api.github.com/repos/{repo}/pulls",
-                headers=github_headers(token),
-                params={"state": "open", "per_page": 100, "page": page},
-                timeout=30,
-            )
-        except requests.exceptions.RequestException as exc:
-            raise SystemExit(
-                f"Failed to fetch open PRs for repo '{repo}' (page {page}): {exc}"
-            ) from exc
+        response = make_github_request(
+            "GET",
+            f"https://api.github.com/repos/{repo}/pulls",
+            headers=github_headers(token),
+            params={"state": "open", "per_page": 100, "page": page},
+            timeout=30,
+        )
         data = response.json()
         if not data:
             break
@@ -239,13 +234,16 @@ def stale_prs(prs: Iterable[PullRequest], days: int) -> List[PullRequest]:
 
 
 def close_pr(token: str, repo: str, pr: PullRequest) -> None:
-    make_github_request(
-        "PATCH",
-        f"https://api.github.com/repos/{repo}/pulls/{pr.number}",
-        headers=github_headers(token),
-        json={"state": "closed"},
-        timeout=30,
-    )
+    try:
+        make_github_request(
+            "PATCH",
+            f"https://api.github.com/repos/{repo}/pulls/{pr.number}",
+            headers=github_headers(token),
+            json={"state": "closed"},
+            timeout=30,
+        )
+    except requests.exceptions.RequestException as exc:
+        raise SystemExit(f"Failed to close PR #{pr.number}: {exc}") from exc
 
 
 def close_prs(
