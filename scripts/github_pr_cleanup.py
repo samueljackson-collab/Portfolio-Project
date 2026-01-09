@@ -10,6 +10,7 @@ Usage examples:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import time
 from dataclasses import dataclass
@@ -207,7 +208,7 @@ def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
                 timeout=30,
             )
             data = response.json()
-        except requests.exceptions.JSONDecodeError as exc:
+        except (json.JSONDecodeError, ValueError) as exc:
             raise SystemExit(
                 f"Failed to parse JSON response for repo '{repo}' (page {page}): {exc}"
             ) from exc
