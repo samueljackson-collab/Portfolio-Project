@@ -32,8 +32,9 @@ class PullRequest:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Close or list stale GitHub pull requests.")
-    parser.add_argument("--list", action="store_true", help="List open pull requests.")
-    parser.add_argument("--close-stale", action="store_true", help="Close stale pull requests.")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--list", action="store_true", help="List open pull requests.")
+    group.add_argument("--close-stale", action="store_true", help="Close stale pull requests.")
     parser.add_argument("--dry-run", action="store_true", help="Preview actions without closing PRs.")
     parser.add_argument("--days", type=int, default=30, help="Staleness threshold in days.")
     parser.add_argument("--max", type=int, default=None, help="Maximum PRs to close.")
