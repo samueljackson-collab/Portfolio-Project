@@ -109,8 +109,13 @@ def make_github_request(
                 # Check if it's a rate limit error
                 try:
                     remaining = response.headers.get("X-RateLimit-Remaining")
-                    if remaining is not None and int(remaining) == 0:
-                        reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
+                    reset_time_str = response.headers.get("X-RateLimit-Reset")
+                    if (
+                        remaining is not None
+                        and int(remaining) == 0
+                        and reset_time_str is not None
+                    ):
+                        reset_time = int(reset_time_str)
                         current_time = int(time.time())
                         wait_time = max(0, reset_time - current_time) + 1
                         print(
@@ -136,8 +141,8 @@ def make_github_request(
             )
             time.sleep(backoff_time)
 
-    # This should never be reached, but added for type safety
-    raise SystemExit("Failed to complete request after maximum retries")
+    # This line is unreachable but satisfies type checkers
+    raise AssertionError("Unreachable code")
 
 
 def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
