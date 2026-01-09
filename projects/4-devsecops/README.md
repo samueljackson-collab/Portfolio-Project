@@ -18,7 +18,7 @@ Security-first CI pipeline with SBOM generation, container scanning, and policy 
 | --- | --- |
 | Live URL | `https://4-devsecops.staging.portfolio.example.com` |
 | DNS | `4-devsecops.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
-| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `terraform/`, `infra/`, or `deploy/` for this project) |
+| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `pipelines/` for this project) |
 
 ### Project-specific endpoints
 
@@ -29,8 +29,9 @@ Security-first CI pipeline with SBOM generation, container scanning, and policy 
 For detailed deployment status and verification steps, see [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md).
 
 ### Deployment automation
-- **CI/CD:** GitHub Actions [`/.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`/.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
+- **CI/CD:** GitHub Actions [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
 - **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
+- **Deployment status:** See [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) for live deployment tracking and verification steps.
 
 ### Monitoring
 - **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)

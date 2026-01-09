@@ -21,16 +21,14 @@ This project provisions a production-ready AWS environment with multiple impleme
 | Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `terraform/`, `cdk/`, or `pulumi/` for this project) |
 
 ### Project-specific endpoints
-
 - **Primary endpoint:** `https://aws-infra-automation.example.com`
 - **Health check:** `https://aws-infra-automation.example.com/healthz`
-- **Static assets (CDN):** `https://static.aws-infra-automation.example.com`
-
-For detailed deployment status and verification steps, see [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md).
+- **CDN (static assets):** `https://static.aws-infra-automation.example.com`
 
 ### Deployment automation
 - **CI/CD:** GitHub Actions [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
 - **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
+- **Deployment status:** See [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) for live deployment tracking and verification steps.
 
 ### Monitoring
 - **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)

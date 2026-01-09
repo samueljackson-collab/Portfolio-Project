@@ -95,8 +95,7 @@ gh run watch --workflow security-pipeline.yml | tee deployments/${DEPLOY_DATE}/p
 cp reports/security-scan-latest.json deployments/${DEPLOY_DATE}/security-scan-summary.json
 cp sbom/myapp-latest.json deployments/${DEPLOY_DATE}/sbom-summary.json
 
-# Update the deployment record
-sed -i.bak "s/Deployment date: .* (planned)/Deployment date: ${DEPLOY_DATE} (live)/" DEPLOYMENT_STATUS.md
+# Note: Deployment status and details are maintained in the Live Deployment section of README.md
 ```
 
 ### Security Scanning Operations
