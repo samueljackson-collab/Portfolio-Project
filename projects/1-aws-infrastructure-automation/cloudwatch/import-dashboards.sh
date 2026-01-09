@@ -115,13 +115,13 @@ import_dashboard() {
     # Replace placeholders
     local processed_json
     processed_json=$(cat "$json_file" | \
-        sed "s/\${AWS_REGION}/${AWS_REGION}/g" | \
-        sed "s/\${NAT_GATEWAY_ID}/${NAT_GATEWAY_ID}/g" | \
-        sed "s/\${DB_INSTANCE_ID}/${DB_INSTANCE_ID}/g" | \
-        sed "s/\${DB_REPLICA_ID}/${DB_REPLICA_ID}/g" | \
-        sed "s/\${ASG_NAME}/${ASG_NAME}/g" | \
-        sed "s/\${FLOW_LOG_GROUP}/${FLOW_LOG_GROUP}/g" | \
-        sed "s/\${LOG_GROUP_NAMESPACE}/${LOG_GROUP_NAMESPACE}/g"
+        sed "s|\${AWS_REGION}|${AWS_REGION}|g" | \
+        sed "s|\${NAT_GATEWAY_ID}|${NAT_GATEWAY_ID}|g" | \
+        sed "s|\${DB_INSTANCE_ID}|${DB_INSTANCE_ID}|g" | \
+        sed "s|\${DB_REPLICA_ID}|${DB_REPLICA_ID}|g" | \
+        sed "s|\${ASG_NAME}|${ASG_NAME}|g" | \
+        sed "s|\${FLOW_LOG_GROUP}|${FLOW_LOG_GROUP}|g" | \
+        sed "s|\${LOG_GROUP_NAMESPACE}|${LOG_GROUP_NAMESPACE}|g"
     )
 
     if [ "$DRY_RUN" = true ]; then
