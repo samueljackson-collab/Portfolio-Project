@@ -6,6 +6,13 @@ Complete analysis of all 25 Enterprise Portfolio Projects
 
 This index guides you through the comprehensive analysis of the 25-project portfolio. Four documents provide complete coverage from executive summary to technical details.
 
+### New for 2026: PORTFOLIO_MASTER_INDEX.md
+- **Purpose**: Master navigation hub and strategic narrative for the full portfolio
+- **Length**: ~12,000 words
+- **Best For**: Recruiters, hiring managers, and interview prep sessions needing a curated overview of flagship projects, metrics, and skill mapping
+- **Contains**: Executive portfolio summary, competency matrices, flagship deep-dives, and cross-references to evidence packages
+- **Start Here**: When you need a guided tour of the portfolio aligned to Systems Development Engineer and Solutions Architect roles
+
 ---
 
 ## Main Documents
