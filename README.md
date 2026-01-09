@@ -65,7 +65,7 @@ pie title Repository Evidence Mix
   "Blueprints" : 25
 ```
 
-## 🧭 Repository Map (What lives where)
+## 🗺️ Repository Map (What lives where)
 
 | Area | Purpose | What to look for |
 | --- | --- | --- |

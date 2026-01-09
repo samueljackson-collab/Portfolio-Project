@@ -16,11 +16,11 @@ For cross-project documentation, standards, and runbooks, see the [Portfolio Doc
 - **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
 
 ### Monitoring
-- **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)
-- **Grafana:** `https://grafana.staging.portfolio.example.com` (dashboard JSON: `grafana/dashboards/*.json`)
+- **Prometheus:** Shared portfolio-wide staging Prometheus at `https://prometheus.staging.portfolio.example.com` (project scrape config in this repo: `prometheus/prometheus.yml`; metrics are labeled/filtered by the `multi-region-disaster-recovery` services/namespaces).
+- **Grafana:** Shared portfolio-wide staging Grafana at `https://grafana.staging.portfolio.example.com` (project dashboards live under the `Multi-Region Disaster Recovery` folder, sourced from `grafana/dashboards/*.json` in this repo).
 
 ### Live deployment screenshots
-![Live deployment dashboard](../../assets/screenshots/live-deployment-placeholder.svg)
+![Placeholder for live deployment monitoring dashboard showing service health, latency metrics, and infrastructure status](../../assets/screenshots/live-deployment-placeholder.svg)
 
 
 ## 📊 Portfolio Status Board
