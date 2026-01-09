@@ -27,6 +27,12 @@ scrape_configs:
       - targets: ['mlflow:5000']
     metrics_path: '/metrics'
 
+  # FastAPI Model Serving API
+  - job_name: 'model-serving'
+    static_configs:
+      - targets: ['model-serving:8000']
+    metrics_path: '/metrics'
+
   # Model serving endpoints (TensorFlow Serving)
   - job_name: 'tf-serving'
     static_configs:
