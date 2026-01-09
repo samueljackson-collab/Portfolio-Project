@@ -191,12 +191,12 @@ enable_auto_merge() {
     fi
 }
 
-# Process all PRs
+# Process all PRs - using process substitution to preserve counter variables
 COUNTER=0
-echo "$ALL_PRS" | jq -r '.[] | "\(.number)|\(.title)"' | while IFS='|' read -r PR_NUM PR_TITLE; do
+while IFS='|' read -r PR_NUM PR_TITLE; do
     ((COUNTER++))
     enable_auto_merge "$PR_NUM" "$PR_TITLE" "$COUNTER"
-done
+done < <(echo "$ALL_PRS" | jq -r '.[] | "\(.number)|\(.title)"')
 
 # Wait a moment for final counts to update
 sleep 1

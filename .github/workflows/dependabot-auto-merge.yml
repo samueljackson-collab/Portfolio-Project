@@ -55,7 +55,7 @@ jobs:
         # Flag major updates for manual review
         if: steps.metadata.outputs.update-type == 'version-update:semver-major'
         run: |
-          gh pr comment "$PR_URL" --body "⚠️ **Major Version Update Detected**
+          COMMENT_BODY="⚠️ **Major Version Update Detected**
 
           This PR contains a major version update that may include breaking changes.
           Please review the changes carefully before merging.
@@ -66,6 +66,8 @@ jobs:
           **New Version:** ${{ steps.metadata.outputs.new-version }}
 
           Manual approval and merge required."
+          
+          gh pr comment "$PR_URL" --body "$COMMENT_BODY"
           echo "⚠️ Major version update - manual review required"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
