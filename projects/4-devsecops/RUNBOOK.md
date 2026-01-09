@@ -94,6 +94,8 @@ gh run watch --workflow security-pipeline.yml | tee deployments/${DEPLOY_DATE}/p
 # Capture security scan and SBOM summaries
 cp reports/security-scan-latest.json deployments/${DEPLOY_DATE}/security-scan-summary.json
 cp sbom/myapp-latest.json deployments/${DEPLOY_DATE}/sbom-summary.json
+
+# Note: Deployment status and details are maintained in the Live Deployment section of README.md
 ```
 
 ### Security Scanning Operations

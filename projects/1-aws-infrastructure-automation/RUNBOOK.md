@@ -85,6 +85,8 @@ mkdir -p deployments/${DEPLOY_DATE}
     terraform plan -var-file=environments/prod.tfvars -out=tfplan | tee "../deployments/${DEPLOY_DATE}/terraform-plan.txt" && \
     terraform apply tfplan | tee "../deployments/${DEPLOY_DATE}/terraform-apply.log" && \
     terraform output -json > "../deployments/${DEPLOY_DATE}/outputs.json")
+
+# Note: Deployment status and details are maintained in the Live Deployment section of README.md
 ```
 
 ### Infrastructure Deployment
