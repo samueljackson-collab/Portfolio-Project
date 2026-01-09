@@ -5,6 +5,21 @@ Usage examples:
   python scripts/github_pr_cleanup.py --list
   python scripts/github_pr_cleanup.py --dry-run --close-stale --days 30
   python scripts/github_pr_cleanup.py --close-stale --days 90 --max 200
+
+Environment:
+  This script requires the following environment variables:
+
+    GITHUB_TOKEN
+      A GitHub personal access token used to authenticate API requests.
+      You can create a token from:
+        https://github.com/settings/tokens
+      For classic tokens, grant at least the "repo" scope for private
+      repositories, or appropriate fine-grained permissions to read and
+      modify pull requests in the target repository.
+
+    GITHUB_REPO
+      The repository to operate on, in "owner/repo" format, for example:
+        octocat/Hello-World
 """
 
 from __future__ import annotations
