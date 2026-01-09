@@ -436,7 +436,7 @@ def cmd_status(args: argparse.Namespace) -> int:
                 readme = module / "README.md"
                 desc = "No description"
                 if readme.exists():
-                    with open(readme) as f:
+                    with open(readme, encoding="utf-8") as f:
                         for line in f:
                             if line.startswith("# "):
                                 desc = line[2:].strip()
