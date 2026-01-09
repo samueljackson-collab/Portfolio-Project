@@ -9,7 +9,6 @@ Provides REST API endpoints for:
 - Health and status
 """
 
-import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
