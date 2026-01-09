@@ -70,16 +70,21 @@ def check_rate_limit(response: requests.Response) -> None:
     remaining = response.headers.get("X-RateLimit-Remaining")
     reset_time = response.headers.get("X-RateLimit-Reset")
 
-    if remaining is not None and int(remaining) < 10:
-        if reset_time is not None:
-            reset_timestamp = int(reset_time)
-            current_time = int(time.time())
-            wait_time = max(0, reset_timestamp - current_time)
-            if wait_time > 0:
-                print(
-                    f"Rate limit nearly exhausted ({remaining} remaining). Waiting {wait_time}s until reset..."
-                )
-                time.sleep(wait_time + 1)  # Add 1 second buffer
+    if remaining is not None:
+        try:
+            remaining_int = int(remaining)
+            if remaining_int < 10 and reset_time is not None:
+                reset_timestamp = int(reset_time)
+                current_time = int(time.time())
+                wait_time = max(0, reset_timestamp - current_time)
+                if wait_time > 0:
+                    print(
+                        f"Rate limit nearly exhausted ({remaining} remaining). Waiting {wait_time}s until reset..."
+                    )
+                    time.sleep(wait_time + 1)  # Add 1 second buffer
+        except (ValueError, TypeError):
+            # Ignore malformed rate limit headers
+            pass
 
 
 def make_github_request(
@@ -102,16 +107,20 @@ def make_github_request(
             # Check for rate limiting before raising for status
             if response.status_code == 403:
                 # Check if it's a rate limit error
-                if (
-                    "X-RateLimit-Remaining" in response.headers
-                    and int(response.headers["X-RateLimit-Remaining"]) == 0
-                ):
-                    reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
-                    current_time = int(time.time())
-                    wait_time = max(0, reset_time - current_time) + 1
-                    print(f"Rate limit exceeded. Waiting {wait_time}s until reset...")
-                    time.sleep(wait_time)
-                    continue  # Retry the request
+                try:
+                    remaining = response.headers.get("X-RateLimit-Remaining")
+                    if remaining is not None and int(remaining) == 0:
+                        reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
+                        current_time = int(time.time())
+                        wait_time = max(0, reset_time - current_time) + 1
+                        print(
+                            f"Rate limit exceeded. Waiting {wait_time}s until reset..."
+                        )
+                        time.sleep(wait_time)
+                        continue  # Retry the request
+                except (ValueError, TypeError):
+                    # If headers are malformed, let normal error handling proceed
+                    pass
 
             response.raise_for_status()
             check_rate_limit(response)
@@ -127,6 +136,7 @@ def make_github_request(
             )
             time.sleep(backoff_time)
 
+    # This should never be reached, but added for type safety
     raise SystemExit("Failed to complete request after maximum retries")
 
 
