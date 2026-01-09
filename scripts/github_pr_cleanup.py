@@ -112,13 +112,18 @@ def stale_prs(prs: Iterable[PullRequest], days: int) -> List[PullRequest]:
 
 
 def close_pr(token: str, repo: str, pr: PullRequest) -> None:
-    response = requests.patch(
-        f"https://api.github.com/repos/{repo}/pulls/{pr.number}",
-        headers=github_headers(token),
-        json={"state": "closed"},
-        timeout=30,
-    )
-    response.raise_for_status()
+    try:
+        response = requests.patch(
+            f"https://api.github.com/repos/{repo}/pulls/{pr.number}",
+            headers=github_headers(token),
+            json={"state": "closed"},
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as exc:
+        raise SystemExit(
+            f"Failed to close PR #{pr.number} ({pr.title!r}): {exc}"
+        ) from exc
 
 
 def close_prs(
