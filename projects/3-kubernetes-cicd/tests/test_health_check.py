@@ -1,4 +1,5 @@
 """Health check tests for 3-kubernetes-cicd."""
+
 from src.health_check import check_health
 
 

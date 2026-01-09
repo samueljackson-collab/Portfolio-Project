@@ -16,8 +16,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ class MLAnomalyDetector:
         self,
         contamination: float = 0.1,
         n_estimators: int = 100,
-        model_path: Optional[Path] = None
+        model_path: Optional[Path] = None,
     ):
         """
         Initialize anomaly detector.
@@ -46,24 +45,24 @@ class MLAnomalyDetector:
         """
         self.contamination = contamination
         self.n_estimators = n_estimators
-        self.model_path = model_path or Path('models/anomaly_detector.pkl')
+        self.model_path = model_path or Path("models/anomaly_detector.pkl")
 
         # Initialize models
         self.model = IsolationForest(
             contamination=contamination,
             n_estimators=n_estimators,
             random_state=42,
-            n_jobs=-1
+            n_jobs=-1,
         )
         self.scaler = StandardScaler()
         self.pca = None
 
         # Feature columns
         self.feature_columns = [
-            'temperature',
-            'humidity',
-            'battery_level',
-            'signal_strength'
+            "temperature",
+            "humidity",
+            "battery_level",
+            "signal_strength",
         ]
 
         # Training history
@@ -84,14 +83,18 @@ class MLAnomalyDetector:
         features = df[self.feature_columns].copy()
 
         # Add derived features
-        features['temp_humidity_ratio'] = features['temperature'] / (features['humidity'] + 1)
-        features['battery_temp_interaction'] = features['battery_level'] * features['temperature']
+        features["temp_humidity_ratio"] = features["temperature"] / (
+            features["humidity"] + 1
+        )
+        features["battery_temp_interaction"] = (
+            features["battery_level"] * features["temperature"]
+        )
 
         # Add time-based features if timestamp available
-        if 'timestamp' in df.columns:
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            features['hour'] = df['timestamp'].dt.hour
-            features['day_of_week'] = df['timestamp'].dt.dayofweek
+        if "timestamp" in df.columns:
+            df["timestamp"] = pd.to_datetime(df["timestamp"])
+            features["hour"] = df["timestamp"].dt.hour
+            features["day_of_week"] = df["timestamp"].dt.dayofweek
 
         return features
 
@@ -116,19 +119,21 @@ class MLAnomalyDetector:
         if use_pca:
             self.pca = PCA(n_components=n_components, random_state=42)
             X_scaled = self.pca.fit_transform(X_scaled)
-            logger.info(f"PCA variance explained: {self.pca.explained_variance_ratio_.sum():.3f}")
+            logger.info(
+                f"PCA variance explained: {self.pca.explained_variance_ratio_.sum():.3f}"
+            )
 
         # Train Isolation Forest
         self.model.fit(X_scaled)
 
         # Record training info
         training_info = {
-            'timestamp': datetime.now().isoformat(),
-            'n_samples': len(df),
-            'contamination': self.contamination,
-            'n_estimators': self.n_estimators,
-            'features': list(X.columns),
-            'use_pca': use_pca
+            "timestamp": datetime.now().isoformat(),
+            "n_samples": len(df),
+            "contamination": self.contamination,
+            "n_estimators": self.n_estimators,
+            "features": list(X.columns),
+            "use_pca": use_pca,
         }
         self.training_history.append(training_info)
 
@@ -167,9 +172,7 @@ class MLAnomalyDetector:
         return predictions, anomaly_scores
 
     def detect_anomalies(
-        self,
-        df: pd.DataFrame,
-        combine_with_stats: bool = True
+        self, df: pd.DataFrame, combine_with_stats: bool = True
     ) -> pd.DataFrame:
         """
         Detect anomalies and return enriched DataFrame.
@@ -186,21 +189,28 @@ class MLAnomalyDetector:
         # ML-based detection
         predictions, scores = self.predict(df)
 
-        result['is_anomaly_ml'] = (predictions == -1)
-        result['anomaly_score'] = scores
+        result["is_anomaly_ml"] = predictions == -1
+        result["anomaly_score"] = scores
 
         # Statistical detection (z-score method)
         if combine_with_stats:
             for col in self.feature_columns:
                 if col in result.columns:
-                    z_scores = np.abs((result[col] - result[col].mean()) / result[col].std())
-                    result[f'{col}_z_score'] = z_scores
-                    result[f'{col}_anomaly'] = z_scores > 3
+                    z_scores = np.abs(
+                        (result[col] - result[col].mean()) / result[col].std()
+                    )
+                    result[f"{col}_z_score"] = z_scores
+                    result[f"{col}_anomaly"] = z_scores > 3
 
             # Combined anomaly flag
-            stat_anomaly = result[[f'{col}_anomaly' for col in self.feature_columns
-                                  if col in result.columns]].any(axis=1)
-            result['is_anomaly_combined'] = result['is_anomaly_ml'] | stat_anomaly
+            stat_anomaly = result[
+                [
+                    f"{col}_anomaly"
+                    for col in self.feature_columns
+                    if col in result.columns
+                ]
+            ].any(axis=1)
+            result["is_anomaly_combined"] = result["is_anomaly_ml"] | stat_anomaly
 
         return result
 
@@ -217,32 +227,36 @@ class MLAnomalyDetector:
         result = self.detect_anomalies(df)
 
         summary = {
-            'total_records': len(result),
-            'anomalies_ml': int(result['is_anomaly_ml'].sum()),
-            'anomaly_rate_ml': float(result['is_anomaly_ml'].mean()),
-            'avg_anomaly_score': float(result['anomaly_score'].mean()),
-            'min_anomaly_score': float(result['anomaly_score'].min()),
-            'max_anomaly_score': float(result['anomaly_score'].max())
+            "total_records": len(result),
+            "anomalies_ml": int(result["is_anomaly_ml"].sum()),
+            "anomaly_rate_ml": float(result["is_anomaly_ml"].mean()),
+            "avg_anomaly_score": float(result["anomaly_score"].mean()),
+            "min_anomaly_score": float(result["anomaly_score"].min()),
+            "max_anomaly_score": float(result["anomaly_score"].max()),
         }
 
-        if 'is_anomaly_combined' in result.columns:
-            summary['anomalies_combined'] = int(result['is_anomaly_combined'].sum())
-            summary['anomaly_rate_combined'] = float(result['is_anomaly_combined'].mean())
+        if "is_anomaly_combined" in result.columns:
+            summary["anomalies_combined"] = int(result["is_anomaly_combined"].sum())
+            summary["anomaly_rate_combined"] = float(
+                result["is_anomaly_combined"].mean()
+            )
 
         # Anomalies by device
-        if 'device_id' in result.columns:
-            anomaly_by_device = result[result['is_anomaly_ml']].groupby('device_id').size()
-            summary['top_anomalous_devices'] = anomaly_by_device.nlargest(5).to_dict()
+        if "device_id" in result.columns:
+            anomaly_by_device = (
+                result[result["is_anomaly_ml"]].groupby("device_id").size()
+            )
+            summary["top_anomalous_devices"] = anomaly_by_device.nlargest(5).to_dict()
 
         # Anomalies by feature
         anomaly_reasons = []
         for col in self.feature_columns:
-            if f'{col}_anomaly' in result.columns:
-                count = result[f'{col}_anomaly'].sum()
+            if f"{col}_anomaly" in result.columns:
+                count = result[f"{col}_anomaly"].sum()
                 if count > 0:
-                    anomaly_reasons.append({'feature': col, 'count': int(count)})
+                    anomaly_reasons.append({"feature": col, "count": int(count)})
 
-        summary['anomaly_reasons'] = anomaly_reasons
+        summary["anomaly_reasons"] = anomaly_reasons
 
         return summary
 
@@ -251,15 +265,15 @@ class MLAnomalyDetector:
         self.model_path.parent.mkdir(parents=True, exist_ok=True)
 
         model_data = {
-            'model': self.model,
-            'scaler': self.scaler,
-            'pca': self.pca,
-            'feature_columns': self.feature_columns,
-            'training_history': self.training_history,
-            'contamination': self.contamination
+            "model": self.model,
+            "scaler": self.scaler,
+            "pca": self.pca,
+            "feature_columns": self.feature_columns,
+            "training_history": self.training_history,
+            "contamination": self.contamination,
         }
 
-        with open(self.model_path, 'wb') as f:
+        with open(self.model_path, "wb") as f:
             pickle.dump(model_data, f)
 
         logger.info(f"Model saved to {self.model_path}")
@@ -269,15 +283,15 @@ class MLAnomalyDetector:
         if not self.model_path.exists():
             raise FileNotFoundError(f"Model not found: {self.model_path}")
 
-        with open(self.model_path, 'rb') as f:
+        with open(self.model_path, "rb") as f:
             model_data = pickle.load(f)
 
-        self.model = model_data['model']
-        self.scaler = model_data['scaler']
-        self.pca = model_data.get('pca')
-        self.feature_columns = model_data['feature_columns']
-        self.training_history = model_data.get('training_history', [])
-        self.contamination = model_data['contamination']
+        self.model = model_data["model"]
+        self.scaler = model_data["scaler"]
+        self.pca = model_data.get("pca")
+        self.feature_columns = model_data["feature_columns"]
+        self.training_history = model_data.get("training_history", [])
+        self.contamination = model_data["contamination"]
 
         logger.info(f"Model loaded from {self.model_path}")
 
@@ -289,7 +303,7 @@ class RealTimeAnomalyDetector:
         self,
         db_config: Dict,
         detector: MLAnomalyDetector,
-        check_interval_seconds: int = 60
+        check_interval_seconds: int = 60,
     ):
         """
         Initialize real-time detector.
@@ -340,17 +354,24 @@ class RealTimeAnomalyDetector:
 
         if not rows:
             logger.warning("No recent data found")
-            return {'anomalies_found': False}
+            return {"anomalies_found": False}
 
         # Convert to DataFrame
-        df = pd.DataFrame(rows, columns=[
-            'device_id', 'timestamp', 'temperature',
-            'humidity', 'battery_level', 'signal_strength'
-        ])
+        df = pd.DataFrame(
+            rows,
+            columns=[
+                "device_id",
+                "timestamp",
+                "temperature",
+                "humidity",
+                "battery_level",
+                "signal_strength",
+            ],
+        )
 
         # Detect anomalies
         result = self.detector.detect_anomalies(df)
-        anomalies = result[result['is_anomaly_combined']]
+        anomalies = result[result["is_anomaly_combined"]]
 
         # Get summary
         summary = self.detector.get_anomaly_summary(df)
@@ -366,11 +387,11 @@ class RealTimeAnomalyDetector:
             self._store_anomalies(anomalies)
 
         return {
-            'anomalies_found': len(anomalies) > 0,
-            'anomaly_count': len(anomalies),
-            'checked_records': len(df),
-            'summary': summary,
-            'anomalies': anomalies.to_dict('records') if len(anomalies) < 20 else []
+            "anomalies_found": len(anomalies) > 0,
+            "anomaly_count": len(anomalies),
+            "checked_records": len(df),
+            "summary": summary,
+            "anomalies": anomalies.to_dict("records") if len(anomalies) < 20 else [],
         }
 
     def _store_anomalies(self, anomalies_df: pd.DataFrame):
@@ -381,7 +402,8 @@ class RealTimeAnomalyDetector:
         cursor = conn.cursor()
 
         # Create anomalies table if not exists
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS iot_anomalies (
                 id SERIAL PRIMARY KEY,
                 device_id VARCHAR(50),
@@ -394,25 +416,29 @@ class RealTimeAnomalyDetector:
                 anomaly_score FLOAT,
                 anomaly_type VARCHAR(20)
             )
-        """)
+        """
+        )
 
         # Insert anomalies
         for _, row in anomalies_df.iterrows():
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO iot_anomalies (
                     device_id, anomaly_timestamp, temperature, humidity,
                     battery_level, signal_strength, anomaly_score, anomaly_type
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                row['device_id'],
-                row['timestamp'],
-                row['temperature'],
-                row['humidity'],
-                row['battery_level'],
-                row.get('signal_strength'),
-                row['anomaly_score'],
-                'combined'
-            ))
+            """,
+                (
+                    row["device_id"],
+                    row["timestamp"],
+                    row["temperature"],
+                    row["humidity"],
+                    row["battery_level"],
+                    row.get("signal_strength"),
+                    row["anomaly_score"],
+                    "combined",
+                ),
+            )
 
         conn.commit()
         cursor.close()
@@ -426,31 +452,33 @@ def main():
     import argparse
     import psycopg2
 
-    parser = argparse.ArgumentParser(description='ML Anomaly Detection')
-    parser.add_argument('--action', choices=['train', 'detect', 'realtime'], required=True)
-    parser.add_argument('--db-host', default='localhost')
-    parser.add_argument('--db-port', type=int, default=5432)
-    parser.add_argument('--db-name', default='iot_analytics')
-    parser.add_argument('--db-user', default='postgres')
-    parser.add_argument('--db-password', default='postgres')
-    parser.add_argument('--contamination', type=float, default=0.1)
-    parser.add_argument('--lookback-hours', type=int, default=24)
+    parser = argparse.ArgumentParser(description="ML Anomaly Detection")
+    parser.add_argument(
+        "--action", choices=["train", "detect", "realtime"], required=True
+    )
+    parser.add_argument("--db-host", default="localhost")
+    parser.add_argument("--db-port", type=int, default=5432)
+    parser.add_argument("--db-name", default="iot_analytics")
+    parser.add_argument("--db-user", default="postgres")
+    parser.add_argument("--db-password", default="postgres")
+    parser.add_argument("--contamination", type=float, default=0.1)
+    parser.add_argument("--lookback-hours", type=int, default=24)
 
     args = parser.parse_args()
 
     # Database configuration
     db_config = {
-        'host': args.db_host,
-        'port': args.db_port,
-        'database': args.db_name,
-        'user': args.db_user,
-        'password': args.db_password
+        "host": args.db_host,
+        "port": args.db_port,
+        "database": args.db_name,
+        "user": args.db_user,
+        "password": args.db_password,
     }
 
     # Initialize detector
     detector = MLAnomalyDetector(contamination=args.contamination)
 
-    if args.action == 'train':
+    if args.action == "train":
         # Load training data
         logger.info(f"Loading training data (last {args.lookback_hours} hours)...")
 
@@ -471,7 +499,7 @@ def main():
 
         logger.info("Training completed and model saved")
 
-    elif args.action == 'detect':
+    elif args.action == "detect":
         # Load model
         detector.load_model()
 
@@ -494,12 +522,16 @@ def main():
         logger.info("Anomaly Detection Summary")
         logger.info("=" * 60)
         logger.info(f"Total records: {summary['total_records']}")
-        logger.info(f"Anomalies (ML): {summary['anomalies_ml']} ({summary['anomaly_rate_ml']:.2%})")
-        if 'anomalies_combined' in summary:
-            logger.info(f"Anomalies (Combined): {summary['anomalies_combined']} ({summary['anomaly_rate_combined']:.2%})")
+        logger.info(
+            f"Anomalies (ML): {summary['anomalies_ml']} ({summary['anomaly_rate_ml']:.2%})"
+        )
+        if "anomalies_combined" in summary:
+            logger.info(
+                f"Anomalies (Combined): {summary['anomalies_combined']} ({summary['anomaly_rate_combined']:.2%})"
+            )
         logger.info("=" * 60)
 
-    elif args.action == 'realtime':
+    elif args.action == "realtime":
         # Load model
         detector.load_model()
 
@@ -510,10 +542,11 @@ def main():
         logger.info("Press Ctrl+C to stop")
 
         import time
+
         try:
             while True:
                 result = rt_detector.check_recent_data(lookback_minutes=5)
-                if result['anomalies_found']:
+                if result["anomalies_found"]:
                     logger.warning(f"Anomalies detected: {result['anomaly_count']}")
 
                 time.sleep(60)  # Check every minute
@@ -522,5 +555,5 @@ def main():
             logger.info("Stopped")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -68,9 +68,7 @@ def extract_exif_data(image_data: bytes) -> PhotoMetadata:
         if date_str:
             try:
                 # EXIF date format: "YYYY:MM:DD HH:MM:SS"
-                metadata.capture_date = datetime.strptime(
-                    date_str, "%Y:%m:%d %H:%M:%S"
-                )
+                metadata.capture_date = datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
             except ValueError as e:
                 logger.warning(f"Failed to parse date '{date_str}': {e}")
 
@@ -172,6 +170,7 @@ async def create_thumbnail(
     Returns:
         Thumbnail image bytes
     """
+
     def _generate_thumbnail() -> bytes:
         try:
             # Open original image

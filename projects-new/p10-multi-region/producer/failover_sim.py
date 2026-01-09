@@ -9,7 +9,13 @@ def simulate(primary: str, secondary: str, fail_after: int):
     events = []
     for second in range(0, fail_after + 60, 10):
         region = primary if second < fail_after else secondary
-        events.append({"timestamp": second, "region": region, "latency_ms": random.randint(40, 120)})
+        events.append(
+            {
+                "timestamp": second,
+                "region": region,
+                "latency_ms": random.randint(40, 120),
+            }
+        )
     return events
 
 
@@ -25,7 +31,9 @@ def main():
     events = simulate(args.primary, args.secondary, args.fail_after)
     with open(args.output, "w", encoding="utf-8") as fh:
         json.dump(events, fh, indent=2)
-    print(f"Simulated failover after {args.fail_after}s; wrote {len(events)} events to {args.output}")
+    print(
+        f"Simulated failover after {args.fail_after}s; wrote {len(events)} events to {args.output}"
+    )
 
 
 if __name__ == "__main__":

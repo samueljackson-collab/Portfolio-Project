@@ -1,6 +1,8 @@
 # Foundation Deployment Plan
 **Enterprise Portfolio Projects - Phase 1: Infrastructure Foundation**
 
+> **Historical snapshot**: This plan reflects an early Phase 1 deployment roadmap. For the current deployment guidance, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Executive Summary
 
 This document outlines the deployment strategy for the three foundational projects that will host and support the remaining 22 portfolio projects. Following the **Foundation-First → Vertical Completion** approach, we establish shared infrastructure before completing projects by category.

@@ -1,5 +1,7 @@
 # Documentation Test Suite Summary
 
+> **Historical snapshot**: This document summarizes a specific documentation-focused test suite. For the canonical testing overview, see [TEST_SUMMARY.md](TEST_SUMMARY.md).
+
 ## Overview
 
 This document summarizes the comprehensive test suite generated for the Architecture Decision Records (ADRs) and Production Runbooks added in this branch.

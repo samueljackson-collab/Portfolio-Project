@@ -1,4 +1,5 @@
 """Lambda handlers for the serverless data processing pipeline."""
+
 from __future__ import annotations
 
 import json
@@ -95,7 +96,9 @@ def _start_workflow(payload: Dict[str, Any]) -> None:
     state_machine = os.environ["WORKFLOW_ARN"]
     step_functions.start_execution(
         stateMachineArn=state_machine,
-        input=json.dumps({"payload": payload, "received_at": datetime.now(timezone.utc).isoformat()}),
+        input=json.dumps(
+            {"payload": payload, "received_at": datetime.now(timezone.utc).isoformat()}
+        ),
     )
 
 

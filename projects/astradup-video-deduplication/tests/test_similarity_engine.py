@@ -22,7 +22,7 @@ class TestSimilarityResult:
             metadata_similarity=0.85,
             combined_similarity=0.92,
             is_duplicate=True,
-            confidence=0.88
+            confidence=0.88,
         )
 
         assert result.video_id_1 == "vid1"
@@ -40,14 +40,14 @@ class TestSimilarityResult:
             metadata_similarity=0.85,
             combined_similarity=0.92,
             is_duplicate=True,
-            confidence=0.88
+            confidence=0.88,
         )
 
         result_dict = result.to_dict()
 
         assert isinstance(result_dict, dict)
-        assert result_dict['video_id_1'] == "vid1"
-        assert result_dict['combined_similarity'] == 0.92
+        assert result_dict["video_id_1"] == "vid1"
+        assert result_dict["combined_similarity"] == 0.92
 
     def test_similarity_result_str(self):
         """Test string representation of SimilarityResult"""
@@ -59,7 +59,7 @@ class TestSimilarityResult:
             metadata_similarity=0.85,
             combined_similarity=0.92,
             is_duplicate=True,
-            confidence=0.88
+            confidence=0.88,
         )
 
         result_str = str(result)
@@ -88,9 +88,7 @@ class TestSimilarityEngine:
     def test_initialization_custom_weights(self):
         """Test SimilarityEngine initialization with custom weights"""
         engine = SimilarityEngine(
-            visual_weight=0.5,
-            audio_weight=0.3,
-            metadata_weight=0.2
+            visual_weight=0.5, audio_weight=0.3, metadata_weight=0.2
         )
 
         # Weights should be normalized
@@ -104,11 +102,11 @@ class TestSimilarityEngine:
     def test_compute_metadata_similarity_identical(self, engine):
         """Test metadata similarity with identical metadata"""
         metadata1 = {
-            'duration': 120.0,
-            'width': 1920,
-            'height': 1080,
-            'file_size': 50000000,
-            'fps': 30.0
+            "duration": 120.0,
+            "width": 1920,
+            "height": 1080,
+            "file_size": 50000000,
+            "fps": 30.0,
         }
         metadata2 = metadata1.copy()
 
@@ -120,18 +118,18 @@ class TestSimilarityEngine:
     def test_compute_metadata_similarity_different(self, engine):
         """Test metadata similarity with different metadata"""
         metadata1 = {
-            'duration': 120.0,
-            'width': 1920,
-            'height': 1080,
-            'file_size': 50000000,
-            'fps': 30.0
+            "duration": 120.0,
+            "width": 1920,
+            "height": 1080,
+            "file_size": 50000000,
+            "fps": 30.0,
         }
         metadata2 = {
-            'duration': 60.0,  # Different duration
-            'width': 1280,  # Different resolution
-            'height': 720,
-            'file_size': 25000000,  # Different size
-            'fps': 24.0  # Different FPS
+            "duration": 60.0,  # Different duration
+            "width": 1280,  # Different resolution
+            "height": 720,
+            "file_size": 25000000,  # Different size
+            "fps": 24.0,  # Different FPS
         }
 
         similarity = engine.compute_metadata_similarity(metadata1, metadata2)
@@ -152,16 +150,16 @@ class TestSimilarityEngine:
     def test_compute_visual_similarity_with_phashes(self, engine):
         """Test visual similarity computation with perceptual hashes"""
         features1 = {
-            'phashes': ['abc123', 'def456'],
-            'embeddings': np.random.randn(2048)
+            "phashes": ["abc123", "def456"],
+            "embeddings": np.random.randn(2048),
         }
         features2 = {
-            'phashes': ['abc123', 'def456'],
-            'embeddings': np.random.randn(2048)
+            "phashes": ["abc123", "def456"],
+            "embeddings": np.random.randn(2048),
         }
 
-        with patch.object(engine, '_compare_phashes', return_value=0.95):
-            with patch.object(engine, '_compare_embeddings', return_value=0.90):
+        with patch.object(engine, "_compare_phashes", return_value=0.95):
+            with patch.object(engine, "_compare_embeddings", return_value=0.90):
                 similarity = engine.compute_visual_similarity(features1, features2)
 
                 # Should be weighted combination
@@ -181,18 +179,18 @@ class TestSimilarityEngine:
     def test_compute_audio_similarity_with_audio(self, engine):
         """Test audio similarity computation with audio features"""
         features1 = {
-            'has_audio': True,
-            'audio_fingerprint': 'fp1',
-            'mfcc_features': np.random.randn(26)
+            "has_audio": True,
+            "audio_fingerprint": "fp1",
+            "mfcc_features": np.random.randn(26),
         }
         features2 = {
-            'has_audio': True,
-            'audio_fingerprint': 'fp2',
-            'mfcc_features': np.random.randn(26)
+            "has_audio": True,
+            "audio_fingerprint": "fp2",
+            "mfcc_features": np.random.randn(26),
         }
 
-        with patch.object(engine, '_compare_fingerprints', return_value=0.85):
-            with patch.object(engine, '_compare_mfcc', return_value=0.80):
+        with patch.object(engine, "_compare_fingerprints", return_value=0.85):
+            with patch.object(engine, "_compare_mfcc", return_value=0.80):
                 similarity = engine.compute_audio_similarity(features1, features2)
 
                 # Should be weighted combination
@@ -201,8 +199,8 @@ class TestSimilarityEngine:
 
     def test_compute_audio_similarity_no_audio(self, engine):
         """Test audio similarity when videos have no audio"""
-        features1 = {'has_audio': False}
-        features2 = {'has_audio': False}
+        features1 = {"has_audio": False}
+        features2 = {"has_audio": False}
 
         similarity = engine.compute_audio_similarity(features1, features2)
 
@@ -221,9 +219,9 @@ class TestSimilarityEngine:
 
         # Check weighted combination
         expected = (
-            engine.visual_weight * visual_sim +
-            engine.audio_weight * audio_sim +
-            engine.metadata_weight * metadata_sim
+            engine.visual_weight * visual_sim
+            + engine.audio_weight * audio_sim
+            + engine.metadata_weight * metadata_sim
         )
         assert combined == pytest.approx(expected, rel=0.01)
 
@@ -246,34 +244,37 @@ class TestSimilarityEngine:
     def test_compare_videos_duplicate(self, engine):
         """Test full video comparison resulting in duplicate"""
         video1_features = {
-            'phashes': ['abc'] * 5,
-            'embeddings': np.random.randn(2048),
-            'has_audio': True,
-            'audio_fingerprint': 'fp1',
-            'mfcc_features': np.random.randn(26)
+            "phashes": ["abc"] * 5,
+            "embeddings": np.random.randn(2048),
+            "has_audio": True,
+            "audio_fingerprint": "fp1",
+            "mfcc_features": np.random.randn(26),
         }
 
         video2_features = video1_features.copy()
 
         video1_metadata = {
-            'duration': 120.0,
-            'width': 1920,
-            'height': 1080,
-            'file_size': 50000000,
-            'fps': 30.0
+            "duration": 120.0,
+            "width": 1920,
+            "height": 1080,
+            "file_size": 50000000,
+            "fps": 30.0,
         }
 
         video2_metadata = video1_metadata.copy()
 
         # Mock the comparison methods to return high similarity
-        with patch.object(engine, '_compare_phashes', return_value=0.98):
-            with patch.object(engine, '_compare_embeddings', return_value=0.97):
-                with patch.object(engine, '_compare_fingerprints', return_value=0.96):
-                    with patch.object(engine, '_compare_mfcc', return_value=0.95):
+        with patch.object(engine, "_compare_phashes", return_value=0.98):
+            with patch.object(engine, "_compare_embeddings", return_value=0.97):
+                with patch.object(engine, "_compare_fingerprints", return_value=0.96):
+                    with patch.object(engine, "_compare_mfcc", return_value=0.95):
                         result = engine.compare_videos(
-                            video1_features, video2_features,
-                            video1_metadata, video2_metadata,
-                            "vid1", "vid2"
+                            video1_features,
+                            video2_features,
+                            video1_metadata,
+                            video2_metadata,
+                            "vid1",
+                            "vid2",
                         )
 
                         assert isinstance(result, SimilarityResult)
@@ -283,42 +284,45 @@ class TestSimilarityEngine:
     def test_compare_videos_not_duplicate(self, engine):
         """Test full video comparison resulting in non-duplicate"""
         video1_features = {
-            'phashes': ['abc'] * 5,
-            'embeddings': np.random.randn(2048),
-            'has_audio': True,
-            'audio_fingerprint': 'fp1',
-            'mfcc_features': np.random.randn(26)
+            "phashes": ["abc"] * 5,
+            "embeddings": np.random.randn(2048),
+            "has_audio": True,
+            "audio_fingerprint": "fp1",
+            "mfcc_features": np.random.randn(26),
         }
 
         video2_features = {
-            'phashes': ['xyz'] * 5,
-            'embeddings': np.random.randn(2048),
-            'has_audio': True,
-            'audio_fingerprint': 'fp2',
-            'mfcc_features': np.random.randn(26)
+            "phashes": ["xyz"] * 5,
+            "embeddings": np.random.randn(2048),
+            "has_audio": True,
+            "audio_fingerprint": "fp2",
+            "mfcc_features": np.random.randn(26),
         }
 
         video1_metadata = {
-            'duration': 120.0,
-            'width': 1920,
-            'height': 1080,
+            "duration": 120.0,
+            "width": 1920,
+            "height": 1080,
         }
 
         video2_metadata = {
-            'duration': 60.0,  # Different
-            'width': 1280,  # Different
-            'height': 720,
+            "duration": 60.0,  # Different
+            "width": 1280,  # Different
+            "height": 720,
         }
 
         # Mock the comparison methods to return low similarity
-        with patch.object(engine, '_compare_phashes', return_value=0.40):
-            with patch.object(engine, '_compare_embeddings', return_value=0.45):
-                with patch.object(engine, '_compare_fingerprints', return_value=0.35):
-                    with patch.object(engine, '_compare_mfcc', return_value=0.38):
+        with patch.object(engine, "_compare_phashes", return_value=0.40):
+            with patch.object(engine, "_compare_embeddings", return_value=0.45):
+                with patch.object(engine, "_compare_fingerprints", return_value=0.35):
+                    with patch.object(engine, "_compare_mfcc", return_value=0.38):
                         result = engine.compare_videos(
-                            video1_features, video2_features,
-                            video1_metadata, video2_metadata,
-                            "vid1", "vid2"
+                            video1_features,
+                            video2_features,
+                            video1_metadata,
+                            video2_metadata,
+                            "vid1",
+                            "vid2",
                         )
 
                         assert isinstance(result, SimilarityResult)
@@ -345,5 +349,5 @@ class TestSimilarityEngineThresholds:
         assert engine.SIMILAR_THRESHOLD == 0.70
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

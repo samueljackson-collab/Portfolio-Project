@@ -8,7 +8,7 @@ import sys
 import os
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 from src.validate_policies import PolicyValidator
 
@@ -29,9 +29,9 @@ class TestPolicyValidator:
                 {
                     "Effect": "Allow",
                     "Action": "s3:GetObject",
-                    "Resource": "arn:aws:s3:::my-bucket/*"
+                    "Resource": "arn:aws:s3:::my-bucket/*",
                 }
-            ]
+            ],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
@@ -42,11 +42,7 @@ class TestPolicyValidator:
         """Test detection of missing Version field."""
         policy = {
             "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": "s3:GetObject",
-                    "Resource": "*"
-                }
+                {"Effect": "Allow", "Action": "s3:GetObject", "Resource": "*"}
             ]
         }
 
@@ -58,13 +54,7 @@ class TestPolicyValidator:
         """Test detection of wildcard actions."""
         policy = {
             "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": "*",
-                    "Resource": "*"
-                }
-            ]
+            "Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"}],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
@@ -76,12 +66,8 @@ class TestPolicyValidator:
         policy = {
             "Version": "2012-10-17",
             "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": "s3:GetObject",
-                    "Resource": "*"
-                }
-            ]
+                {"Effect": "Allow", "Action": "s3:GetObject", "Resource": "*"}
+            ],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
@@ -96,26 +82,22 @@ class TestPolicyValidator:
                 {
                     "Effect": "Allow",
                     "Action": "s3:DeleteBucket",
-                    "Resource": "arn:aws:s3:::my-bucket"
+                    "Resource": "arn:aws:s3:::my-bucket",
                 }
-            ]
+            ],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
         # Should generate warning about destructive actions without conditions
-        assert any("destructive" in m.lower() or "condition" in m.lower() for m in messages)
+        assert any(
+            "destructive" in m.lower() or "condition" in m.lower() for m in messages
+        )
 
     def test_admin_permissions_detection(self, validator):
         """Test detection of admin-level permissions."""
         policy = {
             "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": "iam:*",
-                    "Resource": "*"
-                }
-            ]
+            "Statement": [{"Effect": "Allow", "Action": "iam:*", "Resource": "*"}],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
@@ -127,12 +109,8 @@ class TestPolicyValidator:
         policy = {
             "Version": "2012-10-17",
             "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": "iam:PassRole",
-                    "Resource": "*"
-                }
-            ]
+                {"Effect": "Allow", "Action": "iam:PassRole", "Resource": "*"}
+            ],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
@@ -143,13 +121,7 @@ class TestPolicyValidator:
         """Test that Deny statements with wildcards are acceptable."""
         policy = {
             "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Deny",
-                    "Action": "*",
-                    "Resource": "*"
-                }
-            ]
+            "Statement": [{"Effect": "Deny", "Action": "*", "Resource": "*"}],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
@@ -164,9 +136,9 @@ class TestPolicyValidator:
                 {
                     "Effect": "Allow",
                     "Action": "s3:*",
-                    "Resource": "arn:aws:s3:::my-bucket/*"
+                    "Resource": "arn:aws:s3:::my-bucket/*",
                 }
-            ]
+            ],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
@@ -181,19 +153,15 @@ class TestPolicyValidator:
                 {
                     "Effect": "Allow",
                     "Action": "s3:GetObject",
-                    "Resource": "arn:aws:s3:::my-bucket/*"
+                    "Resource": "arn:aws:s3:::my-bucket/*",
                 },
-                {
-                    "Effect": "Deny",
-                    "Action": "s3:DeleteBucket",
-                    "Resource": "*"
-                }
-            ]
+                {"Effect": "Deny", "Action": "s3:DeleteBucket", "Resource": "*"},
+            ],
         }
 
         is_valid, messages = validator.validate_policy(policy, "test-policy")
         assert is_valid is True
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

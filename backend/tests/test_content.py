@@ -40,11 +40,7 @@ async def test_list_content(client: AsyncClient, test_content: Content):
 
 
 @pytest.mark.asyncio
-async def test_list_content_pagination(
-    client: AsyncClient,
-    test_db,
-    test_user: User
-):
+async def test_list_content_pagination(client: AsyncClient, test_db, test_user: User):
     """Test content listing with pagination."""
     # Create multiple content items
     for i in range(15):
@@ -52,7 +48,7 @@ async def test_list_content_pagination(
             title=f"Content {i}",
             body=f"Body {i}",
             owner_id=test_user.id,
-            is_published=True
+            is_published=True,
         )
         test_db.add(content)
     await test_db.commit()
@@ -84,8 +80,7 @@ async def test_get_content_by_id(client: AsyncClient, test_content: Content):
 
 @pytest.mark.asyncio
 async def test_public_content_accessible_without_auth(
-    client: AsyncClient,
-    test_content: Content
+    client: AsyncClient, test_content: Content
 ):
     """Ensure published content is accessible without credentials."""
 
@@ -101,10 +96,7 @@ async def test_public_content_accessible_without_auth(
 
 @pytest.mark.asyncio
 async def test_private_content_requires_auth(
-    client: AsyncClient,
-    authenticated_client: AsyncClient,
-    test_db,
-    test_user: User
+    client: AsyncClient, authenticated_client: AsyncClient, test_db, test_user: User
 ):
     """Verify private content stays hidden without authentication."""
 
@@ -112,14 +104,16 @@ async def test_private_content_requires_auth(
         title="Private Article",
         body="Hidden text",
         owner_id=test_user.id,
-        is_published=False
+        is_published=False,
     )
     test_db.add(private_content)
     await test_db.commit()
     await test_db.refresh(private_content)
 
     # Unauthenticated users should not see the private item in listings
-    list_response = await client.get("/content", params={"page": 1, "page_size": 10, "published_only": False})
+    list_response = await client.get(
+        "/content", params={"page": 1, "page_size": 10, "published_only": False}
+    )
     assert list_response.status_code == 200
     list_data = list_response.json()
     assert all(item["id"] != str(private_content.id) for item in list_data["items"])
@@ -154,14 +148,10 @@ async def test_get_content_invalid_uuid(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_create_content(
-    authenticated_client: AsyncClient,
-    sample_content_data: dict
+    authenticated_client: AsyncClient, sample_content_data: dict
 ):
     """Test creating new content (authenticated user)."""
-    response = await authenticated_client.post(
-        "/content",
-        json=sample_content_data
-    )
+    response = await authenticated_client.post("/content", json=sample_content_data)
 
     assert response.status_code == 201
     data = response.json()
@@ -175,8 +165,7 @@ async def test_create_content(
 
 @pytest.mark.asyncio
 async def test_create_content_unauthorized(
-    client: AsyncClient,
-    sample_content_data: dict
+    client: AsyncClient, sample_content_data: dict
 ):
     """Test creating content without authentication fails."""
     response = await client.post("/content", json=sample_content_data)
@@ -188,31 +177,23 @@ async def test_create_content_unauthorized(
 async def test_create_content_missing_title(authenticated_client: AsyncClient):
     """Test creating content without required title field."""
     response = await authenticated_client.post(
-        "/content",
-        json={
-            "body": "Content body",
-            "is_published": False
-        }
+        "/content", json={"body": "Content body", "is_published": False}
     )
 
     assert response.status_code == 422  # Validation error
 
 
 @pytest.mark.asyncio
-async def test_update_content(
-    authenticated_client: AsyncClient,
-    test_content: Content
-):
+async def test_update_content(authenticated_client: AsyncClient, test_content: Content):
     """Test updating content by owner."""
     update_data = {
         "title": "Updated Title",
         "body": "Updated body content",
-        "is_published": True
+        "is_published": True,
     }
 
     response = await authenticated_client.put(
-        f"/content/{test_content.id}",
-        json=update_data
+        f"/content/{test_content.id}", json=update_data
     )
 
     assert response.status_code == 200
@@ -224,17 +205,13 @@ async def test_update_content(
 
 @pytest.mark.asyncio
 async def test_update_content_partial(
-    authenticated_client: AsyncClient,
-    test_content: Content
+    authenticated_client: AsyncClient, test_content: Content
 ):
     """Test partial update of content."""
-    update_data = {
-        "title": "Only Update Title"
-    }
+    update_data = {"title": "Only Update Title"}
 
     response = await authenticated_client.put(
-        f"/content/{test_content.id}",
-        json=update_data
+        f"/content/{test_content.id}", json=update_data
     )
 
     assert response.status_code == 200
@@ -244,14 +221,10 @@ async def test_update_content_partial(
 
 
 @pytest.mark.asyncio
-async def test_update_content_unauthorized(
-    client: AsyncClient,
-    test_content: Content
-):
+async def test_update_content_unauthorized(client: AsyncClient, test_content: Content):
     """Test updating content without authentication fails."""
     response = await client.put(
-        f"/content/{test_content.id}",
-        json={"title": "New Title"}
+        f"/content/{test_content.id}", json={"title": "New Title"}
     )
 
     assert response.status_code == 401
@@ -259,10 +232,7 @@ async def test_update_content_unauthorized(
 
 @pytest.mark.asyncio
 async def test_update_content_not_owner(
-    client: AsyncClient,
-    test_db,
-    test_content: Content,
-    sample_user_data: dict
+    client: AsyncClient, test_db, test_content: Content, sample_user_data: dict
 ):
     """Test updating content by non-owner fails."""
     # Create another user
@@ -272,26 +242,21 @@ async def test_update_content_not_owner(
     other_user = User(
         email="other@example.com",
         hashed_password=get_password_hash("password123"),
-        is_active=True
+        is_active=True,
     )
     test_db.add(other_user)
     await test_db.commit()
 
     # Login as other user
     response = await client.post(
-        "/auth/login",
-        data={
-            "username": other_user.email,
-            "password": "password123"
-        }
+        "/auth/login", data={"username": other_user.email, "password": "password123"}
     )
     token = response.json()["access_token"]
 
     # Try to update original user's content
     client.headers.update({"Authorization": f"Bearer {token}"})
     response = await client.put(
-        f"/content/{test_content.id}",
-        json={"title": "Hacked Title"}
+        f"/content/{test_content.id}", json={"title": "Hacked Title"}
     )
 
     assert response.status_code == 403
@@ -299,10 +264,7 @@ async def test_update_content_not_owner(
 
 
 @pytest.mark.asyncio
-async def test_delete_content(
-    authenticated_client: AsyncClient,
-    test_content: Content
-):
+async def test_delete_content(authenticated_client: AsyncClient, test_content: Content):
     """Test deleting content by owner."""
     response = await authenticated_client.delete(f"/content/{test_content.id}")
 
@@ -314,10 +276,7 @@ async def test_delete_content(
 
 
 @pytest.mark.asyncio
-async def test_delete_content_unauthorized(
-    client: AsyncClient,
-    test_content: Content
-):
+async def test_delete_content_unauthorized(client: AsyncClient, test_content: Content):
     """Test deleting content without authentication fails."""
     response = await client.delete(f"/content/{test_content.id}")
 
@@ -326,9 +285,7 @@ async def test_delete_content_unauthorized(
 
 @pytest.mark.asyncio
 async def test_delete_content_not_owner(
-    client: AsyncClient,
-    test_db,
-    test_content: Content
+    client: AsyncClient, test_db, test_content: Content
 ):
     """Test deleting content by non-owner fails."""
     # Create another user
@@ -338,18 +295,14 @@ async def test_delete_content_not_owner(
     other_user = User(
         email="other@example.com",
         hashed_password=get_password_hash("password123"),
-        is_active=True
+        is_active=True,
     )
     test_db.add(other_user)
     await test_db.commit()
 
     # Login as other user
     response = await client.post(
-        "/auth/login",
-        data={
-            "username": other_user.email,
-            "password": "password123"
-        }
+        "/auth/login", data={"username": other_user.email, "password": "password123"}
     )
     token = response.json()["access_token"]
 

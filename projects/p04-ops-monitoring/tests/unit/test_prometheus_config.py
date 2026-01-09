@@ -22,18 +22,12 @@ class TestPrometheusConfig:
     @pytest.fixture
     def config_path(self):
         """Return path to prometheus.yml config file."""
-        return os.path.join(
-            os.path.dirname(__file__),
-            "../../config/prometheus.yml"
-        )
+        return os.path.join(os.path.dirname(__file__), "../../config/prometheus.yml")
 
     @pytest.fixture
     def alerts_path(self):
         """Return path to alerts.yml config file."""
-        return os.path.join(
-            os.path.dirname(__file__),
-            "../../config/alerts.yml"
-        )
+        return os.path.join(os.path.dirname(__file__), "../../config/alerts.yml")
 
     def test_prometheus_config_exists(self, config_path):
         """Test that prometheus.yml exists."""
@@ -96,14 +90,18 @@ class TestPrometheusConfig:
             job_name = scrape_config.get("job_name")
             # Each config should have at least one discovery method
             has_static = "static_configs" in scrape_config
-            has_sd = any(key in scrape_config for key in [
-                "consul_sd_configs",
-                "file_sd_configs",
-                "ec2_sd_configs",
-                "kubernetes_sd_configs"
-            ])
-            assert has_static or has_sd, \
-                f"Scrape config '{job_name}' missing static_configs or service discovery"
+            has_sd = any(
+                key in scrape_config
+                for key in [
+                    "consul_sd_configs",
+                    "file_sd_configs",
+                    "ec2_sd_configs",
+                    "kubernetes_sd_configs",
+                ]
+            )
+            assert (
+                has_static or has_sd
+            ), f"Scrape config '{job_name}' missing static_configs or service discovery"
 
     def test_prometheus_required_scrape_targets(self, config_path):
         """Test that required scrape targets are configured."""
@@ -116,12 +114,13 @@ class TestPrometheusConfig:
             "prometheus",  # Self-monitoring
             "node-exporter",  # Infrastructure metrics
             "backend-api",  # Backend service metrics
-            "alertmanager"  # Alert manager
+            "alertmanager",  # Alert manager
         ]
 
         for required in required_jobs:
-            assert required in job_names, \
-                f"Required scrape config '{required}' not found in prometheus.yml"
+            assert (
+                required in job_names
+            ), f"Required scrape config '{required}' not found in prometheus.yml"
 
     def test_prometheus_optional_scrape_targets(self, config_path):
         """Test that optional scrape targets are present."""
@@ -133,12 +132,13 @@ class TestPrometheusConfig:
         optional_jobs = [
             "frontend-app",  # Frontend service metrics
             "rds-metrics",  # RDS database metrics
-            "aws-cloudwatch"  # CloudWatch metrics
+            "aws-cloudwatch",  # CloudWatch metrics
         ]
 
         for optional in optional_jobs:
-            assert optional in job_names, \
-                f"Optional scrape config '{optional}' not found in prometheus.yml"
+            assert (
+                optional in job_names
+            ), f"Optional scrape config '{optional}' not found in prometheus.yml"
 
     def test_prometheus_scrape_intervals_are_valid(self, config_path):
         """Test that scrape intervals are valid duration strings."""
@@ -148,9 +148,12 @@ class TestPrometheusConfig:
         valid_intervals = ["5s", "10s", "15s", "30s", "60s", "120s", "5m", "1m"]
 
         for scrape_config in config["scrape_configs"]:
-            interval = scrape_config.get("scrape_interval", config["global"]["scrape_interval"])
-            assert interval in valid_intervals or interval is None, \
-                f"Invalid scrape_interval '{interval}' in {scrape_config.get('job_name')}"
+            interval = scrape_config.get(
+                "scrape_interval", config["global"]["scrape_interval"]
+            )
+            assert (
+                interval in valid_intervals or interval is None
+            ), f"Invalid scrape_interval '{interval}' in {scrape_config.get('job_name')}"
 
     def test_prometheus_rule_files_exist(self, config_path, alerts_path):
         """Test that rule files referenced in prometheus.yml exist."""
@@ -176,8 +179,9 @@ class TestPrometheusConfig:
                 for static_config in static_configs:
                     labels = static_config.get("labels", {})
                     # Important labels should be present
-                    assert "service" in labels or "job" in labels, \
-                        f"Scrape config '{job_name}' missing service/job label"
+                    assert (
+                        "service" in labels or "job" in labels
+                    ), f"Scrape config '{job_name}' missing service/job label"
 
 
 class TestAlertRules:
@@ -186,10 +190,7 @@ class TestAlertRules:
     @pytest.fixture
     def alerts_path(self):
         """Return path to alerts.yml config file."""
-        return os.path.join(
-            os.path.dirname(__file__),
-            "../../config/alerts.yml"
-        )
+        return os.path.join(os.path.dirname(__file__), "../../config/alerts.yml")
 
     def test_alerts_file_exists(self, alerts_path):
         """Test that alerts.yml exists."""
@@ -218,7 +219,9 @@ class TestAlertRules:
 
         for group in alerts["groups"]:
             assert "name" in group, "Alert group missing 'name'"
-            assert "rules" in group, f"Alert group '{group.get('name')}' missing 'rules'"
+            assert (
+                "rules" in group
+            ), f"Alert group '{group.get('name')}' missing 'rules'"
 
     def test_alert_rules_have_required_fields(self, alerts_path):
         """Test that all alert rules have required fields."""
@@ -231,8 +234,9 @@ class TestAlertRules:
             for rule in group.get("rules", []):
                 alert_name = rule.get("alert", "unknown")
                 for field in required_fields:
-                    assert field in rule, \
-                        f"Alert '{alert_name}' missing required field '{field}'"
+                    assert (
+                        field in rule
+                    ), f"Alert '{alert_name}' missing required field '{field}'"
 
     def test_alert_rules_have_severity(self, alerts_path):
         """Test that all alert rules have a severity label."""
@@ -245,10 +249,12 @@ class TestAlertRules:
             for rule in group.get("rules", []):
                 alert_name = rule.get("alert")
                 severity = rule.get("labels", {}).get("severity")
-                assert severity is not None, \
-                    f"Alert '{alert_name}' missing severity label"
-                assert severity in valid_severities, \
-                    f"Alert '{alert_name}' has invalid severity: {severity}"
+                assert (
+                    severity is not None
+                ), f"Alert '{alert_name}' missing severity label"
+                assert (
+                    severity in valid_severities
+                ), f"Alert '{alert_name}' has invalid severity: {severity}"
 
     def test_alert_rules_have_category(self, alerts_path):
         """Test that all alert rules have a category label."""
@@ -256,17 +262,23 @@ class TestAlertRules:
             alerts = yaml.safe_load(f)
 
         valid_categories = [
-            "infrastructure", "application", "database", "slo", "monitoring"
+            "infrastructure",
+            "application",
+            "database",
+            "slo",
+            "monitoring",
         ]
 
         for group in alerts["groups"]:
             for rule in group.get("rules", []):
                 alert_name = rule.get("alert")
                 category = rule.get("labels", {}).get("category")
-                assert category is not None, \
-                    f"Alert '{alert_name}' missing category label"
-                assert category in valid_categories, \
-                    f"Alert '{alert_name}' has invalid category: {category}"
+                assert (
+                    category is not None
+                ), f"Alert '{alert_name}' missing category label"
+                assert (
+                    category in valid_categories
+                ), f"Alert '{alert_name}' has invalid category: {category}"
 
     def test_alert_annotations_have_summary(self, alerts_path):
         """Test that alert annotations have summary."""
@@ -277,8 +289,9 @@ class TestAlertRules:
             for rule in group.get("rules", []):
                 alert_name = rule.get("alert")
                 summary = rule.get("annotations", {}).get("summary")
-                assert summary is not None, \
-                    f"Alert '{alert_name}' missing summary annotation"
+                assert (
+                    summary is not None
+                ), f"Alert '{alert_name}' missing summary annotation"
 
     def test_alert_annotations_have_description(self, alerts_path):
         """Test that alert annotations have description."""
@@ -289,8 +302,9 @@ class TestAlertRules:
             for rule in group.get("rules", []):
                 alert_name = rule.get("alert")
                 description = rule.get("annotations", {}).get("description")
-                assert description is not None, \
-                    f"Alert '{alert_name}' missing description annotation"
+                assert (
+                    description is not None
+                ), f"Alert '{alert_name}' missing description annotation"
 
     def test_required_alerts_exist(self, alerts_path):
         """Test that required alert rules exist."""
@@ -309,12 +323,13 @@ class TestAlertRules:
             "HighErrorRate",
             "ServiceDown",
             "RDSConnectionPoolExhausted",
-            "SlowResponseTime"
+            "SlowResponseTime",
         ]
 
         for required in required_alerts:
-            assert required in alert_names, \
-                f"Required alert '{required}' not found in alerts.yml"
+            assert (
+                required in alert_names
+            ), f"Required alert '{required}' not found in alerts.yml"
 
     def test_alert_expressions_are_not_empty(self, alerts_path):
         """Test that alert expressions are not empty."""
@@ -325,8 +340,7 @@ class TestAlertRules:
             for rule in group.get("rules", []):
                 alert_name = rule.get("alert")
                 expr = rule.get("expr", "").strip()
-                assert len(expr) > 0, \
-                    f"Alert '{alert_name}' has empty expression"
+                assert len(expr) > 0, f"Alert '{alert_name}' has empty expression"
 
     def test_alert_for_durations_are_valid(self, alerts_path):
         """Test that alert 'for' durations are valid."""
@@ -338,8 +352,9 @@ class TestAlertRules:
                 alert_name = rule.get("alert")
                 for_duration = rule.get("for", "1m")
                 # Simple check: should contain 's', 'm', or 'h'
-                assert any(unit in str(for_duration) for unit in ['s', 'm', 'h']), \
-                    f"Alert '{alert_name}' has invalid 'for' duration: {for_duration}"
+                assert any(
+                    unit in str(for_duration) for unit in ["s", "m", "h"]
+                ), f"Alert '{alert_name}' has invalid 'for' duration: {for_duration}"
 
 
 if __name__ == "__main__":

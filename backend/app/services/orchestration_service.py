@@ -52,7 +52,9 @@ class OrchestrationService:
         return self._plans
 
     def list_runs(self) -> List[Dict[str, object]]:
-        return sorted(self._runs.values(), key=lambda run: run["started_at"], reverse=True)
+        return sorted(
+            self._runs.values(), key=lambda run: run["started_at"], reverse=True
+        )
 
     def get_run(self, run_id: str) -> Dict[str, object]:
         try:

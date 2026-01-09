@@ -16,43 +16,103 @@ PROJECTS_DIR = PROJECT_ROOT / "projects"
 
 # Projects from the checklist that need specific deliverables
 NEEDS_CICD = [
-    "10-blockchain-smart-contract-platform", "11-iot-data-analytics", "12-quantum-computing",
-    "13-advanced-cybersecurity", "14-edge-ai-inference", "15-real-time-collaboration",
-    "16-advanced-data-lake", "17-multi-cloud-service-mesh", "18-gpu-accelerated-computing",
-    "19-advanced-kubernetes-operators", "20-blockchain-oracle-service", "21-quantum-safe-cryptography",
-    "22-autonomous-devops-platform", "24-report-generator", "25-portfolio-website",
-    "3-kubernetes-cicd", "4-devsecops", "5-real-time-data-streaming", "6-mlops-platform",
-    "7-serverless-data-processing", "8-advanced-ai-chatbot", "9-multi-region-disaster-recovery",
-    "astradup-video-deduplication", "p02-iam-hardening", "p03-hybrid-network", "p04-ops-monitoring",
-    "p05-mobile-testing", "p07-roaming-simulation", "p08-api-testing", "p09-cloud-native-poc",
-    "p10-multi-region", "p11-serverless", "p12-data-pipeline", "p13-ha-webapp",
-    "p14-disaster-recovery", "p15-cost-optimization", "p16-zero-trust", "p17-terraform-multicloud",
-    "p18-k8s-cicd", "p19-security-automation", "p20-observability"
+    "10-blockchain-smart-contract-platform",
+    "11-iot-data-analytics",
+    "12-quantum-computing",
+    "13-advanced-cybersecurity",
+    "14-edge-ai-inference",
+    "15-real-time-collaboration",
+    "16-advanced-data-lake",
+    "17-multi-cloud-service-mesh",
+    "18-gpu-accelerated-computing",
+    "19-advanced-kubernetes-operators",
+    "20-blockchain-oracle-service",
+    "21-quantum-safe-cryptography",
+    "22-autonomous-devops-platform",
+    "24-report-generator",
+    "25-portfolio-website",
+    "3-kubernetes-cicd",
+    "4-devsecops",
+    "5-real-time-data-streaming",
+    "6-mlops-platform",
+    "7-serverless-data-processing",
+    "8-advanced-ai-chatbot",
+    "9-multi-region-disaster-recovery",
+    "astradup-video-deduplication",
+    "p02-iam-hardening",
+    "p03-hybrid-network",
+    "p04-ops-monitoring",
+    "p05-mobile-testing",
+    "p07-roaming-simulation",
+    "p08-api-testing",
+    "p09-cloud-native-poc",
+    "p10-multi-region",
+    "p11-serverless",
+    "p12-data-pipeline",
+    "p13-ha-webapp",
+    "p14-disaster-recovery",
+    "p15-cost-optimization",
+    "p16-zero-trust",
+    "p17-terraform-multicloud",
+    "p18-k8s-cicd",
+    "p19-security-automation",
+    "p20-observability",
 ]
 
 NEEDS_TESTS = [
-    "10-blockchain-smart-contract-platform", "11-iot-data-analytics", "12-quantum-computing",
-    "13-advanced-cybersecurity", "14-edge-ai-inference", "15-real-time-collaboration",
-    "16-advanced-data-lake", "17-multi-cloud-service-mesh", "18-gpu-accelerated-computing",
-    "19-advanced-kubernetes-operators", "20-blockchain-oracle-service", "21-quantum-safe-cryptography",
-    "22-autonomous-devops-platform", "23-advanced-monitoring", "24-report-generator",
-    "25-portfolio-website", "3-kubernetes-cicd", "4-devsecops", "5-real-time-data-streaming",
-    "6-mlops-platform", "7-serverless-data-processing", "8-advanced-ai-chatbot",
-    "9-multi-region-disaster-recovery", "p05-mobile-testing"
+    "10-blockchain-smart-contract-platform",
+    "11-iot-data-analytics",
+    "12-quantum-computing",
+    "13-advanced-cybersecurity",
+    "14-edge-ai-inference",
+    "15-real-time-collaboration",
+    "16-advanced-data-lake",
+    "17-multi-cloud-service-mesh",
+    "18-gpu-accelerated-computing",
+    "19-advanced-kubernetes-operators",
+    "20-blockchain-oracle-service",
+    "21-quantum-safe-cryptography",
+    "22-autonomous-devops-platform",
+    "23-advanced-monitoring",
+    "24-report-generator",
+    "25-portfolio-website",
+    "3-kubernetes-cicd",
+    "4-devsecops",
+    "5-real-time-data-streaming",
+    "6-mlops-platform",
+    "7-serverless-data-processing",
+    "8-advanced-ai-chatbot",
+    "9-multi-region-disaster-recovery",
+    "p05-mobile-testing",
 ]
 
 NEEDS_SRC = [
-    "1-aws-infrastructure-automation", "9-multi-region-disaster-recovery", "10-blockchain-smart-contract-platform",
-    "17-multi-cloud-service-mesh", "20-blockchain-oracle-service", "23-advanced-monitoring",
-    "25-portfolio-website", "3-kubernetes-cicd", "4-devsecops", "p03-hybrid-network",
-    "p04-ops-monitoring", "p05-mobile-testing", "p08-api-testing", "p10-multi-region",
-    "p12-data-pipeline", "p14-disaster-recovery", "p15-cost-optimization", "p16-zero-trust",
-    "p17-terraform-multicloud", "p18-k8s-cicd", "p19-security-automation", "p20-observability"
+    "1-aws-infrastructure-automation",
+    "9-multi-region-disaster-recovery",
+    "10-blockchain-smart-contract-platform",
+    "17-multi-cloud-service-mesh",
+    "20-blockchain-oracle-service",
+    "23-advanced-monitoring",
+    "25-portfolio-website",
+    "3-kubernetes-cicd",
+    "4-devsecops",
+    "p03-hybrid-network",
+    "p04-ops-monitoring",
+    "p05-mobile-testing",
+    "p08-api-testing",
+    "p10-multi-region",
+    "p12-data-pipeline",
+    "p14-disaster-recovery",
+    "p15-cost-optimization",
+    "p16-zero-trust",
+    "p17-terraform-multicloud",
+    "p18-k8s-cicd",
+    "p19-security-automation",
+    "p20-observability",
 ]
 
-NEEDS_ADRS = [
-    "astradup-video-deduplication", "p05-mobile-testing"
-]
+NEEDS_ADRS = ["astradup-video-deduplication", "p05-mobile-testing"]
+
 
 def create_cicd_workflow(project_name: str) -> str:
     """Generate GitHub Actions CI/CD workflow."""
@@ -109,6 +169,7 @@ jobs:
           # Add deployment commands here
 """
 
+
 def create_test_file(project_name: str) -> str:
     """Generate a basic test file."""
     return f"""\"\"\"
@@ -132,6 +193,7 @@ def test_project_structure():
 # Add more tests specific to your project
 """
 
+
 def create_src_placeholder(project_name: str) -> str:
     """Generate a basic source code placeholder."""
     return f'''"""
@@ -146,6 +208,7 @@ def main():
 if __name__ == "__main__":
     main()
 '''
+
 
 def create_adr_template(project_name: str, number: int, title: str) -> str:
     """Generate ADR (Architecture Decision Record) template."""
@@ -175,6 +238,7 @@ Describe the decision that was made.
 - Link to relevant documentation
 - Link to related ADRs
 """
+
 
 def create_runbook(project_name: str) -> str:
     """Generate operational runbook."""
@@ -244,51 +308,55 @@ Operational procedures for maintaining and troubleshooting {project_name}.
 - Escalation: [manager contact]
 """
 
+
 def create_code_gen_prompts_section(project_name: str, project_type: str) -> str:
     """Generate Code Generation Prompts section for README."""
     examples = {
         "infrastructure": [
             "Create Terraform module for [specific infrastructure component]",
             "Generate CloudFormation template for [resource type]",
-            "Write Ansible playbook for [deployment task]"
+            "Write Ansible playbook for [deployment task]",
         ],
         "kubernetes": [
             "Create Kubernetes deployment manifest for [application]",
             "Generate Helm chart for [service]",
-            "Write custom Kubernetes operator for [resource]"
+            "Write custom Kubernetes operator for [resource]",
         ],
         "security": [
             "Create security policy for [access control]",
             "Generate IAM roles for [service]",
-            "Write security scanning script for [vulnerability type]"
+            "Write security scanning script for [vulnerability type]",
         ],
         "data_processing": [
             "Create data pipeline for [data source] to [destination]",
             "Generate ETL script for [transformation]",
-            "Write stream processing logic for [event type]"
+            "Write stream processing logic for [event type]",
         ],
         "ml_ai": [
             "Create ML model for [prediction task]",
             "Generate training pipeline for [model type]",
-            "Write inference service for [model deployment]"
+            "Write inference service for [model deployment]",
         ],
         "testing": [
             "Create test suite for [feature]",
             "Generate test data for [scenario]",
-            "Write automated test for [user flow]"
+            "Write automated test for [user flow]",
         ],
         "blockchain": [
             "Create smart contract for [functionality]",
             "Generate deployment script for [contract]",
-            "Write tests for [contract function]"
-        ]
+            "Write tests for [contract function]",
+        ],
     }
 
-    prompts = examples.get(project_type, [
-        "Create [component] for [functionality]",
-        "Generate [artifact] for [use case]",
-        "Write [code] for [feature]"
-    ])
+    prompts = examples.get(
+        project_type,
+        [
+            "Create [component] for [functionality]",
+            "Generate [artifact] for [use case]",
+            "Write [code] for [feature]",
+        ],
+    )
 
     section = f"""
 
@@ -313,6 +381,7 @@ When using these prompts with AI coding assistants:
 4. Follow security best practices
 """
     return section
+
 
 def process_project(project_path: Path, project_name: str):
     """Process a single project and create missing deliverables."""
@@ -339,7 +408,9 @@ def process_project(project_path: Path, project_name: str):
         # Create pytest config
         pytest_ini = tests_dir.parent / "pytest.ini"
         if not pytest_ini.exists():
-            pytest_ini.write_text("[pytest]\ntestpaths = tests\npython_files = test_*.py\n")
+            pytest_ini.write_text(
+                "[pytest]\ntestpaths = tests\npython_files = test_*.py\n"
+            )
             print(f"  ✓ Created pytest config")
 
     # Create src directory with placeholder
@@ -357,7 +428,9 @@ def process_project(project_path: Path, project_name: str):
         adr_dir.mkdir(parents=True, exist_ok=True)
         adr_file = adr_dir / "0001-initial-architecture.md"
         if not adr_file.exists():
-            adr_file.write_text(create_adr_template(project_name, 1, "Initial Architecture"))
+            adr_file.write_text(
+                create_adr_template(project_name, 1, "Initial Architecture")
+            )
             print(f"  ✓ Created ADR")
 
     # Always create docs/adr directory even if not in NEEDS_ADRS (per checklist)
@@ -366,7 +439,9 @@ def process_project(project_path: Path, project_name: str):
         adr_dir.mkdir(parents=True, exist_ok=True)
         adr_file = adr_dir / "0001-initial-decision.md"
         if not adr_file.exists():
-            adr_file.write_text(create_adr_template(project_name, 1, "Initial Architecture Decision"))
+            adr_file.write_text(
+                create_adr_template(project_name, 1, "Initial Architecture Decision")
+            )
             print(f"  ✓ Created ADR directory and initial ADR")
 
     # Create runbook if missing
@@ -375,6 +450,7 @@ def process_project(project_path: Path, project_name: str):
         runbook_file.write_text(create_runbook(project_name))
         print(f"  ✓ Created runbook")
 
+
 def main():
     """Generate all missing deliverables."""
     print("=" * 80)
@@ -382,7 +458,11 @@ def main():
     print("=" * 80)
 
     # Get all project directories
-    all_projects = [d.name for d in PROJECTS_DIR.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    all_projects = [
+        d.name
+        for d in PROJECTS_DIR.iterdir()
+        if d.is_dir() and not d.name.startswith(".")
+    ]
 
     print(f"\nProcessing {len(all_projects)} projects...")
 
@@ -401,6 +481,7 @@ def main():
     print("2. Review and customize generated files")
     print("3. Update the checklist to reflect completed items")
     print("4. Commit and push changes")
+
 
 if __name__ == "__main__":
     main()
