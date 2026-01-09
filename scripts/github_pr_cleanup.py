@@ -60,13 +60,16 @@ def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
     prs: List[PullRequest] = []
     page = 1
     while True:
-        response = requests.get(
-            f"https://api.github.com/repos/{repo}/pulls",
-            headers=github_headers(token),
-            params={"state": "open", "per_page": 100, "page": page},
-            timeout=30,
-        )
-        response.raise_for_status()
+        try:
+            response = requests.get(
+                f"https://api.github.com/repos/{repo}/pulls",
+                headers=github_headers(token),
+                params={"state": "open", "per_page": 100, "page": page},
+                timeout=30,
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as exc:
+            raise SystemExit(f"Failed to fetch open PRs for repo '{repo}' (page {page}): {exc}") from exc
         data = response.json()
         if not data:
             break
