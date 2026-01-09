@@ -59,8 +59,8 @@ usage() {
 }
 
 # Parse --compare flag
-for arg in "$@"; do
-    case $arg in
+while [[ $# -gt 0 ]]; do
+    case $1 in
         --compare)
             COMPARE_TO="$2"
             shift 2
@@ -68,6 +68,17 @@ for arg in "$@"; do
         --help|-h)
             usage
             exit 0
+            ;;
+        *)
+            # Handle positional arguments
+            if [ -z "$ENVIRONMENT_SET" ]; then
+                ENVIRONMENT="$1"
+                ENVIRONMENT_SET=true
+            elif [ -z "$FORMAT_SET" ]; then
+                OUTPUT_FORMAT="$1"
+                FORMAT_SET=true
+            fi
+            shift
             ;;
     esac
 done
