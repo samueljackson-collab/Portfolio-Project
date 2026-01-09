@@ -20,6 +20,10 @@ from typing import Iterable, List, Optional
 import requests
 
 
+# Maximum wait time for retries in seconds
+MAX_WAIT_TIME_SECONDS = 60
+
+
 @dataclass
 class PullRequest:
     number: int
@@ -93,12 +97,26 @@ def make_github_request(
     max_retries: int = 3,
     **kwargs,
 ) -> requests.Response:
-    """Make a GitHub API request with retry logic and rate limit handling."""
-    max_wait_time = 60  # Cap wait time at 60 seconds
+    """Make a GitHub API request with retry logic and rate limit handling.
+
+    Args:
+        method: HTTP method (GET, POST, PATCH, etc.)
+        url: The URL to request
+        headers: HTTP headers to include in the request
+        max_retries: Maximum number of retry attempts (default: 3)
+        **kwargs: Additional arguments to pass to requests.request()
+
+    Returns:
+        requests.Response: The successful HTTP response
+
+    Raises:
+        SystemExit: If the request fails after all retries or rate limit is exceeded
+        requests.exceptions.RequestException: For request errors that shouldn't be retried
+    """
 
     def calculate_backoff(attempt: int) -> int:
         """Calculate exponential backoff with a maximum cap."""
-        return min(2**attempt, max_wait_time)
+        return min(2**attempt, MAX_WAIT_TIME_SECONDS)
 
     for attempt in range(max_retries):
         try:
@@ -113,7 +131,7 @@ def make_github_request(
                     retry_after = response.headers.get("Retry-After")
                     if retry_after:
                         try:
-                            wait_time = min(int(retry_after), max_wait_time)
+                            wait_time = min(int(retry_after), MAX_WAIT_TIME_SECONDS)
                         except (ValueError, TypeError):
                             # Fallback to exponential backoff if Retry-After is invalid
                             wait_time = calculate_backoff(attempt)
@@ -208,7 +226,7 @@ def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
                 timeout=30,
             )
             data = response.json()
-        except (json.JSONDecodeError, ValueError) as exc:
+        except json.JSONDecodeError as exc:
             raise SystemExit(
                 f"Failed to parse JSON response for repo '{repo}' (page {page}): {exc}"
             ) from exc
