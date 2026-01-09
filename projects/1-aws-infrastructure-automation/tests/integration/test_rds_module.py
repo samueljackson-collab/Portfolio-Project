@@ -14,7 +14,6 @@ Environment Variables:
 """
 
 import boto3
-import json
 import os
 import pytest
 import subprocess
