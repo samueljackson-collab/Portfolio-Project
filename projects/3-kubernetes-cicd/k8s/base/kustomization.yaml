@@ -9,6 +9,7 @@ resources:
   - ingress.yaml
   - hpa.yaml
   - networkpolicy.yaml
+  - pdb.yaml
   # Uncomment to use Argo Rollouts instead of standard Deployment
   # - rollout.yaml
 
