@@ -78,7 +78,8 @@ def check_rate_limit(response: requests.Response) -> None:
         if remaining_int == 0 and reset_time:
             reset_timestamp = int(reset_time)
             reset_datetime = datetime.fromtimestamp(reset_timestamp, tz=timezone.utc)
-            wait_seconds = reset_timestamp - int(datetime.now(timezone.utc).timestamp())
+            current_timestamp = int(datetime.now(timezone.utc).timestamp())
+            wait_seconds = max(0, reset_timestamp - current_timestamp)
             raise SystemExit(
                 f"GitHub API rate limit exceeded. "
                 f"Limit: {limit_int}, Remaining: {remaining_int}. "
@@ -112,7 +113,11 @@ def make_github_request(
             if response.status_code == 429:
                 retry_after = response.headers.get("Retry-After")
                 if retry_after:
-                    wait_time = int(retry_after)
+                    try:
+                        wait_time = int(retry_after)
+                    except (ValueError, TypeError):
+                        # Fallback to exponential backoff if Retry-After is invalid
+                        wait_time = 2**attempt
                 else:
                     # Exponential backoff: 2^attempt seconds
                     wait_time = 2**attempt
@@ -143,9 +148,6 @@ def make_github_request(
                 time.sleep(wait_time)
                 continue
             raise
-
-    # This should never be reached, but just in case
-    raise SystemExit(f"Failed to make request after {max_retries} attempts")
 
 
 def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
