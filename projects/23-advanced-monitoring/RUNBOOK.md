@@ -139,9 +139,6 @@ docker-compose logs --no-color > deployments/${DEPLOY_DATE}/docker-compose.log
 
 # Capture health snapshots
 curl -fsSL http://localhost:3000/api/health > deployments/${DEPLOY_DATE}/stack-health.json
-
-# Update the deployment record
-sed -i.bak "s/Deployment date: .* (planned)/Deployment date: ${DEPLOY_DATE} (live)/" DEPLOYMENT_STATUS.md
 ```
 
 ### Stack Deployment
