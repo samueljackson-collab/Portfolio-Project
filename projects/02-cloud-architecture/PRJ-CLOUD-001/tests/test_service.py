@@ -1,4 +1,5 @@
 """Tests to validate the cloud architecture service module."""
+
 import service
 
 

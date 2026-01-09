@@ -1,4 +1,5 @@
 """Lambda handler for UPDATE operations."""
+
 import json
 import logging
 from datetime import datetime, timezone
@@ -71,7 +72,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict:
 
         # Build update expression
         update_expression = "SET updated_at = :updated_at"
-        expression_values = {":updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
+        expression_values = {
+            ":updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        }
         expression_names = {}
 
         # Add allowed fields to update
@@ -119,10 +122,7 @@ if __name__ == "__main__":
         "httpMethod": "PUT",
         "path": "/items/123",
         "pathParameters": {"item_id": "123"},
-        "body": json.dumps({
-            "name": "Updated Item",
-            "price": 39.99
-        }),
-        "requestContext": {"requestId": "test-789"}
+        "body": json.dumps({"name": "Updated Item", "price": 39.99}),
+        "requestContext": {"requestId": "test-789"},
     }
     print(json.dumps(lambda_handler(test_event, None), indent=2))

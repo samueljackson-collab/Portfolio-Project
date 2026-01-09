@@ -90,8 +90,7 @@ def apply_transformations(**context):
 
         task_instance = context["task_instance"]
         cleaning_stats = task_instance.xcom_pull(
-            task_ids="clean_data",
-            key="cleaning_stats"
+            task_ids="clean_data", key="cleaning_stats"
         )
 
         rows_to_transform = cleaning_stats.get("rows_output", 0)
@@ -130,8 +129,7 @@ def check_data_quality(**context):
 
         task_instance = context["task_instance"]
         transform_stats = task_instance.xcom_pull(
-            task_ids="apply_transformations",
-            key="transform_stats"
+            task_ids="apply_transformations", key="transform_stats"
         )
 
         # Simulate quality checks
@@ -143,7 +141,9 @@ def check_data_quality(**context):
             "overall_quality_score": 98.5,
         }
 
-        logger.info(f"Quality checks completed. Score: {quality_metrics['overall_quality_score']}%")
+        logger.info(
+            f"Quality checks completed. Score: {quality_metrics['overall_quality_score']}%"
+        )
         task_instance.xcom_push(key="quality_metrics", value=quality_metrics)
 
         return quality_metrics
@@ -161,8 +161,7 @@ def decide_quality_branch(**context):
     """
     task_instance = context["task_instance"]
     quality_metrics = task_instance.xcom_pull(
-        task_ids="check_data_quality",
-        key="quality_metrics"
+        task_ids="check_data_quality", key="quality_metrics"
     )
 
     quality_score = quality_metrics.get("overall_quality_score", 0)
@@ -171,7 +170,9 @@ def decide_quality_branch(**context):
         logger.info(f"Quality score {quality_score} is acceptable. Proceeding to load.")
         return "notify_transform_complete"
     else:
-        logger.warning(f"Quality score {quality_score} is below threshold. Manual review needed.")
+        logger.warning(
+            f"Quality score {quality_score} is below threshold. Manual review needed."
+        )
         return "quality_alert"
 
 
@@ -181,8 +182,7 @@ def trigger_quality_alert(**context):
     """
     task_instance = context["task_instance"]
     quality_metrics = task_instance.xcom_pull(
-        task_ids="check_data_quality",
-        key="quality_metrics"
+        task_ids="check_data_quality", key="quality_metrics"
     )
 
     logger.error(f"Data quality alert triggered. Metrics: {quality_metrics}")
@@ -198,8 +198,7 @@ def notify_transform_complete(**context):
     logger.info("Transform phase completed successfully")
     task_instance = context["task_instance"]
     quality_metrics = task_instance.xcom_pull(
-        task_ids="check_data_quality",
-        key="quality_metrics"
+        task_ids="check_data_quality", key="quality_metrics"
     )
     logger.info(f"Final quality score: {quality_metrics['overall_quality_score']}%")
 

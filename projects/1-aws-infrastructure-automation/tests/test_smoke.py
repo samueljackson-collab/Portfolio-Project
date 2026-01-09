@@ -1,4 +1,5 @@
 """Smoke tests for AWS Infrastructure Automation."""
+
 from src.health_check import run_health_check
 
 

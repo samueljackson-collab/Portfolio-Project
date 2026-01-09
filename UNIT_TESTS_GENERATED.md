@@ -1,5 +1,7 @@
 # Unit Tests Generated for Documentation Changes
 
+> **Historical snapshot**: This document records a prior documentation test generation pass. For the canonical testing overview, see [TEST_SUMMARY.md](TEST_SUMMARY.md).
+
 ## Executive Summary
 
 Successfully generated **comprehensive, production-ready unit tests** for all documentation files added in this branch. The test suite validates Architecture Decision Records (ADRs) and Production Runbooks with **57 test methods** across **1,003 lines** of test code.

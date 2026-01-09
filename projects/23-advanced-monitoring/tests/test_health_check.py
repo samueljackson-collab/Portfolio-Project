@@ -1,4 +1,5 @@
 """Health check tests for 23-advanced-monitoring."""
+
 from src.health_check import check_health
 
 

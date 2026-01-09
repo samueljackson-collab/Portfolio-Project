@@ -8,6 +8,7 @@ from typing import List
 
 class DiagramType(Enum):
     """Types of available diagrams"""
+
     HLR_VLR_ARCHITECTURE = "hlr_vlr_architecture"
     CALL_FLOW = "call_flow"
     HANDOFF_FLOW = "handoff_flow"

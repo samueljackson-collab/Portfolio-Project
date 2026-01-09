@@ -22,7 +22,11 @@ logger = logging.getLogger(__name__)
 default_args = {
     "owner": "analytics",
     "depends_on_past": False,
-    "email": Variable.get("analytics_notification_email", deserialize_json=True, default_var=["analytics@example.com"]),
+    "email": Variable.get(
+        "analytics_notification_email",
+        deserialize_json=True,
+        default_var=["analytics@example.com"],
+    ),
     "email_on_failure": True,
     "email_on_retry": False,
     "retries": 1,
@@ -67,7 +71,9 @@ def calculate_kpis(**context):
             "calculation_timestamp": datetime.now().isoformat(),
         }
 
-        logger.info(f"KPI calculation completed. Revenue: ${kpi_results['total_revenue']}")
+        logger.info(
+            f"KPI calculation completed. Revenue: ${kpi_results['total_revenue']}"
+        )
         context["task_instance"].xcom_push(key="kpi_results", value=kpi_results)
 
         return kpi_results
@@ -103,8 +109,12 @@ def generate_customer_analytics(**context):
             "timestamp": datetime.now().isoformat(),
         }
 
-        logger.info(f"Customer analytics completed. Segments: {len(customer_analytics['segments'])}")
-        context["task_instance"].xcom_push(key="customer_analytics", value=customer_analytics)
+        logger.info(
+            f"Customer analytics completed. Segments: {len(customer_analytics['segments'])}"
+        )
+        context["task_instance"].xcom_push(
+            key="customer_analytics", value=customer_analytics
+        )
 
         return customer_analytics
 
@@ -142,8 +152,12 @@ def generate_product_analytics(**context):
             "timestamp": datetime.now().isoformat(),
         }
 
-        logger.info(f"Product analytics completed. Top revenue: ${product_analytics['top_10_products_revenue']}")
-        context["task_instance"].xcom_push(key="product_analytics", value=product_analytics)
+        logger.info(
+            f"Product analytics completed. Top revenue: ${product_analytics['top_10_products_revenue']}"
+        )
+        context["task_instance"].xcom_push(
+            key="product_analytics", value=product_analytics
+        )
 
         return product_analytics
 
@@ -167,8 +181,7 @@ def generate_trend_analysis(**context):
 
         task_instance = context["task_instance"]
         kpi_results = task_instance.xcom_pull(
-            task_ids="calculate_kpis",
-            key="kpi_results"
+            task_ids="calculate_kpis", key="kpi_results"
         )
 
         trend_analysis = {
@@ -182,7 +195,9 @@ def generate_trend_analysis(**context):
             "timestamp": datetime.now().isoformat(),
         }
 
-        logger.info(f"Trend analysis completed. WoW Growth: {trend_analysis['week_over_week_growth']}%")
+        logger.info(
+            f"Trend analysis completed. WoW Growth: {trend_analysis['week_over_week_growth']}%"
+        )
         task_instance.xcom_push(key="trend_analysis", value=trend_analysis)
 
         return trend_analysis
@@ -203,18 +218,17 @@ def generate_report(**context):
         logger.info("Generating daily analytics report...")
 
         task_instance = context["task_instance"]
-        kpi_results = task_instance.xcom_pull(task_ids="calculate_kpis", key="kpi_results")
+        kpi_results = task_instance.xcom_pull(
+            task_ids="calculate_kpis", key="kpi_results"
+        )
         customer_analytics = task_instance.xcom_pull(
-            task_ids="generate_customer_analytics",
-            key="customer_analytics"
+            task_ids="generate_customer_analytics", key="customer_analytics"
         )
         product_analytics = task_instance.xcom_pull(
-            task_ids="generate_product_analytics",
-            key="product_analytics"
+            task_ids="generate_product_analytics", key="product_analytics"
         )
         trend_analysis = task_instance.xcom_pull(
-            task_ids="generate_trend_analysis",
-            key="trend_analysis"
+            task_ids="generate_trend_analysis", key="trend_analysis"
         )
 
         report = {
@@ -252,10 +266,7 @@ def publish_report(**context):
         logger.info("Publishing daily analytics report...")
 
         task_instance = context["task_instance"]
-        report = task_instance.xcom_pull(
-            task_ids="generate_report",
-            key="daily_report"
-        )
+        report = task_instance.xcom_pull(task_ids="generate_report", key="daily_report")
 
         publish_result = {
             "email_sent": True,
@@ -285,8 +296,7 @@ def send_completion_notification(**context):
     logger.info("Daily analytics pipeline completed successfully")
     task_instance = context["task_instance"]
     publish_result = task_instance.xcom_pull(
-        task_ids="publish_report",
-        key="publish_result"
+        task_ids="publish_report", key="publish_result"
     )
     logger.info(f"Publish result: {publish_result}")
 
@@ -335,4 +345,10 @@ notify_task = PythonOperator(
 )
 
 # Set task dependencies
-[kpi_task, customer_task, product_task] >> trend_task >> report_task >> publish_task >> notify_task
+(
+    [kpi_task, customer_task, product_task]
+    >> trend_task
+    >> report_task
+    >> publish_task
+    >> notify_task
+)

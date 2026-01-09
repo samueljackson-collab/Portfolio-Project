@@ -9,7 +9,10 @@ from app.schemas import (
     OrchestrationRun,
     OrchestrationRunRequest,
 )
-from app.services.orchestration_service import get_orchestration_service, OrchestrationService
+from app.services.orchestration_service import (
+    get_orchestration_service,
+    OrchestrationService,
+)
 
 router = APIRouter(
     prefix="/orchestration",

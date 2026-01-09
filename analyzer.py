@@ -39,7 +39,9 @@ class RepositoryMetrics:
 class _AnalyzerBase:
     """Shared utilities for repository analysis."""
 
-    def _normalize_doc_identifiers(self, documentation_files: Iterable[str]) -> Set[str]:
+    def _normalize_doc_identifiers(
+        self, documentation_files: Iterable[str]
+    ) -> Set[str]:
         """Normalize documentation identifiers for matching."""
         identifiers: Set[str] = set()
         for doc in documentation_files:
@@ -134,9 +136,7 @@ class GitHubAnalyzer(_AnalyzerBase):
         self._analyze_gaps(metrics)
         return metrics
 
-    def _collect_documentation_from_tree(
-        self, tree: Sequence[str | dict]
-    ) -> List[str]:
+    def _collect_documentation_from_tree(self, tree: Sequence[str | dict]) -> List[str]:
         """Extract documentation file paths from a GitHub tree."""
         doc_paths: Set[str] = set()
         for entry in tree:

@@ -1,4 +1,5 @@
 """Unit tests for IAM policy validation."""
+
 import json
 from pathlib import Path
 
@@ -37,16 +38,23 @@ def test_developer_policy_has_deny_production(developer_policy):
     statements = developer_policy.get("Statement", [])
     deny_statements = [s for s in statements if s.get("Effect") == "Deny"]
 
-    assert len(deny_statements) > 0, "Policy should have explicit Deny statements for production"
+    assert (
+        len(deny_statements) > 0
+    ), "Policy should have explicit Deny statements for production"
 
-    prod_deny = next((s for s in deny_statements if "DenyProductionResources" in s.get("Sid", "")), None)
+    prod_deny = next(
+        (s for s in deny_statements if "DenyProductionResources" in s.get("Sid", "")),
+        None,
+    )
     assert prod_deny is not None, "Missing production resource deny statement"
 
 
 def test_developer_policy_s3_restricted(developer_policy):
     """Verify S3 access is restricted to dev buckets."""
     statements = developer_policy.get("Statement", [])
-    s3_statements = [s for s in statements if any("s3:" in str(a) for a in s.get("Action", []))]
+    s3_statements = [
+        s for s in statements if any("s3:" in str(a) for a in s.get("Action", []))
+    ]
 
     assert len(s3_statements) > 0, "Policy should have S3 permissions"
 
@@ -57,8 +65,11 @@ def test_developer_policy_s3_restricted(developer_policy):
                 resources = [resources]
             # Check that S3 resources are scoped (not wildcards)
             for resource in resources:
-                assert "dev-" in resource or "*" not in resource or resource.startswith("arn:aws:s3:::dev-"), \
-                    f"S3 resource should be scoped to dev buckets: {resource}"
+                assert (
+                    "dev-" in resource
+                    or "*" not in resource
+                    or resource.startswith("arn:aws:s3:::dev-")
+                ), f"S3 resource should be scoped to dev buckets: {resource}"
 
 
 def test_developer_policy_no_iam_permissions(developer_policy):
@@ -70,9 +81,15 @@ def test_developer_policy_no_iam_permissions(developer_policy):
             if isinstance(actions, str):
                 actions = [actions]
             for action in actions:
-                assert not action.startswith("iam:Create"), f"Policy should not allow IAM creation: {action}"
-                assert not action.startswith("iam:Delete"), f"Policy should not allow IAM deletion: {action}"
-                assert not action.startswith("iam:Put"), f"Policy should not allow IAM modification: {action}"
+                assert not action.startswith(
+                    "iam:Create"
+                ), f"Policy should not allow IAM creation: {action}"
+                assert not action.startswith(
+                    "iam:Delete"
+                ), f"Policy should not allow IAM deletion: {action}"
+                assert not action.startswith(
+                    "iam:Put"
+                ), f"Policy should not allow IAM modification: {action}"
 
 
 def test_policy_diff_script_exists():

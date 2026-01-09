@@ -103,6 +103,6 @@ output "logs_bucket_arn" {
 #------------------------------------------------------------------------------
 
 output "static_website_url" {
-  description = "The URL to access static content via CloudFront."
-  value       = var.create_cloudfront_distribution ? "https://${aws_cloudfront_distribution.static[0].domain_name}" : "s3://${aws_s3_bucket.static.id}"
+  description = "The URL to access static content (CloudFront HTTPS URL or S3 bucket reference when CloudFront is disabled)."
+  value       = var.create_cloudfront_distribution ? "https://${aws_cloudfront_distribution.static[0].domain_name}" : "https://${aws_s3_bucket.static.bucket_regional_domain_name}"
 }

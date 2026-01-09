@@ -1,5 +1,7 @@
 # Comprehensive Test Suite Summary
 
+> **Historical snapshot**: This document summarizes a specific infrastructure test suite. For the canonical testing overview, see [TEST_SUMMARY.md](TEST_SUMMARY.md).
+
 ## Overview
 
 This document summarizes the comprehensive test suite generated for the infrastructure code changes in this branch.

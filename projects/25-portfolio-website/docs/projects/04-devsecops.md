@@ -117,5 +117,5 @@ syft packages dir:. -o spdx-json > sbom.json
 
 **Related Projects:**
 - [Project 3: Kubernetes CI/CD](/projects/03-kubernetes-cicd) - Base pipeline
-- [Project 11: Zero-Trust](/projects/11-zero-trust) - Runtime security
+- [Project 11: IoT Analytics](/projects/11-iot) - Security monitoring
 - [Project 13: Cybersecurity](/projects/13-cybersecurity) - SIEM integration

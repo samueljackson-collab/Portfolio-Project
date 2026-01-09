@@ -1,4 +1,5 @@
 """Smoke tests for Multi-Region Disaster Recovery project."""
+
 from src.health_check import run_health_check
 
 

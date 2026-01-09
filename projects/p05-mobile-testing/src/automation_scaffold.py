@@ -23,16 +23,16 @@ class MobileTestBase:
     def android_driver(self):
         """Setup Android driver."""
         desired_caps = {
-            'platformName': 'Android',
-            'platformVersion': '11',
-            'deviceName': 'Android Emulator',
-            'app': '/path/to/your/app.apk',
-            'automationName': 'UiAutomator2',
-            'appPackage': 'com.yourapp.package',
-            'appActivity': '.MainActivity'
+            "platformName": "Android",
+            "platformVersion": "11",
+            "deviceName": "Android Emulator",
+            "app": "/path/to/your/app.apk",
+            "automationName": "UiAutomator2",
+            "appPackage": "com.yourapp.package",
+            "appActivity": ".MainActivity",
         }
 
-        driver = webdriver.Remote('http://localhost:4723/wd/hub', desired_caps)
+        driver = webdriver.Remote("http://localhost:4723/wd/hub", desired_caps)
         yield driver
         driver.quit()
 
@@ -40,15 +40,15 @@ class MobileTestBase:
     def ios_driver(self):
         """Setup iOS driver."""
         desired_caps = {
-            'platformName': 'iOS',
-            'platformVersion': '14.5',
-            'deviceName': 'iPhone 12',
-            'app': '/path/to/your/app.ipa',
-            'automationName': 'XCUITest',
-            'bundleId': 'com.yourapp.bundle'
+            "platformName": "iOS",
+            "platformVersion": "14.5",
+            "deviceName": "iPhone 12",
+            "app": "/path/to/your/app.ipa",
+            "automationName": "XCUITest",
+            "bundleId": "com.yourapp.bundle",
         }
 
-        driver = webdriver.Remote('http://localhost:4723/wd/hub', desired_caps)
+        driver = webdriver.Remote("http://localhost:4723/wd/hub", desired_caps)
         yield driver
         driver.quit()
 
@@ -68,7 +68,9 @@ class TestLoginFlow(MobileTestBase):
 
         # Enter credentials
         username_field.send_keys("testuser")
-        driver.find_element(AppiumBy.ID, "com.yourapp:id/password").send_keys("testpass")
+        driver.find_element(AppiumBy.ID, "com.yourapp:id/password").send_keys(
+            "testpass"
+        )
         driver.find_element(AppiumBy.ID, "com.yourapp:id/loginButton").click()
 
         # Verify successful login
@@ -87,7 +89,9 @@ class TestLoginFlow(MobileTestBase):
         )
 
         username_field.send_keys("wronguser")
-        driver.find_element(AppiumBy.ID, "com.yourapp:id/password").send_keys("wrongpass")
+        driver.find_element(AppiumBy.ID, "com.yourapp:id/password").send_keys(
+            "wrongpass"
+        )
         driver.find_element(AppiumBy.ID, "com.yourapp:id/loginButton").click()
 
         # Verify error message
@@ -131,7 +135,7 @@ class LoginPage:
         return element.text
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Mobile Test Automation Scaffold")
     print("=" * 50)
     print("Setup Instructions:")

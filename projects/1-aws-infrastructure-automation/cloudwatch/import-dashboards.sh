@@ -76,15 +76,12 @@ if [ -f "${TERRAFORM_DIR}/.terraform/terraform.tfstate" ] || [ -d "${TERRAFORM_D
     NAT_GATEWAY_ID=$(echo "$OUTPUTS" | jq -r '.nat_gateway_ids.value[0] // "nat-placeholder"' 2>/dev/null || echo "nat-placeholder")
     DB_INSTANCE_ID=$(echo "$OUTPUTS" | jq -r '.rds_endpoint.value // "portfolio-'${ENV}'"' 2>/dev/null | cut -d'.' -f1 || echo "portfolio-${ENV}")
     ASG_NAME=$(echo "$OUTPUTS" | jq -r '.app_autoscaling_group_name.value // "portfolio-app-'${ENV}'"' 2>/dev/null || echo "portfolio-app-${ENV}")
-    ALB_ARN=$(echo "$OUTPUTS" | jq -r '.alb_dns_name.value // ""' 2>/dev/null || echo "")
-
     cd "${SCRIPT_DIR}"
 else
     echo -e "${YELLOW}Terraform not initialized, using placeholder values${NC}"
     NAT_GATEWAY_ID="nat-placeholder"
     DB_INSTANCE_ID="portfolio-${ENV}"
     ASG_NAME="portfolio-app-${ENV}"
-    ALB_ARN=""
 fi
 
 # Set derived values

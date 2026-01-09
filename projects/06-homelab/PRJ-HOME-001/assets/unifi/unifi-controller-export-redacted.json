@@ -1,0 +1,100 @@
+{
+  "export_version": "7.5.0",
+  "site": {
+    "name": "Homelab",
+    "id": "site-redacted",
+    "timezone": "America/New_York"
+  },
+  "redactions": {
+    "mac_addresses": "REDACTED",
+    "public_ips": "REDACTED",
+    "device_serials": "REDACTED",
+    "psk": "REDACTED",
+    "radius_secrets": "REDACTED"
+  },
+  "networks": [
+    {
+      "name": "Trusted",
+      "vlan": 10,
+      "subnet": "192.168.10.0/24",
+      "gateway": "192.168.10.1"
+    },
+    {
+      "name": "IoT",
+      "vlan": 20,
+      "subnet": "192.168.20.0/24",
+      "gateway": "192.168.20.1"
+    },
+    {
+      "name": "Guest",
+      "vlan": 30,
+      "subnet": "192.168.30.0/24",
+      "gateway": "192.168.30.1"
+    },
+    {
+      "name": "Servers",
+      "vlan": 40,
+      "subnet": "192.168.40.0/24",
+      "gateway": "192.168.40.1"
+    },
+    {
+      "name": "DMZ",
+      "vlan": 50,
+      "subnet": "192.168.50.0/24",
+      "gateway": "192.168.50.1"
+    }
+  ],
+  "wlans": [
+    {
+      "name": "Homelab-Secure",
+      "security": "WPA3-Enterprise",
+      "radius_profile": "REDACTED",
+      "vlan": 10
+    },
+    {
+      "name": "Homelab-IoT",
+      "security": "WPA2-PSK",
+      "psk": "REDACTED",
+      "vlan": 20
+    },
+    {
+      "name": "Homelab-Guest",
+      "security": "Open + Captive Portal",
+      "vlan": 30
+    }
+  ],
+  "devices": [
+    {
+      "type": "USW-24-PoE",
+      "name": "Core Switch",
+      "mac": "REDACTED",
+      "ip": "192.168.10.2",
+      "adopted": true
+    },
+    {
+      "type": "U6-Pro",
+      "name": "AP-Living",
+      "mac": "REDACTED",
+      "ip": "192.168.10.10",
+      "adopted": true
+    },
+    {
+      "type": "U6-Pro",
+      "name": "AP-Office",
+      "mac": "REDACTED",
+      "ip": "192.168.10.11",
+      "adopted": true
+    }
+  ],
+  "firewall_groups": [
+    {
+      "name": "Trusted_Admins",
+      "members": ["192.168.10.20", "192.168.10.21"]
+    },
+    {
+      "name": "IoT_Hubs",
+      "members": ["192.168.20.10", "192.168.20.11"]
+    }
+  ],
+  "notes": "Export is sanitized for portfolio use. Remove redactions and replace placeholders before production restore."
+}

@@ -1,4 +1,5 @@
 """Simulate stream processing by aggregating sample events."""
+
 from __future__ import annotations
 
 import json

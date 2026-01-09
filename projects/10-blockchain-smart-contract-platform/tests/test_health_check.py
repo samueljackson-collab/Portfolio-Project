@@ -1,4 +1,5 @@
 """Health check tests for 10-blockchain-smart-contract-platform."""
+
 from src.health_check import check_health
 
 

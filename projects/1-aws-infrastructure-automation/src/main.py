@@ -387,7 +387,7 @@ def cmd_status(args: argparse.Namespace) -> int:
             capture_output=True,
             check=False,
         )
-        print(f"    {stdout.split('\n')[0]}")
+        print(f"    {stdout.splitlines()[0]}")
     else:
         print_error("Terraform is not installed")
 

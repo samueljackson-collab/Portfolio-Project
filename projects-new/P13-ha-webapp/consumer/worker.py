@@ -1,4 +1,5 @@
 """Consumer prints enriched payload."""
+
 from pathlib import Path
 import json
 
