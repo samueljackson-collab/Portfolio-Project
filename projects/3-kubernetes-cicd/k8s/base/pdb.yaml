@@ -4,29 +4,22 @@ metadata:
   name: k8s-cicd-demo-pdb
   labels:
     app: k8s-cicd-demo
-    app.kubernetes.io/name: k8s-cicd-demo
-    app.kubernetes.io/component: pdb
 spec:
-  # Ensure at least 2 pods are available during voluntary disruptions
-  # (node drains, deployments, etc.)
+  # Ensure at least 2 replicas are always available during disruptions
   minAvailable: 2
-
   selector:
     matchLabels:
       app: k8s-cicd-demo
-
 ---
-# Alternative: Use maxUnavailable instead of minAvailable
-# This allows at most 1 pod to be unavailable at a time
-# Uncomment below and comment above if preferred
-
+# Alternative PDB using maxUnavailable (use one or the other)
 # apiVersion: policy/v1
 # kind: PodDisruptionBudget
 # metadata:
-#   name: k8s-cicd-demo-pdb-max-unavailable
+#   name: k8s-cicd-demo-pdb-max
 #   labels:
 #     app: k8s-cicd-demo
 # spec:
+#   # Allow at most 1 pod to be unavailable during disruptions
 #   maxUnavailable: 1
 #   selector:
 #     matchLabels:

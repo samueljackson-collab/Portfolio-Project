@@ -1,5 +1,7 @@
 # ADR-005: Comprehensive Observability Strategy
 
+> **Historical snapshot**: This ADR captures the 2024 observability strategy decision record. For current monitoring operations, see the [Observability Runbook](../runbooks/observability-runbook.md).
+
 ## Status
 Accepted - December 2024
 

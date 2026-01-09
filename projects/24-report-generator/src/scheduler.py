@@ -1,4 +1,5 @@
 """Scheduled report generation using APScheduler."""
+
 from __future__ import annotations
 
 import logging
@@ -17,8 +18,7 @@ from generate_report import ReportGenerator
 from email_sender import EmailSender
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class ScheduledReportGenerator:
         templates_dir: Path,
         output_dir: Path,
         config: Optional[Dict[str, Any]] = None,
-        background: bool = False
+        background: bool = False,
     ):
         """
         Initialize scheduled report generator.
@@ -53,16 +53,12 @@ class ScheduledReportGenerator:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize generator
-        self.generator = ReportGenerator(
-            portfolio_root,
-            templates_dir,
-            config
-        )
+        self.generator = ReportGenerator(portfolio_root, templates_dir, config)
 
         # Initialize email sender if configured
         self.email_sender = None
-        if self.config.get('email', {}).get('enabled'):
-            self.email_sender = EmailSender(self.config['email'])
+        if self.config.get("email", {}).get("enabled"):
+            self.email_sender = EmailSender(self.config["email"])
 
         # Initialize scheduler
         if background:
@@ -78,20 +74,18 @@ class ScheduledReportGenerator:
 
         try:
             # Generate reports
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             weekly_dir = self.output_dir / f"weekly_{timestamp}"
             weekly_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate HTML and PDF
             reports_generated = []
 
-            for format in ['html', 'pdf']:
+            for format in ["html", "pdf"]:
                 output_file = weekly_dir / f"weekly-report.{format}"
                 try:
                     self.generator.render_template(
-                        'weekly.html',
-                        output_file,
-                        format=format
+                        "weekly.html", output_file, format=format
                     )
                     reports_generated.append(output_file)
                     logger.info(f"Generated {format.upper()} report: {output_file}")
@@ -100,12 +94,9 @@ class ScheduledReportGenerator:
 
             # Send via email if configured
             if self.email_sender and reports_generated:
-                recipients = self.config.get('email', {}).get('weekly_recipients', [])
+                recipients = self.config.get("email", {}).get("weekly_recipients", [])
                 if recipients:
-                    self.email_sender.send_weekly_report(
-                        reports_generated,
-                        recipients
-                    )
+                    self.email_sender.send_weekly_report(reports_generated, recipients)
                     logger.info(f"Weekly report sent to {len(recipients)} recipient(s)")
 
             logger.info("Weekly report generation completed")
@@ -119,27 +110,25 @@ class ScheduledReportGenerator:
 
         try:
             # Generate reports
-            timestamp = datetime.now().strftime('%Y%m')
+            timestamp = datetime.now().strftime("%Y%m")
             monthly_dir = self.output_dir / f"monthly_{timestamp}"
             monthly_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate multiple report types
             templates = [
-                ('executive_summary.html', 'executive-summary'),
-                ('project_status.html', 'project-status'),
-                ('technical_documentation.html', 'technical-docs')
+                ("executive_summary.html", "executive-summary"),
+                ("project_status.html", "project-status"),
+                ("technical_documentation.html", "technical-docs"),
             ]
 
             reports_generated = []
 
             for template, basename in templates:
-                for format in ['html', 'pdf']:
+                for format in ["html", "pdf"]:
                     output_file = monthly_dir / f"{basename}.{format}"
                     try:
                         self.generator.render_template(
-                            template,
-                            output_file,
-                            format=format
+                            template, output_file, format=format
                         )
                         reports_generated.append(output_file)
                         logger.info(f"Generated {basename}.{format}")
@@ -148,13 +137,14 @@ class ScheduledReportGenerator:
 
             # Send via email if configured
             if self.email_sender and reports_generated:
-                recipients = self.config.get('email', {}).get('monthly_recipients', [])
+                recipients = self.config.get("email", {}).get("monthly_recipients", [])
                 if recipients:
                     self.email_sender.send_monthly_summary(
-                        reports_generated,
-                        recipients
+                        reports_generated, recipients
                     )
-                    logger.info(f"Monthly summary sent to {len(recipients)} recipient(s)")
+                    logger.info(
+                        f"Monthly summary sent to {len(recipients)} recipient(s)"
+                    )
 
             logger.info("Monthly summary generation completed")
 
@@ -166,16 +156,14 @@ class ScheduledReportGenerator:
         logger.info("Generating daily statistics...")
 
         try:
-            timestamp = datetime.now().strftime('%Y%m%d')
+            timestamp = datetime.now().strftime("%Y%m%d")
             daily_dir = self.output_dir / "daily" / timestamp
             daily_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate quick status HTML
             output_file = daily_dir / "daily-stats.html"
             self.generator.render_template(
-                'project_status.html',
-                output_file,
-                format='html'
+                "project_status.html", output_file, format="html"
             )
 
             logger.info(f"Daily statistics generated: {output_file}")
@@ -185,56 +173,47 @@ class ScheduledReportGenerator:
 
     def setup_schedules(self):
         """Set up all scheduled jobs."""
-        schedules = self.config.get('schedules', {})
+        schedules = self.config.get("schedules", {})
 
         # Weekly report (default: Monday 9 AM)
-        weekly_schedule = schedules.get('weekly', {
-            'day_of_week': 'mon',
-            'hour': 9,
-            'minute': 0
-        })
+        weekly_schedule = schedules.get(
+            "weekly", {"day_of_week": "mon", "hour": 9, "minute": 0}
+        )
         self.scheduler.add_job(
             self.generate_and_send_weekly_report,
             trigger=CronTrigger(**weekly_schedule),
-            id='weekly_report',
-            name='Weekly Portfolio Report'
+            id="weekly_report",
+            name="Weekly Portfolio Report",
         )
         logger.info(f"Scheduled weekly report: {weekly_schedule}")
 
         # Monthly summary (default: 1st of month, 9 AM)
-        monthly_schedule = schedules.get('monthly', {
-            'day': 1,
-            'hour': 9,
-            'minute': 0
-        })
+        monthly_schedule = schedules.get("monthly", {"day": 1, "hour": 9, "minute": 0})
         self.scheduler.add_job(
             self.generate_and_send_monthly_summary,
             trigger=CronTrigger(**monthly_schedule),
-            id='monthly_summary',
-            name='Monthly Executive Summary'
+            id="monthly_summary",
+            name="Monthly Executive Summary",
         )
         logger.info(f"Scheduled monthly summary: {monthly_schedule}")
 
         # Daily stats (default: every day 8 AM)
-        daily_schedule = schedules.get('daily', {
-            'hour': 8,
-            'minute': 0
-        })
+        daily_schedule = schedules.get("daily", {"hour": 8, "minute": 0})
         self.scheduler.add_job(
             self.generate_daily_stats,
             trigger=CronTrigger(**daily_schedule),
-            id='daily_stats',
-            name='Daily Statistics'
+            id="daily_stats",
+            name="Daily Statistics",
         )
         logger.info(f"Scheduled daily stats: {daily_schedule}")
 
         # Optional: Test job (every 5 minutes)
-        if schedules.get('test_mode', False):
+        if schedules.get("test_mode", False):
             self.scheduler.add_job(
                 self.generate_daily_stats,
                 trigger=IntervalTrigger(minutes=5),
-                id='test_job',
-                name='Test Job (5 min interval)'
+                id="test_job",
+                name="Test Job (5 min interval)",
             )
             logger.info("Test job scheduled (every 5 minutes)")
 
@@ -265,41 +244,33 @@ def load_config(config_path: Path) -> Dict[str, Any]:
         logger.warning(f"Config file not found: {config_path}")
         return {}
 
-    with open(config_path, 'r') as f:
+    with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
 
 def main():
     """CLI entry point for scheduled report generator."""
-    parser = argparse.ArgumentParser(
-        description='Scheduled Portfolio Report Generator'
-    )
+    parser = argparse.ArgumentParser(description="Scheduled Portfolio Report Generator")
     parser.add_argument(
-        '--config',
+        "--config",
         type=str,
-        default='config/scheduler.yml',
-        help='Configuration file path'
+        default="config/scheduler.yml",
+        help="Configuration file path",
     )
+    parser.add_argument("--portfolio-root", type=str, help="Portfolio root directory")
     parser.add_argument(
-        '--portfolio-root',
+        "--output-dir",
         type=str,
-        help='Portfolio root directory'
+        default="./reports",
+        help="Output directory for reports",
     )
     parser.add_argument(
-        '--output-dir',
-        type=str,
-        default='./reports',
-        help='Output directory for reports'
+        "--test-mode", action="store_true", help="Run in test mode (5 min intervals)"
     )
     parser.add_argument(
-        '--test-mode',
-        action='store_true',
-        help='Run in test mode (5 min intervals)'
-    )
-    parser.add_argument(
-        '--run-once',
-        choices=['weekly', 'monthly', 'daily'],
-        help='Run a job once and exit'
+        "--run-once",
+        choices=["weekly", "monthly", "daily"],
+        help="Run a job once and exit",
     )
 
     args = parser.parse_args()
@@ -319,27 +290,23 @@ def main():
 
     # Override test mode
     if args.test_mode:
-        if 'schedules' not in config:
-            config['schedules'] = {}
-        config['schedules']['test_mode'] = True
+        if "schedules" not in config:
+            config["schedules"] = {}
+        config["schedules"]["test_mode"] = True
 
     # Initialize generator
     generator = ScheduledReportGenerator(
-        portfolio_path,
-        templates_dir,
-        output_dir,
-        config,
-        background=False
+        portfolio_path, templates_dir, output_dir, config, background=False
     )
 
     # Run once if requested
     if args.run_once:
         logger.info(f"Running {args.run_once} job once...")
-        if args.run_once == 'weekly':
+        if args.run_once == "weekly":
             generator.generate_and_send_weekly_report()
-        elif args.run_once == 'monthly':
+        elif args.run_once == "monthly":
             generator.generate_and_send_monthly_summary()
-        elif args.run_once == 'daily':
+        elif args.run_once == "daily":
             generator.generate_daily_stats()
         logger.info("Job completed. Exiting.")
         return
@@ -348,5 +315,5 @@ def main():
     generator.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

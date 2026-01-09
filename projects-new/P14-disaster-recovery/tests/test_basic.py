@@ -53,6 +53,7 @@ class TestBackupFunctions:
     def test_take_backup_format(self):
         """Test backup name format."""
         from app import take_backup
+
         backup = take_backup()
         assert backup.startswith("backup-")
         assert backup.endswith(".tar.gz")
@@ -60,12 +61,14 @@ class TestBackupFunctions:
     def test_restore_format(self):
         """Test restore result format."""
         from app import restore
+
         result = restore("test-backup.tar.gz")
         assert "restored-from" in result
 
     def test_verify_restore(self):
         """Test restore verification."""
         from app import verify_restore
+
         result = verify_restore("test-resource")
         assert "verified" in result
 
@@ -76,6 +79,7 @@ class TestDRDrill:
     def test_dr_drill_returns_log(self):
         """Test DR drill returns log entries."""
         from app import run_dr_drill
+
         log = run_dr_drill()
         assert isinstance(log, list)
         assert len(log) > 0
@@ -83,17 +87,20 @@ class TestDRDrill:
     def test_dr_drill_contains_backup(self):
         """Test DR drill creates backup."""
         from app import run_dr_drill
+
         log = run_dr_drill()
         assert any("backup" in line for line in log)
 
     def test_dr_drill_contains_restore(self):
         """Test DR drill performs restore."""
         from app import run_dr_drill
+
         log = run_dr_drill()
         assert any("restore" in line for line in log)
 
     def test_dr_drill_meets_rto(self):
         """Test DR drill reports RTO."""
         from app import run_dr_drill
+
         log = run_dr_drill()
         assert any("RTO" in line for line in log)

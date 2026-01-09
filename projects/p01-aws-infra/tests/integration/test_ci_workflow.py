@@ -1,4 +1,5 @@
 """Integration checks to ensure CI workflow aligns with factory stages."""
+
 from pathlib import Path
 
 import yaml

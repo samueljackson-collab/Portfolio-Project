@@ -1,4 +1,5 @@
 """Unit tests for UPDATE Lambda handler."""
+
 import json
 import sys
 import os
@@ -32,10 +33,7 @@ def test_update_item_success(api_event_base, sample_item):
     event["httpMethod"] = "PUT"
     event["path"] = "/items/test-item-123"
     event["pathParameters"] = {"item_id": "test-item-123"}
-    event["body"] = json.dumps({
-        "name": "Updated Name",
-        "price": 39.99
-    })
+    event["body"] = json.dumps({"name": "Updated Name", "price": 39.99})
 
     # Execute
     response = lambda_handler(event, None)

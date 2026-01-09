@@ -28,6 +28,8 @@ async def test_start_run(authenticated_client):
     assert run_data["status"] == "succeeded"
     assert run_data["artifacts"]["runbook"].endswith("orchestration-runbook.md")
 
-    detail_response = await authenticated_client.get(f"/orchestration/runs/{run_data['id']}")
+    detail_response = await authenticated_client.get(
+        f"/orchestration/runs/{run_data['id']}"
+    )
     assert detail_response.status_code == 200
     assert len(detail_response.json()["logs"]) >= 1

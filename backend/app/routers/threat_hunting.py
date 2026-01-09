@@ -21,8 +21,14 @@ from app.schemas import (
 router = APIRouter(prefix="/threat-hunting", tags=["Threat Hunting"])
 
 
-@router.post("/hypotheses", response_model=HypothesisResponse, status_code=status.HTTP_201_CREATED)
-async def create_hypothesis(payload: HypothesisCreate, db: DatabaseSession, _: CurrentUser) -> HuntHypothesis:
+@router.post(
+    "/hypotheses",
+    response_model=HypothesisResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_hypothesis(
+    payload: HypothesisCreate, db: DatabaseSession, _: CurrentUser
+) -> HuntHypothesis:
     hypothesis = HuntHypothesis(**payload.model_dump())
     db.add(hypothesis)
     await db.flush()
@@ -37,7 +43,9 @@ async def list_hypotheses(db: DatabaseSession) -> list[HuntHypothesis]:
 
 
 @router.put("/hypotheses/{hypothesis_id}", response_model=HypothesisResponse)
-async def update_hypothesis(hypothesis_id: str, payload: HypothesisCreate, db: DatabaseSession, _: CurrentUser) -> HuntHypothesis:
+async def update_hypothesis(
+    hypothesis_id: str, payload: HypothesisCreate, db: DatabaseSession, _: CurrentUser
+) -> HuntHypothesis:
     hypothesis = await db.get(HuntHypothesis, uuid.UUID(str(hypothesis_id)))
     if not hypothesis:
         raise_not_found("Hypothesis")
@@ -49,15 +57,23 @@ async def update_hypothesis(hypothesis_id: str, payload: HypothesisCreate, db: D
 
 
 @router.delete("/hypotheses/{hypothesis_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_hypothesis(hypothesis_id: str, db: DatabaseSession, _: CurrentUser) -> None:
+async def delete_hypothesis(
+    hypothesis_id: str, db: DatabaseSession, _: CurrentUser
+) -> None:
     hypothesis = await db.get(HuntHypothesis, uuid.UUID(str(hypothesis_id)))
     if not hypothesis:
         raise_not_found("Hypothesis")
     await db.delete(hypothesis)
 
 
-@router.post("/hypotheses/{hypothesis_id}/findings", response_model=FindingResponse, status_code=status.HTTP_201_CREATED)
-async def add_finding(hypothesis_id: str, payload: FindingCreate, db: DatabaseSession, _: CurrentUser) -> HuntFinding:
+@router.post(
+    "/hypotheses/{hypothesis_id}/findings",
+    response_model=FindingResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_finding(
+    hypothesis_id: str, payload: FindingCreate, db: DatabaseSession, _: CurrentUser
+) -> HuntFinding:
     hypothesis = await db.get(HuntHypothesis, uuid.UUID(str(hypothesis_id)))
     if not hypothesis:
         raise_not_found("Hypothesis")
@@ -68,15 +84,25 @@ async def add_finding(hypothesis_id: str, payload: FindingCreate, db: DatabaseSe
     return finding
 
 
-@router.get("/hypotheses/{hypothesis_id}/findings", response_model=list[FindingResponse])
+@router.get(
+    "/hypotheses/{hypothesis_id}/findings", response_model=list[FindingResponse]
+)
 async def list_findings(hypothesis_id: str, db: DatabaseSession) -> list[HuntFinding]:
     hyp_id = uuid.UUID(str(hypothesis_id))
-    result = await db.execute(select(HuntFinding).where(HuntFinding.hypothesis_id == hyp_id))
+    result = await db.execute(
+        select(HuntFinding).where(HuntFinding.hypothesis_id == hyp_id)
+    )
     return result.scalars().all()
 
 
-@router.post("/detection-rules", response_model=DetectionRuleResponse, status_code=status.HTTP_201_CREATED)
-async def create_detection_rule(payload: DetectionRuleCreate, db: DatabaseSession, _: CurrentUser) -> DetectionRule:
+@router.post(
+    "/detection-rules",
+    response_model=DetectionRuleResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_detection_rule(
+    payload: DetectionRuleCreate, db: DatabaseSession, _: CurrentUser
+) -> DetectionRule:
     rule = DetectionRule(**payload.model_dump())
     db.add(rule)
     await db.flush()
@@ -85,7 +111,9 @@ async def create_detection_rule(payload: DetectionRuleCreate, db: DatabaseSessio
 
 
 @router.get("/detection-rules", response_model=list[DetectionRuleResponse])
-async def list_detection_rules(db: DatabaseSession, status_filter: Optional[str] = Query(None, alias="status")) -> list[DetectionRule]:
+async def list_detection_rules(
+    db: DatabaseSession, status_filter: Optional[str] = Query(None, alias="status")
+) -> list[DetectionRule]:
     stmt = select(DetectionRule)
     if status_filter:
         stmt = stmt.where(DetectionRule.status == status_filter)
@@ -94,7 +122,9 @@ async def list_detection_rules(db: DatabaseSession, status_filter: Optional[str]
 
 
 @router.post("/findings/{finding_id}/promote", response_model=DetectionRuleResponse)
-async def promote_finding(finding_id: str, db: DatabaseSession, _: CurrentUser) -> DetectionRule:
+async def promote_finding(
+    finding_id: str, db: DatabaseSession, _: CurrentUser
+) -> DetectionRule:
     finding = await db.get(HuntFinding, uuid.UUID(str(finding_id)))
     if not finding:
         raise_not_found("Finding")

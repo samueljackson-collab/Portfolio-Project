@@ -8,6 +8,7 @@ Environment Variables:
 Usage:
     Invoked by Step Functions state machine with S3 event payload.
 """
+
 from __future__ import annotations
 import json
 import logging
@@ -23,9 +24,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # AWS clients
-s3_client = boto3.client('s3')
-dynamodb = boto3.resource('dynamodb', region_name=os.environ.get('REGION', 'us-east-1'))
-metadata_table = dynamodb.Table(os.environ['METADATA_TABLE'])
+s3_client = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb", region_name=os.environ.get("REGION", "us-east-1"))
+metadata_table = dynamodb.Table(os.environ["METADATA_TABLE"])
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -45,35 +46,41 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     # Initialize variables for error handling
     execution_id = None
     timestamp_unix = None
-    
+
     try:
         # Parse S3 event (handle both direct S3 event and Step Functions wrapper)
-        if 'detail' in event:  # EventBridge S3 event
-            bucket = event['detail']['bucket']['name']
-            key = event['detail']['object']['key']
-            size_bytes = event['detail']['object']['size']
-            version_id = event['detail']['object'].get('version-id')
-        elif 'Records' in event:  # Direct S3 event notification
-            record = event['Records'][0]
-            bucket = record['s3']['bucket']['name']
-            key = record['s3']['object']['key']
-            size_bytes = record['s3']['object']['size']
-            version_id = record['s3']['object'].get('versionId')
+        if "detail" in event:  # EventBridge S3 event
+            bucket = event["detail"]["bucket"]["name"]
+            key = event["detail"]["object"]["key"]
+            size_bytes = event["detail"]["object"]["size"]
+            version_id = event["detail"]["object"].get("version-id")
+        elif "Records" in event:  # Direct S3 event notification
+            record = event["Records"][0]
+            bucket = record["s3"]["bucket"]["name"]
+            key = record["s3"]["object"]["key"]
+            size_bytes = record["s3"]["object"]["size"]
+            version_id = record["s3"]["object"].get("versionId")
         else:
             raise ValueError(f"Unsupported event format: {json.dumps(event)}")
 
-        logger.info(f"Ingesting file: s3://{bucket}/{key} (size: {size_bytes} bytes, version: {version_id})")
+        logger.info(
+            f"Ingesting file: s3://{bucket}/{key} (size: {size_bytes} bytes, version: {version_id})"
+        )
 
         # Validate file size (reject files > 500MB to prevent Lambda OOM)
         max_size_bytes = 500 * 1024 * 1024  # 500MB
         if size_bytes > max_size_bytes:
-            error_msg = f"File size {size_bytes} bytes exceeds limit {max_size_bytes} bytes"
+            error_msg = (
+                f"File size {size_bytes} bytes exceeds limit {max_size_bytes} bytes"
+            )
             logger.error(error_msg)
             raise ValueError(error_msg)
 
         # Generate unique execution ID for idempotency tracking
         now_iso = datetime.now(timezone.utc).isoformat()
-        timestamp_unix = int(datetime.now(timezone.utc).timestamp() * 1000)  # Milliseconds since epoch
+        timestamp_unix = int(
+            datetime.now(timezone.utc).timestamp() * 1000
+        )  # Milliseconds since epoch
         execution_id = f"{bucket}/{key}/{version_id or 'no-version'}/{now_iso}"
 
         # NOTE: Idempotency check removed. The current design includes both an ISO timestamp (now_iso)
@@ -87,12 +94,10 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Read S3 object metadata (but not full content yet - validate first)
         try:
             s3_metadata = s3_client.head_object(
-                Bucket=bucket,
-                Key=key,
-                VersionId=version_id if version_id else None
+                Bucket=bucket, Key=key, VersionId=version_id if version_id else None
             )
-            content_type = s3_metadata.get('ContentType', 'application/octet-stream')
-            last_modified = s3_metadata['LastModified'].isoformat()
+            content_type = s3_metadata.get("ContentType", "application/octet-stream")
+            last_modified = s3_metadata["LastModified"].isoformat()
         except ClientError as e:
             logger.error(f"Failed to read S3 object metadata: {e}")
             raise
@@ -100,17 +105,18 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Write metadata to DynamoDB (initial status: ingested)
         timestamp_iso = datetime.now(timezone.utc).isoformat()
         metadata_item = {
-            'execution_id': execution_id,
-            'timestamp': timestamp_unix,  # RANGE key (numeric)
-            'bucket': bucket,
-            'key': key,
-            'version_id': version_id,
-            'size_bytes': size_bytes,
-            'content_type': content_type,
-            'last_modified': last_modified,
-            'status': 'ingested',
-            'ingestion_timestamp': timestamp_iso,
-            'ttl': int(datetime.now(timezone.utc).timestamp()) + (180 * 24 * 60 * 60)  # 180 days TTL
+            "execution_id": execution_id,
+            "timestamp": timestamp_unix,  # RANGE key (numeric)
+            "bucket": bucket,
+            "key": key,
+            "version_id": version_id,
+            "size_bytes": size_bytes,
+            "content_type": content_type,
+            "last_modified": last_modified,
+            "status": "ingested",
+            "ingestion_timestamp": timestamp_iso,
+            "ttl": int(datetime.now(timezone.utc).timestamp())
+            + (180 * 24 * 60 * 60),  # 180 days TTL
         }
 
         try:
@@ -122,16 +128,16 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         # Return payload for next Step Functions state (validate)
         return {
-            'statusCode': 200,
-            'execution_id': execution_id,
-            'bucket': bucket,
-            'key': key,
-            'version_id': version_id,
-            'size_bytes': size_bytes,
-            'content_type': content_type,
-            'duplicate': False,
-            'timestamp': timestamp_unix,  # Pass numeric timestamp for subsequent states
-            'ingestion_timestamp': timestamp_iso
+            "statusCode": 200,
+            "execution_id": execution_id,
+            "bucket": bucket,
+            "key": key,
+            "version_id": version_id,
+            "size_bytes": size_bytes,
+            "content_type": content_type,
+            "duplicate": False,
+            "timestamp": timestamp_unix,  # Pass numeric timestamp for subsequent states
+            "ingestion_timestamp": timestamp_iso,
         }
 
     except Exception as e:
@@ -140,13 +146,10 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if execution_id and timestamp_unix:
             try:
                 metadata_table.update_item(
-                    Key={'execution_id': execution_id, 'timestamp': timestamp_unix},
-                    UpdateExpression='SET #status = :status, error_message = :error',
-                    ExpressionAttributeNames={'#status': 'status'},
-                    ExpressionAttributeValues={
-                        ':status': 'failed',
-                        ':error': str(e)
-                    }
+                    Key={"execution_id": execution_id, "timestamp": timestamp_unix},
+                    UpdateExpression="SET #status = :status, error_message = :error",
+                    ExpressionAttributeNames={"#status": "status"},
+                    ExpressionAttributeValues={":status": "failed", ":error": str(e)},
                 )
             except Exception as update_error:
                 logger.error(f"Failed to update error status: {update_error}")
@@ -165,7 +168,12 @@ def sanitize_log_message(message: str) -> str:
     """
     # Example: Redact email addresses, SSN patterns (basic regex)
     import re
-    message = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[EMAIL_REDACTED]', message)
-    message = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '[SSN_REDACTED]', message)
-    message = re.sub(r'\b\d{16}\b', '[CC_REDACTED]', message)  # Credit card
+
+    message = re.sub(
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+        "[EMAIL_REDACTED]",
+        message,
+    )
+    message = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "[SSN_REDACTED]", message)
+    message = re.sub(r"\b\d{16}\b", "[CC_REDACTED]", message)  # Credit card
     return message

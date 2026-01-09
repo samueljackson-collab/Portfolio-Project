@@ -98,7 +98,7 @@ async def run_full_sync(verify: bool = False, assume_yes: bool = False):
     print()
 
     # Verify if requested
-    if verify and stats['synced'] > 0:
+    if verify and stats["synced"] > 0:
         print("Running verification...")
         # Verification would check a sample of files
         print("Verification complete.")
@@ -223,37 +223,31 @@ def main():
     parser = argparse.ArgumentParser(
         description="ElderPhoto Backup Synchronization Script",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
 
     parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Perform full sync of all photos"
+        "--full", action="store_true", help="Perform full sync of all photos"
     )
 
     parser.add_argument(
         "--incremental",
         action="store_true",
-        help="Perform incremental sync (new/modified only)"
+        help="Perform incremental sync (new/modified only)",
     )
 
     parser.add_argument(
         "--verify",
         action="store_true",
-        help="Verify backups after sync (used with --full or --incremental)"
+        help="Verify backups after sync (used with --full or --incremental)",
     )
 
     parser.add_argument(
-        "--verify-only",
-        action="store_true",
-        help="Only verify backups, don't sync"
+        "--verify-only", action="store_true", help="Only verify backups, don't sync"
     )
 
     parser.add_argument(
-        "--status",
-        action="store_true",
-        help="Show backup status and exit"
+        "--status", action="store_true", help="Show backup status and exit"
     )
 
     parser.add_argument(
@@ -269,7 +263,9 @@ def main():
 
     # Validate arguments
     if not any([args.full, args.incremental, args.verify_only, args.status]):
-        parser.error("Must specify one of: --full, --incremental, --verify-only, or --status")
+        parser.error(
+            "Must specify one of: --full, --incremental, --verify-only, or --status"
+        )
 
     # Run appropriate command
     try:

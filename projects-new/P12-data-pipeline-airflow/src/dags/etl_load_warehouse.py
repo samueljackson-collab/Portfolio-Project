@@ -89,8 +89,7 @@ def load_facts_table(**context):
 
         task_instance = context["task_instance"]
         prep_stats = task_instance.xcom_pull(
-            task_ids="prepare_for_load",
-            key="prep_stats"
+            task_ids="prepare_for_load", key="prep_stats"
         )
 
         rows_to_load = prep_stats.get("rows_prepared", 0)
@@ -145,7 +144,7 @@ def load_dimensions_table(**context):
                 "dim_product",
                 "dim_date",
                 "dim_location",
-                "dim_channel"
+                "dim_channel",
             ],
             "timestamp": datetime.now().isoformat(),
         }
@@ -180,7 +179,9 @@ def refresh_warehouse_views(**context):
             "timestamp": datetime.now().isoformat(),
         }
 
-        logger.info(f"View refresh completed. Views: {refresh_stats['views_refreshed']}")
+        logger.info(
+            f"View refresh completed. Views: {refresh_stats['views_refreshed']}"
+        )
         context["task_instance"].xcom_push(key="refresh_stats", value=refresh_stats)
 
         return refresh_stats
@@ -205,12 +206,10 @@ def validate_warehouse_load(**context):
 
         task_instance = context["task_instance"]
         facts_stats = task_instance.xcom_pull(
-            task_ids="load_facts_table",
-            key="facts_load_stats"
+            task_ids="load_facts_table", key="facts_load_stats"
         )
         dimensions_stats = task_instance.xcom_pull(
-            task_ids="load_dimensions_table",
-            key="dimensions_load_stats"
+            task_ids="load_dimensions_table", key="dimensions_load_stats"
         )
 
         # Simulate validation
@@ -224,7 +223,9 @@ def validate_warehouse_load(**context):
             "timestamp": datetime.now().isoformat(),
         }
 
-        logger.info(f"Warehouse validation completed. Status: {validation_result['overall_status']}")
+        logger.info(
+            f"Warehouse validation completed. Status: {validation_result['overall_status']}"
+        )
         task_instance.xcom_push(key="validation_result", value=validation_result)
 
         return validation_result
@@ -244,8 +245,7 @@ def notify_load_complete(**context):
     logger.info("Load phase completed successfully")
     task_instance = context["task_instance"]
     validation_result = task_instance.xcom_pull(
-        task_ids="validate_warehouse_load",
-        key="validation_result"
+        task_ids="validate_warehouse_load", key="validation_result"
     )
     logger.info(f"Load validation result: {validation_result}")
 

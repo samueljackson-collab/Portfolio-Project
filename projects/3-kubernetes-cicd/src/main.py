@@ -387,6 +387,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
+
 def main():
     """Main entry point."""
     import uvicorn

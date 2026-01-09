@@ -1,4 +1,5 @@
 """Smoke tests for Portfolio Website project."""
+
 from src.health_check import run_health_check
 
 

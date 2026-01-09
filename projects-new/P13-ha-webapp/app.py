@@ -18,7 +18,9 @@ class Node:
 
 def simulate_failover(primary: Node, replica: Node) -> list[str]:
     log: list[str] = []
-    log.append(f"[{datetime.now(timezone.utc).isoformat()}Z] Checking primary: {primary.heartbeat()}")
+    log.append(
+        f"[{datetime.now(timezone.utc).isoformat()}Z] Checking primary: {primary.heartbeat()}"
+    )
     if primary.healthy:
         log.append("Traffic remains on primary")
     else:

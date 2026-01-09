@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class CallFlowState(Enum):
     """Call flow states during roaming"""
+
     IDLE = "idle"
     LOCATION_REQUEST = "location_request"
     HLR_LOOKUP = "hlr_lookup"
@@ -35,6 +36,7 @@ class CallFlowState(Enum):
 
 class OperatorType(Enum):
     """Types of network operators"""
+
     HOME_NETWORK = "home_network"
     VISITED_NETWORK = "visited_network"
 
@@ -42,6 +44,7 @@ class OperatorType(Enum):
 @dataclass
 class NetworkLatency:
     """Network latency simulation parameters"""
+
     min_ms: float = 20.0
     max_ms: float = 150.0
     jitter_pct: float = 10.0  # Jitter as percentage of latency
@@ -56,6 +59,7 @@ class NetworkLatency:
 @dataclass
 class PLMN:
     """Public Land Mobile Network (operator) representation"""
+
     mcc: str  # Mobile Country Code (3 digits)
     mnc: str  # Mobile Network Code (2-3 digits)
     operator_name: str = ""
@@ -79,6 +83,7 @@ class PLMN:
 @dataclass
 class HLRRecord:
     """Home Location Register record"""
+
     imsi: str
     msisdn: str  # Mobile Subscriber Integrated Services Digital Network number
     home_network: PLMN
@@ -99,6 +104,7 @@ class HLRRecord:
 @dataclass
 class VLRRecord:
     """Visitor Location Register record"""
+
     imsi: str
     msisdn: str
     home_network: PLMN
@@ -119,6 +125,7 @@ class VLRRecord:
 @dataclass
 class CallSession:
     """Represents a roaming call session"""
+
     session_id: str
     imsi: str
     msisdn: str
@@ -138,12 +145,14 @@ class CallSession:
 
     def add_handoff(self, from_network: PLMN, to_network: PLMN, duration_ms: float):
         """Record a network handoff"""
-        self.handoffs.append({
-            "timestamp": datetime.now().isoformat(),
-            "from_network": from_network.plmn_id,
-            "to_network": to_network.plmn_id,
-            "duration_ms": duration_ms,
-        })
+        self.handoffs.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "from_network": from_network.plmn_id,
+                "to_network": to_network.plmn_id,
+                "duration_ms": duration_ms,
+            }
+        )
 
 
 class HLRDatabase:
@@ -192,7 +201,9 @@ class VLRDatabase:
         time.sleep(latency / 1000.0)  # Simulate network delay
 
         self.records[vlr_record.imsi] = vlr_record
-        logger.info(f"VLR ({self.plmn.plmn_id}): Registered roaming subscriber {vlr_record.msisdn}")
+        logger.info(
+            f"VLR ({self.plmn.plmn_id}): Registered roaming subscriber {vlr_record.msisdn}"
+        )
         return True
 
     def lookup(self, imsi: str) -> Optional[VLRRecord]:
@@ -212,7 +223,9 @@ class VLRDatabase:
         """Deregister a roaming subscriber from the VLR"""
         if imsi in self.records:
             del self.records[imsi]
-            logger.info(f"VLR ({self.plmn.plmn_id}): Deregistered roaming subscriber {imsi}")
+            logger.info(
+                f"VLR ({self.plmn.plmn_id}): Deregistered roaming subscriber {imsi}"
+            )
             return True
         return False
 
@@ -231,8 +244,14 @@ class NetworkOperator:
         self.vlr = VLRDatabase(plmn)
         self.call_sessions: Dict[str, CallSession] = {}
 
-    def create_call_session(self, imsi: str, msisdn: str, called_party: str,
-                           home_network: PLMN, visited_network: PLMN) -> Optional[CallSession]:
+    def create_call_session(
+        self,
+        imsi: str,
+        msisdn: str,
+        called_party: str,
+        home_network: PLMN,
+        visited_network: PLMN,
+    ) -> Optional[CallSession]:
         """Create a new call session"""
         session_id = f"session_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
         session = CallSession(
@@ -245,7 +264,9 @@ class NetworkOperator:
             state=CallFlowState.LOCATION_REQUEST,
         )
         self.call_sessions[session_id] = session
-        logger.info(f"Operator ({self.plmn.plmn_id}): Created call session {session_id}")
+        logger.info(
+            f"Operator ({self.plmn.plmn_id}): Created call session {session_id}"
+        )
         return session
 
 
@@ -282,14 +303,22 @@ class RoamingSimulator:
         """Get visited network operator by PLMN ID"""
         return self.visited_networks.get(plmn_id)
 
-    def initiate_call(self, imsi: str, msisdn: str, called_party: str,
-                     home_plmn_id: str, visited_plmn_id: str) -> Optional[CallSession]:
+    def initiate_call(
+        self,
+        imsi: str,
+        msisdn: str,
+        called_party: str,
+        home_plmn_id: str,
+        visited_plmn_id: str,
+    ) -> Optional[CallSession]:
         """Initiate a roaming call"""
         home_operator = self._get_home_operator(home_plmn_id)
         visited_operator = self._get_visited_operator(visited_plmn_id)
 
         if not home_operator or not visited_operator:
-            logger.error(f"Invalid PLMN IDs: home={home_plmn_id}, visited={visited_plmn_id}")
+            logger.error(
+                f"Invalid PLMN IDs: home={home_plmn_id}, visited={visited_plmn_id}"
+            )
             return None
 
         # Create call session
@@ -305,7 +334,7 @@ class RoamingSimulator:
         start_time = time.time()
         hlr_record = home_operator.hlr.lookup(imsi)
         session.hlr_lookup_time = (time.time() - start_time) * 1000
-        session.network_latencies['hlr_lookup'] = session.hlr_lookup_time
+        session.network_latencies["hlr_lookup"] = session.hlr_lookup_time
 
         if not hlr_record:
             session.state = CallFlowState.FAILED
@@ -341,7 +370,7 @@ class RoamingSimulator:
             visited_operator.vlr.register(vlr_record)
 
         session.vlr_lookup_time = (time.time() - start_time) * 1000
-        session.network_latencies['vlr_lookup'] = session.vlr_lookup_time
+        session.network_latencies["vlr_lookup"] = session.vlr_lookup_time
 
         # Simulate call setup
         session.state = CallFlowState.CALL_SETUP
@@ -349,7 +378,7 @@ class RoamingSimulator:
         latency = self.inter_operator_latency.simulate()
         time.sleep(latency / 1000.0)
         session.call_setup_time = (time.time() - start_time) * 1000
-        session.network_latencies['call_setup'] = session.call_setup_time
+        session.network_latencies["call_setup"] = session.call_setup_time
 
         # Call connected
         session.state = CallFlowState.CONNECTED
@@ -379,7 +408,9 @@ class RoamingSimulator:
             return False
 
         old_network = session.visited_network
-        logger.info(f"Call {session_id}: Initiating handoff from {old_network.plmn_id} to {new_visited_plmn_id}")
+        logger.info(
+            f"Call {session_id}: Initiating handoff from {old_network.plmn_id} to {new_visited_plmn_id}"
+        )
 
         # Handoff in progress
         session.state = CallFlowState.HANDOFF_IN_PROGRESS
@@ -398,7 +429,9 @@ class RoamingSimulator:
         new_operator.vlr.register(vlr_record)
 
         # Simulate handoff latency
-        handoff_latency = self.inter_operator_latency.simulate() * 1.5  # Handoff takes longer
+        handoff_latency = (
+            self.inter_operator_latency.simulate() * 1.5
+        )  # Handoff takes longer
         time.sleep(handoff_latency / 1000.0)
 
         handoff_duration = (time.time() - start_time) * 1000
@@ -407,7 +440,7 @@ class RoamingSimulator:
         session.visited_network = new_operator.plmn
         session.state = CallFlowState.HANDOFF_COMPLETE
         session.add_handoff(old_network, new_operator.plmn, handoff_duration)
-        session.network_latencies['last_handoff'] = handoff_duration
+        session.network_latencies["last_handoff"] = handoff_duration
 
         logger.info(
             f"Call {session_id}: Handoff complete "
@@ -432,7 +465,9 @@ class RoamingSimulator:
         session.disconnection_time = datetime.now()
 
         if session.connection_time:
-            session.total_duration = (session.disconnection_time - session.connection_time).total_seconds()
+            session.total_duration = (
+                session.disconnection_time - session.connection_time
+            ).total_seconds()
 
         # Deregister from VLR
         visited_operator = self._get_visited_operator(session.visited_network.plmn_id)
@@ -476,12 +511,15 @@ class RoamingSimulator:
         """Get overall simulator statistics"""
         total_sessions = len(self.call_sessions)
         successful_sessions = sum(
-            1 for s in self.call_sessions.values()
-            if s.state != CallFlowState.FAILED
+            1 for s in self.call_sessions.values() if s.state != CallFlowState.FAILED
         )
         total_handoffs = sum(len(s.handoffs) for s in self.call_sessions.values())
-        avg_hlr_latency = sum(s.hlr_lookup_time for s in self.call_sessions.values()) / max(total_sessions, 1)
-        avg_vlr_latency = sum(s.vlr_lookup_time for s in self.call_sessions.values()) / max(total_sessions, 1)
+        avg_hlr_latency = sum(
+            s.hlr_lookup_time for s in self.call_sessions.values()
+        ) / max(total_sessions, 1)
+        avg_vlr_latency = sum(
+            s.vlr_lookup_time for s in self.call_sessions.values()
+        ) / max(total_sessions, 1)
 
         return {
             "total_sessions": total_sessions,

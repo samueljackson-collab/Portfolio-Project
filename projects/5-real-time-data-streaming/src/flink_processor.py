@@ -1,4 +1,5 @@
 """Apache Flink stream processing job for real-time analytics."""
+
 from __future__ import annotations
 
 import json
@@ -13,13 +14,12 @@ from pyflink.common.serialization import SimpleStringSchema
 from pyflink.datastream.connectors.kafka import (
     KafkaSource,
     KafkaSink,
-    KafkaRecordSerializationSchema
+    KafkaRecordSerializationSchema,
 )
 from pyflink.common.typeinfo import Types
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -29,10 +29,10 @@ class FlinkEventProcessor:
 
     def __init__(
         self,
-        kafka_bootstrap_servers: str = 'localhost:9092',
-        input_topic: str = 'user-events',
-        output_topic: str = 'event-analytics',
-        checkpoint_interval: int = 60000
+        kafka_bootstrap_servers: str = "localhost:9092",
+        input_topic: str = "user-events",
+        output_topic: str = "event-analytics",
+        checkpoint_interval: int = 60000,
     ):
         """
         Initialize Flink stream processor.
@@ -60,8 +60,7 @@ class FlinkEventProcessor:
 
         # Set RocksDB as state backend
         state_backend = RocksDBStateBackend(
-            "file:///tmp/flink-checkpoints",
-            enable_incremental_checkpointing=True
+            "file:///tmp/flink-checkpoints", enable_incremental_checkpointing=True
         )
         self.env.set_state_backend(state_backend)
 
@@ -82,27 +81,31 @@ class FlinkEventProcessor:
 
     def setup_kafka_source(self) -> KafkaSource:
         """Configure Kafka source connector."""
-        kafka_source = KafkaSource.builder() \
-            .set_bootstrap_servers(self.kafka_servers) \
-            .set_topics(self.input_topic) \
-            .set_group_id('flink-consumer-group') \
-            .set_starting_offsets_earliest() \
-            .set_value_only_deserializer(SimpleStringSchema()) \
+        kafka_source = (
+            KafkaSource.builder()
+            .set_bootstrap_servers(self.kafka_servers)
+            .set_topics(self.input_topic)
+            .set_group_id("flink-consumer-group")
+            .set_starting_offsets_earliest()
+            .set_value_only_deserializer(SimpleStringSchema())
             .build()
+        )
 
         return kafka_source
 
     def setup_kafka_sink(self) -> KafkaSink:
         """Configure Kafka sink connector."""
-        kafka_sink = KafkaSink.builder() \
-            .set_bootstrap_servers(self.kafka_servers) \
+        kafka_sink = (
+            KafkaSink.builder()
+            .set_bootstrap_servers(self.kafka_servers)
             .set_record_serializer(
                 KafkaRecordSerializationSchema.builder()
                 .set_topic(self.output_topic)
                 .set_value_serialization_schema(SimpleStringSchema())
                 .build()
-            ) \
+            )
             .build()
+        )
 
         return kafka_sink
 
@@ -120,14 +123,14 @@ class FlinkEventProcessor:
         try:
             event = json.loads(event_json)
             return (
-                event.get('timestamp', ''),
-                event.get('event_type', 'unknown'),
-                event.get('user_id', 'unknown'),
-                json.dumps(event.get('data', {}))
+                event.get("timestamp", ""),
+                event.get("event_type", "unknown"),
+                event.get("user_id", "unknown"),
+                json.dumps(event.get("data", {})),
             )
         except Exception as e:
             logger.error(f"Failed to parse event: {e}")
-            return ('', 'error', 'unknown', '{}')
+            return ("", "error", "unknown", "{}")
 
     @staticmethod
     def count_by_event_type(events) -> str:
@@ -149,9 +152,9 @@ class FlinkEventProcessor:
             total += 1
 
         result = {
-            'window_end': datetime.now(timezone.utc).isoformat(),
-            'total_events': total,
-            'by_type': event_counts
+            "window_end": datetime.now(timezone.utc).isoformat(),
+            "total_events": total,
+            "by_type": event_counts,
         }
 
         return json.dumps(result)
@@ -174,10 +177,10 @@ class FlinkEventProcessor:
         for event in events:
             _, event_type, user_id, data_json = event
 
-            if event_type == 'purchase':
+            if event_type == "purchase":
                 try:
                     data = json.loads(data_json)
-                    amount = data.get('amount', 0)
+                    amount = data.get("amount", 0)
                     total_revenue += amount
                     purchase_count += 1
                     unique_users.add(user_id)
@@ -187,12 +190,12 @@ class FlinkEventProcessor:
         avg_purchase = total_revenue / purchase_count if purchase_count > 0 else 0
 
         result = {
-            'window_end': datetime.now(timezone.utc).isoformat(),
-            'metric_type': 'revenue',
-            'total_revenue': round(total_revenue, 2),
-            'purchase_count': purchase_count,
-            'unique_customers': len(unique_users),
-            'average_purchase': round(avg_purchase, 2)
+            "window_end": datetime.now(timezone.utc).isoformat(),
+            "metric_type": "revenue",
+            "total_revenue": round(total_revenue, 2),
+            "purchase_count": purchase_count,
+            "unique_customers": len(unique_users),
+            "average_purchase": round(avg_purchase, 2),
         }
 
         return json.dumps(result)
@@ -209,23 +212,26 @@ class FlinkEventProcessor:
         stream = self.env.from_source(
             kafka_source,
             WatermarkStrategy.for_bounded_out_of_orderness(Duration.of_seconds(5)),
-            "kafka-source"
+            "kafka-source",
         )
 
         # Parse events
         parsed_stream = stream.map(
             lambda x: self.parse_event(x),
-            output_type=Types.TUPLE([Types.STRING(), Types.STRING(), Types.STRING(), Types.STRING()])
+            output_type=Types.TUPLE(
+                [Types.STRING(), Types.STRING(), Types.STRING(), Types.STRING()]
+            ),
         )
 
         # Window and aggregate
-        windowed = parsed_stream \
-            .key_by(lambda x: "all") \
-            .window(TumblingEventTimeWindows.of(Time.minutes(1))) \
+        windowed = (
+            parsed_stream.key_by(lambda x: "all")
+            .window(TumblingEventTimeWindows.of(Time.minutes(1)))
             .apply(
                 lambda key, window, events: self.count_by_event_type(events),
-                output_type=Types.STRING()
+                output_type=Types.STRING(),
             )
+        )
 
         # Sink to output topic
         windowed.sink_to(kafka_sink)
@@ -245,26 +251,29 @@ class FlinkEventProcessor:
         stream = self.env.from_source(
             kafka_source,
             WatermarkStrategy.for_bounded_out_of_orderness(Duration.of_seconds(5)),
-            "kafka-source"
+            "kafka-source",
         )
 
         # Parse events
         parsed_stream = stream.map(
             lambda x: self.parse_event(x),
-            output_type=Types.TUPLE([Types.STRING(), Types.STRING(), Types.STRING(), Types.STRING()])
+            output_type=Types.TUPLE(
+                [Types.STRING(), Types.STRING(), Types.STRING(), Types.STRING()]
+            ),
         )
 
         # Filter for purchase events
-        purchase_stream = parsed_stream.filter(lambda x: x[1] == 'purchase')
+        purchase_stream = parsed_stream.filter(lambda x: x[1] == "purchase")
 
         # Window and calculate metrics
-        windowed = purchase_stream \
-            .key_by(lambda x: "all") \
-            .window(TumblingEventTimeWindows.of(Time.minutes(5))) \
+        windowed = (
+            purchase_stream.key_by(lambda x: "all")
+            .window(TumblingEventTimeWindows.of(Time.minutes(5)))
             .apply(
                 lambda key, window, events: self.calculate_revenue_metrics(events),
-                output_type=Types.STRING()
+                output_type=Types.STRING(),
             )
+        )
 
         # Sink to output topic
         windowed.sink_to(kafka_sink)
@@ -284,28 +293,33 @@ class FlinkEventProcessor:
         stream = self.env.from_source(
             kafka_source,
             WatermarkStrategy.for_bounded_out_of_orderness(Duration.of_seconds(5)),
-            "kafka-source"
+            "kafka-source",
         )
 
         # Parse events
         parsed_stream = stream.map(
             lambda x: self.parse_event(x),
-            output_type=Types.TUPLE([Types.STRING(), Types.STRING(), Types.STRING(), Types.STRING()])
+            output_type=Types.TUPLE(
+                [Types.STRING(), Types.STRING(), Types.STRING(), Types.STRING()]
+            ),
         )
 
         # Group by user and count events per session
-        user_activity = parsed_stream \
-            .key_by(lambda x: x[2]) \
-            .window(TumblingEventTimeWindows.of(Time.minutes(30))) \
+        user_activity = (
+            parsed_stream.key_by(lambda x: x[2])
+            .window(TumblingEventTimeWindows.of(Time.minutes(30)))
             .apply(
-                lambda user_id, window, events: json.dumps({
-                    'user_id': user_id,
-                    'window_end': datetime.now(timezone.utc).isoformat(),
-                    'event_count': len(list(events)),
-                    'event_types': list(set(e[1] for e in events))
-                }),
-                output_type=Types.STRING()
+                lambda user_id, window, events: json.dumps(
+                    {
+                        "user_id": user_id,
+                        "window_end": datetime.now(timezone.utc).isoformat(),
+                        "event_count": len(list(events)),
+                        "event_types": list(set(e[1] for e in events)),
+                    }
+                ),
+                output_type=Types.STRING(),
             )
+        )
 
         # Sink to output topic
         user_activity.sink_to(kafka_sink)
@@ -318,27 +332,21 @@ def main():
     """Main entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Flink Stream Processor')
+    parser = argparse.ArgumentParser(description="Flink Stream Processor")
     parser.add_argument(
-        '--kafka-servers',
-        default='localhost:9092',
-        help='Kafka bootstrap servers'
+        "--kafka-servers", default="localhost:9092", help="Kafka bootstrap servers"
     )
     parser.add_argument(
-        '--input-topic',
-        default='user-events',
-        help='Input Kafka topic'
+        "--input-topic", default="user-events", help="Input Kafka topic"
     )
     parser.add_argument(
-        '--output-topic',
-        default='event-analytics',
-        help='Output Kafka topic'
+        "--output-topic", default="event-analytics", help="Output Kafka topic"
     )
     parser.add_argument(
-        '--job',
-        choices=['event-count', 'revenue', 'sessions'],
-        default='event-count',
-        help='Job to run'
+        "--job",
+        choices=["event-count", "revenue", "sessions"],
+        default="event-count",
+        help="Job to run",
     )
 
     args = parser.parse_args()
@@ -346,16 +354,16 @@ def main():
     processor = FlinkEventProcessor(
         kafka_bootstrap_servers=args.kafka_servers,
         input_topic=args.input_topic,
-        output_topic=args.output_topic
+        output_topic=args.output_topic,
     )
 
-    if args.job == 'event-count':
+    if args.job == "event-count":
         processor.run_event_count_job()
-    elif args.job == 'revenue':
+    elif args.job == "revenue":
         processor.run_revenue_tracking_job()
-    elif args.job == 'sessions':
+    elif args.job == "sessions":
         processor.run_user_session_analysis()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

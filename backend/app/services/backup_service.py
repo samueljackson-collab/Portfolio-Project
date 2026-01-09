@@ -79,14 +79,18 @@ class BackupLocation:
             result = subprocess.run(
                 [
                     "ssh",
-                    "-o", "BatchMode=yes",
-                    "-o", "ConnectTimeout=5",
-                    "-o", "StrictHostKeyChecking=no",
+                    "-o",
+                    "BatchMode=yes",
+                    "-o",
+                    "ConnectTimeout=5",
+                    "-o",
+                    "StrictHostKeyChecking=no",
                     f"{self.ssh_user}@{self.ssh_host}",
-                    "echo", "OK"
+                    "echo",
+                    "OK",
                 ],
                 capture_output=True,
-                timeout=10
+                timeout=10,
             )
             return result.returncode == 0 and b"OK" in result.stdout
         except subprocess.TimeoutExpired:
@@ -243,7 +247,9 @@ async def sync_file_via_rsync(
     """
     try:
         dest_path = backup_location.get_full_path(relative_path)
-        remote_dest = f"{backup_location.ssh_user}@{backup_location.ssh_host}:{dest_path}"
+        remote_dest = (
+            f"{backup_location.ssh_user}@{backup_location.ssh_host}:{dest_path}"
+        )
 
         # Create remote directory first
         mkdir_cmd = (
@@ -275,7 +281,9 @@ async def sync_file_via_rsync(
         return False
 
 
-async def backup_photo(photo_path: str, thumbnail_path: Optional[str] = None) -> Dict[str, bool]:
+async def backup_photo(
+    photo_path: str, thumbnail_path: Optional[str] = None
+) -> Dict[str, bool]:
     """
     Backup a photo (and its thumbnail) to all configured backup locations.
 
@@ -368,7 +376,9 @@ async def sync_all_photos() -> Dict[str, int]:
 
     # Find all photo files
     photo_files = list(primary_path.rglob("*.jpg")) + list(primary_path.rglob("*.jpeg"))
-    photo_files += list(primary_path.rglob("*.png")) + list(primary_path.rglob("*.webp"))
+    photo_files += list(primary_path.rglob("*.png")) + list(
+        primary_path.rglob("*.webp")
+    )
 
     stats["total"] = len(photo_files)
 
@@ -388,9 +398,7 @@ async def sync_all_photos() -> Dict[str, int]:
 
         # Log progress every 10 files
         if stats["synced"] % 10 == 0:
-            logger.info(
-                f"Progress: {stats['synced']}/{stats['total']} photos synced"
-            )
+            logger.info(f"Progress: {stats['synced']}/{stats['total']} photos synced")
 
     return stats
 
@@ -439,7 +447,7 @@ async def generate_backup_report() -> str:
     status = await get_backup_status()
 
     report = [
-        "="* 60,
+        "=" * 60,
         "ElderPhoto Backup Status Report",
         "=" * 60,
         f"Generated: {status['timestamp']}",

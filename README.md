@@ -16,6 +16,74 @@
 
 ---
 
+## ⚡ Quick Navigation
+
+**Start here**
+- [Portfolio Documentation Hub](./DOCUMENTATION_INDEX.md)
+- [Portfolio Validation Checklist](./PORTFOLIO_VALIDATION.md)
+- [Portfolio Status Master Checklist](./PROJECT_STATUS_MASTER_CHECKLIST.md)
+
+**Key artifacts**
+- [Portfolio Evidence Completion Summary](./PORTFOLIO_EVIDENCE_COMPLETION_SUMMARY.md)
+- [Portfolio Infrastructure Guide](./PORTFOLIO_INFRASTRUCTURE_GUIDE.md)
+- [Security Overview](./SECURITY.md)
+- [Deployment Guide](./DEPLOYMENT.md)
+
+**Ops & Observability**
+- [Observability Stack](./observability)
+- [Home Assistant Dashboard](./HOME_ASSISTANT_DASHBOARD.md)
+
+---
+
+## 📈 GitHub Status Snapshot (Local Repository)
+
+**Repository Pulse (local Git snapshot)**
+- **Active branch:** `work`
+- **Last update:** 2026-01-05
+- **Commits:** 777 total revisions
+- **Tracked files:** 3,062 assets
+- **Projects:** 25 portfolio showcases
+- **READMEs:** 46 published guides
+
+**Documentation & Infra Inventory**
+- **Markdown files:** 407 references · **Total words:** 506,150
+- **Docker compose files:** 25 · **Terraform files:** 81 · **Config packs:** 54
+
+```mermaid
+flowchart LR
+  A[Commit] --> B[CI Workflows]
+  B --> C[Docs + Evidence]
+  C --> D[Release Artifacts]
+  D --> E[GitHub Pages]
+```
+
+```mermaid
+pie title Repository Evidence Mix
+  "Docs + Runbooks" : 46
+  "Infrastructure as Code" : 25
+  "Validation + Tests" : 23
+  "Blueprints" : 25
+```
+
+## 🗺️ Repository Map (What lives where)
+
+| Area | Purpose | What to look for |
+| --- | --- | --- |
+| `projects/` | Primary portfolio projects (1–25) | Project READMEs, architecture diagrams, runbooks, testing evidence |
+| `docs/` | Deep-dive documentation | Architecture guides, process documentation, diagrams |
+| `observability/` | Metrics + dashboards | Grafana dashboards, OpenTelemetry collector config |
+| `terraform/` | IaC baseline | Shared infrastructure building blocks |
+| `scripts/` | Automation helpers | Deployment, validation, and maintenance scripts |
+
+```mermaid
+flowchart TB
+  Repo[Portfolio Repository] --> Projects[projects/ (1–25)]
+  Repo --> Docs[docs/ + runbooks]
+  Repo --> IaC[terraform/ + infrastructure/]
+  Repo --> Obs[observability/ + grafana dashboards]
+  Repo --> Ops[scripts/ + CI/CD workflows]
+```
+
 ## 🧭 Reviewer Fast Reference
 
 - **Reviewer Checklist:** For a detailed validation checklist covering top metrics, interview workflow, and file map, please see [**PORTFOLIO_VALIDATION.md**](./PORTFOLIO_VALIDATION.md). This file serves as the single source of truth for validation runs.
@@ -32,6 +100,26 @@ System-minded engineer specializing in building, securing, and operating infrast
 
 **QA-forward** Quality-driven systems engineer turning ambiguous requirements into testable runbooks, acceptance criteria, and regression checklists. Builds monitoring dashboards for golden signals and SLOs.
 </details>
+
+---
+
+## 🧪 Validation & Evidence Workflow
+
+This portfolio is structured to make validation repeatable and auditable. The validation path below mirrors how the projects are maintained and reviewed.
+
+```mermaid
+flowchart LR
+  A[Review README] --> B[Inspect IaC]
+  B --> C[Check Runbooks]
+  C --> D[Review Tests]
+  D --> E[Verify Evidence]
+```
+
+**Recommended review sequence**
+1. Use [PORTFOLIO_VALIDATION.md](./PORTFOLIO_VALIDATION.md) for the canonical checklist.
+2. Validate project readmes (scope, dependencies, operational steps).
+3. Review IaC (`terraform/`, `infrastructure/`, project `infra/`).
+4. Confirm monitoring dashboards (`observability/`, project `grafana/`).
 
 ---
 
@@ -72,6 +160,335 @@ System-minded engineer specializing in building, securing, and operating infrast
 - 🟢 [Project 23: Advanced Monitoring & Observability](./projects/23-advanced-monitoring) — Grafana dashboards, alerting rules, and distributed tracing config.
 - 🟢 [Project 24: Portfolio Report Generator](./projects/24-report-generator) — Automated report templating with Jinja2.
 - 🟢 [Project 25: Portfolio Website & Documentation Hub](./projects/25-portfolio-website) — VitePress-powered portal aggregating all documentation and guides.
+
+---
+
+## 🧩 Project Visuals (Charts + Diagrams)
+
+### Project 1: AWS Infrastructure Automation
+```mermaid
+flowchart LR
+  A[Plan] --> B[Apply]
+  B --> C[Operate]
+```
+```mermaid
+pie title Coverage: AWS Infra
+  "IaC Modules" : 40
+  "CI Validation" : 30
+  "Ops Runbooks" : 30
+```
+
+### Project 2: Database Migration Platform
+```mermaid
+flowchart LR
+  A[Source DB] --> B[CDC]
+  B --> C[Target DB]
+```
+```mermaid
+pie title Coverage: Migration
+  "CDC Pipelines" : 35
+  "Validation" : 35
+  "Rollback" : 30
+```
+
+### Project 3: Kubernetes CI/CD Pipeline
+```mermaid
+flowchart LR
+  A[Commit] --> B[CI Gates]
+  B --> C[ArgoCD Sync]
+```
+```mermaid
+pie title Coverage: K8s CI/CD
+  "Policy Gates" : 35
+  "Delivery" : 35
+  "Telemetry" : 30
+```
+
+### Project 4: DevSecOps Pipeline
+```mermaid
+flowchart LR
+  A[Build] --> B[Scan]
+  B --> C[Release]
+```
+```mermaid
+pie title Coverage: DevSecOps
+  "SAST/SCA" : 40
+  "DAST" : 30
+  "SBOM" : 30
+```
+
+### Project 5: Real-time Data Streaming
+```mermaid
+flowchart LR
+  A[Producers] --> B[Kafka/Flink]
+  B --> C[Sinks]
+```
+```mermaid
+pie title Coverage: Streaming
+  "Throughput" : 35
+  "Latency" : 35
+  "Recovery" : 30
+```
+
+### Project 6: Machine Learning Pipeline
+```mermaid
+flowchart LR
+  A[Train] --> B[Track]
+  B --> C[Deploy]
+```
+```mermaid
+pie title Coverage: MLOps
+  "Training" : 35
+  "Registry" : 35
+  "Promotion" : 30
+```
+
+### Project 7: Serverless Data Processing
+```mermaid
+flowchart LR
+  A[Events] --> B[Step Functions]
+  B --> C[DynamoDB]
+```
+```mermaid
+pie title Coverage: Serverless
+  "Orchestration" : 35
+  "Reliability" : 35
+  "Security" : 30
+```
+
+### Project 8: Advanced AI Chatbot
+```mermaid
+flowchart LR
+  A[Query] --> B[RAG Retrieve]
+  B --> C[Answer + Tools]
+```
+```mermaid
+pie title Coverage: AI Assistant
+  "Retrieval" : 35
+  "Tooling" : 35
+  "Evaluation" : 30
+```
+
+### Project 9: Multi-Region Disaster Recovery
+```mermaid
+flowchart LR
+  A[Primary] --> B[Replication]
+  B --> C[Standby]
+```
+```mermaid
+pie title Coverage: DR
+  "Failover" : 35
+  "Validation" : 35
+  "Runbooks" : 30
+```
+
+### Project 10: Blockchain Smart Contract Platform
+```mermaid
+flowchart LR
+  A[Develop] --> B[Test]
+  B --> C[Deploy]
+```
+```mermaid
+pie title Coverage: Smart Contracts
+  "Tests" : 35
+  "Audit" : 35
+  "Release" : 30
+```
+
+### Project 11: IoT Data Ingestion & Analytics
+```mermaid
+flowchart LR
+  A[Devices] --> B[Ingest]
+  B --> C[Dashboards]
+```
+```mermaid
+pie title Coverage: IoT Analytics
+  "Ingest" : 35
+  "Storage" : 35
+  "Visualization" : 30
+```
+
+### Project 12: Quantum Computing Integration
+```mermaid
+flowchart LR
+  A[Classical] --> B[QPU]
+  B --> C[Analysis]
+```
+```mermaid
+pie title Coverage: Quantum
+  "Experiments" : 35
+  "Simulation" : 35
+  "Docs" : 30
+```
+
+### Project 13: Advanced Cybersecurity Platform
+```mermaid
+flowchart LR
+  A[Detect] --> B[Enrich]
+  B --> C[Respond]
+```
+```mermaid
+pie title Coverage: Cybersecurity
+  "SOAR" : 35
+  "Playbooks" : 35
+  "Automation" : 30
+```
+
+### Project 14: Edge AI Inference Platform
+```mermaid
+flowchart LR
+  A[Sensors] --> B[Inference]
+  B --> C[Actions]
+```
+```mermaid
+pie title Coverage: Edge AI
+  "Latency" : 35
+  "Accuracy" : 35
+  "Ops" : 30
+```
+
+### Project 15: Real-time Collaborative Platform
+```mermaid
+flowchart LR
+  A[Clients] --> B[CRDT Sync]
+  B --> C[Server]
+```
+```mermaid
+pie title Coverage: Collaboration
+  "Sync" : 35
+  "Conflict Resolution" : 35
+  "Latency" : 30
+```
+
+### Project 16: Advanced Data Lake & Analytics
+```mermaid
+flowchart LR
+  A[Bronze] --> B[Silver]
+  B --> C[Gold]
+```
+```mermaid
+pie title Coverage: Data Lake
+  "Ingest" : 35
+  "Quality" : 35
+  "Curate" : 30
+```
+
+### Project 17: Multi-Cloud Service Mesh
+```mermaid
+flowchart LR
+  A[Cluster A] --> B[mTLS Mesh]
+  B --> C[Cluster B]
+```
+```mermaid
+pie title Coverage: Service Mesh
+  "Routing" : 35
+  "Security" : 35
+  "Observability" : 30
+```
+
+### Project 18: GPU-Accelerated Computing
+```mermaid
+flowchart LR
+  A[Data] --> B[GPU Compute]
+  B --> C[Results]
+```
+```mermaid
+pie title Coverage: GPU Computing
+  "Performance" : 35
+  "Testing" : 35
+  "Docs" : 30
+```
+
+### Project 19: Advanced Kubernetes Operators
+```mermaid
+flowchart LR
+  A[CRDs] --> B[Reconcile]
+  B --> C[State]
+```
+```mermaid
+pie title Coverage: Operators
+  "Lifecycle" : 35
+  "Automation" : 35
+  "Testing" : 30
+```
+
+### Project 20: Blockchain Oracle Service
+```mermaid
+flowchart LR
+  A[Data Feeds] --> B[Oracle]
+  B --> C[On-chain]
+```
+```mermaid
+pie title Coverage: Oracles
+  "Feeds" : 35
+  "Verification" : 35
+  "SLAs" : 30
+```
+
+### Project 21: Quantum-Safe Cryptography
+```mermaid
+flowchart LR
+  A[ECDH] --> B[Kyber]
+  B --> C[Hybrid Key]
+```
+```mermaid
+pie title Coverage: Crypto
+  "Keygen" : 35
+  "Exchange" : 35
+  "Validation" : 30
+```
+
+### Project 22: Autonomous DevOps Platform
+```mermaid
+flowchart LR
+  A[Detect] --> B[Decide]
+  B --> C[Act]
+```
+```mermaid
+pie title Coverage: AutoOps
+  "Signals" : 35
+  "Runbooks" : 35
+  "Verification" : 30
+```
+
+### Project 23: Advanced Monitoring & Observability
+```mermaid
+flowchart LR
+  A[Collect] --> B[Store]
+  B --> C[Alert]
+```
+```mermaid
+pie title Coverage: Observability
+  "Metrics" : 35
+  "Logs" : 35
+  "Traces" : 30
+```
+
+### Project 24: Portfolio Report Generator
+```mermaid
+flowchart LR
+  A[Inputs] --> B[Render]
+  B --> C[Publish]
+```
+```mermaid
+pie title Coverage: Reporting
+  "Templates" : 35
+  "Evidence" : 35
+  "Export" : 30
+```
+
+### Project 25: Portfolio Website & Documentation Hub
+```mermaid
+flowchart LR
+  A[Docs] --> B[Build]
+  B --> C[Publish]
+```
+```mermaid
+pie title Coverage: Website
+  "Docs" : 35
+  "Build" : 35
+  "QA" : 30
+```
 
 ---
 ## 📊 Portfolio Status Board
@@ -172,7 +589,6 @@ Latest updates: [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md)
   - Plan: Jinja2-driven document factory with CLI/CI hooks for batch publishing and evidence packaging.
   - Links: [Blueprint](./projects/24-report-generator)
 
----
 ## 🛠️ Core Skills
 
 - **Systems & Infra:** Linux/Windows, networking, VLANs, VPN, UniFi, NAS, Active Directory
@@ -192,21 +608,18 @@ Latest updates: [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md)
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi for isolated IoT, guest, and trusted networks.
 **Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/) · [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-001/assets/screenshots)
-**Evidence:** Assets uploaded: Yes — [Evidence index](./projects/06-homelab/PRJ-HOME-001/assets/README.md)
 
 ### Virtualization & Core Services
 
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
 **Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/) · [Evidence Assets](./projects/06-homelab/PRJ-HOME-002/assets) · [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-002/assets/screenshots)
-**Evidence:** Assets uploaded: Yes — [Evidence index](./projects/06-homelab/PRJ-HOME-002/assets/README.md)
 
 ### Observability & Backups Stack
 
 **Status:** 🟢 Complete · 📝 Docs pending
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
 **Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/) · [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets) · [Screenshots/Logs](./projects/01-sde-devops/PRJ-SDE-002/assets/screenshots)
-**Evidence:** Assets uploaded: Yes — [Evidence index](./projects/01-sde-devops/PRJ-SDE-002/assets/README.md)
 
 ---
 

@@ -13,6 +13,7 @@ on:
 env:
   TF_VERSION: '1.4'
   AWS_REGION: us-west-2
+  INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
 
 jobs:
   python-tests:
@@ -91,30 +92,94 @@ jobs:
           working_directory: projects/1-aws-infrastructure-automation/terraform
           soft_fail: true
 
-      - name: Run Checkov security scan
+  security-scan:
+    name: Security Scanning (Checkov)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/1-aws-infrastructure-automation/terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov scan
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: projects/1-aws-infrastructure-automation/terraform
           framework: terraform
-          output_format: cli
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
           soft_fail: true
           skip_check: CKV_AWS_144,CKV_AWS_145  # Skip cross-region replication checks for demo
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif
+        continue-on-error: true
+
+  cost-estimate:
+    name: Infracost Cost Estimation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: projects/1-aws-infrastructure-automation/terraform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Infracost
         uses: infracost/actions/setup@v3
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: base
+
+      - name: Generate Infracost cost estimate (base)
+        run: |
+          cd ${{ github.workspace }}/base/projects/1-aws-infrastructure-automation/terraform
+          infracost breakdown --path . \
+            --terraform-var-file dev.tfvars \
+            --format json \
+            --out-file /tmp/infracost-base.json
         continue-on-error: true
 
-      - name: Generate Infracost cost estimate
+      - name: Generate Infracost cost estimate (PR)
         run: |
-          infracost breakdown --path . --format table || echo "Infracost estimation skipped"
+          infracost breakdown --path . \
+            --terraform-var-file dev.tfvars \
+            --format json \
+            --out-file /tmp/infracost-pr.json
+        continue-on-error: true
+
+      - name: Generate Infracost diff
+        run: |
+          infracost diff --path . \
+            --terraform-var-file dev.tfvars \
+            --compare-to /tmp/infracost-base.json \
+            --format json \
+            --out-file /tmp/infracost-diff.json
+        continue-on-error: true
+
+      - name: Post Infracost comment
+        uses: infracost/actions/comment@v1
+        with:
+          path: /tmp/infracost-diff.json
+          behavior: update
         continue-on-error: true
 
   plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, security-scan]
     if: github.event_name == 'pull_request'
     defaults:
       run:
@@ -140,13 +205,52 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan -var-file=dev.tfvars -out=tfplan
+        id: plan
+        run: |
+          terraform plan -var-file=dev.tfvars -out=tfplan -no-color 2>&1 | tee plan-output.txt
+        continue-on-error: true
+
+      - name: Post Plan to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('projects/1-aws-infrastructure-automation/terraform/plan-output.txt', 'utf8');
+            const maxLength = 65000;
+            const truncatedPlan = planOutput.length > maxLength
+              ? planOutput.substring(0, maxLength) + '\n... (truncated)'
+              : planOutput;
+
+            const body = `## Terraform Plan Output
+
+            <details>
+            <summary>Click to expand</summary>
+
+            \`\`\`hcl
+            ${truncatedPlan}
+            \`\`\`
+
+            </details>
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+        continue-on-error: true
 
       - name: Save Plan
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: terraform-plan
           path: projects/1-aws-infrastructure-automation/terraform/tfplan
+
+      - name: Check Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
 
   apply:
     name: Terraform Apply
@@ -185,7 +289,7 @@ jobs:
         run: terraform output -json > infrastructure-outputs.json
 
       - name: Save Outputs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: infrastructure-outputs
           path: projects/1-aws-infrastructure-automation/terraform/infrastructure-outputs.json

@@ -2,514 +2,524 @@
 """
 AWS Infrastructure Automation CLI
 
-A command-line tool for managing AWS infrastructure using Terraform,
-AWS CDK, and Pulumi. Provides unified interface for common operations
-like planning, deploying, validating, and destroying infrastructure.
+A command-line interface for managing AWS infrastructure using Terraform.
+Provides commands for planning, applying, validating, and estimating costs.
+
+Usage:
+    ./src/main.py plan [--env ENV]
+    ./src/main.py apply [--env ENV] [--auto-approve]
+    ./src/main.py validate
+    ./src/main.py cost [--env ENV]
+    ./src/main.py destroy [--env ENV] [--auto-approve]
+    ./src/main.py status
 """
 
 import argparse
 import json
-import os
 import subprocess
 import sys
-from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 
-class IaCTool(Enum):
-    """Supported Infrastructure as Code tools."""
-    TERRAFORM = "terraform"
-    CDK = "cdk"
-    PULUMI = "pulumi"
+# ANSI colors for terminal output
+class Colors:
+    RED = "\033[0;31m"
+    GREEN = "\033[0;32m"
+    YELLOW = "\033[1;33m"
+    BLUE = "\033[0;34m"
+    CYAN = "\033[0;36m"
+    NC = "\033[0m"  # No Color
 
 
-class Environment(Enum):
-    """Deployment environments."""
-    DEV = "dev"
-    STAGING = "staging"
-    PRODUCTION = "production"
+def get_project_root() -> Path:
+    """Get the project root directory."""
+    return Path(__file__).parent.parent
 
 
-@dataclass
-class InfraConfig:
-    """Infrastructure configuration."""
-    tool: IaCTool
-    environment: Environment
-    region: str
-    project_root: Path
-    dry_run: bool = False
-    auto_approve: bool = False
+def get_terraform_dir() -> Path:
+    """Get the Terraform directory."""
+    return get_project_root() / "terraform"
 
 
-class InfrastructureManager:
-    """Manages infrastructure operations across different IaC tools."""
-
-    def __init__(self, config: InfraConfig):
-        self.config = config
-        self.terraform_dir = config.project_root / "terraform"
-        self.cdk_dir = config.project_root / "cdk"
-        self.pulumi_dir = config.project_root / "pulumi"
-
-    def validate(self) -> bool:
-        """Validate infrastructure configuration."""
-        print(f"Validating {self.config.tool.value} configuration...")
-
-        if self.config.tool == IaCTool.TERRAFORM:
-            return self._validate_terraform()
-        elif self.config.tool == IaCTool.CDK:
-            return self._validate_cdk()
-        elif self.config.tool == IaCTool.PULUMI:
-            return self._validate_pulumi()
-        return False
-
-    def plan(self) -> bool:
-        """Generate execution plan."""
-        print(f"Planning {self.config.tool.value} changes for {self.config.environment.value}...")
-
-        if self.config.tool == IaCTool.TERRAFORM:
-            return self._plan_terraform()
-        elif self.config.tool == IaCTool.CDK:
-            return self._plan_cdk()
-        elif self.config.tool == IaCTool.PULUMI:
-            return self._plan_pulumi()
-        return False
-
-    def deploy(self) -> bool:
-        """Deploy infrastructure."""
-        if not self.config.auto_approve:
-            confirm = input(f"Deploy to {self.config.environment.value}? [y/N]: ")
-            if confirm.lower() != 'y':
-                print("Deployment cancelled.")
-                return False
-
-        print(f"Deploying {self.config.tool.value} to {self.config.environment.value}...")
-
-        if self.config.dry_run:
-            print("[DRY RUN] Would deploy infrastructure")
-            return True
-
-        if self.config.tool == IaCTool.TERRAFORM:
-            return self._deploy_terraform()
-        elif self.config.tool == IaCTool.CDK:
-            return self._deploy_cdk()
-        elif self.config.tool == IaCTool.PULUMI:
-            return self._deploy_pulumi()
-        return False
-
-    def destroy(self) -> bool:
-        """Destroy infrastructure."""
-        if self.config.environment == Environment.PRODUCTION:
-            print("WARNING: Destroying production infrastructure!")
-            confirm = input("Type 'destroy-production' to confirm: ")
-            if confirm != 'destroy-production':
-                print("Destruction cancelled.")
-                return False
-        elif not self.config.auto_approve:
-            confirm = input(f"Destroy {self.config.environment.value} infrastructure? [y/N]: ")
-            if confirm.lower() != 'y':
-                print("Destruction cancelled.")
-                return False
-
-        print(f"Destroying {self.config.tool.value} infrastructure in {self.config.environment.value}...")
-
-        if self.config.dry_run:
-            print("[DRY RUN] Would destroy infrastructure")
-            return True
-
-        if self.config.tool == IaCTool.TERRAFORM:
-            return self._destroy_terraform()
-        elif self.config.tool == IaCTool.CDK:
-            return self._destroy_cdk()
-        elif self.config.tool == IaCTool.PULUMI:
-            return self._destroy_pulumi()
-        return False
-
-    def output(self) -> dict:
-        """Get infrastructure outputs."""
-        print(f"Fetching {self.config.tool.value} outputs...")
-
-        if self.config.tool == IaCTool.TERRAFORM:
-            return self._output_terraform()
-        elif self.config.tool == IaCTool.CDK:
-            return self._output_cdk()
-        elif self.config.tool == IaCTool.PULUMI:
-            return self._output_pulumi()
-        return {}
-
-    def cost_estimate(self) -> Optional[dict]:
-        """Estimate infrastructure costs using Infracost."""
-        print("Estimating infrastructure costs...")
-
-        if self.config.tool != IaCTool.TERRAFORM:
-            print("Cost estimation currently only supports Terraform")
-            return None
-
-        try:
-            result = subprocess.run(
-                ["infracost", "breakdown", "--path", str(self.terraform_dir), "--format", "json"],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            return json.loads(result.stdout)
-        except FileNotFoundError:
-            print("Infracost not installed. Install with: brew install infracost")
-            return None
-        except subprocess.CalledProcessError as e:
-            print(f"Cost estimation failed: {e.stderr}")
-            return None
-
-    # Terraform operations
-    def _validate_terraform(self) -> bool:
-        """Validate Terraform configuration."""
-        try:
-            subprocess.run(
-                ["terraform", "init", "-backend=false"],
-                cwd=self.terraform_dir,
-                check=True,
-                capture_output=True
-            )
-            subprocess.run(
-                ["terraform", "validate"],
-                cwd=self.terraform_dir,
-                check=True
-            )
-            subprocess.run(
-                ["terraform", "fmt", "-check", "-recursive"],
-                cwd=self.terraform_dir,
-                check=True
-            )
-            print("✓ Terraform configuration is valid")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Terraform validation failed: {e}")
-            return False
-
-    def _plan_terraform(self) -> bool:
-        """Generate Terraform plan."""
-        tfvars_file = self.terraform_dir / f"{self.config.environment.value}.tfvars"
-
-        try:
-            subprocess.run(
-                ["terraform", "init"],
-                cwd=self.terraform_dir,
-                check=True
-            )
-
-            cmd = ["terraform", "plan", "-out=tfplan"]
-            if tfvars_file.exists():
-                cmd.extend(["-var-file", str(tfvars_file)])
-
-            subprocess.run(cmd, cwd=self.terraform_dir, check=True)
-            print("✓ Terraform plan generated: tfplan")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Terraform plan failed: {e}")
-            return False
-
-    def _deploy_terraform(self) -> bool:
-        """Apply Terraform configuration."""
-        try:
-            subprocess.run(
-                ["terraform", "apply", "tfplan"],
-                cwd=self.terraform_dir,
-                check=True
-            )
-            print("✓ Terraform apply completed")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Terraform apply failed: {e}")
-            return False
-
-    def _destroy_terraform(self) -> bool:
-        """Destroy Terraform infrastructure."""
-        tfvars_file = self.terraform_dir / f"{self.config.environment.value}.tfvars"
-
-        try:
-            cmd = ["terraform", "destroy", "-auto-approve"]
-            if tfvars_file.exists():
-                cmd.extend(["-var-file", str(tfvars_file)])
-
-            subprocess.run(cmd, cwd=self.terraform_dir, check=True)
-            print("✓ Terraform destroy completed")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Terraform destroy failed: {e}")
-            return False
-
-    def _output_terraform(self) -> dict:
-        """Get Terraform outputs."""
-        try:
-            result = subprocess.run(
-                ["terraform", "output", "-json"],
-                cwd=self.terraform_dir,
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            return json.loads(result.stdout)
-        except subprocess.CalledProcessError:
-            return {}
-
-    # CDK operations
-    def _validate_cdk(self) -> bool:
-        """Validate CDK configuration."""
-        try:
-            subprocess.run(
-                ["cdk", "synth", "--quiet"],
-                cwd=self.cdk_dir,
-                check=True,
-                capture_output=True
-            )
-            print("✓ CDK configuration is valid")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ CDK validation failed: {e}")
-            return False
-
-    def _plan_cdk(self) -> bool:
-        """Generate CDK diff."""
-        try:
-            subprocess.run(
-                ["cdk", "diff"],
-                cwd=self.cdk_dir,
-                check=True,
-                env={**os.environ, "CDK_ENV": self.config.environment.value}
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ CDK diff failed: {e}")
-            return False
-
-    def _deploy_cdk(self) -> bool:
-        """Deploy CDK stack."""
-        try:
-            cmd = ["cdk", "deploy", "--require-approval", "never"]
-            subprocess.run(
-                cmd,
-                cwd=self.cdk_dir,
-                check=True,
-                env={**os.environ, "CDK_ENV": self.config.environment.value}
-            )
-            print("✓ CDK deploy completed")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ CDK deploy failed: {e}")
-            return False
-
-    def _destroy_cdk(self) -> bool:
-        """Destroy CDK stack."""
-        try:
-            subprocess.run(
-                ["cdk", "destroy", "--force"],
-                cwd=self.cdk_dir,
-                check=True,
-                env={**os.environ, "CDK_ENV": self.config.environment.value}
-            )
-            print("✓ CDK destroy completed")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ CDK destroy failed: {e}")
-            return False
-
-    def _output_cdk(self) -> dict:
-        """Get CDK outputs."""
-        # CDK outputs are shown during deploy
-        return {}
-
-    # Pulumi operations
-    def _validate_pulumi(self) -> bool:
-        """Validate Pulumi configuration."""
-        try:
-            subprocess.run(
-                ["pulumi", "preview", "--non-interactive"],
-                cwd=self.pulumi_dir,
-                check=True,
-                capture_output=True
-            )
-            print("✓ Pulumi configuration is valid")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Pulumi validation failed: {e}")
-            return False
-
-    def _plan_pulumi(self) -> bool:
-        """Generate Pulumi preview."""
-        try:
-            subprocess.run(
-                ["pulumi", "preview", "--stack", self.config.environment.value],
-                cwd=self.pulumi_dir,
-                check=True
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Pulumi preview failed: {e}")
-            return False
-
-    def _deploy_pulumi(self) -> bool:
-        """Deploy Pulumi stack."""
-        try:
-            subprocess.run(
-                ["pulumi", "up", "--yes", "--stack", self.config.environment.value],
-                cwd=self.pulumi_dir,
-                check=True
-            )
-            print("✓ Pulumi up completed")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Pulumi up failed: {e}")
-            return False
-
-    def _destroy_pulumi(self) -> bool:
-        """Destroy Pulumi stack."""
-        try:
-            subprocess.run(
-                ["pulumi", "destroy", "--yes", "--stack", self.config.environment.value],
-                cwd=self.pulumi_dir,
-                check=True
-            )
-            print("✓ Pulumi destroy completed")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Pulumi destroy failed: {e}")
-            return False
-
-    def _output_pulumi(self) -> dict:
-        """Get Pulumi outputs."""
-        try:
-            result = subprocess.run(
-                ["pulumi", "stack", "output", "--json", "--stack", self.config.environment.value],
-                cwd=self.pulumi_dir,
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            return json.loads(result.stdout)
-        except subprocess.CalledProcessError:
-            return {}
+def print_header(title: str) -> None:
+    """Print a formatted header."""
+    print(f"\n{Colors.GREEN}{'=' * 60}{Colors.NC}")
+    print(f"{Colors.GREEN}{title:^60}{Colors.NC}")
+    print(f"{Colors.GREEN}{'=' * 60}{Colors.NC}\n")
 
 
-def run_security_scan(project_root: Path) -> bool:
-    """Run security scans on infrastructure code."""
-    terraform_dir = project_root / "terraform"
+def print_success(message: str) -> None:
+    """Print a success message."""
+    print(f"{Colors.GREEN}[OK]{Colors.NC} {message}")
 
-    print("Running security scans...")
 
-    # Run tfsec
+def print_error(message: str) -> None:
+    """Print an error message."""
+    print(f"{Colors.RED}[ERROR]{Colors.NC} {message}", file=sys.stderr)
+
+
+def print_warning(message: str) -> None:
+    """Print a warning message."""
+    print(f"{Colors.YELLOW}[WARN]{Colors.NC} {message}")
+
+
+def print_info(message: str) -> None:
+    """Print an info message."""
+    print(f"{Colors.BLUE}[INFO]{Colors.NC} {message}")
+
+
+def run_command(
+    cmd: list,
+    cwd: Optional[Path] = None,
+    capture_output: bool = False,
+    check: bool = True,
+) -> Tuple[int, str, str]:
+    """Run a shell command and return the result."""
     try:
-        subprocess.run(
-            ["tfsec", str(terraform_dir), "--format", "lovely"],
-            check=True
+        result = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=capture_output,
+            text=True,
+            check=check,
         )
-        print("✓ tfsec scan passed")
+        return result.returncode, result.stdout or "", result.stderr or ""
+    except subprocess.CalledProcessError as e:
+        return e.returncode, e.stdout or "", e.stderr or ""
     except FileNotFoundError:
-        print("⚠ tfsec not installed, skipping")
-    except subprocess.CalledProcessError:
-        print("✗ tfsec found issues")
-        return False
+        return 1, "", f"Command not found: {cmd[0]}"
 
-    # Run checkov
-    try:
-        subprocess.run(
-            ["checkov", "-d", str(terraform_dir), "--quiet", "--compact"],
-            check=True
+
+def check_terraform_installed() -> bool:
+    """Check if Terraform is installed."""
+    returncode, _, _ = run_command(
+        ["terraform", "version"], capture_output=True, check=False
+    )
+    return returncode == 0
+
+
+def check_aws_credentials() -> bool:
+    """Check if AWS credentials are configured."""
+    returncode, _, _ = run_command(
+        ["aws", "sts", "get-caller-identity"],
+        capture_output=True,
+        check=False,
+    )
+    return returncode == 0
+
+
+def get_tfvars_file(env: str) -> Path:
+    """Get the tfvars file path for an environment."""
+    terraform_dir = get_terraform_dir()
+    tfvars_file = terraform_dir / f"{env}.tfvars"
+    return tfvars_file
+
+
+def terraform_init(terraform_dir: Path, backend: bool = True) -> int:
+    """Initialize Terraform."""
+    print_info("Initializing Terraform...")
+
+    cmd = ["terraform", "init"]
+    if not backend:
+        cmd.append("-backend=false")
+
+    returncode, _, stderr = run_command(cmd, cwd=terraform_dir, check=False)
+
+    if returncode == 0:
+        print_success("Terraform initialized successfully")
+    else:
+        print_error(f"Terraform init failed: {stderr}")
+
+    return returncode
+
+
+def cmd_plan(args: argparse.Namespace) -> int:
+    """Execute terraform plan."""
+    print_header(f"Terraform Plan ({args.env})")
+
+    terraform_dir = get_terraform_dir()
+    tfvars_file = get_tfvars_file(args.env)
+
+    if not tfvars_file.exists():
+        print_error(f"Environment file not found: {tfvars_file}")
+        available = [f.stem for f in terraform_dir.glob("*.tfvars")]
+        print_info(f"Available environments: {', '.join(available)}")
+        return 1
+
+    # Check prerequisites
+    if not check_terraform_installed():
+        print_error("Terraform is not installed")
+        return 1
+
+    # Initialize
+    if terraform_init(terraform_dir) != 0:
+        return 1
+
+    # Plan
+    print_info(f"Running terraform plan with {args.env}.tfvars...")
+    cmd = ["terraform", "plan", f"-var-file={tfvars_file}"]
+
+    if args.out:
+        cmd.extend(["-out", args.out])
+        print_info(f"Plan will be saved to: {args.out}")
+
+    returncode, _, _ = run_command(cmd, cwd=terraform_dir, check=False)
+
+    if returncode == 0:
+        print_success("Plan completed successfully")
+    else:
+        print_error("Plan failed")
+
+    return returncode
+
+
+def cmd_apply(args: argparse.Namespace) -> int:
+    """Execute terraform apply."""
+    print_header(f"Terraform Apply ({args.env})")
+
+    terraform_dir = get_terraform_dir()
+    tfvars_file = get_tfvars_file(args.env)
+
+    if not tfvars_file.exists():
+        print_error(f"Environment file not found: {tfvars_file}")
+        return 1
+
+    # Check prerequisites
+    if not check_terraform_installed():
+        print_error("Terraform is not installed")
+        return 1
+
+    if not check_aws_credentials():
+        print_warning("AWS credentials may not be configured")
+
+    # Confirm if not auto-approve
+    if not args.auto_approve:
+        print_warning(f"This will apply changes to the {args.env} environment!")
+        response = input(f"{Colors.YELLOW}Continue? (yes/no): {Colors.NC}")
+        if response.lower() != "yes":
+            print_info("Apply cancelled")
+            return 0
+
+    # Initialize
+    if terraform_init(terraform_dir) != 0:
+        return 1
+
+    # Apply
+    print_info(f"Applying infrastructure for {args.env}...")
+    cmd = ["terraform", "apply", f"-var-file={tfvars_file}"]
+
+    if args.auto_approve:
+        cmd.append("-auto-approve")
+
+    returncode, _, _ = run_command(cmd, cwd=terraform_dir, check=False)
+
+    if returncode == 0:
+        print_success("Apply completed successfully")
+
+        # Show outputs
+        print_info("Infrastructure outputs:")
+        run_command(["terraform", "output"], cwd=terraform_dir, check=False)
+    else:
+        print_error("Apply failed")
+
+    return returncode
+
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    """Validate Terraform configuration."""
+    print_header("Terraform Validate")
+
+    terraform_dir = get_terraform_dir()
+
+    if not check_terraform_installed():
+        print_error("Terraform is not installed")
+        return 1
+
+    # Initialize without backend
+    if terraform_init(terraform_dir, backend=False) != 0:
+        return 1
+
+    # Format check
+    print_info("Checking Terraform formatting...")
+    returncode, stdout, _ = run_command(
+        ["terraform", "fmt", "-check", "-recursive"],
+        cwd=terraform_dir,
+        capture_output=True,
+        check=False,
+    )
+
+    if returncode == 0:
+        print_success("All files are properly formatted")
+    else:
+        print_warning(f"Files need formatting: {stdout}")
+
+    # Validate
+    print_info("Validating Terraform configuration...")
+    returncode, _, stderr = run_command(
+        ["terraform", "validate"],
+        cwd=terraform_dir,
+        capture_output=True,
+        check=False,
+    )
+
+    if returncode == 0:
+        print_success("Configuration is valid")
+    else:
+        print_error(f"Validation failed: {stderr}")
+
+    # Validate modules
+    print_info("Validating modules...")
+    modules_dir = terraform_dir / "modules"
+    if modules_dir.exists():
+        for module_dir in modules_dir.iterdir():
+            if module_dir.is_dir() and (module_dir / "main.tf").exists():
+                # Init module
+                run_command(
+                    ["terraform", "init", "-backend=false"],
+                    cwd=module_dir,
+                    capture_output=True,
+                    check=False,
+                )
+
+                # Validate module
+                ret, _, err = run_command(
+                    ["terraform", "validate"],
+                    cwd=module_dir,
+                    capture_output=True,
+                    check=False,
+                )
+
+                if ret == 0:
+                    print_success(f"Module {module_dir.name} is valid")
+                else:
+                    print_error(f"Module {module_dir.name} failed: {err}")
+
+    return returncode
+
+
+def cmd_cost(args: argparse.Namespace) -> int:
+    """Estimate infrastructure costs."""
+    print_header(f"Cost Estimation ({args.env})")
+
+    project_root = get_project_root()
+    cost_script = project_root / "terraform" / "scripts" / "cost-estimate.sh"
+
+    if not cost_script.exists():
+        print_error(f"Cost estimation script not found: {cost_script}")
+        return 1
+
+    # Check if infracost is installed
+    returncode, _, _ = run_command(
+        ["infracost", "--version"], capture_output=True, check=False
+    )
+    if returncode != 0:
+        print_warning("Infracost is not installed")
+        print_info("Install: curl -fsSL https://raw.githubusercontent.com/"
+                   "infracost/infracost/master/scripts/install.sh | sh")
+        print_info("Then run: infracost auth login")
+        return 1
+
+    # Run cost estimation
+    print_info(f"Estimating costs for {args.env} environment...")
+    cmd = [str(cost_script), args.env]
+
+    if args.compare:
+        cmd.append("--compare")
+
+    returncode, _, _ = run_command(cmd, cwd=project_root, check=False)
+
+    return returncode
+
+
+def cmd_destroy(args: argparse.Namespace) -> int:
+    """Destroy infrastructure."""
+    print_header(f"Terraform Destroy ({args.env})")
+
+    terraform_dir = get_terraform_dir()
+    tfvars_file = get_tfvars_file(args.env)
+
+    if not tfvars_file.exists():
+        print_error(f"Environment file not found: {tfvars_file}")
+        return 1
+
+    # Confirm if not auto-approve
+    if not args.auto_approve:
+        print_error(f"WARNING: This will DESTROY all resources in {args.env}!")
+        response = input(f"{Colors.RED}Type 'destroy' to confirm: {Colors.NC}")
+        if response != "destroy":
+            print_info("Destroy cancelled")
+            return 0
+
+    # Initialize
+    if terraform_init(terraform_dir) != 0:
+        return 1
+
+    # Destroy
+    print_info(f"Destroying infrastructure for {args.env}...")
+    cmd = ["terraform", "destroy", f"-var-file={tfvars_file}"]
+
+    if args.auto_approve:
+        cmd.append("-auto-approve")
+
+    returncode, _, _ = run_command(cmd, cwd=terraform_dir, check=False)
+
+    if returncode == 0:
+        print_success("Destroy completed successfully")
+    else:
+        print_error("Destroy failed")
+
+    return returncode
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    """Show infrastructure status."""
+    print_header("Infrastructure Status")
+
+    terraform_dir = get_terraform_dir()
+
+    # Check Terraform installation
+    print_info("Checking prerequisites...")
+    if check_terraform_installed():
+        print_success("Terraform is installed")
+        returncode, stdout, _ = run_command(
+            ["terraform", "version"],
+            capture_output=True,
+            check=False,
         )
-        print("✓ checkov scan passed")
-    except FileNotFoundError:
-        print("⚠ checkov not installed, skipping")
-    except subprocess.CalledProcessError:
-        print("✗ checkov found issues")
-        return False
+        print(f"    {stdout.splitlines()[0]}")
+    else:
+        print_error("Terraform is not installed")
 
-    return True
+    # Check AWS credentials
+    if check_aws_credentials():
+        print_success("AWS credentials are configured")
+        returncode, stdout, _ = run_command(
+            ["aws", "sts", "get-caller-identity", "--output", "json"],
+            capture_output=True,
+            check=False,
+        )
+        if returncode == 0:
+            identity = json.loads(stdout)
+            print(f"    Account: {identity.get('Account', 'N/A')}")
+            print(f"    ARN: {identity.get('Arn', 'N/A')}")
+    else:
+        print_warning("AWS credentials are not configured")
+
+    # List available environments
+    print_info("\nAvailable environments:")
+    for tfvars in terraform_dir.glob("*.tfvars"):
+        print(f"    - {tfvars.stem}")
+
+    # Show terraform state if initialized
+    if (terraform_dir / ".terraform").exists():
+        print_info("\nTerraform state:")
+        returncode, stdout, _ = run_command(
+            ["terraform", "state", "list"],
+            cwd=terraform_dir,
+            capture_output=True,
+            check=False,
+        )
+        if returncode == 0 and stdout:
+            resource_count = len(stdout.strip().split("\n"))
+            print_success(f"State contains {resource_count} resources")
+        else:
+            print_warning("No state file found or state is empty")
+
+    # Show modules
+    modules_dir = terraform_dir / "modules"
+    if modules_dir.exists():
+        print_info("\nAvailable modules:")
+        for module in sorted(modules_dir.iterdir()):
+            if module.is_dir() and (module / "main.tf").exists():
+                readme = module / "README.md"
+                desc = "No description"
+                if readme.exists():
+                    with open(readme, encoding="utf-8") as f:
+                        for line in f:
+                            if line.startswith("# "):
+                                desc = line[2:].strip()
+                                break
+                print(f"    - {module.name}: {desc}")
+
+    return 0
 
 
-def main():
+def main() -> int:
     """Main entry point for the CLI."""
     parser = argparse.ArgumentParser(
         description="AWS Infrastructure Automation CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s validate --tool terraform
-  %(prog)s plan --tool terraform --env dev
-  %(prog)s deploy --tool terraform --env staging
-  %(prog)s output --tool terraform
-  %(prog)s cost-estimate
-  %(prog)s security-scan
-        """
+  %(prog)s plan --env dev          Plan dev environment
+  %(prog)s apply --env staging     Apply staging environment
+  %(prog)s validate                Validate all configurations
+  %(prog)s cost --env production   Estimate production costs
+  %(prog)s status                  Show infrastructure status
+        """,
     )
 
-    parser.add_argument(
-        "action",
-        choices=["validate", "plan", "deploy", "destroy", "output", "cost-estimate", "security-scan"],
-        help="Action to perform"
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Plan command
+    plan_parser = subparsers.add_parser("plan", help="Plan infrastructure changes")
+    plan_parser.add_argument(
+        "--env", "-e", default="dev", help="Environment (dev, staging, production)"
     )
-    parser.add_argument(
-        "--tool", "-t",
-        choices=["terraform", "cdk", "pulumi"],
-        default="terraform",
-        help="IaC tool to use (default: terraform)"
+    plan_parser.add_argument("--out", "-o", help="Save plan to file")
+
+    # Apply command
+    apply_parser = subparsers.add_parser("apply", help="Apply infrastructure changes")
+    apply_parser.add_argument(
+        "--env", "-e", default="dev", help="Environment (dev, staging, production)"
     )
-    parser.add_argument(
-        "--env", "-e",
-        choices=["dev", "staging", "production"],
-        default="dev",
-        help="Target environment (default: dev)"
+    apply_parser.add_argument(
+        "--auto-approve", action="store_true", help="Skip confirmation"
     )
-    parser.add_argument(
-        "--region", "-r",
-        default="us-west-2",
-        help="AWS region (default: us-west-2)"
+
+    # Validate command
+    subparsers.add_parser("validate", help="Validate Terraform configuration")
+
+    # Cost command
+    cost_parser = subparsers.add_parser("cost", help="Estimate infrastructure costs")
+    cost_parser.add_argument(
+        "--env", "-e", default="dev", help="Environment (dev, staging, production)"
     )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be done without making changes"
+    cost_parser.add_argument(
+        "--compare", action="store_true", help="Compare with baseline"
     )
-    parser.add_argument(
-        "--auto-approve",
-        action="store_true",
-        help="Skip confirmation prompts"
+
+    # Destroy command
+    destroy_parser = subparsers.add_parser("destroy", help="Destroy infrastructure")
+    destroy_parser.add_argument(
+        "--env", "-e", default="dev", help="Environment (dev, staging, production)"
     )
+    destroy_parser.add_argument(
+        "--auto-approve", action="store_true", help="Skip confirmation"
+    )
+
+    # Status command
+    subparsers.add_parser("status", help="Show infrastructure status")
 
     args = parser.parse_args()
 
-    # Determine project root
-    project_root = Path(__file__).parent.parent.resolve()
+    if not args.command:
+        parser.print_help()
+        return 0
 
-    # Handle actions that don't need full config
-    if args.action == "security-scan":
-        success = run_security_scan(project_root)
-        sys.exit(0 if success else 1)
-
-    # Create configuration
-    config = InfraConfig(
-        tool=IaCTool(args.tool),
-        environment=Environment(args.env),
-        region=args.region,
-        project_root=project_root,
-        dry_run=args.dry_run,
-        auto_approve=args.auto_approve
-    )
-
-    # Create manager and execute action
-    manager = InfrastructureManager(config)
-
-    actions = {
-        "validate": manager.validate,
-        "plan": manager.plan,
-        "deploy": manager.deploy,
-        "destroy": manager.destroy,
-        "output": lambda: print(json.dumps(manager.output(), indent=2)),
-        "cost-estimate": lambda: print(json.dumps(manager.cost_estimate(), indent=2))
+    # Execute command
+    commands = {
+        "plan": cmd_plan,
+        "apply": cmd_apply,
+        "validate": cmd_validate,
+        "cost": cmd_cost,
+        "destroy": cmd_destroy,
+        "status": cmd_status,
     }
 
-    success = actions[args.action]()
-    sys.exit(0 if success else 1)
+    return commands[args.command](args)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

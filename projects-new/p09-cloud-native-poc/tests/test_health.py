@@ -45,6 +45,7 @@ class TestHealthEndpoint:
         """Verify health check responds quickly"""
         client = TestClient(app)
         import time
+
         start = time.time()
         response = client.get("/health")
         elapsed = time.time() - start

@@ -36,7 +36,7 @@ class TestScriptExistence:
 
     def test_script_has_bash_shebang(self, script_path):
         """Verify the script has bash shebang."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             first_line = f.readline().strip()
         assert first_line.startswith("#!/"), "Script missing shebang"
         assert "bash" in first_line, "Script should use bash"
@@ -51,15 +51,13 @@ class TestScriptSyntax:
         if not bash_path:
             pytest.skip("bash not found on this system")
         result = subprocess.run(  # noqa: S603
-            [bash_path, "-n", str(script_path)],
-            capture_output=True,
-            text=True
+            [bash_path, "-n", str(script_path)], capture_output=True, text=True
         )
         assert result.returncode == 0, f"Syntax error: {result.stderr}"
 
     def test_script_uses_strict_mode(self, script_path):
         """Verify script uses set -euo pipefail."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "set -euo pipefail" in content or "set -e" in content
 
@@ -69,20 +67,20 @@ class TestArgumentParsing:
 
     def test_script_accepts_workspace_argument(self, script_path):
         """Test script accepts workspace as first argument."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "WORKSPACE" in content
         assert "${1:-" in content or "$1" in content
 
     def test_script_has_default_workspace(self, script_path):
         """Test script has a default workspace value."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "${1:-default}" in content or "default" in content
 
     def test_script_accepts_auto_approve_argument(self, script_path):
         """Test script accepts auto-approve as second argument."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "AUTO_APPROVE" in content
         assert "${2:-" in content or "$2" in content
@@ -93,31 +91,31 @@ class TestTerraformCommands:
 
     def test_script_runs_terraform_fmt(self, script_path):
         """Verify script runs terraform fmt."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "terraform fmt" in content or "fmt" in content
 
     def test_script_runs_terraform_init(self, script_path):
         """Verify script runs terraform init."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "terraform init" in content
 
     def test_script_runs_terraform_validate(self, script_path):
         """Verify script runs terraform validate."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "terraform validate" in content
 
     def test_script_runs_terraform_plan(self, script_path):
         """Verify script runs terraform plan."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "terraform plan" in content
 
     def test_script_saves_plan_to_file(self, script_path):
         """Verify script saves plan to a file."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "-out=" in content or "plan.tfplan" in content
 
@@ -127,25 +125,25 @@ class TestWorkspaceManagement:
 
     def test_script_manages_workspaces(self, script_path):
         """Verify script manages Terraform workspaces."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "terraform workspace" in content
 
     def test_script_selects_existing_workspace(self, script_path):
         """Verify script can select existing workspace."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "workspace select" in content
 
     def test_script_creates_new_workspace(self, script_path):
         """Verify script can create new workspace."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "workspace new" in content
 
     def test_script_checks_workspace_existence(self, script_path):
         """Verify script checks if workspace exists before selecting."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "workspace list" in content or "grep" in content
 
@@ -155,21 +153,21 @@ class TestAutoApproveLogic:
 
     def test_script_handles_auto_approve(self, script_path):
         """Verify script handles auto-approve flag."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "AUTO_APPROVE" in content
         assert "true" in content or "false" in content
 
     def test_script_applies_with_auto_approve(self, script_path):
         """Verify script applies with auto-approve when flag is true."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "terraform apply" in content
         assert "-auto-approve" in content or "auto-approve" in content
 
     def test_script_provides_manual_apply_command(self, script_path):
         """Verify script shows manual apply command when not auto-approving."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         # Should show the command to run manually
         assert "To apply:" in content or "terraform apply" in content
@@ -180,14 +178,14 @@ class TestDirectoryNavigation:
 
     def test_script_changes_to_terraform_directory(self, script_path):
         """Verify script changes to terraform directory."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "cd" in content
         assert "terraform" in content
 
     def test_script_determines_root_directory(self, script_path):
         """Verify script determines repository root directory."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "ROOT_DIR" in content or 'dirname "$0"' in content
 
@@ -197,13 +195,13 @@ class TestSafetyChecks:
 
     def test_script_uses_input_false(self, script_path):
         """Verify script uses -input=false for non-interactive mode."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         assert "-input=false" in content
 
     def test_script_formats_before_other_commands(self, script_path):
         """Verify fmt runs before init/plan/apply."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             lines = f.readlines()
 
         fmt_line = None
@@ -219,7 +217,7 @@ class TestSafetyChecks:
 
     def test_script_validates_before_plan(self, script_path):
         """Verify validate runs before plan."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             lines = f.readlines()
 
         validate_line = None
@@ -239,13 +237,13 @@ class TestOutputMessages:
 
     def test_script_provides_progress_messages(self, script_path):
         """Verify script outputs progress messages."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
-        assert 'echo' in content, "Script should provide progress messages"
+        assert "echo" in content, "Script should provide progress messages"
 
     def test_script_indicates_current_step(self, script_path):
         """Verify script indicates what step it's running."""
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
         # Check for messages about formatting, initializing, planning, etc.
         keywords = ["Formatting", "Initializing", "Planning", "Validating"]

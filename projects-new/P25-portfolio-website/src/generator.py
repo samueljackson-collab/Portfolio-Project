@@ -24,8 +24,8 @@ class PortfolioGenerator:
 
         # Setup Jinja2
         self.env = Environment(
-            loader=FileSystemLoader('templates'),
-            autoescape=select_autoescape(['html', 'xml'])
+            loader=FileSystemLoader("templates"),
+            autoescape=select_autoescape(["html", "xml"]),
         )
 
     def scan_projects(self) -> List[Dict]:
@@ -36,7 +36,7 @@ class PortfolioGenerator:
         projects_path = self.projects_dir / "projects"
         if projects_path.exists():
             for project_dir in sorted(projects_path.iterdir()):
-                if project_dir.is_dir() and not project_dir.name.startswith('.'):
+                if project_dir.is_dir() and not project_dir.name.startswith("."):
                     project_info = self._extract_project_info(project_dir)
                     if project_info:
                         projects.append(project_info)
@@ -45,7 +45,7 @@ class PortfolioGenerator:
         projects_new_path = self.projects_dir / "projects-new"
         if projects_new_path.exists():
             for project_dir in sorted(projects_new_path.iterdir()):
-                if project_dir.is_dir() and not project_dir.name.startswith('.'):
+                if project_dir.is_dir() and not project_dir.name.startswith("."):
                     project_info = self._extract_project_info(project_dir)
                     if project_info:
                         projects.append(project_info)
@@ -59,25 +59,25 @@ class PortfolioGenerator:
             return None
 
         # Parse README
-        with open(readme_path, 'r') as f:
+        with open(readme_path, "r") as f:
             content = f.read()
 
         # Extract title (first # heading)
         title = "Unknown Project"
-        for line in content.split('\n'):
-            if line.startswith('# '):
+        for line in content.split("\n"):
+            if line.startswith("# "):
                 title = line[2:].strip()
                 break
 
         # Extract description (first paragraph after title)
         description = ""
-        lines = content.split('\n')
+        lines = content.split("\n")
         in_description = False
         for line in lines:
             if in_description and line.strip():
                 description = line.strip()
                 break
-            if line.startswith('# '):
+            if line.startswith("# "):
                 in_description = True
 
         # Determine project status
@@ -87,12 +87,12 @@ class PortfolioGenerator:
         technologies = self._extract_technologies(content)
 
         return {
-            'id': project_dir.name,
-            'title': title,
-            'description': description,
-            'status': status,
-            'technologies': technologies,
-            'path': str(project_dir.relative_to(self.projects_dir))
+            "id": project_dir.name,
+            "title": title,
+            "description": description,
+            "status": status,
+            "technologies": technologies,
+            "path": str(project_dir.relative_to(self.projects_dir)),
         }
 
     def _determine_status(self, project_dir: Path) -> str:
@@ -105,7 +105,7 @@ class PortfolioGenerator:
         # Check CHANGELOG for completion indicators
         changelog_path = project_dir / "CHANGELOG.md"
         if changelog_path.exists():
-            with open(changelog_path, 'r') as f:
+            with open(changelog_path, "r") as f:
                 content = f.read()
                 if "[1.0.0]" in content or "production" in content.lower():
                     return "complete"
@@ -122,15 +122,15 @@ class PortfolioGenerator:
         """Extract technologies from README."""
         technologies = []
         tech_keywords = {
-            'Python': ['python', 'pytest', 'flask', 'django', 'fastapi'],
-            'Terraform': ['terraform', 'hcl'],
-            'Kubernetes': ['kubernetes', 'k8s', 'kubectl', 'helm'],
-            'AWS': ['aws', 'cloudformation', 's3', 'ec2', 'rds', 'lambda'],
-            'Docker': ['docker', 'dockerfile', 'container'],
-            'TypeScript': ['typescript', 'ts'],
-            'React': ['react', 'jsx'],
-            'Prometheus': ['prometheus'],
-            'Grafana': ['grafana']
+            "Python": ["python", "pytest", "flask", "django", "fastapi"],
+            "Terraform": ["terraform", "hcl"],
+            "Kubernetes": ["kubernetes", "k8s", "kubectl", "helm"],
+            "AWS": ["aws", "cloudformation", "s3", "ec2", "rds", "lambda"],
+            "Docker": ["docker", "dockerfile", "container"],
+            "TypeScript": ["typescript", "ts"],
+            "React": ["react", "jsx"],
+            "Prometheus": ["prometheus"],
+            "Grafana": ["grafana"],
         }
 
         content_lower = readme_content.lower()
@@ -142,12 +142,12 @@ class PortfolioGenerator:
 
     def generate_index(self, projects: List[Dict]):
         """Generate index.html."""
-        template = self.env.get_template('index.html')
+        template = self.env.get_template("index.html")
 
         # Group projects by status
-        complete = [p for p in projects if p['status'] == 'complete']
-        in_progress = [p for p in projects if p['status'] == 'in-progress']
-        planned = [p for p in projects if p['status'] in ['started', 'planned']]
+        complete = [p for p in projects if p["status"] == "complete"]
+        in_progress = [p for p in projects if p["status"] == "in-progress"]
+        planned = [p for p in projects if p["status"] in ["started", "planned"]]
 
         html = template.render(
             projects=projects,
@@ -155,30 +155,30 @@ class PortfolioGenerator:
             in_progress_projects=in_progress,
             planned_projects=planned,
             total_projects=len(projects),
-            generated_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         output_path = self.output_dir / "index.html"
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(html)
 
         print(f"✓ Generated index.html ({len(projects)} projects)")
 
     def generate_project_pages(self, projects: List[Dict]):
         """Generate individual project pages."""
-        template = self.env.get_template('project.html')
+        template = self.env.get_template("project.html")
 
         for project in projects:
             html = template.render(
                 project=project,
-                generated_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             )
 
             project_dir = self.output_dir / "projects"
             project_dir.mkdir(exist_ok=True)
 
             output_path = project_dir / f"{project['id']}.html"
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write(html)
 
         print(f"✓ Generated {len(projects)} project pages")
@@ -220,5 +220,5 @@ def main():
     generator.generate()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

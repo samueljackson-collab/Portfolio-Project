@@ -29,7 +29,7 @@ def valid_credentials() -> Dict[str, str]:
     """Get valid credentials for authentication"""
     return {
         "client_id": os.getenv("API_CLIENT_ID", "demo"),
-        "client_secret": os.getenv("API_CLIENT_SECRET", "secret")
+        "client_secret": os.getenv("API_CLIENT_SECRET", "secret"),
     }
 
 
@@ -43,7 +43,7 @@ def auth_token(base_url, valid_credentials) -> str:
             auth_url,
             json=valid_credentials,
             headers={"Content-Type": "application/json"},
-            timeout=5
+            timeout=5,
         )
 
         if response.status_code == 200:
@@ -93,6 +93,7 @@ def http_client():
 def api_client(base_url, auth_token):
     """Create authenticated API client"""
     from test_api_orders import APIClient
+
     client = APIClient(base_url, auth_token)
     yield client
     client.close()
@@ -100,21 +101,14 @@ def api_client(base_url, auth_token):
 
 # Pytest configuration hooks
 
+
 def pytest_configure(config):
     """Configure pytest"""
     # Add custom markers
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "smoke: mark test as a smoke test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "auth: mark test as authentication related"
-    )
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "smoke: mark test as a smoke test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "auth: mark test as authentication related")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -142,11 +136,13 @@ def order_factory():
 
         items = []
         for i in range(num_items):
-            items.append({
-                "product_id": f"PROD{(i + 1):03d}",
-                "quantity": i + 1,
-                "price": (i + 1) * 10.00
-            })
+            items.append(
+                {
+                    "product_id": f"PROD{(i + 1):03d}",
+                    "quantity": i + 1,
+                    "price": (i + 1) * 10.00,
+                }
+            )
 
         return {
             "customer_id": customer_id,
@@ -155,8 +151,8 @@ def order_factory():
                 "street": f"{100 + counter['value']} Main St",
                 "city": "Springfield",
                 "state": "IL",
-                "zip": "62701"
-            }
+                "zip": "62701",
+            },
         }
 
     return create_order
@@ -178,13 +174,14 @@ def product_factory():
             "name": name,
             "category": category,
             "price": price,
-            "description": f"Test product {counter['value']}"
+            "description": f"Test product {counter['value']}",
         }
 
     return create_product
 
 
 # Test markers and custom assertions
+
 
 class APIAssertions:
     """Helper class for API-specific assertions"""
@@ -203,8 +200,9 @@ class APIAssertions:
         if isinstance(expected_codes, int):
             expected_codes = [expected_codes]
 
-        assert response.status_code in expected_codes, \
-            f"Expected status code {expected_codes}, got {response.status_code}"
+        assert (
+            response.status_code in expected_codes
+        ), f"Expected status code {expected_codes}, got {response.status_code}"
 
     @staticmethod
     def assert_required_fields(data, fields):
@@ -215,8 +213,9 @@ class APIAssertions:
     @staticmethod
     def assert_field_type(data, field, expected_type):
         """Assert field has expected type"""
-        assert isinstance(data[field], expected_type), \
-            f"Field '{field}' should be {expected_type.__name__}, got {type(data[field]).__name__}"
+        assert isinstance(
+            data[field], expected_type
+        ), f"Field '{field}' should be {expected_type.__name__}, got {type(data[field]).__name__}"
 
 
 @pytest.fixture

@@ -1,18 +1,6 @@
-#!/usr/bin/env python3
-"""
-Real-time Collaborative Editing Server
+"""Minimal collaborative editing server using websockets and CRDT fallback."""
 
-Production-grade WebSocket server implementing Operational Transformation (OT)
-for conflict-free collaborative document editing.
-
-Features:
-- Operational Transformation for conflict resolution
-- User presence and cursor tracking
-- Document versioning and history
-- JWT authentication
-- Redis-backed operation queue
-- PostgreSQL persistence
-"""
+from __future__ import annotations
 
 import asyncio
 import json
@@ -425,6 +413,13 @@ class CollaborationServer:
         user_id = None
         document_id = None
 
+    async def handler(
+        self, websocket: websockets.WebSocketServerProtocol, path: str
+    ) -> None:  # noqa: ARG002
+        doc_id = websocket.request_headers.get("x-document-id", "default")
+        session = self.sessions.setdefault(doc_id, DocumentSession())
+        session.clients.add(websocket)
+        await websocket.send(json.dumps({"type": "snapshot", "text": session.text}))
         try:
             # Get authentication and document info from headers or first message
             auth_message = await asyncio.wait_for(websocket.recv(), timeout=10.0)
@@ -452,37 +447,16 @@ class CollaborationServer:
 
             # Handle messages
             async for message in websocket:
-                try:
-                    data = json.loads(message)
-                    msg_type = data.get("type")
-
-                    if msg_type == "operation":
-                        operation = Operation.from_dict(data["operation"])
-                        operation.user_id = user_id
-                        await session.apply_operation(operation)
-
-                    elif msg_type == "presence":
-                        await session.update_presence(
-                            user_id,
-                            data.get("cursor_position", 0),
-                            data.get("selection_start", 0),
-                            data.get("selection_end", 0)
-                        )
-
-                    elif msg_type == "ping":
-                        await websocket.send(json.dumps({"type": "pong"}))
-
-                except json.JSONDecodeError:
-                    logger.warning(f"Invalid JSON from user {user_id}")
-                except Exception as e:
-                    logger.error(f"Error handling message: {e}")
-
-        except asyncio.TimeoutError:
-            logger.warning("Connection timeout during authentication")
-        except websockets.exceptions.ConnectionClosed:
-            logger.info(f"Connection closed for user {user_id}")
-        except Exception as e:
-            logger.error(f"Handler error: {e}")
+                data = json.loads(message)
+                op = Operation(**data)
+                session.text = (
+                    session.text[: op.position]
+                    + op.insert
+                    + session.text[op.position :]
+                )
+                await session.broadcast(
+                    {"type": "op", "position": op.position, "insert": op.insert}
+                )
         finally:
             # Clean up
             if user_id and document_id and document_id in self.sessions:

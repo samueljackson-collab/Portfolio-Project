@@ -1,4 +1,5 @@
 """MQTT to TimescaleDB processor for IoT telemetry data."""
+
 from __future__ import annotations
 
 import json
@@ -14,8 +15,7 @@ import psycopg2
 from psycopg2.extras import execute_values
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class MQTTProcessor:
         mqtt_broker: str,
         mqtt_port: int,
         mqtt_topic: str,
-        postgres_config: Dict[str, Any]
+        postgres_config: Dict[str, Any],
     ):
         """
         Initialize MQTT processor.
@@ -83,7 +83,8 @@ class MQTTProcessor:
             cursor = self.db_conn.cursor()
 
             # Create telemetry table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS device_telemetry (
                     time TIMESTAMPTZ NOT NULL,
                     device_id TEXT NOT NULL,
@@ -93,25 +94,32 @@ class MQTTProcessor:
                     battery DOUBLE PRECISION,
                     raw_data JSONB
                 )
-            """)
+            """
+            )
 
             # Convert to hypertable (idempotent)
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT create_hypertable('device_telemetry', 'time',
                     if_not_exists => TRUE
                 )
-            """)
+            """
+            )
 
             # Create indexes
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_device_telemetry_device_id
                 ON device_telemetry (device_id, time DESC)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_device_telemetry_time
                 ON device_telemetry (time DESC)
-            """)
+            """
+            )
 
             self.db_conn.commit()
             logger.info("TimescaleDB hypertable created successfully")
@@ -124,7 +132,9 @@ class MQTTProcessor:
     def on_connect(self, client, userdata, flags, rc):
         """Callback for MQTT connection."""
         if rc == 0:
-            logger.info(f"Connected to MQTT broker at {self.mqtt_broker}:{self.mqtt_port}")
+            logger.info(
+                f"Connected to MQTT broker at {self.mqtt_broker}:{self.mqtt_port}"
+            )
             client.subscribe(self.mqtt_topic)
             logger.info(f"Subscribed to topic: {self.mqtt_topic}")
         else:
@@ -146,7 +156,7 @@ class MQTTProcessor:
         """
         try:
             # Parse message
-            payload = json.loads(msg.payload.decode('utf-8'))
+            payload = json.loads(msg.payload.decode("utf-8"))
 
             # Add to batch buffer
             self.batch_buffer.append(payload)
@@ -182,13 +192,13 @@ class MQTTProcessor:
             records = []
             for payload in self.batch_buffer:
                 record = (
-                    datetime.fromtimestamp(payload.get('timestamp', 0)),
-                    payload.get('device_id'),
-                    payload.get('firmware'),
-                    payload.get('temperature'),
-                    payload.get('humidity'),
-                    payload.get('battery'),
-                    json.dumps(payload)
+                    datetime.fromtimestamp(payload.get("timestamp", 0)),
+                    payload.get("device_id"),
+                    payload.get("firmware"),
+                    payload.get("temperature"),
+                    payload.get("humidity"),
+                    payload.get("battery"),
+                    json.dumps(payload),
                 )
                 records.append(record)
 
@@ -200,7 +210,7 @@ class MQTTProcessor:
                 (time, device_id, firmware_version, temperature, humidity, battery, raw_data)
                 VALUES %s
                 """,
-                records
+                records,
             )
 
             self.db_conn.commit()
@@ -256,16 +266,16 @@ class MQTTProcessor:
 def main():
     """Main entry point."""
     # Load configuration from environment
-    mqtt_broker = os.getenv('MQTT_BROKER', 'localhost')
-    mqtt_port = int(os.getenv('MQTT_PORT', '1883'))
-    mqtt_topic = os.getenv('MQTT_TOPIC', 'portfolio/telemetry')
+    mqtt_broker = os.getenv("MQTT_BROKER", "localhost")
+    mqtt_port = int(os.getenv("MQTT_PORT", "1883"))
+    mqtt_topic = os.getenv("MQTT_TOPIC", "portfolio/telemetry")
 
     postgres_config = {
-        'host': os.getenv('POSTGRES_HOST', 'localhost'),
-        'port': int(os.getenv('POSTGRES_PORT', '5432')),
-        'database': os.getenv('POSTGRES_DB', 'iot_analytics'),
-        'user': os.getenv('POSTGRES_USER', 'iot'),
-        'password': os.getenv('POSTGRES_PASSWORD', 'iot_password')
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": int(os.getenv("POSTGRES_PORT", "5432")),
+        "database": os.getenv("POSTGRES_DB", "iot_analytics"),
+        "user": os.getenv("POSTGRES_USER", "iot"),
+        "password": os.getenv("POSTGRES_PASSWORD", "iot_password"),
     }
 
     # Create and run processor
@@ -273,11 +283,11 @@ def main():
         mqtt_broker=mqtt_broker,
         mqtt_port=mqtt_port,
         mqtt_topic=mqtt_topic,
-        postgres_config=postgres_config
+        postgres_config=postgres_config,
     )
 
     processor.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

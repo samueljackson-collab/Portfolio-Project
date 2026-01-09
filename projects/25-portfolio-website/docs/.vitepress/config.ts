@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid(
+  defineConfig({
   title: 'Sam Jackson - Enterprise Portfolio',
   description: 'Technical portfolio showcasing 25 enterprise-grade projects across Infrastructure, AI/ML, Security, and Emerging Technologies',
   lang: 'en-US',
@@ -103,6 +105,7 @@ export default defineConfig({
       {
         text: '📚 Guides & Resources',
         items: [
+          { text: 'Complete Portfolio Overview (with Diagrams)', link: '/main/complete-overview' },
           { text: 'Wiki.js Setup Guide', link: '/wikijs' }
         ]
       }
@@ -134,32 +137,31 @@ export default defineConfig({
       dark: 'github-dark'
     },
     lineNumbers: true,
-    // Enable code copy button
     config: (md) => {
-      // Custom markdown-it plugins can be added here
+      // Enable Mermaid diagrams
+      md.set({ breaks: true })
     }
   },
 
-  // Build configuration
-  vite: {
-    build: {
-      minify: 'terser',
-      chunkSizeWarningLimit: 1000
-    },
-    // Enable CSS code splitting
-    css: {
-      devSourcemap: true
+  // Mermaid configuration
+  mermaid: {
+    theme: 'default',
+    themeVariables: {
+      primaryColor: '#2563eb',
+      primaryTextColor: '#fff',
+      primaryBorderColor: '#1e40af',
+      lineColor: '#64748b',
+      secondaryColor: '#06b6d4',
+      tertiaryColor: '#f8fafc'
     }
   },
 
-  // Last updated timestamp
-  lastUpdated: true,
-
-  // Clean URLs (no .html extension)
-  cleanUrls: true,
-
-  // Ignore dead links during build (for development)
-  ignoreDeadLinks: [
-    /^https?:\/\/localhost/,
-  ]
+  vue: {
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => tag === 'mjx-container'
+      }
+    }
+  }
 })
+)
