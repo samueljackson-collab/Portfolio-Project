@@ -16,6 +16,25 @@
 
 ---
 
+## ⚡ Quick Navigation
+
+**Start here**
+- [Portfolio Documentation Hub](./DOCUMENTATION_INDEX.md)
+- [Portfolio Validation Checklist](./PORTFOLIO_VALIDATION.md)
+- [Portfolio Status Master Checklist](./PROJECT_STATUS_MASTER_CHECKLIST.md)
+
+**Key artifacts**
+- [Portfolio Evidence Completion Summary](./PORTFOLIO_EVIDENCE_COMPLETION_SUMMARY.md)
+- [Portfolio Infrastructure Guide](./PORTFOLIO_INFRASTRUCTURE_GUIDE.md)
+- [Security Overview](./SECURITY.md)
+- [Deployment Guide](./DEPLOYMENT.md)
+
+**Ops & Observability**
+- [Observability Stack](./observability)
+- [Home Assistant Dashboard](./HOME_ASSISTANT_DASHBOARD.md)
+
+---
+
 ## 📈 GitHub Status Snapshot (Local Repository)
 
 **Repository Pulse (local Git snapshot)**
@@ -46,6 +65,25 @@ pie title Repository Evidence Mix
   "Blueprints" : 25
 ```
 
+## 🗺️ Repository Map (What lives where)
+
+| Area | Purpose | What to look for |
+| --- | --- | --- |
+| `projects/` | Primary portfolio projects (1–25) | Project READMEs, architecture diagrams, runbooks, testing evidence |
+| `docs/` | Deep-dive documentation | Architecture guides, process documentation, diagrams |
+| `observability/` | Metrics + dashboards | Grafana dashboards, OpenTelemetry collector config |
+| `terraform/` | IaC baseline | Shared infrastructure building blocks |
+| `scripts/` | Automation helpers | Deployment, validation, and maintenance scripts |
+
+```mermaid
+flowchart TB
+  Repo[Portfolio Repository] --> Projects[projects/ (1–25)]
+  Repo --> Docs[docs/ + runbooks]
+  Repo --> IaC[terraform/ + infrastructure/]
+  Repo --> Obs[observability/ + grafana dashboards]
+  Repo --> Ops[scripts/ + CI/CD workflows]
+```
+
 ## 🧭 Reviewer Fast Reference
 
 - **Reviewer Checklist:** For a detailed validation checklist covering top metrics, interview workflow, and file map, please see [**PORTFOLIO_VALIDATION.md**](./PORTFOLIO_VALIDATION.md). This file serves as the single source of truth for validation runs.
@@ -62,6 +100,26 @@ System-minded engineer specializing in building, securing, and operating infrast
 
 **QA-forward** Quality-driven systems engineer turning ambiguous requirements into testable runbooks, acceptance criteria, and regression checklists. Builds monitoring dashboards for golden signals and SLOs.
 </details>
+
+---
+
+## 🧪 Validation & Evidence Workflow
+
+This portfolio is structured to make validation repeatable and auditable. The validation path below mirrors how the projects are maintained and reviewed.
+
+```mermaid
+flowchart LR
+  A[Review README] --> B[Inspect IaC]
+  B --> C[Check Runbooks]
+  C --> D[Review Tests]
+  D --> E[Verify Evidence]
+```
+
+**Recommended review sequence**
+1. Use [PORTFOLIO_VALIDATION.md](./PORTFOLIO_VALIDATION.md) for the canonical checklist.
+2. Validate project readmes (scope, dependencies, operational steps).
+3. Review IaC (`terraform/`, `infrastructure/`, project `infra/`).
+4. Confirm monitoring dashboards (`observability/`, project `grafana/`).
 
 ---
 
