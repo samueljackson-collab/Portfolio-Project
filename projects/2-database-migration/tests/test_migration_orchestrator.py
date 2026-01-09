@@ -10,7 +10,7 @@ from migration_orchestrator import (
     DatabaseMigrationOrchestrator,
     DatabaseConfig,
     MigrationPhase,
-    MigrationMetrics
+    MigrationMetrics,
 )
 
 
@@ -24,7 +24,7 @@ class TestDatabaseConfig:
             port=5432,
             database="testdb",
             username="testuser",
-            password="testpass"
+            password="testpass",
         )
 
         assert config.host == "localhost"
@@ -42,7 +42,7 @@ class TestDatabaseConfig:
             database="testdb",
             username="testuser",
             password="testpass",
-            ssl_mode="disable"
+            ssl_mode="disable",
         )
 
         assert config.ssl_mode == "disable"
@@ -58,7 +58,7 @@ class TestMigrationMetrics:
             replication_lag_seconds=2.5,
             rows_migrated=1000,
             errors_count=0,
-            start_time=start_time
+            start_time=start_time,
         )
 
         assert metrics.replication_lag_seconds == 2.5
@@ -78,7 +78,7 @@ class TestMigrationMetrics:
             rows_migrated=1000,
             errors_count=0,
             start_time=start_time,
-            end_time=end_time
+            end_time=end_time,
         )
 
         duration = metrics.get_duration()
@@ -96,7 +96,7 @@ class TestDatabaseMigrationOrchestrator:
             port=5432,
             database="source_db",
             username="source_user",
-            password="source_pass"
+            password="source_pass",
         )
 
     @pytest.fixture
@@ -107,20 +107,22 @@ class TestDatabaseMigrationOrchestrator:
             port=5432,
             database="target_db",
             username="target_user",
-            password="target_pass"
+            password="target_pass",
         )
 
     @pytest.fixture
     def orchestrator(self, source_config, target_config):
         """Migration orchestrator fixture"""
-        with patch('migration_orchestrator.boto3'):
+        with patch("migration_orchestrator.boto3"):
             return DatabaseMigrationOrchestrator(
                 source_config=source_config,
                 target_config=target_config,
-                max_replication_lag_seconds=5
+                max_replication_lag_seconds=5,
             )
 
-    def test_orchestrator_initialization(self, orchestrator, source_config, target_config):
+    def test_orchestrator_initialization(
+        self, orchestrator, source_config, target_config
+    ):
         """Test orchestrator initialization"""
         assert orchestrator.source_config == source_config
         assert orchestrator.target_config == target_config
@@ -129,13 +131,13 @@ class TestDatabaseMigrationOrchestrator:
         assert orchestrator.phase == MigrationPhase.INIT
         assert isinstance(orchestrator.metrics, MigrationMetrics)
 
-    @patch('migration_orchestrator.psycopg2.connect')
+    @patch("migration_orchestrator.psycopg2.connect")
     def test_validate_connectivity_success(self, mock_connect, orchestrator):
         """Test successful connectivity validation"""
         # Mock database connections
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = ['PostgreSQL 15.4']
+        mock_cursor.fetchone.return_value = ["PostgreSQL 15.4"]
 
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
         mock_connect.return_value = mock_conn
@@ -145,7 +147,7 @@ class TestDatabaseMigrationOrchestrator:
         assert result is True
         assert mock_connect.call_count == 2  # Source and target
 
-    @patch('migration_orchestrator.psycopg2.connect')
+    @patch("migration_orchestrator.psycopg2.connect")
     def test_validate_connectivity_failure(self, mock_connect, orchestrator):
         """Test connectivity validation failure"""
         # Simulate connection error
@@ -157,20 +159,22 @@ class TestDatabaseMigrationOrchestrator:
 
     def test_setup_replication_without_dms(self, orchestrator):
         """Test replication setup without DMS"""
-        with patch.object(orchestrator, '_setup_debezium_replication') as mock_debezium:
+        with patch.object(orchestrator, "_setup_debezium_replication") as mock_debezium:
             result = orchestrator.setup_replication()
 
             assert result is True
             assert orchestrator.phase == MigrationPhase.REPLICATION
             mock_debezium.assert_called_once()
 
-    @patch('migration_orchestrator.boto3.client')
-    def test_setup_replication_with_dms(self, mock_boto_client, source_config, target_config):
+    @patch("migration_orchestrator.boto3.client")
+    def test_setup_replication_with_dms(
+        self, mock_boto_client, source_config, target_config
+    ):
         """Test replication setup with DMS"""
         mock_dms_client = MagicMock()
         mock_dms_client.create_replication_task.return_value = {
-            'ReplicationTask': {
-                'ReplicationTaskArn': 'arn:aws:dms:us-west-2:123456789012:task:test'
+            "ReplicationTask": {
+                "ReplicationTaskArn": "arn:aws:dms:us-west-2:123456789012:task:test"
             }
         }
         mock_boto_client.return_value = mock_dms_client
@@ -178,10 +182,12 @@ class TestDatabaseMigrationOrchestrator:
         orchestrator = DatabaseMigrationOrchestrator(
             source_config=source_config,
             target_config=target_config,
-            dms_replication_instance_arn='arn:aws:dms:us-west-2:123456789012:rep:test'
+            dms_replication_instance_arn="arn:aws:dms:us-west-2:123456789012:rep:test",
         )
 
-        with patch.object(orchestrator, '_create_dms_endpoint', return_value='endpoint-arn'):
+        with patch.object(
+            orchestrator, "_create_dms_endpoint", return_value="endpoint-arn"
+        ):
             result = orchestrator.setup_replication()
 
             assert result is True
@@ -190,19 +196,27 @@ class TestDatabaseMigrationOrchestrator:
 
     def test_measure_replication_lag(self, orchestrator):
         """Test replication lag measurement"""
-        with patch.object(orchestrator, '_get_connection') as mock_get_conn:
+        with patch.object(orchestrator, "_get_connection") as mock_get_conn:
             # Mock database connections
             mock_source_conn = MagicMock()
             mock_target_conn = MagicMock()
 
             mock_source_cursor = MagicMock()
-            mock_source_cursor.fetchone.return_value = [1609459200.0]  # 2021-01-01 00:00:00
+            mock_source_cursor.fetchone.return_value = [
+                1609459200.0
+            ]  # 2021-01-01 00:00:00
 
             mock_target_cursor = MagicMock()
-            mock_target_cursor.fetchone.return_value = [1609459195.0]  # 5 seconds behind
+            mock_target_cursor.fetchone.return_value = [
+                1609459195.0
+            ]  # 5 seconds behind
 
-            mock_source_conn.cursor.return_value.__enter__.return_value = mock_source_cursor
-            mock_target_conn.cursor.return_value.__enter__.return_value = mock_target_cursor
+            mock_source_conn.cursor.return_value.__enter__.return_value = (
+                mock_source_cursor
+            )
+            mock_target_conn.cursor.return_value.__enter__.return_value = (
+                mock_target_cursor
+            )
 
             mock_get_conn.side_effect = [mock_source_conn, mock_target_conn]
 
@@ -210,15 +224,17 @@ class TestDatabaseMigrationOrchestrator:
 
             assert lag == 5.0
 
-    @patch.object(DatabaseMigrationOrchestrator, '_measure_replication_lag', return_value=2.0)
-    @patch.object(DatabaseMigrationOrchestrator, '_validate_data_consistency', return_value=True)
-    @patch.object(DatabaseMigrationOrchestrator, '_validate_row_counts', return_value=True)
+    @patch.object(
+        DatabaseMigrationOrchestrator, "_measure_replication_lag", return_value=2.0
+    )
+    @patch.object(
+        DatabaseMigrationOrchestrator, "_validate_data_consistency", return_value=True
+    )
+    @patch.object(
+        DatabaseMigrationOrchestrator, "_validate_row_counts", return_value=True
+    )
     def test_validate_replication_success(
-        self,
-        mock_row_counts,
-        mock_data_consistency,
-        mock_lag,
-        orchestrator
+        self, mock_row_counts, mock_data_consistency, mock_lag, orchestrator
     ):
         """Test successful replication validation"""
         result = orchestrator.validate_replication()
@@ -227,18 +243,24 @@ class TestDatabaseMigrationOrchestrator:
         assert orchestrator.phase == MigrationPhase.VALIDATION
         assert orchestrator.metrics.replication_lag_seconds == 2.0
 
-    @patch.object(DatabaseMigrationOrchestrator, '_measure_replication_lag', return_value=10.0)
+    @patch.object(
+        DatabaseMigrationOrchestrator, "_measure_replication_lag", return_value=10.0
+    )
     def test_validate_replication_lag_too_high(self, mock_lag, orchestrator):
         """Test replication validation fails when lag is too high"""
         result = orchestrator.validate_replication()
 
         assert result is False
 
-    @patch.object(DatabaseMigrationOrchestrator, 'validate_replication', return_value=True)
-    @patch.object(DatabaseMigrationOrchestrator, '_pause_application_writes')
-    @patch.object(DatabaseMigrationOrchestrator, '_wait_for_replication_sync')
-    @patch.object(DatabaseMigrationOrchestrator, '_switch_application_traffic')
-    @patch.object(DatabaseMigrationOrchestrator, '_verify_target_operations', return_value=True)
+    @patch.object(
+        DatabaseMigrationOrchestrator, "validate_replication", return_value=True
+    )
+    @patch.object(DatabaseMigrationOrchestrator, "_pause_application_writes")
+    @patch.object(DatabaseMigrationOrchestrator, "_wait_for_replication_sync")
+    @patch.object(DatabaseMigrationOrchestrator, "_switch_application_traffic")
+    @patch.object(
+        DatabaseMigrationOrchestrator, "_verify_target_operations", return_value=True
+    )
     def test_perform_cutover_success(
         self,
         mock_verify,
@@ -246,7 +268,7 @@ class TestDatabaseMigrationOrchestrator:
         mock_wait,
         mock_pause,
         mock_validate,
-        orchestrator
+        orchestrator,
     ):
         """Test successful cutover"""
         result = orchestrator.perform_cutover()
@@ -256,17 +278,16 @@ class TestDatabaseMigrationOrchestrator:
         assert orchestrator.metrics.end_time is not None
         assert orchestrator.metrics.downtime_seconds > 0
 
-    @patch.object(DatabaseMigrationOrchestrator, '_pause_application_writes')
-    @patch.object(DatabaseMigrationOrchestrator, '_wait_for_replication_sync')
-    @patch.object(DatabaseMigrationOrchestrator, 'validate_replication', side_effect=Exception("Validation failed"))
-    @patch.object(DatabaseMigrationOrchestrator, 'rollback', return_value=True)
+    @patch.object(DatabaseMigrationOrchestrator, "_pause_application_writes")
+    @patch.object(DatabaseMigrationOrchestrator, "_wait_for_replication_sync")
+    @patch.object(
+        DatabaseMigrationOrchestrator,
+        "validate_replication",
+        side_effect=Exception("Validation failed"),
+    )
+    @patch.object(DatabaseMigrationOrchestrator, "rollback", return_value=True)
     def test_perform_cutover_failure_triggers_rollback(
-        self,
-        mock_rollback,
-        mock_validate,
-        mock_wait,
-        mock_pause,
-        orchestrator
+        self, mock_rollback, mock_validate, mock_wait, mock_pause, orchestrator
     ):
         """Test cutover failure triggers rollback"""
         result = orchestrator.perform_cutover()
@@ -277,19 +298,25 @@ class TestDatabaseMigrationOrchestrator:
 
     def test_rollback(self, orchestrator):
         """Test rollback procedure"""
-        with patch.object(orchestrator, '_switch_to_source'):
-            with patch.object(orchestrator, '_stop_replication'):
-                with patch.object(orchestrator, 'validate_connectivity', return_value=True):
+        with patch.object(orchestrator, "_switch_to_source"):
+            with patch.object(orchestrator, "_stop_replication"):
+                with patch.object(
+                    orchestrator, "validate_connectivity", return_value=True
+                ):
                     result = orchestrator.rollback()
 
                     assert result is True
                     assert orchestrator.phase == MigrationPhase.ROLLBACK
 
-    @patch.object(DatabaseMigrationOrchestrator, 'validate_connectivity', return_value=True)
-    @patch.object(DatabaseMigrationOrchestrator, 'setup_replication', return_value=True)
-    @patch.object(DatabaseMigrationOrchestrator, 'validate_replication', return_value=True)
-    @patch.object(DatabaseMigrationOrchestrator, 'perform_cutover', return_value=True)
-    @patch.object(DatabaseMigrationOrchestrator, 'publish_metrics')
+    @patch.object(
+        DatabaseMigrationOrchestrator, "validate_connectivity", return_value=True
+    )
+    @patch.object(DatabaseMigrationOrchestrator, "setup_replication", return_value=True)
+    @patch.object(
+        DatabaseMigrationOrchestrator, "validate_replication", return_value=True
+    )
+    @patch.object(DatabaseMigrationOrchestrator, "perform_cutover", return_value=True)
+    @patch.object(DatabaseMigrationOrchestrator, "publish_metrics")
     def test_run_migration_success(
         self,
         mock_publish,
@@ -297,7 +324,7 @@ class TestDatabaseMigrationOrchestrator:
         mock_validate,
         mock_setup,
         mock_connectivity,
-        orchestrator
+        orchestrator,
     ):
         """Test complete migration workflow success"""
         result = orchestrator.run_migration()
@@ -309,7 +336,9 @@ class TestDatabaseMigrationOrchestrator:
         mock_cutover.assert_called_once()
         mock_publish.assert_called_once()
 
-    @patch.object(DatabaseMigrationOrchestrator, 'validate_connectivity', return_value=False)
+    @patch.object(
+        DatabaseMigrationOrchestrator, "validate_connectivity", return_value=False
+    )
     def test_run_migration_fails_on_connectivity(self, mock_connectivity, orchestrator):
         """Test migration fails on connectivity check"""
         result = orchestrator.run_migration()
@@ -320,22 +349,24 @@ class TestDatabaseMigrationOrchestrator:
     def test_table_mappings_json_format(self, orchestrator):
         """Test table mappings are valid JSON"""
         import json
+
         mappings = orchestrator._get_table_mappings()
         parsed = json.loads(mappings)
 
-        assert 'rules' in parsed
-        assert len(parsed['rules']) > 0
+        assert "rules" in parsed
+        assert len(parsed["rules"]) > 0
 
     def test_replication_settings_json_format(self, orchestrator):
         """Test replication settings are valid JSON"""
         import json
+
         settings = orchestrator._get_replication_settings()
         parsed = json.loads(settings)
 
-        assert 'TargetMetadata' in parsed
-        assert 'FullLoadSettings' in parsed
-        assert 'Logging' in parsed
+        assert "TargetMetadata" in parsed
+        assert "FullLoadSettings" in parsed
+        assert "Logging" in parsed
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

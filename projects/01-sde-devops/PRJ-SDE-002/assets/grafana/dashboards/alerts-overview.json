@@ -1,0 +1,111 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
+  "dashboard": {
+    "id": null,
+    "uid": "alerts-overview-sanitized",
+    "title": "Alerts Overview (Sanitized)",
+    "tags": [
+      "alerts",
+      "alertmanager",
+      "sanitized"
+    ],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "type": "stat",
+        "title": "Active Alerts",
+        "datasource": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"firing\"})",
+            "legendFormat": "firing"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "type": "stat",
+        "title": "Pending Alerts",
+        "datasource": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"pending\"})",
+            "legendFormat": "pending"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "type": "timeseries",
+        "title": "Alert Volume by Severity",
+        "datasource": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"firing\"}) by (severity)",
+            "legendFormat": "{{severity}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 6
+        }
+      },
+      {
+        "type": "timeseries",
+        "title": "Alert Rate (24h)",
+        "datasource": "${DS_PROMETHEUS}",
+        "targets": [
+          {
+            "expr": "sum(rate(ALERTS[24h])) by (alertname)",
+            "legendFormat": "{{alertname}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 6
+        }
+      }
+    ]
+  },
+  "overwrite": true
+}

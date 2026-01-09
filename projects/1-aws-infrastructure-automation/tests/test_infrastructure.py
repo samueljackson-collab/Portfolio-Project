@@ -22,21 +22,25 @@ class TestTerraformConfiguration:
 
     def test_terraform_files_exist(self, terraform_dir):
         """Verify all required Terraform files exist."""
-        required_files = ['main.tf', 'variables.tf', 'outputs.tf']
+        required_files = ["main.tf", "variables.tf", "outputs.tf"]
         for filename in required_files:
-            assert (terraform_dir / filename).exists(), f"Missing required file: {filename}"
+            assert (
+                terraform_dir / filename
+            ).exists(), f"Missing required file: {filename}"
 
     def test_terraform_format(self, terraform_dir):
         """Verify Terraform files are properly formatted."""
         if not shutil.which("terraform"):
             pytest.skip("Terraform CLI not available")
         result = subprocess.run(
-            ['terraform', 'fmt', '-check', '-recursive'],
+            ["terraform", "fmt", "-check", "-recursive"],
             cwd=terraform_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
-        assert result.returncode == 0, f"Terraform formatting issues found:\n{result.stdout}"
+        assert (
+            result.returncode == 0
+        ), f"Terraform formatting issues found:\n{result.stdout}"
 
     def test_terraform_validate(self, terraform_dir):
         """Validate Terraform configuration syntax."""
@@ -44,35 +48,36 @@ class TestTerraformConfiguration:
             pytest.skip("Terraform CLI not available")
         # Initialize Terraform (without backend)
         init_result = subprocess.run(
-            ['terraform', 'init', '-backend=false'],
+            ["terraform", "init", "-backend=false"],
             cwd=terraform_dir,
             capture_output=True,
-            text=True
+            text=True,
         )
-        assert init_result.returncode == 0, f"Terraform init failed:\n{init_result.stderr}"
+        assert (
+            init_result.returncode == 0
+        ), f"Terraform init failed:\n{init_result.stderr}"
 
         # Validate configuration
         validate_result = subprocess.run(
-            ['terraform', 'validate'],
-            cwd=terraform_dir,
-            capture_output=True,
-            text=True
+            ["terraform", "validate"], cwd=terraform_dir, capture_output=True, text=True
         )
-        assert validate_result.returncode == 0, f"Terraform validation failed:\n{validate_result.stderr}"
+        assert (
+            validate_result.returncode == 0
+        ), f"Terraform validation failed:\n{validate_result.stderr}"
 
     def test_variable_definitions(self, terraform_dir):
         """Verify all required variables are defined."""
-        variables_file = terraform_dir / 'variables.tf'
+        variables_file = terraform_dir / "variables.tf"
         content = variables_file.read_text()
 
         required_vars = [
-            'region',
-            'environment',
-            'vpc_cidr',
-            'availability_zones',
-            'private_subnet_cidrs',
-            'public_subnet_cidrs',
-            'database_subnet_cidrs'
+            "region",
+            "environment",
+            "vpc_cidr",
+            "availability_zones",
+            "private_subnet_cidrs",
+            "public_subnet_cidrs",
+            "database_subnet_cidrs",
         ]
 
         for var in required_vars:
@@ -80,10 +85,10 @@ class TestTerraformConfiguration:
 
     def test_output_definitions(self, terraform_dir):
         """Verify outputs are properly defined."""
-        outputs_file = terraform_dir / 'outputs.tf'
+        outputs_file = terraform_dir / "outputs.tf"
         content = outputs_file.read_text()
 
-        expected_outputs = ['vpc_id', 'eks_cluster_name', 'rds_endpoint']
+        expected_outputs = ["vpc_id", "eks_cluster_name", "rds_endpoint"]
         for output in expected_outputs:
             assert f'output "{output}"' in content, f"Missing output: {output}"
 
@@ -98,15 +103,15 @@ class TestEnvironmentConfigurations:
 
     def test_dev_tfvars_exists(self, terraform_dir):
         """Verify dev environment configuration exists."""
-        assert (terraform_dir / 'dev.tfvars').exists()
+        assert (terraform_dir / "dev.tfvars").exists()
 
     def test_production_tfvars_exists(self, terraform_dir):
         """Verify production environment configuration exists."""
-        assert (terraform_dir / 'production.tfvars').exists()
+        assert (terraform_dir / "production.tfvars").exists()
 
     def test_backend_config_exists(self, terraform_dir):
         """Verify backend configuration exists."""
-        assert (terraform_dir / 'backend.hcl').exists()
+        assert (terraform_dir / "backend.hcl").exists()
 
 
 class TestDeploymentScripts:
@@ -120,10 +125,10 @@ class TestDeploymentScripts:
     def test_deployment_scripts_exist(self, scripts_dir):
         """Verify all deployment scripts exist."""
         required_scripts = [
-            'deploy-terraform.sh',
-            'deploy-cdk.sh',
-            'deploy-pulumi.sh',
-            'validate.sh'
+            "deploy-terraform.sh",
+            "deploy-cdk.sh",
+            "deploy-pulumi.sh",
+            "validate.sh",
         ]
 
         for script in required_scripts:
@@ -132,7 +137,7 @@ class TestDeploymentScripts:
 
     def test_scripts_are_executable(self, scripts_dir):
         """Verify scripts have executable permissions."""
-        scripts = list(scripts_dir.glob('*.sh'))
+        scripts = list(scripts_dir.glob("*.sh"))
         for script in scripts:
             assert os.access(script, os.X_OK), f"Script not executable: {script.name}"
 
@@ -147,21 +152,21 @@ class TestCDKConfiguration:
 
     def test_cdk_app_exists(self, cdk_dir):
         """Verify CDK app file exists."""
-        assert (cdk_dir / 'app.py').exists()
+        assert (cdk_dir / "app.py").exists()
 
     def test_cdk_json_exists(self, cdk_dir):
         """Verify cdk.json configuration exists."""
-        cdk_json = cdk_dir / 'cdk.json'
+        cdk_json = cdk_dir / "cdk.json"
         assert cdk_json.exists()
 
         # Validate JSON syntax
         with open(cdk_json) as f:
             data = json.load(f)
-            assert 'app' in data, "Missing 'app' key in cdk.json"
+            assert "app" in data, "Missing 'app' key in cdk.json"
 
     def test_cdk_requirements_exist(self, cdk_dir):
         """Verify CDK requirements file exists."""
-        assert (cdk_dir / 'requirements.txt').exists()
+        assert (cdk_dir / "requirements.txt").exists()
 
 
 class TestPulumiConfiguration:
@@ -174,16 +179,16 @@ class TestPulumiConfiguration:
 
     def test_pulumi_yaml_exists(self, pulumi_dir):
         """Verify Pulumi.yaml configuration exists."""
-        pulumi_yaml = pulumi_dir / 'Pulumi.yaml'
+        pulumi_yaml = pulumi_dir / "Pulumi.yaml"
         assert pulumi_yaml.exists()
 
     def test_pulumi_main_exists(self, pulumi_dir):
         """Verify Pulumi main program exists."""
-        assert (pulumi_dir / '__main__.py').exists()
+        assert (pulumi_dir / "__main__.py").exists()
 
     def test_pulumi_requirements_exist(self, pulumi_dir):
         """Verify Pulumi requirements file exists."""
-        assert (pulumi_dir / 'requirements.txt').exists()
+        assert (pulumi_dir / "requirements.txt").exists()
 
 
 class TestSecurityBestPractices:
@@ -196,23 +201,24 @@ class TestSecurityBestPractices:
 
     def test_rds_encryption_enabled(self, terraform_dir):
         """Verify RDS encryption is configured."""
-        main_tf = (terraform_dir / 'main.tf').read_text()
+        main_tf = (terraform_dir / "main.tf").read_text()
         # Check for encryption-related configurations
-        assert 'storage_encrypted' in main_tf or 'encrypted' in main_tf, \
-            "RDS encryption should be explicitly configured"
+        assert (
+            "storage_encrypted" in main_tf or "encrypted" in main_tf
+        ), "RDS encryption should be explicitly configured"
 
     def test_backup_retention_configured(self, terraform_dir):
         """Verify backup retention is configured."""
-        main_tf = (terraform_dir / 'main.tf').read_text()
-        assert 'backup_retention_period' in main_tf, \
-            "Backup retention should be configured"
+        main_tf = (terraform_dir / "main.tf").read_text()
+        assert (
+            "backup_retention_period" in main_tf
+        ), "Backup retention should be configured"
 
     def test_multi_az_for_production(self, terraform_dir):
         """Verify Multi-AZ configuration exists."""
-        main_tf = (terraform_dir / 'main.tf').read_text()
-        assert 'multi_az' in main_tf.lower(), \
-            "Multi-AZ configuration should be present"
+        main_tf = (terraform_dir / "main.tf").read_text()
+        assert "multi_az" in main_tf.lower(), "Multi-AZ configuration should be present"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

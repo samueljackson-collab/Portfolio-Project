@@ -22,7 +22,9 @@ pytestmark = pytest.mark.integration
 def source_db_conn():
     """Create connection to source database."""
     conn = psycopg2.connect(
-        os.getenv('SOURCE_DB_URL', 'postgresql://postgres:postgres@localhost:5432/sourcedb')
+        os.getenv(
+            "SOURCE_DB_URL", "postgresql://postgres:postgres@localhost:5432/sourcedb"
+        )
     )
     yield conn
     conn.close()
@@ -32,7 +34,9 @@ def source_db_conn():
 def target_db_conn():
     """Create connection to target database."""
     conn = psycopg2.connect(
-        os.getenv('TARGET_DB_URL', 'postgresql://postgres:postgres@localhost:5433/targetdb')
+        os.getenv(
+            "TARGET_DB_URL", "postgresql://postgres:postgres@localhost:5433/targetdb"
+        )
     )
     yield conn
     conn.close()
@@ -41,13 +45,13 @@ def target_db_conn():
 @pytest.fixture(scope="module")
 def debezium_url():
     """Return Debezium Connect URL."""
-    return os.getenv('DEBEZIUM_CONNECT_URL', 'http://localhost:8083')
+    return os.getenv("DEBEZIUM_CONNECT_URL", "http://localhost:8083")
 
 
 @pytest.fixture(scope="module")
 def kafka_servers():
     """Return Kafka bootstrap servers."""
-    return os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
+    return os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 
 
 class TestDatabaseConnectivity:
@@ -88,7 +92,7 @@ class TestDatabaseConnectivity:
         # Check wal_level
         cursor.execute("SHOW wal_level")
         wal_level = cursor.fetchone()[0]
-        assert wal_level == 'logical', "wal_level must be 'logical' for CDC"
+        assert wal_level == "logical", "wal_level must be 'logical' for CDC"
 
         # Check replication slots
         cursor.execute("SHOW max_replication_slots")
@@ -103,13 +107,12 @@ class TestKafkaConnectivity:
         """Test that Kafka is accessible."""
         try:
             producer = KafkaProducer(
-                bootstrap_servers=kafka_servers,
-                request_timeout_ms=10000
+                bootstrap_servers=kafka_servers, request_timeout_ms=10000
             )
             # Send a test message
-            future = producer.send('test-topic', b'test-message')
+            future = producer.send("test-topic", b"test-message")
             record_metadata = future.get(timeout=10)
-            assert record_metadata.topic == 'test-topic'
+            assert record_metadata.topic == "test-topic"
             producer.close()
         except KafkaError as e:
             pytest.fail(f"Kafka not accessible: {e}")
@@ -125,7 +128,7 @@ class TestDebeziumConnector:
 
     def test_list_connectors(self, debezium_url):
         """Test listing Debezium connectors."""
-        response = requests.get(f'{debezium_url}/connectors')
+        response = requests.get(f"{debezium_url}/connectors")
         assert response.status_code == 200
         connectors = response.json()
         assert isinstance(connectors, list), "Should return list of connectors"
@@ -133,7 +136,7 @@ class TestDebeziumConnector:
     def test_register_postgres_connector(self, debezium_url):
         """Test registering PostgreSQL connector."""
         # Load connector configuration
-        config_path = 'config/debezium-postgres-connector.json'
+        config_path = "config/debezium-postgres-connector.json"
 
         if not os.path.exists(config_path):
             pytest.skip("Connector config file not found")
@@ -143,24 +146,29 @@ class TestDebeziumConnector:
 
         # Register connector
         response = requests.post(
-            f'{debezium_url}/connectors',
+            f"{debezium_url}/connectors",
             json=connector_config,
-            headers={'Content-Type': 'application/json'}
+            headers={"Content-Type": "application/json"},
         )
 
         # 201 = created, 409 = already exists (both acceptable)
-        assert response.status_code in [200, 201, 409], \
-            f"Connector registration failed: {response.text}"
+        assert response.status_code in [
+            200,
+            201,
+            409,
+        ], f"Connector registration failed: {response.text}"
 
         # Verify connector is running
         time.sleep(5)  # Give connector time to start
-        connector_name = connector_config['name']
-        response = requests.get(f'{debezium_url}/connectors/{connector_name}/status')
+        connector_name = connector_config["name"]
+        response = requests.get(f"{debezium_url}/connectors/{connector_name}/status")
 
         assert response.status_code == 200
         status = response.json()
-        assert status['connector']['state'] in ['RUNNING', 'UNASSIGNED'], \
-            f"Connector not running: {status}"
+        assert status["connector"]["state"] in [
+            "RUNNING",
+            "UNASSIGNED",
+        ], f"Connector not running: {status}"
 
 
 class TestChangeDataCapture:
@@ -177,19 +185,19 @@ class TestChangeDataCapture:
         """Test that CDC captures INSERT events."""
         # Create Kafka consumer for CDC events
         consumer = KafkaConsumer(
-            'dbserver1.public.users',
+            "dbserver1.public.users",
             bootstrap_servers=kafka_servers,
-            auto_offset_reset='latest',
+            auto_offset_reset="latest",
             consumer_timeout_ms=20000,
-            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
         )
 
         # Insert a new user in source database
         cursor = source_db_conn.cursor()
-        test_username = f'testuser_{int(time.time())}'
+        test_username = f"testuser_{int(time.time())}"
         cursor.execute(
             "INSERT INTO users (username, email) VALUES (%s, %s) RETURNING id",
-            (test_username, f'{test_username}@example.com')
+            (test_username, f"{test_username}@example.com"),
         )
         user_id = cursor.fetchone()[0]
         source_db_conn.commit()
@@ -200,9 +208,14 @@ class TestChangeDataCapture:
             event = message.value
 
             # Check if this is our INSERT event
-            if event.get('payload', {}).get('after', {}).get('username') == test_username:
-                assert event['payload']['op'] == 'c', "Operation should be 'c' (create/insert)"
-                assert event['payload']['after']['id'] == user_id
+            if (
+                event.get("payload", {}).get("after", {}).get("username")
+                == test_username
+            ):
+                assert (
+                    event["payload"]["op"] == "c"
+                ), "Operation should be 'c' (create/insert)"
+                assert event["payload"]["after"]["id"] == user_id
                 event_found = True
                 break
 
@@ -212,11 +225,11 @@ class TestChangeDataCapture:
     def test_cdc_captures_updates(self, source_db_conn, kafka_servers):
         """Test that CDC captures UPDATE events."""
         consumer = KafkaConsumer(
-            'dbserver1.public.orders',
+            "dbserver1.public.orders",
             bootstrap_servers=kafka_servers,
-            auto_offset_reset='latest',
+            auto_offset_reset="latest",
             consumer_timeout_ms=20000,
-            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
         )
 
         # Update an order status
@@ -233,9 +246,12 @@ class TestChangeDataCapture:
             event = message.value
 
             # Check if this is our UPDATE event
-            if event.get('payload', {}).get('after', {}).get('order_number') == order_number:
-                assert event['payload']['op'] == 'u', "Operation should be 'u' (update)"
-                assert event['payload']['after']['status'] == 'completed'
+            if (
+                event.get("payload", {}).get("after", {}).get("order_number")
+                == order_number
+            ):
+                assert event["payload"]["op"] == "u", "Operation should be 'u' (update)"
+                assert event["payload"]["after"]["status"] == "completed"
                 event_found = True
                 break
 
@@ -246,11 +262,11 @@ class TestChangeDataCapture:
         """Test that CDC captures DELETE events."""
         # First, create a test order to delete
         cursor = source_db_conn.cursor()
-        test_order_number = f'ORD-TEST-{int(time.time())}'
+        test_order_number = f"ORD-TEST-{int(time.time())}"
         cursor.execute(
             """INSERT INTO orders (user_id, order_number, total_amount, status)
                VALUES (1, %s, 99.99, 'pending') RETURNING id""",
-            (test_order_number,)
+            (test_order_number,),
         )
         order_id = cursor.fetchone()[0]
         source_db_conn.commit()
@@ -260,11 +276,11 @@ class TestChangeDataCapture:
 
         # Create consumer
         consumer = KafkaConsumer(
-            'dbserver1.public.orders',
+            "dbserver1.public.orders",
             bootstrap_servers=kafka_servers,
-            auto_offset_reset='latest',
+            auto_offset_reset="latest",
             consumer_timeout_ms=20000,
-            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
         )
 
         # Now delete it
@@ -277,9 +293,9 @@ class TestChangeDataCapture:
             event = message.value
 
             # Check if this is our DELETE event
-            before_data = event.get('payload', {}).get('before', {})
-            if before_data.get('order_number') == test_order_number:
-                assert event['payload']['op'] == 'd', "Operation should be 'd' (delete)"
+            before_data = event.get("payload", {}).get("before", {})
+            if before_data.get("order_number") == test_order_number:
+                assert event["payload"]["op"] == "d", "Operation should be 'd' (delete)"
                 event_found = True
                 break
 
@@ -315,12 +331,14 @@ class TestEndToEndMigration:
         """Test data validation between source and target."""
         # Get table list from source
         source_cursor = source_db_conn.cursor()
-        source_cursor.execute("""
+        source_cursor.execute(
+            """
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = 'public'
             AND table_type = 'BASE TABLE'
-        """)
+        """
+        )
         tables = [row[0] for row in source_cursor.fetchall()]
 
         assert len(tables) > 0, "Source should have tables"
@@ -339,28 +357,31 @@ class TestPerformance:
     def test_cdc_latency(self, source_db_conn, kafka_servers):
         """Measure CDC event latency."""
         consumer = KafkaConsumer(
-            'dbserver1.public.users',
+            "dbserver1.public.users",
             bootstrap_servers=kafka_servers,
-            auto_offset_reset='latest',
+            auto_offset_reset="latest",
             consumer_timeout_ms=10000,
-            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
         )
 
         # Insert and measure time until CDC event appears
         start_time = time.time()
 
         cursor = source_db_conn.cursor()
-        test_username = f'perftest_{int(time.time())}'
+        test_username = f"perftest_{int(time.time())}"
         cursor.execute(
             "INSERT INTO users (username, email) VALUES (%s, %s)",
-            (test_username, f'{test_username}@example.com')
+            (test_username, f"{test_username}@example.com"),
         )
         source_db_conn.commit()
 
         # Wait for CDC event
         for message in consumer:
             event = message.value
-            if event.get('payload', {}).get('after', {}).get('username') == test_username:
+            if (
+                event.get("payload", {}).get("after", {}).get("username")
+                == test_username
+            ):
                 latency = time.time() - start_time
                 print(f"\nCDC latency: {latency:.3f} seconds")
                 assert latency < 5.0, "CDC latency should be under 5 seconds"
@@ -369,5 +390,5 @@ class TestPerformance:
         consumer.close()
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '--integration'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "--integration"])

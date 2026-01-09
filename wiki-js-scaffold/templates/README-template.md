@@ -27,9 +27,9 @@ A brief description of your project. Explain what it does, why it exists, and wh
 
 ### Installation
 
-\`\`\`bash
+```bash
 # Clone the repository
-git clone https://github.com/yourusername/yourrepo.git
+git clone <https://github.com/yourusername/yourrepo.git>
 
 # Navigate to project directory
 cd yourrepo
@@ -38,32 +38,32 @@ cd yourrepo
 npm install
 # or
 pip install -r requirements.txt
-\`\`\`
+```
 
-### Usage
+## Usage
 
-\`\`\`bash
+```bash
 # Run the application
 npm start
 # or
 python main.py
-\`\`\`
+```
 
 ## 📚 Documentation
 
 For detailed documentation, visit [link to docs].
 
-### Configuration
+## Configuration
 
-\`\`\`bash
+```bash
 # Copy example config
 cp .env.example .env
 
 # Edit configuration
 nano .env
-\`\`\`
+```
 
-### API Reference
+## API Reference
 
 Describe your API endpoints or main functions:
 
@@ -98,7 +98,7 @@ See also the list of [contributors](https://github.com/yourusername/yourrepo/con
 
 ## 📧 Contact
 
-- Email: your.email@example.com
+- Email: <your.email@example.com>
 - Twitter: [@yourhandle](https://twitter.com/yourhandle)
 - LinkedIn: [Your Name](https://linkedin.com/in/yourprofile)
 

@@ -286,6 +286,19 @@ Creates production-ready VM template (ID 9000) with:
 - [`service-screenshots.md`](assets/screenshots/service-screenshots.md) - Descriptions of captured Proxmox/NPM/TrueNAS views
 - [`reverse-proxy-dataflow.mmd`](assets/diagrams/reverse-proxy-dataflow.mmd) - TLS ingress and backend flow for core services
 
+### Config Exports
+- [`vm-export-manifest.md`](assets/proxmox/exports/vm-export-manifest.md) - Proxmox VM export inventory
+- [`lxc-export-manifest.md`](assets/proxmox/exports/lxc-export-manifest.md) - Proxmox LXC export inventory
+- [`npm-config-summary.md`](assets/configs/nginx-proxy-manager/npm-config-summary.md) - Nginx Proxy Manager config summary
+- [`system-config-summary.md`](assets/configs/truenas/system-config-summary.md) - TrueNAS system config summary
+
+### Backup Evidence
+- [`backup-sample-logs.md`](assets/logs/backup-sample-logs.md) - Sanitized backup/replication log excerpts
+- [`restore-test-results.md`](assets/logs/restore-test-results.md) - Quarterly restore test results
+
+### Runbooks
+- [`disaster-recovery-runbook.md`](assets/runbooks/disaster-recovery-runbook.md) - DR execution checklist
+
 ### Demo & Visualizations
 
 - [`demo/home-assistant-dashboard.html`](demo/home-assistant-dashboard.html) - Interactive Home Assistant dashboard mockup

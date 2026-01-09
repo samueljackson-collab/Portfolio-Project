@@ -11,7 +11,7 @@ import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import DAGs
 from src.dags.etl_extract_data import dag as extract_dag
@@ -35,11 +35,7 @@ class TestOperatorConfiguration(unittest.TestCase):
     def test_all_operators_are_initialized(self):
         """Test that all operators are properly initialized."""
         for dag_name, dag in self.dags.items():
-            self.assertGreater(
-                len(dag.tasks),
-                0,
-                f"DAG {dag_name} has no tasks"
-            )
+            self.assertGreater(len(dag.tasks), 0, f"DAG {dag_name} has no tasks")
 
             for task in dag.tasks:
                 self.assertIsNotNone(task)
@@ -54,11 +50,11 @@ class TestOperatorConfiguration(unittest.TestCase):
                 if task_type == "PythonOperator":
                     self.assertIsNotNone(
                         task.python_callable,
-                        f"PythonOperator {task.task_id} has no python_callable"
+                        f"PythonOperator {task.task_id} has no python_callable",
                     )
                     self.assertTrue(
                         callable(task.python_callable),
-                        f"python_callable for {task.task_id} is not callable"
+                        f"python_callable for {task.task_id} is not callable",
                     )
 
     def test_all_tasks_have_retry_configuration(self):
@@ -66,13 +62,10 @@ class TestOperatorConfiguration(unittest.TestCase):
         for dag_name, dag in self.dags.items():
             for task in dag.tasks:
                 self.assertIsNotNone(
-                    task.retries,
-                    f"Task {task.task_id} has no retries configuration"
+                    task.retries, f"Task {task.task_id} has no retries configuration"
                 )
                 self.assertGreaterEqual(
-                    task.retries,
-                    0,
-                    f"Task {task.task_id} has negative retries"
+                    task.retries, 0, f"Task {task.task_id} has negative retries"
                 )
 
     def test_all_tasks_have_retry_delay(self):
@@ -82,12 +75,12 @@ class TestOperatorConfiguration(unittest.TestCase):
                 if task.retries > 0:
                     self.assertIsNotNone(
                         task.retry_delay,
-                        f"Task {task.task_id} has retries but no retry_delay"
+                        f"Task {task.task_id} has retries but no retry_delay",
                     )
                     self.assertIsInstance(
                         task.retry_delay,
                         timedelta,
-                        f"Task {task.task_id} retry_delay is not a timedelta"
+                        f"Task {task.task_id} retry_delay is not a timedelta",
                     )
 
     def test_all_tasks_have_pool_set(self):
@@ -96,9 +89,7 @@ class TestOperatorConfiguration(unittest.TestCase):
             for task in dag.tasks:
                 # pool_slots should be at least 1
                 self.assertGreaterEqual(
-                    task.pool_slots,
-                    1,
-                    f"Task {task.task_id} has invalid pool_slots"
+                    task.pool_slots, 1, f"Task {task.task_id} has invalid pool_slots"
                 )
 
 
@@ -125,7 +116,7 @@ class TestPythonOperatorDefaults(unittest.TestCase):
                 self.assertEqual(
                     type(task).__name__,
                     "PythonOperator",
-                    f"Task {task.task_id} should be a PythonOperator"
+                    f"Task {task.task_id} should be a PythonOperator",
                 )
                 self.assertIsNotNone(task.python_callable)
 
@@ -145,7 +136,7 @@ class TestPythonOperatorDefaults(unittest.TestCase):
                 self.assertIn(
                     task_type,
                     ["PythonOperator", "BranchPythonOperator"],
-                    f"Task {task.task_id} should be a PythonOperator variant"
+                    f"Task {task.task_id} should be a PythonOperator variant",
                 )
 
     def test_load_dag_python_operators(self):
@@ -164,7 +155,7 @@ class TestPythonOperatorDefaults(unittest.TestCase):
                 self.assertEqual(
                     type(task).__name__,
                     "PythonOperator",
-                    f"Task {task.task_id} should be a PythonOperator"
+                    f"Task {task.task_id} should be a PythonOperator",
                 )
                 self.assertIsNotNone(task.python_callable)
 
@@ -185,7 +176,7 @@ class TestPythonOperatorDefaults(unittest.TestCase):
                 self.assertEqual(
                     type(task).__name__,
                     "PythonOperator",
-                    f"Task {task.task_id} should be a PythonOperator"
+                    f"Task {task.task_id} should be a PythonOperator",
                 )
                 self.assertIsNotNone(task.python_callable)
 
@@ -208,7 +199,7 @@ class TestRetryPolicies(unittest.TestCase):
             self.assertEqual(
                 task.retries,
                 2,
-                f"Extract DAG task {task.task_id} should have 2 retries"
+                f"Extract DAG task {task.task_id} should have 2 retries",
             )
 
     def test_transform_dag_retry_policy(self):
@@ -217,16 +208,14 @@ class TestRetryPolicies(unittest.TestCase):
             self.assertEqual(
                 task.retries,
                 2,
-                f"Transform DAG task {task.task_id} should have 2 retries"
+                f"Transform DAG task {task.task_id} should have 2 retries",
             )
 
     def test_load_dag_retry_policy(self):
         """Test retry policy for load DAG."""
         for task in self.load_dag.tasks:
             self.assertEqual(
-                task.retries,
-                2,
-                f"Load DAG task {task.task_id} should have 2 retries"
+                task.retries, 2, f"Load DAG task {task.task_id} should have 2 retries"
             )
 
     def test_analytics_dag_retry_policy(self):
@@ -236,7 +225,7 @@ class TestRetryPolicies(unittest.TestCase):
             self.assertEqual(
                 task.retries,
                 expected_retries,
-                f"Analytics DAG task {task.task_id} should have {expected_retries} retries"
+                f"Analytics DAG task {task.task_id} should have {expected_retries} retries",
             )
 
     def test_retry_delay_consistency(self):
@@ -251,12 +240,12 @@ class TestRetryPolicies(unittest.TestCase):
                     self.assertGreaterEqual(
                         task.retry_delay,
                         min_delay,
-                        f"Task {task.task_id} retry_delay is too small"
+                        f"Task {task.task_id} retry_delay is too small",
                     )
                     self.assertLessEqual(
                         task.retry_delay,
                         max_delay,
-                        f"Task {task.task_id} retry_delay is too large"
+                        f"Task {task.task_id} retry_delay is too large",
                     )
 
 
@@ -279,7 +268,7 @@ class TestEmailNotifications(unittest.TestCase):
                 # Check if email_on_failure is set (could be True or False)
                 self.assertIsNotNone(
                     task.email_on_failure,
-                    f"Task {task.task_id} has no email_on_failure configuration"
+                    f"Task {task.task_id} has no email_on_failure configuration",
                 )
 
     def test_email_on_retry_configured(self):
@@ -289,7 +278,7 @@ class TestEmailNotifications(unittest.TestCase):
                 # Check if email_on_retry is set (could be True or False)
                 self.assertIsNotNone(
                     task.email_on_retry,
-                    f"Task {task.task_id} has no email_on_retry configuration"
+                    f"Task {task.task_id} has no email_on_retry configuration",
                 )
 
 
@@ -308,15 +297,8 @@ class TestTaskTags(unittest.TestCase):
     def test_dags_have_tags(self):
         """Test that DAGs have tags defined."""
         for dag_name, dag in self.dags.items():
-            self.assertIsNotNone(
-                dag.tags,
-                f"DAG {dag_name} has no tags"
-            )
-            self.assertGreater(
-                len(dag.tags),
-                0,
-                f"DAG {dag_name} has empty tags"
-            )
+            self.assertIsNotNone(dag.tags, f"DAG {dag_name} has no tags")
+            self.assertGreater(len(dag.tags), 0, f"DAG {dag_name} has empty tags")
 
     def test_extract_dag_tags(self):
         """Test tags for extract DAG."""
@@ -324,7 +306,7 @@ class TestTaskTags(unittest.TestCase):
         actual_tags = set(self.dags["extract"].tags)
         self.assertTrue(
             expected_tags.issubset(actual_tags),
-            f"Extract DAG should have tags {expected_tags}"
+            f"Extract DAG should have tags {expected_tags}",
         )
 
     def test_transform_dag_tags(self):
@@ -333,7 +315,7 @@ class TestTaskTags(unittest.TestCase):
         actual_tags = set(self.dags["transform"].tags)
         self.assertTrue(
             expected_tags.issubset(actual_tags),
-            f"Transform DAG should have tags {expected_tags}"
+            f"Transform DAG should have tags {expected_tags}",
         )
 
     def test_load_dag_tags(self):
@@ -342,7 +324,7 @@ class TestTaskTags(unittest.TestCase):
         actual_tags = set(self.dags["load"].tags)
         self.assertTrue(
             expected_tags.issubset(actual_tags),
-            f"Load DAG should have tags {expected_tags}"
+            f"Load DAG should have tags {expected_tags}",
         )
 
     def test_analytics_dag_tags(self):
@@ -351,7 +333,7 @@ class TestTaskTags(unittest.TestCase):
         actual_tags = set(self.dags["analytics"].tags)
         self.assertTrue(
             expected_tags.issubset(actual_tags),
-            f"Analytics DAG should have tags {expected_tags}"
+            f"Analytics DAG should have tags {expected_tags}",
         )
 
 

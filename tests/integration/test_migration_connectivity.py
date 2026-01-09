@@ -16,7 +16,10 @@ except ModuleNotFoundError:  # pragma: no cover - handled by pytest skip
 
 pytest.importorskip("psycopg2")
 
-from migration_orchestrator import DatabaseConfig, DatabaseMigrationOrchestrator  # noqa: E402
+from migration_orchestrator import (
+    DatabaseConfig,
+    DatabaseMigrationOrchestrator,
+)  # noqa: E402
 
 
 def _require_env(var_name: str) -> str:
@@ -59,7 +62,9 @@ def _wait_for_postgres(conn_info: Dict[str, str]) -> None:
             )
             conn.close()
             return
-        except psycopg2.OperationalError as exc:  # pragma: no cover - best effort polling
+        except (
+            psycopg2.OperationalError
+        ) as exc:  # pragma: no cover - best effort polling
             last_error = exc
             time.sleep(2)
     if last_error:
@@ -84,7 +89,9 @@ def _ensure_database(conn_info: Dict[str, str], db_name: str) -> None:
 
 @pytest.mark.integration
 @patch("migration_orchestrator.boto3")
-def test_validate_connectivity_against_live_postgres(mock_boto3: MagicMock, postgres_env: Dict[str, str]):
+def test_validate_connectivity_against_live_postgres(
+    mock_boto3: MagicMock, postgres_env: Dict[str, str]
+):
     """Validate that the orchestrator can connect to the provisioned Postgres databases."""
     _wait_for_postgres(postgres_env)
     _ensure_database(postgres_env, postgres_env["source_db"])

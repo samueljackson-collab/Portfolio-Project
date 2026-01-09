@@ -33,7 +33,9 @@ def main():
     user = "platform-engineer"
     response = simulate_api_gateway_request(request_path, user)
     ARTIFACT.write_text(json.dumps(response, indent=2))
-    print("API Gateway demo complete. Response written to artifacts/api_gateway_flow.json")
+    print(
+        "API Gateway demo complete. Response written to artifacts/api_gateway_flow.json"
+    )
 
 
 if __name__ == "__main__":

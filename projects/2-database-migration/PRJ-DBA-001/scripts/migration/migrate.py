@@ -32,13 +32,13 @@ def apply_migration(path: Path):
     result = subprocess.run(["psql", "-v", "ON_ERROR_STOP=1", "-f", str(path)])
     if result.returncode != 0:
         raise RuntimeError(f"Migration failed: {path.name}")
-    run_psql(
-        "INSERT INTO schema_migrations (filename) VALUES ('" + path.name + "');"
-    )
+    run_psql("INSERT INTO schema_migrations (filename) VALUES ('" + path.name + "');")
 
 
 def main():
-    migrations_dir = Path(os.environ.get("MIGRATIONS_DIR", "./scripts/migration/schema_migrations"))
+    migrations_dir = Path(
+        os.environ.get("MIGRATIONS_DIR", "./scripts/migration/schema_migrations")
+    )
     if not migrations_dir.exists():
         raise SystemExit(f"Migrations directory not found: {migrations_dir}")
 

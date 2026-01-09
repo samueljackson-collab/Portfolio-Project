@@ -136,7 +136,7 @@ def extract_runbook_slo(runbook_path: Path) -> str:
     if start is None:
         return ""
     table_lines = []
-    for line in lines[start:end if end is not None else len(lines)]:
+    for line in lines[start : end if end is not None else len(lines)]:
         if line.strip().startswith("|"):
             table_lines.append(line.rstrip())
     return "\n".join(table_lines).strip()
@@ -158,7 +158,10 @@ def gather_doc_links(project_dir: Path, extra_doc: Path) -> list:
 
 
 def build_components_table(technologies: list) -> str:
-    rows = ["| Component | Technology | Purpose |", "|-----------|-----------|---------|"]
+    rows = [
+        "| Component | Technology | Purpose |",
+        "|-----------|-----------|---------|",
+    ]
     for name, desc in technologies[:3]:
         tech = name
         purpose = desc or "Documented in project overview"
@@ -179,7 +182,9 @@ def render_results(business: list, status: str) -> str:
 
 
 def clean_paragraph(text: str) -> str:
-    lines = [ln.rstrip() for ln in textwrap.dedent(text).strip().splitlines() if ln.strip()]
+    lines = [
+        ln.rstrip() for ln in textwrap.dedent(text).strip().splitlines() if ln.strip()
+    ]
     return "\n\n".join(lines)
 
 
@@ -208,7 +213,10 @@ def render_checklist(project_dir: Path, master_snippet: str) -> tuple[str, str]:
                 break
         snippet = "\n".join(lines)
         return snippet, f"../{checklist_file.name}"
-    return master_snippet, "../../../docs/PRJ-MASTER-PLAYBOOK/README.md#5-deployment--release"
+    return (
+        master_snippet,
+        "../../../docs/PRJ-MASTER-PLAYBOOK/README.md#5-deployment--release",
+    )
 
 
 def render_skills(technologies: list) -> str:
@@ -242,7 +250,10 @@ def main() -> None:
             continue
         sections = doc["sections"]
         overview = clean_paragraph(sections.get("Overview", ""))
-        objectives = render_objectives(extract_bullets(sections.get("Key Features", "")) or extract_bullets(sections.get("Goals", "")))
+        objectives = render_objectives(
+            extract_bullets(sections.get("Key Features", ""))
+            or extract_bullets(sections.get("Goals", ""))
+        )
         architecture = sections.get("Architecture", "Architecture details pending.")
         technologies = parse_technologies(sections.get("Technologies", ""))
         components_table = build_components_table(technologies)
@@ -250,13 +261,21 @@ def main() -> None:
         implementation = render_implementation(sections)
         results = render_results(business, doc["status"])
         slo_table = extract_runbook_slo(project_dir / "RUNBOOK.md")
-        checklist_snippet, checklist_source = render_checklist(project_dir, master_checklist)
+        checklist_snippet, checklist_source = render_checklist(
+            project_dir, master_checklist
+        )
         screenshot_path = select_screen_mockup(doc["category"])
         doc_links = gather_doc_links(project_dir, doc["path"])
         slug = project_dir.name.split("-", 1)[1]
-        front_description = overview.split(". ")[0].strip() if overview else doc["title"]
+        front_description = (
+            overview.split(". ")[0].strip() if overview else doc["title"]
+        )
         front_description = re.sub(r"[`*]", "", front_description)
-        tags = ["portfolio", slugify(doc["category"] or slug), slugify(technologies[0][0]) if technologies else slug]
+        tags = [
+            "portfolio",
+            slugify(doc["category"] or slug),
+            slugify(technologies[0][0]) if technologies else slug,
+        ]
         doc_rel = doc["path"].relative_to(REPO_ROOT)
 
         wiki_lines = []
@@ -264,14 +283,17 @@ def main() -> None:
         wiki_lines.append(f"title: {doc['title']}")
         wiki_lines.append(f"description: {front_description}")
         wiki_lines.append(f"tags: [{', '.join(tags)}]")
-        wiki_lines.append("repository: https://github.com/samueljackson-collab/Portfolio-Project")
+        wiki_lines.append(
+            "repository: https://github.com/samueljackson-collab/Portfolio-Project"
+        )
         wiki_lines.append(f"path: /projects/{slug}")
         wiki_lines.append("---\n")
         wiki_lines.append(f"# {doc['title']}")
-        wiki_lines.append(f"> **Category:** {doc['category']} | **Status:** {doc['status']}")
         wiki_lines.append(
-            "> **Source:** projects/25-portfolio-website/docs/projects/"
-            + doc_rel.name
+            f"> **Category:** {doc['category']} | **Status:** {doc['status']}"
+        )
+        wiki_lines.append(
+            "> **Source:** projects/25-portfolio-website/docs/projects/" + doc_rel.name
         )
         wiki_lines.append("\n## 📋 Executive Summary\n")
         wiki_lines.append(overview or "Documentation in progress.")
@@ -285,9 +307,15 @@ def main() -> None:
         wiki_lines.append("\n## 💡 Key Technical Decisions\n")
         for idx, (name, desc) in enumerate(technologies[:3], start=1):
             wiki_lines.append(f"### Decision {idx}: Adopt {name}")
-            wiki_lines.append(f"**Context:** {doc['title']} requires a resilient delivery path.")
-            wiki_lines.append(f"**Decision:** {desc or 'Implementation documented in README.md.'}")
-            wiki_lines.append("**Outcome:** Practices captured in RUNBOOK.md support ongoing operations.\n")
+            wiki_lines.append(
+                f"**Context:** {doc['title']} requires a resilient delivery path."
+            )
+            wiki_lines.append(
+                f"**Decision:** {desc or 'Implementation documented in README.md.'}"
+            )
+            wiki_lines.append(
+                "**Outcome:** Practices captured in RUNBOOK.md support ongoing operations.\n"
+            )
         wiki_lines.append("## 🔧 Implementation Details\n")
         wiki_lines.append(implementation)
         wiki_lines.append("\n## ✅ Results & Outcomes\n")
@@ -321,7 +349,9 @@ def main() -> None:
 
         wiki_dir = project_dir / "wiki"
         wiki_dir.mkdir(parents=True, exist_ok=True)
-        (wiki_dir / "overview.md").write_text("\n".join(wiki_lines) + "\n", encoding="utf-8")
+        (wiki_dir / "overview.md").write_text(
+            "\n".join(wiki_lines) + "\n", encoding="utf-8"
+        )
 
 
 if __name__ == "__main__":

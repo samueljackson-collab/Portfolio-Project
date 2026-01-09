@@ -382,17 +382,20 @@ class TestRDSModuleDeployment:
         try:
             rds_client.delete_db_subnet_group(DBSubnetGroupName=subnet_group_name)
         except Exception:
+            # Ignore errors if subnet group was already deleted or doesn't exist
             pass
 
         for subnet_id in subnet_ids:
             try:
                 ec2_client.delete_subnet(SubnetId=subnet_id)
             except Exception:
+                # Ignore errors if subnet was already deleted or doesn't exist
                 pass
 
         try:
             ec2_client.delete_vpc(VpcId=vpc_id)
         except Exception:
+            # Ignore errors if VPC was already deleted or doesn't exist
             pass
 
     def test_rds_multi_az_enabled(self, rds_client, vpc_resources):

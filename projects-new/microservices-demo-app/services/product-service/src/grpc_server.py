@@ -18,11 +18,14 @@ def response_serializer(message: dict):
 
 
 def get_product_handler(product_id: str):
-    return PRODUCTS.get(product_id, {
-        "product_id": product_id,
-        "name": "Unknown",
-        "price": 0.0,
-    })
+    return PRODUCTS.get(
+        product_id,
+        {
+            "product_id": product_id,
+            "name": "Unknown",
+            "price": 0.0,
+        },
+    )
 
 
 def serve() -> grpc.Server:

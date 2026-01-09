@@ -66,7 +66,7 @@ variable "oidc_provider_url" {
 variable "github_repo_pattern" {
   description = "GitHub repository pattern for OIDC trust."
   type        = string
-  default     = "repo:*/*:*"
+  default     = "repo:your-org/your-repo:ref:refs/heads/main"
 }
 
 variable "terraform_state_bucket" {

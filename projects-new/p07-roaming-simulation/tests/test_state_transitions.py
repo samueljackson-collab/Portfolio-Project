@@ -331,7 +331,9 @@ class TestNetworkLatency(unittest.TestCase):
         for _ in range(100):
             latency = self.latency.simulate()
             self.assertGreaterEqual(latency, self.latency.min_ms)
-            self.assertLessEqual(latency, self.latency.max_ms + (self.latency.max_ms * 0.1))
+            self.assertLessEqual(
+                latency, self.latency.max_ms + (self.latency.max_ms * 0.1)
+            )
 
     def test_latency_variation(self):
         """Test that latency has variation (not constant)"""

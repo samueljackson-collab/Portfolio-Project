@@ -1,12 +1,22 @@
 """Lightweight scheduler stub for roaming simulations."""
+
 import subprocess
 import time
 
 
 def run(profile: str, batch_size: int):
-    cmd = ["python", "producer/main.py", "--profile", profile, "--events", str(batch_size)]
+    cmd = [
+        "python",
+        "producer/main.py",
+        "--profile",
+        profile,
+        "--events",
+        str(batch_size),
+    ]
     subprocess.check_call(cmd)
-    subprocess.check_call(["python", "consumer/main.py", "--ingest-file", "out/events.jsonl"])
+    subprocess.check_call(
+        ["python", "consumer/main.py", "--ingest-file", "out/events.jsonl"]
+    )
 
 
 def schedule():

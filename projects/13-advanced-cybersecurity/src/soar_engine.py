@@ -1,4 +1,5 @@
 """Simplified SOAR engine that enriches alerts and executes response playbooks."""
+
 from __future__ import annotations
 
 import argparse

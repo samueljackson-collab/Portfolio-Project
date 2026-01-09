@@ -31,25 +31,24 @@ class Settings(BaseSettings):
     database_url: str = Field(
         default="postgresql+asyncpg://portfolio_user:securepassword@localhost:5432/portfolio_db",
         description="PostgreSQL connection URL",
-        examples=["postgresql+asyncpg://user:pass@localhost:5432/dbname"]
+        examples=["postgresql+asyncpg://user:pass@localhost:5432/dbname"],
     )
 
     # Security Settings
     secret_key: str = Field(
         default="development-secret-key-change-in-production-min-32-chars",
         min_length=32,
-        description="Secret key for JWT tokens (min 32 characters)"
+        description="Secret key for JWT tokens (min 32 characters)",
     )
     algorithm: str = Field(default="HS256", description="JWT algorithm")
     access_token_expire_minutes: int = Field(
-        default=30,
-        description="JWT token expiration in minutes"
+        default=30, description="JWT token expiration in minutes"
     )
 
     # CORS Settings
     cors_origins: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:5173"],
-        description="Allowed CORS origins"
+        description="Allowed CORS origins",
     )
 
     # Logging Settings
@@ -85,9 +84,8 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"  # Ignore unknown environment variables
+        extra="ignore",  # Ignore unknown environment variables
     )
-
 
     @property
     def max_photo_size_bytes(self) -> int:

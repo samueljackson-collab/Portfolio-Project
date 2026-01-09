@@ -110,22 +110,16 @@ class WikiJSPublisher:
         self.api_url = api_url
         self.headers = {
             "Authorization": f"Bearer {api_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
     def graphql_request(self, query: str, variables: Dict) -> Dict:
         """Execute a GraphQL request"""
-        payload = {
-            "query": query,
-            "variables": variables
-        }
+        payload = {"query": query, "variables": variables}
 
         try:
             response = requests.post(
-                self.api_url,
-                json=payload,
-                headers=self.headers,
-                timeout=30
+                self.api_url, json=payload, headers=self.headers, timeout=30
             )
             response.raise_for_status()
             return response.json()
@@ -141,18 +135,30 @@ class WikiJSPublisher:
             return result["data"]["pages"]["single"]
         return None
 
-    def create_page(self, title: str, content: str, path: str, locale: str = "en", tags: Optional[List[str]] = None) -> bool:
+    def create_page(
+        self,
+        title: str,
+        content: str,
+        path: str,
+        locale: str = "en",
+        tags: Optional[List[str]] = None,
+    ) -> bool:
         """Create a new page"""
         variables = {
             "title": title,
             "content": content,
             "path": path,
             "locale": locale,
-            "tags": tags or []
+            "tags": tags or [],
         }
 
         result = self.graphql_request(UPSERT_PAGE_MUTATION, variables)
-        response_result = result.get("data", {}).get("pages", {}).get("create", {}).get("responseResult", {})
+        response_result = (
+            result.get("data", {})
+            .get("pages", {})
+            .get("create", {})
+            .get("responseResult", {})
+        )
 
         if response_result.get("succeeded"):
             print(f"✓ Created: {title} → {path}")
@@ -162,18 +168,30 @@ class WikiJSPublisher:
             print(f"✗ Failed to create {title}: {error}")
             return False
 
-    def update_page(self, page_id: int, title: str, content: str, path: str, tags: Optional[List[str]] = None) -> bool:
+    def update_page(
+        self,
+        page_id: int,
+        title: str,
+        content: str,
+        path: str,
+        tags: Optional[List[str]] = None,
+    ) -> bool:
         """Update an existing page"""
         variables = {
             "id": page_id,
             "title": title,
             "content": content,
             "path": path,
-            "tags": tags or []
+            "tags": tags or [],
         }
 
         result = self.graphql_request(UPDATE_PAGE_MUTATION, variables)
-        response_result = result.get("data", {}).get("pages", {}).get("update", {}).get("responseResult", {})
+        response_result = (
+            result.get("data", {})
+            .get("pages", {})
+            .get("update", {})
+            .get("responseResult", {})
+        )
 
         if response_result.get("succeeded"):
             print(f"✓ Updated: {title} → {path}")
@@ -188,7 +206,7 @@ class WikiJSPublisher:
 
         # Read content
         try:
-            with open(md_path, 'r', encoding='utf-8') as f:
+            with open(md_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             print(f"✗ Error reading {md_path}: {e}")
@@ -196,7 +214,10 @@ class WikiJSPublisher:
 
         metadata = self._parse_front_matter(content)
 
-        title = metadata.get("title") or md_path.stem.replace("-", " ").replace("_", " ").title()
+        title = (
+            metadata.get("title")
+            or md_path.stem.replace("-", " ").replace("_", " ").title()
+        )
 
         wiki_path = metadata.get("path")
         if wiki_path:
@@ -216,18 +237,17 @@ class WikiJSPublisher:
                 title=title,
                 content=content,
                 path=wiki_path,
-                tags=tags
+                tags=tags,
             )
         else:
             # Create new page
             return self.create_page(
-                title=title,
-                content=content,
-                path=wiki_path,
-                tags=tags
+                title=title, content=content, path=wiki_path, tags=tags
             )
 
-    def publish_directory(self, directory: Path, pattern: str = "*.md", base_path: str = "/projects") -> Dict[str, int]:
+    def publish_directory(
+        self, directory: Path, pattern: str = "*.md", base_path: str = "/projects"
+    ) -> Dict[str, int]:
         """Publish all Markdown files in a directory"""
         markdown_files = sorted(directory.glob(pattern))
         if not markdown_files:
@@ -237,7 +257,9 @@ class WikiJSPublisher:
         print(f"\nPublishing {len(markdown_files)} file(s) from {directory}...\n")
         return self.publish_files(markdown_files, base_path)
 
-    def publish_files(self, markdown_files: List[Path], base_path: str = "/projects") -> Dict[str, int]:
+    def publish_files(
+        self, markdown_files: List[Path], base_path: str = "/projects"
+    ) -> Dict[str, int]:
         """Publish an explicit list of Markdown files"""
         stats = {"success": 0, "failed": 0, "skipped": 0}
 
@@ -262,12 +284,12 @@ class WikiJSPublisher:
         if not content.startswith("---"):
             return {}, content
 
-        parts = content.split('---', 2)
+        parts = content.split("---", 2)
         if len(parts) < 3:
             return {}, content
 
         front_matter_raw, content_body = parts[1], parts[2]
-        
+
         try:
             parsed = yaml.safe_load(front_matter_raw) or {}
             metadata = parsed if isinstance(parsed, dict) else {}
@@ -275,6 +297,7 @@ class WikiJSPublisher:
             metadata = WikiJSPublisher._fallback_front_matter(front_matter_raw)
 
         return metadata, content_body.lstrip()
+
     @staticmethod
     def _fallback_front_matter(front_matter_raw: str) -> Dict:
         """Best-effort parser when YAML safe load fails (e.g., unquoted colons)"""
@@ -301,39 +324,35 @@ def main():
     parser = argparse.ArgumentParser(
         description="Publish Markdown documentation to Wiki.js"
     )
-    parser.add_argument(
-        "path",
-        nargs="?",
-        help="Path to Markdown file or directory"
-    )
+    parser.add_argument("path", nargs="?", help="Path to Markdown file or directory")
     parser.add_argument(
         "--pattern",
         default="*.md",
-        help="File pattern for directory publishing (default: *.md)"
+        help="File pattern for directory publishing (default: *.md)",
     )
     parser.add_argument(
         "--base-path",
         default=BASE_PATH,
-        help=f"Base path in Wiki.js (default: {BASE_PATH})"
+        help=f"Base path in Wiki.js (default: {BASE_PATH})",
     )
     parser.add_argument(
         "--api-url",
         default=API_URL,
-        help=f"Wiki.js GraphQL API URL (default: {API_URL})"
+        help=f"Wiki.js GraphQL API URL (default: {API_URL})",
     )
     parser.add_argument(
         "--api-token",
         default=API_TOKEN,
-        help="Wiki.js API token (or set WIKI_TOKEN env var)"
+        help="Wiki.js API token (or set WIKI_TOKEN env var)",
     )
     parser.add_argument(
         "--content-root",
-        help="Root directory to search for Markdown files (used with --glob)"
+        help="Root directory to search for Markdown files (used with --glob)",
     )
     parser.add_argument(
         "--glob",
         dest="glob_pattern",
-        help="Glob pattern relative to --content-root (e.g., '*/wiki/*.md')"
+        help="Glob pattern relative to --content-root (e.g., '*/wiki/*.md')",
     )
 
     args = parser.parse_args()
@@ -357,10 +376,14 @@ def main():
         markdown_files = sorted(content_root.glob(glob_pattern))
 
         if not markdown_files:
-            print(f"No Markdown files found in {content_root} matching pattern '{glob_pattern}'")
+            print(
+                f"No Markdown files found in {content_root} matching pattern '{glob_pattern}'"
+            )
             sys.exit(1)
 
-        print(f"\nPublishing {len(markdown_files)} file(s) from {content_root} using pattern '{glob_pattern}'...\n")
+        print(
+            f"\nPublishing {len(markdown_files)} file(s) from {content_root} using pattern '{glob_pattern}'...\n"
+        )
         stats = publisher.publish_files(markdown_files, args.base_path)
 
         print("\n" + "=" * 50)

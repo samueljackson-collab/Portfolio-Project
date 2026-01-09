@@ -1,4 +1,5 @@
 """Minimal collaborative editing server using websockets and CRDT fallback."""
+
 from __future__ import annotations
 
 import asyncio
@@ -31,7 +32,9 @@ class CollaborationServer:
     def __init__(self) -> None:
         self.sessions: Dict[str, DocumentSession] = {}
 
-    async def handler(self, websocket: websockets.WebSocketServerProtocol, path: str) -> None:  # noqa: ARG002
+    async def handler(
+        self, websocket: websockets.WebSocketServerProtocol, path: str
+    ) -> None:  # noqa: ARG002
         doc_id = websocket.request_headers.get("x-document-id", "default")
         session = self.sessions.setdefault(doc_id, DocumentSession())
         session.clients.add(websocket)
@@ -40,8 +43,14 @@ class CollaborationServer:
             async for message in websocket:
                 data = json.loads(message)
                 op = Operation(**data)
-                session.text = session.text[: op.position] + op.insert + session.text[op.position :]
-                await session.broadcast({"type": "op", "position": op.position, "insert": op.insert})
+                session.text = (
+                    session.text[: op.position]
+                    + op.insert
+                    + session.text[op.position :]
+                )
+                await session.broadcast(
+                    {"type": "op", "position": op.position, "insert": op.insert}
+                )
         finally:
             session.clients.discard(websocket)
 

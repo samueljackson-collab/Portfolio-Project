@@ -1,4 +1,5 @@
 """Enrichment stage shared across projects."""
+
 from pathlib import Path
 import json
 import hashlib
