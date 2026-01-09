@@ -1,0 +1,91 @@
+name: Dependabot Auto-Merge
+
+# ============================================================================
+# DEPENDABOT AUTO-MERGE WORKFLOW
+# ============================================================================
+# Automatically approves and merges Dependabot PRs for patch and minor updates.
+# Major version updates are flagged for manual review.
+# 
+# This workflow ensures that security patches and minor updates are applied
+# quickly without manual intervention, while still requiring human review
+# for breaking changes.
+# ============================================================================
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    # Only run for Dependabot PRs
+    if: github.actor == 'dependabot[bot]'
+    
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Auto-approve Dependabot PRs
+        run: |
+          gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge patch and minor updates
+        # Only auto-merge for patch and minor updates (not major)
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          gh pr merge --auto --squash --delete-branch "$PR_URL"
+          echo "✅ Auto-merge enabled for ${{ steps.metadata.outputs.update-type }} update"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on major updates
+        # Flag major updates for manual review
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: |
+          COMMENT_BODY="⚠️ **Major Version Update Detected**
+
+          This PR contains a major version update that may include breaking changes.
+          Please review the changes carefully before merging.
+
+          **Update Type:** ${{ steps.metadata.outputs.update-type }}
+          **Dependency:** ${{ steps.metadata.outputs.dependency-names }}
+          **Previous Version:** ${{ steps.metadata.outputs.previous-version }}
+          **New Version:** ${{ steps.metadata.outputs.new-version }}
+
+          Manual approval and merge required."
+          
+          gh pr comment "$PR_URL" --body "$COMMENT_BODY"
+          echo "⚠️ Major version update - manual review required"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "### 🤖 Dependabot Auto-Merge Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Update Type:** ${{ steps.metadata.outputs.update-type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Dependency:** ${{ steps.metadata.outputs.dependency-names }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Previous Version:** ${{ steps.metadata.outputs.previous-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**New Version:** ${{ steps.metadata.outputs.new-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch" ]] || \
+             [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-minor" ]]; then
+            echo "✅ **Action:** Auto-approved and auto-merge enabled" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Action:** Auto-approved, manual merge required" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -1,1352 +1,177 @@
 version: 2
 updates:
+  # ============================================================================
+  # DOCKER DEPENDENCIES - GROUPED BY BASE IMAGE
+  # ============================================================================
+  # All Docker updates are now grouped by base image type, scanning from root
+  # directory. This consolidates 80+ separate directory configs into 5 groups.
+  # Result: 1 PR per base image type instead of 1 PR per directory.
+  # ============================================================================
+
+  # Group 1: All Python Docker Images
+  # Consolidates all Python-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      python-docker-all:
+        patterns:
+          - "python*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "python"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 2: All Node.js Docker Images
+  # Consolidates all Node-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      node-docker-all:
+        patterns:
+          - "node*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "node"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 3: All Alpine Linux Docker Images
+  # Consolidates all Alpine-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      alpine-docker-all:
+        patterns:
+          - "alpine*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "alpine"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 4: All Golang Docker Images
+  # Consolidates all Golang-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      golang-docker-all:
+        patterns:
+          - "golang*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "golang"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 5: All Java/OpenJDK Docker Images
+  # Consolidates all Java-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      java-docker-all:
+        patterns:
+          - "openjdk*"
+          - "eclipse-temurin*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "java"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 6: Other Docker Images (Nginx, Postgres, Redis, etc.)
+  # Catches any other Docker base images not covered above
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      other-docker-all:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "python*"
+          - "node*"
+          - "alpine*"
+          - "golang*"
+          - "openjdk*"
+          - "eclipse-temurin*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # ============================================================================
+  # PYTHON PIP DEPENDENCIES - SINGLE GROUPED UPDATE
+  # ============================================================================
+  # Scans all Python requirements files from root, creates 1 consolidated PR
+  # instead of 1 PR per directory. Dramatically reduces PR count.
+  # ============================================================================
+
+  # Group 7: All Python pip Dependencies
+  # Consolidates all pip dependencies across the repository
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/backend"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects-new/P11-serverless-api-gateway"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects-new/microservices-demo-app/services/notification-service"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects-new/microservices-demo-app/services/order-service"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects-new/microservices-demo-app/services/product-service"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects-new/p08-api-testing"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects-new/p09-cloud-native-poc"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/03-cybersecurity/PRJ-CYB-BLUE-001/lambda"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/07-aiml-automation/PRJ-AIML-002/ml-models"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/1-aws-infrastructure-automation"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/1-aws-infrastructure-automation/cdk"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/1-aws-infrastructure-automation/pulumi"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/10-blockchain-smart-contract-platform"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/11-iot-data-analytics"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/12-quantum-computing"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/14-edge-ai-inference"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/15-real-time-collaboration"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/16-advanced-data-lake"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/18-gpu-accelerated-computing"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/19-advanced-kubernetes-operators"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/2-database-migration"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/21-quantum-safe-cryptography"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/23-advanced-monitoring"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/23-advanced-monitoring/exporters"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/24-report-generator"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/25-portfolio-website"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/3-kubernetes-cicd"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/3-kubernetes-cicd/app"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/4-devsecops"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/5-real-time-data-streaming"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/6-mlops-platform"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/7-serverless-data-processing"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/7-serverless-data-processing/functions"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/8-advanced-ai-chatbot"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/9-multi-region-disaster-recovery"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/astradup-video-deduplication"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/external-pen-test/backend"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/internal-net-pentest/backend"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p01-aws-infra"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p02-iam-hardening"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p07-roaming-simulation"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p09-cloud-native-poc"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p10-multi-region"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p11-serverless"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p12-data-pipeline"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p13-ha-webapp"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p14-disaster-recovery"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p15-cost-optimization"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p16-zero-trust"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p17-terraform-multicloud"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p18-k8s-cicd"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p19-security-automation"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/p20-observability"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "pip"
-    directory: "/projects/web-app-assessment/backend"
-    schedule:
-      interval: "weekly"
-    groups:
-      python-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/backend"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/demo"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/deploy"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/frontend"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P11-api-gateway-serverless"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P11-serverless-api-gateway/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P12-data-pipeline"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P12-data-pipeline-airflow"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P12-data-pipeline-airflow/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P13-ha-webapp"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P13-ha-webapp/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P14-disaster-recovery"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P14-disaster-recovery/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P15-cost-optimization"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P15-cost-optimization/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P16-zero-trust"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P16-zero-trust/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P17-terraform-multicloud"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P17-terraform-multicloud/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P18-k8s-cicd"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P18-k8s-cicd/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P19-security-automation"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P19-security-automation/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P20-observability"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P20-observability/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P21-quantum-safe-crypto"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P21-quantum-safe-cryptography/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P22-autonomous-devops"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P22-autonomous-devops-platform/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P23-advanced-monitoring"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P23-advanced-monitoring/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P24-report-generator"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P24-report-generator/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P25-portfolio-website"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/P25-portfolio-website/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/microservices-demo-app"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/microservices-demo-app/services/api-gateway"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/microservices-demo-app/services/notification-service"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/microservices-demo-app/services/order-service"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/microservices-demo-app/services/payment-service"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/microservices-demo-app/services/product-service"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/microservices-demo-app/services/user-service"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/p07-roaming-simulation/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects-new/p09-cloud-native-poc/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/01-sde-devops/PRJ-SDE-002"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/01-sde-devops/PRJ-SDE-002/assets"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/02-cloud-architecture/PRJ-CLOUD-001"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/02-cloud-solutions/PRJ-CLOUD-001"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/05-networking-datacenter/PRJ-NET-DC-001"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/06-homelab/PRJ-HOME-002/assets/services/step-ca"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/06-homelab/PRJ-HOME-002/assets/services/traefik"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/06-homelab/PRJ-HOME-003"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/1-aws-infrastructure-automation"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/10-blockchain-smart-contract-platform"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/11-iot-data-analytics"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/2-database-migration"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/23-advanced-monitoring"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/23-advanced-monitoring/exporters"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/24-report-generator"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/25-portfolio-website"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/3-kubernetes-cicd"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/4-devsecops"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/5-real-time-data-streaming"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/7-serverless-data-processing/infrastructure"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/9-multi-region-disaster-recovery"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/astradup-video-deduplication"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/custom-prometheus-exporter"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/external-pen-test"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/external-pen-test/backend"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/external-pen-test/frontend"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/internal-net-pentest"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/internal-net-pentest/backend"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/internal-net-pentest/frontend"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/p01-aws-infra/infra"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/p04-ops-monitoring"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/p09-cloud-native-poc/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/web-app-assessment"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/web-app-assessment/backend"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/projects/web-app-assessment/frontend"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
-    assignees:
-      - "Codex"
-  - package-ecosystem: "docker"
-    directory: "/wiki-js-scaffold/docker"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-dependencies:
-        patterns:
-          - "*"
+      day: "monday"
+    groups:
+      python-dependencies-all:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "python"
+      - "pip"
+    open-pull-requests-limit: 5
     assignees:
       - "Codex"
