@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Iterable, List, Optional
@@ -31,12 +32,20 @@ class PullRequest:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Close or list stale GitHub pull requests.")
+    parser = argparse.ArgumentParser(
+        description="Close or list stale GitHub pull requests."
+    )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--list", action="store_true", help="List open pull requests.")
-    group.add_argument("--close-stale", action="store_true", help="Close stale pull requests.")
-    parser.add_argument("--dry-run", action="store_true", help="Preview actions without closing PRs.")
-    parser.add_argument("--days", type=int, default=30, help="Staleness threshold in days.")
+    group.add_argument(
+        "--close-stale", action="store_true", help="Close stale pull requests."
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview actions without closing PRs."
+    )
+    parser.add_argument(
+        "--days", type=int, default=30, help="Staleness threshold in days."
+    )
     parser.add_argument("--max", type=int, default=None, help="Maximum PRs to close.")
     return parser.parse_args()
 
@@ -56,25 +65,94 @@ def github_headers(token: str) -> dict:
     }
 
 
+def check_rate_limit(response: requests.Response) -> None:
+    """Check rate limit headers and wait if necessary."""
+    remaining = response.headers.get("X-RateLimit-Remaining")
+    reset_time = response.headers.get("X-RateLimit-Reset")
+
+    if remaining is not None and int(remaining) < 10:
+        if reset_time is not None:
+            reset_timestamp = int(reset_time)
+            current_time = int(time.time())
+            wait_time = max(0, reset_timestamp - current_time)
+            if wait_time > 0:
+                print(
+                    f"Rate limit nearly exhausted ({remaining} remaining). Waiting {wait_time}s until reset..."
+                )
+                time.sleep(wait_time + 1)  # Add 1 second buffer
+
+
+def make_github_request(
+    method: str,
+    url: str,
+    headers: dict,
+    max_retries: int = 3,
+    **kwargs,
+) -> requests.Response:
+    """Make a GitHub API request with rate limiting and retry logic."""
+    for attempt in range(max_retries):
+        try:
+            if method.upper() == "GET":
+                response = requests.get(url, headers=headers, **kwargs)
+            elif method.upper() == "PATCH":
+                response = requests.patch(url, headers=headers, **kwargs)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
+
+            # Check for rate limiting before raising for status
+            if response.status_code == 403:
+                # Check if it's a rate limit error
+                if (
+                    "X-RateLimit-Remaining" in response.headers
+                    and int(response.headers["X-RateLimit-Remaining"]) == 0
+                ):
+                    reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
+                    current_time = int(time.time())
+                    wait_time = max(0, reset_time - current_time) + 1
+                    print(f"Rate limit exceeded. Waiting {wait_time}s until reset...")
+                    time.sleep(wait_time)
+                    continue  # Retry the request
+
+            response.raise_for_status()
+            check_rate_limit(response)
+            return response
+
+        except requests.exceptions.RequestException as exc:
+            if attempt == max_retries - 1:
+                raise
+            # Exponential backoff
+            backoff_time = 2**attempt
+            print(
+                f"Request failed (attempt {attempt + 1}/{max_retries}): {exc}. Retrying in {backoff_time}s..."
+            )
+            time.sleep(backoff_time)
+
+    raise SystemExit("Failed to complete request after maximum retries")
+
+
 def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
     prs: List[PullRequest] = []
     page = 1
     while True:
         try:
-            response = requests.get(
+            response = make_github_request(
+                "GET",
                 f"https://api.github.com/repos/{repo}/pulls",
                 headers=github_headers(token),
                 params={"state": "open", "per_page": 100, "page": page},
                 timeout=30,
             )
-            response.raise_for_status()
         except requests.exceptions.RequestException as exc:
-            raise SystemExit(f"Failed to fetch open PRs for repo '{repo}' (page {page}): {exc}") from exc
+            raise SystemExit(
+                f"Failed to fetch open PRs for repo '{repo}' (page {page}): {exc}"
+            ) from exc
         data = response.json()
         if not data:
             break
         for item in data:
-            updated_at = datetime.fromisoformat(item["updated_at"].replace("Z", "+00:00"))
+            updated_at = datetime.fromisoformat(
+                item["updated_at"].replace("Z", "+00:00")
+            )
             prs.append(
                 PullRequest(
                     number=item["number"],
@@ -97,13 +175,13 @@ def stale_prs(prs: Iterable[PullRequest], days: int) -> List[PullRequest]:
 
 
 def close_pr(token: str, repo: str, pr: PullRequest) -> None:
-    response = requests.patch(
+    make_github_request(
+        "PATCH",
         f"https://api.github.com/repos/{repo}/pulls/{pr.number}",
         headers=github_headers(token),
         json={"state": "closed"},
         timeout=30,
     )
-    response.raise_for_status()
 
 
 def close_prs(
