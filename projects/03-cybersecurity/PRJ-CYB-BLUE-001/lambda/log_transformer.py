@@ -19,6 +19,9 @@ from typing import Dict, List, Any
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Constants
+DATA_SAMPLE_LENGTH = 100  # Number of characters to include in error log samples
+
 # Common schema field names
 COMMON_SCHEMA = {
     "timestamp": "@timestamp",
@@ -47,6 +50,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     output_records = []
 
     for record in event["records"]:
+        payload = None  # Track decoded payload for error logging
         try:
             # Decode the incoming record
             payload = base64.b64decode(record["data"]).decode("utf-8")
@@ -65,16 +69,69 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
             output_records.append(output_record)
 
-        except Exception as e:
-            logger.error(f"Error processing record {record['recordId']}: {str(e)}")
-            # Mark as failed but allow Firehose to retry or send to S3 backup
-            output_records.append(
-                {
-                    "recordId": record["recordId"],
-                    "result": "ProcessingFailed",
-                    "data": record["data"],
+        except json.JSONDecodeError as e:
+            # This occurs after successful base64/utf-8 decode, so payload contains the decoded text
+            logger.error(
+                f"JSON parse error in record {record['recordId']}: {str(e)}",
+                extra={
+                    'record_id': record['recordId'],
+                    'error_type': 'JSONDecodeError',
+                    'data_sample': payload[:DATA_SAMPLE_LENGTH] if payload else record['data'][:DATA_SAMPLE_LENGTH]
                 }
             )
+            output_records.append({
+                'recordId': record['recordId'],
+                'result': 'ProcessingFailed',
+                'data': record['data']
+            })
+
+        except (UnicodeDecodeError, ValueError) as e:
+            # This occurs during base64 or UTF-8 decode, so we log the raw base64 data
+            logger.error(
+                f"Decode error in record {record['recordId']}: {str(e)}",
+                extra={
+                    'record_id': record['recordId'],
+                    'error_type': type(e).__name__,
+                    'data_sample': record['data'][:DATA_SAMPLE_LENGTH]
+                }
+            )
+            output_records.append({
+                'recordId': record['recordId'],
+                'result': 'ProcessingFailed',
+                'data': record['data']
+            })
+
+        except KeyError as e:
+            logger.warning(
+                f"Missing required field {str(e)} in record {record['recordId']}",
+                extra={
+                    'record_id': record['recordId'],
+                    'error_type': 'MissingField',
+                    'missing_field': str(e)
+                }
+            )
+            # Depending on field, might want to use default value instead of failing
+            output_records.append({
+                'recordId': record['recordId'],
+                'result': 'ProcessingFailed',
+                'data': record['data']
+            })
+
+        except Exception as e:
+            logger.error(
+                f"Unexpected error processing record {record['recordId']}: {str(e)}",
+                extra={
+                    'record_id': record['recordId'],
+                    'error_type': type(e).__name__,
+                    'error_message': str(e)
+                },
+                exc_info=True  # Include full traceback
+            )
+            output_records.append({
+                'recordId': record['recordId'],
+                'result': 'ProcessingFailed',
+                'data': record['data']
+            })
 
     logger.info(
         f"Successfully processed {sum(1 for r in output_records if r['result'] == 'Ok')} records"

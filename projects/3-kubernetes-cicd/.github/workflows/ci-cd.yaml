@@ -135,8 +135,22 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - name: Run Trivy vulnerability scanner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (fail on CRITICAL)
         uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL'
+
+      - name: Run Trivy for SARIF report (HIGH and above)
+        uses: aquasecurity/trivy-action@master
+        if: always()
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: 'sarif'
@@ -148,6 +162,13 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
+
+      - name: Run Dockle container linter
+        uses: erzz/dockle-action@v1
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          failure-threshold: high
+          exit-code: 1
 
   # Job 5: Deploy to dev (auto on develop branch)
   deploy-dev:
@@ -180,7 +201,8 @@ jobs:
       - name: Run smoke tests
         run: |
           echo "Running smoke tests against dev environment"
-          # curl https://dev-k8s-demo.example.com/health
+          chmod +x ${{ env.PROJECT_DIR }}/scripts/smoke-test.sh
+          # ${{ env.PROJECT_DIR }}/scripts/smoke-test.sh https://dev-k8s-demo.example.com
 
   # Job 6: Deploy to staging (manual approval)
   deploy-staging:
@@ -203,6 +225,8 @@ jobs:
       - name: Run smoke tests
         run: |
           echo "Running smoke tests against staging"
+          chmod +x ${{ env.PROJECT_DIR }}/scripts/smoke-test.sh
+          # ${{ env.PROJECT_DIR }}/scripts/smoke-test.sh https://staging-k8s-demo.example.com
 
   # Job 7: Deploy to production (ArgoCD, manual approval required)
   deploy-production:
@@ -243,8 +267,17 @@ jobs:
       - name: Run production smoke tests
         run: |
           echo "Running production smoke tests"
-          # curl https://k8s-demo.example.com/health
-          # Run comprehensive health checks
+          chmod +x ${{ env.PROJECT_DIR }}/scripts/smoke-test.sh
+          # ${{ env.PROJECT_DIR }}/scripts/smoke-test.sh https://k8s-demo.example.com
+
+      - name: Run load tests (optional)
+        if: false  # Enable when ready for load testing
+        run: |
+          pip install requests
+          python ${{ env.PROJECT_DIR }}/scripts/load-test.py \
+            --host https://k8s-demo.example.com \
+            --users 10 \
+            --duration 30
 
   # Job 8: Rollback on failure
   rollback:

@@ -9,7 +9,7 @@ For cross-project documentation, standards, and runbooks, see the [Portfolio Doc
 | --- | --- |
 | Live URL | `https://13-advanced-cybersecurity.staging.portfolio.example.com` |
 | DNS | `13-advanced-cybersecurity.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
-| Deployment environment | Staging (AWS us-east-1, containerized services) |
+| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `terraform/`, `infra/`, or `deploy/` for this project) |
 
 ### Deployment automation
 - **CI/CD:** GitHub Actions [`/.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`/.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.

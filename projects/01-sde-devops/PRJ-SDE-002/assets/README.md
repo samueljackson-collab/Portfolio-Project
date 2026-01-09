@@ -13,10 +13,13 @@ Evidence and configurations for PRJ-SDE-002, covering Prometheus, Alertmanager, 
 - Infrastructure USE view: [`grafana/dashboards/infrastructure-overview.json`](./grafana/dashboards/infrastructure-overview.json)
 - Application RED view: [`grafana/dashboards/application-metrics.json`](./grafana/dashboards/application-metrics.json)
 - Backup/PBS health: [`grafana/dashboards/backup-health.json`](./grafana/dashboards/backup-health.json)
+- Infrastructure overview export: [`grafana/dashboards/infra-overview-export.json`](./grafana/dashboards/infra-overview-export.json)
+- Service health export: [`grafana/dashboards/service-health.json`](./grafana/dashboards/service-health.json)
+- Alerts overview export: [`grafana/dashboards/alerts-overview.json`](./grafana/dashboards/alerts-overview.json)
 
 ## Configurations
-- Prometheus: [`configs/prometheus.yml`](./configs/prometheus.yml) and alert rules [`configs/alert-rules.yml`](./configs/alert-rules.yml), [`configs/alerts/demo-alerts.yml`](./configs/alerts/demo-alerts.yml)
-- Alertmanager: [`alertmanager/alertmanager.yml`](./alertmanager/alertmanager.yml) (use `.env.example` for secrets)
+- Prometheus: [`configs/prometheus.yml`](./configs/prometheus.yml) and example [`configs/prometheus.example.yml`](./configs/prometheus.example.yml) plus alert rules [`configs/alert-rules.yml`](./configs/alert-rules.yml), [`configs/alerts/demo-alerts.yml`](./configs/alerts/demo-alerts.yml)
+- Alertmanager: [`alertmanager/alertmanager.yml`](./alertmanager/alertmanager.yml) and example [`alertmanager/alertmanager.example.yml`](./alertmanager/alertmanager.example.yml) (use `.env.example` for secrets)
 - Loki/Promtail: [`loki/loki-config.yml`](./loki/loki-config.yml), [`loki/promtail-config.yml`](./loki/promtail-config.yml)
 
 ## Backups (PBS)
@@ -50,9 +53,10 @@ Supporting materials for the Observability & Backups Stack. Dashboards, configs,
 ## Contents
 - **docs/** — [Monitoring philosophy](./docs/monitoring-philosophy.md) (USE/RED), dashboard rationale, alert mapping, backups approach, and lessons learned.
 - **runbooks/** — [Alert responses](./runbooks/ALERT_RESPONSES.md) and [operational playbook](./runbooks/OPERATIONAL_RUNBOOK.md) for triage and recovery.
-- **grafana/dashboards/** — JSON exports for Infrastructure Overview, Application Metrics, Alert Operations, and PBS Backups.
+- **grafana/dashboards/** — JSON exports for Infrastructure Overview, Service Health, Alerts Overview, Application Metrics, Alert Operations, and PBS Backups.
 - **screenshots/** — Sanitized dashboard, targets, and alert snapshots (SVG placeholders).
-- **configs/** — Prometheus, Alertmanager, Loki, and Promtail example configs (placeholders for endpoints/webhooks).
+- **configs/** — Prometheus example configs (placeholders for endpoints/webhooks).
+- **alertmanager/** — Alertmanager example configs (placeholder webhooks and SMTP).
 - **backups/** — PBS job plan and retention report summarizing backup posture.
 - **scripts/** — Helpers such as `verify-pbs-backups.sh` for sandbox restore checks.
 - **diagrams/** — Architecture diagrams for topology context.

@@ -9,10 +9,10 @@ For cross-project documentation, standards, and runbooks, see the [Portfolio Doc
 | --- | --- |
 | Live URL | `https://10-blockchain-smart-contract-platform.staging.portfolio.example.com` |
 | DNS | `10-blockchain-smart-contract-platform.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
-| Deployment environment | Staging (AWS us-east-1, containerized services; contracts deployed via Hardhat scripts) |
+| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `scripts/` for this project) |
 
 ### Deployment automation
-- **CI/CD:** GitHub Actions [`/.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`/.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
+- **CI/CD:** GitHub Actions [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
 - **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
 
 ### Monitoring

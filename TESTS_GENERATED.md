@@ -1,5 +1,7 @@
 # Unit Tests Generated for Documentation
 
+> **Historical snapshot**: This document tracks a prior documentation test generation pass. For the canonical testing overview, see [TEST_SUMMARY.md](TEST_SUMMARY.md).
+
 ## Summary
 
 Successfully generated comprehensive unit tests for the documentation changes in this branch.

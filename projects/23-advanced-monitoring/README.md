@@ -29,8 +29,9 @@ Enterprise-grade monitoring and observability stack featuring Prometheus, Grafan
 - **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
 
 ### Monitoring
-- **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)
-- **Grafana:** `https://grafana.staging.portfolio.example.com` (dashboard JSON: `grafana/dashboards/*.json`)
+- **Prometheus:** `https://monitoring.example.com/prometheus` (scrape config: `prometheus/prometheus.yml`)
+- **Grafana:** `https://monitoring.example.com/grafana` (dashboard JSON: `grafana/dashboards/*.json`)
+- **Alertmanager:** `https://monitoring.example.com/alertmanager` (routing config: `alertmanager/alertmanager.yml`)
 
 ### Live deployment screenshots
 ![Live deployment dashboard](../../assets/screenshots/live-deployment-placeholder.svg)

@@ -19,6 +19,8 @@ Comprehensive monitoring, logging, alerting, and backup automation for the homel
 - [Screenshots](./assets/screenshots)
 - [Log Samples](./assets/logs)
 - [Prometheus/Alertmanager/Loki/Promtail Configs](./assets/configs)
+- [Prometheus Example Config](./assets/configs/prometheus.example.yml)
+- [Alertmanager Example Config](./assets/alertmanager/alertmanager.example.yml)
 - [PBS Jobs & Retention Evidence](./assets/backups)
 - [Parent Documentation](../../../README.md)
 
@@ -76,10 +78,14 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 
 **Configuration Locations (portfolio mirrors)**:
 - Prometheus: [`assets/configs/prometheus.yml`](./assets/configs/prometheus.yml), alert rules in [`assets/configs/alerts/`](./assets/configs/alerts/)
-- Grafana dashboards: [`assets/grafana/dashboards/`](./assets/grafana/dashboards/)
+- Grafana dashboards: [`assets/grafana/dashboards/`](./assets/grafana/dashboards/), including
+  [`infra-overview-export.json`](./assets/grafana/dashboards/infra-overview-export.json),
+  [`service-health.json`](./assets/grafana/dashboards/service-health.json), and
+  [`alerts-overview.json`](./assets/grafana/dashboards/alerts-overview.json)
 - Loki: [`assets/loki/loki-config.yml`](./assets/loki/loki-config.yml)
 - Promtail: [`assets/loki/promtail-config.yml`](./assets/loki/promtail-config.yml)
-- Alertmanager: [`assets/alertmanager/alertmanager.yml`](./assets/alertmanager/alertmanager.yml)
+- Alertmanager: [`assets/alertmanager/alertmanager.yml`](./assets/alertmanager/alertmanager.yml) and
+  [`assets/alertmanager/alertmanager.example.yml`](./assets/alertmanager/alertmanager.example.yml)
 
 **Service Management (example)**:
 - `sudo systemctl enable --now prometheus`
