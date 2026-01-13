@@ -141,7 +141,7 @@ fix_javascript() {
 
     # Install dev tools
     echo "📦 Installing linting tools..."
-    npm install eslint prettier eslint-config-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser --silent 2>/dev/null || true
+    npm install -D eslint prettier eslint-config-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser --silent 2>/dev/null || true
 
     # Create ESLint config if not exists
     if [ ! -f "eslint.config.js" ] && [ ! -f "eslint.config.mjs" ] && \
@@ -329,10 +329,10 @@ fix_security() {
     echo "🔍 Scanning for potential secrets..."
     SECRETS=$(grep -rn --include="*.py" --include="*.js" --include="*.ts" --include="*.yaml" --include="*.yml" \
         -E "(password|secret|api_key|apikey|token|credential).*=.*['\"][^'\"]+['\"]" . 2>/dev/null | \
-        grep -vi -e "example" -e "placeholder" -e "your_")
+        grep -vi -e "example" -e "placeholder" -e "your_" | head -20)
 
     if [ -n "$SECRETS" ]; then
-        print_warning "Potential hardcoded secrets found:"
+        print_warning "Potential hardcoded secrets found (showing first 20):"
         echo "$SECRETS"
         echo ""
         echo "Please review and move to environment variables."
