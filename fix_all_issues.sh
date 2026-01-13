@@ -55,10 +55,8 @@ print_error() {
 fix_python() {
     print_header "🐍 Fixing Python Files"
 
-    # Check if Python files exist
-    PYTHON_FILES=$(find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*" -not -path "./node_modules/*" 2>/dev/null | head -1)
-
-    if [ -z "$PYTHON_FILES" ]; then
+    # Check if at least one Python file exists (excluding common virtualenv and node_modules)
+    if ! find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*" -not -path "./node_modules/*" -print -quit 2>/dev/null | grep -q .; then
         print_warning "No Python files found. Skipping."
         return 0
     fi
