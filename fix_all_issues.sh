@@ -217,7 +217,15 @@ fix_yaml_json() {
     find . -name "*.json" -not -path "./node_modules/*" 2>/dev/null | while read file; do
         if [ -f "$file" ]; then
             # Use Python to format JSON
-            python3 -c "import json; f=open('$file'); d=json.load(f); f.close(); f=open('$file','w'); json.dump(d,f,indent=2); f.close()" 2>/dev/null || true
+            python3 -c 'import json, sys; path=sys.argv[1];
+try:
+    with open(path, "r+") as f:
+        data = json.load(f)
+        f.seek(0)
+        f.truncate()
+        json.dump(data, f, indent=2)
+except (json.JSONDecodeError, IsADirectoryError, UnicodeDecodeError):
+    pass # Ignore non-JSON files, directories, or binary files' "$file"
         fi
     done
 
