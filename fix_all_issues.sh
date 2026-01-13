@@ -200,10 +200,9 @@ fix_yaml_json() {
 
     # Fix YAML indentation (tabs to spaces)
     echo "🔧 Fixing YAML indentation..."
-    find . -name "*.yaml" -o -name "*.yml" 2>/dev/null | while read file; do
-        if [ -f "$file" ]; then
-            sed -i 's/\t/  /g' "$file" 2>/dev/null || true
-        fi
+    find . \( -name "*.yaml" -o -name "*.yml" \) -type f -print0 2>/dev/null | while IFS= read -r -d '' file; do
+        # Use portable sed -i by creating a backup and removing it on success.
+        sed -i.bak 's/\t/  /g' "$file" && rm -f "$file.bak"
     done
 
     # Validate YAML if yamllint is available
