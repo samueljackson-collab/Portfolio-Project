@@ -61,9 +61,29 @@ fix_python() {
         return 0
     fi
 
-    # Install tools if needed
-    echo "📦 Installing Python tools..."
-    pip install black isort autoflake flake8 bandit safety --quiet
+    # Check for required Python tools
+    REQUIRED_PY_TOOLS=("black" "isort" "autoflake" "flake8" "bandit" "safety")
+    MISSING_PY_TOOLS=()
+    for tool in "${REQUIRED_PY_TOOLS[@]}"; do
+        if ! command -v "$tool" >/dev/null 2>&1; then
+            MISSING_PY_TOOLS+=("$tool")
+        fi
+    done
+
+    if [ "${#MISSING_PY_TOOLS[@]}" -ne 0 ]; then
+        print_warning "Missing Python tools: ${MISSING_PY_TOOLS[*]}"
+        echo "Installing missing tools (recommended to use a virtual environment)..."
+        echo "To use a virtual environment:"
+        echo "  python -m venv .venv"
+        echo "  source .venv/bin/activate"
+        echo "  pip install black isort autoflake flake8 bandit safety"
+        echo ""
+        echo "Installing globally for now..."
+        pip install "${MISSING_PY_TOOLS[@]}" --quiet 2>/dev/null || {
+            print_error "Failed to install Python tools. Please install manually."
+            return 1
+        }
+    fi
 
     # Run black formatter
     echo "🔧 Running black formatter..."
@@ -73,9 +93,14 @@ fix_python() {
     echo "🔧 Sorting imports with isort..."
     isort . --profile black --quiet 2>/dev/null || true
 
-    # Remove unused imports
-    echo "🔧 Removing unused imports..."
-    autoflake --in-place --remove-all-unused-imports --remove-unused-variables --recursive . 2>/dev/null || true
+    # Remove unused imports and variables
+    if [ "${DRY_RUN:-0}" -eq 1 ]; then
+        echo "🔍 Running autoflake in dry-run mode (no files will be modified)..."
+        autoflake --remove-all-unused-imports --remove-unused-variables --recursive . 2>/dev/null || true
+    else
+        echo "🔧 Removing unused imports and unused variables..."
+        autoflake --in-place --remove-all-unused-imports --remove-unused-variables --recursive . 2>/dev/null || true
+    fi
 
     # Check for remaining issues
     echo "📋 Checking for remaining issues..."
@@ -103,7 +128,7 @@ fix_javascript() {
     if [ ! -f "package.json" ]; then
         # Check subdirectories
         if [ -f "frontend/package.json" ]; then
-            cd frontend
+            pushd frontend > /dev/null 2>&1 || return 1
         else
             print_warning "No package.json found. Skipping JS/TS fixes."
             return 0
@@ -116,7 +141,41 @@ fix_javascript() {
 
     # Install dev tools
     echo "📦 Installing linting tools..."
-    npm install -D eslint prettier eslint-config-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser --silent 2>/dev/null || true
+    npm install eslint prettier eslint-config-prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser --silent 2>/dev/null || true
+
+    # Create ESLint config if not exists
+    if [ ! -f "eslint.config.js" ] && [ ! -f "eslint.config.mjs" ] && \
+       [ ! -f ".eslintrc" ] && [ ! -f ".eslintrc.js" ] && \
+       [ ! -f ".eslintrc.cjs" ] && [ ! -f ".eslintrc.json" ]; then
+        echo "📝 Creating default ESLint configuration..."
+        cat > .eslintrc.json << 'ESLINT'
+{
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "ignorePatterns": [
+    "dist/",
+    "build/",
+    "node_modules/"
+  ]
+}
+ESLINT
+    fi
 
     # Create prettier config if not exists
     if [ ! -f ".prettierrc" ] && [ ! -f ".prettierrc.json" ]; then
@@ -150,7 +209,7 @@ PRETTIER
     print_success "JavaScript/TypeScript fixes applied!"
 
     # Return to original directory if we changed
-    cd - > /dev/null 2>&1 || true
+    popd > /dev/null 2>&1 || true
 }
 
 #==============================================================================
@@ -215,18 +274,19 @@ fix_yaml_json() {
 
     # Fix JSON formatting
     echo "🔧 Fixing JSON formatting..."
-    find . -name "*.json" -not -path "./node_modules/*" 2>/dev/null | while read file; do
+    find . -name "*.json" -not -path "./node_modules/*" 2>/dev/null | while read -r file; do
         if [ -f "$file" ]; then
-            # Use Python to format JSON
-            python3 -c 'import json, sys; path=sys.argv[1];
+            # Use Python to format JSON (pass filename as argument to avoid code injection)
+            python3 -c 'import json, sys
 try:
-    with open(path, "r+") as f:
+    with open(sys.argv[1], "r+") as f:
         data = json.load(f)
         f.seek(0)
         f.truncate()
         json.dump(data, f, indent=2)
 except (json.JSONDecodeError, IsADirectoryError, UnicodeDecodeError):
-    pass # Ignore non-JSON files, directories, or binary files' "$file"
+    pass  # Ignore non-JSON files, directories, or binary files
+' "$file" 2>/dev/null || true
         fi
     done
 
@@ -239,8 +299,8 @@ except (json.JSONDecodeError, IsADirectoryError, UnicodeDecodeError):
 fix_dockerfiles() {
     print_header "🐳 Fixing Dockerfiles"
 
-    # Find Dockerfiles
-    DOCKERFILES=$(find . -name "Dockerfile*" 2>/dev/null)
+    # Find Dockerfiles (exact name or with extensions like Dockerfile.dev)
+    DOCKERFILES=$(find . \( -name Dockerfile -o -name 'Dockerfile.*' \) 2>/dev/null)
 
     if [ -z "$DOCKERFILES" ]; then
         print_warning "No Dockerfiles found. Skipping."
@@ -269,7 +329,7 @@ fix_security() {
     echo "🔍 Scanning for potential secrets..."
     SECRETS=$(grep -rn --include="*.py" --include="*.js" --include="*.ts" --include="*.yaml" --include="*.yml" \
         -E "(password|secret|api_key|apikey|token|credential).*=.*['\"][^'\"]+['\"]" . 2>/dev/null | \
-        grep -v "example" | grep -v "placeholder" | grep -v "your_" | head -5)
+        grep -vi -e "example" -e "placeholder" -e "your_")
 
     if [ -n "$SECRETS" ]; then
         print_warning "Potential hardcoded secrets found:"
@@ -282,9 +342,30 @@ fix_security() {
 
     # Check Python dependencies
     if [ -f "requirements.txt" ]; then
-        echo "📦 Checking Python dependencies for vulnerabilities..."
-        pip install safety --quiet 2>/dev/null || true
-        safety check -r requirements.txt 2>/dev/null | head -10 || true
+        if [ ! -s "requirements.txt" ]; then
+            print_warning "requirements.txt exists but is empty; skipping safety dependency check."
+        else
+            echo "📦 Checking Python dependencies for vulnerabilities..."
+            if ! command -v safety >/dev/null 2>&1; then
+                pip install safety --quiet 2>/dev/null || {
+                    print_warning "Unable to install 'safety'; skipping Python dependency vulnerability check."
+                    return
+                }
+            fi
+
+            # Run safety without truncating output; capture exit code explicitly
+            set +e
+            SAFETY_OUTPUT="$(safety check -r requirements.txt 2>&1)"
+            SAFETY_EXIT_CODE=$?
+            set -e
+
+            if [ "$SAFETY_EXIT_CODE" -ne 0 ]; then
+                print_warning "Safety check encountered an issue (exit code $SAFETY_EXIT_CODE):"
+                echo "$SAFETY_OUTPUT"
+            else
+                echo "$SAFETY_OUTPUT"
+            fi
+        fi
     fi
 
     # Check npm dependencies
@@ -306,9 +387,9 @@ commit_fixes() {
         return 0
     fi
 
-    # Stage all changes
+    # Stage tracked changes (modified/deleted), but do not add new untracked files
     echo "📁 Staging changes..."
-    git add .
+    git add -u
 
     # Show what changed
     echo "📋 Changes to commit:"
@@ -326,9 +407,7 @@ Applied automatic fixes:
 - Python: black, isort, autoflake
 - JavaScript/TypeScript: ESLint, Prettier
 - Terraform: terraform fmt
-- YAML/JSON: indentation fixes
-
-Co-authored-by: CI Bot <ci@example.com>"
+- YAML/JSON: indentation fixes"
 
         print_success "Changes committed!"
 
