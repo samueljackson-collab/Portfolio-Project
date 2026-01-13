@@ -11,7 +11,7 @@ Owner: Data Engineering Team
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.operators.postgres_operator import PostgresOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
 from airflow.exceptions import AirflowException

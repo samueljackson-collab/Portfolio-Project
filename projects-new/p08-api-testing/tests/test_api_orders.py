@@ -17,11 +17,6 @@ class TestOrdersCRUD:
     """Test suite for Orders CRUD operations"""
 
     @pytest.fixture
-    def api_client(self, base_url, auth_token):
-        """Create API client with authentication"""
-        return APIClient(base_url, auth_token)
-
-    @pytest.fixture
     def sample_order(self):
         """Sample order payload for testing"""
         return {
@@ -377,39 +372,3 @@ class TestOrdersResponseTime:
         assert response.status_code == 201
         response_time_ms = response.elapsed.total_seconds() * 1000
         assert response_time_ms < 2000, f"Response took {response_time_ms}ms, should be < 2000ms"
-
-
-class APIClient:
-    """Helper class for making API requests"""
-
-    def __init__(self, base_url: str, auth_token: str):
-        self.base_url = base_url.rstrip("/")
-        self.auth_token = auth_token
-        self.session = requests.Session()
-        self.session.headers.update({
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {auth_token}"
-        })
-
-    def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None):
-        url = f"{self.base_url}{endpoint}"
-        return self.session.get(url, params=params)
-
-    def post(self, endpoint: str, json: Dict[str, Any]):
-        url = f"{self.base_url}{endpoint}"
-        return self.session.post(url, json=json)
-
-    def put(self, endpoint: str, json: Dict[str, Any]):
-        url = f"{self.base_url}{endpoint}"
-        return self.session.put(url, json=json)
-
-    def patch(self, endpoint: str, json: Dict[str, Any]):
-        url = f"{self.base_url}{endpoint}"
-        return self.session.patch(url, json=json)
-
-    def delete(self, endpoint: str):
-        url = f"{self.base_url}{endpoint}"
-        return self.session.delete(url)
-
-    def close(self):
-        self.session.close()

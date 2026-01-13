@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from pathlib import Path
 
 ARTIFACT = Path("artifacts/cost_report.json")
@@ -16,7 +17,7 @@ def calculate_savings(current_month: float, rightsized: float, spot: float) -> d
 
 def main():
     savings = calculate_savings(current_month=12000.0, rightsized=1800.0, spot=950.0)
-    ARTIFACT.write_text(str(savings))
+    ARTIFACT.write_text(json.dumps(savings, indent=2))
     print("Cost optimization demo complete. See artifacts/cost_report.json")
 
 

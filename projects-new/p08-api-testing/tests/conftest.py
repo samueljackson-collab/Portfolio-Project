@@ -92,7 +92,7 @@ def http_client():
 @pytest.fixture
 def api_client(base_url, auth_token):
     """Create authenticated API client"""
-    from test_api_orders import APIClient
+    from api_client import APIClient
     client = APIClient(base_url, auth_token)
     yield client
     client.close()
@@ -127,8 +127,11 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment(api_health_check):
-    """Setup test environment"""
-    pass
+    """Setup test environment and ensure API is healthy before running tests"""
+    # API health check is performed by the api_health_check fixture
+    # Additional setup can be added here if needed (e.g., database seeding)
+    yield
+    # Teardown actions can be added here if needed
 
 
 @pytest.fixture

@@ -1,3 +1,4 @@
+import os
 from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
@@ -14,9 +15,6 @@ class Todo(BaseModel):
 def check_api_key(x_api_key: Optional[str]):
     if API_KEY and x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="invalid api key")
-
-
-import os
 
 @app.on_event("startup")
 async def load_key():
