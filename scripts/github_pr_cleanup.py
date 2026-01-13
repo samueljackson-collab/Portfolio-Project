@@ -5,6 +5,21 @@ Usage examples:
   python scripts/github_pr_cleanup.py --list
   python scripts/github_pr_cleanup.py --dry-run --close-stale --days 30
   python scripts/github_pr_cleanup.py --close-stale --days 90 --max 200
+
+Environment:
+  This script requires the following environment variables:
+
+    GITHUB_TOKEN
+      A GitHub personal access token used to authenticate API requests.
+      You can create a token from:
+        https://github.com/settings/tokens
+      For classic tokens, grant at least the "repo" scope for private
+      repositories, or appropriate fine-grained permissions to read and
+      modify pull requests in the target repository.
+
+    GITHUB_REPO
+      The repository to operate on, in "owner/repo" format, for example:
+        octocat/Hello-World
 """
 
 from __future__ import annotations
@@ -190,13 +205,18 @@ def stale_prs(prs: Iterable[PullRequest], days: int) -> List[PullRequest]:
 
 
 def close_pr(token: str, repo: str, pr: PullRequest) -> None:
-    make_github_request(
-        "PATCH",
-        f"https://api.github.com/repos/{repo}/pulls/{pr.number}",
-        headers=github_headers(token),
-        json={"state": "closed"},
-        timeout=30,
-    )
+    try:
+        response = requests.patch(
+            f"https://api.github.com/repos/{repo}/pulls/{pr.number}",
+            headers=github_headers(token),
+            json={"state": "closed"},
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as exc:
+        raise SystemExit(
+            f"Failed to close PR #{pr.number} ({pr.title!r}): {exc}"
+        ) from exc
 
 
 def close_prs(
@@ -215,10 +235,26 @@ def close_prs(
             close_pr(token, repo, pr)
 
 
+def validate_github_repo(repo: str) -> str:
+    """
+    Validate that the repository identifier is in the 'owner/repo' format.
+
+    Raises:
+        ValueError: If the repository string is not in the expected format.
+    """
+    owner, sep, name = repo.partition("/")
+    if sep != "/" or not owner or not name or "/" in name:
+        raise ValueError(
+            f"Invalid GITHUB_REPO value: {repo!r}. Expected format 'owner/repo'."
+        )
+    return repo
+
+
 def main() -> None:
     args = parse_args()
     token = get_env("GITHUB_TOKEN")
-    repo = get_env("GITHUB_REPO")
+    repo_raw = get_env("GITHUB_REPO")
+    repo = validate_github_repo(repo_raw)
 
     open_prs = fetch_open_prs(token, repo)
     open_prs.sort(key=lambda pr: pr.updated_at)
