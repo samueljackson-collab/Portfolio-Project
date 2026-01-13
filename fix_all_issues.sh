@@ -65,7 +65,7 @@ fix_python() {
 
     # Install tools if needed
     echo "📦 Installing Python tools..."
-    pip install black isort autoflake flake8 bandit safety --quiet 2>/dev/null || true
+    pip install black isort autoflake flake8 bandit safety --quiet
 
     # Run black formatter
     echo "🔧 Running black formatter..."
