@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Report Generator API
+  report-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: report-generator
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - OUTPUT_DIR=/app/output
+      - TEMPLATE_DIR=/app/templates
+      - SMTP_HOST=${SMTP_HOST:-localhost}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SCHEDULE_ENABLED=${SCHEDULE_ENABLED:-false}
+      - REPORT_SCHEDULE=${REPORT_SCHEDULE:-0 9 * * 1}
+    volumes:
+      - ./src:/app/src:ro
+      - ./templates:/app/templates:ro
+      - ./config:/app/config:ro
+      - report-output:/app/output
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "src/health_check.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - report-network
+
+  # Scheduled report runner
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: report-scheduler
+    command: ["python", "-m", "src.scheduler"]
+    environment:
+      - PYTHONPATH=/app
+      - OUTPUT_DIR=/app/output
+      - TEMPLATE_DIR=/app/templates
+      - SMTP_HOST=${SMTP_HOST:-localhost}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SCHEDULE_ENABLED=true
+      - REPORT_SCHEDULE=${REPORT_SCHEDULE:-0 9 * * 1}
+    volumes:
+      - ./src:/app/src:ro
+      - ./templates:/app/templates:ro
+      - ./config:/app/config:ro
+      - report-output:/app/output
+      - ./data:/app/data
+    profiles:
+      - scheduled
+    networks:
+      - report-network
+
+  # MailHog for local email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: report-mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    profiles:
+      - dev
+    networks:
+      - report-network
+
+  # Test runner
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["pytest", "-v", "--cov=src", "--cov-report=html"]
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./templates:/app/templates:ro
+      - ./coverage:/app/htmlcov
+    profiles:
+      - testing
+    networks:
+      - report-network
+
+volumes:
+  report-output:
+
+networks:
+  report-network:
+    driver: bridge

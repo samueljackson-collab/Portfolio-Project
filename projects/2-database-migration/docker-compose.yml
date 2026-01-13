@@ -1,0 +1,116 @@
+version: '3.8'
+
+# Production-like environment for database migration
+# For full demo with all services, use: docker compose -f compose.demo.yml up
+
+services:
+  # Source PostgreSQL database
+  source-db:
+    image: postgres:15
+    container_name: migration-source-db
+    environment:
+      POSTGRES_DB: sourcedb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+      - "-c"
+      - "max_wal_senders=10"
+      - "-c"
+      - "max_replication_slots=10"
+    ports:
+      - "5432:5432"
+    volumes:
+      - source-db-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Target PostgreSQL database
+  target-db:
+    image: postgres:15
+    container_name: migration-target-db
+    environment:
+      POSTGRES_DB: targetdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - target-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Migration Orchestrator
+  migration-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: migration-orchestrator
+    depends_on:
+      source-db:
+        condition: service_healthy
+      target-db:
+        condition: service_healthy
+    environment:
+      SOURCE_DB_URL: postgresql://postgres:postgres@source-db:5432/sourcedb
+      TARGET_DB_URL: postgresql://postgres:postgres@target-db:5432/targetdb
+      MIGRATION_STRATEGY: full-load
+      BATCH_SIZE: 5000
+      PARALLEL_WORKERS: 2
+      ENABLE_VALIDATION: "true"
+      LOG_LEVEL: INFO
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./src:/app/src:ro
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "src/health_check.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - migration-network
+
+  # Test runner
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["pytest", "-v", "--cov=src", "--cov-report=html"]
+    depends_on:
+      source-db:
+        condition: service_healthy
+      target-db:
+        condition: service_healthy
+    environment:
+      SOURCE_DB_URL: postgresql://postgres:postgres@source-db:5432/sourcedb
+      TARGET_DB_URL: postgresql://postgres:postgres@target-db:5432/targetdb
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./coverage:/app/htmlcov
+    profiles:
+      - testing
+    networks:
+      - migration-network
+
+volumes:
+  source-db-data:
+  target-db-data:
+
+networks:
+  migration-network:
+    driver: bridge
