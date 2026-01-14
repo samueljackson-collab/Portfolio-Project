@@ -222,7 +222,7 @@
 
 ## 📝 SECTION 7: AI PROMPTS INVENTORY
 
-### Available Prompts from AI_PROMPTS_LIBRARY.md
+### Available Prompts from PORTFOLIO_DELIVERY_DOSSIER.md
 | # | Prompt | Est. Output | Priority |
 |---|--------|-------------|----------|
 | 1 | Multi-Region DR | 2,000+ lines | P1 |
@@ -247,7 +247,7 @@
 # 1. Push session code to GitHub
 # Note: Run the following commands from your local project root directory.
 git add -A
-git commit -m "feat: Add complete portfolio implementation (46 files, ~19,000 lines)"
+git commit -m "feat: Add complete portfolio implementation (~19,000 lines)"
 git push origin main
 
 # 2. Close stale PRs
