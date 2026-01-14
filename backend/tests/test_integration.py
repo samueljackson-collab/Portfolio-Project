@@ -134,11 +134,11 @@ class TestDatabaseTransactions:
         self,
         authenticated_client: AsyncClient
     ):
-        """Test that concurrent content creation works correctly."""
-        import asyncio
-
-        async def create_content(index: int):
-            return await authenticated_client.post(
+        """Test that multiple content creations work correctly."""
+        # Create 5 content items sequentially to avoid concurrent use of a
+        # shared async DB session.
+        for index in range(5):
+            result = await authenticated_client.post(
                 "/content/",
                 json={
                     "title": f"Concurrent Content {index}",
@@ -146,12 +146,6 @@ class TestDatabaseTransactions:
                     "is_published": True
                 }
             )
-
-        # Create 5 content items concurrently
-        results = await asyncio.gather(*[create_content(i) for i in range(5)])
-
-        # All should succeed
-        for result in results:
             assert result.status_code == 201
 
     async def test_user_can_only_modify_own_content(
