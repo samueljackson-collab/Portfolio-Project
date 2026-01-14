@@ -18,8 +18,8 @@
 | Projects with Real Code | ~5 | 🟢 Functional |
 | Open Pull Requests | 302 | 🔴 CRITICAL ISSUE |
 | Open Issues | 16 | 🟡 Needs attention |
-| Session Code (Local) | 47 files | ⚠️ NOT PUSHED |
-| Total Lines of Code | 21,325 | ✅ Production-Ready |
+| Lines of Code (Repo) | ~2,325 | ✅ In GitHub |
+| Lines of Code (Local) | ~19,000 | ⚠️ NOT PUSHED |
 | GitHub Commits | 387 | 📊 History exists |
 
 **CRITICAL GAP:** The session code (~19,000 lines) exists locally but ISN'T in GitHub!
