@@ -49,15 +49,15 @@ jobs:
 
     - name: Validate Markdown
       run: markdownlint '**/*.md' --ignore node_modules
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+      continue-on-error: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
     - name: Check Python formatting
       run: black --check .
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+      continue-on-error: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
     - name: Lint Python code
       run: ruff check .
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+      continue-on-error: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
     - name: Run unit tests with coverage
       run: |
@@ -68,7 +68,7 @@ jobs:
           -m "not integration" \
           --maxfail=1 \
           --durations=10
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+      continue-on-error: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
     - name: Run PostgreSQL integration tests
       env:
@@ -79,7 +79,7 @@ jobs:
         POSTGRES_SOURCE_DB: migration_source
         POSTGRES_TARGET_DB: migration_target
       run: pytest tests/integration -m integration --maxfail=1 --durations=10
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+      continue-on-error: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
@@ -140,11 +140,11 @@ jobs:
 
     - name: Lint
       run: npm run lint
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+      continue-on-error: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
     - name: Type check
       run: npm run type-check
-      continue-on-error: ${{ github.ref != 'refs/heads/main' }}
+      continue-on-error: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
 
     - name: Run tests with coverage
       run: npm run test:coverage -- --reporter=verbose
