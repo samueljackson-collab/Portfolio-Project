@@ -127,7 +127,8 @@ finishes.
 - [x] Producer/consumer demo services
 - [x] Stream validation tests
 
-### Future
+### Current
+- [ ] 
 - [ ] Backpressure/retry handling documented
 - [ ] Monitoring dashboard for lag/throughput
 - [ ] Architecture diagram + runbook for partition scaling
