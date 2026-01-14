@@ -245,7 +245,7 @@
 ### Phase 1: Critical Fixes (TODAY)
 ```bash
 # 1. Push session code to GitHub
-cd /home/claude/portfolio-project
+# Note: Run the following commands from your local project root directory.
 git add -A
 git commit -m "feat: Add complete portfolio implementation (46 files, ~19,000 lines)"
 git push origin main
