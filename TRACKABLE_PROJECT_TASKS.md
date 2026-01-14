@@ -166,7 +166,8 @@ finishes.
 - [x] Retry/backoff policies
 - [x] Unit tests for handlers
 
-### Future
+### Current
+- [ ] 
 - [ ] DLQ and failure handling
 - [ ] Local test setup (SAM/LocalStack)
 - [ ] Sequence diagram + runbook for event replay
