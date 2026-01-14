@@ -152,7 +152,7 @@
 ### Critical Missing (P0)
 | Item | Impact | Solution |
 |------|--------|----------|
-| **Session code not in GitHub** | Recruiters see empty folders | Push all /home/claude/portfolio-project/ |
+| **Session code not in GitHub** | Recruiters see empty folders | Push all code from the local project directory |
 | **302 Open PRs** | Looks unprofessional | Run github_pr_cleanup.py |
 | **No deployed demo** | Can't demonstrate working code | Deploy to Vercel/Railway |
 | **No screenshots** | No visual proof | Capture with demo running |
