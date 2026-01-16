@@ -141,7 +141,7 @@ class TestDatabaseTransactions:
             result = await authenticated_client.post(
                 "/content/",
                 json={
-                    "title": f"Concurrent Content {index}",
+                    "title": f"Sequential Content {index}",
                     "body": f"Body for content {index}",
                     "is_published": True
                 }
