@@ -1,0 +1,4 @@
+Area,Observation,Recommendation
+Dependency Updates,Backend dependencies lack dependabot automation.,Enable Dependabot for Python and Docker ecosystems.
+Grafana Credentials,Default admin credentials must be rotated post-deployment.,Store secrets in GitHub environments and inject at runtime.
+Documentation Sprawl,Multiple readiness guides overlap.,Consolidate references in DOCUMENTATION_INDEX.md with canonical links.
