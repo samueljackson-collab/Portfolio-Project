@@ -1,0 +1,40 @@
+version: '3.8'
+
+# IAM Hardening - LocalStack environment for IAM policy testing
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: iam-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=iam,sts,organizations,accessanalyzer
+      - DEBUG=1
+      - AWS_DEFAULT_REGION=us-east-1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iam-network
+
+  policy-validator:
+    build: .
+    container_name: iam-validator
+    environment:
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - ./src:/app/src:ro
+      - ./policies:/app/policies:ro
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - iam-network
+
+networks:
+  iam-network:
+    driver: bridge

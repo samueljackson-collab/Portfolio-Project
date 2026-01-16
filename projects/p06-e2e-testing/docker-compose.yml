@@ -1,0 +1,52 @@
+version: '3.8'
+
+# E2E Testing - Playwright with multiple browsers
+services:
+  playwright:
+    image: mcr.microsoft.com/playwright:latest
+    container_name: e2e-playwright
+    working_dir: /app
+    environment:
+      - CI=true
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    volumes:
+      - ./:/app
+      - ./test-results:/app/test-results
+    command: ["npx", "playwright", "test"]
+    profiles:
+      - testing
+    networks:
+      - e2e-network
+
+  # Application under test
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: e2e-app
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - e2e-network
+
+  # Test report server
+  report-server:
+    image: nginx:alpine
+    container_name: e2e-reports
+    ports:
+      - "8080:80"
+    volumes:
+      - ./test-results:/usr/share/nginx/html:ro
+    profiles:
+      - reports
+    networks:
+      - e2e-network
+
+networks:
+  e2e-network:
+    driver: bridge

@@ -1,0 +1,94 @@
+version: '3.8'
+
+# Disaster Recovery - Primary and DR site simulation
+services:
+  # Primary Site
+  primary-app:
+    build: .
+    container_name: dr-primary-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SITE=primary
+      - DATABASE_URL=postgres://app:app@primary-db:5432/app
+      - REPLICATION_TARGET=dr-db:5432
+    depends_on:
+      - primary-db
+    networks:
+      - primary-network
+      - replication-network
+
+  primary-db:
+    image: postgres:15-alpine
+    container_name: dr-primary-db
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+      - POSTGRES_DB=app
+    volumes:
+      - primary-db-data:/var/lib/postgresql/data
+    networks:
+      - primary-network
+      - replication-network
+
+  # DR Site
+  dr-app:
+    build: .
+    container_name: dr-dr-app
+    ports:
+      - "8081:8080"
+    environment:
+      - SITE=dr
+      - DATABASE_URL=postgres://app:app@dr-db:5432/app
+      - STANDBY_MODE=true
+    depends_on:
+      - dr-db
+    profiles:
+      - dr
+    networks:
+      - dr-network
+      - replication-network
+
+  dr-db:
+    image: postgres:15-alpine
+    container_name: dr-dr-db
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+      - POSTGRES_DB=app
+    volumes:
+      - dr-db-data:/var/lib/postgresql/data
+    profiles:
+      - dr
+    networks:
+      - dr-network
+      - replication-network
+
+  # Backup service
+  backup-service:
+    build:
+      context: ./backup
+    container_name: dr-backup
+    environment:
+      - SOURCE_DB=primary-db
+      - BACKUP_LOCATION=/backups
+      - SCHEDULE=0 */6 * * *
+    volumes:
+      - backup-data:/backups
+    depends_on:
+      - primary-db
+    networks:
+      - primary-network
+
+volumes:
+  primary-db-data:
+  dr-db-data:
+  backup-data:
+
+networks:
+  primary-network:
+    driver: bridge
+  dr-network:
+    driver: bridge
+  replication-network:
+    driver: bridge

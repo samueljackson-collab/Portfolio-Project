@@ -1,0 +1,76 @@
+version: '3.8'
+
+# Kubernetes CI/CD - Local K8s with GitOps
+services:
+  # Local Kubernetes (kind control plane runs separately)
+  registry:
+    image: registry:2
+    container_name: k8s-registry
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+    networks:
+      - k8s-network
+
+  # Gitea for Git server
+  gitea:
+    image: gitea/gitea:latest
+    container_name: k8s-gitea
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=sqlite3
+    volumes:
+      - gitea-data:/data
+    networks:
+      - k8s-network
+
+  # ArgoCD for GitOps (connects to external K8s cluster)
+  argocd:
+    image: quay.io/argoproj/argocd:latest
+    container_name: k8s-argocd
+    ports:
+      - "8080:8080"
+    environment:
+      - ARGOCD_SERVER_INSECURE=true
+    networks:
+      - k8s-network
+
+  # Tekton dashboard
+  tekton-dashboard:
+    image: gcr.io/tekton-releases/github.com/tektoncd/dashboard/cmd/dashboard:latest
+    container_name: k8s-tekton
+    ports:
+      - "9097:9097"
+    profiles:
+      - tekton
+    networks:
+      - k8s-network
+
+  # SonarQube for code quality
+  sonarqube:
+    image: sonarqube:community
+    container_name: k8s-sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+    profiles:
+      - quality
+    networks:
+      - k8s-network
+
+volumes:
+  registry-data:
+  gitea-data:
+  sonarqube-data:
+
+networks:
+  k8s-network:
+    driver: bridge

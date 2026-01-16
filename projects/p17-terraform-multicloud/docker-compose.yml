@@ -1,0 +1,71 @@
+version: '3.8'
+
+# Terraform Multi-Cloud - Local testing environment
+services:
+  # LocalStack for AWS
+  localstack:
+    image: localstack/localstack:latest
+    container_name: terraform-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=ec2,s3,iam,lambda,dynamodb,rds,vpc,route53
+      - DEBUG=1
+    volumes:
+      - localstack-data:/var/lib/localstack
+    networks:
+      - terraform-network
+
+  # Terraform runner
+  terraform:
+    image: hashicorp/terraform:latest
+    container_name: terraform-runner
+    working_dir: /terraform
+    environment:
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ./terraform:/terraform
+      - ./modules:/modules:ro
+    depends_on:
+      - localstack
+    entrypoint: ["tail", "-f", "/dev/null"]
+    networks:
+      - terraform-network
+
+  # Terraform state backend
+  minio:
+    image: minio/minio:latest
+    container_name: terraform-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - terraform-network
+
+  # Infracost for cost estimation
+  infracost:
+    image: infracost/infracost:latest
+    container_name: terraform-infracost
+    volumes:
+      - ./terraform:/terraform:ro
+    profiles:
+      - cost
+    networks:
+      - terraform-network
+
+volumes:
+  localstack-data:
+  minio-data:
+
+networks:
+  terraform-network:
+    driver: bridge

@@ -1,0 +1,64 @@
+version: '3.8'
+
+# API Testing - Contract testing with Pact and performance with k6
+services:
+  # Pact Broker for contract testing
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    container_name: api-pact-broker
+    ports:
+      - "9292:9292"
+    environment:
+      - PACT_BROKER_DATABASE_URL=postgres://pact:pact@postgres/pact
+      - PACT_BROKER_BASIC_AUTH_USERNAME=admin
+      - PACT_BROKER_BASIC_AUTH_PASSWORD=admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - api-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: api-postgres
+    environment:
+      - POSTGRES_USER=pact
+      - POSTGRES_PASSWORD=pact
+      - POSTGRES_DB=pact
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pact"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - api-network
+
+  # Mock API server
+  mock-server:
+    image: mockserver/mockserver:latest
+    container_name: api-mock-server
+    ports:
+      - "1080:1080"
+    environment:
+      - MOCKSERVER_PROPERTY_FILE=/config/mockserver.properties
+    volumes:
+      - ./mocks:/config:ro
+    networks:
+      - api-network
+
+  # k6 for performance testing
+  k6:
+    image: grafana/k6:latest
+    container_name: api-k6
+    volumes:
+      - ./tests/performance:/scripts:ro
+      - ./test-results:/results
+    command: ["run", "/scripts/load-test.js"]
+    profiles:
+      - performance
+    networks:
+      - api-network
+
+networks:
+  api-network:
+    driver: bridge

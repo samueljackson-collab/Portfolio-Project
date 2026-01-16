@@ -1,0 +1,105 @@
+version: '3.8'
+
+# High Availability Web Application
+services:
+  # Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: ha-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app-1
+      - app-2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ha-network
+
+  # Application instances
+  app-1:
+    build: .
+    container_name: ha-app-1
+    environment:
+      - INSTANCE_ID=app-1
+      - DATABASE_URL=postgres://app:app@postgres-primary:5432/app
+      - REDIS_URL=redis://redis-sentinel:26379
+    depends_on:
+      - postgres-primary
+      - redis-sentinel
+    networks:
+      - ha-network
+
+  app-2:
+    build: .
+    container_name: ha-app-2
+    environment:
+      - INSTANCE_ID=app-2
+      - DATABASE_URL=postgres://app:app@postgres-primary:5432/app
+      - REDIS_URL=redis://redis-sentinel:26379
+    depends_on:
+      - postgres-primary
+      - redis-sentinel
+    networks:
+      - ha-network
+
+  # PostgreSQL with replication
+  postgres-primary:
+    image: postgres:15-alpine
+    container_name: ha-postgres-primary
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+      - POSTGRES_DB=app
+    volumes:
+      - postgres-primary-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ha-network
+
+  postgres-replica:
+    image: postgres:15-alpine
+    container_name: ha-postgres-replica
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+    depends_on:
+      - postgres-primary
+    networks:
+      - ha-network
+
+  # Redis Sentinel for HA caching
+  redis-master:
+    image: redis:7-alpine
+    container_name: ha-redis-master
+    networks:
+      - ha-network
+
+  redis-sentinel:
+    image: redis:7-alpine
+    container_name: ha-redis-sentinel
+    command: redis-sentinel /etc/redis/sentinel.conf
+    volumes:
+      - ./redis/sentinel.conf:/etc/redis/sentinel.conf:ro
+    depends_on:
+      - redis-master
+    networks:
+      - ha-network
+
+volumes:
+  postgres-primary-data:
+
+networks:
+  ha-network:
+    driver: bridge

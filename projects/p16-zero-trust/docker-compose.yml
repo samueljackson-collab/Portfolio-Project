@@ -1,0 +1,71 @@
+version: '3.8'
+
+# Zero Trust Security Architecture
+services:
+  # Identity Provider (Keycloak)
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: zerotrust-keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command: start-dev
+    networks:
+      - zerotrust-network
+
+  # Policy Decision Point (OPA)
+  opa:
+    image: openpolicyagent/opa:latest
+    container_name: zerotrust-opa
+    ports:
+      - "8181:8181"
+    command: run --server --addr :8181
+    volumes:
+      - ./policies:/policies:ro
+    networks:
+      - zerotrust-network
+
+  # Service Mesh (Envoy proxy)
+  envoy:
+    image: envoyproxy/envoy:v1.28-latest
+    container_name: zerotrust-envoy
+    ports:
+      - "10000:10000"
+      - "9901:9901"
+    volumes:
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    networks:
+      - zerotrust-network
+
+  # Protected application
+  app:
+    build: .
+    container_name: zerotrust-app
+    environment:
+      - OIDC_ISSUER=http://keycloak:8080/realms/master
+      - OPA_URL=http://opa:8181
+    depends_on:
+      - keycloak
+      - opa
+    networks:
+      - zerotrust-network
+
+  # Vault for secrets
+  vault:
+    image: hashicorp/vault:latest
+    container_name: zerotrust-vault
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - zerotrust-network
+
+networks:
+  zerotrust-network:
+    driver: bridge

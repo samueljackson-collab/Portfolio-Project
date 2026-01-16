@@ -1,0 +1,91 @@
+version: '3.8'
+
+# Security Automation - SAST, DAST, and vulnerability scanning
+services:
+  # SonarQube for SAST
+  sonarqube:
+    image: sonarqube:community
+    container_name: security-sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+    networks:
+      - security-network
+
+  # OWASP ZAP for DAST
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    container_name: security-zap
+    ports:
+      - "8080:8080"
+    command: zap-webswing.sh
+    volumes:
+      - zap-data:/zap/wrk
+    networks:
+      - security-network
+
+  # Trivy for container scanning
+  trivy:
+    image: aquasec/trivy:latest
+    container_name: security-trivy
+    volumes:
+      - trivy-cache:/root/.cache/trivy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    entrypoint: ["tail", "-f", "/dev/null"]
+    networks:
+      - security-network
+
+  # DefectDojo for vulnerability management
+  defectdojo:
+    image: defectdojo/defectdojo-django:latest
+    container_name: security-defectdojo
+    ports:
+      - "8000:8080"
+    environment:
+      - DD_DATABASE_URL=postgres://defectdojo:defectdojo@postgres:5432/defectdojo
+      - DD_SECRET_KEY=changeme
+    depends_on:
+      - postgres
+    networks:
+      - security-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: security-postgres
+    environment:
+      - POSTGRES_USER=defectdojo
+      - POSTGRES_PASSWORD=defectdojo
+      - POSTGRES_DB=defectdojo
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - security-network
+
+  # Dependency-Check for SCA
+  dependency-check:
+    image: owasp/dependency-check:latest
+    container_name: security-depcheck
+    volumes:
+      - ./:/src:ro
+      - depcheck-data:/usr/share/dependency-check/data
+      - ./reports:/report
+    profiles:
+      - scan
+    networks:
+      - security-network
+
+volumes:
+  sonarqube-data:
+  sonarqube-logs:
+  zap-data:
+  trivy-cache:
+  postgres-data:
+  depcheck-data:
+
+networks:
+  security-network:
+    driver: bridge

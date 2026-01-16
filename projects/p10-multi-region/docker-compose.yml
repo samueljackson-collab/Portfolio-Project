@@ -1,0 +1,85 @@
+version: '3.8'
+
+# Multi-Region - Simulated multi-region deployment
+services:
+  # Region 1 - US East
+  app-us-east:
+    build: .
+    container_name: multiregion-us-east
+    environment:
+      - REGION=us-east-1
+      - DATABASE_URL=postgres://app:app@db-us-east:5432/app
+      - REDIS_URL=redis://redis-us-east:6379
+    depends_on:
+      - db-us-east
+      - redis-us-east
+    networks:
+      - us-east-network
+      - global-network
+
+  db-us-east:
+    image: postgres:15-alpine
+    container_name: multiregion-db-us-east
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+      - POSTGRES_DB=app
+    networks:
+      - us-east-network
+
+  redis-us-east:
+    image: redis:7-alpine
+    container_name: multiregion-redis-us-east
+    networks:
+      - us-east-network
+
+  # Region 2 - EU West
+  app-eu-west:
+    build: .
+    container_name: multiregion-eu-west
+    environment:
+      - REGION=eu-west-1
+      - DATABASE_URL=postgres://app:app@db-eu-west:5432/app
+      - REDIS_URL=redis://redis-eu-west:6379
+    depends_on:
+      - db-eu-west
+      - redis-eu-west
+    networks:
+      - eu-west-network
+      - global-network
+
+  db-eu-west:
+    image: postgres:15-alpine
+    container_name: multiregion-db-eu-west
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+      - POSTGRES_DB=app
+    networks:
+      - eu-west-network
+
+  redis-eu-west:
+    image: redis:7-alpine
+    container_name: multiregion-redis-eu-west
+    networks:
+      - eu-west-network
+
+  # Global Load Balancer
+  haproxy:
+    image: haproxy:latest
+    container_name: multiregion-haproxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy:ro
+    networks:
+      - global-network
+
+networks:
+  us-east-network:
+    driver: bridge
+  eu-west-network:
+    driver: bridge
+  global-network:
+    driver: bridge

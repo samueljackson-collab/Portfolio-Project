@@ -1,0 +1,61 @@
+version: '3.8'
+
+# Cost Optimization - Cloud cost analysis tools
+services:
+  # Cost analysis API
+  cost-api:
+    build: .
+    container_name: cost-api
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://app:app@postgres:5432/costs
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    depends_on:
+      - postgres
+      - localstack
+    networks:
+      - cost-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: cost-postgres
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=app
+      - POSTGRES_DB=costs
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - cost-network
+
+  # LocalStack for AWS Cost Explorer simulation
+  localstack:
+    image: localstack/localstack:latest
+    container_name: cost-localstack
+    environment:
+      - SERVICES=ce,cloudwatch,s3
+      - AWS_DEFAULT_REGION=us-east-1
+    networks:
+      - cost-network
+
+  # Grafana for cost dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cost-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - cost-network
+
+volumes:
+  postgres-data:
+
+networks:
+  cost-network:
+    driver: bridge
