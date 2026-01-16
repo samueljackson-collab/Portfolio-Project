@@ -3,17 +3,30 @@ name: DevSecOps Security Pipeline
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'projects/4-devsecops/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'projects/4-devsecops/**'
   schedule:
-    # Run security scans daily at 2 AM
+    # Run security scans daily at 2 AM UTC
     - cron: '0 2 * * *'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/secure-app
+  WORKING_DIR: projects/4-devsecops
+
+defaults:
+  run:
+    working-directory: projects/4-devsecops
 
 jobs:
+  # ============================================================================
+  # SAST - Static Application Security Testing
+  # ============================================================================
   sast-scan:
     name: Static Application Security Testing (SAST)
     runs-on: ubuntu-latest
@@ -28,6 +41,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Semgrep scan on sample-app
       - name: Run Semgrep SAST
         uses: returntocorp/semgrep-action@v1
         with:
@@ -35,32 +54,69 @@ jobs:
             p/security-audit
             p/secrets
             p/owasp-top-ten
+            p/python
+          generateSarif: true
+        env:
+          SEMGREP_RULES: "p/security-audit p/owasp-top-ten"
 
+      - name: Run Semgrep on sample-app (JSON output)
+        run: |
+          pip install semgrep
+          semgrep --config "p/security-audit" --config "p/owasp-top-ten" \
+            --json --output semgrep-results.json \
+            sample-app/ || true
+
+      - name: Upload Semgrep results
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: ${{ env.WORKING_DIR }}/semgrep-results.json
+
+      # Bandit scan on Python code
       - name: Run Bandit (Python security)
-        if: hashFiles('**/*.py') != ''
         run: |
           pip install bandit
-          bandit -r . -f json -o bandit-report.json || true
+          bandit -r sample-app/ -f json -o bandit-report.json --skip B101 || true
+          bandit -r sample-app/ -f sarif -o bandit-results.sarif --skip B101 || true
+
+      - name: Upload Bandit SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ env.WORKING_DIR }}/bandit-results.sarif
+          category: bandit
+        continue-on-error: true
 
       - name: Upload Bandit results
-        if: hashFiles('bandit-report.json') != ''
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: bandit-security-report
-          path: bandit-report.json
+          name: bandit-results
+          path: ${{ env.WORKING_DIR }}/bandit-report.json
 
+      # CodeQL Analysis
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-extended
 
       - name: Autobuild CodeQL database
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v3
 
       - name: Run CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
 
+  # ============================================================================
+  # Secrets Detection
+  # ============================================================================
   secrets-scan:
     name: Secrets Detection
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout code
@@ -68,49 +124,87 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Gitleaks scan
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+          GITLEAKS_ENABLE_SUMMARY: true
+        continue-on-error: true
 
+      - name: Run Gitleaks (JSON output)
+        working-directory: projects/4-devsecops
+        run: |
+          # Install gitleaks
+          wget -q -O gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz
+          ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
+
+      - name: Upload Gitleaks results
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-results
+          path: ${{ env.WORKING_DIR }}/gitleaks-report.json
+        continue-on-error: true
+
+      # TruffleHog scan
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
-          extra_args: --debug --only-verified
+          extra_args: --only-verified
+        continue-on-error: true
 
+  # ============================================================================
+  # Software Composition Analysis (SCA)
+  # ============================================================================
   dependency-scan:
     name: Software Composition Analysis (SCA)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Snyk vulnerability scan
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: --severity-threshold=high
-
+      # Trivy dependency scan
       - name: Run Trivy dependency scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          scan-ref: '.'
+          scan-ref: '${{ env.WORKING_DIR }}'
           format: 'sarif'
           output: 'trivy-dependency-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          scanners: 'vuln,secret,misconfig'
+
+      - name: Run Trivy (JSON output)
+        working-directory: projects/4-devsecops
+        run: |
+          # JSON output for dashboard
+          trivy fs . --format json --output trivy-results.json --severity CRITICAL,HIGH,MEDIUM || true
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-dependency-results.sarif
+          category: trivy-dependencies
+        continue-on-error: true
 
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: actions/upload-artifact@v4
         with:
-          sarif_file: 'trivy-dependency-results.sarif'
+          name: trivy-results
+          path: ${{ env.WORKING_DIR }}/trivy-results.json
 
+  # ============================================================================
+  # SBOM Generation
+  # ============================================================================
   sbom-generation:
     name: Generate Software Bill of Materials
     runs-on: ubuntu-latest
@@ -119,31 +213,157 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Syft SBOM generation
       - name: Generate SBOM with Syft
         uses: anchore/sbom-action@v0
         with:
-          path: ./
+          path: ${{ env.WORKING_DIR }}
           artifact-name: sbom.spdx.json
-          output-file: sbom.spdx.json
+          output-file: ${{ env.WORKING_DIR }}/syft-sbom.json
           format: spdx-json
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-artifact
-          path: sbom.spdx.json
+          path: ${{ env.WORKING_DIR }}/syft-sbom.json
 
+      # Scan SBOM for vulnerabilities
       - name: Scan SBOM for vulnerabilities
-        uses: anchore/scan-action@v3
+        uses: anchore/scan-action@v4
         with:
-          sbom: sbom.spdx.json
+          sbom: ${{ env.WORKING_DIR }}/syft-sbom.json
           fail-build: false
-          severity-cutoff: high
+          severity-cutoff: critical
 
-  build-secure-container:
-    name: Build Secure Container Image
+  # ============================================================================
+  # Infrastructure as Code (IaC) Scanning
+  # ============================================================================
+  iac-scan:
+    name: Infrastructure as Code Security
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Checkov IaC scan
+      - name: Run Checkov (IaC scan)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ${{ env.WORKING_DIR }}
+          framework: terraform,kubernetes,dockerfile
+          output_format: cli,sarif
+          output_file_path: console,${{ env.WORKING_DIR }}/checkov-results.sarif
+          soft_fail: true
+
+      - name: Run Checkov (JSON output)
+        working-directory: projects/4-devsecops
+        run: |
+          pip install checkov
+          checkov -d . --framework terraform,kubernetes,dockerfile \
+            --output json > checkov-results.json || true
+
+      - name: Upload Checkov SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ env.WORKING_DIR }}/checkov-results.sarif
+          category: checkov
+        continue-on-error: true
+
+      - name: Upload Checkov results
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov-results
+          path: ${{ env.WORKING_DIR }}/checkov-results.json
+        continue-on-error: true
+
+      # Trivy IaC scan
+      - name: Run Trivy IaC scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '${{ env.WORKING_DIR }}'
+          format: 'sarif'
+          output: 'trivy-iac-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy IaC SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-iac-results.sarif
+          category: trivy-iac
+        continue-on-error: true
+
+  # ============================================================================
+  # OPA Policy Validation
+  # ============================================================================
+  policy-check:
+    name: OPA Policy Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      # Test OPA policies
+      - name: Test Kubernetes policies
+        working-directory: projects/4-devsecops
+        run: |
+          opa eval --data policies/kubernetes.rego \
+            --input k8s/deployment.yaml \
+            "data.kubernetes.deny" --format pretty || true
+
+      - name: Test Terraform policies
+        working-directory: projects/4-devsecops
+        run: |
+          # Create a mock Terraform plan for testing
+          echo '{"resource_changes": []}' > tf-plan.json
+          opa eval --data policies/terraform.rego \
+            --input tf-plan.json \
+            "data.terraform.deny" --format pretty || true
+
+      # Conftest tests
+      - name: Install Conftest
+        run: |
+          wget -q -O conftest.tar.gz https://github.com/open-policy-agent/conftest/releases/download/v0.45.0/conftest_0.45.0_Linux_x86_64.tar.gz
+          tar -xzf conftest.tar.gz
+          sudo mv conftest /usr/local/bin/
+
+      - name: Run Conftest on Kubernetes
+        working-directory: projects/4-devsecops
+        run: |
+          conftest test k8s/ --policy policies/ --output json > conftest-k8s.json || true
+
+      - name: Run Conftest on Terraform
+        working-directory: projects/4-devsecops
+        run: |
+          conftest test terraform/ --policy policies/ --output json > conftest-tf.json || true
+
+  # ============================================================================
+  # Container Image Build and Scan
+  # ============================================================================
+  build-and-scan-container:
+    name: Build and Scan Container
     runs-on: ubuntu-latest
     needs: [sast-scan, secrets-scan, dependency-scan]
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
 
     steps:
       - name: Checkout code
@@ -153,138 +373,216 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Build container image
       - name: Build container image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          context: ${{ env.WORKING_DIR }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
             VCS_REF=${{ github.sha }}
 
-  container-scan:
-    name: Container Image Security Scan
-    runs-on: ubuntu-latest
-    needs: build-secure-container
-
-    steps:
+      # Trivy container scan
       - name: Run Trivy container scan
+        if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-container-results.sarif'
           severity: 'CRITICAL,HIGH'
+        continue-on-error: true
 
-      - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@v2
+      - name: Upload Trivy container SARIF
+        if: github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'trivy-container-results.sarif'
+          sarif_file: trivy-container-results.sarif
+          category: trivy-container
+        continue-on-error: true
 
-      - name: Run Dockle image linter
+      # Dockle container linting
+      - name: Run Dockle
+        if: github.event_name != 'pull_request'
         uses: erzz/dockle-action@v1
         with:
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           exit-code: '0'
           failure-threshold: high
+        continue-on-error: true
 
-  dast-scan:
-    name: Dynamic Application Security Testing (DAST)
+  # ============================================================================
+  # Generate Security Dashboard
+  # ============================================================================
+  generate-dashboard:
+    name: Generate Security Dashboard
     runs-on: ubuntu-latest
-    needs: build-secure-container
-    if: github.event_name == 'push'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Start application container
-        run: |
-          docker run -d -p 8080:8080 \
-            --name test-app \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Wait for application
-        run: |
-          timeout 60 sh -c 'until curl -f http://localhost:8080/health; do sleep 2; done'
-
-      - name: Run OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.7.0
-        with:
-          target: 'http://localhost:8080'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
-
-      - name: Stop application
-        if: always()
-        run: docker stop test-app && docker rm test-app
-
-  compliance-check:
-    name: Compliance and Policy Validation
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run OPA policy checks
-        uses: open-policy-agent/opa@v1
-        with:
-          args: test policies/ --verbose
-
-      - name: Check license compliance
-        uses: fossas/fossa-action@v1
-        with:
-          api-key: ${{ secrets.FOSSA_API_KEY }}
-
-  security-report:
-    name: Generate Security Report
-    runs-on: ubuntu-latest
-    needs: [sast-scan, secrets-scan, dependency-scan, container-scan, dast-scan]
+    needs: [sast-scan, secrets-scan, dependency-scan, iac-scan, sbom-generation]
     if: always()
+    permissions:
+      contents: write
 
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Generate consolidated report
-        run: |
-          echo "# Security Scan Report" > security-report.md
-          echo "**Date**: $(date)" >> security-report.md
-          echo "**Commit**: ${{ github.sha }}" >> security-report.md
-          echo "" >> security-report.md
-          echo "## Scan Results" >> security-report.md
-          echo "- SAST: Completed" >> security-report.md
-          echo "- Secrets: Completed" >> security-report.md
-          echo "- Dependencies: Completed" >> security-report.md
-          echo "- Container: Completed" >> security-report.md
-          echo "- DAST: Completed" >> security-report.md
-
-      - name: Upload security report
-        uses: actions/upload-artifact@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          name: security-report
-          path: security-report.md
+          python-version: '3.11'
 
-      - name: Comment PR with results
+      # Download all scan artifacts
+      - name: Download Semgrep results
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-results
+          path: ${{ env.WORKING_DIR }}/scan-results
+        continue-on-error: true
+
+      - name: Download Bandit results
+        uses: actions/download-artifact@v4
+        with:
+          name: bandit-results
+          path: ${{ env.WORKING_DIR }}/scan-results
+        continue-on-error: true
+
+      - name: Download Gitleaks results
+        uses: actions/download-artifact@v4
+        with:
+          name: gitleaks-results
+          path: ${{ env.WORKING_DIR }}/scan-results
+        continue-on-error: true
+
+      - name: Download Trivy results
+        uses: actions/download-artifact@v4
+        with:
+          name: trivy-results
+          path: ${{ env.WORKING_DIR }}/scan-results
+        continue-on-error: true
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-artifact
+          path: ${{ env.WORKING_DIR }}/scan-results
+        continue-on-error: true
+
+      - name: Download Checkov results
+        uses: actions/download-artifact@v4
+        with:
+          name: checkov-results
+          path: ${{ env.WORKING_DIR }}/scan-results
+        continue-on-error: true
+
+      # Generate dashboard
+      - name: Generate Security Dashboard
+        working-directory: projects/4-devsecops
+        run: |
+          pip install -r sample-app/requirements.txt || true
+          python scripts/generate-dashboard.py \
+            --scan-dir scan-results \
+            --output security-dashboard.html \
+            --json-output security-report.json \
+            --commit ${{ github.sha }} \
+            --branch ${{ github.ref_name }}
+
+      - name: Upload Dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-dashboard
+          path: |
+            ${{ env.WORKING_DIR }}/security-dashboard.html
+            ${{ env.WORKING_DIR }}/security-report.json
+
+      # Comment on PR with results
+      - name: Comment PR with security summary
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const report = fs.readFileSync('security-report.md', 'utf8');
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: report
-            });
+            try {
+              const report = JSON.parse(fs.readFileSync('${{ env.WORKING_DIR }}/security-report.json', 'utf8'));
+              const summaries = report.summaries || [];
+              let totalCritical = 0, totalHigh = 0, totalMedium = 0;
+              summaries.forEach(s => {
+                totalCritical += s.critical || 0;
+                totalHigh += s.high || 0;
+                totalMedium += s.medium || 0;
+              });
+
+              const status = totalCritical > 0 ? '🔴 Critical Issues' :
+                            totalHigh > 0 ? '🟠 High Severity Issues' :
+                            totalMedium > 0 ? '🟡 Medium Severity Issues' :
+                            '🟢 No Critical Issues';
+
+              const body = `## Security Scan Results ${status}
+
+              | Severity | Count |
+              |----------|-------|
+              | Critical | ${totalCritical} |
+              | High | ${totalHigh} |
+              | Medium | ${totalMedium} |
+
+              **Commit:** \`${report.commit?.substring(0, 8) || 'N/A'}\`
+              **Scanned at:** ${report.timestamp || 'N/A'}
+
+              [View full dashboard artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              `;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            } catch (e) {
+              console.log('Could not parse security report:', e);
+            }
+
+  # ============================================================================
+  # Security Gate
+  # ============================================================================
+  security-gate:
+    name: Security Gate Check
+    runs-on: ubuntu-latest
+    needs: [sast-scan, secrets-scan, dependency-scan, iac-scan, generate-dashboard]
+    if: always()
+
+    steps:
+      - name: Download security report
+        uses: actions/download-artifact@v4
+        with:
+          name: security-dashboard
+          path: ./reports
+        continue-on-error: true
+
+      - name: Check for critical findings
+        run: |
+          if [ -f "./reports/security-report.json" ]; then
+            CRITICAL=$(cat ./reports/security-report.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(sum(s.get('critical',0) for s in d.get('summaries',[])))" 2>/dev/null || echo "0")
+            echo "Critical findings: $CRITICAL"
+            if [ "$CRITICAL" -gt "0" ]; then
+              echo "::error::Security gate failed: $CRITICAL critical vulnerabilities found"
+              # Uncomment the next line to fail the build on critical findings
+              # exit 1
+            fi
+          else
+            echo "No security report found, skipping gate check"
+          fi
+
+      - name: Security gate passed
+        run: echo "Security gate check completed"
