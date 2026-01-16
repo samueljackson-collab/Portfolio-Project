@@ -25,6 +25,7 @@ Environment:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import time
 from dataclasses import dataclass
@@ -32,6 +33,10 @@ from datetime import datetime, timezone
 from typing import Iterable, List, Optional
 
 import requests
+
+
+# Maximum wait time for retries in seconds
+MAX_WAIT_TIME_SECONDS = 60
 
 
 @dataclass
