@@ -5,6 +5,21 @@ Usage examples:
   python scripts/github_pr_cleanup.py --list
   python scripts/github_pr_cleanup.py --dry-run --close-stale --days 30
   python scripts/github_pr_cleanup.py --close-stale --days 90 --max 200
+
+Environment:
+  This script requires the following environment variables:
+
+    GITHUB_TOKEN
+      A GitHub personal access token used to authenticate API requests.
+      You can create a token from:
+        https://github.com/settings/tokens
+      For classic tokens, grant at least the "repo" scope for private
+      repositories, or appropriate fine-grained permissions to read and
+      modify pull requests in the target repository.
+
+    GITHUB_REPO
+      The repository to operate on, in "owner/repo" format, for example:
+        octocat/Hello-World
 """
 
 from __future__ import annotations
@@ -71,22 +86,24 @@ def github_headers(token: str) -> dict:
 
 
 def check_rate_limit(response: requests.Response) -> None:
-    """Check rate limit headers and warn if approaching limit."""
+    """Check rate limit headers and wait if necessary."""
     remaining = response.headers.get("X-RateLimit-Remaining")
-    limit = response.headers.get("X-RateLimit-Limit")
+    reset_time = response.headers.get("X-RateLimit-Reset")
 
-    if remaining is not None and limit is not None:
+    if remaining is not None:
         try:
             remaining_int = int(remaining)
-            limit_int = int(limit)
-
-            if remaining_int < 10:
-                print(
-                    f"WARNING: Approaching rate limit. "
-                    f"Remaining: {remaining_int}/{limit_int} requests."
-                )
+            if remaining_int < 10 and reset_time is not None:
+                reset_timestamp = int(reset_time)
+                current_time = int(time.time())
+                wait_time = max(0, reset_timestamp - current_time)
+                if wait_time > 0:
+                    print(
+                        f"Rate limit nearly exhausted ({remaining} remaining). Waiting {wait_time}s until reset..."
+                    )
+                    time.sleep(wait_time + 1)  # Add 1 second buffer
         except (ValueError, TypeError):
-            # Ignore invalid rate limit headers
+            # Ignore malformed rate limit headers
             pass
 
 
@@ -97,120 +114,55 @@ def make_github_request(
     max_retries: int = 3,
     **kwargs,
 ) -> requests.Response:
-    """Make a GitHub API request with retry logic and rate limit handling.
-
-    Args:
-        method: HTTP method (GET, POST, PATCH, etc.)
-        url: The URL to request
-        headers: HTTP headers to include in the request
-        max_retries: Maximum number of retry attempts (default: 3)
-        **kwargs: Additional arguments to pass to requests.request()
-
-    Returns:
-        requests.Response: The successful HTTP response
-
-    Raises:
-        SystemExit: If the request fails after all retries or rate limit is exceeded
-        requests.exceptions.RequestException: For request errors that shouldn't be retried
-    """
-
-    def calculate_backoff(attempt: int) -> int:
-        """Calculate exponential backoff with a maximum cap."""
-        return min(2**attempt, MAX_WAIT_TIME_SECONDS)
-
+    """Make a GitHub API request with rate limiting and retry logic."""
     for attempt in range(max_retries):
         try:
-            response = requests.request(method, url, headers=headers, **kwargs)
+            if method.upper() == "GET":
+                response = requests.get(url, headers=headers, **kwargs)
+            elif method.upper() == "PATCH":
+                response = requests.patch(url, headers=headers, **kwargs)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
 
-            # Check rate limit and warn if approaching limit
-            check_rate_limit(response)
-
-            # Handle rate limit errors (429) with exponential backoff
-            if response.status_code == 429:
-                if attempt < max_retries - 1:
-                    retry_after = response.headers.get("Retry-After")
-                    if retry_after:
-                        try:
-                            wait_time = min(int(retry_after), MAX_WAIT_TIME_SECONDS)
-                        except (ValueError, TypeError):
-                            # Fallback to exponential backoff if Retry-After is invalid
-                            wait_time = calculate_backoff(attempt)
-                    else:
-                        # Exponential backoff: 2^attempt seconds (capped)
-                        wait_time = calculate_backoff(attempt)
-
-                    reset_time = response.headers.get("X-RateLimit-Reset")
-                    reset_info = ""
-                    if reset_time:
-                        try:
-                            reset_timestamp = int(reset_time)
-                            reset_datetime = datetime.fromtimestamp(
-                                reset_timestamp, tz=timezone.utc
-                            )
-                            reset_info = (
-                                f" Rate limit resets at {reset_datetime.isoformat()}."
-                            )
-                        except (ValueError, TypeError):
-                            pass
-
-                    print(
-                        f"Rate limited (429). Waiting {wait_time} seconds before retry "
-                        f"(attempt {attempt + 1}/{max_retries})...{reset_info}"
-                    )
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    # Final attempt failed, provide detailed error message
-                    reset_time = response.headers.get("X-RateLimit-Reset")
-                    if reset_time:
-                        try:
-                            reset_timestamp = int(reset_time)
-                            reset_datetime = datetime.fromtimestamp(
-                                reset_timestamp, tz=timezone.utc
-                            )
-                            current_timestamp = int(
-                                datetime.now(timezone.utc).timestamp()
-                            )
-                            wait_seconds = max(0, reset_timestamp - current_timestamp)
-                            raise SystemExit(
-                                f"GitHub API rate limit exceeded after {max_retries} retries. "
-                                f"Rate limit resets at {reset_datetime.isoformat()} "
-                                f"(in {wait_seconds} seconds). Please try again later."
-                            )
-                        except (ValueError, TypeError):
-                            pass
-
-                    raise SystemExit(
-                        f"GitHub API rate limit exceeded after {max_retries} retries. "
-                        "Please try again later."
-                    )
+            # Check for rate limiting before raising for status
+            if response.status_code == 403:
+                # Check if it's a rate limit error
+                try:
+                    remaining = response.headers.get("X-RateLimit-Remaining")
+                    reset_time_str = response.headers.get("X-RateLimit-Reset")
+                    if (
+                        remaining is not None
+                        and int(remaining) == 0
+                        and reset_time_str is not None
+                    ):
+                        reset_time = int(reset_time_str)
+                        current_time = int(time.time())
+                        wait_time = max(0, reset_time - current_time) + 1
+                        print(
+                            f"Rate limit exceeded. Waiting {wait_time}s until reset..."
+                        )
+                        time.sleep(wait_time)
+                        continue  # Retry the request
+                except (ValueError, TypeError):
+                    # If headers are malformed, let normal error handling proceed
+                    pass
 
             response.raise_for_status()
+            check_rate_limit(response)
             return response
 
-        except requests.exceptions.HTTPError as exc:
-            # Only retry on server errors (5xx), not client errors (4xx)
-            if (
-                attempt < max_retries - 1
-                and exc.response is not None
-                and exc.response.status_code >= 500
-            ):
-                wait_time = calculate_backoff(attempt)
-                print(
-                    f"Server error ({exc.response.status_code}). "
-                    f"Retrying in {wait_time} seconds..."
-                )
-                time.sleep(wait_time)
-                continue
-            raise
         except requests.exceptions.RequestException as exc:
-            # Retry on network errors with exponential backoff
-            if attempt < max_retries - 1:
-                wait_time = calculate_backoff(attempt)
-                print(f"Request failed: {exc}. Retrying in {wait_time} seconds...")
-                time.sleep(wait_time)
-                continue
-            raise
+            if attempt == max_retries - 1:
+                raise
+            # Exponential backoff
+            backoff_time = 2**attempt
+            print(
+                f"Request failed (attempt {attempt + 1}/{max_retries}): {exc}. Retrying in {backoff_time}s..."
+            )
+            time.sleep(backoff_time)
+
+    # This line is unreachable but satisfies type checkers
+    raise AssertionError("Unreachable code")
 
 
 def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
@@ -225,16 +177,11 @@ def fetch_open_prs(token: str, repo: str) -> List[PullRequest]:
                 params={"state": "open", "per_page": 100, "page": page},
                 timeout=30,
             )
-            data = response.json()
-        except json.JSONDecodeError as exc:
-            raise SystemExit(
-                f"Failed to parse JSON response for repo '{repo}' (page {page}): {exc}"
-            ) from exc
         except requests.exceptions.RequestException as exc:
             raise SystemExit(
                 f"Failed to fetch open PRs for repo '{repo}' (page {page}): {exc}"
             ) from exc
-
+        data = response.json()
         if not data:
             break
         for item in data:
@@ -264,15 +211,17 @@ def stale_prs(prs: Iterable[PullRequest], days: int) -> List[PullRequest]:
 
 def close_pr(token: str, repo: str, pr: PullRequest) -> None:
     try:
-        make_github_request(
-            "PATCH",
+        response = requests.patch(
             f"https://api.github.com/repos/{repo}/pulls/{pr.number}",
             headers=github_headers(token),
             json={"state": "closed"},
             timeout=30,
         )
-    except requests.exceptions.RequestException as exc:
-        raise SystemExit(f"Failed to close PR #{pr.number}: {exc}") from exc
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as exc:
+        raise SystemExit(
+            f"Failed to close PR #{pr.number} ({pr.title!r}): {exc}"
+        ) from exc
 
 
 def close_prs(
@@ -291,10 +240,26 @@ def close_prs(
             close_pr(token, repo, pr)
 
 
+def validate_github_repo(repo: str) -> str:
+    """
+    Validate that the repository identifier is in the 'owner/repo' format.
+
+    Raises:
+        ValueError: If the repository string is not in the expected format.
+    """
+    owner, sep, name = repo.partition("/")
+    if sep != "/" or not owner or not name or "/" in name:
+        raise ValueError(
+            f"Invalid GITHUB_REPO value: {repo!r}. Expected format 'owner/repo'."
+        )
+    return repo
+
+
 def main() -> None:
     args = parse_args()
     token = get_env("GITHUB_TOKEN")
-    repo = get_env("GITHUB_REPO")
+    repo_raw = get_env("GITHUB_REPO")
+    repo = validate_github_repo(repo_raw)
 
     open_prs = fetch_open_prs(token, repo)
     open_prs.sort(key=lambda pr: pr.updated_at)
