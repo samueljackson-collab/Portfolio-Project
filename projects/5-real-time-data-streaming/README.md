@@ -148,6 +148,98 @@ python src/flink_processor.py --job revenue
 python src/flink_processor.py --job sessions
 ```
 
+## Schema Registry Integration
+
+This project includes full Schema Registry integration for Avro serialization and schema evolution.
+
+### Avro Schema
+
+The event schema is defined in `schemas/user_event.avsc`:
+
+```json
+{
+  "type": "record",
+  "name": "UserEvent",
+  "namespace": "com.portfolio.streaming.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "user_id", "type": "string"},
+    {"name": "session_id", "type": ["null", "string"]},
+    {"name": "event_type", "type": {"type": "enum", "name": "EventType", ...}},
+    {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis"},
+    {"name": "properties", "type": {"type": "map", "values": "string"}},
+    {"name": "metadata", "type": "record", ...}
+  ]
+}
+```
+
+### Using Avro Producer
+
+```bash
+# Produce Avro-serialized events with Schema Registry
+python src/avro_producer.py \
+  --bootstrap-servers localhost:9092 \
+  --schema-registry http://localhost:8081 \
+  --topic user-events-avro \
+  --count 1000 \
+  --users 50
+
+# With custom producer ID
+python src/avro_producer.py \
+  --producer-id my-producer-1 \
+  --count 500
+```
+
+### Using Avro Consumer
+
+```bash
+# Consume and validate Avro events
+python src/avro_consumer.py \
+  --bootstrap-servers localhost:9092 \
+  --schema-registry http://localhost:8081 \
+  --topic user-events-avro \
+  --group-id avro-consumer-group
+
+# With aggregation
+python src/avro_consumer.py \
+  --aggregate \
+  --window 30 \
+  --max-messages 1000
+```
+
+### Schema Registry API
+
+```bash
+# List subjects
+curl http://localhost:8081/subjects
+
+# Get latest schema version
+curl http://localhost:8081/subjects/user-events-avro-value/versions/latest
+
+# Check compatibility
+curl -X POST -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+  --data '{"schema": "..."}' \
+  http://localhost:8081/compatibility/subjects/user-events-avro-value/versions/latest
+```
+
+### Schema Evolution
+
+The schema supports backward and forward compatibility:
+
+- **Backward Compatible**: New consumers can read old data
+- **Forward Compatible**: Old consumers can read new data
+- **Full Compatible**: Both directions
+
+Add new optional fields with defaults for safe evolution:
+
+```json
+{
+  "name": "new_field",
+  "type": ["null", "string"],
+  "default": null
+}
+```
+
 ## Event Schema
 
 ### Standard Event Structure
@@ -193,6 +285,40 @@ pytest tests/ -v --cov=src --cov-report=html
 
 # Run specific test file
 pytest tests/test_producer.py -v
+
+# Run integration tests
+pytest tests/test_integration.py -v
+
+# Run only unit tests (fast)
+pytest tests/ -v -m "not integration"
+```
+
+### Test Categories
+
+| Test File | Description |
+|-----------|-------------|
+| `test_producer.py` | Producer unit tests with mocks |
+| `test_consumer.py` | Consumer and aggregation tests |
+| `test_integration.py` | End-to-end pipeline tests |
+| `test_basic.py` | Basic functionality tests |
+| `test_health_check.py` | Health endpoint tests |
+
+### Integration Test Requirements
+
+For full integration tests with real services:
+
+```bash
+# Start services
+docker-compose up -d
+
+# Wait for services to be ready
+./scripts/wait-for-services.sh
+
+# Run integration tests
+pytest tests/test_integration.py -v --integration
+
+# Cleanup
+docker-compose down
 ```
 
 ## Configuration
