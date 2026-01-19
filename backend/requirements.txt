@@ -6,8 +6,7 @@ python-multipart==0.0.21
 # Database
 sqlalchemy[asyncio]==2.0.45
 asyncpg==0.31.0
-aiosqlite==0.21.0
-alembic==1.18.0
+alembic==1.18.1
 psycopg2-binary==2.9.11
 
 # Authentication
@@ -22,7 +21,7 @@ python-dotenv==1.2.1
 email-validator==2.3.0
 
 # Observability
-prometheus-client==0.24.0
+prometheus-client==0.24.1
 prometheus-fastapi-instrumentator==7.1.0
 
 # Development
@@ -33,8 +32,8 @@ httpx==0.28.1
 faker==40.1.2
 
 # Code Quality
-ruff==0.14.11
-black==25.12.0
+ruff==0.14.13
+black==26.1.0
 mypy==1.19.1
 
 # Testing
