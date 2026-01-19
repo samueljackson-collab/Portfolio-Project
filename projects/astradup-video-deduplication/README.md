@@ -12,6 +12,31 @@ For cross-project documentation, standards, and runbooks, see the [Portfolio Doc
 
 ---
 
+## Live Deployment
+| Detail | Value |
+| --- | --- |
+| Live URL | Not deployed (local Docker Compose) |
+| Deployment environment | Local / lab stack |
+| Runbook | [RUNBOOK.md](RUNBOOK.md) |
+
+### Monitoring
+- **Prometheus:** `http://localhost:9090` (config: `prometheus/prometheus.yml`)
+- **Grafana:** `http://localhost:3000` (dashboard: `grafana/dashboards/astradup-video-deduplication-dashboard.json`)
+- **API health check:** `http://localhost:8000/health`
+- **Airflow UI:** `http://localhost:8080`
+
+---
+
+## 📊 Portfolio Status Board
+
+🟢 Done · 🟠 In Progress · 🔵 Planned
+
+**Current Status:** 🟢 Done (Implemented)
+
+**Status**: ✅ **Production-Ready** - Local observability and task execution supported
+
+---
+
 ## 📋 Executive Summary
 
 ### Project Overview
@@ -239,8 +264,8 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your configuration
 
-# Initialize database
-python scripts/init_database.py
+# Initialize Airflow metadata DB (first run only)
+docker-compose run --rm airflow-webserver airflow db init
 
 # Run tests
 pytest tests/
@@ -264,43 +289,40 @@ docker-compose logs -f astradup-worker
 ## 📁 Project Structure
 
 ```
-astradup/
+astradup-video-deduplication/
 ├── README.md
+├── RUNBOOK.md
 ├── requirements.txt
 ├── setup.py
 ├── docker-compose.yml
 ├── Dockerfile
 ├── src/
+│   ├── api/
+│   │   └── main.py                 # FastAPI health + metrics
+│   ├── engine/
+│   │   └── similarity_engine.py    # Multi-modal similarity computation
 │   ├── features/
 │   │   ├── perceptual_hash.py      # Perceptual hashing implementation
 │   │   ├── deep_embeddings.py      # ResNet/CLIP feature extraction
-│   │   ├── audio_fingerprint.py    # Audio fingerprinting
-│   │   └── feature_extractor.py    # Unified feature extraction
-│   ├── engine/
-│   │   ├── similarity_engine.py    # Multi-modal similarity computation
-│   │   └── duplicate_detector.py   # Duplicate detection logic
-│   ├── pipeline/
-│   │   ├── scanner.py              # S3 bucket scanner
-│   │   ├── preprocessor.py         # Video preprocessing
-│   │   └── orchestrator.py         # Pipeline orchestration
-│   ├── database/
-│   │   ├── db_manager.py           # PostgreSQL manager
-│   │   └── vector_store.py         # Pinecone vector DB
-│   ├── cache/
-│   │   └── feature_cache.py        # Redis caching layer
-│   └── utils/
-│       ├── video_utils.py          # Video utilities
-│       └── gpu_batch_processor.py  # GPU batch processing
+│   │   └── audio_fingerprint.py    # Audio fingerprinting
+│   └── pipeline/
+│       └── tasks.py                # Celery task entrypoint
 ├── dags/
 │   └── video_deduplication_pipeline.py  # Airflow DAG
+├── prometheus/
+│   ├── prometheus.yml              # Scrape config
+│   └── rules.yml                   # Alert rules
+├── grafana/
+│   ├── dashboards/
+│   │   ├── astradup-video-deduplication-dashboard.json
+│   │   └── dashboards.yml
+│   └── datasources/
+│       └── datasource.yml
 ├── tests/
 │   ├── test_perceptual_hash.py
-│   ├── test_deep_embeddings.py
 │   └── test_similarity_engine.py
-├── terraform/                      # Infrastructure as Code
-├── k8s/                           # Kubernetes manifests
 └── docs/
-    └── architecture.md            # Detailed architecture documentation
+    └── architecture.md             # Detailed architecture documentation
 ```
 
 ---
@@ -329,42 +351,38 @@ hashes = hasher.compute_video_signature(video_path)
 frames = hasher.extract_key_frames(video_path)
 embeddings = extractor.extract_video_features(frames)
 
-# Find duplicates
-duplicates = engine.find_duplicates(
-    video_id="video_123",
-    threshold=0.70,
-    max_results=100
+# Compare with a second video
+video2_hashes = hasher.compute_video_signature("path/to/second.mp4")
+features1 = {"phashes": hashes, "embeddings": embeddings}
+features2 = {"phashes": video2_hashes, "embeddings": embeddings}
+
+result = engine.compare_videos(
+    video1_features=features1,
+    video2_features=features2,
+    video1_metadata={"duration": 120, "resolution": (1920, 1080)},
+    video2_metadata={"duration": 118, "resolution": (1920, 1080)},
+    video1_id="video_123",
+    video2_id="video_456",
 )
 
-# Print results
-for result in duplicates:
-    print(f"Duplicate found: {result.video_id_2}")
-    print(f"  Similarity: {result.combined_similarity:.2%}")
-    print(f"  Confidence: {result.confidence:.2%}")
-    print(f"  Visual: {result.visual_similarity:.2%}")
-    print(f"  Audio: {result.audio_similarity:.2%}")
+print(result)
 ```
 
-### Advanced Processing Pipeline
+### Distributed Processing with Celery
 
 ```python
-from src.pipeline.orchestrator import PipelineOrchestrator
+from src.pipeline.tasks import compute_similarity
 
-# Initialize orchestrator
-orchestrator = PipelineOrchestrator()
-
-# Process batch of videos
-video_ids = ["vid_001", "vid_002", "vid_003"]
-
-results = orchestrator.process_batch(
-    video_ids=video_ids,
-    parallel_workers=10,
-    enable_gpu=True
+# Submit async similarity job
+task = compute_similarity.delay(
+    {"phashes": ["ff00ff"], "embeddings": [[0.1, 0.2, 0.3]]},
+    {"phashes": ["ff00ff"], "embeddings": [[0.1, 0.2, 0.3]]},
+    {"duration": 120, "resolution": (1920, 1080)},
+    {"duration": 118, "resolution": (1920, 1080)},
 )
 
-# Generate deduplication report
-report = orchestrator.generate_report(results)
-print(report)
+result = task.get(timeout=30)
+print(result)
 ```
 
 ---
@@ -387,11 +405,9 @@ pytest tests/ --cov=src --cov-report=html
 ### Run Integration Tests
 
 ```bash
-# Integration tests require database and Redis
-docker-compose up -d postgres redis
-
-# Run integration tests
-pytest tests/integration/ -v
+# Integration-style smoke checks using running services
+docker-compose up -d postgres redis api
+curl -f http://localhost:8000/health
 ```
 
 ---
@@ -442,7 +458,13 @@ if features is None:
 
 ### Environment Variables
 
+Copy `.env.example` to `.env` and update secrets (especially `AIRFLOW_FERNET_KEY`).
+
 ```bash
+# Airflow + observability
+AIRFLOW_FERNET_KEY=replace-with-32-byte-base64-key
+GRAFANA_PASSWORD=admin
+
 # Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/astradup
 REDIS_URL=redis://localhost:6379/0
@@ -613,4 +635,3 @@ Write a feature engineering pipeline that handles missing values, encodes catego
 - Write tests for AI-generated components
 - Document any assumptions or limitations
 - Keep sensitive information (credentials, keys) in environment variables
-
