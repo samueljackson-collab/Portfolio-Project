@@ -1,64 +1,172 @@
-# astradup-video-deduplication Operational Runbook
+# AstraDup Video De-duplication Operational Runbook
 
 ## Overview
-Operational procedures for maintaining and troubleshooting astradup-video-deduplication.
+Operational procedures for maintaining and troubleshooting AstraDup services (API, Celery workers, Airflow, and observability stack).
+
+## Service Map
+| Service | Purpose | Default Port | Container |
+| --- | --- | --- | --- |
+| PostgreSQL | Metadata store | 5432 | `astradup-postgres` |
+| Redis | Cache + Celery broker | 6379 | `astradup-redis` |
+| Celery Worker | Video processing tasks | N/A | `astradup-worker` |
+| Airflow Webserver | Orchestration UI | 8080 | `astradup-airflow-webserver` |
+| Airflow Scheduler | DAG scheduling | N/A | `astradup-airflow-scheduler` |
+| API | Health + metrics | 8000 | `astradup-api` |
+| Prometheus | Metrics scraping | 9090 | `astradup-prometheus` |
+| Grafana | Dashboards | 3000 | `astradup-grafana` |
 
 ## Prerequisites
-- Access credentials
-- Required tools installed
-- Familiarity with system architecture
+- Docker + Docker Compose
+- Access to `.env` values (see `.env.example`)
+- FFmpeg available if running local feature extraction
 
 ## Common Operations
 
-### Starting the Service
+### Start the Stack
 ```bash
-# Add startup commands
+docker-compose up -d
 ```
 
-### Stopping the Service
+### Stop the Stack
 ```bash
-# Add shutdown commands
+docker-compose down
 ```
 
-### Health Checks
+### Restart a Single Service
 ```bash
-# Add health check commands
+docker-compose restart api
+```
+
+### Tail Logs
+```bash
+# All services
+
+docker-compose logs -f
+
+# Single service
+
+docker-compose logs -f astradup-worker
+```
+
+## Health Checks
+
+### Container Status
+```bash
+docker-compose ps
+```
+
+### API + Metrics
+```bash
+curl -f http://localhost:8000/health
+curl -f http://localhost:8000/metrics
+```
+
+### Airflow
+```bash
+curl -f http://localhost:8080/health
+```
+
+### Redis
+```bash
+docker-compose exec redis redis-cli ping
+```
+
+### PostgreSQL
+```bash
+docker-compose exec postgres pg_isready -U astradup
+```
+
+## Airflow Operations
+
+### Initialize the Airflow DB (first run)
+```bash
+docker-compose run --rm airflow-webserver airflow db init
+```
+
+### Create Admin User
+```bash
+docker-compose run --rm airflow-webserver airflow users create \
+  --username admin \
+  --firstname Astra \
+  --lastname Dup \
+  --role Admin \
+  --email admin@example.com \
+  --password changeme
+```
+
+### Trigger the Deduplication DAG
+```bash
+docker-compose exec airflow-webserver airflow dags trigger video_deduplication_pipeline
+```
+
+## Celery Operations
+
+### Inspect Worker
+```bash
+docker-compose exec celery-worker celery -A src.pipeline.tasks inspect ping
+```
+
+### Run Sample Similarity Task
+```bash
+docker-compose exec celery-worker celery -A src.pipeline.tasks call astradup.healthcheck
 ```
 
 ## Troubleshooting
 
-### Issue: Service Not Starting
-**Symptoms:** Service fails to start
+### Issue: API returns 5xx
+**Symptoms:** `curl http://localhost:8000/health` fails.
 
 **Diagnosis Steps:**
-1. Check logs
-2. Verify configuration
-3. Check dependencies
+1. `docker-compose ps` to confirm `api` is healthy.
+2. `docker-compose logs -f api` for stack traces.
+3. Validate dependencies: PostgreSQL and Redis must be healthy.
 
 **Resolution:**
-- Steps to resolve
+- Restart API after dependencies are healthy: `docker-compose restart api`.
 
-### Issue: High Resource Usage
-**Symptoms:** High CPU/memory usage
+### Issue: Celery workers stuck
+**Symptoms:** Tasks remain in queued state.
 
 **Diagnosis Steps:**
-1. Check metrics
-2. Identify resource-intensive operations
+1. Validate Redis: `docker-compose exec redis redis-cli ping`.
+2. Inspect worker: `docker-compose exec celery-worker celery -A src.pipeline.tasks inspect active`.
 
 **Resolution:**
-- Steps to resolve
+- Restart worker: `docker-compose restart celery-worker`.
+
+### Issue: Airflow UI unavailable
+**Symptoms:** `http://localhost:8080` returns error.
+
+**Diagnosis Steps:**
+1. `docker-compose logs -f airflow-webserver` for startup errors.
+2. Ensure DB initialized: run `airflow db init` if needed.
+
+**Resolution:**
+- Recreate webserver container: `docker-compose up -d airflow-webserver`.
 
 ## Monitoring and Alerts
-- Key metrics to monitor
-- Alert thresholds
-- Escalation procedures
+- **Prometheus:** `http://localhost:9090` (config: `prometheus/prometheus.yml`)
+- **Grafana:** `http://localhost:3000` (default user `admin`, password from `.env`)
+- Alert rules live in `prometheus/rules.yml`.
 
 ## Backup and Recovery
-- Backup procedures
-- Recovery procedures
-- RTO/RPO objectives
+
+### PostgreSQL Backup
+```bash
+docker-compose exec postgres pg_dump -U astradup astradup > /tmp/astradup_backup.sql
+```
+
+### PostgreSQL Restore
+```bash
+docker-compose exec -T postgres psql -U astradup astradup < /tmp/astradup_backup.sql
+```
+
+### Redis Snapshot
+```bash
+docker-compose exec redis redis-cli save
+```
 
 ## Contacts
 - On-call engineer: [contact info]
-- Team slack: [channel]
+- Team channel: [slack/teams channel]
 - Escalation: [manager contact]
