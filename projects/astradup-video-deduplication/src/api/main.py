@@ -32,10 +32,14 @@ async def record_metrics(request: Request, call_next):
     start_time = time.monotonic()
     response = await call_next(request)
     duration = time.monotonic() - start_time
-    REQUEST_LATENCY.labels(request.method, request.url.path).observe(duration)
+
+    route = request.scope.get("route")
+    path_template = route.path if route else request.url.path
+
+    REQUEST_LATENCY.labels(request.method, path_template).observe(duration)
     REQUEST_COUNT.labels(
         request.method,
-        request.url.path,
+        path_template,
         str(response.status_code),
     ).inc()
     return response
