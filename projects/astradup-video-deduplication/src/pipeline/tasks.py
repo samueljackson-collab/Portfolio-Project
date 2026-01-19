@@ -14,10 +14,11 @@ def _redis_url() -> str:
     return os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 
+redis_url = _redis_url()
 celery_app = Celery(
     "astradup",
-    broker=os.getenv("CELERY_BROKER_URL", _redis_url()),
-    backend=os.getenv("CELERY_RESULT_BACKEND", _redis_url()),
+    broker=os.getenv("CELERY_BROKER_URL", redis_url),
+    backend=os.getenv("CELERY_RESULT_BACKEND", redis_url),
 )
 
 
