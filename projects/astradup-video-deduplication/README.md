@@ -21,6 +21,7 @@ For cross-project documentation, standards, and runbooks, see the [Portfolio Doc
 
 ### Monitoring
 - **Prometheus:** `http://localhost:9090` (config: `prometheus/prometheus.yml`)
+- **Alertmanager:** `http://localhost:9093` (config: `alertmanager/alertmanager.yml`)
 - **Grafana:** `http://localhost:3000` (dashboard: `grafana/dashboards/astradup-video-deduplication-dashboard.json`)
 - **API health check:** `http://localhost:8000/health`
 - **Airflow UI:** `http://localhost:8080`
@@ -284,6 +285,8 @@ docker-compose ps
 docker-compose logs -f astradup-worker
 ```
 
+> Note: Create a local `./backups` directory for PostgreSQL backup/restore commands in the runbook.
+
 ---
 
 ## 📁 Project Structure
@@ -352,9 +355,8 @@ frames = hasher.extract_key_frames(video_path)
 embeddings = extractor.extract_video_features(frames)
 
 # Compare with a second video
-video2_path = "path/to/second.mp4"
-video2_hashes = hasher.compute_video_signature(video2_path)
-video2_frames = hasher.extract_key_frames(video2_path)
+video2_hashes = hasher.compute_video_signature("path/to/second.mp4")
+video2_frames = hasher.extract_key_frames("path/to/second.mp4")
 video2_embeddings = extractor.extract_video_features(video2_frames)
 features1 = {"phashes": hashes, "embeddings": embeddings}
 features2 = {"phashes": video2_hashes, "embeddings": video2_embeddings}
