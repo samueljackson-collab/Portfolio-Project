@@ -30,18 +30,23 @@ REQUEST_LATENCY = Histogram(
 async def record_metrics(request: Request, call_next):
     """Record basic request metrics for Prometheus."""
     start_time = time.monotonic()
-    response = await call_next(request)
-    duration = time.monotonic() - start_time
-
     route = request.scope.get("route")
     path_template = route.path if route else request.url.path
 
-    REQUEST_LATENCY.labels(request.method, path_template).observe(duration)
-    REQUEST_COUNT.labels(
-        request.method,
-        path_template,
-        str(response.status_code),
-    ).inc()
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+    except Exception:
+        status_code = 500
+        raise
+    finally:
+        duration = time.monotonic() - start_time
+        REQUEST_LATENCY.labels(request.method, path_template).observe(duration)
+        REQUEST_COUNT.labels(
+            request.method,
+            path_template,
+            str(status_code),
+        ).inc()
     return response
 
 
