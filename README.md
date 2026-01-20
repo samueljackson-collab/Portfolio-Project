@@ -725,7 +725,7 @@ Latest updates: [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md) · 
 **Description** Designed and wired a home network from scratch: rack-mounted gear, VLAN segmentation, and secure Wi-Fi  
 for isolated IoT, guest, and trusted networks.
 
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-001/README.md) ·  
+**Links**: [Project README](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/06-homelab/PRJ-HOME-001) ·  
 [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets/README.md) ·  
 [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-001/assets/screenshots/README.md)
 
@@ -735,7 +735,7 @@ for isolated IoT, guest, and trusted networks.
 
 **Description** Proxmox/TrueNAS host running Wiki.js, Home Assistant, and Immich behind a reverse proxy with TLS.
 
-**Links**: [Project README](./projects/06-homelab/PRJ-HOME-002/README.md) ·  
+**Links**: [Project README](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/06-homelab/PRJ-HOME-002) ·  
 [Evidence Assets](./projects/06-homelab/PRJ-HOME-002/assets/README.md) ·  
 [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-002/assets/screenshots/README.md)
 
@@ -746,7 +746,7 @@ for isolated IoT, guest, and trusted networks.
 **Description** Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox  
 Backup Server.
 
-**Links**: [Project README](./projects/01-sde-devops/PRJ-SDE-002/README.md) ·  
+**Links**: [Project README](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/01-sde-devops/PRJ-SDE-002) ·  
 [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets/README.md) ·  
 [Screenshots/Logs](./projects/01-sde-devops/PRJ-SDE-002/assets/screenshots/README.md)
 
@@ -765,7 +765,7 @@ they're rebuilt.
 **Description** Previously built and managed: resort booking site; high-SKU flooring store; tours site with complex  
 variations. Code and process docs are being rebuilt for publication.
 
-**Links**: [Project README & Recovery Plan](./projects/08-web-data/PRJ-WEB-001/README.md) ·  
+**Links**: [Project README & Recovery Plan](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/08-web-data/PRJ-WEB-001) ·  
 [Recovery Timeline](./projects/08-web-data/PRJ-WEB-001/RECOVERY_TIMELINE.md) ·  
 [Artifacts (backup catalog, ERD, runbooks)](./projects/08-web-data/PRJ-WEB-001/assets/README.md)
 
