@@ -15,5 +15,5 @@ scrape_configs:
 - job_name: astradup-video-deduplication
   static_configs:
   - targets:
-    - app:8080
+    - api:8000
   metrics_path: /metrics

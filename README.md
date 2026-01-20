@@ -605,59 +605,59 @@ Latest updates: [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md)
   - What it is: Terraform/CDK/Pulumi baseline for AWS with reusable deploy scripts.  
   - What's done: CI for fmt/validate/tfsec/plan/apply; 250+ lines of pytest coverage validating variables,  
     outputs, and security controls.  
-  - Evidence: [Blueprint](./projects/1-aws-infrastructure-automation/README.md) ·  
+  - Evidence: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/1-aws-infrastructure-automation) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-1-aws-infrastructure-automation)  
 - **Project 2: Database Migration Platform**  
   - What it is: Debezium + AWS DMS–driven zero-downtime migration orchestrator.  
   - What's done: 680-line orchestrator, Dockerized runtime, 300+ lines of unit tests, CI for  
     lint/test/build/publish, Debezium connector config.  
-  - Evidence: [Blueprint](./projects/2-database-migration/README.md) ·  
+  - Evidence: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/2-database-migration) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-2-database-migration-platform)  
 - **Project 3: Kubernetes CI/CD Pipeline**  
   - What it is: GitOps-ready CI/CD for Kubernetes with progressive delivery.  
   - What's done: GitHub Actions with YAML/K8s validation, image builds, Trivy scans, ArgoCD sync,  
     blue-green deploys, automated rollbacks.  
-  - Evidence: [Blueprint](./projects/3-kubernetes-cicd/README.md) · [Assets](./projects/3-kubernetes-cicd/assets/README.md) ·  
+  - Evidence: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/3-kubernetes-cicd) · [Assets](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/3-kubernetes-cicd/assets/README.md) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-3-kubernetes-cicd-pipeline)  
 - **Project 4: DevSecOps Pipeline**  
   - What it is: Security-first pipeline covering SAST, SCA, secrets, SBOM, and DAST.  
   - What's done: Semgrep, Bandit, CodeQL, Gitleaks/TruffleHog, Syft SBOM, Trivy/Dockle, OWASP ZAP,  
     and compliance policy validation.  
-  - Evidence: [Blueprint](./projects/4-devsecops/README.md) ·  
+  - Evidence: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/4-devsecops) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-4-devsecops-pipeline)  
 - **Project 23: Advanced Monitoring & Observability**  
   - What it is: Monitoring stack for metrics, logs, and tracing across services.  
   - What's done: Automated Prometheus/Grafana/Loki/Otel deployment, dashboard linting, alert rule  
     checks, health verification.  
-  - Evidence: [Blueprint](./projects/23-advanced-monitoring/README.md) ·  
-    [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-23-advanced-monitoring-observability)
+  - Evidence: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/23-advanced-monitoring) ·  
+    [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-23-advanced-monitoring--observability)
 
 ### 🟠 In Progress
 
 - **Project 6: Machine Learning Pipeline**  
   - Focus: Phase 2 expansion—experiment tracking, model promotion gates, Docker images for training/serving.  
   - Next: Integrate experiment registry and CI hooks for promotion approvals.  
-  - Links: [Blueprint](./projects/6-mlops-platform/README.md) · [Roadmap](./ACTION_PLAN.md)  
+  - Links: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/6-mlops-platform) · [Roadmap](./ACTION_PLAN.md)  
 - **Project 7: Serverless Data Processing**  
   - Focus: Lambda/Step Functions pipelines with IaC and CDC ingestion.  
   - Next: Add unit tests and failure-handling paths; wire to validation harness.  
-  - Links: [Blueprint](./projects/7-serverless-data-processing/README.md) · [Roadmap](./ACTION_PLAN.md)  
+  - Links: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/7-serverless-data-processing) · [Roadmap](./ACTION_PLAN.md)  
 - **Project 8: Advanced AI Chatbot**  
   - Focus: RAG pipeline and tool-execution flow with evaluation harness.  
   - Next: Containerize services, add retrieval evals, and wire telemetry.  
-  - Links: [Blueprint](./projects/8-advanced-ai-chatbot/README.md) · [Roadmap](./ACTION_PLAN.md)  
+  - Links: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/8-advanced-ai-chatbot) · [Roadmap](./ACTION_PLAN.md)  
 - **Project 10: Blockchain Smart Contract Platform**  
   - Focus: Hardhat-based contracts with audits and deployment automation.  
   - Next: Expand CI coverage, add audit scripts, and release pipelines.  
-  - Links: [Blueprint](./projects/10-blockchain-smart-contract-platform/README.md) · [Roadmap](./ACTION_PLAN.md)  
+  - Links: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/10-blockchain-smart-contract-platform) · [Roadmap](./ACTION_PLAN.md)  
 - **Project 15: Real-time Collaborative Platform**  
   - Focus: CRDT/OT engine for collaborative editing.  
   - Next: Conflict resolution tests, latency simulations, and deploy automation.  
-  - Links: [Blueprint](./projects/15-real-time-collaboration/README.md) · [Roadmap](./ACTION_PLAN.md)  
+  - Links: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/15-real-time-collaboration) · [Roadmap](./ACTION_PLAN.md)  
 - **Project 25: Portfolio Website & Documentation Hub**  
   - Focus: VitePress site hosting portfolio docs and reports.  
   - Next: Improve navigation/badges, automate report publishing, and add status cards.  
-  - Links: [Blueprint](./projects/25-portfolio-website/README.md) · [Site](./portfolio-website/README.md)
+  - Links: [Blueprint](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/25-portfolio-website) · [Site](./portfolio-website/README.md)
 
 ### 🔵 Planned
 
