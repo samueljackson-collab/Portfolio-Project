@@ -184,6 +184,19 @@ services:
     networks:
       - astradup-network
 
+  # Alertmanager
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: astradup-alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - astradup-network
+
 networks:
   astradup-network:
     driver: bridge
