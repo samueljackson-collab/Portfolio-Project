@@ -153,12 +153,13 @@ docker-compose exec celery-worker celery -A src.pipeline.tasks call astradup.hea
 
 ### PostgreSQL Backup
 ```bash
-docker-compose exec postgres pg_dump -U astradup astradup > /tmp/astradup_backup.sql
+mkdir -p ./backups
+docker-compose exec postgres pg_dump -U astradup astradup > ./backups/astradup_backup.sql
 ```
 
 ### PostgreSQL Restore
 ```bash
-docker-compose exec -T postgres psql -U astradup astradup < /tmp/astradup_backup.sql
+docker-compose exec -T postgres psql -U astradup astradup < ./backups/astradup_backup.sql
 ```
 
 ### Redis Snapshot

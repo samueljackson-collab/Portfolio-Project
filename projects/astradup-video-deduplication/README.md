@@ -284,6 +284,8 @@ docker-compose ps
 docker-compose logs -f astradup-worker
 ```
 
+> Note: Create a local `./backups` directory for PostgreSQL backup/restore commands in the runbook.
+
 ---
 
 ## 📁 Project Structure
@@ -353,8 +355,10 @@ embeddings = extractor.extract_video_features(frames)
 
 # Compare with a second video
 video2_hashes = hasher.compute_video_signature("path/to/second.mp4")
+video2_frames = hasher.extract_key_frames("path/to/second.mp4")
+video2_embeddings = extractor.extract_video_features(video2_frames)
 features1 = {"phashes": hashes, "embeddings": embeddings}
-features2 = {"phashes": video2_hashes, "embeddings": embeddings}
+features2 = {"phashes": video2_hashes, "embeddings": video2_embeddings}
 
 result = engine.compare_videos(
     video1_features=features1,
