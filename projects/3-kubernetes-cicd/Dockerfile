@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Flask application
 
 # Stage 1: Builder
-FROM python:3.11-slim as builder
+FROM python:3.14-slim as builder
 
 WORKDIR /build
 
@@ -10,7 +10,7 @@ COPY app/requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Stage 2: Runtime
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
