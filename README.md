@@ -605,31 +605,31 @@ Latest updates: [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md)
   - What it is: Terraform/CDK/Pulumi baseline for AWS with reusable deploy scripts.  
   - What's done: CI for fmt/validate/tfsec/plan/apply; 250+ lines of pytest coverage validating variables,  
     outputs, and security controls.  
-  - Evidence: [Blueprint](./projects/1-aws-infrastructure-automation/README.md) ·  
+  - Evidence: [Blueprint](./projects/1-aws-infrastructure-automation) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-1-aws-infrastructure-automation)  
 - **Project 2: Database Migration Platform**  
   - What it is: Debezium + AWS DMS–driven zero-downtime migration orchestrator.  
   - What's done: 680-line orchestrator, Dockerized runtime, 300+ lines of unit tests, CI for  
     lint/test/build/publish, Debezium connector config.  
-  - Evidence: [Blueprint](./projects/2-database-migration/README.md) ·  
+  - Evidence: [Blueprint](./projects/2-database-migration) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-2-database-migration-platform)  
 - **Project 3: Kubernetes CI/CD Pipeline**  
   - What it is: GitOps-ready CI/CD for Kubernetes with progressive delivery.  
   - What's done: GitHub Actions with YAML/K8s validation, image builds, Trivy scans, ArgoCD sync,  
     blue-green deploys, automated rollbacks.  
-  - Evidence: [Blueprint](./projects/3-kubernetes-cicd/README.md) · [Assets](./projects/3-kubernetes-cicd/assets/README.md) ·  
+  - Evidence: [Blueprint](./projects/3-kubernetes-cicd) · [Assets](./projects/3-kubernetes-cicd/assets/README.md) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-3-kubernetes-cicd-pipeline)  
 - **Project 4: DevSecOps Pipeline**  
   - What it is: Security-first pipeline covering SAST, SCA, secrets, SBOM, and DAST.  
   - What's done: Semgrep, Bandit, CodeQL, Gitleaks/TruffleHog, Syft SBOM, Trivy/Dockle, OWASP ZAP,  
     and compliance policy validation.  
-  - Evidence: [Blueprint](./projects/4-devsecops/README.md) ·  
+  - Evidence: [Blueprint](./projects/4-devsecops) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-4-devsecops-pipeline)  
 - **Project 23: Advanced Monitoring & Observability**  
   - What it is: Monitoring stack for metrics, logs, and tracing across services.  
   - What's done: Automated Prometheus/Grafana/Loki/Otel deployment, dashboard linting, alert rule  
     checks, health verification.  
-  - Evidence: [Blueprint](./projects/23-advanced-monitoring/README.md) ·  
+  - Evidence: [Blueprint](./projects/23-advanced-monitoring) ·  
     [Progress](./PORTFOLIO_COMPLETION_PROGRESS.md#project-23-advanced-monitoring--observability)
 
 ### 🟠 In Progress
