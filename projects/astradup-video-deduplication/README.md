@@ -21,6 +21,7 @@ For cross-project documentation, standards, and runbooks, see the [Portfolio Doc
 
 ### Monitoring
 - **Prometheus:** `http://localhost:9090` (config: `prometheus/prometheus.yml`)
+- **Alertmanager:** `http://localhost:9093` (config: `alertmanager/alertmanager.yml`)
 - **Grafana:** `http://localhost:3000` (dashboard: `grafana/dashboards/astradup-video-deduplication-dashboard.json`)
 - **API health check:** `http://localhost:8000/health`
 - **Airflow UI:** `http://localhost:8080`
