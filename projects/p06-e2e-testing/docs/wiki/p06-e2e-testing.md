@@ -1,4 +1,4 @@
-# P18 — Web App Automated Testing
+# P06 — Web App Automated Testing
 
 ## Overview
 
