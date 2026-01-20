@@ -159,7 +159,7 @@ flowchart LR
 - [EnterpriseWiki](./src/components/EnterpriseWiki.tsx) — React component that renders interactive learning paths for  
   SDE, DevOps, QA, and architecture roles.
 
-## 📦 Portfolio Blueprints
+## 🧭 Portfolio Blueprints & Evidence
 
 - 🟢 [Project 1: AWS Infrastructure Automation](./projects/1-aws-infrastructure-automation/README.md) — Multi-tool  
   infrastructure-as-code implementation covering Terraform, AWS CDK, and Pulumi with reusable deploy scripts.
@@ -597,7 +597,7 @@ pie title Coverage: Website
 
 🟢 Done · 🟠 In Progress · 🔵 Planned
 
-Latest updates: [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md)
+Latest updates: [PORTFOLIO_STATUS_UPDATED.md](./PORTFOLIO_STATUS_UPDATED.md) · [Portfolio Blueprints](#portfolio-blueprints--evidence)
 
 ### 🟢 Done
 
