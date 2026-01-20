@@ -131,6 +131,12 @@ Use the documents below as the single source of truth for each operational area.
 
 ---
 
+## Requested Deliverables Intake
+
+Use this intake document to track newly requested documentation bundles and readiness before execution.
+
+- **Requested Deliverables Intake**: [docs/REQUESTED_DELIVERABLES_INTAKE.md](docs/REQUESTED_DELIVERABLES_INTAKE.md)
+
 ## How to Use These Documents
 
 ### Scenario 1: "I need to explain the portfolio to someone"
