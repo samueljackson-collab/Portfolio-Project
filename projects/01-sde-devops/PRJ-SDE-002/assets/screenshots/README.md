@@ -1,11 +1,9 @@
 # Screenshots (Sanitized Evidence)
 
-This folder contains sanitized SVG snapshots of key monitoring views. Use PNG exports for higher-fidelity captures as needed.
+This folder contains guidance for sanitized monitoring snapshots. The SVG placeholders were removed from the repo; store regenerated screenshots externally as needed.
 
 ## Available Snapshots
-- `PRJ-SDE-002_dashboards_01_20251110.svg` — Grafana infrastructure overview.
-- `PRJ-SDE-002_monitoring_01_20251110.svg` — Prometheus targets health.
-- `PRJ-SDE-002_monitoring_02_20251110.svg` — Alertmanager overview.
+- Stored externally. Regenerate PNG exports when needed and follow the sanitization steps below.
 
 ## How to Recreate Sanitized Screenshots
 1. Import the Grafana dashboards from `../grafana/dashboards/` (Infrastructure overview, Application metrics, Backup health).

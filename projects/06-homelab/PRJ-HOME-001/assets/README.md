@@ -7,9 +7,9 @@ This directory contains comprehensive documentation and configuration artifacts 
 
 ```
 assets/
-├── diagrams/          # Network topology diagrams (Mermaid + SVG exports)
-│   ├── physical-topology.mermaid / physical-topology.svg
-│   └── logical-vlan-map.mermaid / logical-vlan-map.svg
+├── diagrams/          # Network topology diagrams (Mermaid sources; SVG exports stored externally)
+│   ├── physical-topology.mermaid
+│   └── logical-vlan-map.mermaid
 ├── configs/           # Network configuration documentation and monitoring evidence
 │   ├── firewall-rules.md
 │   ├── firewall-rules-matrix.md
@@ -25,8 +25,8 @@ assets/
 ## Generated Artifacts
 
 ### Diagrams
-- **physical-topology.mermaid/.svg**: Complete physical network layout showing all equipment, cable runs, and connections
-- **logical-vlan-map.mermaid/.svg**: Logical network segmentation with VLAN architecture and firewall rules
+- **physical-topology.mermaid**: Complete physical network layout showing all equipment, cable runs, and connections
+- **logical-vlan-map.mermaid**: Logical network segmentation with VLAN architecture and firewall rules
 
 ### Configuration Documentation
 - **firewall-rules.md**: Comprehensive firewall rule set with maintenance procedures
@@ -35,7 +35,7 @@ assets/
 - **monitoring-observations.md**: Prometheus/Grafana/Loki evidence with sanitized metrics and log lines
 
 ### Screenshots
-- Sanitized UniFi controller, pfSense firewall, and VLAN topology snapshots stored in `screenshots/`.
+- Sanitized UniFi controller, pfSense firewall, and VLAN topology snapshots stored externally.
 
 ### Logs
 - Sanitized controller/firewall summary logs stored in `logs/`.
@@ -57,7 +57,7 @@ Follow the network-deployment-runbook.md for complete deployment procedures.
 ## Status
 - ✅ Physical topology diagram
 - ✅ Logical VLAN map
-- ✅ Sanitized dashboard screenshots stored in `screenshots/`
+- ✅ Sanitized dashboard screenshots stored externally
 - ✅ Sanitized logs captured in `logs/`
 - ✅ Monitoring evidence excerpts (Prometheus/Grafana/Loki)
 - 📝 Configuration documentation (in progress)

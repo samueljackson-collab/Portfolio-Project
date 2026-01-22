@@ -501,7 +501,7 @@ aws iam set-default-policy-version --policy-arn <arn> --version-id <previous-ver
 Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
 
 **Evidence artifacts**
-- [Screenshot](./docs/evidence/screenshot.svg)
+- Screenshot stored externally.
 - [Run log](./docs/evidence/run-log.txt)
 - [Dashboard export](./docs/evidence/dashboard-export.json)
 - [Load test summary](./docs/evidence/load-test-summary.txt)
@@ -510,7 +510,7 @@ Verification summary: Evidence artifacts captured on 2025-11-14 to validate the 
 
 | Evidence Item | Location | Status |
 | --- | --- | --- |
-| Screenshot captured | `docs/evidence/screenshot.svg` | ✅ |
+| Screenshot captured | Stored externally | ✅ |
 | Run log captured | `docs/evidence/run-log.txt` | ✅ |
 | Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
 | Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

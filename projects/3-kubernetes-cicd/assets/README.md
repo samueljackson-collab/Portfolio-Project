@@ -3,14 +3,11 @@
 Evidence artifacts for the GitOps-ready CI/CD pipeline. All screenshots/logs are sanitized and use placeholder project names, registries, and cluster identifiers.
 
 ## Contents
-- **screenshots/** — GitHub Actions workflow, Argo CD sync, and rollout status captures (SVG placeholders).
+- **screenshots/** — GitHub Actions workflow, Argo CD sync, and rollout status captures (stored externally).
 - **logs/** — Pipeline run summaries and Argo CD sync logs (sanitized).
 
 ## Evidence Index
-- Screenshots:
-  - `screenshots/project-3-cicd_pipeline_01_20251110.svg` — GitHub Actions workflow summary.
-  - `screenshots/project-3-cicd_pipeline_02_20251110.svg` — Argo CD sync health view.
-  - `screenshots/project-3-cicd_pipeline_03_20251110.svg` — Argo Rollouts canary status.
+- Screenshots: stored externally. Regenerate PNG exports on demand.
 - Logs:
   - `logs/github-actions-run.txt` — CI stages with lint/test/scan/build.
   - `logs/argocd-sync.txt` — GitOps sync summary and rollout promotion.
