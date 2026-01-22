@@ -1,0 +1,6 @@
+Training metrics summary (random_forest_classifier, run: 9e68c220f2864abbbc02e865bc9c6ef9)
+accuracy: 0.8812
+precision: 0.8818
+recall: 0.8812
+f1_score: 0.8812
+roc_auc: 0.9591
