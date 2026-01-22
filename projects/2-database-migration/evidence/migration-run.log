@@ -1,0 +1,2 @@
+$ docker compose -f compose.demo.yml up -d migration-orchestrator
+bash: command not found: docker

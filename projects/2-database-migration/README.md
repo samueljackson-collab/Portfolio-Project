@@ -440,6 +440,10 @@ Import the provided dashboard (`dashboards/migration-dashboard.json`) for:
 - Error rate and alerts
 - Throughput graphs
 
+## 🧾 Demo Evidence
+
+Evidence artifacts for the demo stack (deployment attempts, schema snapshots, validation plans, and throughput notes) are stored under [`projects/2-database-migration/evidence/`](./evidence/). See the [evidence README](./evidence/README.md) for details.
+
 ## 🔒 Security
 
 ### Database Credentials
