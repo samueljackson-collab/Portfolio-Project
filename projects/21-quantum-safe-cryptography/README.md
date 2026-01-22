@@ -44,13 +44,11 @@ Evidence from key exchange and signing flows is captured under `evidence/`, incl
 
 - Protocol logs: [`evidence/protocol-logs.txt`](evidence/protocol-logs.txt)
 - Test output: [`evidence/test-output.txt`](evidence/test-output.txt)
-- Benchmark summary: [`evidence/benchmark-summary.md`](evidence/benchmark-summary.md)
+- Benchmark summary: [`evidence/benchmark-summary.md`](evidence/benchmark-summary.md) - Contains latency and payload comparisons.
 - Benchmark data: [`evidence/performance-benchmarks.csv`](evidence/performance-benchmarks.csv), [`evidence/performance-benchmarks.json`](evidence/performance-benchmarks.json)
 
 > Note: If liboqs is not available, benchmarks fall back to the built-in placeholders (see logs for warnings).
 
-### Classical vs PQC Comparisons
-See the benchmark summary for latency and payload comparisons: [`evidence/benchmark-summary.md`](evidence/benchmark-summary.md).
 
 
 ## Code Generation Prompts
