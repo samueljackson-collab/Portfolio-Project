@@ -22,6 +22,9 @@ For cross-project documentation, standards, and runbooks, see the [Portfolio Doc
 ### Live deployment screenshots
 ![Live deployment dashboard](../../assets/screenshots/live-deployment-placeholder.svg)
 
+### Evidence
+Deployment and metrics evidence are tracked in [`evidence/README.md`](./evidence/README.md).
+
 
 ## 📊 Portfolio Status Board
 
