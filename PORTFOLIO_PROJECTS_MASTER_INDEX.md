@@ -4,8 +4,8 @@
 
 This index provides quick access to all portfolio projects with their documentation. All links point to files tracked inside this GitHub repository.
 
-**Evidence tracker**: [docs/evidence-tracker.md](docs/evidence-tracker.md)  
-**Catalog decision log**: [docs/portfolio-catalog.md](docs/portfolio-catalog.md)
+- **Evidence tracker**: [docs/evidence-tracker.md](docs/evidence-tracker.md)
+- **Catalog decision log**: [docs/portfolio-catalog.md](docs/portfolio-catalog.md)
 
 | # | Project | GitHub | Wiki | Diagram | Runbook |
 |---|---------|--------|------|---------|---------|
