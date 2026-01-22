@@ -49,7 +49,7 @@ Run the following in an environment with Kubernetes access and GitHub credential
 2. Capture cluster output:
    ```bash
    kubectl get all -n default
-   kubectl rollout history deployment/k8s-cicd-demo
+   kubectl argo rollouts history k8s-cicd-demo -n default
    ```
 3. Trigger the CI workflow via GitHub Actions and capture logs + screenshots.
 4. Save screenshots and outputs in `projects/3-kubernetes-cicd/evidence/`.
