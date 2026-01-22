@@ -72,6 +72,38 @@ mlflow server --backend-store-uri sqlite:///mlruns.db --default-artifact-root ./
 ./scripts/run_training.sh configs/churn-experiment.yaml
 ```
 
+## Kubernetes Deployment (Tracking, Registry, Serving)
+```bash
+# Deploy MLflow tracking + registry endpoints
+kubectl apply -f k8s/mlflow-tracking.yaml
+kubectl apply -f k8s/mlflow-registry.yaml
+
+# Deploy model serving API
+kubectl apply -f k8s/model-serving-deployment.yaml
+```
+
+## Evidence
+| Evidence | Artifact |
+| --- | --- |
+| Training metrics summary | `evidence/training-metrics.txt` |
+| MLflow model registry snapshot | `evidence/model-registry.txt` |
+| Serving endpoint test output | `evidence/serving-endpoint-test.txt` |
+
+### Training metrics summary
+```text
+See: evidence/training-metrics.txt
+```
+
+### Model registry snapshot
+```text
+See: evidence/model-registry.txt
+```
+
+### Serving endpoint test output
+```text
+See: evidence/serving-endpoint-test.txt
+```
+
 ## Observability & Ops
 - MLflow metrics dashboards and artifacts for experiment traceability.
 - Prometheus-compatible metrics exporter for inference endpoints.

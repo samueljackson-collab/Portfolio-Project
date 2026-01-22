@@ -77,29 +77,29 @@ class ModelInfo(BaseModel):
 def load_model(model_name: str, version: Optional[str] = None):
     """Load model from MLflow registry."""
     try:
+        client = mlflow.tracking.MlflowClient()
+        version_str = version
+
         if version:
             model_uri = f"models:/{model_name}/{version}"
-        else:
-            model_uri = f"models:/{model_name}/Production"
-
-        model = mlflow.pyfunc.load_model(model_uri)
-
-        # Get model metadata
-        client = mlflow.tracking.MlflowClient()
-        if version:
             model_versions = client.search_model_versions(
                 f"name='{model_name}' and version='{version}'"
             )
+            if model_versions:
+                version_str = model_versions[0].version
         else:
-            model_versions = client.search_model_versions(
-                f"name='{model_name}' and current_stage='Production'"
-            )
+            model_versions = client.get_latest_versions(model_name)
+            production_versions = [
+                v for v in model_versions if getattr(v, "current_stage", "") == "Production"
+            ]
+            selected_versions = production_versions or model_versions
+            if not selected_versions:
+                raise ValueError(f"No versions found for model {model_name}")
+            latest = max(selected_versions, key=lambda v: int(v.version))
+            version_str = latest.version
+            model_uri = f"models:/{model_name}/{version_str}"
 
-        if model_versions:
-            model_metadata = model_versions[0]
-            version_str = model_metadata.version
-        else:
-            version_str = version or "latest"
+        model = mlflow.pyfunc.load_model(model_uri)
 
         loaded_models[model_name] = {
             "model": model,
@@ -189,7 +189,21 @@ async def predict(request: PredictionRequest, background_tasks: BackgroundTasks)
             version = model_data["version"]
 
         # Convert features to DataFrame
-        feature_names = [f"feature_{i:02d}" for i in range(len(request.features[0]))]
+        feature_env = os.getenv("MODEL_FEATURE_NAMES")
+        if feature_env:
+            feature_names = [name.strip() for name in feature_env.split(",") if name.strip()]
+        else:
+            feature_names = [f"feature_{i:02d}" for i in range(len(request.features[0]))]
+
+        if len(feature_names) != len(request.features[0]):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Feature count mismatch: received "
+                    f"{len(request.features[0])} values, expected {len(feature_names)}."
+                ),
+            )
+
         df = pd.DataFrame(request.features, columns=feature_names)
 
         # Make predictions
@@ -212,6 +226,8 @@ async def predict(request: PredictionRequest, background_tasks: BackgroundTasks)
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
+    except HTTPException as exc:
+        raise exc
     except Exception as e:
         metrics_counter["errors"] += 1
         logger.error(f"Prediction error: {e}")

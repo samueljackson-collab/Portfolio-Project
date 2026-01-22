@@ -32,6 +32,8 @@ spec:
           value: "http://mlflow:5000"
         - name: MODEL_NAME
           value: "production-model"
+        - name: MODEL_FEATURE_NAMES
+          value: "plan_type,region,device,monthly_spend,tenure_months,support_calls"
         - name: PORT
           value: "8000"
         - name: START_TIME
