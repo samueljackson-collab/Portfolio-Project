@@ -33,6 +33,7 @@ Security-first CI pipeline with SBOM generation, container scanning, and policy 
 
 ## Contents
 - `pipelines/github-actions.yaml` — orchestrates build, security scanning, and deployment gates.
+- Evidence: [`reports/evidence-20260121-172338/`](reports/evidence-20260121-172338/)
 
 
 ## Code Generation Prompts
