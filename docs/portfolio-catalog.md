@@ -8,10 +8,10 @@ folders and indexes remain available as historical or supplemental material, but
 **do not override** the canonical list or status table.
 
 ## Canonical Catalog
-- **Source of truth:** [PORTFOLIO_STATUS_UPDATED.md](../PORTFOLIO_STATUS_UPDATED.md)
+- **Source of truth:** [Portfolio Project Status](../PORTFOLIO_STATUS_UPDATED.md)
 - **Folder scope:** `projects/1-aws-infrastructure-automation` through
   `projects/25-portfolio-website`
-- **Evidence tracking:** [docs/evidence-tracker.md](./evidence-tracker.md)
+- **Evidence tracking:** [Portfolio Evidence Tracker](./evidence-tracker.md)
 
 ## Cross-Map of Legacy/Alternate Project Families
 
