@@ -235,7 +235,7 @@ def write_benchmarks(results: list[BenchmarkResult], output_dir: Path) -> None:
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "results": [asdict(result) for result in results],
     }
-    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    json_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
