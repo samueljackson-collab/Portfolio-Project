@@ -46,7 +46,7 @@ def _percentile(values: list[float], percentile: float) -> float:
     return sorted_values[index]
 
 
-def _benchmark(label: str, func, iterations: int) -> list[float]:
+def _benchmark(func, iterations: int) -> list[float]:
     durations = []
     for _ in range(iterations):
         start = perf_counter()
