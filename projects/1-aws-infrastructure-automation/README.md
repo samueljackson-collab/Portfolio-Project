@@ -36,6 +36,12 @@ This project provisions a production-ready AWS environment with multiple impleme
 ### Live deployment screenshots
 ![Live deployment dashboard](../../assets/screenshots/live-deployment-placeholder.svg)
 
+## Evidence
+- [Evidence artifacts index](./evidence/README.md)
+- [Terraform outputs (`outputs.json`)](./evidence/outputs.json)
+
+> Console screenshots (VPC, subnets, RDS) and the AWS Cost Explorer chart should be added to the evidence folder once captured from the dedicated dev AWS account.
+
 ## Goals
 - Launch a multi-AZ network foundation with private, public, and database subnets.
 - Provide a managed Kubernetes control plane, managed worker nodes, and autoscaling policies.

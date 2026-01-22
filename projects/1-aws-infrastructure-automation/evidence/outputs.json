@@ -1,0 +1,9 @@
+{
+  "error": "Terraform outputs not captured in this environment.",
+  "reason": "AWS credentials and a dedicated dev account were not available in the execution environment.",
+  "next_steps": [
+    "Run: terraform init",
+    "Run: terraform apply -var-file=env/dev.tfvars",
+    "Run: terraform output -json > projects/1-aws-infrastructure-automation/evidence/outputs.json"
+  ]
+}
