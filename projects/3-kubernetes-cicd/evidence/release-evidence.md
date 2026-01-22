@@ -44,7 +44,7 @@ Run the following in an environment with Kubernetes access and GitHub credential
 1. Deploy manifests:
    ```bash
    kubectl apply -k projects/3-kubernetes-cicd/k8s/base
-   kubectl rollout status deployment/k8s-cicd-demo
+   kubectl argo rollouts status k8s-cicd-demo -n default
    ```
 2. Capture cluster output:
    ```bash
