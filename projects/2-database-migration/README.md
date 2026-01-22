@@ -442,7 +442,7 @@ Import the provided dashboard (`dashboards/migration-dashboard.json`) for:
 
 ## 🧾 Demo Evidence
 
-Evidence artifacts for the demo stack (deployment attempts, schema snapshots, validation plans, and throughput notes) are stored under [`projects/2-database-migration/evidence/`](./evidence/). See the [evidence README](./evidence/README.md) for details.
+Evidence artifacts for the demo stack (deployment attempts, schema snapshots, validation plans, and throughput notes) are stored in the [`evidence/`](./evidence/) directory. See the [evidence README](./evidence/README.md) for details.
 
 ## 🔒 Security
 
