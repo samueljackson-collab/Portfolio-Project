@@ -3,6 +3,9 @@
 **Last Reconciled**: 2025-12-26
 **Scope**: Projects 1–25
 
+- **Evidence tracker**: [docs/evidence-tracker.md](docs/evidence-tracker.md)
+- **Catalog decision log**: [docs/portfolio-catalog.md](docs/portfolio-catalog.md)
+
 This document is the **authoritative status table** for portfolio planning. All other summary/assessment files must link here instead of duplicating status tables.
 
 ## Reconciliation Decision (Prevents Future Drift)
