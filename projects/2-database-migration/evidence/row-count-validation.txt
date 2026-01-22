@@ -1,0 +1,5 @@
+Unable to run row-count validation or checksum comparisons because Docker is not available in this environment.
+
+Intended commands:
+  docker exec -i migration-source-db psql -U postgres -d sourcedb -c "SELECT 'users' AS table, COUNT(*) FROM users UNION ALL SELECT 'products', COUNT(*) FROM products UNION ALL SELECT 'orders', COUNT(*) FROM orders UNION ALL SELECT 'order_items', COUNT(*) FROM order_items;"
+  docker exec -i migration-target-db psql -U postgres -d targetdb -c "SELECT 'users' AS table, COUNT(*) FROM users UNION ALL SELECT 'products', COUNT(*) FROM products UNION ALL SELECT 'orders', COUNT(*) FROM orders UNION ALL SELECT 'order_items', COUNT(*) FROM order_items;"
