@@ -178,6 +178,7 @@ curl http://localhost:8080/api/v1/tasks | jq
 
 ## Evidence Assets
 - [Assets Index](./assets/README.md)
+- [Release Evidence Pack](./evidence/release-evidence.md)
 
 ## GitHub Actions Workflow
 The `portfolio-delivery` workflow enforces validation, security, and progressive deployment stages:
