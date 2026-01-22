@@ -240,7 +240,7 @@ def write_benchmarks(results: list[BenchmarkResult], output_dir: Path) -> None:
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=list(asdict(results[0]).keys()),
+            fieldnames=[f.name for f in fields(BenchmarkResult)],
         )
         writer.writeheader()
         for result in results:
