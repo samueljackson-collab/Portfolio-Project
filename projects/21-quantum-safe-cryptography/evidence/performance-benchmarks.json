@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-01-22T15:33:45.309874Z",
+  "results": [
+    {
+      "name": "Classical X25519 key exchange",
+      "category": "key_exchange",
+      "mean_ms": 0.3213469799948143,
+      "median_ms": 0.2962804999810942,
+      "p95_ms": 0.5013300000200616,
+      "payload_bytes": 64,
+      "public_key_bytes": 32,
+      "signature_bytes": null,
+      "ciphertext_bytes": null
+    },
+    {
+      "name": "PQC Kyber768-FALLBACK KEM",
+      "category": "key_exchange",
+      "mean_ms": 0.29450143999838474,
+      "median_ms": 0.2809380000599049,
+      "p95_ms": 0.4879890000211162,
+      "payload_bytes": 1248,
+      "public_key_bytes": 1184,
+      "signature_bytes": null,
+      "ciphertext_bytes": 64
+    },
+    {
+      "name": "Classical Ed25519 signature",
+      "category": "signature",
+      "mean_ms": 0.3970952199892963,
+      "median_ms": 0.3801569999950516,
+      "p95_ms": 0.5574799999976676,
+      "payload_bytes": 64,
+      "public_key_bytes": 32,
+      "signature_bytes": 64,
+      "ciphertext_bytes": null
+    },
+    {
+      "name": "PQC Dilithium3-FALLBACK signature",
+      "category": "signature",
+      "mean_ms": 1.0329087600052844,
+      "median_ms": 1.0013235000769782,
+      "p95_ms": 1.3026410000520627,
+      "payload_bytes": 64,
+      "public_key_bytes": 32,
+      "signature_bytes": 64,
+      "ciphertext_bytes": null
+    }
+  ]
+}
