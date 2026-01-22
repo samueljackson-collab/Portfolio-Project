@@ -4,6 +4,9 @@
 
 This index provides quick access to all portfolio projects with their documentation. All links point to files tracked inside this GitHub repository.
 
+**Evidence tracker**: [docs/evidence-tracker.md](docs/evidence-tracker.md)  
+**Catalog decision log**: [docs/portfolio-catalog.md](docs/portfolio-catalog.md)
+
 | # | Project | GitHub | Wiki | Diagram | Runbook |
 |---|---------|--------|------|---------|---------|
 | 1 | AWS Infrastructure Automation | [README](projects/p01-aws-infra/README.md) | [Wiki](projects/p01-aws-infra/docs/wiki/p01-aws-infra.md) | [Diagram](projects/p01-aws-infra/docs/diagrams/architecture.mmd) | [Runbook](projects/p01-aws-infra/RUNBOOK.md) |
