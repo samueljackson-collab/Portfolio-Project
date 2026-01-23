@@ -44,6 +44,12 @@ python src/portfolio_optimizer.py
 - Automatic fallback to classical simulated annealing when quantum job queue is unavailable.
 - Metrics exported to CloudWatch for performance tracking.
 
+## Evidence
+- Integration test run: [`evidence/integration_tests.txt`](evidence/integration_tests.txt)
+- Quantum circuit output + baseline comparison: [`evidence/benchmark_summary.md`](evidence/benchmark_summary.md)
+- Quantum circuit text output: [`evidence/quantum_circuit_output.txt`](evidence/quantum_circuit_output.txt)
+- Baseline comparison data: [`evidence/baseline_comparison.json`](evidence/baseline_comparison.json)
+
 
 ## Code Generation Prompts
 
