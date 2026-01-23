@@ -1,8 +1,8 @@
 ---
-title: DevSecOps Pipeline
-description: Security-first CI pipeline integrating SAST, DAST, and container scanning.
+title: "DevSecOps Pipeline"
+description: "Security-first CI pipeline integrating SAST, DAST, and container scanning."
 published: true
-date: 2026-01-22T18:25:20.000Z
+date: 2026-01-23T15:24:46.000Z
 tags:
   - security
   - devops
@@ -10,8 +10,9 @@ tags:
   - sast
   - dast
 editor: markdown
-dateCreated: 2026-01-22T18:25:20.000Z
+dateCreated: 2026-01-23T15:24:46.000Z
 ---
+
 
 # DevSecOps Pipeline
 
@@ -23,13 +24,74 @@ Security-first CI pipeline integrating SAST, DAST, and container scanning.
 
 ---
 
+
+## 📋 Table of Contents
+
+1. [Problem Statement](#-problem-statement) - Why this project exists
+2. [Learning Objectives](#-learning-objectives) - What you'll learn
+3. [Architecture](#-architecture) - System design and components
+4. [Tech Stack](#-tech-stack) - Technologies and their purposes
+5. [Technology Deep Dives](#-technology-deep-dives) - In-depth explanations
+6. [Implementation Guide](#-implementation-guide) - How to build it
+7. [Best Practices](#-best-practices) - Do's and don'ts
+8. [Quick Start](#-quick-start) - Get running in minutes
+9. [Operational Guide](#-operational-guide) - Day-2 operations
+10. [Real-World Scenarios](#-real-world-scenarios) - Practical applications
+
+---
+
+
 ## 🎯 Problem Statement
 
-Security vulnerabilities discovered in production are **50x more expensive** to fix
-than those caught during development. Organizations need automated security gates
-integrated into the development workflow.
+### The Application Security Challenge
 
-### This Project Solves
+Security vulnerabilities discovered in production are expensive, embarrassing, and
+potentially catastrophic. Yet traditional security practices treat security as a gate
+at the end of development:
+
+**The Security Bottleneck**: Security teams review code manually before release. With
+hundreds of PRs per week, they become a bottleneck. Developers wait days for reviews,
+or worse, security review is skipped "just this once."
+
+**Late Discovery**: Vulnerabilities found in production cost 100x more to fix than
+those caught during development. The code has already shipped. Customers are affected.
+Emergency patches are required.
+
+**Tool Proliferation**: Teams adopt point solutions—one tool for SAST, another for
+dependencies, another for containers. Results are scattered across dashboards with
+no unified view.
+
+**Alert Fatigue**: Security scanners generate thousands of findings. Most are false
+positives or low-severity issues. Critical vulnerabilities get buried in noise.
+
+
+**Business Impact:**
+- Average cost of data breach: $4.45 million (IBM 2023)
+- Reputation damage from security incidents
+- Regulatory fines (GDPR, CCPA, PCI-DSS)
+- Customer churn after breaches
+- Engineering time spent on emergency patches
+
+
+### How This Project Solves It
+
+
+**DevSecOps integrates security into the development workflow:**
+
+1. **Shift-Left Scanning**: Security checks run automatically in CI pipelines. Every
+   PR gets scanned before merge. No waiting for manual review.
+
+2. **Unified Policy**: Define security policies as code. Block builds that violate
+   policies. Consistent enforcement across all repositories.
+
+3. **Prioritized Results**: ML-powered triage surfaces critical findings. Low-priority
+   issues are tracked but don't block releases.
+
+4. **Developer-Friendly**: Security feedback appears in familiar tools—IDE plugins,
+   PR comments, Slack notifications. Developers fix issues without context switching.
+
+
+### Key Capabilities Delivered
 
 - ✅ **SBOM generation**
 - ✅ **Automated vulnerability scanning**
@@ -37,21 +99,99 @@ integrated into the development workflow.
 
 ---
 
-## 🛠️ Tech Stack Selection
 
-| Technology | Purpose |
-|------------|----------|
-| **GitHub Actions** | CI/CD workflow automation |
-| **Trivy** | Container vulnerability scanner |
-| **SonarQube** | Code quality analysis |
-| **OWASP ZAP** | Web application security testing |
+## 🎓 Learning Objectives
+
+By studying and implementing this project, you will:
+
+   1. Implement SAST, DAST, and dependency scanning in pipelines
+   2. Configure policy-as-code for security enforcement
+   3. Design SBOM generation and vulnerability tracking
+   4. Set up security gates that balance velocity and safety
+   5. Implement secret scanning and credential rotation
+
+**Prerequisites:**
+- Basic understanding of cloud services (AWS/GCP/Azure)
+- Familiarity with containerization (Docker)
+- Command-line proficiency (Bash/Linux)
+- Version control with Git
+
+**Estimated Learning Time:** 15-25 hours for full implementation
+
+---
 
 
-### Why This Stack?
+## 🏗️ Architecture
 
-This combination was chosen to balance **developer productivity**, **operational simplicity**,
-and **production reliability**. Each component integrates seamlessly while serving a specific
-purpose in the overall architecture.
+### High-Level System Design
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         DevSecOps Pipeline                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   ┌───────────────┐    ┌─────────────────┐    ┌───────────────────┐   │
+│   │    INPUT      │    │   PROCESSING    │    │     OUTPUT        │   │
+│   │               │───▶│                 │───▶│                   │   │
+│   │ • API Gateway │    │ • Business Logic│    │ • Response/Events │   │
+│   │ • Event Queue │    │ • Validation    │    │ • Persistence     │   │
+│   │ • File Upload │    │ • Transformation│    │ • Notifications   │   │
+│   └───────────────┘    └─────────────────┘    └───────────────────┘   │
+│           │                    │                       │              │
+│           └────────────────────┴───────────────────────┘              │
+│                                │                                       │
+│                    ┌───────────┴───────────┐                          │
+│                    │    INFRASTRUCTURE     │                          │
+│                    │ • Compute (EKS/Lambda)│                          │
+│                    │ • Storage (S3/RDS)    │                          │
+│                    │ • Network (VPC/ALB)   │                          │
+│                    │ • Security (IAM/KMS)  │                          │
+│                    └───────────────────────┘                          │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Multi-AZ Deployment | Ensures high availability during AZ failures |
+| Managed Services | Reduces operational burden, focus on business logic |
+| Infrastructure as Code | Reproducibility, version control, audit trail |
+| GitOps Workflow | Single source of truth, automated reconciliation |
+
+---
+
+
+## 🛠️ Tech Stack
+
+### Technologies Used
+
+| Technology | Purpose & Rationale |
+|------------|---------------------|
+| **GitHub Actions** | Native CI/CD automation with deep GitHub integration and marketplace ecosystem |
+| **Trivy** | Comprehensive vulnerability scanner for containers, IaC, and code |
+| **SonarQube** | Code quality platform detecting bugs, vulnerabilities, and smells |
+| **OWASP ZAP** | Dynamic application security testing for finding vulnerabilities |
+
+### Why This Combination?
+
+This stack was carefully selected based on:
+
+1. **Production Maturity** - All components are battle-tested at scale
+2. **Community & Ecosystem** - Strong documentation, plugins, and support
+3. **Integration** - Technologies work together with established patterns
+4. **Scalability** - Architecture supports growth without major refactoring
+5. **Operability** - Built-in observability and debugging capabilities
+6. **Cost Efficiency** - Balance of capability and cloud spend optimization
+
+### Alternative Considerations
+
+| Current Choice | Alternatives Considered | Why Current Was Chosen |
+|---------------|------------------------|------------------------|
+| Terraform | CloudFormation, Pulumi | Provider-agnostic, mature ecosystem |
+| Kubernetes | ECS, Nomad | Industry standard, portable |
+| PostgreSQL | MySQL, MongoDB | ACID compliance, JSON support |
 
 ---
 
@@ -60,211 +200,587 @@ purpose in the overall architecture.
 ### 📚 Why Security-First Development?
 
 Security-first development integrates security practices throughout the SDLC
-rather than treating it as an afterthought. This shift-left approach catches
-vulnerabilities early when they're cheapest to fix.
+rather than treating it as an afterthought. This "shift-left" approach catches
+vulnerabilities early when they're cheapest to fix—before they reach production.
 
-**Key Benefits:**
-- **Early Detection**: Find vulnerabilities before production
-- **Cost Reduction**: Fix issues when they're cheapest
-- **Compliance**: Meet regulatory requirements (SOC2, HIPAA)
-- **Trust**: Build confidence with customers
-- **Automation**: Consistent security checks in CI/CD
+Studies show that fixing a vulnerability in production costs 100x more than
+fixing it during development. By embedding security into CI/CD pipelines,
+teams catch issues automatically without slowing down delivery.
 
-**Learn More:**
+#### How It Works
+
+
+**Shift-Left Security Stages:**
+1. **Design**: Threat modeling, security requirements
+2. **Code**: SAST, secret scanning, dependency scanning
+3. **Build**: Container scanning, SBOM generation
+4. **Test**: DAST, penetration testing
+5. **Deploy**: Configuration scanning, compliance checks
+6. **Runtime**: WAF, monitoring, incident response
+
+**Key Tools by Stage:**
+- SAST: SonarQube, Semgrep, CodeQL
+- Dependencies: Snyk, Dependabot, OWASP Dependency-Check
+- Containers: Trivy, Grype, Clair
+- DAST: OWASP ZAP, Burp Suite
+- Secrets: GitLeaks, TruffleHog
+
+
+#### Working Code Example
+
+```yaml
+# Example: Security Pipeline in GitHub Actions
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly Monday 6am
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for secret detection
+
+      - name: GitLeaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python, javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+
+  dependency-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Snyk
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  container-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t app:${{ github.sha }} .
+
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: app:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  dast:
+    runs-on: ubuntu-latest
+    needs: [sast, dependency-scan]
+    steps:
+      - name: Start application
+        run: docker-compose up -d
+
+      - name: OWASP ZAP Scan
+        uses: zaproxy/action-full-scan@v0.8.0
+        with:
+          target: 'http://localhost:8080'
+          rules_file_name: '.zap/rules.tsv'
+```
+
+#### Key Benefits
+
+- **Early Detection**: Find vulnerabilities before production (100x cheaper)
+- **Cost Reduction**: Automated scanning vs expensive penetration tests
+- **Compliance**: Meet regulatory requirements (SOC2, HIPAA, PCI-DSS)
+- **Customer Trust**: Build confidence with secure-by-default practices
+- **Automation**: Consistent security checks in every CI/CD run
+- **Developer Enablement**: Security feedback in familiar tools (IDE, PR)
+- **Supply Chain Security**: Detect vulnerable dependencies automatically
+
+#### Best Practices
+
+- ✅ Implement security scanning in CI with blocking thresholds
+- ✅ Use secret scanning with pre-commit hooks
+- ✅ Maintain SBOM (Software Bill of Materials) for all releases
+- ✅ Conduct threat modeling during design phase
+- ✅ Implement least-privilege access for all services
+- ✅ Regular security training for development teams
+
+#### Common Pitfalls to Avoid
+
+- ❌ Security as a gate at the end of development
+- ❌ Ignoring vulnerability findings without triage
+- ❌ Relying solely on perimeter security
+- ❌ Storing secrets in code or environment variables
+- ❌ Security exceptions that never get reviewed
+
+#### Further Reading
+
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
-
-### 📚 What is SAST?
-
-Static Application Security Testing (SAST) analyzes source code to identify
-security vulnerabilities without executing the application. It's a white-box testing
-approach that catches issues early in development.
-
-**Key Benefits:**
-- **Early Detection**: Scan code before it runs
-- **Line-Level Feedback**: Pinpoint exact vulnerability locations
-- **CI/CD Integration**: Automate in build pipelines
-- **Coverage**: Analyze entire codebase systematically
-- **Developer-Friendly**: Provide actionable remediation guidance
-
-**Learn More:**
-- [SonarQube Documentation](https://docs.sonarqube.org/)
-- [Semgrep Rules](https://semgrep.dev/docs/)
-
+- [DevSecOps Maturity Model](https://dsomm.owasp.org/)
 
 ---
 
-## 🏗️ Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    DevSecOps Pipeline                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  [Input Layer] ──▶ [Processing] ──▶ [Output Layer]         │
-│                                                             │
-│  • Data ingestion      • Core logic        • API/Events    │
-│  • Validation          • Transformation    • Storage       │
-│  • Authentication      • Orchestration     • Monitoring    │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
 
-> 💡 **Note**: Refer to the project's `docs/architecture.md` for detailed diagrams.
+## 📖 Implementation Guide
+
+This section provides production-ready code you can adapt for your own projects.
+
+### Step 1: Implementing SBOM generation
+
+**Objective:** Build sbom generation with production-grade quality.
+
+**Implementation Approach:**
+
+1. **Define Requirements**
+   - Functional: What it must do
+   - Non-functional: Performance, security, reliability targets
+
+2. **Design the Solution**
+   - Consider failure modes and edge cases
+   - Plan for observability from the start
+   - Document architectural decisions
+
+3. **Implement Iteratively**
+   - Start with a minimal working version
+   - Add tests before extending functionality
+   - Refactor for clarity and maintainability
+
+4. **Validate Thoroughly**
+   - Unit tests for business logic
+   - Integration tests for component interaction
+   - Load tests for performance validation
+
+### Step 2: Implementing Automated vulnerability scanning
+
+**Objective:** Build automated vulnerability scanning with production-grade quality.
+
+**Implementation Approach:**
+
+1. **Define Requirements**
+   - Functional: What it must do
+   - Non-functional: Performance, security, reliability targets
+
+2. **Design the Solution**
+   - Consider failure modes and edge cases
+   - Plan for observability from the start
+   - Document architectural decisions
+
+3. **Implement Iteratively**
+   - Start with a minimal working version
+   - Add tests before extending functionality
+   - Refactor for clarity and maintainability
+
+4. **Validate Thoroughly**
+   - Unit tests for business logic
+   - Integration tests for component interaction
+   - Load tests for performance validation
+
+### Step 3: Implementing Policy enforcement gates
+
+**Objective:** Build policy enforcement gates with production-grade quality.
+
+**Implementation Approach:**
+
+1. **Define Requirements**
+   - Functional: What it must do
+   - Non-functional: Performance, security, reliability targets
+
+2. **Design the Solution**
+   - Consider failure modes and edge cases
+   - Plan for observability from the start
+   - Document architectural decisions
+
+3. **Implement Iteratively**
+   - Start with a minimal working version
+   - Add tests before extending functionality
+   - Refactor for clarity and maintainability
+
+4. **Validate Thoroughly**
+   - Unit tests for business logic
+   - Integration tests for component interaction
+   - Load tests for performance validation
 
 ---
+
+
+## ✅ Best Practices
+
+### Infrastructure
+
+| Practice | Description | Why It Matters |
+|----------|-------------|----------------|
+| **Infrastructure as Code** | Define all resources in version-controlled code | Reproducibility, audit trail, peer review |
+| **Immutable Infrastructure** | Replace instances, don't modify them | Consistency, easier rollback, no drift |
+| **Least Privilege** | Grant minimum required permissions | Security, blast radius reduction |
+| **Multi-AZ Deployment** | Distribute across availability zones | High availability during AZ failures |
+
+### Security
+
+- ⛔ **Never** hardcode credentials in source code
+- ⛔ **Never** commit secrets to version control
+- ✅ **Always** use IAM roles over access keys
+- ✅ **Always** encrypt data at rest and in transit
+- ✅ **Always** enable audit logging (CloudTrail, VPC Flow Logs)
+
+### Operations
+
+1. **Observability First**
+   - Instrument code before production deployment
+   - Establish baselines for normal behavior
+   - Create actionable alerts, not noise
+
+2. **Automate Everything**
+   - Manual processes don't scale
+   - Runbooks should be scripts, not documents
+   - Test automation regularly
+
+3. **Practice Failure**
+   - Regular DR drills validate recovery procedures
+   - Chaos engineering builds confidence
+   - Document and learn from incidents
+
+### Code Quality
+
+```python
+# ✅ Good: Clear, testable, observable
+class PaymentProcessor:
+    def __init__(self, gateway: PaymentGateway, metrics: MetricsClient):
+        self.gateway = gateway
+        self.metrics = metrics
+        self.logger = logging.getLogger(__name__)
+
+    def process(self, payment: Payment) -> Result:
+        self.logger.info(f"Processing payment {payment.id}")
+        start = time.time()
+
+        try:
+            result = self.gateway.charge(payment)
+            self.metrics.increment("payments.success")
+            return result
+        except GatewayError as e:
+            self.metrics.increment("payments.failure")
+            self.logger.error(f"Payment failed: {e}")
+            raise
+        finally:
+            self.metrics.timing("payments.duration", time.time() - start)
+
+# ❌ Bad: Untestable, no observability
+def process_payment(payment):
+    return requests.post(GATEWAY_URL, json=payment).json()
+```
+
+---
+
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Python 3.11+
-- Required cloud CLI tools (AWS CLI, kubectl, etc.)
+Before you begin, ensure you have:
 
-### Installation
+- [ ] **Docker** (20.10+) and Docker Compose installed
+- [ ] **Python** 3.11+ with pip
+- [ ] **AWS CLI** configured with appropriate credentials
+- [ ] **kubectl** installed and configured
+- [ ] **Terraform** 1.5+ installed
+- [ ] **Git** for version control
+
+### Step 1: Clone the Repository
 
 ```bash
-# Clone the repository
 git clone https://github.com/samueljackson-collab/Portfolio-Project.git
 cd Portfolio-Project/projects/4-devsecops
+```
 
-# Review the README
+### Step 2: Review the Documentation
+
+```bash
+# Read the project README
 cat README.md
 
-# Run with Docker Compose (if available)
-docker-compose up -d
+# Review available make targets
+make help
 ```
 
-### Configuration
+### Step 3: Set Up Environment
 
-1. Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+# Copy environment template
+cp .env.example .env
 
-2. Edit `.env` with your configuration values
+# Edit with your configuration
+vim .env
 
-3. Run the setup script:
-   ```bash
-   ./scripts/setup.sh
-   ```
-
----
-
-## 📖 Implementation Walkthrough
-
-This section outlines key implementation details and patterns used in this project.
-
-### Step 1: SBOM generation
-
-Implementation approach and key considerations for this feature.
-
-```python
-# Example code pattern
-def implement_sbom_generation():
-    """
-    Implementation skeleton for SBOM generation
-    """
-    # Configuration
-    config = load_config()
-
-    # Core logic
-    result = process(config)
-
-    # Return or persist
-    return result
+# Validate configuration
+make validate-config
 ```
 
-### Step 2: Automated vulnerability scanning
+### Step 4: Start Local Development
 
-Implementation approach and key considerations for this feature.
+```bash
+# Start all services with Docker Compose
+make up
 
-```python
-# Example code pattern
-def implement_automated_vulnerabil():
-    """
-    Implementation skeleton for Automated vulnerability scanning
-    """
-    # Configuration
-    config = load_config()
+# Verify services are running
+make status
 
-    # Core logic
-    result = process(config)
+# View logs
+make logs
 
-    # Return or persist
-    return result
+# Run tests
+make test
 ```
 
-### Step 3: Policy enforcement gates
+### Step 5: Deploy to Cloud
 
-Implementation approach and key considerations for this feature.
+```bash
+# Initialize Terraform
+cd terraform
+terraform init
 
-```python
-# Example code pattern
-def implement_policy_enforcement_g():
-    """
-    Implementation skeleton for Policy enforcement gates
-    """
-    # Configuration
-    config = load_config()
+# Review planned changes
+terraform plan -out=tfplan
 
-    # Core logic
-    result = process(config)
+# Apply infrastructure
+terraform apply tfplan
 
-    # Return or persist
-    return result
+# Deploy application
+cd ..
+make deploy ENV=staging
+```
+
+### Verification
+
+```bash
+# Check deployment health
+make health
+
+# Run smoke tests
+make smoke-test
+
+# View dashboards
+open http://localhost:3000  # Grafana
 ```
 
 ---
+
 
 ## ⚙️ Operational Guide
 
-### Monitoring & Observability
+### Monitoring & Alerting
 
-- **Metrics**: Key metrics are exposed via Prometheus endpoints
-- **Logs**: Structured JSON logging for aggregation
-- **Traces**: OpenTelemetry instrumentation for distributed tracing
+| Metric Type | Tool | Dashboard |
+|-------------|------|-----------|
+| **Metrics** | Prometheus | Grafana `http://localhost:3000` |
+| **Logs** | Loki | Grafana Explore |
+| **Traces** | Tempo/Jaeger | Grafana Explore |
+| **Errors** | Sentry | `https://sentry.io/org/project` |
+
+### Key Metrics to Monitor
+
+```promql
+# Request latency (P99)
+histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+# Error rate
+sum(rate(http_requests_total{status=~"5.."}[5m])) /
+sum(rate(http_requests_total[5m]))
+
+# Resource utilization
+container_memory_usage_bytes / container_spec_memory_limit_bytes
+```
 
 ### Common Operations
 
-| Task | Command |
-|------|---------|
-| Health check | `make health` |
-| View logs | `docker-compose logs -f` |
-| Run tests | `make test` |
-| Deploy | `make deploy` |
+| Task | Command | When to Use |
+|------|---------|-------------|
+| View logs | `kubectl logs -f deploy/app` | Debugging issues |
+| Scale up | `kubectl scale deploy/app --replicas=5` | Handling load |
+| Rollback | `kubectl rollout undo deploy/app` | Bad deployment |
+| Port forward | `kubectl port-forward svc/app 8080:80` | Local debugging |
+| Exec into pod | `kubectl exec -it deploy/app -- bash` | Investigation |
 
-### Troubleshooting
+### Runbooks
 
 <details>
-<summary>Common Issues</summary>
+<summary><strong>🔴 High Error Rate</strong></summary>
 
-1. **Connection refused**: Ensure all services are running
-2. **Authentication failure**: Verify credentials in `.env`
-3. **Resource limits**: Check container memory/CPU allocation
+**Symptoms:** Error rate exceeds 1% threshold
 
+**Investigation:**
+1. Check recent deployments: `kubectl rollout history deploy/app`
+2. Review error logs: `kubectl logs -l app=app --since=1h | grep ERROR`
+3. Check dependency health: `make check-dependencies`
+4. Review metrics dashboard for patterns
+
+**Resolution:**
+- If recent deployment: `kubectl rollout undo deploy/app`
+- If dependency failure: Check upstream service status
+- If resource exhaustion: Scale horizontally or vertically
+
+**Escalation:** Page on-call if not resolved in 15 minutes
 </details>
 
+<details>
+<summary><strong>🟡 High Latency</strong></summary>
+
+**Symptoms:** P99 latency > 500ms
+
+**Investigation:**
+1. Check traces for slow operations
+2. Review database query performance
+3. Check for resource constraints
+4. Review recent configuration changes
+
+**Resolution:**
+- Identify slow queries and optimize
+- Add caching for frequently accessed data
+- Scale database read replicas
+- Review and optimize N+1 queries
+</details>
+
+<details>
+<summary><strong>🔵 Deployment Failure</strong></summary>
+
+**Symptoms:** ArgoCD sync fails or pods not ready
+
+**Investigation:**
+1. Check ArgoCD UI for sync errors
+2. Review pod events: `kubectl describe pod <pod>`
+3. Check image pull status
+4. Verify secrets and config maps exist
+
+**Resolution:**
+- Fix manifest issues and re-sync
+- Ensure image exists in registry
+- Verify RBAC permissions
+- Check resource quotas
+</details>
+
+### Disaster Recovery
+
+**RTO Target:** 15 minutes
+**RPO Target:** 1 hour
+
+```bash
+# Failover to DR region
+./scripts/dr-failover.sh --region us-west-2
+
+# Validate data integrity
+./scripts/dr-validate.sh
+
+# Failback to primary
+./scripts/dr-failback.sh --region us-east-1
+```
+
 ---
+
+
+## 🌍 Real-World Scenarios
+
+These scenarios demonstrate how this project applies to actual business situations.
+
+### Scenario: Production Traffic Surge
+
+**Challenge:** Application needs to handle 5x normal traffic during peak events.
+
+**Solution:** Auto-scaling policies trigger based on CPU and request metrics.
+Load testing validates capacity before the event. Runbooks document
+manual intervention procedures if automated scaling is insufficient.
+
+---
+
+### Scenario: Security Incident Response
+
+**Challenge:** Vulnerability discovered in production dependency.
+
+**Solution:** Automated scanning detected the CVE. Patch branch created
+and tested within hours. Rolling deployment updated all instances with
+zero downtime. Audit trail documented the entire response timeline.
+
+---
+
 
 ## 🔗 Related Projects
 
-- [Kubernetes CI/CD Pipeline](/projects/kubernetes-cicd) - GitOps-driven continuous delivery pipeline combining GitHub ...
-- [Quantum-Safe Cryptography](/projects/quantum-safe-cryptography) - Hybrid key exchange service using Kyber KEM....
-- [Autonomous DevOps Platform](/projects/autonomous-devops-platform) - Event-driven automation layer for self-healing infrastructur...
+Explore these related projects that share technologies or concepts:
+
+| Project | Description | Shared Tags |
+|---------|-------------|-------------|
+| [Kubernetes CI/CD Pipeline](/projects/kubernetes-cicd) | GitOps-driven continuous delivery pipeline combini... | 1 |
+| [Quantum-Safe Cryptography](/projects/quantum-safe-cryptography) | Hybrid key exchange service using Kyber KEM.... | 1 |
+| [Autonomous DevOps Platform](/projects/autonomous-devops-platform) | Event-driven automation layer for self-healing inf... | 1 |
 
 ---
+
 
 ## 📚 Resources
 
-- **Source Code**: [GitHub Repository](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/4-devsecops)
-- **Documentation**: See `projects/4-devsecops/docs/` for detailed guides
-- **Issues**: [Report bugs or request features](https://github.com/samueljackson-collab/Portfolio-Project/issues)
+### Project Links
+
+| Resource | Link |
+|----------|------|
+| 📂 Source Code | [GitHub Repository](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/4-devsecops) |
+| 📖 Documentation | [`projects/4-devsecops/docs/`](projects/4-devsecops/docs/) |
+| 🐛 Issues | [Report bugs or request features](https://github.com/samueljackson-collab/Portfolio-Project/issues) |
+
+### Recommended Reading
+
+- [The Twelve-Factor App](https://12factor.net/)
+- [Google SRE Book](https://sre.google/sre-book/table-of-contents/)
+- [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
+
+### Community Resources
+
+- Stack Overflow: Tag your questions appropriately
+- Reddit: r/devops, r/aws, r/kubernetes
+- Discord: Many technology-specific servers
 
 ---
 
-<small>
-Last updated: 2026-01-22 |
-Generated by Portfolio Wiki Content Generator
-</small>
+<div align="center">
+
+**Last Updated:** 2026-01-23 |
+**Version:** 3.0 |
+**Generated by:** Portfolio Wiki Content Generator
+
+*Found this helpful? Star the repository!*
+
+</div>

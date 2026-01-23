@@ -1,16 +1,17 @@
 ---
-title: Portfolio Website
-description: Static documentation portal generated with VitePress.
+title: "Portfolio Website"
+description: "Static documentation portal generated with VitePress."
 published: true
-date: 2026-01-22T18:25:20.000Z
+date: 2026-01-23T15:24:46.000Z
 tags:
   - web
   - vitepress
   - documentation
   - vue
 editor: markdown
-dateCreated: 2026-01-22T18:25:20.000Z
+dateCreated: 2026-01-23T15:24:46.000Z
 ---
+
 
 # Portfolio Website
 
@@ -22,13 +23,72 @@ Static documentation portal generated with VitePress.
 
 ---
 
+
+## 📋 Table of Contents
+
+1. [Problem Statement](#-problem-statement) - Why this project exists
+2. [Learning Objectives](#-learning-objectives) - What you'll learn
+3. [Architecture](#-architecture) - System design and components
+4. [Tech Stack](#-tech-stack) - Technologies and their purposes
+5. [Technology Deep Dives](#-technology-deep-dives) - In-depth explanations
+6. [Implementation Guide](#-implementation-guide) - How to build it
+7. [Best Practices](#-best-practices) - Do's and don'ts
+8. [Quick Start](#-quick-start) - Get running in minutes
+9. [Operational Guide](#-operational-guide) - Day-2 operations
+10. [Real-World Scenarios](#-real-world-scenarios) - Practical applications
+
+---
+
+
 ## 🎯 Problem Statement
 
-Modern software systems face increasing complexity in deployment, scaling, and operations.
-This project addresses key challenges through automation, best practices, and
-production-ready implementations.
+### The Deployment Challenge
 
-### This Project Solves
+Traditional deployment processes are fraught with manual steps, tribal knowledge,
+and prayers to the deployment gods:
+
+**The Fear Factor**: "Deploy Fridays" are banned. Changes queue up for weeks waiting
+for the "safe" deployment window. By the time they ship, developers have forgotten
+the context, and issues are harder to debug.
+
+**Inconsistent Environments**: "It works on my machine" becomes "it worked in staging."
+Configuration differences between environments cause production failures that couldn't
+be caught earlier.
+
+**Rollback Roulette**: When deployments fail, rolling back is a manual, error-prone
+process. Teams maintain "rollback runbooks" that are perpetually out of date.
+
+**Coordination Overhead**: Deploying requires synchronizing between dev, QA, ops, and
+often a manual approval chain. A simple change takes days to reach production.
+
+
+**Business Impact:**
+- Deployment velocity measured in weeks, not hours
+- High-stress deployment events with all-hands-on-deck
+- Customer-impacting incidents from failed deployments
+- Developer frustration and burnout
+- Competitive disadvantage from slow feature delivery
+
+
+### How This Project Solves It
+
+
+**GitOps and Progressive Delivery transform deployments:**
+
+1. **Git as Source of Truth**: All configuration lives in Git. To change production,
+   you change Git. Audit trail is automatic.
+
+2. **Automated Pipelines**: Every commit triggers build, test, security scan, and
+   deployment. Humans review, machines execute.
+
+3. **Progressive Rollout**: Canary deployments expose changes to small user segments
+   first. Issues are detected before full rollout.
+
+4. **Automated Rollback**: Health checks continuously monitor deployments. Failures
+   trigger automatic rollback—no human intervention required.
+
+
+### Key Capabilities Delivered
 
 - ✅ **Project showcase**
 - ✅ **Automated deployment**
@@ -37,187 +97,777 @@ production-ready implementations.
 
 ---
 
-## 🛠️ Tech Stack Selection
 
-| Technology | Purpose |
-|------------|----------|
-| **VitePress** | Static site generator |
-| **Vue.js** | Frontend JavaScript framework |
-| **Node.js** | JavaScript runtime for backend services |
-| **GitHub Pages** | Core technology component |
+## 🎓 Learning Objectives
+
+By studying and implementing this project, you will:
+
+   1. Design GitOps workflows with Git as source of truth
+   2. Implement progressive deployment strategies (canary, blue-green)
+   3. Configure automated rollback on health check failures
+   4. Set up multi-environment promotion pipelines
+   5. Integrate security scanning into CI/CD workflows
+
+**Prerequisites:**
+- Basic understanding of cloud services (AWS/GCP/Azure)
+- Familiarity with containerization (Docker)
+- Command-line proficiency (Bash/Linux)
+- Version control with Git
+
+**Estimated Learning Time:** 15-25 hours for full implementation
+
+---
 
 
-### Why This Stack?
+## 🏗️ Architecture
 
-This combination was chosen to balance **developer productivity**, **operational simplicity**,
-and **production reliability**. Each component integrates seamlessly while serving a specific
-purpose in the overall architecture.
+### High-Level System Design
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Portfolio Website                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   ┌───────────────┐    ┌─────────────────┐    ┌───────────────────┐   │
+│   │    INPUT      │    │   PROCESSING    │    │     OUTPUT        │   │
+│   │               │───▶│                 │───▶│                   │   │
+│   │ • API Gateway │    │ • Business Logic│    │ • Response/Events │   │
+│   │ • Event Queue │    │ • Validation    │    │ • Persistence     │   │
+│   │ • File Upload │    │ • Transformation│    │ • Notifications   │   │
+│   └───────────────┘    └─────────────────┘    └───────────────────┘   │
+│           │                    │                       │              │
+│           └────────────────────┴───────────────────────┘              │
+│                                │                                       │
+│                    ┌───────────┴───────────┐                          │
+│                    │    INFRASTRUCTURE     │                          │
+│                    │ • Compute (EKS/Lambda)│                          │
+│                    │ • Storage (S3/RDS)    │                          │
+│                    │ • Network (VPC/ALB)   │                          │
+│                    │ • Security (IAM/KMS)  │                          │
+│                    └───────────────────────┘                          │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Component Breakdown
+
+**Source Control**
+- GitHub Repository, Branch Protection, Code Review
+
+**CI Pipeline**
+- GitHub Actions, Build, Test, Security Scan
+
+**Artifact Storage**
+- Container Registry, Helm Repository, Image Signing
+
+**CD Pipeline**
+- ArgoCD, Sync Policies, Health Checks, Rollback
+
+### Data Flow
+
+`Commit → Build → Test → Scan → Push Image → Sync to Cluster → Health Check`
+
+### Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Multi-AZ Deployment | Ensures high availability during AZ failures |
+| Managed Services | Reduces operational burden, focus on business logic |
+| Infrastructure as Code | Reproducibility, version control, audit trail |
+| GitOps Workflow | Single source of truth, automated reconciliation |
 
 ---
 
-## 🏗️ Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Portfolio Website                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  [Input Layer] ──▶ [Processing] ──▶ [Output Layer]         │
-│                                                             │
-│  • Data ingestion      • Core logic        • API/Events    │
-│  • Validation          • Transformation    • Storage       │
-│  • Authentication      • Orchestration     • Monitoring    │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+## 🛠️ Tech Stack
 
-> 💡 **Note**: Refer to the project's `docs/architecture.md` for detailed diagrams.
+### Technologies Used
+
+| Technology | Purpose & Rationale |
+|------------|---------------------|
+| **VitePress** | Vue-powered static site generator optimized for documentation |
+| **Vue.js** | Progressive JavaScript framework for building user interfaces |
+| **Node.js** | JavaScript runtime for backend services and blockchain tooling |
+| **GitHub Pages** | Core component |
+
+### Why This Combination?
+
+This stack was carefully selected based on:
+
+1. **Production Maturity** - All components are battle-tested at scale
+2. **Community & Ecosystem** - Strong documentation, plugins, and support
+3. **Integration** - Technologies work together with established patterns
+4. **Scalability** - Architecture supports growth without major refactoring
+5. **Operability** - Built-in observability and debugging capabilities
+6. **Cost Efficiency** - Balance of capability and cloud spend optimization
+
+### Alternative Considerations
+
+| Current Choice | Alternatives Considered | Why Current Was Chosen |
+|---------------|------------------------|------------------------|
+| Terraform | CloudFormation, Pulumi | Provider-agnostic, mature ecosystem |
+| Kubernetes | ECS, Nomad | Industry standard, portable |
+| PostgreSQL | MySQL, MongoDB | ACID compliance, JSON support |
 
 ---
+
+## 🔬 Technology Deep Dives
+
+
+
+## 📖 Implementation Guide
+
+This section provides production-ready code you can adapt for your own projects.
+
+### Pipeline
+
+```yaml
+# Complete GitOps CI/CD Pipeline
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================
+  # Stage 1: Build and Test
+  # ============================================
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run linting
+        run: |
+          ruff check .
+          mypy src/
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=80
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: true
+
+  # ============================================
+  # Stage 2: Security Scanning
+  # ============================================
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Run Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+
+  # ============================================
+  # Stage 3: Build and Push Container
+  # ============================================
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+
+  # ============================================
+  # Stage 4: Deploy to Staging
+  # ============================================
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: staging
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Kubernetes manifests
+        run: |
+          cd k8s/overlays/staging
+          kustomize edit set image app=${{ needs.build.outputs.image-tag }}
+
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Deploy to staging: ${{ github.sha }}"
+          git push
+
+      # ArgoCD will auto-sync from Git
+
+  # ============================================
+  # Stage 5: Deploy to Production
+  # ============================================
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Kubernetes manifests
+        run: |
+          cd k8s/overlays/production
+          kustomize edit set image app=${{ needs.build.outputs.image-tag }}
+
+      - name: Create canary deployment
+        run: |
+          # Deploy to 10% of traffic initially
+          kubectl apply -f k8s/canary/
+
+      - name: Monitor canary metrics
+        run: |
+          # Check error rate for 5 minutes
+          ./scripts/canary-analysis.sh --threshold 0.01 --duration 300
+
+      - name: Promote to full deployment
+        run: |
+          kubectl apply -f k8s/overlays/production/
+```
+
+### Argocd
+
+```yaml
+# ArgoCD Application with Progressive Delivery
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: production-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/org/app-manifests.git
+    targetRevision: main
+    path: k8s/overlays/production
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# Argo Rollout for Canary Deployments
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: app-rollout
+  namespace: production
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: production-app
+  template:
+    metadata:
+      labels:
+        app: production-app
+    spec:
+      containers:
+        - name: app
+          image: app:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+
+  strategy:
+    canary:
+      steps:
+        - setWeight: 10
+        - pause: {duration: 5m}
+        - setWeight: 30
+        - pause: {duration: 5m}
+        - setWeight: 50
+        - pause: {duration: 10m}
+        - setWeight: 100
+
+      analysis:
+        templates:
+          - templateName: success-rate
+        startingStep: 1
+        args:
+          - name: service-name
+            value: production-app
+
+      trafficRouting:
+        istio:
+          virtualService:
+            name: app-vsvc
+            routes:
+              - primary
+
+---
+# Analysis Template for Canary Validation
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  args:
+    - name: service-name
+  metrics:
+    - name: success-rate
+      interval: 1m
+      successCondition: result[0] >= 0.99
+      failureLimit: 3
+      provider:
+        prometheus:
+          address: http://prometheus:9090
+          query: |
+            sum(rate(http_requests_total{
+              service="{{args.service-name}}",
+              status=~"2.."
+            }[5m])) /
+            sum(rate(http_requests_total{
+              service="{{args.service-name}}"
+            }[5m]))
+```
+
+---
+
+
+## ✅ Best Practices
+
+### Infrastructure
+
+| Practice | Description | Why It Matters |
+|----------|-------------|----------------|
+| **Infrastructure as Code** | Define all resources in version-controlled code | Reproducibility, audit trail, peer review |
+| **Immutable Infrastructure** | Replace instances, don't modify them | Consistency, easier rollback, no drift |
+| **Least Privilege** | Grant minimum required permissions | Security, blast radius reduction |
+| **Multi-AZ Deployment** | Distribute across availability zones | High availability during AZ failures |
+
+### Security
+
+- ⛔ **Never** hardcode credentials in source code
+- ⛔ **Never** commit secrets to version control
+- ✅ **Always** use IAM roles over access keys
+- ✅ **Always** encrypt data at rest and in transit
+- ✅ **Always** enable audit logging (CloudTrail, VPC Flow Logs)
+
+### Operations
+
+1. **Observability First**
+   - Instrument code before production deployment
+   - Establish baselines for normal behavior
+   - Create actionable alerts, not noise
+
+2. **Automate Everything**
+   - Manual processes don't scale
+   - Runbooks should be scripts, not documents
+   - Test automation regularly
+
+3. **Practice Failure**
+   - Regular DR drills validate recovery procedures
+   - Chaos engineering builds confidence
+   - Document and learn from incidents
+
+### Code Quality
+
+```python
+# ✅ Good: Clear, testable, observable
+class PaymentProcessor:
+    def __init__(self, gateway: PaymentGateway, metrics: MetricsClient):
+        self.gateway = gateway
+        self.metrics = metrics
+        self.logger = logging.getLogger(__name__)
+
+    def process(self, payment: Payment) -> Result:
+        self.logger.info(f"Processing payment {payment.id}")
+        start = time.time()
+
+        try:
+            result = self.gateway.charge(payment)
+            self.metrics.increment("payments.success")
+            return result
+        except GatewayError as e:
+            self.metrics.increment("payments.failure")
+            self.logger.error(f"Payment failed: {e}")
+            raise
+        finally:
+            self.metrics.timing("payments.duration", time.time() - start)
+
+# ❌ Bad: Untestable, no observability
+def process_payment(payment):
+    return requests.post(GATEWAY_URL, json=payment).json()
+```
+
+---
+
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Python 3.11+
-- Required cloud CLI tools (AWS CLI, kubectl, etc.)
+Before you begin, ensure you have:
 
-### Installation
+- [ ] **Docker** (20.10+) and Docker Compose installed
+- [ ] **Python** 3.11+ with pip
+- [ ] **AWS CLI** configured with appropriate credentials
+- [ ] **kubectl** installed and configured
+- [ ] **Terraform** 1.5+ installed
+- [ ] **Git** for version control
+
+### Step 1: Clone the Repository
 
 ```bash
-# Clone the repository
 git clone https://github.com/samueljackson-collab/Portfolio-Project.git
 cd Portfolio-Project/projects/25-portfolio-website
+```
 
-# Review the README
+### Step 2: Review the Documentation
+
+```bash
+# Read the project README
 cat README.md
 
-# Run with Docker Compose (if available)
-docker-compose up -d
+# Review available make targets
+make help
 ```
 
-### Configuration
+### Step 3: Set Up Environment
 
-1. Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+# Copy environment template
+cp .env.example .env
 
-2. Edit `.env` with your configuration values
+# Edit with your configuration
+vim .env
 
-3. Run the setup script:
-   ```bash
-   ./scripts/setup.sh
-   ```
-
----
-
-## 📖 Implementation Walkthrough
-
-This section outlines key implementation details and patterns used in this project.
-
-### Step 1: Project showcase
-
-Implementation approach and key considerations for this feature.
-
-```python
-# Example code pattern
-def implement_project_showcase():
-    """
-    Implementation skeleton for Project showcase
-    """
-    # Configuration
-    config = load_config()
-
-    # Core logic
-    result = process(config)
-
-    # Return or persist
-    return result
+# Validate configuration
+make validate-config
 ```
 
-### Step 2: Automated deployment
+### Step 4: Start Local Development
 
-Implementation approach and key considerations for this feature.
+```bash
+# Start all services with Docker Compose
+make up
 
-```python
-# Example code pattern
-def implement_automated_deployment():
-    """
-    Implementation skeleton for Automated deployment
-    """
-    # Configuration
-    config = load_config()
+# Verify services are running
+make status
 
-    # Core logic
-    result = process(config)
+# View logs
+make logs
 
-    # Return or persist
-    return result
+# Run tests
+make test
 ```
 
-### Step 3: Responsive design
+### Step 5: Deploy to Cloud
 
-Implementation approach and key considerations for this feature.
+```bash
+# Initialize Terraform
+cd terraform
+terraform init
 
-```python
-# Example code pattern
-def implement_responsive_design():
-    """
-    Implementation skeleton for Responsive design
-    """
-    # Configuration
-    config = load_config()
+# Review planned changes
+terraform plan -out=tfplan
 
-    # Core logic
-    result = process(config)
+# Apply infrastructure
+terraform apply tfplan
 
-    # Return or persist
-    return result
+# Deploy application
+cd ..
+make deploy ENV=staging
+```
+
+### Verification
+
+```bash
+# Check deployment health
+make health
+
+# Run smoke tests
+make smoke-test
+
+# View dashboards
+open http://localhost:3000  # Grafana
 ```
 
 ---
+
 
 ## ⚙️ Operational Guide
 
-### Monitoring & Observability
+### Monitoring & Alerting
 
-- **Metrics**: Key metrics are exposed via Prometheus endpoints
-- **Logs**: Structured JSON logging for aggregation
-- **Traces**: OpenTelemetry instrumentation for distributed tracing
+| Metric Type | Tool | Dashboard |
+|-------------|------|-----------|
+| **Metrics** | Prometheus | Grafana `http://localhost:3000` |
+| **Logs** | Loki | Grafana Explore |
+| **Traces** | Tempo/Jaeger | Grafana Explore |
+| **Errors** | Sentry | `https://sentry.io/org/project` |
+
+### Key Metrics to Monitor
+
+```promql
+# Request latency (P99)
+histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+
+# Error rate
+sum(rate(http_requests_total{status=~"5.."}[5m])) /
+sum(rate(http_requests_total[5m]))
+
+# Resource utilization
+container_memory_usage_bytes / container_spec_memory_limit_bytes
+```
 
 ### Common Operations
 
-| Task | Command |
-|------|---------|
-| Health check | `make health` |
-| View logs | `docker-compose logs -f` |
-| Run tests | `make test` |
-| Deploy | `make deploy` |
+| Task | Command | When to Use |
+|------|---------|-------------|
+| View logs | `kubectl logs -f deploy/app` | Debugging issues |
+| Scale up | `kubectl scale deploy/app --replicas=5` | Handling load |
+| Rollback | `kubectl rollout undo deploy/app` | Bad deployment |
+| Port forward | `kubectl port-forward svc/app 8080:80` | Local debugging |
+| Exec into pod | `kubectl exec -it deploy/app -- bash` | Investigation |
 
-### Troubleshooting
+### Runbooks
 
 <details>
-<summary>Common Issues</summary>
+<summary><strong>🔴 High Error Rate</strong></summary>
 
-1. **Connection refused**: Ensure all services are running
-2. **Authentication failure**: Verify credentials in `.env`
-3. **Resource limits**: Check container memory/CPU allocation
+**Symptoms:** Error rate exceeds 1% threshold
 
+**Investigation:**
+1. Check recent deployments: `kubectl rollout history deploy/app`
+2. Review error logs: `kubectl logs -l app=app --since=1h | grep ERROR`
+3. Check dependency health: `make check-dependencies`
+4. Review metrics dashboard for patterns
+
+**Resolution:**
+- If recent deployment: `kubectl rollout undo deploy/app`
+- If dependency failure: Check upstream service status
+- If resource exhaustion: Scale horizontally or vertically
+
+**Escalation:** Page on-call if not resolved in 15 minutes
 </details>
 
+<details>
+<summary><strong>🟡 High Latency</strong></summary>
+
+**Symptoms:** P99 latency > 500ms
+
+**Investigation:**
+1. Check traces for slow operations
+2. Review database query performance
+3. Check for resource constraints
+4. Review recent configuration changes
+
+**Resolution:**
+- Identify slow queries and optimize
+- Add caching for frequently accessed data
+- Scale database read replicas
+- Review and optimize N+1 queries
+</details>
+
+<details>
+<summary><strong>🔵 Deployment Failure</strong></summary>
+
+**Symptoms:** ArgoCD sync fails or pods not ready
+
+**Investigation:**
+1. Check ArgoCD UI for sync errors
+2. Review pod events: `kubectl describe pod <pod>`
+3. Check image pull status
+4. Verify secrets and config maps exist
+
+**Resolution:**
+- Fix manifest issues and re-sync
+- Ensure image exists in registry
+- Verify RBAC permissions
+- Check resource quotas
+</details>
+
+### Disaster Recovery
+
+**RTO Target:** 15 minutes
+**RPO Target:** 1 hour
+
+```bash
+# Failover to DR region
+./scripts/dr-failover.sh --region us-west-2
+
+# Validate data integrity
+./scripts/dr-validate.sh
+
+# Failback to primary
+./scripts/dr-failback.sh --region us-east-1
+```
+
 ---
+
+
+## 🌍 Real-World Scenarios
+
+These scenarios demonstrate how this project applies to actual business situations.
+
+### Scenario: Critical Bug in Production
+
+**Challenge:** Security vulnerability discovered in production, needs immediate fix
+
+**Solution:** Emergency PR triggers fast-track pipeline, automated tests validate fix, ArgoCD deploys within minutes
+
+---
+
+### Scenario: Feature Flag Rollout
+
+**Challenge:** Launch risky feature to 1% of users, expand if metrics look good
+
+**Solution:** Canary deployment with automated metric analysis, progressive rollout controlled by GitOps
+
+---
+
+
+
 
 ## 📚 Resources
 
-- **Source Code**: [GitHub Repository](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/25-portfolio-website)
-- **Documentation**: See `projects/25-portfolio-website/docs/` for detailed guides
-- **Issues**: [Report bugs or request features](https://github.com/samueljackson-collab/Portfolio-Project/issues)
+### Project Links
+
+| Resource | Link |
+|----------|------|
+| 📂 Source Code | [GitHub Repository](https://github.com/samueljackson-collab/Portfolio-Project/tree/main/projects/25-portfolio-website) |
+| 📖 Documentation | [`projects/25-portfolio-website/docs/`](projects/25-portfolio-website/docs/) |
+| 🐛 Issues | [Report bugs or request features](https://github.com/samueljackson-collab/Portfolio-Project/issues) |
+
+### Recommended Reading
+
+- [The Twelve-Factor App](https://12factor.net/)
+- [Google SRE Book](https://sre.google/sre-book/table-of-contents/)
+- [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
+
+### Community Resources
+
+- Stack Overflow: Tag your questions appropriately
+- Reddit: r/devops, r/aws, r/kubernetes
+- Discord: Many technology-specific servers
 
 ---
 
-<small>
-Last updated: 2026-01-22 |
-Generated by Portfolio Wiki Content Generator
-</small>
+<div align="center">
+
+**Last Updated:** 2026-01-23 |
+**Version:** 3.0 |
+**Generated by:** Portfolio Wiki Content Generator
+
+*Found this helpful? Star the repository!*
+
+</div>
