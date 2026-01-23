@@ -44,6 +44,12 @@ pip install -r requirements.txt
 python src/collaboration_server.py
 ```
 
+## Evidence
+The latest multi-client collaboration evidence is stored in `projects/15-real-time-collaboration/evidence/`:
+- `collab_demo.html` for the two-client UI demo.
+- `multi_client_demo.log` and `server.log` for synchronized operation traces.
+- `load_test_results.csv` for the concurrent user latency run (chart generation script included).
+
 
 ## Code Generation Prompts
 
