@@ -4,6 +4,6 @@
   "next_steps": [
     "Run: terraform init",
     "Run: terraform apply -var-file=env/dev.tfvars",
-    "Run: terraform output -json > projects/1-aws-infrastructure-automation/evidence/outputs.json"
+    "Run: terraform output -json > ../evidence/outputs.json"
   ]
 }
