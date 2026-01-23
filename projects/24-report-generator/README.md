@@ -271,6 +271,16 @@ python src/scheduler.py --config config/scheduler.yml
 # Reports will be generated and emailed automatically
 ```
 
+## Evidence
+
+### 2026-01-22 Report Generation Run
+- Run notes: [`evidence/2026-01-22/run-notes.md`](evidence/2026-01-22/run-notes.md)
+- Install log: [`evidence/2026-01-22/pip-install.log`](evidence/2026-01-22/pip-install.log)
+- Generation log: [`evidence/2026-01-22/generate-all.log`](evidence/2026-01-22/generate-all.log)
+- Reports (HTML): [`evidence/2026-01-22/reports/`](evidence/2026-01-22/reports/)
+- Timed reports (HTML): [`evidence/2026-01-22/timed-reports/`](evidence/2026-01-22/timed-reports/)
+- Timing data: [`evidence/2026-01-22/report-timings.csv`](evidence/2026-01-22/report-timings.csv)
+
 ## 🔧 Configuration
 
 ### Gmail Setup
