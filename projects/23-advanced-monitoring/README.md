@@ -34,7 +34,7 @@ Enterprise-grade monitoring and observability stack featuring Prometheus, Grafan
 - **Alertmanager:** `https://monitoring.example.com/alertmanager` (routing config: `alertmanager/alertmanager.yml`)
 
 ### Live deployment screenshots
-![Live deployment dashboard](../../assets/screenshots/live-deployment-placeholder.svg)
+Live deployment dashboard screenshot stored externally.
 
 ## 🎯 Features
 

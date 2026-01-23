@@ -29,7 +29,7 @@ Security-first CI pipeline with SBOM generation, container scanning, and policy 
 - **Grafana:** `https://grafana.staging.portfolio.example.com` (dashboard JSON: `grafana/dashboards/*.json`)
 
 ### Live deployment screenshots
-![Live deployment dashboard](../../assets/screenshots/live-deployment-placeholder.svg)
+Live deployment dashboard screenshot stored externally.
 
 ## Contents
 - `pipelines/github-actions.yaml` — orchestrates build, security scanning, and deployment gates.
