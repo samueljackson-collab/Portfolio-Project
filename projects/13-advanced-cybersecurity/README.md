@@ -44,6 +44,15 @@ pip install -r requirements.txt
 python src/soar_engine.py --alerts data/alerts.json
 ```
 
+## Evidence (Simulated Detection Runs)
+Evidence from simulated detection workflows, alert processing output, MTTR calculations, and visual summaries is stored in `evidence/`:
+- `evidence/simulated_alerts.json` — alert payloads used for the detection run.
+- `evidence/detection-log.txt` — SOAR engine output with response actions.
+- `evidence/mttr-metrics.md` — MTTR summary in a human-readable format.
+- `evidence/mttr-metrics.json` — Raw per-alert MTTR metrics for programmatic use.
+- `evidence/alert-dashboard.svg` — simulated alert dashboard snapshot.
+- `evidence/detections-by-category-severity.svg` — chart of detections by category and severity.
+
 
 ## Code Generation Prompts
 
