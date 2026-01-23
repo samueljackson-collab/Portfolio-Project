@@ -1,0 +1,60 @@
+[
+  {
+    "dataset": "bronze_layer",
+    "layer": "bronze",
+    "path": "data/bronze.json",
+    "record_count": 2,
+    "columns": [
+      "event_id",
+      "status",
+      "ingested_at"
+    ],
+    "dtypes": {
+      "event_id": "object",
+      "status": "object",
+      "ingested_at": "object"
+    },
+    "file_size_bytes": 163,
+    "captured_at": "2026-01-23T18:29:51.205006+00:00"
+  },
+  {
+    "dataset": "silver_layer",
+    "layer": "silver",
+    "path": "evidence/silver/silver.csv",
+    "record_count": 2,
+    "columns": [
+      "event_id",
+      "status",
+      "ingested_at"
+    ],
+    "dtypes": {
+      "event_id": "object",
+      "status": "object",
+      "ingested_at": "object"
+    },
+    "file_size_bytes": 107,
+    "captured_at": "2026-01-23T18:29:51.206580+00:00"
+  },
+  {
+    "dataset": "gold_layer",
+    "layer": "gold",
+    "path": "evidence/gold/gold_data.csv",
+    "record_count": 2,
+    "columns": [
+      "_time_bucket",
+      "status",
+      "event_count",
+      "_gold_processed_at",
+      "_source_row_count"
+    ],
+    "dtypes": {
+      "_time_bucket": "object",
+      "status": "object",
+      "event_count": "int64",
+      "_gold_processed_at": "object",
+      "_source_row_count": "int64"
+    },
+    "file_size_bytes": 168,
+    "captured_at": "2026-01-23T18:29:51.207903+00:00"
+  }
+]
