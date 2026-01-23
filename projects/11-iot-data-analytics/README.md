@@ -428,6 +428,20 @@ docker-compose down --remove-orphans
 5. **Monitoring**: Set up alerts for device offline, low battery
 6. **Backup**: Regular PostgreSQL backups and point-in-time recovery
 
+## Evidence (2026-01-21)
+
+### Infrastructure
+- Terraform deployment attempt log: `evidence/2026-01-21/infrastructure_deploy.log`
+
+### Data ingestion & analytics
+- Evidence report: `evidence/2026-01-21/pipeline_report.md`
+- Sample telemetry: `evidence/2026-01-21/sample_sensor_data.csv`
+- Anomaly detection output: `evidence/2026-01-21/anomaly_detection_results.csv`
+- Summary metrics: `evidence/2026-01-21/pipeline_summary.json`
+
+### Dashboard & charts
+- Dashboard and chart images were generated during the run but are not stored in the repo (binary artifacts removed).
+
 ## License
 
 MIT
