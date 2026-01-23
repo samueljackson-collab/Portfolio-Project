@@ -1,0 +1,10 @@
+2026-01-22 15:30:57,308 INFO Invocation 1: received event_id=evt-1001
+2026-01-22 15:30:57,329 INFO Invocation 1: processed event_id=evt-1001 duration_ms=20.45
+2026-01-22 15:30:57,329 INFO Invocation 2: received event_id=evt-1002
+2026-01-22 15:30:57,350 INFO Invocation 2: processed event_id=evt-1002 duration_ms=20.40
+2026-01-22 15:30:57,351 INFO Invocation 3: received event_id=evt-1003
+2026-01-22 15:30:57,372 INFO Invocation 3: processed event_id=evt-1003 duration_ms=20.50
+2026-01-22 15:30:57,373 INFO Invocation 4: received event_id=evt-1004
+2026-01-22 15:30:57,394 INFO Invocation 4: processed event_id=evt-1004 duration_ms=20.45
+2026-01-22 15:30:57,394 INFO Invocation 5: received event_id=evt-1005
+2026-01-22 15:30:57,415 INFO Invocation 5: processed event_id=evt-1005 duration_ms=20.43

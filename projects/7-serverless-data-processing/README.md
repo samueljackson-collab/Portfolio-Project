@@ -71,6 +71,20 @@ pytest
 aws lambda invoke --function-name ingest --payload file://events/sample.json out.json
 ```
 
+## Evidence (local simulation)
+The following artifacts capture the infrastructure plan, workflow execution logs, output data, and
+cloud-metric charts generated in a local simulation (SAM/AWS CLI unavailable in this environment).
+
+- Deployment plan summary: [`evidence/deployment-summary.json`](evidence/deployment-summary.json)
+- Sample events used to trigger the workflow: [`evidence/sample-events.json`](evidence/sample-events.json)
+- Execution logs: [`evidence/workflow-execution.log`](evidence/workflow-execution.log)
+- Output data: [`evidence/workflow-output.json`](evidence/workflow-output.json)
+- Metrics data: [`evidence/workflow-metrics.json`](evidence/workflow-metrics.json)
+- Chart-ready CSVs:
+  - Invocation count: [`evidence/invocation-count.csv`](evidence/invocation-count.csv)
+  - Duration: [`evidence/duration-ms.csv`](evidence/duration-ms.csv)
+  - Cost: [`evidence/cost-usd.csv`](evidence/cost-usd.csv)
+
 ### Containerized infrastructure workflows
 
 Use the provided multi-stage image for SAM validation and packaging from consistent tooling:

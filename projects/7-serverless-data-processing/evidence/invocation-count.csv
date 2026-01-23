@@ -1,0 +1,6 @@
+event_type,invocations
+user_action,1
+metric_update,1
+system_event,1
+audit_log,1
+error_event,1

@@ -1,0 +1,37 @@
+[
+  {
+    "invocation": 1,
+    "event_id": "evt-1001",
+    "event_type": "user_action",
+    "duration_ms": 20.45,
+    "cost_usd": 2.873e-07
+  },
+  {
+    "invocation": 2,
+    "event_id": "evt-1002",
+    "event_type": "metric_update",
+    "duration_ms": 20.4,
+    "cost_usd": 2.87e-07
+  },
+  {
+    "invocation": 3,
+    "event_id": "evt-1003",
+    "event_type": "system_event",
+    "duration_ms": 20.5,
+    "cost_usd": 2.875e-07
+  },
+  {
+    "invocation": 4,
+    "event_id": "evt-1004",
+    "event_type": "audit_log",
+    "duration_ms": 20.45,
+    "cost_usd": 2.873e-07
+  },
+  {
+    "invocation": 5,
+    "event_id": "evt-1005",
+    "event_type": "error_event",
+    "duration_ms": 20.43,
+    "cost_usd": 2.872e-07
+  }
+]
