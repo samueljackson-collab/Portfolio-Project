@@ -46,6 +46,14 @@ npx hardhat test
 npx hardhat run scripts/deploy.ts --network goerli
 ```
 
+## Evidence
+Artifacts captured during the latest local run attempt are stored in [`evidence/`](./evidence/):
+- Test run output: [`evidence/test-report.txt`](./evidence/test-report.txt)
+- Deployment attempt log: [`evidence/deploy-log.txt`](./evidence/deploy-log.txt)
+- Deployment addresses (not available due to compile failure): [`evidence/deployment-addresses.json`](./evidence/deployment-addresses.json)
+- Gas usage summary (not available due to compile failure): [`evidence/gas-usage-summary.json`](./evidence/gas-usage-summary.json)
+- Gas usage chart: [`evidence/gas-usage-chart.md`](./evidence/gas-usage-chart.md)
+
 ## Security
 - Slither static analysis in CI (`scripts/analyze.sh`).
 - Time-locked governance actions for treasury safety.
