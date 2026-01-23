@@ -1,0 +1,7 @@
+run_id,timestamp_utc,region,rpo_seconds,rto_seconds,notes
+2025-02-12-drill-01,2025-02-12T15:02:00Z,us-east-1,45,420,Primary-to-DR failover drill (simulated)
+2025-02-12-drill-01,2025-02-12T15:02:00Z,us-west-2,30,360,DR promotion and traffic shift (simulated)
+2025-02-19-drill-02,2025-02-19T15:05:00Z,us-east-1,50,450,Primary-to-DR failover drill (simulated)
+2025-02-19-drill-02,2025-02-19T15:05:00Z,us-west-2,35,390,DR promotion and traffic shift (simulated)
+2025-02-26-drill-03,2025-02-26T15:01:00Z,us-east-1,40,400,Primary-to-DR failover drill (simulated)
+2025-02-26-drill-03,2025-02-26T15:01:00Z,us-west-2,28,350,DR promotion and traffic shift (simulated)
