@@ -73,6 +73,13 @@ terraform apply -var-file=production.tfvars
 ## Runbooks
 Detailed runbooks for failover, fallback, and DR testing are located in the `runbooks/` directory.
 
+## Evidence
+Deployment attempts, failover drill timing, and DR metrics are recorded in the evidence bundle:
+
+- [`evidence/README.md`](evidence/README.md)
+- RPO/RTO data: `evidence/rpo-rto-metrics.csv`
+- Regional resource inventory: `evidence/regional-resource-inventory.csv`
+
 
 ## Code Generation Prompts
 
