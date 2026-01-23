@@ -37,6 +37,7 @@ exporters:
     sampling_initial: 5
     sampling_thereafter: 200
   loki:
+    # WARNING: Using HTTP (unencrypted) - configure HTTPS for production environments.
     endpoint: http://loki:3100/loki/api/v1/push
     default_labels_enabled:
       job: true
