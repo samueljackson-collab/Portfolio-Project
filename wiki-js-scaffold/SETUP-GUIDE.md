@@ -29,6 +29,11 @@ export WIKIJS_TOKEN=your-token-here
 npm install
 node scripts/import-to-wikijs.js
 
+# Optional: Import portfolio wiki content from ../wiki
+export CONTENT_DIRS=content,../wiki
+export DEFAULT_TAGS=portfolio
+node scripts/import-to-wikijs.js
+
 # Done! Wiki is ready at http://localhost:3000
 ```
 
