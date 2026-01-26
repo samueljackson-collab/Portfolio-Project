@@ -70,6 +70,13 @@ TIMELINE_STATUSES = ["Not Started", "Planned", "In Progress", "On Hold", "Comple
 class ListManager(ttk.Frame):
     """Widget for managing lists of items"""
     def __init__(self, parent, title):
+        """
+        Create a titled list-manager widget that provides an input, Add/Remove controls, and a listbox for managing string items.
+        
+        Parameters:
+            parent: The Tkinter parent widget to attach this ListManager to.
+            title (str): Text displayed as the widget title above the input field.
+        """
         super().__init__(parent)
 
         ttk.Label(self, text=title, font=('Arial', 10, 'bold')).pack(anchor='w', pady=(0, 5))
@@ -91,20 +98,42 @@ class ListManager(ttk.Frame):
         ttk.Button(btn_frame, text="Remove", command=self._remove_item, width=10).pack(side='left', padx=2)
 
     def _add_item(self):
+        """
+        Add the trimmed text from the entry widget to the listbox and clear the entry.
+        
+        If the entry contains only whitespace or is empty, no item is added and the entry is left cleared.
+        """
         value = self.entry.get().strip()
         if value:
             self.listbox.insert(tk.END, value)
             self.entry.delete(0, tk.END)
 
     def _remove_item(self):
+        """
+        Remove the currently selected item from the listbox.
+        
+        If no item is selected, the method does nothing.
+        """
         selection = self.listbox.curselection()
         if selection:
             self.listbox.delete(selection[0])
 
     def get_items(self):
+        """
+        Get the current items shown in the listbox.
+        
+        Returns:
+            list[str]: The listbox contents as a list of strings in display order.
+        """
         return list(self.listbox.get(0, tk.END))
 
     def set_items(self, items):
+        """
+        Replace the list contents with the provided items.
+        
+        Parameters:
+            items (iterable[str]): Sequence of strings to display in the list; existing entries are replaced by these items.
+        """
         self.listbox.delete(0, tk.END)
         for item in items:
             self.listbox.insert(tk.END, item)
@@ -113,6 +142,17 @@ class ListManager(ttk.Frame):
 class TagEntry(ttk.Frame):
     """Widget for managing tags with suggestions"""
     def __init__(self, parent, suggestions):
+        """
+        Initialize the TagEntry widget that manages a list of tags with suggestion support and a UI for adding/removing tags.
+        
+        Parameters:
+            parent: The parent Tkinter container to attach this widget to.
+            suggestions (list[str]): Initial list of suggested tag values shown in the entry dropdown.
+        
+        Attributes:
+            suggestions (list[str]): Current suggestion list.
+            tags (list[str]): Current list of added tags.
+        """
         super().__init__(parent)
         self.suggestions = suggestions
         self.tags = []
@@ -130,6 +170,11 @@ class TagEntry(ttk.Frame):
         self.tag_frame.pack(fill='x')
 
     def _add_tag(self):
+        """
+        Add the current entry text as a tag if it is non-empty and not already present, update the rendered tag widgets, and clear the entry field.
+        
+        This method reads the text from the widget entry, trims whitespace, and only appends it to the internal tag list when the trimmed value is not empty and not a duplicate. After adding, it refreshes the tag display and clears the entry input.
+        """
         tag = self.entry.get().strip()
         if tag and tag not in self.tags:
             self.tags.append(tag)
@@ -137,11 +182,22 @@ class TagEntry(ttk.Frame):
             self.entry.delete(0, tk.END)
 
     def _remove_tag(self, tag):
+        """
+        Remove a tag from the current tag list and refresh the displayed tag widgets.
+        
+        Parameters:
+            tag (str): The tag value to remove; if the tag is not present nothing happens.
+        """
         if tag in self.tags:
             self.tags.remove(tag)
             self._render_tags()
 
     def _render_tags(self):
+        """
+        Render the current tags as interactive tag widgets inside the tag_frame.
+        
+        Clears any existing tag widgets and creates a compact "chip" for each tag in self.tags containing the tag text and a remove button that removes that tag when clicked.
+        """
         for widget in self.tag_frame.winfo_children():
             widget.destroy()
 
@@ -153,9 +209,21 @@ class TagEntry(ttk.Frame):
             ttk.Button(tag_widget, text="×", width=2, command=lambda t=tag: self._remove_tag(t)).pack(side='left')
 
     def get_tags(self):
+        """
+        Return a shallow copy of the widget's current tags.
+        
+        Returns:
+            list: A list of tag strings representing the current tags; this is a shallow copy of the internal tags list.
+        """
         return self.tags.copy()
 
     def set_tags(self, tags):
+        """
+        Replace the current tag set with the provided tags and refresh the displayed tag widgets.
+        
+        Parameters:
+            tags (list[str]): Sequence of tag strings to use as the new tags. A shallow copy is stored internally.
+        """
         self.tags = tags.copy()
         self._render_tags()
 
@@ -166,6 +234,12 @@ class TagEntry(ttk.Frame):
 
 class ReportifyProApp:
     def __init__(self, root):
+        """
+        Initialize the Reportify Pro application, create the main window and UI, initialize the data model, and show the default SECURITY category.
+        
+        Parameters:
+            root (tk.Tk): The main Tkinter application window used as the app's root.
+        """
         self.root = root
         self.root.title("Reportify Pro v2.1 - Enterprise Report Generator")
         self.root.geometry("1400x900")
@@ -179,6 +253,11 @@ class ReportifyProApp:
 
     def _create_ui(self):
         # Menu bar
+        """
+        Constructs and configures the main application user interface.
+        
+        Builds the window menu and a three-panel layout: a left sidebar with category buttons, a middle scrollable template gallery, and a right content editor containing a top action bar, a scrollable form area, and a status bar. Also creates controls for New/Open/Save/Export/Help and initializes the form by calling _create_form.
+        """
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
 
@@ -296,6 +375,14 @@ class ReportifyProApp:
 
     def _show_category(self, category):
         # Clear template list
+        """
+        Update the template panel to show templates for the given category.
+        
+        Updates the template list UI and header to reflect the selected category by clearing existing template cards and displaying cards for templates whose `category` equals the provided value.
+        
+        Parameters:
+            category (ReportCategory): Category whose templates should be displayed.
+        """
         for widget in self.template_list_frame.winfo_children():
             widget.destroy()
 
@@ -309,6 +396,16 @@ class ReportifyProApp:
                 card.pack(fill='x', padx=5, pady=5)
 
     def _create_template_card(self, key, template):
+        """
+        Create a UI card representing a report template with its icon, name, description, and a "Use Template" action.
+        
+        Parameters:
+            key (str): Identifier for the template; passed to the load action when the card's button is pressed.
+            template (Mapping): Template data containing at least the keys `'icon'`, `'name'`, and `'description'`.
+        
+        Returns:
+            ttk.LabelFrame: A frame widget containing the rendered template card.
+        """
         card = ttk.LabelFrame(self.template_list_frame, text="", padding=10)
 
         # Icon and name
@@ -329,6 +426,14 @@ class ReportifyProApp:
         return card
 
     def _load_template(self, template_key):
+        """
+        Load a report template by key, initialize the form data from that template, and update the UI to reflect the selected template.
+        
+        This sets the current template, creates a new ReportData pre-populated with the template's category and any provided defaults (title, objectives, methodology), updates the displayed report title, populates the form fields from the new data, and updates the status message.
+        
+        Parameters:
+            template_key (str): Key identifying a template in REPORT_TEMPLATES.
+        """
         template = REPORT_TEMPLATES[template_key]
         self.current_template = template
 
@@ -350,6 +455,18 @@ class ReportifyProApp:
 
     def _create_form(self):
         # Create notebook for tabs
+        """
+        Constructs and attaches the multi-tab report editor form to the application's form container.
+        
+        Creates a Notebook with four tabs (Basic Info, Content, Analysis, Metadata) and initializes the form controls used by the application. The method sets the following instance attributes for later data population and collection:
+        - title_entry, subtitle_entry, company_entry, author_entry
+        - summary_text
+        - objectives_manager, scope_text, methodology_text, findings_manager, recommendations_manager
+        - analysis_text, conclusion_text, next_steps_manager
+        - tag_entry, status_combo, classification_combo
+        
+        Each attribute corresponds to a visible input or custom widget in the UI (text entries, scrolled text areas, ListManager/TagEntry widgets, and comboboxes).
+        """
         notebook = ttk.Notebook(self.form_frame)
         notebook.pack(fill='both', expand=True)
 
@@ -465,7 +582,11 @@ class ReportifyProApp:
         self.classification_combo.pack(fill='x')
 
     def _populate_form(self):
-        """Populate form with current data"""
+        """
+        Populate the UI form fields from the instance's ReportData.
+        
+        Sets all entry fields, multiline text widgets, list managers, tag entry, and combo boxes to the corresponding values found in self.data.
+        """
         self.title_entry.delete(0, tk.END)
         self.title_entry.insert(0, self.data.title)
 
@@ -505,7 +626,14 @@ class ReportifyProApp:
         self.classification_combo.set(self.data.classification)
 
     def _collect_data(self):
-        """Collect data from form"""
+        """
+        Populate the application's ReportData model with values read from the current form widgets.
+        
+        Reads all visible form fields, list managers, and tag entry, updates the corresponding attributes on self.data, and returns the updated ReportData instance.
+        
+        Returns:
+            ReportData: The updated report data model populated from the form.
+        """
         self.data.title = self.title_entry.get()
         self.data.subtitle = self.subtitle_entry.get()
         self.data.company_name = self.company_entry.get()
@@ -525,6 +653,13 @@ class ReportifyProApp:
         return self.data
 
     def _new_report(self):
+        """
+        Prompt the user to create a new report and, if confirmed, reset the editor state.
+        
+        If the user confirms the action via a confirmation dialog, this replaces the current
+        report data with a new ReportData instance, clears the current file and template
+        references, repopulates the UI form from the new data, and updates the status label.
+        """
         if messagebox.askyesno("New Report", "Create new report? Unsaved changes will be lost."):
             self.data = ReportData()
             self.current_file = None
@@ -533,12 +668,22 @@ class ReportifyProApp:
             self.status_label.config(text="New report created")
 
     def _save_project(self):
+        """
+        Save the current project to disk using the existing file if available, otherwise start the Save As workflow.
+        
+        If a current file path is set, writes to that file; if not, opens the Save As dialog to choose a destination.
+        """
         if self.current_file:
             self._save_to_file(self.current_file)
         else:
             self._save_project_as()
 
     def _save_project_as(self):
+        """
+        Prompt the user to choose a JSON file path and save the current report data there.
+        
+        Opens a Save dialog defaulting to ".json"; if the user selects a filename, collects form data and writes the project to that path using the application's save routine.
+        """
         self._collect_data()
 
         filename = filedialog.asksaveasfilename(
@@ -551,6 +696,14 @@ class ReportifyProApp:
             self._save_to_file(Path(filename))
 
     def _save_to_file(self, file_path):
+        """
+        Save the current report data to the specified filesystem path and update application state.
+        
+        Attempts to write self.data to file_path. On success sets self.current_file to file_path, updates the status label to indicate the saved filename, and shows a success dialog. On failure shows an error dialog with the underlying exception message.
+        
+        Parameters:
+            file_path (pathlib.Path | str): Destination path where the project file will be written.
+        """
         try:
             ProjectFileManager.save_project(self.data, file_path)
             self.current_file = file_path
@@ -560,6 +713,11 @@ class ReportifyProApp:
             messagebox.showerror("Error", f"Failed to save: {e}")
 
     def _open_project(self):
+        """
+        Open a saved project file and load its data into the application.
+        
+        Displays a file-open dialog for JSON project files. If a file is selected and successfully loaded, replaces the app's ReportData, calls _populate_form to update the UI, sets current_file, sets current_template when the loaded data references a known template, and updates the status label. If loading fails or an error occurs, shows an error dialog.
+        """
         filename = filedialog.askopenfilename(
             title="Open Project",
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
@@ -584,6 +742,11 @@ class ReportifyProApp:
                 messagebox.showerror("Error", f"Failed to open: {e}")
 
     def _export_docx(self):
+        """
+        Export the current report to a DOCX file using the selected template or a default template.
+        
+        If the report title is empty, shows a warning and aborts. Otherwise collects form data, prompts the user for a destination filename, and generates the DOCX via DocumentGenerator. On successful export updates the status label and shows a success dialog; on failure shows an error dialog.
+        """
         if not self.data.title:
             messagebox.showwarning("Warning", "Please enter a report title")
             return
@@ -609,6 +772,11 @@ class ReportifyProApp:
                 messagebox.showerror("Error", f"Export failed: {e}")
 
     def _show_about(self):
+        """
+        Display the About dialog with the application version and a brief feature summary.
+        
+        Shows an informational message box titled "About Reportify Pro" containing the current version, key features, and attribution.
+        """
         about_text = """
 Reportify Pro v2.1.0
 Enterprise Report Generator
@@ -630,6 +798,11 @@ Created for Portfolio Showcase
 # ═══════════════════════════════════════════════════════════════════════════
 
 def main():
+    """
+    Start the Reportify Pro GUI.
+    
+    Creates the Tk root window, instantiates ReportifyProApp with that root, and runs the Tkinter main event loop.
+    """
     root = tk.Tk()
     app = ReportifyProApp(root)
     root.mainloop()
