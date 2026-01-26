@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 
 
 def main() -> None:
-    csv_path = Path(__file__).parent / "load_test_results.csv"
-    output_path = Path(__file__).parent / "load_test_chart.png"
+    base_dir = Path(__file__).resolve().parent
+    csv_path = base_dir / "load_test_results.csv"
+    output_path = base_dir / "load_test_chart.png"
 
     rows = []
     with csv_path.open() as file:
