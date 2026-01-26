@@ -108,7 +108,7 @@ class ReportData:
     title: str = ""
     subtitle: str = ""
     author: str = os.getlogin() if hasattr(os, 'getlogin') else "Report Author"
-    date: str = datetime.now().strftime("%B %d, %Y")
+    date: str = field(default_factory=lambda: datetime.now().strftime("%B %d, %Y"))
     version: str = "1.0"
     status: str = "Draft"
     classification: str = "Internal"
