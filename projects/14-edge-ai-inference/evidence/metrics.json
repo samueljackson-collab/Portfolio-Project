@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-01-23T17:25:24.527805+00:00",
+  "profiles": [
+    {
+      "name": "Jetson Nano (sim)",
+      "power_watts": 5.0,
+      "target_latency_ms": 45.0,
+      "runs": 60,
+      "p50_ms": 45.0,
+      "p95_ms": 45.0,
+      "avg_ms": 45.0,
+      "throughput_ips": 22.22222222222222,
+      "energy_j_per_inf": 0.22499999999999998
+    },
+    {
+      "name": "Jetson Orin (sim)",
+      "power_watts": 15.0,
+      "target_latency_ms": 12.0,
+      "runs": 60,
+      "p50_ms": 12.0,
+      "p95_ms": 12.0,
+      "avg_ms": 12.0,
+      "throughput_ips": 83.33333333333334,
+      "energy_j_per_inf": 0.18
+    },
+    {
+      "name": "Coral Edge TPU (sim)",
+      "power_watts": 6.0,
+      "target_latency_ms": 20.0,
+      "runs": 60,
+      "p50_ms": 20.0,
+      "p95_ms": 20.0,
+      "avg_ms": 20.0,
+      "throughput_ips": 50.0,
+      "energy_j_per_inf": 0.12
+    }
+  ]
+}
