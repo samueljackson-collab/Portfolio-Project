@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  gpu-compute:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gpu-compute
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - DASK_SCHEDULER=scheduler:8786
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+        limits:
+          memory: 16G
+    depends_on:
+      - scheduler
+    restart: unless-stopped
+
+  scheduler:
+    image: ghcr.io/dask/dask:latest
+    container_name: dask-scheduler
+    command: ["dask-scheduler"]
+    ports:
+      - "8786:8786"
+      - "8787:8787"
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["dask-worker", "scheduler:8786", "--nthreads", "2", "--memory-limit", "8GB"]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      replicas: 2
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 8G
+    depends_on:
+      - scheduler
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: gpu-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: gpu-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=gpu123
+    volumes:
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  dcgm-exporter:
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:3.2.5-3.1.8-ubuntu22.04
+    container_name: dcgm-exporter
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "9400:9400"
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

@@ -1,0 +1,11 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: custom-prometheus-exporter
+spec:
+  selector:
+    matchLabels:
+      app: custom-prometheus-exporter
+  endpoints:
+    - port: http
+      interval: 30s

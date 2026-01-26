@@ -79,6 +79,203 @@ Reportify Pro is a comprehensive enterprise-grade report generation system desig
 ### Installation
 
 ```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Verify installation
+python src/generate_report.py --help
+```
+
+### Generate Reports Manually
+
+```bash
+# Generate a single report
+python src/generate_report.py generate \
+    --template weekly.html \
+    --output ./reports/weekly-report.pdf \
+    --format pdf
+
+# Generate all reports
+python src/generate_report.py generate-all \
+    --output-dir ./reports
+
+# View portfolio statistics
+python src/generate_report.py stats
+```
+
+## 📊 Components
+
+### 1. Manual Report Generation
+
+**Basic Usage**:
+```bash
+# HTML report
+python src/generate_report.py generate \
+    -t project_status.html \
+    -o report.html \
+    -f html
+
+# PDF report
+python src/generate_report.py generate \
+    -t executive_summary.html \
+    -o summary.pdf \
+    -f pdf
+
+# All reports at once
+python src/generate_report.py generate-all -o ./reports
+```
+
+**Available Templates**:
+- `project_status.html` - Detailed project status and completion
+- `executive_summary.html` - High-level overview for executives
+- `technical_documentation.html` - Architecture and implementation details
+- `weekly.html` - Weekly progress report
+
+### 2. Scheduled Report Generation
+
+**Configuration**:
+Edit `config/scheduler.yml`:
+```yaml
+schedules:
+  weekly:
+    day_of_week: mon
+    hour: 9
+    minute: 0
+
+  monthly:
+    day: 1
+    hour: 9
+    minute: 0
+```
+
+**Start Scheduler**:
+```bash
+# Run with default config
+python src/scheduler.py --config config/scheduler.yml
+
+# Run in test mode (5 min intervals)
+python src/scheduler.py --test-mode
+
+# Run a single job and exit
+python src/scheduler.py --run-once weekly
+```
+
+**Scheduled Jobs**:
+- **Weekly Report**: Every Monday at 9 AM
+- **Monthly Summary**: 1st of month at 9 AM
+- **Daily Stats**: Every day at 8 AM
+
+### 3. Email Delivery
+
+**Configuration**:
+Edit `config/scheduler.yml`:
+```yaml
+email:
+  enabled: true
+  smtp_server: smtp.gmail.com
+  smtp_port: 587
+  smtp_user: your-email@gmail.com
+  smtp_password: your-app-password
+  from_address: your-email@gmail.com
+  from_name: Portfolio Report Generator
+  use_tls: true
+
+  weekly_recipients:
+    - team@example.com
+    - manager@example.com
+
+  monthly_recipients:
+    - executives@example.com
+```
+
+**Test Email Sending**:
+```bash
+python src/email_sender.py \
+    --smtp-server smtp.gmail.com \
+    --smtp-port 587 \
+    --smtp-user your-email@gmail.com \
+    --smtp-password your-app-password \
+    --to recipient@example.com \
+    --reports report.pdf
+```
+
+**Email Features**:
+- HTML-formatted emails with embedded styling
+- Multiple attachments (HTML + PDF)
+- Weekly and monthly templates
+- Custom subject lines and messages
+
+### 4. Historical Comparison
+
+**Save Current Snapshot**:
+```bash
+# Save current portfolio state
+python src/compare.py \
+    --action save \
+    --data-file current_data.json \
+    --history-dir ./history
+```
+
+**Compare with Previous**:
+```bash
+# Compare with snapshot from 7 days ago
+python src/compare.py \
+    --action compare \
+    --data-file current_data.json \
+    --days-back 7 \
+    --history-dir ./history
+```
+
+**View Trends**:
+```bash
+# View trend for a metric over 30 days
+python src/compare.py \
+    --action trend \
+    --metric avg_completion \
+    --days-back 30 \
+    --history-dir ./history
+```
+
+**Comparison Features**:
+- Metric deltas and percentage changes
+- Trend detection (up/down/stable)
+- Technology stack changes
+- Project status changes
+- Automated insights generation
+
+## 📈 Report Templates
+
+### Executive Summary
+- High-level portfolio overview
+- Key metrics and KPIs
+- Status breakdown by tier
+- Technology stack summary
+- Quality indicators
+
+### Project Status
+- Detailed project listing
+- Completion percentages
+- Code statistics
+- CI/CD and testing status
+- Docker and Kubernetes indicators
+
+### Technical Documentation
+- Architecture overview
+- Implementation details
+- Technology choices
+- Best practices
+- Deployment guides
+
+### Weekly Report
+- Recent changes
+- Progress updates
+- Blockers and risks
+- Next week's focus
+
+## Run
+
+### One-Time Report
+```bash
 # Clone the repository
 git clone https://github.com/your-org/Portfolio-Project.git
 cd Portfolio-Project/projects/24-report-generator
@@ -483,3 +680,96 @@ MIT License - see LICENSE file for details.
 **Built with ❤️ for IT professionals who value quality documentation.**
 
 For questions or feedback, open an issue or reach out via LinkedIn.
+python src/generate_report.py generate-all -o ./reports
+```
+
+### Scheduled Reports
+```bash
+# 1. Configure email and schedules
+vi config/scheduler.yml
+
+# 2. Start scheduler (runs continuously)
+python src/scheduler.py --config config/scheduler.yml
+
+# 3. Check logs for scheduled job execution
+# Reports will be generated and emailed automatically
+```
+
+## Evidence
+
+### 2026-01-22 Report Generation Run
+- Run notes: [`evidence/2026-01-22/run-notes.md`](evidence/2026-01-22/run-notes.md)
+- Install log: [`evidence/2026-01-22/pip-install.log`](evidence/2026-01-22/pip-install.log)
+- Generation log: [`evidence/2026-01-22/generate-all.log`](evidence/2026-01-22/generate-all.log)
+- Reports (HTML): [`evidence/2026-01-22/reports/`](evidence/2026-01-22/reports/)
+- Timed reports (HTML): [`evidence/2026-01-22/timed-reports/`](evidence/2026-01-22/timed-reports/)
+- Timing data: [`evidence/2026-01-22/report-timings.csv`](evidence/2026-01-22/report-timings.csv)
+
+## 🔧 Configuration
+
+### Gmail Setup
+For Gmail SMTP:
+1. Enable 2-factor authentication
+2. Generate app-specific password
+3. Use in `smtp_password` field
+
+### Custom SMTP
+```yaml
+email:
+  smtp_server: mail.yourcompany.com
+  smtp_port: 587
+  smtp_user: reports@yourcompany.com
+  smtp_password: your-password
+```
+
+### Schedule Customization
+Use cron-style scheduling:
+```yaml
+schedules:
+  custom_job:
+    day_of_week: tue,thu  # Tuesday and Thursday
+    hour: 14              # 2 PM
+    minute: 30            # :30
+```
+
+
+## Code Generation Prompts
+
+This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
+
+### Code Components
+
+#### 1. Core Functionality
+```
+Create the main application logic for [specific feature], including error handling, logging, and configuration management
+```
+
+#### 2. API Integration
+```
+Generate code to integrate with [external service] API, including authentication, rate limiting, and retry logic
+```
+
+#### 3. Testing
+```
+Write comprehensive tests for [component], covering normal operations, edge cases, and error scenarios
+```
+
+### How to Use These Prompts
+
+1. **Copy the prompt** from the code block above
+2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
+3. **Provide context** to your AI assistant about:
+   - Your development environment and tech stack
+   - Existing code patterns and conventions in this project
+   - Any constraints or requirements specific to your use case
+4. **Review and adapt** the generated code before using it
+5. **Test thoroughly** and adjust as needed for your specific scenario
+
+### Best Practices
+
+- Always review AI-generated code for security vulnerabilities
+- Ensure generated code follows your project's coding standards
+- Add appropriate error handling and logging
+- Write tests for AI-generated components
+- Document any assumptions or limitations
+- Keep sensitive information (credentials, keys) in environment variables

@@ -1,0 +1,6 @@
+{
+  "alerts": [
+    "cpu_high"
+  ],
+  "total_alerts": 1
+}

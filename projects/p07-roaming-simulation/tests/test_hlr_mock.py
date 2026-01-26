@@ -1,10 +1,6 @@
 """Unit tests for mock HLR/HSS."""
-import pytest
-import sys
-from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+import pytest
 
 from hlr_mock import MockHLR
 
@@ -20,7 +16,7 @@ class TestMockHLR:
             imsi="310410123456789",
             msisdn="+15551234567",
             home_network="310-410",
-            ki="0123456789ABCDEF0123456789ABCDEF"
+            ki="0123456789ABCDEF0123456789ABCDEF",
         )
         hlr.add_roaming_agreement("310-410", ["208-01", "234-15"])
         return hlr
@@ -64,8 +60,8 @@ class TestMockHLR:
         assert vectors is not None
         rand, sres, kc = vectors
         assert len(rand) == 32  # 16 bytes hex
-        assert len(sres) == 8   # 4 bytes hex
-        assert len(kc) == 16    # 8 bytes hex
+        assert len(sres) == 8  # 4 bytes hex
+        assert len(kc) == 16  # 8 bytes hex
 
     def test_generate_auth_vectors_invalid_imsi(self, hlr):
         """Test auth vector generation fails for invalid IMSI."""

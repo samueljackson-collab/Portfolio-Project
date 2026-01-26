@@ -1,0 +1,13 @@
+version: 1
+formatters:
+  concise:
+    format: "%(levelname)s %(message)s"
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: concise
+    level: INFO
+    stream: ext://sys.stdout
+root:
+  level: INFO
+  handlers: [console]

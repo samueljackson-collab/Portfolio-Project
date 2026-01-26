@@ -1,0 +1,36 @@
+# Development Environment Configuration
+# Copy to dev.tfvars and customize values
+
+# Environment identifier
+environment = "dev"
+
+# AWS region for deployment
+region = "us-west-2"
+
+# VPC Configuration
+vpc_cidr              = "10.0.0.0/16"
+availability_zones    = ["us-west-2a", "us-west-2b"]
+private_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+public_subnet_cidrs   = ["10.0.101.0/24", "10.0.102.0/24"]
+database_subnet_cidrs = ["10.0.201.0/24", "10.0.202.0/24"]
+
+# Application Auto Scaling Group
+app_instance_type    = "t3.micro"  # Use smaller instances for dev
+app_min_size         = 1
+app_max_size         = 2
+app_desired_capacity = 1
+
+# Database Configuration
+# IMPORTANT: Use secrets manager or environment variables for sensitive values
+# Do NOT commit actual credentials to version control
+db_username = "portfolio_dev"
+db_password = "REPLACE_WITH_SECURE_PASSWORD"  # Use: export TF_VAR_db_password="your-password"
+
+# CloudFront Configuration
+cloudfront_price_class = "PriceClass_100"  # US, Canada, Europe only (cheapest)
+
+# Optional: Custom bucket name (must be globally unique)
+# static_site_bucket_name = "my-portfolio-static-dev"
+
+# Optional: ACM Certificate ARN for HTTPS
+# acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERT_ID"

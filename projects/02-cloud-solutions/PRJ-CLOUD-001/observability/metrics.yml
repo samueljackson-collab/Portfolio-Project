@@ -1,0 +1,10 @@
+server:
+  port: 9100
+  scrape_interval: 30s
+metrics:
+  - name: solution_profile_loaded
+    type: counter
+    help: "Counts successful profile loads in the scaffold"
+    labels:
+      service: cloud-solutions
+      stage: sample

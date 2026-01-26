@@ -1,0 +1,47 @@
+{
+  "resource": {
+    "aws_s3_bucket": {
+      "public_bucket": {
+        "bucket": "public-bucket"
+      }
+    },
+    "aws_db_instance": {
+      "prod-db": {
+        "storage_encrypted": false,
+        "publicly_accessible": true,
+        "deletion_protection": false,
+        "backup_retention_period": 1,
+        "tags": {
+          "Environment": "prod"
+        }
+      }
+    },
+    "aws_security_group": {
+      "sg-open": {
+        "ingress": [
+          {
+            "from_port": 22,
+            "to_port": 22,
+            "cidr_blocks": ["0.0.0.0/0"]
+          }
+        ]
+      }
+    },
+    "aws_iam_policy": {
+      "wide-open": {
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"*\"],\"Resource\":\"*\"}]}"
+      }
+    },
+    "aws_instance": {
+      "web": {
+        "metadata_options": {
+          "http_tokens": "optional"
+        },
+        "tags": {
+          "Environment": "dev",
+          "Owner": "devops"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collaboration Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f6f7fb;
+      color: #1f2933;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .panel {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+    .status {
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+    .status.connected {
+      background: #e7f5ed;
+      color: #116a3d;
+    }
+    .status.waiting {
+      background: #fff1d6;
+      color: #9f5d00;
+    }
+    .doc {
+      background: #f0f4f8;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 80px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 12px 0 0;
+      max-height: 180px;
+      overflow: auto;
+      font-size: 13px;
+    }
+    li {
+      margin-bottom: 6px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: #eef2ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Real-time Collaboration Demo</h1>
+  <p>This demo uses two WebSocket clients to show sync events in a shared document.</p>
+  <div class="grid">
+    <div class="panel">
+      <h2>Client A</h2>
+      <span id="statusA" class="status waiting">Connecting...</span>
+      <div id="docA" class="doc"></div>
+      <ul id="logA"></ul>
+    </div>
+    <div class="panel">
+      <h2>Client B</h2>
+      <span id="statusB" class="status waiting">Connecting...</span>
+      <div id="docB" class="doc"></div>
+      <ul id="logB"></ul>
+    </div>
+  </div>
+
+  <script>
+    const wsUrl = 'ws://localhost:8765';
+    const documentId = 'demo-doc';
+
+    const state = {
+      A: { content: '', logEl: document.getElementById('logA'), docEl: document.getElementById('docA'), statusEl: document.getElementById('statusA') },
+      B: { content: '', logEl: document.getElementById('logB'), docEl: document.getElementById('docB'), statusEl: document.getElementById('statusB') }
+    };
+
+    const appendLog = (client, message) => {
+      const item = document.createElement('li');
+      item.textContent = message;
+      state[client].logEl.prepend(item);
+    };
+
+    const updateDoc = (client, content) => {
+      state[client].content = content;
+      state[client].docEl.textContent = content || '(empty)';
+    };
+
+    const connectClient = (label, username, initialMessage) => {
+      const socket = new WebSocket(wsUrl);
+      socket.addEventListener('open', () => {
+        state[label].statusEl.textContent = 'Connected';
+        state[label].statusEl.classList.remove('waiting');
+        state[label].statusEl.classList.add('connected');
+
+        socket.send(JSON.stringify({
+          document_id: documentId,
+          user_id: `${label.toLowerCase()}-${Date.now()}`,
+          username
+        }));
+
+        appendLog(label, `${username} authenticated`);
+
+        if (initialMessage) {
+          setTimeout(() => {
+            const operation = {
+              type: 'insert',
+              position: state[label].content.length,
+              content: initialMessage,
+              length: initialMessage.length,
+              version: 0
+            };
+            socket.send(JSON.stringify({ type: 'operation', operation }));
+            appendLog(label, `Sent: "${initialMessage}"`);
+          }, 600);
+        }
+      });
+
+      socket.addEventListener('message', (event) => {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'snapshot') {
+          updateDoc(label, payload.content || '');
+          appendLog(label, 'Received snapshot');
+        }
+        if (payload.type === 'operation') {
+          const op = payload.operation;
+          if (op.type === 'insert') {
+            const next = state[label].content.slice(0, op.position) + op.content + state[label].content.slice(op.position);
+            updateDoc(label, next);
+            appendLog(label, `Applied insert: "${op.content}"`);
+          }
+        }
+        if (payload.type === 'ack') {
+          appendLog(label, `Ack version ${payload.version}`);
+        }
+      });
+
+      socket.addEventListener('close', () => {
+        state[label].statusEl.textContent = 'Disconnected';
+        state[label].statusEl.classList.remove('connected');
+        state[label].statusEl.classList.add('waiting');
+      });
+
+      return socket;
+    };
+
+    connectClient('A', 'Editor A', 'Hello from A. ');
+    setTimeout(() => {
+      connectClient('B', 'Editor B', 'Update from B.');
+    }, 400);
+  </script>
+</body>
+</html>

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Executive Summary</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.8;
+            color: #2c3e50;
+            background: white;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #34495e;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #1a252f;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .date {
+            margin-top: 20px;
+            color: #95a5a6;
+            font-size: 0.95em;
+        }
+
+        .section {
+            margin: 50px 0;
+            page-break-inside: avoid;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 10px;
+        }
+
+        p {
+            margin: 15px 0;
+            font-size: 1.1em;
+            text-align: justify;
+        }
+
+        .highlights {
+            background: #ecf0f1;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .highlight-item {
+            text-align: center;
+        }
+
+        .highlight-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #3498db;
+            display: block;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .highlight-label {
+            font-size: 0.95em;
+            color: #7f8c8d;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .status-breakdown {
+            margin: 30px 0;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .status-name {
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .status-count {
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .key-achievements {
+            list-style: none;
+            padding: 0;
+        }
+
+        .key-achievements li {
+            padding: 15px 0 15px 40px;
+            position: relative;
+            border-left: 2px solid #3498db;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .key-achievements li:before {
+            content: "✓";
+            position: absolute;
+            left: -12px;
+            top: 12px;
+            background: #3498db;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .tech-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .tech-tag {
+            background: #34495e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .recommendation-box {
+            background: #fff9e6;
+            border-left: 4px solid #f39c12;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .recommendation-box h3 {
+            color: #e67e22;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .recommendation-box ul {
+            margin-left: 20px;
+        }
+
+        .recommendation-box li {
+            margin: 10px 0;
+        }
+
+        footer {
+            margin-top: 80px;
+            padding-top: 30px;
+            border-top: 2px solid #34495e;
+            text-align: center;
+            color: #95a5a6;
+            font-size: 0.9em;
+        }
+
+        .signature-section {
+            margin-top: 60px;
+            padding-top: 40px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 300px;
+            margin: 50px auto 10px;
+        }
+
+        .signature-label {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            h2 {
+                page-break-after: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Executive Summary</h1>
+            <div class="subtitle">Portfolio Development Progress Report</div>
+            <div class="date">{{ generated_date }}</div>
+        </header>
+
+        <div class="section">
+            <h2>Overview</h2>
+            <p>
+                This executive summary provides a comprehensive overview of the portfolio development
+                initiative, encompassing {{ summary.total_projects }} distinct projects across multiple
+                technology domains. The portfolio demonstrates significant progress in cloud infrastructure,
+                DevOps automation, data engineering, and modern application development practices.
+            </p>
+            <p>
+                As of {{ generated_date }}, the portfolio shows an average completion rate of
+                <strong>{{ summary.avg_completion }}%</strong>, representing substantial progress toward
+                production-ready implementations across all projects.
+            </p>
+        </div>
+
+        <div class="highlights">
+            <h2 style="border: none; padding: 0; margin-bottom: 20px;">Key Metrics</h2>
+            <div class="highlight-grid">
+                <div class="highlight-item">
+                    <span class="highlight-number">{{ summary.total_projects }}</span>
+                    <span class="highlight-label">Active Projects</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-number">{{ summary.avg_completion }}%</span>
+                    <span class="highlight-label">Average Completion</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-number">{{ summary.total_lines|format_number }}</span>
+                    <span class="highlight-label">Lines of Code</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-number">{{ summary.projects_with_tests }}</span>
+                    <span class="highlight-label">Projects with Tests</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Project Status Distribution</h2>
+            <p>
+                The portfolio projects are categorized by their current development status,
+                providing visibility into the maturity and readiness of each initiative.
+            </p>
+            <div class="status-breakdown">
+                {% for status, count in summary.status_breakdown.items() %}
+                <div class="status-item">
+                    <span class="status-name">{{ status|replace('-', ' ')|title }}</span>
+                    <span class="status-count">{{ count }} projects</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Key Achievements</h2>
+            <ul class="key-achievements">
+                <li>
+                    <strong>Infrastructure Automation:</strong> Implemented comprehensive infrastructure-as-code
+                    solutions across multiple cloud providers, enabling rapid and consistent environment provisioning.
+                </li>
+                <li>
+                    <strong>CI/CD Excellence:</strong> {{ summary.projects_with_ci_cd }} projects now feature
+                    automated continuous integration and deployment pipelines, significantly reducing deployment time
+                    and human error.
+                </li>
+                <li>
+                    <strong>Containerization:</strong> {{ summary.projects_with_docker }} projects leverage Docker
+                    containerization, with {{ summary.projects_with_k8s }} utilizing Kubernetes orchestration for
+                    production-grade scalability.
+                </li>
+                <li>
+                    <strong>Quality Assurance:</strong> {{ summary.projects_with_tests }} projects include
+                    comprehensive test suites, demonstrating commitment to code quality and reliability.
+                </li>
+                <li>
+                    <strong>Code Volume:</strong> The portfolio comprises {{ summary.total_lines|format_number }}
+                    lines of production-quality code across {{ summary.total_files|format_number }} files,
+                    representing substantial engineering effort.
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Technology Stack</h2>
+            <p>
+                The portfolio demonstrates proficiency across a modern technology stack, incorporating
+                industry-standard tools and frameworks:
+            </p>
+            <div class="tech-summary">
+                {% for tech in summary.tech_stack_count.keys() %}
+                <span class="tech-tag">{{ tech }}</span>
+                {% endfor %}
+            </div>
+            <p style="margin-top: 20px;">
+                This diverse technology landscape demonstrates adaptability and comprehensive understanding
+                of contemporary software engineering practices.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>Business Value</h2>
+            <p>
+                The portfolio delivers measurable business value through:
+            </p>
+            <ul style="margin-left: 40px; margin-top: 15px;">
+                <li>
+                    <strong>Operational Efficiency:</strong> Automated infrastructure and deployment processes
+                    reduce manual effort by an estimated 70-80%, freeing teams to focus on innovation.
+                </li>
+                <li>
+                    <strong>Risk Mitigation:</strong> Comprehensive testing, monitoring, and disaster recovery
+                    implementations minimize downtime and data loss risks.
+                </li>
+                <li>
+                    <strong>Scalability:</strong> Cloud-native architectures with Kubernetes orchestration enable
+                    seamless scaling to meet growing demand.
+                </li>
+                <li>
+                    <strong>Cost Optimization:</strong> Infrastructure-as-code and automated resource management
+                    optimize cloud spending through right-sizing and efficient resource allocation.
+                </li>
+            </ul>
+        </div>
+
+        <div class="recommendation-box">
+            <h3>Strategic Recommendations</h3>
+            <ul>
+                <li>
+                    <strong>Prioritize Production Deployments:</strong> Focus on moving projects above 90%
+                    completion to production environments to demonstrate immediate value.
+                </li>
+                <li>
+                    <strong>Expand Test Coverage:</strong> Increase automated testing across remaining projects
+                    to ensure reliability and maintainability.
+                </li>
+                <li>
+                    <strong>Documentation Enhancement:</strong> Create comprehensive documentation for all
+                    production-ready systems to facilitate knowledge transfer and maintenance.
+                </li>
+                <li>
+                    <strong>Monitoring & Observability:</strong> Deploy monitoring solutions across all production
+                    systems to ensure operational visibility and proactive issue detection.
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Conclusion</h2>
+            <p>
+                The portfolio represents a comprehensive demonstration of modern software engineering
+                capabilities, spanning infrastructure automation, cloud-native development, data engineering,
+                and DevOps practices. With {{ summary.total_projects }} active projects and an average
+                completion rate of {{ summary.avg_completion }}%, the portfolio showcases both breadth
+                and depth of technical expertise.
+            </p>
+            <p>
+                The strong emphasis on automation, testing, and infrastructure-as-code positions these
+                projects for successful production deployment and long-term maintainability. Continued
+                focus on the strategic recommendations outlined above will maximize the business value
+                and technical impact of this initiative.
+            </p>
+        </div>
+
+        <footer>
+            <p>Confidential | Portfolio Development Report</p>
+            <p>Generated: {{ generated_date }} at {{ generated_time }}</p>
+        </footer>
+    </div>
+</body>
+</html>

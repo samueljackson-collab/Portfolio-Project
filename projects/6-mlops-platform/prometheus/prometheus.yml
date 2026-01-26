@@ -1,0 +1,60 @@
+# Prometheus Configuration for MLOps Platform
+# Monitors ML models, training jobs, inference endpoints
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'mlops'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # MLflow tracking server
+  - job_name: 'mlflow'
+    static_configs:
+      - targets: ['mlflow:5000']
+    metrics_path: '/metrics'
+
+  # FastAPI Model Serving API
+  - job_name: 'model-serving'
+    static_configs:
+      - targets: ['model-serving:8000']
+    metrics_path: '/metrics'
+
+  # Model serving endpoints (TensorFlow Serving)
+  - job_name: 'tf-serving'
+    static_configs:
+      - targets: ['tf-serving:8501']
+
+  # Kubeflow pipelines
+  - job_name: 'kubeflow'
+    static_configs:
+      - targets: ['kubeflow:8888']
+
+  # Feature store
+  - job_name: 'feature-store'
+    static_configs:
+      - targets: ['feast:6566']
+
+  # Model monitoring
+  - job_name: 'model-monitor'
+    static_configs:
+      - targets: ['model-monitor:9090']
+    metrics_path: '/metrics'
+
+  # GPU metrics
+  - job_name: 'dcgm-exporter'
+    static_configs:
+      - targets: ['dcgm-exporter:9400']

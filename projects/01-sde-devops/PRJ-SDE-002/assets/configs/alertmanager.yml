@@ -1,0 +1,49 @@
+route:
+  receiver: default
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: critical-team
+      continue: true
+    - matchers:
+        - alertname="BackupJobFailed"
+      receiver: backups
+      continue: true
+    - matchers:
+        - alertname="LogErrorRate"
+      receiver: logging
+      continue: true
+receivers:
+  - name: default
+    webhook_configs:
+      - url: https://alerts.example.com/webhook
+        send_resolved: true
+  - name: critical-team
+    slack_configs:
+      - api_url: https://hooks.slack.com/services/T000/B000/EXAMPLE
+        channel: '#oncall-critical'
+        title: '[PRJ-SDE-002] Critical: {{ .CommonLabels.alertname }}'
+        text: |
+          Severity: {{ .CommonLabels.severity }}
+          Summary: {{ .CommonAnnotations.summary }}
+          Runbook: {{ .CommonAnnotations.runbook }}
+  - name: backups
+    email_configs:
+      - to: 'backup-oncall@example.com'
+        from: 'alertmanager@example.com'
+        headers:
+          subject: 'Backup issue: {{ .CommonLabels.instance }}'
+  - name: logging
+    email_configs:
+      - to: 'logging-duty@example.com'
+        from: 'alertmanager@example.com'
+        headers:
+          subject: 'Log pipeline alert: {{ .CommonLabels.alertname }}'
+inhibit_rules:
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: ['alertname', 'instance']

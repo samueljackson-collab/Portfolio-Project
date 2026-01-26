@@ -1,0 +1,30 @@
+%% Reverse proxy data flow for PRJ-HOME-002
+flowchart LR
+  User[User Browser]
+  NPM[Nginx Proxy Manager]
+  FreeIPA[FreeIPA / LDAP]
+  PiHole[Pi-hole DNS]
+  HA[Home Assistant]
+  Wiki[Wiki.js]
+  Immich[Immich]
+  Proxmox[Proxmox UI]
+  Grafana[Grafana/Prometheus]
+  TrueNAS[TrueNAS NFS/iSCSI]
+  PBS[PBS]
+
+  User -->|DNS lookup| PiHole
+  User -->|HTTPS| NPM
+  NPM -->|SNI: home.example.com| HA
+  NPM -->|SNI: wiki.example.com| Wiki
+  NPM -->|SNI: photos.example.com| Immich
+  NPM -->|SNI: proxmox.example.com| Proxmox
+  NPM -->|SNI: grafana.example.com| Grafana
+
+  HA -->|Media backups| Immich
+  Immich -->|NFS| TrueNAS
+  PBS -->|Datastore sync| TrueNAS
+  Proxmox -->|VM backups| PBS
+  Grafana -->|Scrapes| Proxmox
+  Grafana -->|Scrapes| PBS
+  HA -->|Auth| FreeIPA
+  Wiki -->|Auth| FreeIPA

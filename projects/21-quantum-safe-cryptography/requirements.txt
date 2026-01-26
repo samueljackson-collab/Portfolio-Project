@@ -1,1 +1,13 @@
+# Cryptography
 cryptography>=41.0
+
+# Post-quantum (optional, falls back if not available)
+# liboqs-python>=0.9.0
+
+# Web framework
+fastapi>=0.104
+uvicorn[standard]>=0.24
+pydantic>=2.5
+
+# Monitoring
+prometheus-client>=0.18

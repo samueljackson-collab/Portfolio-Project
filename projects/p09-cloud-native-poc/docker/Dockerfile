@@ -1,5 +1,5 @@
 # Multi-stage build for cloud-native POC
-FROM python:3.11-slim as builder
+FROM python:3.14-slim as builder
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Final stage
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
@@ -18,11 +18,11 @@ RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 
 # Copy dependencies from builder
-COPY --from=builder /root/.local /home/appuser/.local
+COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
 # Copy application code
-COPY src/ ./src/
-COPY tests/ ./tests/
+COPY --chown=appuser:appuser src/ ./src/
+COPY --chown=appuser:appuser tests/ ./tests/
 
 # Switch to non-root user
 USER appuser

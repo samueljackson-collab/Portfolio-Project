@@ -1,0 +1,38 @@
+graph LR
+    subgraph "VLAN Strategy"
+        V10[VLAN 10<br/>Trusted Network<br/>192.168.10.0/24]
+        V30[VLAN 30<br/>Management<br/>192.168.30.0/24]
+        V50[VLAN 50<br/>IoT Devices<br/>192.168.50.0/24]
+        V99[VLAN 99<br/>Guest Network<br/>192.168.99.0/24]
+        
+        style V10 fill:#28a745,stroke:#333,color:#fff
+        style V30 fill:#dc3545,stroke:#333,color:#fff
+        style V50 fill:#ffc107,stroke:#333,color:#000
+        style V99 fill:#6c757d,stroke:#333,color:#fff
+    end
+    
+    subgraph "Security Zones"
+        TRUSTED[Trusted Zone<br/>Full Internal Access]
+        MGMT[Management Zone<br/>Admin Access Only]
+        ISOLATED[Isolated Zone<br/>Internet Only]
+        GUEST_Z[Guest Zone<br/>Internet Only]
+        
+        style TRUSTED fill:#28a745,stroke:#333,color:#fff
+        style MGMT fill:#dc3545,stroke:#333,color:#fff
+        style ISOLATED fill:#ffc107,stroke:#333,color:#000
+        style GUEST_Z fill:#6c757d,stroke:#333,color:#fff
+    end
+    
+    V10 --> TRUSTED
+    V30 --> MGMT
+    V50 --> ISOLATED
+    V99 --> GUEST_Z
+    
+    TRUSTED -->|Allow| MGMT
+    TRUSTED -->|Limited| ISOLATED
+    MGMT -->|Deny All| ISOLATED
+    MGMT -->|Deny All| GUEST_Z
+    ISOLATED -->|Deny All| TRUSTED
+    ISOLATED -->|Deny All| MGMT
+    GUEST_Z -->|Deny All| TRUSTED
+    GUEST_Z -->|Deny All| MGMT

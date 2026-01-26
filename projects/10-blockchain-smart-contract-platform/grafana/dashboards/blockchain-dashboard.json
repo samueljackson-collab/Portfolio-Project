@@ -1,0 +1,93 @@
+{
+  "dashboard": {
+    "title": "Blockchain Smart Contract Platform Dashboard",
+    "tags": ["blockchain", "ethereum", "smart-contracts"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Current Block Height",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "geth_chain_head_block",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Peer Count",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "geth_p2p_peers",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Gas Price",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "geth_tx_pool_basefee / 1000000000",
+            "legendFormat": "Base Fee (Gwei)",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Transaction Pool Size",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "geth_tx_pool_pending",
+            "legendFormat": "Pending",
+            "refId": "A"
+          },
+          {
+            "expr": "geth_tx_pool_queued",
+            "legendFormat": "Queued",
+            "refId": "B"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Smart Contract Executions",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(contract_executions_total[5m])",
+            "legendFormat": "{{contract_name}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Block Sync Progress",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(geth_chain_head_block[1m])",
+            "legendFormat": "Blocks/minute",
+            "refId": "A"
+          }
+        ]
+      }
+    ]
+  }
+}

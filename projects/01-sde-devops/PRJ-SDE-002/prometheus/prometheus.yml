@@ -1,0 +1,464 @@
+# Prometheus Configuration File
+# ==============================
+# This configuration defines how Prometheus collects metrics, evaluates alert rules,
+# and integrates with Alertmanager for notification management.
+#
+# Configuration Structure:
+#   - global: Default settings applied to all scrape jobs
+#   - alerting: Alertmanager integration configuration
+#   - rule_files: Alert and recording rule file paths
+#   - scrape_configs: Metric collection jobs (targets to scrape)
+#
+# Hot Reload:
+#   After modifying this file, reload without restart:
+#   curl -X POST http://localhost:9090/-/reload
+#   Or send SIGHUP: docker kill -s SIGHUP prometheus
+#
+# Validation:
+#   promtool check config prometheus.yml
+#
+# Documentation: https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+# Author: Portfolio Project
+# Last Updated: 2024-11-24
+
+# Global Configuration
+# ====================
+# These settings apply as defaults to all scrape jobs unless overridden per-job.
+# Choose values based on your monitoring requirements and resource constraints.
+global:
+  # scrape_interval: How frequently to scrape targets for metrics
+  # Default: 1m (Prometheus default)
+  # Recommendation: 15s for infrastructure, 30s for applications
+  #
+  # Trade-offs:
+  #   - Lower (5s-10s): Higher resolution data, more storage, more load on targets
+  #   - Higher (30s-60s): Less granular data, lower storage, reduced target load
+  #
+  # This value: 15s provides good balance for homelab monitoring
+  #   - CPU/memory spikes visible (important for capacity planning)
+  #   - Storage manageable (~1-2GB/day with typical cardinality)
+  #   - Target load acceptable (4 scrapes/minute)
+  scrape_interval: 15s
+
+  # evaluation_interval: How frequently to evaluate alert rules
+  # Default: 1m
+  # Recommendation: Match scrape_interval for consistency
+  #
+  # Why match scrape_interval?
+  #   - Rules use latest scraped data
+  #   - Avoid evaluating stale data multiple times
+  #   - Predictable alert firing timing
+  #
+  # Example: With 15s interval and "for: 2m" alert, need 8 consecutive
+  # evaluations where condition is true before alert fires.
+  evaluation_interval: 15s
+
+  # scrape_timeout: Maximum time to wait for target to respond
+  # Default: 10s
+  # Must be: Less than scrape_interval
+  #
+  # Timeout triggers when:
+  #   - Target is slow to generate metrics
+  #   - Network latency high
+  #   - Target overloaded
+  #
+  # On timeout: Scrape marked as failed, up{} metric set to 0
+  scrape_timeout: 10s
+
+  # external_labels: Labels attached to all metrics and alerts from this Prometheus
+  # Use cases:
+  #   - Federated Prometheus setups (identify source)
+  #   - Alertmanager routing decisions
+  #   - Long-term storage (Thanos, Cortex) identification
+  #
+  # Best practice: Add environment, region, cluster labels
+  external_labels:
+    # Environment identifier
+    # Examples: production, staging, development, homelab
+    # Used for: Alert routing, dashboard filtering
+    environment: 'homelab'
+
+    # Cluster or datacenter identifier
+    # Useful for: Multi-cluster deployments, disaster recovery
+    cluster: 'proxmox-cluster'
+
+    # Prometheus instance identifier (if running multiple)
+    # Optional: Useful for HA Prometheus setups
+    prometheus: 'monitoring-01'
+
+# Alerting Configuration
+# =======================
+# Configures how Prometheus sends alerts to Alertmanager.
+# Supports multiple Alertmanager instances for high availability.
+alerting:
+  # alertmanagers: List of Alertmanager instances
+  alertmanagers:
+    - static_configs:
+        # targets: Alertmanager addresses
+        # Format: 'hostname:port'
+        # Multiple targets: ['alertmanager-01:9093', 'alertmanager-02:9093']
+        - targets:
+            - 'alertmanager:9093'
+
+      # timeout: How long to wait for Alertmanager to respond
+      # Default: 10s
+      # Increase if: Alertmanager processing delays, network latency
+      timeout: 10s
+
+      # path_prefix: URL path prefix if Alertmanager behind reverse proxy
+      # Example: '/alertmanager' if accessible at http://host/alertmanager
+      # path_prefix: /
+
+      # scheme: HTTP or HTTPS
+      # Production: Use HTTPS with TLS configuration
+      scheme: http
+
+      # Optional: Basic auth for Alertmanager
+      # basic_auth:
+      #   username: prometheus
+      #   password: secretpassword
+
+      # Optional: TLS configuration for HTTPS
+      # tls_config:
+      #   ca_file: /etc/prometheus/ca.pem
+      #   cert_file: /etc/prometheus/cert.pem
+      #   key_file: /etc/prometheus/key.pem
+      #   insecure_skip_verify: false
+
+# Alert and Recording Rules
+# ==========================
+# Path(s) to YAML files containing alerting and recording rules.
+# Supports wildcards: '/etc/prometheus/rules/*.yml'
+# Rules automatically reloaded on config reload.
+#
+# Rule Types:
+#   - Alerting Rules: Generate alerts when conditions met
+#   - Recording Rules: Pre-compute expensive queries, store as new metrics
+#
+# Best Practice: Separate rules by category/team into multiple files
+rule_files:
+  # Infrastructure and application alert rules
+  - '/etc/prometheus/alerts/rules.yml'
+
+  # Additional rule files can be added:
+  # - '/etc/prometheus/alerts/application-rules.yml'
+  # - '/etc/prometheus/alerts/recording-rules.yml'
+
+# Scrape Configurations
+# =====================
+# Defines which targets to scrape, how often, and what labels to apply.
+# Each job represents a logical group of targets with similar characteristics.
+#
+# Job Design Principles:
+#   1. Group similar targets (all node exporters, all app servers)
+#   2. Use job label to identify metric source type
+#   3. Apply consistent relabeling across similar targets
+#   4. Set appropriate scrape intervals per job (not all need 15s)
+#
+scrape_configs:
+  # Job 1: Prometheus Self-Monitoring
+  # ==================================
+  # Prometheus exposes its own metrics about scrape performance, storage, queries.
+  # Critical for: Monitoring the monitoring system itself.
+  #
+  # Key Metrics:
+  #   - prometheus_tsdb_* : Storage engine metrics (disk, memory, compaction)
+  #   - prometheus_rule_* : Alert rule evaluation metrics
+  #   - prometheus_target_* : Scrape target health and timing
+  #   - prometheus_http_* : Query API performance
+  #
+  - job_name: 'prometheus'
+    # Honor labels from target (don't override with configured labels)
+    # Important: Preserves internal Prometheus labels
+    honor_labels: true
+
+    # Scrape interval override
+    # Optional: Use shorter interval for critical self-monitoring
+    # scrape_interval: 10s
+
+    # Static targets (manually configured)
+    static_configs:
+      - targets:
+          - 'localhost:9090'  # Prometheus scrapes itself
+        # Optional: Add custom labels to this target
+        labels:
+          instance_type: 'monitoring'
+          service: 'prometheus'
+
+  # Job 2: Node Exporter - Host/OS Metrics
+  # ========================================
+  # Collects hardware and OS metrics from Linux hosts.
+  # One exporter per physical/virtual machine.
+  #
+  # Key Metrics (1000+ total):
+  #   - node_cpu_* : CPU usage per core and mode (user, system, idle, iowait)
+  #   - node_memory_* : Memory usage (available, cached, buffered, swap)
+  #   - node_disk_* : Disk I/O operations, read/write bytes, latency
+  #   - node_filesystem_* : Disk space usage per mount point
+  #   - node_network_* : Network traffic (bytes, packets, errors, drops)
+  #   - node_load* : System load averages (1, 5, 15 minute)
+  #
+  # Use Cases:
+  #   - Capacity planning (CPU/memory trends)
+  #   - Performance troubleshooting (I/O bottlenecks)
+  #   - Alerting on resource exhaustion
+  #
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+          # Docker container running node-exporter
+          - 'node-exporter:9100'
+
+          # Add additional hosts here (Proxmox nodes, VMs, etc.):
+          # - 'proxmox-01:9100'
+          # - 'proxmox-02:9100'
+          # - 'vm-webserver-01:9100'
+
+        # Labels applied to all metrics from these targets
+        labels:
+          environment: 'homelab'
+          job_type: 'infrastructure'
+
+    # Metric relabeling (applied after scrape, before storage)
+    # Use to: Drop unnecessary metrics, modify labels, reduce cardinality
+    # Example: Drop metrics we don't use to save storage
+    # metric_relabel_configs:
+    #   - source_labels: [__name__]
+    #     regex: 'node_arp_.*'  # Drop ARP table metrics (high cardinality)
+    #     action: drop
+
+  # Job 3: cAdvisor - Container Metrics
+  # ====================================
+  # Collects resource usage metrics from Docker containers.
+  # Essential for: Container-based infrastructure monitoring.
+  #
+  # Key Metrics:
+  #   - container_cpu_usage_seconds_total : CPU time used by container
+  #   - container_memory_usage_bytes : Current memory usage
+  #   - container_memory_working_set_bytes : Active memory (better than usage)
+  #   - container_network_* : Network I/O per container
+  #   - container_fs_* : Filesystem usage and I/O per container
+  #   - container_spec_* : Container resource limits and reservations
+  #
+  # Labels Provided by cAdvisor:
+  #   - container_name : Docker container name
+  #   - image : Docker image name
+  #   - id : Container ID (full SHA256)
+  #   - name : Full container path
+  #
+  # Cardinality Warning:
+  #   - Creates metrics per container (can be hundreds)
+  #   - High churn environments = many dead container series
+  #   - Use metric relabeling to drop unwanted containers
+  #
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets:
+          - 'cadvisor:8080'
+
+    # Drop metrics from stopped containers older than 5 minutes
+    # Reduces storage for ephemeral containers
+    metric_relabel_configs:
+      # Drop pause containers (Kubernetes infrastructure, not useful)
+      - source_labels: [container_label_io_kubernetes_pod_name]
+        regex: '.*'
+        action: drop
+
+      # Simplify container name label (remove /docker/ prefix)
+      - source_labels: [name]
+        regex: '/docker/(.+)'
+        target_label: container_name
+        replacement: '$1'
+
+  # Job 4: Grafana Metrics
+  # ======================
+  # Grafana exposes internal metrics about dashboards, datasources, users, queries.
+  # Useful for: Monitoring dashboard performance, query latency, user activity.
+  #
+  # Key Metrics:
+  #   - grafana_* : Various Grafana internal metrics
+  #   - go_* : Go runtime metrics (memory, goroutines, GC)
+  #   - process_* : Process-level metrics (CPU, memory, file descriptors)
+  #
+  - job_name: 'grafana'
+    static_configs:
+      - targets:
+          - 'grafana:3000'
+
+    # Grafana metrics exposed at /metrics (default)
+    metrics_path: '/metrics'
+
+    # Optional: If Grafana auth required for /metrics endpoint
+    # basic_auth:
+    #   username: 'admin'
+    #   password: 'admin'
+
+  # Job 5: Loki Metrics
+  # ====================
+  # Loki exposes metrics about log ingestion, queries, and storage.
+  # Useful for: Understanding log volume, query performance, detecting issues.
+  #
+  # Key Metrics:
+  #   - loki_ingester_* : Log ingestion rate, chunk operations
+  #   - loki_distributor_* : Log distribution across ingesters
+  #   - loki_querier_* : Query performance and cache hit rates
+  #   - loki_request_* : HTTP API request counts and latency
+  #
+  - job_name: 'loki'
+    static_configs:
+      - targets:
+          - 'loki:3100'
+
+    # Loki metrics at /metrics
+    metrics_path: '/metrics'
+
+  # Job 6: Alertmanager Metrics
+  # ============================
+  # Alertmanager exposes metrics about alerts received, notifications sent, silences.
+  # Useful for: Understanding alert volume, notification reliability.
+  #
+  # Key Metrics:
+  #   - alertmanager_alerts : Current active alert count
+  #   - alertmanager_notifications_* : Notification success/failure by receiver
+  #   - alertmanager_silences : Active silence count
+  #
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets:
+          - 'alertmanager:9093'
+
+    metrics_path: '/metrics'
+
+  # Job 7: Proxmox Virtual Environment (Optional)
+  # ==============================================
+  # If running Proxmox, scrape host and VM metrics directly.
+  # Requires: pve-exporter (https://github.com/prometheus-pve/prometheus-pve-exporter)
+  #
+  # Key Metrics:
+  #   - pve_* : Various Proxmox metrics (VMs, storage, cluster)
+  #
+  # Uncomment and configure if you have Proxmox:
+  #
+  # - job_name: 'proxmox'
+  #   static_configs:
+  #     - targets:
+  #         - '192.168.1.100:9221'  # Replace with your Proxmox IP
+  #       labels:
+  #         cluster: 'proxmox-cluster'
+  #
+  #   # PVE exporter may require authentication
+  #   # Configure basic_auth or use API token
+  #   # basic_auth:
+  #   #   username: 'monitoring@pve'
+  #   #   password: 'your-api-token'
+  #
+  #   # Adjust scrape interval (Proxmox metrics change less frequently)
+  #   scrape_interval: 60s
+  #   scrape_timeout: 30s
+
+  # Job 8: Blackbox Exporter - Endpoint Monitoring (Optional)
+  # ==========================================================
+  # Monitors external endpoints via HTTP, TCP, ICMP, DNS probes.
+  # Useful for: Uptime monitoring, response time, certificate expiration.
+  #
+  # Requires: Blackbox exporter container (not included in this stack)
+  #
+  # Uncomment to enable:
+  #
+  # - job_name: 'blackbox-http'
+  #   metrics_path: /probe
+  #   params:
+  #     module: [http_2xx]  # HTTP probe expecting 2xx response
+  #   static_configs:
+  #     - targets:
+  #         - https://google.com
+  #         - https://github.com
+  #         - http://localhost:3000  # Grafana uptime check
+  #   relabel_configs:
+  #     # Pass target as URL parameter to blackbox exporter
+  #     - source_labels: [__address__]
+  #       target_label: __param_target
+  #     # Set address to blackbox exporter
+  #     - target_label: __address__
+  #       replacement: blackbox-exporter:9115
+  #     # Create instance label from original target
+  #     - source_labels: [__param_target]
+  #       target_label: instance
+
+# Advanced Configuration Examples
+# ================================
+#
+# Service Discovery (Dynamic Targets)
+# ------------------------------------
+# Instead of static_configs, use service discovery to automatically find targets:
+#
+# Docker Swarm:
+# - job_name: 'docker-swarm'
+#   dockerswarm_sd_configs:
+#     - host: unix:///var/run/docker.sock
+#       role: tasks
+#
+# Kubernetes:
+# - job_name: 'kubernetes-pods'
+#   kubernetes_sd_configs:
+#     - role: pod
+#
+# Consul:
+# - job_name: 'consul-services'
+#   consul_sd_configs:
+#     - server: 'localhost:8500'
+#
+# DNS:
+# - job_name: 'dns-sd'
+#   dns_sd_configs:
+#     - names:
+#         - 'node-exporter.service.consul'
+#       type: 'A'
+#       port: 9100
+#
+# File-based (dynamic targets from JSON/YAML files):
+# - job_name: 'file-sd'
+#   file_sd_configs:
+#     - files:
+#         - '/etc/prometheus/targets/*.json'
+#         - '/etc/prometheus/targets/*.yml'
+#       refresh_interval: 5m
+#
+# Relabeling Configuration
+# ------------------------
+# Powerful feature to modify labels before/after scraping:
+#
+# Example: Extract datacenter from hostname
+# relabel_configs:
+#   - source_labels: [__address__]
+#     regex: '([^.]+)\.([^.]+)\..*'
+#     target_label: datacenter
+#     replacement: '$2'
+#
+# Example: Drop high-cardinality label
+# metric_relabel_configs:
+#   - regex: 'container_label_com_docker_swarm_task_id'
+#     action: labeldrop
+#
+# Remote Write (Long-term Storage)
+# ---------------------------------
+# Send metrics to remote storage (Thanos, Cortex, VictoriaMetrics):
+#
+# remote_write:
+#   - url: "http://thanos-receive:19291/api/v1/receive"
+#     queue_config:
+#       capacity: 10000
+#       max_shards: 5
+#     write_relabel_configs:
+#       # Only send certain metrics to remote storage
+#       - source_labels: [__name__]
+#         regex: 'node_.*|container_.*'
+#         action: keep
+#
+# Remote Read (Query Federation)
+# -------------------------------
+# Query historical data from remote storage:
+#
+# remote_read:
+#   - url: "http://thanos-query:10902/api/v1/read"
+#     read_recent: false  # Only query old data from remote

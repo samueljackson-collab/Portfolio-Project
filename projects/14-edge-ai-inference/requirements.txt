@@ -1,3 +1,26 @@
+# ONNX Runtime (GPU version includes CPU fallback)
 onnxruntime-gpu>=1.16
+
+# Image processing
 Pillow>=10.0
+
+# Numerical computing
 numpy>=1.25
+
+# Visualization (evidence charts)
+matplotlib>=3.8
+
+# Web framework
+fastapi>=0.104
+uvicorn[standard]>=0.24
+pydantic>=2.5
+python-multipart>=0.0.6
+
+# Monitoring
+prometheus-client>=0.18
+
+# Async support
+aiofiles>=23.2
+
+# Optional: TensorRT for NVIDIA optimization
+# tensorrt>=8.6

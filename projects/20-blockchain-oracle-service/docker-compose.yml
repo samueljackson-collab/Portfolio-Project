@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  oracle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blockchain-oracle
+    ports:
+      - "8000:8000"
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+      - ORACLE_PRIVATE_KEY=${ORACLE_PRIVATE_KEY:-}
+      - LOG_LEVEL=INFO
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  adapter:
+    build:
+      context: .
+      dockerfile: Dockerfile.adapter
+    container_name: chainlink-adapter
+    ports:
+      - "8080:8080"
+    environment:
+      - ORACLE_URL=http://oracle:8000
+    depends_on:
+      - oracle
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: oracle-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: oracle-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=oracle123
+    volumes:
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

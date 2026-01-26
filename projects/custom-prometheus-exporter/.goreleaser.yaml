@@ -1,0 +1,16 @@
+version: 2
+project_name: custom-prometheus-exporter
+builds:
+  - main: ./cmd/exporter
+    binary: custom-exporter
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format: tar.gz
+checksum:
+  name_template: "checksums.txt"

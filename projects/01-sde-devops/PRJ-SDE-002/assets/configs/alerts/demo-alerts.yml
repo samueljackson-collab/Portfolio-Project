@@ -1,0 +1,76 @@
+# Prometheus Alert Rules - Demo Environment (Sanitized)
+groups:
+  - name: demo-alerts
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          project: "{{ $labels.project }}"
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} on {{ $labels.instance }} has been down for more than 2 minutes."
+          runbook_url: "../runbooks/OPERATIONAL_RUNBOOK.md#alert-hostdown"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% (current value: {{ $value }}%)"
+          runbook_url: "../runbooks/OPERATIONAL_RUNBOOK.md#alert-hostdown"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 90% (current value: {{ $value }}%)"
+          runbook_url: "../runbooks/OPERATIONAL_RUNBOOK.md#alert-hostdown"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|fuse.lxcfs"}) * 100 < 15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk {{ $labels.mountpoint }} has less than 15% free space (current: {{ $value }}%)"
+          runbook_url: "../runbooks/OPERATIONAL_RUNBOOK.md#alert-hostdown"
+
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name!~"POD|"})
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.name }} is down"
+          description: "Container {{ $labels.name }} has disappeared from cAdvisor"
+          runbook_url: "../runbooks/PRODUCTION_RUNBOOKS_INCIDENT_RESPONSE.md"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% (current value: {{ $value }})"
+          runbook_url: "../runbooks/PRODUCTION_RUNBOOKS_INCIDENT_RESPONSE.md"
+
+      - alert: BackupJobFailed
+        expr: proxmox_backup_job_last_status != 0
+        for: 30m
+        labels:
+          severity: critical
+          category: backup
+        annotations:
+          summary: "Backup job failed for {{ $labels.job_name }}"
+          description: "PBS exporter reported non-zero status for job {{ $labels.job_name }}."
+          runbook_url: "../pbs/pbs-restore-checklist.md"

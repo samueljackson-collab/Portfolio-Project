@@ -1,0 +1,46 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.19, pytest-7.4.3, pluggy-1.6.0 -- /root/.pyenv/versions/3.10.19/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace/Portfolio-Project/projects/4-devsecops
+configfile: pytest.ini
+plugins: Faker-40.1.2, asyncio-0.21.1, mock-3.12.0, anyio-3.7.1, cov-4.1.0
+asyncio: mode=strict
+collecting ... /root/.pyenv/versions/3.10.19/lib/python3.10/site-packages/coverage/control.py:958: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.13.1/messages.html#warning-no-data-collected
+  self._warn("No data was collected.", slug="no-data-collected")
+collected 6 items / 2 errors
+
+==================================== ERRORS ====================================
+_________________ ERROR collecting tests/test_health_check.py __________________
+ImportError while importing test module '/workspace/Portfolio-Project/projects/4-devsecops/tests/test_health_check.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/root/.pyenv/versions/3.10.19/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_health_check.py:3: in <module>
+    from src.health_check import check_health
+E   ModuleNotFoundError: No module named 'src'
+_____________________ ERROR collecting tests/test_smoke.py _____________________
+ImportError while importing test module '/workspace/Portfolio-Project/projects/4-devsecops/tests/test_smoke.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/root/.pyenv/versions/3.10.19/lib/python3.10/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests/test_smoke.py:3: in <module>
+    from src.health_check import run_health_check
+E   ModuleNotFoundError: No module named 'src'
+
+---------- coverage: platform linux, python 3.10.19-final-0 ----------
+Name                  Stmts   Miss  Cover
+-----------------------------------------
+src/__init__.py           0      0   100%
+src/health_check.py      15     15     0%
+src/main.py               4      4     0%
+-----------------------------------------
+TOTAL                    19     19     0%
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ============================
+ERROR tests/test_health_check.py
+ERROR tests/test_smoke.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 2 errors in 0.16s ===============================

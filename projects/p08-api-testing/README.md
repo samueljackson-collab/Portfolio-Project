@@ -1,5 +1,9 @@
 # P08 — Backend API Testing
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+
+
 ## Overview
 Comprehensive API testing framework using Postman collections and Newman CLI for automated testing. Includes positive/negative test scenarios, contract validation, performance testing, and CI/CD integration. Demonstrates REST API testing best practices and quality assurance automation.
 
@@ -137,3 +141,64 @@ newman run collections/api-tests.json --folder "User Management"
 - [Newman Documentation](https://github.com/postmanlabs/newman)
 - [API Testing Best Practices](https://www.postman.com/api-platform/api-testing/)
 - [JSON Schema Validation](https://json-schema.org/)
+
+
+## Code Generation Prompts
+
+This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
+
+### Test Automation
+
+#### 1. End-to-End Tests
+```
+Create Playwright tests for a login flow, including form validation, authentication error handling, and successful redirect to dashboard
+```
+
+#### 2. API Tests
+```
+Generate pytest-based API tests that verify REST endpoints for CRUD operations, including request/response validation, error cases, and authentication
+```
+
+#### 3. Performance Tests
+```
+Write a Locust load test that simulates 100 concurrent users performing read/write operations, measures response times, and identifies bottlenecks
+```
+
+### How to Use These Prompts
+
+1. **Copy the prompt** from the code block above
+2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
+3. **Provide context** to your AI assistant about:
+   - Your development environment and tech stack
+   - Existing code patterns and conventions in this project
+   - Any constraints or requirements specific to your use case
+4. **Review and adapt** the generated code before using it
+5. **Test thoroughly** and adjust as needed for your specific scenario
+
+### Best Practices
+
+- Always review AI-generated code for security vulnerabilities
+- Ensure generated code follows your project's coding standards
+- Add appropriate error handling and logging
+- Write tests for AI-generated components
+- Document any assumptions or limitations
+- Keep sensitive information (credentials, keys) in environment variables
+
+## Evidence & Verification
+
+Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
+
+**Evidence artifacts**
+- Screenshot stored externally.
+- [Run log](./docs/evidence/run-log.txt)
+- [Dashboard export](./docs/evidence/dashboard-export.json)
+- [Load test summary](./docs/evidence/load-test-summary.txt)
+
+### Evidence Checklist
+
+| Evidence Item | Location | Status |
+| --- | --- | --- |
+| Screenshot captured | Stored externally | ✅ |
+| Run log captured | `docs/evidence/run-log.txt` | ✅ |
+| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
+| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |

@@ -1,5 +1,9 @@
 # PRJ-SDE-001: Full-Stack Database Infrastructure
 
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
 **Status:** 🟢 **COMPLETE**
 **Category:** System Development Engineering / DevOps / Cloud Architecture
 **Technologies:** Terraform, AWS (VPC, RDS, ECS, ALB), PostgreSQL, Docker, Infrastructure as Code
