@@ -43,21 +43,14 @@ except ImportError:
     sys.exit(1)
 
 # Logging setup
-LOG_FORMAT = '%(asctime)s - [%(levelname)s] - %(message)s'
-
 logging.basicConfig(
     level=logging.INFO,
-    format=LOG_FORMAT,
-    handlers=[logging.StreamHandler()]
+    format='%(asctime)s - [%(levelname)s] - %(message)s',
+    handlers=[
+        logging.FileHandler('reportify.log'),
+        logging.StreamHandler()
+    ]
 )
-logger = logging.getLogger(__name__)
-
-try:
-    file_handler = logging.FileHandler('reportify.log')
-    file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    logger.addHandler(file_handler)
-except OSError as exc:
-    logger.warning("File logging disabled: %s", exc)
 logger = logging.getLogger(__name__)
 
 
@@ -115,7 +108,7 @@ class ReportData:
     title: str = ""
     subtitle: str = ""
     author: str = os.getlogin() if hasattr(os, 'getlogin') else "Report Author"
-    date: str = field(default_factory=lambda: datetime.now().strftime("%B %d, %Y"))
+    date: str = datetime.now().strftime("%B %d, %Y")
     version: str = "1.0"
     status: str = "Draft"
     classification: str = "Internal"
@@ -169,7 +162,13 @@ class ReportData:
     kpis: Dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization"""
+        """
+        Serialize the ReportData instance into a JSON-serializable dictionary.
+        
+        Returns:
+            dict: Dictionary representation of the report, with nested `Risk`, `TimelineEntry`,
+            and `TechnicalSpec` objects converted to plain dictionaries suitable for JSON serialization.
+        """
         data = asdict(self)
         # Convert dataclass objects to dicts
         data['risks'] = [asdict(r) for r in self.risks]
@@ -179,7 +178,15 @@ class ReportData:
 
     @classmethod
     def from_dict(cls, data: dict) -> 'ReportData':
-        """Create from dictionary"""
+        """
+        Construct a ReportData instance from a dictionary, converting nested dicts for risks, timeline, and tech_specs into their respective dataclass instances.
+        
+        Parameters:
+            data (dict): Dictionary containing fields for ReportData. Lists under the keys "risks", "timeline", and "tech_specs" may contain dictionaries that will be converted to Risk, TimelineEntry, and TechnicalSpec objects respectively.
+        
+        Returns:
+            ReportData: A ReportData instance populated from the provided dictionary.
+        """
         # Convert dicts back to dataclasses
         if 'risks' in data:
             data['risks'] = [Risk(**r) for r in data['risks']]
@@ -690,7 +697,19 @@ class DocumentGenerator:
 
     @staticmethod
     def generate_report(data: ReportData, template: dict, output_path: Path) -> bool:
-        """Generate complete professional report"""
+        """
+        Generate a Word report from the provided ReportData using the given template and save it to output_path.
+        
+        The function builds a .docx document by applying smart-variable substitution, rendering the template's sections (cover, table of contents, standards, content sections, appendices, etc.), and writing the resulting document to the specified file path. Parent directories for output_path are created if needed.
+        
+        Parameters:
+            data (ReportData): Report content and metadata used to populate the template.
+            template (dict): Template definition dict that must include a 'sections' list and may include keys such as 'standards' and 'defaults'.
+            output_path (Path): Filesystem path where the generated .docx will be saved; parent directories will be created.
+        
+        Returns:
+            bool: `True` if the report was generated and saved successfully.
+        """
         try:
             doc = Document()
             DocumentGenerator._setup_styles(doc)
@@ -777,7 +796,14 @@ class DocumentGenerator:
 
     @staticmethod
     def _apply_smart_variables(data: ReportData) -> ReportData:
-        """Replace smart variables throughout the document"""
+        """
+        Substitute smart-variable placeholders in report text fields with their corresponding values.
+        
+        Builds a mapping from data.smart_variables plus the report's date, author, company, and project_code, then replaces occurrences of placeholders in the form `{{{var}}}` inside the following fields: title, subtitle, executive_summary, background, scope, methodology, analysis, and conclusion.
+        
+        Returns:
+            ReportData: The same ReportData instance with the listed text fields updated to have placeholders replaced.
+        """
         variables = {
             **data.smart_variables,
             'date': data.date,
@@ -799,7 +825,11 @@ class DocumentGenerator:
 
     @staticmethod
     def _setup_styles(doc: Document):
-        """Configure professional document styles"""
+        """
+        Set up document styles for a professional Reportify Pro document.
+        
+        Configures Heading 1–3 to use Calibri with a professional blue color and adjusts sizes/boldness (Heading 1: 16pt bold, Heading 2: 14pt). Sets the Normal style to Calibri 11pt with 6pt spacing after paragraphs and 1.15 line spacing.
+        """
         styles = doc.styles
 
         # Heading styles with professional colors
@@ -823,7 +853,11 @@ class DocumentGenerator:
 
     @staticmethod
     def _add_cover_page(doc: Document, data: ReportData, template: dict):
-        """Generate professional cover page"""
+        """
+        Create a formatted cover page in the given Document using ReportData and template metadata.
+        
+        Adds centered company branding (company and optional department), a prominent title and optional subtitle, a metadata table containing author, date, version, status, classification, project code, department and a generated document ID, and a centered template reference, then inserts a page break.
+        """
         # Company branding
         header = doc.add_paragraph()
         header.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -891,7 +925,17 @@ class DocumentGenerator:
 
     @staticmethod
     def _add_section(doc: Document, title: str, content: str, level: int = 1):
-        """Add text section with formatting"""
+        """
+        Insert a titled section into the document and add its content as paragraphs.
+        
+        Splits `content` into paragraphs at blank lines and adds each non-empty paragraph beneath a heading at the specified level. Appends a final empty paragraph after the section.
+        
+        Parameters:
+            doc (Document): The python-docx Document to modify.
+            title (str): Section heading text.
+            content (str): Section body; paragraphs are separated by one or more blank lines.
+            level (int): Heading level to use for the section (1 = top-level heading).
+        """
         doc.add_heading(title, level)
         paragraphs = content.split('\n\n')
         for para in paragraphs:
@@ -901,7 +945,15 @@ class DocumentGenerator:
 
     @staticmethod
     def _add_list_section(doc: Document, title: str, items: List[str], numbered: bool = False):
-        """Add bulleted or numbered list section"""
+        """
+        Insert a section with a heading followed by a bulleted or numbered list.
+        
+        Parameters:
+            doc (Document): The python-docx Document to modify.
+            title (str): Section heading text.
+            items (List[str]): List of text items to render as list entries.
+            numbered (bool): If True render a numbered list; otherwise render a bulleted list.
+        """
         doc.add_heading(title, 1)
         style = 'List Number' if numbered else 'List Bullet'
         for item in items:
@@ -910,7 +962,12 @@ class DocumentGenerator:
 
     @staticmethod
     def _add_kpis_section(doc: Document, kpis: Dict[str, str]):
-        """Add KPI section with table"""
+        """
+        Add a "Key Performance Indicators" section containing a two-column table of KPI names and values.
+        
+        Parameters:
+            kpis (Dict[str, str]): Mapping of KPI names to their corresponding values; if empty or falsy, no section is added.
+        """
         if not kpis:
             return
 
@@ -934,7 +991,15 @@ class DocumentGenerator:
 
     @staticmethod
     def _add_risks_section(doc: Document, risks: List[Risk]):
-        """Add comprehensive risk assessment section"""
+        """
+        Insert a "Risk Assessment" section into the document with a summary table and detailed entries for each risk.
+        
+        If `risks` is empty, no section is added.
+        
+        Parameters:
+            doc (Document): The python-docx Document to modify.
+            risks (List[Risk]): Ordered list of Risk objects to render; each risk is shown in a summary table row and a detailed subsection including category, impact, likelihood, owner, and optional mitigation.
+        """
         if not risks:
             return
 
@@ -986,7 +1051,14 @@ class DocumentGenerator:
 
     @staticmethod
     def _add_timeline_section(doc: Document, timeline: List[TimelineEntry]):
-        """Add project timeline with Gantt-style table"""
+        """
+        Insert a "Project Timeline" section and populate a five-column table from the provided timeline entries.
+        
+        The table columns are: Milestone, Target Date, Status, Owner, and Notes. Notes longer than 40 characters are truncated with an appended ellipsis.
+        
+        Parameters:
+            timeline (List[TimelineEntry]): Ordered list of timeline entries to render as table rows.
+        """
         if not timeline:
             return
 
@@ -1013,7 +1085,15 @@ class DocumentGenerator:
 
     @staticmethod
     def _add_tech_specs_section(doc: Document, specs: List[TechnicalSpec]):
-        """Add technical specifications table"""
+        """
+        Add a "Technical Specifications" section containing a table of specification entries.
+        
+        If `specs` is empty, no section or table is added.
+        
+        Parameters:
+            doc (Document): The python-docx Document to modify.
+            specs (List[TechnicalSpec]): Sequence of technical specification items; each item populates the Component, Specification, Version, and Notes columns.
+        """
         if not specs:
             return
 
@@ -1039,7 +1119,14 @@ class DocumentGenerator:
 
     @staticmethod
     def _add_appendices(doc: Document, data: ReportData):
-        """Add comprehensive appendices"""
+        """
+        Add an "Appendices" section to the document populated from the report data.
+        
+        Creates an Appendix section (on a new page) and adds any of the following subsections when corresponding fields are present in `data`: Technology Stack, System Specifications (Operating System, Memory, Processor, Deployment Environment), Architecture Details, Resources, Related Links (repository, documentation, demo), References, and Document Keywords.
+        
+        Parameters:
+            data (ReportData): Source report data whose fields populate the appendices (tech_stack, os_platform, ram_size, cpu_specs, deployment_env, architecture, resources, repository_url, documentation_url, demo_url, references, tags).
+        """
         doc.add_page_break()
         doc.add_heading("Appendices", 1)
 
@@ -1147,7 +1234,16 @@ class ProjectFileManager:
 
     @staticmethod
     def save_project(data: ReportData, file_path: Path) -> bool:
-        """Save project to JSON file"""
+        """
+        Write the given ReportData to the provided filesystem path as a UTF-8 JSON project file.
+        
+        Parameters:
+            data (ReportData): The report project to serialize.
+            file_path (Path): Destination file path where the JSON will be written; parent directories must be writable.
+        
+        Returns:
+            bool: `True` if the file was written successfully, `False` otherwise.
+        """
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data.to_dict(), f, indent=2, ensure_ascii=False)
@@ -1159,7 +1255,15 @@ class ProjectFileManager:
 
     @staticmethod
     def load_project(file_path: Path) -> Optional[ReportData]:
-        """Load project from JSON file"""
+        """
+        Load a ReportData instance from a JSON file.
+        
+        Parameters:
+        	file_path (Path): Path to the JSON file containing the serialized report data.
+        
+        Returns:
+        	ReportData or None: A ReportData constructed from the file contents, or `None` if the file cannot be read or parsed.
+        """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 data_dict = json.load(f)
@@ -1175,7 +1279,14 @@ class ProjectFileManager:
 # ═══════════════════════════════════════════════════════════════════════════
 
 def main_cli():
-    """Command-line interface for batch report generation"""
+    """
+    Command-line interface exposing the 'generate', 'list-templates', and 'new' commands for creating and managing report projects.
+    
+    Parses command-line arguments and executes one of three actions:
+    - generate: load a project JSON and generate a .docx report using the project's template.
+    - list-templates: print available report templates grouped by category.
+    - new: create a new project JSON pre-populated from a template's defaults and save it to disk.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(
