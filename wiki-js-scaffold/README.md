@@ -113,6 +113,17 @@ node scripts/import-to-wikijs.js
 - Tag generation
 - Bulk import
 
+**Importing portfolio content from this repo**
+
+If you want to import the existing portfolio wiki content located at `../wiki`, set multiple
+content roots and adjust default tags:
+
+```bash
+export CONTENT_DIRS=content,../wiki
+export DEFAULT_TAGS=portfolio
+node scripts/import-to-wikijs.js
+```
+
 ### Method 3: Manual Setup
 
 **Best for:** Custom installations or learning
