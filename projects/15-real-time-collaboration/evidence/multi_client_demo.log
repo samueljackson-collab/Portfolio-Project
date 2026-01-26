@@ -1,0 +1,16 @@
+Multi-client demo run at 2026-01-21 17:45:22
+
+--- ClientA log ---
+ClientA authenticated as clienta-83040c
+ClientA received: {'type': 'snapshot', 'document_id': 'demo-doc', 'content': '', 'version': 0, 'users': [{'user_id': 'clienta-83040c', 'username': 'ClientA', 'color': '#FF6B6B', 'cursor_position': 0, 'selection_start': 0, 'selection_end': 0, 'last_active': 1769017519.2590318}]}
+ClientA received: {'type': 'user_joined', 'user': {'user_id': 'clientb-f377e7', 'username': 'ClientB', 'color': '#4ECDC4', 'cursor_position': 0, 'selection_start': 0, 'selection_end': 0, 'last_active': 1769017519.7660482}}
+ClientA sent insert operation
+ClientA received: {'type': 'ack', 'version': 1}
+ClientA received: {'type': 'operation', 'operation': {'type': 'insert', 'position': 42, 'content': 'ClientB syncs now.', 'length': 0, 'version': 2, 'user_id': 'clientb-f377e7', 'timestamp': 1769017521.2705579}, 'version': 2}
+
+--- ClientB log ---
+ClientB authenticated as clientb-f377e7
+ClientB received: {'type': 'snapshot', 'document_id': 'demo-doc', 'content': '', 'version': 0, 'users': [{'user_id': 'clienta-83040c', 'username': 'ClientA', 'color': '#FF6B6B', 'cursor_position': 0, 'selection_start': 0, 'selection_end': 0, 'last_active': 1769017519.2590318}, {'user_id': 'clientb-f377e7', 'username': 'ClientB', 'color': '#4ECDC4', 'cursor_position': 0, 'selection_start': 0, 'selection_end': 0, 'last_active': 1769017519.7660482}]}
+ClientB received: {'type': 'operation', 'operation': {'type': 'insert', 'position': 0, 'content': 'Hello from ClientA. ', 'length': 0, 'version': 1, 'user_id': 'clienta-83040c', 'timestamp': 1769017520.768964}, 'version': 1}
+ClientB sent insert operation
+ClientB received: {'type': 'ack', 'version': 2}

@@ -322,6 +322,16 @@ class DocumentSession:
             if len(self.operation_history) > self.max_history_size:
                 self.operation_history = self.operation_history[-self.max_history_size // 2:]
 
+        logger.info(
+            "Applied operation doc=%s user=%s type=%s pos=%s len=%s version=%s",
+            self.document_id,
+            operation.user_id,
+            operation.op_type.value,
+            transformed_op.position,
+            transformed_op.length if transformed_op.op_type == OperationType.DELETE else len(transformed_op.content),
+            self.version
+        )
+
         # Broadcast the operation
         await self._broadcast({
             "type": "operation",
@@ -408,64 +418,62 @@ class CollaborationServer:
         self._color_index += 1
         return color
 
-    async def handler(self, websocket: WebSocketServerProtocol, path: str):
-        """Handle a WebSocket connection."""
-        user_id = None
-        document_id = None
-
     async def handler(
-        self, websocket: websockets.WebSocketServerProtocol, path: str
+        self, websocket: websockets.WebSocketServerProtocol, path: str = ""
     ) -> None:  # noqa: ARG002
-        doc_id = websocket.request_headers.get("x-document-id", "default")
-        session = self.sessions.setdefault(doc_id, DocumentSession())
-        session.clients.add(websocket)
-        await websocket.send(json.dumps({"type": "snapshot", "text": session.text}))
+        """Handle a WebSocket connection."""
+        user_id: Optional[str] = None
+        document_id: Optional[str] = None
+        session: Optional[DocumentSession] = None
+
         try:
-            # Get authentication and document info from headers or first message
             auth_message = await asyncio.wait_for(websocket.recv(), timeout=10.0)
             auth_data = json.loads(auth_message)
+        except (asyncio.TimeoutError, json.JSONDecodeError) as exc:
+            logger.error("Failed to receive auth message: %s", exc)
+            return
 
-            document_id = auth_data.get("document_id", "default")
-            user_id = auth_data.get("user_id", str(uuid.uuid4()))
-            username = auth_data.get("username", f"User-{user_id[:8]}")
+        document_id = auth_data.get("document_id", "default")
+        user_id = auth_data.get("user_id", str(uuid.uuid4()))
+        username = auth_data.get("username", f"User-{user_id[:8]}")
 
-            # Get or create session
-            if document_id not in self.sessions:
-                self.sessions[document_id] = DocumentSession(document_id)
+        session = self.sessions.setdefault(
+            document_id, DocumentSession(document_id)
+        )
 
-            session = self.sessions[document_id]
+        user = UserPresence(
+            user_id=user_id,
+            username=username,
+            color=self._get_next_color()
+        )
 
-            # Create user presence
-            user = UserPresence(
-                user_id=user_id,
-                username=username,
-                color=self._get_next_color()
-            )
+        await session.join(websocket, user)
 
-            # Join the session
-            await session.join(websocket, user)
-
-            # Handle messages
+        try:
             async for message in websocket:
                 data = json.loads(message)
-                op = Operation(**data)
-                session.text = (
-                    session.text[: op.position]
-                    + op.insert
-                    + session.text[op.position :]
-                )
-                await session.broadcast(
-                    {"type": "op", "position": op.position, "insert": op.insert}
-                )
-        finally:
-            # Clean up
-            if user_id and document_id and document_id in self.sessions:
-                await self.sessions[document_id].leave(user_id)
+                message_type = data.get("type")
 
-                # Remove empty sessions
-                if not self.sessions[document_id].clients:
-                    # Keep session for a while in case users reconnect
-                    pass
+                if message_type == "operation":
+                    operation_data = data.get("operation", {})
+                    operation_data["user_id"] = user_id
+                    operation = Operation.from_dict(operation_data)
+                    await session.apply_operation(operation)
+                elif message_type == "presence":
+                    await session.update_presence(
+                        user_id=user_id,
+                        cursor_position=data.get("cursor_position", 0),
+                        selection_start=data.get("selection_start", 0),
+                        selection_end=data.get("selection_end", 0)
+                    )
+                else:
+                    logger.warning("Unknown message type: %s", message_type)
+        finally:
+            if session and user_id:
+                await session.leave(user_id)
+
+            if document_id and session and not session.clients:
+                self.sessions.pop(document_id, None)
 
     async def start(self):
         """Start the WebSocket server."""
