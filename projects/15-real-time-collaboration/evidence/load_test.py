@@ -80,7 +80,7 @@ async def main():
         results.append(result)
         await asyncio.sleep(0.2)
 
-    with open("projects/15-real-time-collaboration/evidence/load_test_results.csv", "w", newline="") as file:
+    with open(Path(__file__).parent / "load_test_results.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["concurrent_users", "avg_latency_ms"])
         writer.writerows(results)
