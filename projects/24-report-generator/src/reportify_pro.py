@@ -43,14 +43,21 @@ except ImportError:
     sys.exit(1)
 
 # Logging setup
+LOG_FORMAT = '%(asctime)s - [%(levelname)s] - %(message)s'
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] - %(message)s',
-    handlers=[
-        logging.FileHandler('reportify.log'),
-        logging.StreamHandler()
-    ]
+    format=LOG_FORMAT,
+    handlers=[logging.StreamHandler()]
 )
+logger = logging.getLogger(__name__)
+
+try:
+    file_handler = logging.FileHandler('reportify.log')
+    file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    logger.addHandler(file_handler)
+except OSError as exc:
+    logger.warning("File logging disabled: %s", exc)
 logger = logging.getLogger(__name__)
 
 
