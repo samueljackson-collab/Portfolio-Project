@@ -349,7 +349,7 @@ Each template follows industry-standard frameworks:
 
 ### Example 2: Cloud Migration Assessment
 
-See `templates/examples/cloud_migration_example.json` (to be created).
+See `templates/examples/cloud_migration_example.json`.
 
 ---
 
