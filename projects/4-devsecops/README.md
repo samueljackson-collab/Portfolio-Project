@@ -33,6 +33,7 @@ Live deployment dashboard screenshot stored externally.
 
 ## Contents
 - `pipelines/github-actions.yaml` — orchestrates build, security scanning, and deployment gates.
+- Evidence: [`Latest Report`](reports/latest/)
 
 
 ## Code Generation Prompts
