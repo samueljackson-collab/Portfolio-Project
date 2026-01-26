@@ -237,11 +237,10 @@ Track project phases:
 │   └── generate_report.py     # Legacy Jinja2 generator (optional)
 ├── templates/
 │   ├── weekly.html            # Legacy HTML template
-│   └── examples/              # (Future: example .json projects)
+│   └── examples/              # Example JSON projects for GUI/CLI
 ├── output/                    # Generated reports (gitignored)
 ├── requirements.txt
 └── README.md
-```
 
 ---
 
