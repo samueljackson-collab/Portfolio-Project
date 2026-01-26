@@ -35,7 +35,7 @@ async def measure_ack_latency(websocket, operation_payload: dict) -> float:
 
     recv_task = asyncio.create_task(receiver())
     await websocket.send(json.dumps(operation_payload))
-    await ack_event.wait()
+    await asyncio.wait_for(ack_event.wait(), timeout=10.0)
     latency = (time.perf_counter() - start) * 1000
     recv_task.cancel()
     await asyncio.gather(recv_task, return_exceptions=True)
