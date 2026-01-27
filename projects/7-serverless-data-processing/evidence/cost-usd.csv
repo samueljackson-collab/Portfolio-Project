@@ -1,0 +1,6 @@
+invocation,event_id,event_type,cost_usd
+1,evt-1001,user_action,2.873e-07
+2,evt-1002,metric_update,2.87e-07
+3,evt-1003,system_event,2.875e-07
+4,evt-1004,audit_log,2.873e-07
+5,evt-1005,error_event,2.872e-07

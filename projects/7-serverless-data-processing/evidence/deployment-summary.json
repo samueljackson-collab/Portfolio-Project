@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-01-22T15:30:57.306609+00:00",
+  "template": "infrastructure/template.yaml",
+  "parameters": [
+    "CuratedTableName",
+    "WorkflowArn"
+  ],
+  "resource_count": 4,
+  "resources": {
+    "IngestionFunction": {
+      "type": "AWS::Serverless::Function",
+      "properties": [
+        "CodeUri",
+        "Handler",
+        "Environment",
+        "Events"
+      ]
+    },
+    "AnalyticsFunction": {
+      "type": "AWS::Serverless::Function",
+      "properties": [
+        "CodeUri",
+        "Handler",
+        "Environment"
+      ]
+    },
+    "CuratedTable": {
+      "type": "AWS::DynamoDB::Table",
+      "properties": [
+        "BillingMode",
+        "AttributeDefinitions",
+        "KeySchema"
+      ]
+    },
+    "RawEventBucket": {
+      "type": "AWS::S3::Bucket",
+      "properties": []
+    }
+  }
+}

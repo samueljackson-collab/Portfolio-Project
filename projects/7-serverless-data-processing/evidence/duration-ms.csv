@@ -1,0 +1,6 @@
+invocation,event_id,event_type,duration_ms
+1,evt-1001,user_action,20.45
+2,evt-1002,metric_update,20.4
+3,evt-1003,system_event,20.5
+4,evt-1004,audit_log,20.45
+5,evt-1005,error_event,20.43

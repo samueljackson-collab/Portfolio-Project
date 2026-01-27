@@ -1,0 +1,53 @@
+[
+  {
+    "event_id": "evt-1001",
+    "event_type": "user_action",
+    "timestamp": "2025-01-05T12:00:00Z",
+    "data": {
+      "action": "click",
+      "page": "home",
+      "user_id": "u-100"
+    },
+    "source": "web"
+  },
+  {
+    "event_id": "evt-1002",
+    "event_type": "metric_update",
+    "timestamp": "2025-01-05T12:00:05Z",
+    "data": {
+      "metric": "cpu",
+      "value": 0.62
+    },
+    "source": "collector"
+  },
+  {
+    "event_id": "evt-1003",
+    "event_type": "system_event",
+    "timestamp": "2025-01-05T12:00:10Z",
+    "data": {
+      "status": "healthy",
+      "service": "ingest"
+    },
+    "source": "healthcheck"
+  },
+  {
+    "event_id": "evt-1004",
+    "event_type": "audit_log",
+    "timestamp": "2025-01-05T12:00:12Z",
+    "data": {
+      "actor": "admin",
+      "action": "config_update"
+    },
+    "source": "admin_ui"
+  },
+  {
+    "event_id": "evt-1005",
+    "event_type": "error_event",
+    "timestamp": "2025-01-05T12:00:15Z",
+    "data": {
+      "error": "timeout",
+      "retry": true
+    },
+    "source": "worker"
+  }
+]
