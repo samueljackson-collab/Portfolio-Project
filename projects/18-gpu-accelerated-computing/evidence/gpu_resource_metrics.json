@@ -1,0 +1,7 @@
+{
+  "user_cpu_seconds": 0.0005949999999999012,
+  "system_cpu_seconds": 0.00010199999999999099,
+  "max_rss_kb": 84616,
+  "minor_page_faults": 10,
+  "major_page_faults": 0
+}

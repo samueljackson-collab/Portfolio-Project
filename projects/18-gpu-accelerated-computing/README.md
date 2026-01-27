@@ -39,6 +39,15 @@ pip install -r requirements.txt
 python src/monte_carlo.py --iterations 1000000
 ```
 
+## Benchmark Evidence
+Evidence from the latest CPU baseline and GPU attempt (CUDA driver mismatch in this environment) is stored under
+`projects/18-gpu-accelerated-computing/evidence/`.
+
+### Evidence artifacts
+- `cpu_benchmark.json`, `cpu_resource_metrics.json`, `cpu_benchmark_output.txt`
+- `gpu_benchmark.json`, `gpu_resource_metrics.json`, `gpu_benchmark_output.txt`
+- `nvidia_smi.txt`, `nvidia_smi_error.txt`
+
 
 ## Code Generation Prompts
 
