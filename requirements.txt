@@ -1,6 +1,6 @@
 pydantic==2.12.5
 black==26.1.0
-ruff==0.14.13
+ruff==0.14.14
 pytest==9.0.2
 pytest-cov==7.0.0
 PyYAML==6.0.3
