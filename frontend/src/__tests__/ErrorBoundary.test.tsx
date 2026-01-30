@@ -86,7 +86,7 @@ describe('ErrorBoundary', () => {
     expect(window.location.href).toBe('/')
 
     // Restore
-    window.location = originalLocation
+    window.location = originalLocation as Location & string
   })
 
   it('displays warning emoji in error state', () => {

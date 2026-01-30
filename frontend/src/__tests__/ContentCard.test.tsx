@@ -9,7 +9,7 @@ const mockContent = {
   is_published: true,
   created_at: '2024-01-15T10:30:00Z',
   updated_at: '2024-01-15T10:30:00Z',
-  user_id: 'user-1',
+  owner_id: 'user-1',
 }
 
 const mockDraftContent = {
