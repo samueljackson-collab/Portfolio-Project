@@ -13,6 +13,7 @@ require('dotenv').config();
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const matter = require('gray-matter');
 
 class WikiJSImporter {
   constructor(config) {
@@ -85,8 +86,8 @@ class WikiJSImporter {
   /**
    * Import all pages from content directory
    */
-  async importFromDirectory(directory) {
-    const pages = this.scanDirectory(directory);
+  async importFromDirectory(directory, options = {}) {
+    const pages = this.scanDirectory(directory, options);
 
     console.log(`📚 Found ${pages.length} pages to import`);
     console.log('🚀 Starting import...\n');
@@ -103,7 +104,7 @@ class WikiJSImporter {
   /**
    * Recursively scan directory for markdown files
    */
-  scanDirectory(dir, basePath = '') {
+  scanDirectory(dir, basePath = '', options = {}) {
     const items = fs.readdirSync(dir);
     const pages = [];
 
@@ -113,19 +114,20 @@ class WikiJSImporter {
 
       if (stat.isDirectory()) {
         // Recursively scan subdirectories
-        const subPages = this.scanDirectory(fullPath, path.join(basePath, item));
+        const subPages = this.scanDirectory(fullPath, path.join(basePath, item), options);
         pages.push(...subPages);
       } else if (item.endsWith('.md')) {
         const content = fs.readFileSync(fullPath, 'utf8');
+        const parsed = matter(content);
         const filename = path.parse(item).name;
 
         // Extract metadata from file
         pages.push({
-          title: this.extractTitle(content, filename),
-          content: this.cleanContent(content),
+          title: this.extractTitle(parsed, filename),
+          content: this.cleanContent(parsed),
           path: this.generatePath(basePath, filename),
-          description: this.extractDescription(content),
-          tags: this.extractTags(basePath, content)
+          description: this.extractDescription(parsed),
+          tags: this.extractTags(basePath, parsed, options)
         });
       }
     }
@@ -136,9 +138,13 @@ class WikiJSImporter {
   /**
    * Extract title from markdown content or filename
    */
-  extractTitle(content, filename) {
+  extractTitle(parsed, filename) {
+    if (parsed.data && parsed.data.title) {
+      return String(parsed.data.title).trim();
+    }
+
     // Try to extract from first H1 heading
-    const h1Match = content.match(/^#\s+(.+)$/m);
+    const h1Match = parsed.content.match(/^#\s+(.+)$/m);
     if (h1Match) {
       return h1Match[1].trim();
     }
@@ -154,9 +160,9 @@ class WikiJSImporter {
   /**
    * Clean content and remove title if present
    */
-  cleanContent(content) {
+  cleanContent(parsed) {
     // Remove first H1 heading if present (title is separate field)
-    return content.replace(/^#\s+.+$/m, '').trim();
+    return parsed.content.replace(/^#\s+.+$/m, '').trim();
   }
 
   /**
@@ -179,9 +185,13 @@ class WikiJSImporter {
   /**
    * Extract description from first paragraph
    */
-  extractDescription(content) {
+  extractDescription(parsed) {
+    if (parsed.data && parsed.data.description) {
+      return String(parsed.data.description).trim();
+    }
+
     // Find first paragraph after title
-    const paragraphMatch = content
+    const paragraphMatch = parsed.content
       .replace(/^#\s+.+$/m, '') // Remove title
       .match(/^[A-Z].+?(?=\n\n|\n#|$)/s);
 
@@ -196,8 +206,19 @@ class WikiJSImporter {
   /**
    * Extract tags from directory path and content
    */
-  extractTags(basePath, content) {
-    const tags = new Set(['github-fundamentals']);
+  extractTags(basePath, parsed, options) {
+    const tags = new Set(options.defaultTags || ['github-fundamentals']);
+
+    if (parsed.data && parsed.data.tags) {
+      const frontmatterTags = Array.isArray(parsed.data.tags)
+        ? parsed.data.tags
+        : String(parsed.data.tags).split(',');
+
+      frontmatterTags
+        .map(tag => String(tag).trim())
+        .filter(Boolean)
+        .forEach(tag => tags.add(tag));
+    }
 
     // Add tags from directory name
     const dirName = path.basename(basePath);
@@ -208,7 +229,7 @@ class WikiJSImporter {
     // Look for common keywords in content
     const keywords = ['git', 'github', 'docker', 'ci/cd', 'security', 'workflow'];
     keywords.forEach(keyword => {
-      if (content.toLowerCase().includes(keyword)) {
+      if (parsed.content.toLowerCase().includes(keyword)) {
         tags.add(keyword.replace(/\//g, '-'));
       }
     });
@@ -233,9 +254,24 @@ async function main() {
     };
 
     const importer = new WikiJSImporter(config);
-    const contentDir = path.join(__dirname, '../content');
+    const contentDirs = (process.env.CONTENT_DIRS || 'content')
+      .split(',')
+      .map(dir => dir.trim())
+      .filter(Boolean)
+      .map(dir => (path.isAbsolute(dir) ? dir : path.resolve(__dirname, '..', dir)));
+    const defaultTags = (process.env.DEFAULT_TAGS || 'github-fundamentals')
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean);
 
-    await importer.importFromDirectory(contentDir);
+    for (const contentDir of contentDirs) {
+      if (!fs.existsSync(contentDir)) {
+        console.warn(`⚠️ Skipping missing content directory: ${contentDir}`);
+        continue;
+      }
+
+      await importer.importFromDirectory(contentDir, { defaultTags });
+    }
   } catch (error) {
     console.error('Fatal error:', error.message);
     process.exit(1);

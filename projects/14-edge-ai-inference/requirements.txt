@@ -7,6 +7,9 @@ Pillow>=10.0
 # Numerical computing
 numpy>=1.25
 
+# Visualization (evidence charts)
+matplotlib>=3.8
+
 # Web framework
 fastapi>=0.104
 uvicorn[standard]>=0.24

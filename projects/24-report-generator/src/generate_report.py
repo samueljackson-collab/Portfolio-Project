@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import click
+import importlib
+import importlib.util
+import re
 import yaml
+from html import unescape
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from weasyprint import HTML
-
 from data_collector import PortfolioDataCollector
 
 
@@ -107,13 +109,99 @@ class ReportGenerator:
             click.echo(f"✓ HTML report generated: {output_path}")
 
         elif format == "pdf":
-            # Convert to PDF using WeasyPrint
-            html = HTML(string=html_content, base_url=str(self.templates_dir))
-            html.write_pdf(output_path)
+            self._render_pdf(html_content, output_path)
             click.echo(f"✓ PDF report generated: {output_path}")
 
         else:
             raise ValueError(f"Unsupported format: {format}")
+
+    def _render_pdf(self, html_content: str, output_path: Path) -> None:
+        """Render PDF using WeasyPrint when available, with a simple fallback."""
+        spec = importlib.util.find_spec("weasyprint")
+        if spec is not None:
+            weasyprint = importlib.import_module("weasyprint")
+            html = weasyprint.HTML(
+                string=html_content,
+                base_url=str(self.templates_dir),
+            )
+            html.write_pdf(output_path)
+            return
+
+        text_content = self._strip_html(html_content)
+        self._write_simple_pdf(text_content, output_path)
+
+    def _strip_html(self, html_content: str) -> str:
+        """Convert HTML content to a plain-text fallback."""
+        cleaned = re.sub(r"<(script|style).*?>.*?</\\1>", "", html_content, flags=re.S)
+        cleaned = re.sub(r"<br\\s*/?>", "\n", cleaned, flags=re.I)
+        cleaned = re.sub(r"</p>", "\n\n", cleaned, flags=re.I)
+        cleaned = re.sub(r"<[^>]+>", "", cleaned)
+        cleaned = unescape(cleaned)
+        return "\n".join(line.strip() for line in cleaned.splitlines()).strip()
+
+    def _write_simple_pdf(self, text: str, output_path: Path) -> None:
+        """Write a minimal PDF with plain text content."""
+        lines = [line for line in text.splitlines() if line.strip()]
+        if not lines:
+            lines = [""]
+
+        def escape_pdf(value: str) -> str:
+            return (
+                value.replace("\\", "\\\\")
+                .replace("(", "\\(")
+                .replace(")", "\\)")
+            )
+
+        content_lines = ["BT", "/F1 11 Tf", "72 720 Td"]
+        for index, line in enumerate(lines):
+            if index > 0:
+                content_lines.append("T*")
+            content_lines.append(f"({escape_pdf(line)}) Tj")
+        content_lines.append("ET")
+        content_stream = "\n".join(content_lines)
+        content_bytes = content_stream.encode("latin-1", errors="replace")
+
+        objects = []
+
+        def add_object(content: bytes) -> None:
+            objects.append(content)
+
+        add_object(b"<< /Type /Catalog /Pages 2 0 R >>")
+        add_object(b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+        add_object(
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            b"/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>"
+        )
+        add_object(b"<< /Length " + str(len(content_bytes)).encode("ascii") + b" >>")
+        add_object(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+
+        output = bytearray()
+        output.extend(b"%PDF-1.4\n")
+        offsets = []
+
+        for index, obj in enumerate(objects, start=1):
+            offsets.append(len(output))
+            output.extend(f"{index} 0 obj\n".encode("ascii"))
+            if index == 4:
+                output.extend(obj + b"\nstream\n" + content_bytes + b"\nendstream\n")
+            else:
+                output.extend(obj + b"\n")
+            output.extend(b"endobj\n")
+
+        xref_offset = len(output)
+        output.extend(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
+        output.extend(b"0000000000 65535 f \n")
+        for offset in offsets:
+            output.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+        output.extend(
+            b"trailer\n"
+            + f"<< /Size {len(objects) + 1} /Root 1 0 R >>\n".encode("ascii")
+            + b"startxref\n"
+            + f"{xref_offset}\n".encode("ascii")
+            + b"%%EOF"
+        )
+
+        output_path.write_bytes(output)
 
     def generate_all_reports(self, output_dir: Path) -> None:
         """Generate all report types."""

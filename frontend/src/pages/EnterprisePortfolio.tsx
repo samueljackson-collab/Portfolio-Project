@@ -940,6 +940,8 @@ const HomeIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    role="img"
+    aria-label="Home"
   >
     <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
     <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -957,6 +959,8 @@ const FolderIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    role="img"
+    aria-label="Project folder"
   >
     <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
   </svg>
@@ -973,6 +977,8 @@ const FileTextIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    role="img"
+    aria-label="Overview document"
   >
     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
     <polyline points="14 2 14 8 20 8"></polyline>
@@ -993,6 +999,8 @@ const CodeIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    role="img"
+    aria-label="Source code"
   >
     <polyline points="16 18 22 12 16 6"></polyline>
     <polyline points="8 6 2 12 8 18"></polyline>
@@ -1010,6 +1018,8 @@ const TerminalIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    role="img"
+    aria-label="Terminal operations"
   >
     <polyline points="4 17 10 11 4 5"></polyline>
     <line x1="12" y1="19" x2="20" y2="19"></line>
@@ -1027,6 +1037,8 @@ const BookIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    role="img"
+    aria-label="Strategic documentation"
   >
     <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
   </svg>
@@ -1043,6 +1055,8 @@ const CopyIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    role="img"
+    aria-label="Copy to clipboard"
   >
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -1060,14 +1074,93 @@ const CheckIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    role="img"
+    aria-label="Copied successfully"
   >
     <polyline points="20 6 9 17 4 12"></polyline>
   </svg>
 )
 
-interface CodeBlockProps extends TechnicalImplementation {}
+const ChevronDownIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role="img"
+    aria-label="Expand"
+  >
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+)
 
-const CodeBlock: React.FC<CodeBlockProps> = ({ fileName, language, code }) => {
+const ChevronUpIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role="img"
+    aria-label="Collapse"
+  >
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+)
+
+const ExpandAllIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role="img"
+    aria-label="Expand all code blocks"
+  >
+    <polyline points="7 13 12 18 17 13"></polyline>
+    <polyline points="7 6 12 11 17 6"></polyline>
+  </svg>
+)
+
+const CollapseAllIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role="img"
+    aria-label="Collapse all code blocks"
+  >
+    <polyline points="17 11 12 6 7 11"></polyline>
+    <polyline points="17 18 12 13 7 18"></polyline>
+  </svg>
+)
+
+interface CodeBlockProps extends TechnicalImplementation {
+  isCollapsed?: boolean
+  onToggle?: () => void
+}
+
+const CodeBlock: React.FC<CodeBlockProps> = ({ fileName, language, code, isCollapsed = false, onToggle }) => {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -1094,21 +1187,34 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ fileName, language, code }) => {
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden my-4 border border-gray-700">
+    <div className="bg-gray-800 rounded-lg overflow-hidden my-4 border border-gray-700 transition-all duration-200">
       <div className="flex justify-between items-center px-4 py-2 bg-gray-900 text-gray-400 text-xs">
-        <span className="font-mono">{fileName}</span>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex items-center gap-2 font-mono hover:text-white transition-colors"
+          aria-expanded={!isCollapsed}
+        >
+          <span className="transition-transform duration-200">
+            {isCollapsed ? <ChevronDownIcon /> : <ChevronUpIcon />}
+          </span>
+          {fileName}
+        </button>
         <button
           type="button"
           onClick={handleCopy}
           className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors"
+          aria-label={copied ? 'Copied to clipboard' : 'Copy code to clipboard'}
         >
           {copied ? <CheckIcon /> : <CopyIcon />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <div className="p-4 text-sm overflow-x-auto">
-        <pre><code className={`language-${language}`}>{code.trim()}</code></pre>
-      </div>
+      {!isCollapsed && (
+        <div className="p-4 text-sm overflow-x-auto animate-fade-in">
+          <pre><code className={`language-${language}`}>{code.trim()}</code></pre>
+        </div>
+      )}
     </div>
   )
 }
@@ -1119,6 +1225,15 @@ interface SidebarProps {
   projects: Project[]
   onSelectProject: (id: string | null) => void
   selectedProjectId: string | null
+}
+
+const CATEGORY_ICONS: Record<string, string> = {
+  'Cloud & Infrastructure': '\u2601\uFE0F',
+  'DevOps & CI/CD': '\u2699\uFE0F',
+  'Software Development & QA': '\uD83D\uDCBB',
+  'Offensive Security': '\uD83D\uDD34',
+  'Defensive Security': '\uD83D\uDEE1\uFE0F',
+  'Cloud & Application Security': '\uD83D\uDD12',
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ profile, projects, onSelectProject, selectedProjectId }) => {
@@ -1133,7 +1248,7 @@ const Sidebar: React.FC<SidebarProps> = ({ profile, projects, onSelectProject, s
   }, [projects])
 
   return (
-    <aside className="w-80 bg-gray-900 text-white p-6 fixed h-full overflow-y-auto border-r border-gray-800 hidden md:block">
+    <aside className="w-80 bg-gray-900 text-white p-6 fixed h-full overflow-y-auto border-r border-gray-800 hidden md:block" role="navigation" aria-label="Portfolio sidebar">
       <div className="flex flex-col items-center text-center pb-6 border-b border-gray-700">
         <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-4xl font-bold mb-4">
           {profile.name.charAt(0)}
@@ -1141,13 +1256,13 @@ const Sidebar: React.FC<SidebarProps> = ({ profile, projects, onSelectProject, s
         <h1 className="text-xl font-bold">{profile.name}</h1>
         <p className="text-sm text-gray-400">{profile.title}</p>
       </div>
-      <nav className="mt-6">
+      <nav className="mt-6" aria-label="Project navigation">
         <ul>
           <li>
             <button
               type="button"
               onClick={() => onSelectProject(null)}
-              className={`flex items-center w-full text-left py-2 px-3 rounded-md hover:bg-gray-700 transition-colors ${!selectedProjectId ? 'bg-sky-600' : ''}`}
+              className={`flex items-center w-full text-left py-2 px-3 rounded-md hover:bg-gray-700 transition-all duration-200 ${!selectedProjectId ? 'bg-sky-600 shadow-lg shadow-sky-600/30' : ''}`}
             >
               <HomeIcon />
               <span className="ml-3">Portfolio Home</span>
@@ -1157,14 +1272,21 @@ const Sidebar: React.FC<SidebarProps> = ({ profile, projects, onSelectProject, s
         <div className="mt-6">
           {Object.keys(groupedProjects).map(category => (
             <div key={category} className="mb-6">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">{category}</h2>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2 flex items-center gap-2">
+                <span>{CATEGORY_ICONS[category] || '\uD83D\uDCC1'}</span>
+                {category}
+              </h2>
               <ul>
                 {groupedProjects[category].map(project => (
                   <li key={project.id}>
                     <button
                       type="button"
                       onClick={() => onSelectProject(project.id)}
-                      className={`flex items-center w-full text-left py-2 px-3 rounded-md text-sm hover:bg-gray-700 transition-colors ${selectedProjectId === project.id ? 'bg-gray-700 font-semibold' : ''}`}
+                      className={`flex items-center w-full text-left py-2 px-3 rounded-md text-sm transition-all duration-200 ${
+                        selectedProjectId === project.id
+                          ? 'bg-gray-700 font-semibold text-sky-300 shadow-inner'
+                          : 'hover:bg-gray-700/60 hover:translate-x-1'
+                      }`}
                     >
                       <FolderIcon />
                       <span className="ml-3 truncate">{project.title}</span>
@@ -1186,9 +1308,11 @@ interface ProjectDetailProps {
 
 const ProjectDetail: React.FC<ProjectDetailProps> = ({ project }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'technical' | 'operational' | 'strategic'>('overview')
+  const [collapsedBlocks, setCollapsedBlocks] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     setActiveTab('overview')
+    setCollapsedBlocks(new Set())
   }, [project.id])
 
   const tabs = [
@@ -1198,12 +1322,61 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project }) => {
     { id: 'strategic', label: 'Strategic Documents', icon: <BookIcon /> },
   ] as const
 
+  const toggleBlock = (fileName: string) => {
+    setCollapsedBlocks(prev => {
+      const next = new Set(prev)
+      if (next.has(fileName)) {
+        next.delete(fileName)
+      } else {
+        next.add(fileName)
+      }
+      return next
+    })
+  }
+
+  const expandAll = () => setCollapsedBlocks(new Set())
+  const collapseAll = () => setCollapsedBlocks(new Set(project.technicalImpl.map(i => i.fileName)))
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
         return <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{project.description}</p>
       case 'technical':
-        return project.technicalImpl.map(impl => <CodeBlock key={impl.fileName} {...impl} />)
+        return (
+          <div>
+            {project.technicalImpl.length > 1 && (
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  type="button"
+                  onClick={expandAll}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 hover:border-sky-400/50 transition-colors"
+                  aria-label="Expand all code blocks"
+                >
+                  <ExpandAllIcon />
+                  Expand All
+                </button>
+                <button
+                  type="button"
+                  onClick={collapseAll}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-gray-600 bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:border-gray-500 transition-colors"
+                  aria-label="Collapse all code blocks"
+                >
+                  <CollapseAllIcon />
+                  Collapse All
+                </button>
+                <span className="text-xs text-gray-500">{project.technicalImpl.length} file{project.technicalImpl.length !== 1 ? 's' : ''}</span>
+              </div>
+            )}
+            {project.technicalImpl.map(impl => (
+              <CodeBlock
+                key={impl.fileName}
+                {...impl}
+                isCollapsed={collapsedBlocks.has(impl.fileName)}
+                onToggle={() => toggleBlock(impl.fileName)}
+              />
+            ))}
+          </div>
+        )
       case 'operational':
         return (
           <div className="prose prose-invert prose-sm max-w-none bg-gray-800 border border-gray-700 p-6 rounded-lg">
@@ -1229,19 +1402,23 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project }) => {
       <p className="text-base text-sky-400 mb-8">{project.category}</p>
 
       <div className="border-b border-gray-700 mb-6">
-        <nav className="-mb-px flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+        <nav className="-mb-px flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Project detail tabs">
           {tabs.map(tab => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap flex items-center gap-2 py-3 px-1 sm:px-3 border-b-2 font-medium text-sm transition-colors ${
+              aria-selected={activeTab === tab.id}
+              role="tab"
+              className={`whitespace-nowrap flex items-center gap-2 py-3 px-1 sm:px-3 border-b-2 font-medium text-sm transition-all duration-200 ${
                 activeTab === tab.id
                   ? 'border-sky-500 text-sky-400'
                   : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500'
               }`}
             >
-              {tab.icon}
+              <span className={activeTab === tab.id ? 'animate-icon-pulse' : ''}>
+                {tab.icon}
+              </span>
               {tab.label}
             </button>
           ))}
@@ -1270,21 +1447,21 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ profile, projects }) => (
         <h2 className="text-xl font-semibold text-white mb-4">Portfolio Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-sky-500/10 rounded-lg text-sky-400"><FolderIcon /></div>
+            <div className="p-3 bg-sky-500/10 rounded-lg text-sky-400 animate-float"><FolderIcon /></div>
             <div>
               <p className="text-2xl font-bold text-white">{projects.length}</p>
               <p className="text-sm text-gray-400">Total Projects</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-indigo-500/10 rounded-lg text-indigo-400"><CodeIcon /></div>
+            <div className="p-3 bg-indigo-500/10 rounded-lg text-indigo-400 animate-float" style={{ animationDelay: '0.5s' }}><CodeIcon /></div>
             <div>
               <p className="text-2xl font-bold text-white">5+</p>
               <p className="text-sm text-gray-400">Core Disciplines</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400"><TerminalIcon /></div>
+            <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400 animate-float" style={{ animationDelay: '1s' }}><TerminalIcon /></div>
             <div>
               <p className="text-2xl font-bold text-white">100+</p>
               <p className="text-sm text-gray-400">Enterprise Artifacts</p>
@@ -1388,6 +1565,10 @@ export const EnterprisePortfolio: React.FC = () => {
         .token.regex, .token.important, .token.variable { color: #fca5a5; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes iconPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .animate-icon-pulse { animation: iconPulse 0.4s ease-out; }
+        @keyframes floatBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .animate-float { animation: floatBounce 3s ease-in-out infinite; }
       `}</style>
 
       <Sidebar
@@ -1402,8 +1583,10 @@ export const EnterprisePortfolio: React.FC = () => {
       <main className="md:ml-80 h-screen overflow-y-auto bg-gray-950">
         <button
           type="button"
-          className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-gray-800/50 backdrop-blur-sm"
+          className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/70 transition-colors"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          aria-label="Toggle sidebar navigation"
+          aria-expanded={isSidebarOpen}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -1415,6 +1598,8 @@ export const EnterprisePortfolio: React.FC = () => {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            role="img"
+            aria-hidden="true"
           >
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>

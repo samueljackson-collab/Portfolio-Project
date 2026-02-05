@@ -44,6 +44,16 @@ pip install -r requirements.txt
 python src/bronze_to_silver.py --input data/bronze.json --output silver.parquet
 ```
 
+## Evidence
+- [Evidence run summary](evidence/RUN_SUMMARY.md)
+- [Dataset metadata](evidence/dataset_metadata.json)
+- [Schema catalog screenshot](evidence/schema_catalog.svg)
+- [Query latency runs](evidence/query_latency_runs.csv)
+- [Query latency summary](evidence/query_latency_summary.csv)
+- [Query latency chart](evidence/query_latency_chart.svg)
+- [Storage growth metrics](evidence/storage_growth.csv)
+- [Storage growth chart](evidence/storage_growth_chart.svg)
+
 
 ## Code Generation Prompts
 

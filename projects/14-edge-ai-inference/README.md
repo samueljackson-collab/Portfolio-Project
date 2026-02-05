@@ -33,6 +33,14 @@ Live deployment dashboard screenshot stored externally.
 ## Overview
 Containerized ONNX Runtime microservice optimized for NVIDIA Jetson devices with automatic model updates via Azure IoT Edge.
 
+## Evidence
+The following artifacts capture simulated edge inference performance, including latency/throughput metrics and power estimates.
+
+- Metrics (JSON): [`evidence/metrics.json`](evidence/metrics.json)
+- Metrics (CSV): [`evidence/metrics.csv`](evidence/metrics.csv)
+- Latency chart (p50/p95): [`evidence/latency_p50_p95.svg`](evidence/latency_p50_p95.svg)
+- Throughput chart: [`evidence/throughput_ips.svg`](evidence/throughput_ips.svg)
+
 ## Running Locally
 ```bash
 pip install -r requirements.txt
