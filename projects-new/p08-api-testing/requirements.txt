@@ -27,7 +27,7 @@ jsonschema==4.26.0
 pydantic==2.12.5
 
 # Performance Testing
-locust==2.43.1
+locust==2.43.2
 
 # Reporting
 pytest-html==4.2.0
