@@ -1,11 +1,11 @@
 Flask==3.1.2
 Werkzeug==3.1.5
-gunicorn==25.0.1
+gunicorn==25.0.3
 prometheus-client==0.24.1
 
 # Database
 SQLAlchemy==2.0.46
-alembic==1.18.3
+alembic==1.18.4
 psycopg2-binary==2.9.11
 
 # Testing
