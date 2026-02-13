@@ -1,0 +1,21 @@
+{
+  "title": "Host Overview",
+  "description": "Placeholder dashboard describing host-level metrics.",
+  "panels": [
+    {
+      "id": "cpu_usage",
+      "title": "CPU Usage",
+      "query": "avg(node_cpu_seconds_total{mode='idle'})"
+    },
+    {
+      "id": "memory_consumption",
+      "title": "Memory Consumption",
+      "query": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes"
+    },
+    {
+      "id": "disk_io",
+      "title": "Disk IO",
+      "query": "rate(node_disk_io_time_seconds_total[5m])"
+    }
+  ]
+}

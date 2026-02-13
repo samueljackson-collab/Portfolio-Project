@@ -1,0 +1,21 @@
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+line-length = 88
+extend-select = ["I"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["projects/backend/app/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["projects/backend/app"]
+
+[tool.coverage.report]
+omit = ["*/__init__.py"]
+show_missing = true
