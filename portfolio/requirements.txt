@@ -1,0 +1,6 @@
+pre-commit==3.6.0
+ruff==0.1.14
+bandit==1.7.5
+httpx==0.25.1
+pytest==7.4.4
+coverage[toml]==7.3.2

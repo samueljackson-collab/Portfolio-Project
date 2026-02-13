@@ -1,0 +1,5 @@
+{
+  "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
+  "editor.formatOnSave": true,
+  "typescript.tsdk": "frontend/node_modules/typescript/lib"
+}
