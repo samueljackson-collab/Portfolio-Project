@@ -110,6 +110,9 @@ System-minded engineer specializing in building, securing, and operating infrast
 Hands-on with homelab → production-like setups (wired rack, UniFi network, VPN, backup/restore drills), and pragmatic  
 DevOps/QA practices.
 
+## 🗂️ Documentation Resources
+- [GitHub Repository Setup Checklist](docs/github_repository_setup_checklist.md)
+
 <details><summary><strong>Alternate summaries for tailoring</strong></summary>
 
 **DevOps-forward** DevOps-leaning systems engineer who builds and operates reliable services end-to-end:  
