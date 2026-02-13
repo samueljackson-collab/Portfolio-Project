@@ -1,0 +1,15 @@
+{
+  "title": "Enterprise Overview",
+  "editable": true,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "CPU Usage",
+      "targets": [
+        {
+          "expr": "avg(rate(container_cpu_usage_seconds_total[5m]))"
+        }
+      ]
+    }
+  ]
+}
