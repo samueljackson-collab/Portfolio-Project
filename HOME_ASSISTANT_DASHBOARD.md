@@ -105,7 +105,7 @@ grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 ## File Changes
 
 ### New Files Created
-1. `/frontend/src/pages/HomeAssistant.tsx` - React component (398 lines)
+1. `/frontend/src/pages/HomeAssistant.tsx` - React component
 2. `/projects/06-homelab/PRJ-HOME-002/demo/home-assistant-dashboard.html` - Standalone demo
 
 ### Modified Files
