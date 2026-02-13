@@ -1,0 +1,12 @@
+[
+  {
+    "title": "Hello World",
+    "body": "This is the first seeded content item.",
+    "slug": "hello-world"
+  },
+  {
+    "title": "Systems Thinking",
+    "body": "Documenting the repeatable portfolio workflow.",
+    "slug": "systems-thinking"
+  }
+]

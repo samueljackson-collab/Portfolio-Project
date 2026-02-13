@@ -1,0 +1,3 @@
+id,domain,input,tool,expected_output
+task-001,backend,"Feature request describing new CRUD resource","FastAPI scaffold script","Generated router, schemas, tests"
+task-002,frontend,"UI component spec","Vite component generator","React component with tests and stories"

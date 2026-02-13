@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "portfolio.fullname" . }}-frontend
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "portfolio.fullname" . }}-frontend
+  template:
+    metadata:
+      labels:
+        app: {{ include "portfolio.fullname" . }}-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: {{ .Values.imageRegistry }}/{{ .Values.frontend.image }}
+          ports:
+            - containerPort: {{ .Values.frontend.service.port }}
+          env:
+            - name: VITE_API_BASE
+              value: http://{{ include "portfolio.fullname" . }}-backend:{{ .Values.backend.service.port }}
