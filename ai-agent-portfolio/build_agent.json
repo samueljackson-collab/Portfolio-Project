@@ -1,0 +1,35 @@
+{
+  "agent_name": "terraform_builder",
+  "version": "2.1.0",
+  "description": "AI-powered Terraform infrastructure generator with validation",
+  "capabilities": [
+    "terraform_code_generation",
+    "syntax_validation",
+    "best_practices_enforcement",
+    "multi_cloud_support",
+    "dependency_management"
+  ],
+  "parameters": {
+    "cloud_provider": {
+      "type": "string",
+      "allowed_values": ["aws", "azure", "gcp", "multi_cloud"],
+      "default": "aws"
+    },
+    "complexity": {
+      "type": "string",
+      "allowed_values": ["basic", "standard", "enterprise"],
+      "default": "standard"
+    },
+    "security_level": {
+      "type": "string",
+      "allowed_values": ["default", "enhanced", "compliance"],
+      "default": "enhanced"
+    }
+  },
+  "workflow": {
+    "analysis_phase": "requirements_parsing",
+    "generation_phase": "modular_code_creation",
+    "validation_phase": "syntax_security_checks",
+    "output_phase": "documentation_bundling"
+  }
+}

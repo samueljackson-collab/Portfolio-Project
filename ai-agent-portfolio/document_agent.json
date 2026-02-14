@@ -1,0 +1,23 @@
+{
+  "agent_name": "knowledge_curator",
+  "version": "1.5.0",
+  "description": "Automated documentation generation and maintenance",
+  "documentation_types": [
+    "architecture_diagrams",
+    "api_reference",
+    "runbooks",
+    "troubleshooting_guides",
+    "compliance_docs"
+  ],
+  "output_formats": {
+    "technical": ["terraform_docs", "archimate", "plantuml"],
+    "user_focused": ["mkdocs", "gitbook", "confluence"],
+    "compliance": ["pdf_reports", "audit_trails", "change_logs"]
+  },
+  "auto_update": {
+    "code_changes": true,
+    "version_updates": true,
+    "dependency_updates": true,
+    "security_advisories": true
+  }
+}
