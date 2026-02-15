@@ -1,0 +1,333 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Twisted Monk Suite",
+    "theme_version": "1.0.0",
+    "theme_author": "Twisted Monk",
+    "theme_documentation_url": "https://docs.twistedmonk.com",
+    "theme_support_url": "https://support.twistedmonk.com"
+  },
+  {
+    "name": "Inventory & Stock Settings",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Stock Level Thresholds"
+      },
+      {
+        "type": "paragraph",
+        "content": "Configure when to show low stock and critical stock warnings"
+      },
+      {
+        "type": "range",
+        "id": "low_stock_threshold",
+        "label": "Low Stock Threshold",
+        "min": 10,
+        "max": 100,
+        "step": 5,
+        "default": 50,
+        "info": "Show low stock warning when inventory falls below this number"
+      },
+      {
+        "type": "range",
+        "id": "critical_stock_threshold",
+        "label": "Critical Stock Threshold",
+        "min": 1,
+        "max": 20,
+        "step": 1,
+        "default": 10,
+        "info": "Show critical stock warning when inventory falls below this number"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_exact_stock_count",
+        "label": "Show Exact Stock Count",
+        "default": false,
+        "info": "Display exact number of items in stock (e.g., '5 left') instead of generic messages"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_real_time_updates",
+        "label": "Enable Real-Time Stock Updates",
+        "default": true,
+        "info": "Poll backend API for real-time inventory updates every 30 seconds"
+      }
+    ]
+  },
+  {
+    "name": "Availability Badge Settings",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Badge Display Options"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_availability_badge",
+        "label": "Show Availability Badge",
+        "default": true,
+        "info": "Display stock availability badge on product pages"
+      },
+      {
+        "type": "select",
+        "id": "badge_position",
+        "label": "Badge Position",
+        "options": [
+          {
+            "value": "above_price",
+            "label": "Above Price"
+          },
+          {
+            "value": "below_price",
+            "label": "Below Price"
+          },
+          {
+            "value": "above_add_to_cart",
+            "label": "Above Add to Cart"
+          },
+          {
+            "value": "below_add_to_cart",
+            "label": "Below Add to Cart"
+          }
+        ],
+        "default": "above_add_to_cart"
+      },
+      {
+        "type": "color",
+        "id": "badge_in_stock_color",
+        "label": "In Stock Badge Color",
+        "default": "#16a34a"
+      },
+      {
+        "type": "color",
+        "id": "badge_low_stock_color",
+        "label": "Low Stock Badge Color",
+        "default": "#f59e0b"
+      },
+      {
+        "type": "color",
+        "id": "badge_critical_color",
+        "label": "Critical Stock Badge Color",
+        "default": "#ea580c"
+      },
+      {
+        "type": "color",
+        "id": "badge_out_of_stock_color",
+        "label": "Out of Stock Badge Color",
+        "default": "#dc2626"
+      }
+    ]
+  },
+  {
+    "name": "Urgency Banner Settings",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Urgency Message Configuration"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_urgency_banner",
+        "label": "Show Urgency Banner",
+        "default": true,
+        "info": "Display urgency messages to encourage purchases"
+      },
+      {
+        "type": "select",
+        "id": "urgency_banner_style",
+        "label": "Banner Style",
+        "options": [
+          {
+            "value": "inline",
+            "label": "Inline (within product area)"
+          },
+          {
+            "value": "floating",
+            "label": "Floating (bottom of screen)"
+          }
+        ],
+        "default": "inline"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_countdown_timer",
+        "label": "Show Countdown Timer",
+        "default": true,
+        "info": "Display countdown timer for critical stock items"
+      },
+      {
+        "type": "range",
+        "id": "countdown_duration_minutes",
+        "label": "Countdown Duration (minutes)",
+        "min": 5,
+        "max": 60,
+        "step": 5,
+        "default": 15,
+        "info": "How long the countdown timer should run"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_social_proof",
+        "label": "Enable Social Proof Messages",
+        "default": true,
+        "info": "Show messages like 'X people viewing this item'"
+      }
+    ]
+  },
+  {
+    "name": "Bundle Recommendations",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Bundle & Cross-Sell Settings"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_bundle_recommendations",
+        "label": "Enable Bundle Recommendations",
+        "default": true,
+        "info": "Show 'Frequently Bought Together' product bundles"
+      },
+      {
+        "type": "range",
+        "id": "max_bundle_products",
+        "label": "Maximum Bundle Products",
+        "min": 2,
+        "max": 6,
+        "step": 1,
+        "default": 4,
+        "info": "Maximum number of products to show in bundle recommendations"
+      },
+      {
+        "type": "range",
+        "id": "bundle_discount_percentage",
+        "label": "Bundle Discount %",
+        "min": 0,
+        "max": 30,
+        "step": 5,
+        "default": 10,
+        "info": "Discount percentage when buying bundle together"
+      },
+      {
+        "type": "text",
+        "id": "bundle_api_endpoint",
+        "label": "Bundle API Endpoint",
+        "default": "/apps/twisted-monk/api/bundles",
+        "info": "Backend API endpoint for fetching bundle recommendations"
+      },
+      {
+        "type": "checkbox",
+        "id": "bundle_auto_display",
+        "label": "Auto-Display Bundles",
+        "default": true,
+        "info": "Automatically show bundle recommendations on product pages"
+      },
+      {
+        "type": "range",
+        "id": "bundle_display_delay_seconds",
+        "label": "Display Delay (seconds)",
+        "min": 0,
+        "max": 10,
+        "step": 1,
+        "default": 2,
+        "info": "Delay before showing bundle recommendations (0 = immediate)"
+      }
+    ]
+  },
+  {
+    "name": "API Integration",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Backend API Configuration"
+      },
+      {
+        "type": "paragraph",
+        "content": "Configure connection to Twisted Monk Suite backend API"
+      },
+      {
+        "type": "text",
+        "id": "api_base_url",
+        "label": "API Base URL",
+        "default": "https://api.twistedmonk.com",
+        "info": "Base URL for the Twisted Monk Suite API"
+      },
+      {
+        "type": "text",
+        "id": "api_key",
+        "label": "API Key",
+        "info": "API key for authentication (keep this secret!)"
+      },
+      {
+        "type": "range",
+        "id": "api_cache_timeout_seconds",
+        "label": "Cache Timeout (seconds)",
+        "min": 60,
+        "max": 3600,
+        "step": 60,
+        "default": 300,
+        "info": "How long to cache API responses"
+      },
+      {
+        "type": "checkbox",
+        "id": "api_fallback_mode",
+        "label": "Enable Fallback Mode",
+        "default": true,
+        "info": "Use fallback data if API is unavailable"
+      }
+    ]
+  },
+  {
+    "name": "Notifications",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Customer Notification Settings"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_back_in_stock_notifications",
+        "label": "Enable 'Notify When Available'",
+        "default": true,
+        "info": "Allow customers to sign up for back-in-stock notifications"
+      },
+      {
+        "type": "text",
+        "id": "notification_email",
+        "label": "Notification Email Address",
+        "default": "notifications@twistedmonk.com",
+        "info": "Email address to receive notification signups"
+      }
+    ]
+  },
+  {
+    "name": "Performance & Analytics",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Performance Settings"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_analytics_tracking",
+        "label": "Enable Analytics Tracking",
+        "default": true,
+        "info": "Track events like impressions, clicks, and conversions"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_lazy_loading",
+        "label": "Enable Lazy Loading",
+        "default": true,
+        "info": "Load bundle recommendations only when needed"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_reduced_motion",
+        "label": "Respect Reduced Motion Preferences",
+        "default": true,
+        "info": "Disable animations for users who prefer reduced motion"
+      }
+    ]
+  }
+]
