@@ -2,7 +2,7 @@
 -r requirements.txt
 
 # SAM CLI for local development (optional, heavy dependency)
-aws-sam-cli==1.150.1
+aws-sam-cli==1.151.0
 
 # Additional development tools
 pytest-watch==4.2.0
