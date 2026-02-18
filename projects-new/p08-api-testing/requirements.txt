@@ -27,7 +27,7 @@ jsonschema==4.26.0
 pydantic==2.12.5
 
 # Performance Testing
-locust==2.43.1
+locust==2.43.3
 
 # Reporting
 pytest-html==4.2.0
@@ -61,4 +61,4 @@ pytest-benchmark==5.2.3
 prometheus-client==0.24.1
 
 # Optional: Secrets management
-pydantic-settings==2.12.0
+pydantic-settings==2.13.0
