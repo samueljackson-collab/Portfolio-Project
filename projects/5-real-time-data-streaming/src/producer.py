@@ -98,7 +98,7 @@ class EventProducer:
 
             return True
 
-        except KafkaError as e:
+        except Exception as e:
             logger.error(f"Failed to send event: {e}")
             return False
 

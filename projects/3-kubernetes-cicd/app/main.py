@@ -53,6 +53,7 @@ def home():
         'hostname': hostname,
         'pod_name': os.getenv('POD_NAME', hostname),
         'namespace': os.getenv('POD_NAMESPACE', 'default'),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
     }), 200
 
 

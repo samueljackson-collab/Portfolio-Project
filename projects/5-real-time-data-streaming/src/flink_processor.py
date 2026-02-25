@@ -6,16 +6,20 @@ import logging
 from datetime import datetime, timezone
 from typing import Tuple
 
-from pyflink.datastream import StreamExecutionEnvironment, TimeCharacteristic
-from pyflink.datastream.window import TumblingEventTimeWindows, Time
-from pyflink.common import WatermarkStrategy, Duration
-from pyflink.common.serialization import SimpleStringSchema
-from pyflink.datastream.connectors.kafka import (
-    KafkaSource,
-    KafkaSink,
-    KafkaRecordSerializationSchema
-)
-from pyflink.common.typeinfo import Types
+try:
+    from pyflink.datastream import StreamExecutionEnvironment, TimeCharacteristic
+    from pyflink.datastream.window import TumblingEventTimeWindows, Time
+    from pyflink.common import WatermarkStrategy, Duration
+    from pyflink.common.serialization import SimpleStringSchema
+    from pyflink.datastream.connectors.kafka import (
+        KafkaSource,
+        KafkaSink,
+        KafkaRecordSerializationSchema
+    )
+    from pyflink.common.typeinfo import Types
+    _PYFLINK_AVAILABLE = True
+except ImportError:
+    _PYFLINK_AVAILABLE = False
 
 logging.basicConfig(
     level=logging.INFO,

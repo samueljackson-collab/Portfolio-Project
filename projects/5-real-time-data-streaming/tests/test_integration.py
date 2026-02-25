@@ -48,7 +48,7 @@ class TestProducerConsumerIntegration:
         # Configure consumer mock
         produced_events = []
 
-        def capture_event(**kwargs):
+        def capture_event(*args, **kwargs):
             produced_events.append(kwargs['value'])
             return mock_future
 
@@ -89,7 +89,7 @@ class TestProducerConsumerIntegration:
 
         produced_keys = []
 
-        def capture_key(**kwargs):
+        def capture_key(*args, **kwargs):
             produced_keys.append(kwargs.get('key'))
             return mock_future
 
