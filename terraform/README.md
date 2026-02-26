@@ -88,3 +88,11 @@ Notes:
 GitHub Actions (`.github/workflows/terraform.yml`) runs `terraform fmt`, `validate`, `tfsec`, and `tflint`, produces a plan on pull requests, and requires environment approval before applying to `main`.
 
 For OIDC role creation steps, refer to `terraform/iam/github_oidc_trust_policy.json` and `terraform/iam/github_actions_ci_policy.json`.
+
+## Documentation Freshness
+
+| Area | Documentation Owner | Backup Owner | Last Reviewed | Next Review Due | Evidence Links |
+| --- | --- | --- | --- | --- | --- |
+| `terraform/` root and module READMEs | Infrastructure as Code Lead | Cloud Security Lead | 2026-02-26 | 2026-03-27 | [Governance Policy](../docs/readme-governance.md), [Terraform CI](../.github/workflows/terraform.yml) |
+
+- Update this table when Terraform architecture, setup, testing, risk posture, or roadmap assumptions change.
