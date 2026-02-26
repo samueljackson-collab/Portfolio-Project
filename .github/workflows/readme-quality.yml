@@ -1,0 +1,38 @@
+name: README Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - '**/README.md'
+      - 'scripts/readme_migration/validate_template.py'
+      - '.github/workflows/readme-quality.yml'
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  validate-readmes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate changed README files (PR scope)
+        if: github.event_name == 'pull_request'
+        run: |
+          python scripts/readme_migration/validate_template.py \
+            --mode changed \
+            --base-ref "origin/${{ github.base_ref }}"
+
+      - name: Validate all README files (scheduled/full scope)
+        if: github.event_name != 'pull_request'
+        run: |
+          python scripts/readme_migration/validate_template.py --mode full
