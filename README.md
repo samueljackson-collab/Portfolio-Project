@@ -53,7 +53,7 @@ runbooks, dashboards, and repeatable processes.***
 - **Last update:** 2026-01-05
 - **Commits:** 777 total revisions
 - **Tracked files:** 3,062 assets
-- **Projects:** 25 portfolio showcases
+- **Projects:** 43 portfolio showcases (25 core blueprints + 18 extended tracks)
 - **READMEs:** 46 published guides
 
 ### Documentation & Infra Inventory
@@ -81,7 +81,7 @@ pie title Repository Evidence Mix
 
 | Area | Purpose | What to look for |
 | --- | --- | --- |
-| `projects/` | Primary portfolio projects (1–25) | Project READMEs, architecture diagrams, runbooks, testing evidence |
+| `projects/` | Primary portfolio projects (1–43: core + extended tracks) | Project READMEs, architecture diagrams, runbooks, testing evidence |
 | `docs/` | Deep-dive documentation | Architecture guides, process documentation, diagrams |
 | `observability/` | Metrics + dashboards | Grafana dashboards, OpenTelemetry collector config |
 | `terraform/` | IaC baseline | Shared infrastructure building blocks |
@@ -89,7 +89,7 @@ pie title Repository Evidence Mix
 
 ```mermaid
 flowchart TB
-  Repo[Portfolio Repository] --> Projects["projects/ (1–25)"]
+  Repo[Portfolio Repository] --> Projects["projects/ (1–43)"]
   Repo --> Docs["docs/ + runbooks"]
   Repo --> IaC["terraform/ + infrastructure/"]
   Repo --> Obs["observability/ + grafana dashboards"]
@@ -211,6 +211,30 @@ flowchart LR
   Jinja2.
 - 🟢 [Project 25: Portfolio Website & Documentation Hub](./projects/25-portfolio-website/README.md) — VitePress-powered portal  
   aggregating all documentation and guides.
+
+### Extended Portfolio Tracks (Projects 26–43)
+
+These additional tracks are active/planned in GitHub and reflected in this repository narrative so the portfolio scope
+now exceeds 25 projects.
+
+- 🟢 **Project 26: Homelab & Secure Network Build** — Rack-based segmented network with VLAN isolation, secure Wi-Fi zones, and remote admin VPN.
+- 🟢 **Project 27: Virtualization & Core Services** — Proxmox/TrueNAS platform hosting Wiki.js, Home Assistant, and Immich with TLS reverse proxy.
+- 🟢 **Project 28: Observability & Backups Stack** — Prometheus/Grafana/Loki/Alertmanager integrated with Proxmox backup workflows.
+- 🔄 **Project 29: Commercial E-commerce & Booking Systems Recovery** — Rebuild effort for prior production systems and operational documentation.
+- 🟠 **Project 30: Database Infrastructure Module (Terraform RDS)** — Modular Terraform baseline for resilient relational database provisioning.
+- 🟠 **Project 31: Resume Set (SDE/Cloud/QA/Net/Cyber)** — Role-targeted resume suite and supporting content automation workflow.
+- 🔵 **Project 32: GitOps Platform with IaC (Terraform + ArgoCD)** — End-to-end GitOps control plane with declarative environment promotion.
+- 🔵 **Project 33: AWS Landing Zone (Organizations + SSO)** — Multi-account security baseline using AWS Organizations and centralized identity.
+- 🔵 **Project 34: Active Directory Design & Automation (DSC/Ansible)** — Domain architecture templates and repeatable configuration automation.
+- 🔵 **Project 35: SIEM Pipeline** — Security telemetry ingest and detection pipeline with dashboarded blue-team workflows.
+- 🔵 **Project 36: Adversary Emulation** — Safe ATT&CK-aligned emulation suite for validating detection and response quality.
+- 🔵 **Project 37: Incident Response Playbook** — Structured ransomware-focused IR runbook and escalation framework.
+- 🔵 **Project 38: Web App Login Test Plan** — Functional, security, and performance testing blueprint for authentication systems.
+- 🔵 **Project 39: Selenium + PyTest CI** — Automated UI validation pipeline integrated with GitHub Actions.
+- 🔵 **Project 40: Multi-OS Lab** — Comparative lab environment spanning Kali, Slacko Puppy, and Ubuntu.
+- 🔵 **Project 41: Document Packaging Pipeline** — Prompt-to-document automation for Docs/PDF/XLSX publication.
+- 🔵 **Project 42: IT Playbook (E2E Lifecycle)** — Cross-functional service lifecycle playbook from intake through operations.
+- 🔵 **Project 43: Engineer's Handbook (Standards/QA Gates)** — Practical engineering standards and quality gate reference.
 
 ---
 
