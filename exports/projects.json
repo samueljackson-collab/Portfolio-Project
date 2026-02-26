@@ -1,0 +1,930 @@
+[
+  {
+    "slug": "p-rt-01",
+    "title": "Red Team Cloud Pivot",
+    "role_category": "Red Team",
+    "status": "Completed",
+    "executive_summary": "Simulated a multi-stage intrusion from phishing to cloud pivoting to validate detection depth across SaaS and IaaS assets.",
+    "scenario_scope": "Assumed-compromise of a user mailbox with expansion into an Azure workload landing zone.",
+    "responsibilities": [
+      "Designed realistic phishing lure and payload chain",
+      "Abused OAuth token reuse to access cloud resources",
+      "Coordinated purple-team debrief with defenders"
+    ],
+    "tools_tech": ["Evilginx", "Azure CLI", "BloodHound", "KQL", "Burp Suite"],
+    "architecture_notes": "Isolated attack infrastructure in a throwaway VNet with rotating outbound IPs and strict logging to a separate SIEM tenant.",
+    "process_walkthrough": [
+      "Conducted controlled phishing campaign with time-boxed scope",
+      "Harvested tokens and validated MFA resilience",
+      "Pivoted into Azure via misconfigured app registrations",
+      "Documented detection opportunities and compensating controls"
+    ],
+    "outcomes_metrics": [
+      "Reduced risky OAuth app registrations by 80%",
+      "Implemented conditional access policies for legacy protocols",
+      "Added KQL detections for anomalous consent grants"
+    ],
+    "evidence_links": [
+      "reports/p-rt-01/phishing-report.pdf",
+      "dashboards/kql-detections.md"
+    ],
+    "reproduction_steps": [
+      "Deploy the throwaway VNet using the provided Terraform module",
+      "Run the phishing workflow with pre-approved targets",
+      "Review SIEM alerts generated during the exercise"
+    ],
+    "interview_points": [
+      "Why token-based persistence is harder to detect than password reuse",
+      "How to scope red-team exercises to protect production tenants",
+      "Cloud-specific detections for OAuth consent abuse"
+    ]
+  },
+  {
+    "slug": "p-rt-02",
+    "title": "Adversary Emulation for OT Lab",
+    "role_category": "Red Team",
+    "status": "In Progress",
+    "executive_summary": "Built an emulation plan for ICS/SCADA environments using MITRE ATT&CK for ICS to validate segmentation controls.",
+    "scenario_scope": "Targeted a lab with Modbus/TCP devices behind a jump host and engineering workstation.",
+    "responsibilities": [
+      "Mapped ATT&CK for ICS techniques to lab assets",
+      "Authored safe payloads to avoid process disruption",
+      "Ran purple-team tabletop with SOC and OT engineers"
+    ],
+    "tools_tech": ["Caldera", "Atomic Red Team", "Wireshark", "GNS3", "ModbusPal"],
+    "architecture_notes": "Segmentation enforced via dual-firewall zones; testing executed from a hardened Ubuntu jump box with strict egress rules.",
+    "process_walkthrough": [
+      "Cataloged OT assets and network flows",
+      "Selected low-impact techniques for the lab",
+      "Executed emulation steps with real-time monitoring",
+      "Captured packet traces and log artifacts for SOC tuning"
+    ],
+    "outcomes_metrics": [
+      "Documented 12 new OT detections",
+      "Validated firewall ACLs for engineering subnets",
+      "Provided evidence pack for compliance reviewers"
+    ],
+    "evidence_links": ["reports/p-rt-02/ot-emulation.pdf"],
+    "reproduction_steps": [
+      "Start the OT lab VMs using the provided compose file",
+      "Launch Caldera with the ICS plugin",
+      "Replay the scripted ATT&CK sequences and capture logs"
+    ],
+    "interview_points": [
+      "Balancing realism and safety in OT testing",
+      "Mapping ATT&CK for ICS to detection engineering",
+      "Coordinating with operations teams during emulation"
+    ]
+  },
+  {
+    "slug": "p-rt-03",
+    "title": "Wireless Intrusion Assessment",
+    "role_category": "Red Team",
+    "status": "Completed",
+    "executive_summary": "Evaluated enterprise Wi-Fi security by performing rogue AP, evil-twin, and PMKID harvesting attacks.",
+    "scenario_scope": "Office SSIDs with WPA2-Enterprise and guest networks segmented via VLANs.",
+    "responsibilities": [
+      "Configured rogue AP with automatic credential capture",
+      "Performed controlled deauth and PMKID collection",
+      "Delivered hardening guidance for RADIUS and certificate validation"
+    ],
+    "tools_tech": ["Kali", "hostapd-wpe", "hcxdumptool", "Wireshark", "Aircrack-ng"],
+    "architecture_notes": "Used battery-powered rogue AP kit with 4G uplink; logs streamed to central syslog for chain-of-custody.",
+    "process_walkthrough": [
+      "Surveyed spectrum and SSIDs",
+      "Executed evil-twin and deauth scenarios",
+      "Captured PMKID handshakes and attempted offline crack",
+      "Validated 802.1X certificate pinning settings"
+    ],
+    "outcomes_metrics": [
+      "Enabled EAP-TLS enforcement for corporate devices",
+      "Blocked legacy TKIP negotiation",
+      "Added rogue AP detection alerts to NMS"
+    ],
+    "evidence_links": ["reports/p-rt-03/wifi-assessment.pdf"],
+    "reproduction_steps": [
+      "Flash the rogue AP SD card with the provided image",
+      "Run the collection script and monitor syslog",
+      "Test 802.1X validation on sample devices"
+    ],
+    "interview_points": [
+      "Defending against evil-twin attacks",
+      "Why certificate validation stops most credential theft",
+      "Coordinating wireless testing with facilities"
+    ]
+  },
+  {
+    "slug": "p-rt-04",
+    "title": "Web App Exploitation Playbook",
+    "role_category": "Red Team",
+    "status": "Planned",
+    "executive_summary": "Curated repeatable exploit chains for a legacy Java web stack, focusing on deserialization and SSRF risks.",
+    "scenario_scope": "Internal bug bounty mirror environment with outdated app server and S3-compatible storage.",
+    "responsibilities": [
+      "Catalog CVE coverage and detection gaps",
+      "Develop SSRF-to-RCE chain with metadata abuse",
+      "Package exploits into safe, repeatable scripts"
+    ],
+    "tools_tech": ["Burp Suite", "ysoserial", "ffuf", "Go", "Docker"],
+    "architecture_notes": "Isolated testing network with replayable fixtures; S3 bucket emulated via MinIO to avoid production access.",
+    "process_walkthrough": [
+      "Set up vulnerable app via docker-compose",
+      "Enumerate endpoints and test deserialization gadgets",
+      "Craft SSRF payloads targeting instance metadata",
+      "Automate exploit chain with safety toggles"
+    ],
+    "outcomes_metrics": [
+      "Documented four exploit playbooks with mitigations",
+      "Provided developer-safe repro scripts",
+      "Enabled CI security gate for deserialization payload detection"
+    ],
+    "evidence_links": ["playbooks/p-rt-04/web-exploit-playbook.md"],
+    "reproduction_steps": [
+      "Start the vulnerable stack with docker-compose",
+      "Run the exploit scripts with sandbox credentials",
+      "Capture logs for S3 access and metadata calls"
+    ],
+    "interview_points": [
+      "Tradeoffs between patching and virtual patching",
+      "Safe exploitation practices in shared labs",
+      "How SSRF escalates in cloud environments"
+    ]
+  },
+  {
+    "slug": "p-rt-05",
+    "title": "Physical Security Bypass",
+    "role_category": "Red Team",
+    "status": "Completed",
+    "executive_summary": "Tested badge cloning and tailgating controls for a regional office, including social engineering resilience.",
+    "scenario_scope": "Two-floor office with HID badges, visitor kiosks, and mantrap entry.",
+    "responsibilities": [
+      "Captured badge IDs using proximity readers",
+      "Attempted clone with reflashable cards",
+      "Conducted staff awareness checks and debriefs"
+    ],
+    "tools_tech": ["Proxmark3", "Flipper Zero", "GoPro", "Kali"],
+    "architecture_notes": "Coordinated with facilities and security; all tests logged with timestamps and video capture for auditability.",
+    "process_walkthrough": [
+      "Surveyed entry points and badge readers",
+      "Captured card data and attempted clones",
+      "Validated door controller logging and alarms",
+      "Ran awareness recap with office leadership"
+    ],
+    "outcomes_metrics": [
+      "Upgraded to SEOS badges for cryptographic validation",
+      "Improved tailgating enforcement through policy updates",
+      "Added door event feeds into SOC dashboards"
+    ],
+    "evidence_links": ["reports/p-rt-05/physical-bypass.pdf"],
+    "reproduction_steps": [
+      "Use lab-issued test badges with Proxmark3",
+      "Attempt clone and test against demo door controller",
+      "Review SOC alerts for unauthorized entries"
+    ],
+    "interview_points": [
+      "Physical security integration with SOC",
+      "Badge technology differences (HID vs SEOS)",
+      "Coordinating red-team ops with facilities"
+    ]
+  },
+  {
+    "slug": "p-bt-01",
+    "title": "SOC Playbook Modernization",
+    "role_category": "Blue Team",
+    "status": "Completed",
+    "executive_summary": "Refreshed SOC runbooks with cloud-first detections, unified triage steps, and response automation hooks.",
+    "scenario_scope": "Coverage across Windows, Linux, and cloud audit logs with integration into a central SOAR.",
+    "responsibilities": [
+      "Mapped alerts to MITRE ATT&CK",
+      "Defined triage decision trees",
+      "Added SOAR automation triggers and rollbacks"
+    ],
+    "tools_tech": ["Sentinel", "Splunk", "SOAR", "KQL", "Sigma"],
+    "architecture_notes": "Standardized ingestion pipelines with schema validation; SOAR playbooks run in isolated worker VMs.",
+    "process_walkthrough": [
+      "Prioritized alerts based on threat intel",
+      "Documented triage steps and data sources",
+      "Automated containment for high-fidelity alerts",
+      "Performed tabletop exercises to validate runbooks"
+    ],
+    "outcomes_metrics": [
+      "Reduced mean time to respond by 30%",
+      "Unified alert taxonomy across tools",
+      "Added rollback steps for automated actions"
+    ],
+    "evidence_links": ["runbooks/p-bt-01/soc-playbooks.md"],
+    "reproduction_steps": [
+      "Import Sigma rules into the SIEM",
+      "Deploy SOAR workflows via provided scripts",
+      "Run tabletop scenarios with the sample alerts"
+    ],
+    "interview_points": [
+      "Balancing automation with analyst oversight",
+      "Mapping ATT&CK techniques to detection content",
+      "Versioning and testing SOC runbooks"
+    ]
+  },
+  {
+    "slug": "p-bt-02",
+    "title": "Endpoint Telemetry Uplift",
+    "role_category": "Blue Team",
+    "status": "In Progress",
+    "executive_summary": "Expanded EDR telemetry coverage for Linux servers and macOS endpoints with standardized baselines.",
+    "scenario_scope": "Hybrid fleet across cloud VMs and corporate laptops with varying OS baselines.",
+    "responsibilities": [
+      "Defined minimum viable telemetry events",
+      "Rolled out new agent policies via MDM",
+      "Validated detections for persistence and lateral movement"
+    ],
+    "tools_tech": ["Elastic Agent", "osquery", "FleetDM", "MDM", "Ansible"],
+    "architecture_notes": "Used staged rollout rings with health checks; events forward through message queue before SIEM ingestion.",
+    "process_walkthrough": [
+      "Captured current state of endpoint logging",
+      "Authored baseline policies for each OS",
+      "Piloted deployment with rollback plans",
+      "Measured detection fidelity against atomic tests"
+    ],
+    "outcomes_metrics": [
+      "Expanded Linux coverage from 40% to 95%",
+      "Standardized 25 baseline queries",
+      "Reduced false positives through tuned rules"
+    ],
+    "evidence_links": ["dashboards/p-bt-02/endpoint-coverage.md"],
+    "reproduction_steps": [
+      "Enroll a test device via FleetDM",
+      "Apply the baseline policy profile",
+      "Trigger atomic persistence tests and review alerts"
+    ],
+    "interview_points": [
+      "How to phase agent rollouts safely",
+      "Balancing telemetry volume with cost",
+      "Detecting lateral movement with osquery"
+    ]
+  },
+  {
+    "slug": "p-bt-03",
+    "title": "SIEM Content as Code",
+    "role_category": "Blue Team",
+    "status": "Completed",
+    "executive_summary": "Implemented version-controlled SIEM detections with CI linting, staged promotion, and automated packaging.",
+    "scenario_scope": "Centralized SIEM with multiple tenants and environment-specific overrides.",
+    "responsibilities": [
+      "Converted ad-hoc KQL queries into reusable modules",
+      "Built CI checks for schema validation",
+      "Created release pipeline for content promotion"
+    ],
+    "tools_tech": ["Azure DevOps", "KQL", "YAML", "Git", "Python"],
+    "architecture_notes": "Detection content stored in Git repo with environment overlays; CI builds signed packages deployed via API.",
+    "process_walkthrough": [
+      "Migrated existing queries into modules",
+      "Added unit tests and linters for KQL",
+      "Published signed content to staging, then production",
+      "Monitored detections for drift and false positives"
+    ],
+    "outcomes_metrics": [
+      "Reduced manual deployment errors to zero",
+      "Cut detection promotion time by 60%",
+      "Enabled rollback via signed artifact history"
+    ],
+    "evidence_links": ["pipelines/p-bt-03/sien-content-ci.md"],
+    "reproduction_steps": [
+      "Clone the detection repo and install dev dependencies",
+      "Run the CI lint workflow locally",
+      "Publish a signed content package to the staging SIEM"
+    ],
+    "interview_points": [
+      "Versioning strategies for detection content",
+      "Testing KQL queries before production",
+      "Handling environment-specific overrides"
+    ]
+  },
+  {
+    "slug": "p-bt-04",
+    "title": "Threat Hunting Sprint",
+    "role_category": "Blue Team",
+    "status": "Completed",
+    "executive_summary": "Ran a two-week hunting sprint focused on identity misuse and cloud console anomalies using hypothesis-driven hunts.",
+    "scenario_scope": "Identity provider logs, cloud audit trails, and VPN telemetry.",
+    "responsibilities": [
+      "Formulated hunting hypotheses",
+      "Built detections for anomalous sign-ins",
+      "Created dashboards for hunt findings"
+    ],
+    "tools_tech": ["Splunk", "Jupyter", "Python", "Sigma", "Okta logs"],
+    "architecture_notes": "Data lake backed by object storage; hunts executed in notebooks with saved KQL/SPL queries for reuse.",
+    "process_walkthrough": [
+      "Defined hunt scope and data sources",
+      "Ran exploratory analytics and baselines",
+      "Converted hunts into persistent detections",
+      "Reported findings and tuned alerts"
+    ],
+    "outcomes_metrics": [
+      "Discovered two misconfigured admin accounts",
+      "Built four new identity anomaly detections",
+      "Documented baselines for VPN geolocation alerts"
+    ],
+    "evidence_links": ["hunts/p-bt-04/hunt-report.md"],
+    "reproduction_steps": [
+      "Load the sample Okta and VPN logs",
+      "Run the provided notebooks to compute baselines",
+      "Deploy the Sigma-derived rules to your SIEM"
+    ],
+    "interview_points": [
+      "Hypothesis-driven hunting",
+      "Turning hunts into detections",
+      "Data quality considerations for identity telemetry"
+    ]
+  },
+  {
+    "slug": "p-bt-05",
+    "title": "Incident Response Playoff",
+    "role_category": "Blue Team",
+    "status": "Planned",
+    "executive_summary": "Designing a gamified IR exercise that pits teams against live-fire scenarios with measured MTTR targets.",
+    "scenario_scope": "Simulated ransomware across mixed Windows/Linux estate with cloud workloads.",
+    "responsibilities": [
+      "Author inject timeline and artifacts",
+      "Define scoring tied to MTTR and containment",
+      "Provide post-incident review templates"
+    ],
+    "tools_tech": ["Velociraptor", "Azure Sentinel", "Ansible", "Caldera", "Slack bots"],
+    "architecture_notes": "Exercise lab isolated via virtualization; snapshot/restore enabled for repeatability and safety.",
+    "process_walkthrough": [
+      "Prepare lab images and data sets",
+      "Execute injects via automation scripts",
+      "Score responses and track timelines",
+      "Facilitate post-incident reviews"
+    ],
+    "outcomes_metrics": [
+      "Baseline MTTR benchmarks for ransomware cases",
+      "Standardized after-action reporting",
+      "Improved collaboration runbooks across teams"
+    ],
+    "evidence_links": ["exercises/p-bt-05/ir-playoff.md"],
+    "reproduction_steps": [
+      "Spin up the lab with provided scripts",
+      "Run the inject automation",
+      "Record response times and compare to benchmarks"
+    ],
+    "interview_points": [
+      "Designing safe yet realistic IR exercises",
+      "Metrics that matter beyond MTTR",
+      "Automating injects and resets"
+    ]
+  },
+  {
+    "slug": "p-cs-01",
+    "title": "Cloud Guardrails Blueprint",
+    "role_category": "Cloud Security",
+    "status": "Completed",
+    "executive_summary": "Authored baseline guardrails for AWS, Azure, and GCP covering identity, networking, and data protection.",
+    "scenario_scope": "Greenfield multi-cloud foundation with centralized identity and logging.",
+    "responsibilities": [
+      "Mapped CIS benchmarks to cloud policies",
+      "Built landing zone guardrails",
+      "Published reusable policy-as-code modules"
+    ],
+    "tools_tech": ["Terraform", "AWS Organizations", "Azure Policy", "GCP Organization Policy", "OPA"],
+    "architecture_notes": "Guardrails enforced via org-level policies with exception workflows; logs aggregated into a security account.",
+    "process_walkthrough": [
+      "Defined baseline security controls",
+      "Implemented policies via Terraform modules",
+      "Tested enforcement with exception paths",
+      "Documented runbooks for tenant onboarding"
+    ],
+    "outcomes_metrics": [
+      "Achieved 95% policy coverage for new accounts",
+      "Reduced manual exceptions by introducing approvals",
+      "Centralized audit logging across clouds"
+    ],
+    "evidence_links": ["guardrails/p-cs-01/policies.md"],
+    "reproduction_steps": [
+      "Deploy the org-level Terraform stack",
+      "Onboard a test account/subscription",
+      "Validate policy enforcement and logging"
+    ],
+    "interview_points": [
+      "Balancing guardrails with developer velocity",
+      "Handling exceptions and drift",
+      "Cross-cloud identity alignment"
+    ]
+  },
+  {
+    "slug": "p-cs-02",
+    "title": "Kubernetes Runtime Hardening",
+    "role_category": "Cloud Security",
+    "status": "In Progress",
+    "executive_summary": "Elevating cluster security with PSP replacements, runtime scanning, and managed identities.",
+    "scenario_scope": "EKS and AKS clusters running internal services with GitOps delivery.",
+    "responsibilities": [
+      "Defined baseline policies for pods and namespaces",
+      "Integrated admission controllers and image scanning",
+      "Enabled managed identities for service-to-service auth"
+    ],
+    "tools_tech": ["Kyverno", "Trivy", "OPA Gatekeeper", "IRSA", "Azure AD Workload Identity"],
+    "architecture_notes": "Policy bundles managed via GitOps; scanners run pre-deploy and at runtime; secrets offloaded to cloud KMS.",
+    "process_walkthrough": [
+      "Audited existing cluster settings",
+      "Implemented admission policies",
+      "Added runtime and supply chain scanning",
+      "Tested break-glass scenarios and RBAC controls"
+    ],
+    "outcomes_metrics": [
+      "Blocked privileged pod deployments",
+      "Achieved 100% image scanning coverage",
+      "Improved service identity posture without secrets in pods"
+    ],
+    "evidence_links": ["clusters/p-cs-02/k8s-hardening.md"],
+    "reproduction_steps": [
+      "Apply Kyverno policies via Helm",
+      "Run Trivy scans on images pre-deploy",
+      "Validate IRSA/Workload Identity mappings"
+    ],
+    "interview_points": [
+      "Admission control vs runtime controls",
+      "Identity handling for Kubernetes workloads",
+      "Testing policies without blocking deploys"
+    ]
+  },
+  {
+    "slug": "p-cs-03",
+    "title": "Data Loss Prevention Rollout",
+    "role_category": "Cloud Security",
+    "status": "Completed",
+    "executive_summary": "Implemented DLP controls for SaaS and cloud storage with classification, alerting, and user education.",
+    "scenario_scope": "Microsoft 365, Google Workspace, and S3 buckets storing regulated data.",
+    "responsibilities": [
+      "Classified data with sensitivity labels",
+      "Defined DLP policies for email and storage",
+      "Built user-friendly justifications and overrides"
+    ],
+    "tools_tech": ["Microsoft Purview", "Google DLP", "Amazon Macie", "KMS", "Power Automate"],
+    "architecture_notes": "Centralized DLP events forwarded to SIEM; override workflows log justifications for audit.",
+    "process_walkthrough": [
+      "Mapped data types to labels",
+      "Deployed DLP policies in audit mode",
+      "Educated users and enabled enforcement",
+      "Monitored alerts and tuned policies"
+    ],
+    "outcomes_metrics": [
+      "Cut outbound sensitive emails by 70%",
+      "Tagged 90% of S3 objects with labels",
+      "Captured override justifications for audits"
+    ],
+    "evidence_links": ["policies/p-cs-03/dlp-rollout.md"],
+    "reproduction_steps": [
+      "Enable labels in M365 and Workspace",
+      "Deploy DLP policies in audit then enforce",
+      "Review Macie findings and SIEM alerts"
+    ],
+    "interview_points": [
+      "Balancing user productivity with DLP",
+      "Cross-platform labeling consistency",
+      "Handling false positives gracefully"
+    ]
+  },
+  {
+    "slug": "p-cs-04",
+    "title": "Secrets Management Unification",
+    "role_category": "Cloud Security",
+    "status": "In Progress",
+    "executive_summary": "Consolidating secrets storage across clouds and CI/CD with automated rotation and least-privilege access.",
+    "scenario_scope": "AWS, Azure, and GitHub Actions workloads consuming shared secrets.",
+    "responsibilities": [
+      "Inventory existing secrets and owners",
+      "Migrated credentials into managed vaults",
+      "Automated rotation and audit logging"
+    ],
+    "tools_tech": ["HashiCorp Vault", "AWS Secrets Manager", "Azure Key Vault", "GitHub OIDC", "Terraform"],
+    "architecture_notes": "Federated OIDC access for CI; apps retrieve secrets via short-lived tokens with per-service namespaces.",
+    "process_walkthrough": [
+      "Mapped secrets to services and lifecycle",
+      "Provisioned vault namespaces and policies",
+      "Implemented rotation jobs and alerting",
+      "Removed plaintext secrets from repos"
+    ],
+    "outcomes_metrics": [
+      "Eliminated long-lived CI secrets",
+      "Rotated 100% of high-risk credentials",
+      "Added audit trails and owner metadata"
+    ],
+    "evidence_links": ["runbooks/p-cs-04/secrets-unification.md"],
+    "reproduction_steps": [
+      "Deploy Vault with the provided helm chart",
+      "Configure GitHub OIDC roles for CI",
+      "Migrate application secrets and test rotation"
+    ],
+    "interview_points": [
+      "Choosing between cloud-native and Vault",
+      "Designing least privilege for secrets",
+      "Automating rotation without downtime"
+    ]
+  },
+  {
+    "slug": "p-cs-05",
+    "title": "Cloud Security Monitoring Fabric",
+    "role_category": "Cloud Security",
+    "status": "Planned",
+    "executive_summary": "Designing unified cloud monitoring with event hubs, schema normalization, and golden signals for security.",
+    "scenario_scope": "Multi-cloud log aggregation with detections for identity, network, and data access.",
+    "responsibilities": [
+      "Define canonical schemas for audit logs",
+      "Build ingestion pipelines with buffering",
+      "Publish golden signals dashboards"
+    ],
+    "tools_tech": ["Event Hub", "Kinesis", "Pub/Sub", "Fluent Bit", "BigQuery"],
+    "architecture_notes": "Hub-and-spoke log ingestion with buffering; normalization via stream processors; storage in data lake with tiered retention.",
+    "process_walkthrough": [
+      "Survey cloud audit sources",
+      "Implement streaming normalization",
+      "Publish metrics and dashboards",
+      "Pilot detections and alert routing"
+    ],
+    "outcomes_metrics": [
+      "Unified schema for 12 log types",
+      "Reduced ingestion failures via buffering",
+      "Published actionable golden signals"
+    ],
+    "evidence_links": ["designs/p-cs-05/monitoring-fabric.md"],
+    "reproduction_steps": [
+      "Deploy the event hub stack",
+      "Connect cloud audit sources",
+      "Run sample normalization jobs"
+    ],
+    "interview_points": [
+      "Why normalization matters for multi-cloud",
+      "Buffering strategies for log spikes",
+      "Golden signals for security telemetry"
+    ]
+  },
+  {
+    "slug": "p-devops-01",
+    "title": "GitOps Platform Build",
+    "role_category": "DevOps / SRE",
+    "status": "Completed",
+    "executive_summary": "Built GitOps delivery for microservices with policy checks, progressive delivery, and secrets handling.",
+    "scenario_scope": "Kubernetes clusters with Argo CD and progressive delivery for internal APIs.",
+    "responsibilities": [
+      "Implemented repo layout and templates",
+      "Added policy checks and image attestations",
+      "Enabled blue/green and canary strategies"
+    ],
+    "tools_tech": ["Argo CD", "Argo Rollouts", "Kyverno", "Cosign", "Helm"],
+    "architecture_notes": "App-of-apps pattern with per-env overlays; admission policies enforce signed images; metrics drive rollout gates.",
+    "process_walkthrough": [
+      "Structured repos for apps and ops",
+      "Configured Argo CD projects and RBAC",
+      "Enabled rollout strategies with metrics",
+      "Documented secrets patterns with external vaults"
+    ],
+    "outcomes_metrics": [
+      "Reduced deployment lead time by 50%",
+      "Achieved 100% signed image enforcement",
+      "Improved rollback time via Git history"
+    ],
+    "evidence_links": ["platform/p-devops-01/gitops-build.md"],
+    "reproduction_steps": [
+      "Install Argo CD and Rollouts via Helm",
+      "Apply the app-of-apps manifests",
+      "Trigger a canary and monitor metrics"
+    ],
+    "interview_points": [
+      "Structuring GitOps repos",
+      "Progressive delivery patterns",
+      "Policy checks in the delivery pipeline"
+    ]
+  },
+  {
+    "slug": "p-devops-02",
+    "title": "Resilience Testing Program",
+    "role_category": "DevOps / SRE",
+    "status": "In Progress",
+    "executive_summary": "Standing up a resilience testing program with chaos experiments, SLOs, and automated rollbacks.",
+    "scenario_scope": "Microservices on Kubernetes with stateful services in managed databases.",
+    "responsibilities": [
+      "Defined SLOs and error budgets",
+      "Authored chaos experiments for dependencies",
+      "Integrated rollback automation based on KPIs"
+    ],
+    "tools_tech": ["LitmusChaos", "Grafana", "Prometheus", "Fluent Bit", "Terraform"],
+    "architecture_notes": "Experiments executed in non-prod first; metrics exported to Grafana; alerting tied to error budgets.",
+    "process_walkthrough": [
+      "Capture service level indicators",
+      "Design chaos scenarios for dependencies",
+      "Automate rollbacks when SLOs breach",
+      "Review experiments in weekly ops council"
+    ],
+    "outcomes_metrics": [
+      "Established SLOs for five services",
+      "Reduced outage MTTR via automated rollbacks",
+      "Documented playbooks for repeatable chaos runs"
+    ],
+    "evidence_links": ["resilience/p-devops-02/chaos-program.md"],
+    "reproduction_steps": [
+      "Deploy LitmusChaos and install CRDs",
+      "Run sample experiments against staging",
+      "Monitor SLO dashboards during tests"
+    ],
+    "interview_points": [
+      "Running chaos safely",
+      "Choosing SLOs and SLIs",
+      "Automating rollback decisions"
+    ]
+  },
+  {
+    "slug": "p-devops-03",
+    "title": "Platform Observability Mesh",
+    "role_category": "DevOps / SRE",
+    "status": "Completed",
+    "executive_summary": "Unified logs, metrics, and traces with opinionated defaults and developer self-service dashboards.",
+    "scenario_scope": "Multi-cluster setup with shared observability stack and tenant isolation.",
+    "responsibilities": [
+      "Deployed distributed tracing",
+      "Normalized logs and metrics schemas",
+      "Built golden signal dashboards"
+    ],
+    "tools_tech": ["OpenTelemetry", "Tempo", "Loki", "Prometheus", "Grafana"],
+    "architecture_notes": "Control plane cluster hosts observability stack; tenants onboard via Helm charts with scoped credentials.",
+    "process_walkthrough": [
+      "Set up OTel collectors and exporters",
+      "Enabled tracing libraries for services",
+      "Created reusable dashboard templates",
+      "Documented tenant onboarding steps"
+    ],
+    "outcomes_metrics": [
+      "Achieved trace coverage for 90% of services",
+      "Standardized log labels across clusters",
+      "Reduced triage time via golden dashboards"
+    ],
+    "evidence_links": ["observability/p-devops-03/mesh.md"],
+    "reproduction_steps": [
+      "Deploy the observability stack via Helmfile",
+      "Install OTel collectors per cluster",
+      "Instrument sample services and verify dashboards"
+    ],
+    "interview_points": [
+      "Multi-tenant observability design",
+      "Tradeoffs between push vs pull metrics",
+      "Rollout strategies for tracing"
+    ]
+  },
+  {
+    "slug": "p-devops-04",
+    "title": "Cost Optimization Lab",
+    "role_category": "DevOps / SRE",
+    "status": "Completed",
+    "executive_summary": "Built a lab to evaluate autoscaling, rightsizing, and storage lifecycle policies with measurable savings.",
+    "scenario_scope": "Workloads across AWS and Azure with mixed batch and web services.",
+    "responsibilities": [
+      "Benchmarked autoscaling policies",
+      "Evaluated storage lifecycle rules",
+      "Modeled savings scenarios"
+    ],
+    "tools_tech": ["AWS Compute Optimizer", "Azure Advisor", "Grafana", "Karpenter", "FinOps dashboards"],
+    "architecture_notes": "Lab workloads tagged for cost tracking; dashboards aggregate costs by service and environment.",
+    "process_walkthrough": [
+      "Instrument workloads with cost tags",
+      "Run autoscaling experiments",
+      "Apply lifecycle rules to storage",
+      "Summarize savings and recommendations"
+    ],
+    "outcomes_metrics": [
+      "Identified 25% compute savings",
+      "Reduced storage spend via lifecycle rules",
+      "Produced FinOps-ready dashboards"
+    ],
+    "evidence_links": ["finops/p-devops-04/cost-lab.md"],
+    "reproduction_steps": [
+      "Deploy sample workloads with tags",
+      "Run autoscaling scenarios",
+      "Review cost dashboards and recommendations"
+    ],
+    "interview_points": [
+      "Balancing performance and cost",
+      "Autoscaling strategies across clouds",
+      "Building FinOps dashboards"
+    ]
+  },
+  {
+    "slug": "p-devops-05",
+    "title": "Reliability Runbooks",
+    "role_category": "DevOps / SRE",
+    "status": "Planned",
+    "executive_summary": "Creating standardized runbooks for on-call with graphs, queries, and decision trees per service.",
+    "scenario_scope": "Critical services spanning APIs, queues, and databases across regions.",
+    "responsibilities": [
+      "Document service overviews and owners",
+      "Provide quick diagnostics and graphs",
+      "Define escalation and rollback paths"
+    ],
+    "tools_tech": ["Grafana", "PagerDuty", "RunWhen", "Terraform", "Markdown"],
+    "architecture_notes": "Runbooks stored with code; linked dashboards auto-open with relevant variables for incidents.",
+    "process_walkthrough": [
+      "Interview service owners",
+      "Document golden signals and alerts",
+      "Publish runbooks with decision trees",
+      "Pilot with on-call rotations"
+    ],
+    "outcomes_metrics": [
+      "Faster incident triage",
+      "Consistent escalation paths",
+      "Reduced toil via scripted diagnostics"
+    ],
+    "evidence_links": ["runbooks/p-devops-05/reliability-runbooks.md"],
+    "reproduction_steps": [
+      "Clone the runbooks repo",
+      "Open service pages in Grafana",
+      "Test the diagnostic scripts"
+    ],
+    "interview_points": [
+      "Designing actionable runbooks",
+      "Keeping runbooks versioned with code",
+      "Measuring runbook effectiveness"
+    ]
+  },
+  {
+    "slug": "p-grc-01",
+    "title": "ISO 27001 Readiness",
+    "role_category": "GRC",
+    "status": "Completed",
+    "executive_summary": "Prepared an ISO 27001 readiness pack covering scope, controls, and evidence mapping.",
+    "scenario_scope": "SaaS platform with multi-tenant architecture across two regions.",
+    "responsibilities": [
+      "Defined ISMS scope",
+      "Mapped Annex A controls",
+      "Gathered evidence with owners"
+    ],
+    "tools_tech": ["Confluence", "Jira", "Drata", "Excel", "PowerPoint"],
+    "architecture_notes": "Evidence library stored in versioned folders; control owners tracked via ticketing with due dates.",
+    "process_walkthrough": [
+      "Kickoff with leadership",
+      "Run gap assessment",
+      "Assign control owners",
+      "Compile evidence and risk register"
+    ],
+    "outcomes_metrics": [
+      "Closed 75% of gaps ahead of audit",
+      "Documented clear scope statement",
+      "Streamlined evidence collection workflows"
+    ],
+    "evidence_links": ["grc/p-grc-01/iso-readiness.md"],
+    "reproduction_steps": [
+      "Review the scope document",
+      "Follow the gap assessment checklist",
+      "Collect evidence using the templates"
+    ],
+    "interview_points": [
+      "Scoping ISMS boundaries",
+      "Tracking control ownership",
+      "Common pitfalls before certification"
+    ]
+  },
+  {
+    "slug": "p-grc-02",
+    "title": "Risk Register Automation",
+    "role_category": "GRC",
+    "status": "In Progress",
+    "executive_summary": "Automating risk register updates with workflows for scoring, approvals, and reporting dashboards.",
+    "scenario_scope": "Enterprise risk program spanning product, infra, and vendor risks.",
+    "responsibilities": [
+      "Defined risk scoring model",
+      "Built intake workflow",
+      "Published reporting dashboards"
+    ],
+    "tools_tech": ["Power Automate", "Power BI", "SharePoint", "Python", "SQL"],
+    "architecture_notes": "Risk data stored in SQL backend with API; workflows enforce approvals; dashboards pull nightly snapshots.",
+    "process_walkthrough": [
+      "Design intake forms",
+      "Implement scoring automation",
+      "Notify owners for reviews",
+      "Publish dashboards to leadership"
+    ],
+    "outcomes_metrics": [
+      "Reduced manual updates by 60%",
+      "Improved visibility into high risks",
+      "Automated reminders for reviews"
+    ],
+    "evidence_links": ["grc/p-grc-02/risk-automation.md"],
+    "reproduction_steps": [
+      "Deploy the SQL schema",
+      "Set up Power Automate flows",
+      "Publish the Power BI dashboard"
+    ],
+    "interview_points": [
+      "Designing usable risk workflows",
+      "Choosing scoring models",
+      "Reporting risk to leadership"
+    ]
+  },
+  {
+    "slug": "p-grc-03",
+    "title": "Vendor Security Review",
+    "role_category": "GRC",
+    "status": "Completed",
+    "executive_summary": "Standardized vendor assessments with questionnaires, evidence collection, and remediation tracking.",
+    "scenario_scope": "Third-party SaaS providers handling customer data across regions.",
+    "responsibilities": [
+      "Authored questionnaire templates",
+      "Built scoring rubric",
+      "Tracked remediation tasks"
+    ],
+    "tools_tech": ["OneTrust", "Jira", "SharePoint", "Excel", "PowerPoint"],
+    "architecture_notes": "Assessments stored in central library; remediation tasks synced to Jira with due dates and owners.",
+    "process_walkthrough": [
+      "Collect vendor responses",
+      "Score controls and gaps",
+      "Assign remediation tasks",
+      "Provide summary to stakeholders"
+    ],
+    "outcomes_metrics": [
+      "Reduced assessment turnaround time",
+      "Improved consistency across vendors",
+      "Clear audit trail for decisions"
+    ],
+    "evidence_links": ["grc/p-grc-03/vendor-review.md"],
+    "reproduction_steps": [
+      "Send the standard questionnaire",
+      "Score responses using the rubric",
+      "Track remediation in Jira"
+    ],
+    "interview_points": [
+      "Balancing depth vs speed in assessments",
+      "Scoring approaches for vendor risk",
+      "Handling partial responses"
+    ]
+  },
+  {
+    "slug": "p-grc-04",
+    "title": "Policy Library Refresh",
+    "role_category": "GRC",
+    "status": "In Progress",
+    "executive_summary": "Refreshing the security policy library with versioning, owner accountability, and crosswalks to frameworks.",
+    "scenario_scope": "Corporate policies covering data, access, change management, and incident response.",
+    "responsibilities": [
+      "Catalog policies and owners",
+      "Map policies to frameworks",
+      "Publish versioned updates"
+    ],
+    "tools_tech": ["Git", "Markdown", "Confluence", "Lucidchart", "Jira"],
+    "architecture_notes": "Policies stored in Git with semantic versioning; publication handled via static site for easy access.",
+    "process_walkthrough": [
+      "Inventory existing policies",
+      "Crosswalk to CIS/NIST",
+      "Update documents with owners",
+      "Publish and collect acknowledgments"
+    ],
+    "outcomes_metrics": [
+      "Clear ownership per policy",
+      "Crosswalks for auditors",
+      "Versioned history of changes"
+    ],
+    "evidence_links": ["policies/p-grc-04/policy-library.md"],
+    "reproduction_steps": [
+      "Clone the policy repo",
+      "Review the crosswalk tables",
+      "Publish updates via static site generator"
+    ],
+    "interview_points": [
+      "Version control for policies",
+      "Mapping to frameworks",
+      "Communicating policy changes"
+    ]
+  },
+  {
+    "slug": "p-grc-05",
+    "title": "BCP/DR Program",
+    "role_category": "GRC",
+    "status": "Planned",
+    "executive_summary": "Building a business continuity and disaster recovery program with impact analysis and test cycles.",
+    "scenario_scope": "Critical customer-facing services with dependencies on cloud infrastructure and third parties.",
+    "responsibilities": [
+      "Conduct business impact analysis",
+      "Define RTO/RPO targets",
+      "Schedule tabletop and technical tests"
+    ],
+    "tools_tech": ["BIA templates", "Runbooks", "Tabletop playbooks", "Terraform", "AWS/Azure"],
+    "architecture_notes": "BCP artifacts stored centrally; DR tests follow standard scenarios with evidence capture for auditors.",
+    "process_walkthrough": [
+      "Interview service owners for BIA",
+      "Document dependencies and targets",
+      "Plan and execute DR tests",
+      "Capture findings and improvements"
+    ],
+    "outcomes_metrics": [
+      "Defined RTO/RPO per service",
+      "Scheduled quarterly DR tests",
+      "Improved readiness documentation"
+    ],
+    "evidence_links": ["dr/p-grc-05/bcp-program.md"],
+    "reproduction_steps": [
+      "Run the BIA workshop",
+      "Document service dependencies",
+      "Execute the DR test plan"
+    ],
+    "interview_points": [
+      "Structuring BCP/DR programs",
+      "Measuring readiness",
+      "Communicating with stakeholders"
+    ]
+  }
+]
