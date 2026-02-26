@@ -112,7 +112,7 @@ def parse_markdown_sections(content: str) -> ReadmeDocument:
 def map_section_heading(old_heading: str) -> str | None:
     normalized = normalize_heading_key(old_heading)
     for token, mapped in SECTION_MAPPING.items():
-        if token in normalized:
+        if re.search(r'\b' + re.escape(token) + r'\b', normalized):
             return mapped
     return None
 
