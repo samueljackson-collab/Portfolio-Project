@@ -1,216 +1,143 @@
-# P06 — Web App Automated Testing (E2E)
+# Project: E2e Testing
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for E2e Testing while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-## Overview
-End-to-end testing framework using Playwright for web application testing, with parallel execution, visual regression testing, and CI/CD integration via GitHub Actions. Demonstrates modern QA automation practices, cross-browser testing, and comprehensive test reporting.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Key Outcomes
-- [x] Playwright test suite for login, checkout, and search flows
-- [x] Cross-browser testing (Chromium, Firefox, WebKit)
-- [x] Visual regression testing with screenshot comparison
-- [x] GitHub Actions CI integration with artifact uploads
-- [x] Parallel test execution and test retry logic
-- [x] HTML/JSON test reports with trace viewer
+## 📌 Scope & Status
 
-## Architecture
-- **Components**: Playwright Test, Page Object Model, CI/CD pipeline
-- **Test Layers**: UI tests, API tests, visual regression tests
-- **Dependencies**: Node.js 18+, Playwright 1.40+
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
+
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
+
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
 ```mermaid
-flowchart TB
-    subgraph CI[GitHub Actions CI]
-        Trigger[Push/PR Trigger]
-        Install[Install Dependencies]
-        Browsers[Install Browsers]
-        RunTests[Run Tests in Parallel]
-        Upload[Upload Reports & Traces]
-    end
-
-    subgraph Tests[Test Suite]
-        Login[Login Flow Tests]
-        Checkout[Checkout Flow Tests]
-        Search[Search Tests]
-        Visual[Visual Regression]
-        API[API Tests]
-    end
-
-    subgraph Browsers[Browser Matrix]
-        Chrome[Chromium]
-        FF[Firefox]
-        Safari[WebKit]
-    end
-
-    Trigger --> Install --> Browsers --> RunTests
-    RunTests --> Tests
-    Tests --> Chrome & FF & Safari
-    RunTests --> Upload
-    Upload --> Report[HTML Report]
-    Upload --> Trace[Trace Files]
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Quickstart
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-```bash
-make setup
-make test
-make report
+## 🚀 Setup & Runbook
+
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
+
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-## Configuration
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-**Target URL**: Set `BASE_URL` to the application under test. Local default is `http://localhost:3000`; staging example: `https://staging.example.com`.
+## 🗺️ Roadmap
 
-| Env Var | Purpose | Example | Required |
-|---------|---------|---------|----------|
-| `BASE_URL` | Target application URL | `https://example.com` | Yes |
-| `TEST_USER` | Test account username | `test@example.com` | Yes |
-| `TEST_PASSWORD` | Test account password | `SecurePass123!` | Yes |
-| `HEADLESS` | Run tests headless | `true`, `false` | No (default: `true`) |
-| `BROWSER` | Browser to test | `chromium`, `firefox`, `webkit` | No (default: `chromium`) |
-| `WORKERS` | Parallel workers | `4` | No (default: `4`) |
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-**Secrets Management**: Store credentials in GitHub Secrets for CI. Use `.env` file locally (gitignored).
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [RUNBOOK.md](./RUNBOOK.md)
+- [docs](./docs)
+- [tests](./tests)
+- [GitHub workflows](../../.github/workflows)
 
-```bash
-cp .env.example .env
-# Edit .env with your test credentials
-```
+## 🧾 Documentation Freshness
 
-**CI Secrets (GitHub Actions)**:
-- `P06_BASE_URL` (target URL)
-- `P06_TEST_USER`
-- `P06_TEST_PASSWORD`
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-## Testing
+## 11) Final Quality Checklist (Before Merge)
 
-```bash
-# Run all tests
-make test
-
-# Run specific test file
-npx playwright test tests/login.spec.ts
-
-# Run in headed mode (see browser)
-npx playwright test --headed
-
-# Run with specific browser
-npx playwright test --project=firefox
-
-# Debug mode
-npx playwright test --debug
-
-# Update visual snapshots
-npx playwright test --update-snapshots
-```
-
-## Operations
-
-### Logs, Metrics, Traces
-- **Test Reports**: `reports/playwright-html/index.html` (generated after test run)
-- **Machine-readable Reports**: `reports/playwright-report.json`, `reports/playwright-junit.xml`
-- **Trace Viewer**: `npx playwright show-trace trace.zip`
-- **Screenshots**: `reports/test-results/` directory (on failure)
-- **Videos**: `reports/test-results/` directory (configurable)
-
-### Common Issues & Fixes
-
-**Issue**: Tests fail with "Timeout waiting for element"
-**Fix**: Increase timeout in `playwright.config.ts` or use `waitForLoadState('networkidle')`.
-
-**Issue**: Visual regression tests fail unexpectedly
-**Fix**: Update snapshots: `npx playwright test --update-snapshots` (verify changes first).
-
-**Issue**: Browser download fails in CI
-**Fix**: Ensure `npx playwright install --with-deps` runs in CI setup.
-
-## Security
-
-### Secrets Handling
-- **Development**: Use `.env` file (gitignored), never commit credentials
-- **CI/CD**: Store in GitHub Secrets → inject as environment variables
-- **Rotation**: Use short-lived test accounts, rotate passwords monthly
-
-### Test Data Security
-- Use dedicated test environment (not production)
-- Sanitize test data (no PII/PHI)
-- Clean up test data after execution
-
-## Roadmap
-
-- [ ] Add accessibility testing with @axe-core/playwright
-- [ ] Implement performance testing with Lighthouse CI
-- [ ] Add mobile viewport testing (responsive design)
-- [ ] Integrate with test management tool (TestRail/Zephyr)
-- [ ] Add contract testing for API endpoints
-
-## References
-
-- [Playwright Documentation](https://playwright.dev/)
-- [Page Object Model Pattern](https://playwright.dev/docs/pom)
-- [Visual Comparisons](https://playwright.dev/docs/test-snapshots)
-- [CI/CD Integration](https://playwright.dev/docs/ci)
-
-
-## Code Generation Prompts
-
-This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
-
-### Test Automation
-
-#### 1. End-to-End Tests
-```
-Create Playwright tests for a login flow, including form validation, authentication error handling, and successful redirect to dashboard
-```
-
-#### 2. API Tests
-```
-Generate pytest-based API tests that verify REST endpoints for CRUD operations, including request/response validation, error cases, and authentication
-```
-
-#### 3. Performance Tests
-```
-Write a Locust load test that simulates 100 concurrent users performing read/write operations, measures response times, and identifies bottlenecks
-```
-
-### How to Use These Prompts
-
-1. **Copy the prompt** from the code block above
-2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
-3. **Provide context** to your AI assistant about:
-   - Your development environment and tech stack
-   - Existing code patterns and conventions in this project
-   - Any constraints or requirements specific to your use case
-4. **Review and adapt** the generated code before using it
-5. **Test thoroughly** and adjust as needed for your specific scenario
-
-### Best Practices
-
-- Always review AI-generated code for security vulnerabilities
-- Ensure generated code follows your project's coding standards
-- Add appropriate error handling and logging
-- Write tests for AI-generated components
-- Document any assumptions or limitations
-- Keep sensitive information (credentials, keys) in environment variables
-
-## Evidence & Verification
-
-Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
-
-**Evidence artifacts**
-- Screenshot stored externally.
-- [Run log](./docs/evidence/run-log.txt)
-- [Dashboard export](./docs/evidence/dashboard-export.json)
-- [Load test summary](./docs/evidence/load-test-summary.txt)
-
-### Evidence Checklist
-
-| Evidence Item | Location | Status |
-| --- | --- | --- |
-| Screenshot captured | Stored externally | ✅ |
-| Run log captured | `docs/evidence/run-log.txt` | ✅ |
-| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
-| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

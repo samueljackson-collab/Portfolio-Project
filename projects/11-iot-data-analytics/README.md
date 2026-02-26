@@ -1,489 +1,145 @@
-# Project 11: IoT Data Ingestion & Analytics
+# Project: Iot Data Analytics
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Iot Data Analytics while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-## Live Deployment
-| Detail | Value |
-| --- | --- |
-| Live URL | `https://11-iot-data-analytics.staging.portfolio.example.com` |
-| DNS | `11-iot-data-analytics.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
-| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `infrastructure/` for this project) |
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-### Deployment automation
-- **CI/CD:** GitHub Actions [`/.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`/.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
-- **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
+## 📌 Scope & Status
 
-### Monitoring
-- **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)
-- **Grafana:** `https://grafana.staging.portfolio.example.com` (dashboard JSON: `grafana/dashboards/*.json`)
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-### Live deployment screenshots
-Live deployment dashboard screenshot stored externally.
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
-## 📊 Portfolio Status Board
-
-🟢 Done · 🟠 In Progress · 🔵 Planned
-
-**Current Status:** 🟢 Done (Implemented)
-
-
-Production-grade IoT telemetry platform with MQTT ingestion, TimescaleDB time-series storage, real-time analytics, and anomaly detection.
-
-## Overview
-
-This project implements a complete IoT data pipeline that:
-- Ingests telemetry data from IoT devices via MQTT protocol
-- Stores time-series data in TimescaleDB (PostgreSQL extension)
-- Provides real-time analytics and anomaly detection
-- Visualizes metrics with Grafana dashboards
-- Scales to handle thousands of devices
-- Supports batch processing with configurable intervals
-
-## Architecture
-
-```
-┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│  IoT Devices │─────▶│   MQTT       │─────▶│   MQTT       │
-│  (Simulated) │      │   Broker     │      │  Processor   │
-└──────────────┘      │  (Mosquitto) │      └──────────────┘
-                      └──────────────┘             │
-                                                   ▼
-                      ┌──────────────┐      ┌──────────────┐
-                      │   Grafana    │◀────│ TimescaleDB  │
-                      │  Dashboards  │      │  (PostgreSQL)│
-                      └──────────────┘      └──────────────┘
-                             │
-                             ▼
-                      ┌──────────────┐
-                      │  Prometheus  │
-                      │  (Metrics)   │
-                      └──────────────┘
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Tech Stack
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-- **MQTT**: Eclipse Mosquitto 2.0 message broker
-- **TimescaleDB**: Time-series database (PostgreSQL 15 + TimescaleDB extension)
-- **Python**: Device simulator, MQTT processor, analytics engine
-- **Grafana**: Real-time dashboards and visualizations
-- **Prometheus**: Infrastructure monitoring
-- **Docker Compose**: Local development stack
+## 🚀 Setup & Runbook
 
-## Features
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-### Device Simulator
-- Simulates multiple IoT devices publishing telemetry
-- Configurable device count and publish interval
-- Generates realistic sensor data (temperature, humidity, battery)
-- MQTT v3.1.1 protocol support
-- Automatic reconnection on network failures
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
 
-### MQTT Processor
-- Subscribes to MQTT topics and processes messages
-- Batch insertion into TimescaleDB for performance
-- Graceful shutdown with message flush
-- Error handling and retry logic
-- Statistics tracking (messages processed, failures)
-- Environment-based configuration
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
 
-### Analytics Engine
-- Real-time device statistics (avg, min, max, stddev)
-- Anomaly detection using z-score method
-- Low battery detection and alerting
-- Inactive device monitoring
-- Time-series queries with customizable intervals
-- Aggregated metrics across all devices
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
 
-### TimescaleDB Integration
-- Automatic hypertable creation for time-series data
-- Optimized indexes for fast queries
-- Continuous aggregates support
-- Data retention policies
-- Compression for historical data
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
 
-## Quick Start
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
 
-### 1. Start the Full Stack
+## 🔐 Security, Risk & Reliability
 
-```bash
-# Start all services (MQTT, TimescaleDB, Grafana, Prometheus)
-docker-compose up -d
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
 
-# Verify all services are running
-docker-compose ps
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
 
-# Check MQTT broker
-docker logs mosquitto
+## 🔄 Delivery & Observability
 
-# Check TimescaleDB
-docker logs timescaledb
-
-# Check processor
-docker logs iot-processor
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-### 2. Access Dashboards
-
-- **Grafana**: http://localhost:3000 (admin/admin)
-- **Prometheus**: http://localhost:9090
-
-### 3. Monitor Device Data
-
-```bash
-# Watch processor logs
-docker logs -f iot-processor
-
-# Check TimescaleDB
-docker exec -it timescaledb psql -U iot -d iot_analytics
-
-# Run analytics queries
-SELECT * FROM device_telemetry ORDER BY time DESC LIMIT 10;
-
-# Get device statistics
-SELECT device_id, COUNT(*), AVG(temperature), AVG(battery)
-FROM device_telemetry
-WHERE time > NOW() - INTERVAL '1 hour'
-GROUP BY device_id;
-```
-
-### 4. Run Analytics
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run analytics script
-python src/analytics.py
-
-# This will display:
-# - All devices summary
-# - Temperature anomalies
-# - Low battery devices
-```
-
-## Manual Testing
-
-### Publish Test Message
-
-```bash
-# Install mosquitto clients
-apt-get install mosquitto-clients  # Ubuntu/Debian
-brew install mosquitto              # macOS
-
-# Publish a test message
-mosquitto_pub -h localhost -t portfolio/telemetry -m '{
-  "device_id": "test-device-001",
-  "firmware": "1.0.0",
-  "temperature": 25.5,
-  "humidity": 60.0,
-  "battery": 85.0,
-  "timestamp": 1234567890
-}'
-
-# Subscribe to see messages
-mosquitto_sub -h localhost -t portfolio/telemetry
-```
-
-### Run Device Simulator Locally
-
-```bash
-# Simulate 5 devices publishing every 2 seconds
-python src/device_simulator.py --device-count 5 --interval 2
-
-# Custom configuration
-python src/device_simulator.py \
-  --device-count 20 \
-  --interval 1 \
-  --broker localhost \
-  --topic portfolio/telemetry
-```
-
-## Analytics Queries
-
-### Device Statistics
-
-```python
-from src.analytics import IoTAnalytics
-
-analytics = IoTAnalytics({
-    'host': 'localhost',
-    'port': 5432,
-    'database': 'iot_analytics',
-    'user': 'iot',
-    'password': 'iot_password'
-})
-
-# Get latest readings
-latest = analytics.get_device_latest_readings('device-001')
-
-# Get 24-hour statistics
-stats = analytics.get_device_statistics('device-001', hours=24)
-
-# Detect anomalies
-anomalies = analytics.detect_temperature_anomalies(threshold_stddev=2.0)
-
-# Find low battery devices
-low_battery = analytics.detect_low_battery_devices(threshold=20.0)
-```
-
-### Time-Series Queries
-
-```sql
--- Temperature trends (5-minute buckets)
-SELECT
-    time_bucket('5 minutes', time) AS bucket,
-    device_id,
-    AVG(temperature) as avg_temp,
-    MAX(temperature) as max_temp,
-    MIN(temperature) as min_temp
-FROM device_telemetry
-WHERE time > NOW() - INTERVAL '24 hours'
-GROUP BY bucket, device_id
-ORDER BY bucket DESC;
-
--- Device health summary
-SELECT
-    device_id,
-    MAX(time) as last_seen,
-    COUNT(*) as message_count,
-    AVG(battery) as avg_battery,
-    MIN(battery) as min_battery
-FROM device_telemetry
-WHERE time > NOW() - INTERVAL '1 hour'
-GROUP BY device_id
-ORDER BY min_battery ASC;
-
--- Anomaly detection
-WITH stats AS (
-    SELECT
-        device_id,
-        AVG(temperature) as mean,
-        STDDEV(temperature) as stddev
-    FROM device_telemetry
-    WHERE time > NOW() - INTERVAL '24 hours'
-    GROUP BY device_id
-)
-SELECT t.*, s.mean, s.stddev,
-       ABS(t.temperature - s.mean) / s.stddev as z_score
-FROM device_telemetry t
-JOIN stats s ON t.device_id = s.device_id
-WHERE ABS(t.temperature - s.mean) > 2 * s.stddev
-ORDER BY time DESC;
-```
-
-## Configuration
-
-### Environment Variables
-
-```bash
-# MQTT Configuration
-MQTT_BROKER=localhost
-MQTT_PORT=1883
-MQTT_TOPIC=portfolio/telemetry
-
-# PostgreSQL/TimescaleDB Configuration
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=iot_analytics
-POSTGRES_USER=iot
-POSTGRES_PASSWORD=iot_password
-
-# Device Simulator
-DEVICE_COUNT=10
-INTERVAL=5
-```
-
-### Docker Compose Customization
-
-```yaml
-# Increase device simulator scale
-device-simulator:
-  environment:
-    DEVICE_COUNT: 50  # More devices
-    INTERVAL: 2       # Faster publishing
-
-# Adjust processor batch size
-iot-processor:
-  environment:
-    BATCH_SIZE: 200   # Larger batches
-```
-
-## Performance
-
-- **Ingestion Rate**: 10,000+ messages/second
-- **Query Performance**: Sub-second for 24-hour aggregations
-- **Storage**: ~100 bytes per message (compressed)
-- **Scalability**: Tested with 1,000 simulated devices
-
-## Monitoring
-
-### Grafana Dashboards
-
-Pre-configured dashboards include:
-- Device overview (active devices, message rates)
-- Temperature trends by device
-- Battery levels and alerts
-- Humidity distribution
-- System health (MQTT broker, database)
-
-### Prometheus Metrics
-
-Exported metrics:
-- Message processing rate
-- Database write latency
-- Active device count
-- Error rates
-
-## Troubleshooting
-
-### MQTT Connection Issues
-
-```bash
-# Check broker is running
-docker logs mosquitto
-
-# Test connection
-mosquitto_pub -h localhost -t test -m "hello"
-
-# Check port is open
-telnet localhost 1883
-```
-
-### Database Issues
-
-```bash
-# Check TimescaleDB logs
-docker logs timescaledb
-
-# Connect to database
-docker exec -it timescaledb psql -U iot -d iot_analytics
-
-# Check table exists
-\dt
-\d device_telemetry
-
-# Verify hypertable
-SELECT * FROM timescaledb_information.hypertables;
-```
-
-### Processor Not Receiving Messages
-
-```bash
-# Check processor logs
-docker logs iot-processor
-
-# Verify MQTT subscription
-mosquitto_sub -h localhost -t portfolio/telemetry
-
-# Check database connectivity
-docker exec -it iot-processor python -c "import psycopg2; psycopg2.connect(host='timescaledb', user='iot', password='iot_password', database='iot_analytics')"
-```
-
-## AWS IoT Core Integration
-
-For production deployment with AWS IoT Core:
-
-1. Create IoT Thing and certificates
-2. Configure IoT Rules to forward to Kinesis
-3. Use Kinesis Firehose to batch write to TimescaleDB
-4. Set up CloudWatch alarms for device health
-
-See `infrastructure/` directory for Terraform templates.
-
-## Testing
-
-```bash
-# Run unit tests
-pytest tests/ -v
-
-# Run with coverage
-pytest tests/ --cov=src --cov-report=html
-
-# Test database connection
-python -c "from src.analytics import IoTAnalytics; IoTAnalytics({'host':'localhost','port':5432,'database':'iot_analytics','user':'iot','password':'iot_password'})"
-```
-
-## Cleanup
-
-```bash
-# Stop all services
-docker-compose down
-
-# Remove volumes (deletes all data)
-docker-compose down -v
-
-# Remove all containers and networks
-docker-compose down --remove-orphans
-```
-
-## Production Considerations
-
-1. **Security**: Enable MQTT authentication (TLS, username/password)
-2. **Scaling**: Use AWS IoT Core for cloud-scale device management
-3. **Data Retention**: Configure TimescaleDB retention policies
-4. **High Availability**: Deploy TimescaleDB in HA mode
-5. **Monitoring**: Set up alerts for device offline, low battery
-6. **Backup**: Regular PostgreSQL backups and point-in-time recovery
-
-## Evidence (2026-01-21)
-
-### Infrastructure
-- Terraform deployment attempt log: `evidence/2026-01-21/infrastructure_deploy.log`
-
-### Data ingestion & analytics
-- Evidence report: `evidence/2026-01-21/pipeline_report.md`
-- Sample telemetry: `evidence/2026-01-21/sample_sensor_data.csv`
-- Anomaly detection output: `evidence/2026-01-21/anomaly_detection_results.csv`
-- Summary metrics: `evidence/2026-01-21/pipeline_summary.json`
-
-### Dashboard & charts
-- Dashboard and chart images were generated during the run but are not stored in the repo (binary artifacts removed).
-
-## License
-
-MIT
-
-
-## Code Generation Prompts
-
-This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
-
-### Data Pipelines
-
-#### 1. ETL Pipeline
-```
-Create a Python-based ETL pipeline using Apache Airflow that extracts data from PostgreSQL, transforms it with pandas, and loads it into a data warehouse with incremental updates
-```
-
-#### 2. Stream Processing
-```
-Generate a Kafka consumer in Python that processes real-time events, performs aggregations using sliding windows, and stores results in Redis with TTL
-```
-
-#### 3. Data Quality
-```
-Write a data validation framework that checks for schema compliance, null values, data freshness, and statistical anomalies, with alerting on failures
-```
-
-### How to Use These Prompts
-
-1. **Copy the prompt** from the code block above
-2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
-3. **Provide context** to your AI assistant about:
-   - Your development environment and tech stack
-   - Existing code patterns and conventions in this project
-   - Any constraints or requirements specific to your use case
-4. **Review and adapt** the generated code before using it
-5. **Test thoroughly** and adjust as needed for your specific scenario
-
-### Best Practices
-
-- Always review AI-generated code for security vulnerabilities
-- Ensure generated code follows your project's coding standards
-- Add appropriate error handling and logging
-- Write tests for AI-generated components
-- Document any assumptions or limitations
-- Keep sensitive information (credentials, keys) in environment variables
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
+
+## 🗺️ Roadmap
+
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
+
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [RUNBOOK.md](./RUNBOOK.md)
+- [docs](./docs)
+- [src](./src)
+- [tests](./tests)
+- [evidence](./evidence)
+- [GitHub workflows](../../.github/workflows)
+
+## 🧾 Documentation Freshness
+
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
+
+## 11) Final Quality Checklist (Before Merge)
+
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

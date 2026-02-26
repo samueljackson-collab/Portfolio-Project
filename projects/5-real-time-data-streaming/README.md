@@ -1,446 +1,144 @@
-# Project 5: Real-time Data Streaming
+# Project: Real Time Data Streaming
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Real Time Data Streaming while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-## Live Deployment
-| Detail | Value |
-| --- | --- |
-| Live URL | `https://5-real-time-data-streaming.staging.portfolio.example.com` |
-| DNS | `5-real-time-data-streaming.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
-| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `terraform/`, `infra/`, or `deploy/` for this project) |
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-### Deployment automation
-- **CI/CD:** GitHub Actions [`/.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`/.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
-- **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
+## 📌 Scope & Status
 
-### Monitoring
-- **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)
-- **Grafana:** `https://grafana.staging.portfolio.example.com` (dashboard JSON: `grafana/dashboards/*.json`)
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-### Live deployment screenshots
-Live deployment dashboard screenshot stored externally.
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
-## 📊 Portfolio Status Board
-
-🟢 Done · 🟠 In Progress · 🔵 Planned
-
-**Current Status:** 🟢 Done (Implemented)
-
-
-High-throughput real-time event streaming and processing pipeline using Apache Kafka and Apache Flink with exactly-once semantics and comprehensive analytics.
-
-## Overview
-
-This project implements a production-grade streaming data pipeline that:
-- Ingests high-volume user events via Kafka producers
-- Processes streams in real-time using both Python consumers and Flink jobs
-- Provides windowed aggregations and analytics
-- Ensures exactly-once processing semantics
-- Includes schema registry for event validation
-- Features comprehensive monitoring and testing
-
-## Architecture
-
-```
-┌─────────────┐      ┌──────────────┐      ┌─────────────────┐
-│   Producer  │─────▶│    Kafka     │─────▶│   Consumer/     │
-│   (Events)  │      │   Cluster    │      │   Flink Jobs    │
-└─────────────┘      └──────────────┘      └─────────────────┘
-                            │
-                            ▼
-                     ┌──────────────┐
-                     │   Schema     │
-                     │   Registry   │
-                     └──────────────┘
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Tech Stack
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-- **Apache Kafka 7.4.0**: Distributed event streaming platform
-- **Apache Flink 1.17**: Stream processing framework
-- **Schema Registry**: Event schema validation
-- **Kafka UI**: Web-based Kafka management
-- **Python**: Event producers and consumers
-- **Docker Compose**: Local development stack
+## 🚀 Setup & Runbook
 
-## Features
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-### Event Producer
-- High-throughput event generation
-- Idempotent writes with exactly-once semantics
-- Partitioning by user ID for ordered processing
-- Configurable event types (page views, clicks, purchases, etc.)
-- Compression and batching optimizations
-- CLI for event simulation
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
 
-### Event Consumer
-- Auto-commit with configurable intervals
-- Real-time event processing
-- Statistics tracking (event types, users, errors)
-- Graceful shutdown handling
-- Multiple consumer groups support
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
 
-### Aggregating Consumer
-- Time-windowed aggregations
-- Real-time metrics calculation
-- Revenue tracking
-- User activity analysis
-- Top-N computations
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
 
-### Flink Stream Processing
-- Event-time processing with watermarks
-- Tumbling and sliding windows
-- Multiple job types:
-  - Event counting by type
-  - Revenue tracking and metrics
-  - User session analysis
-- Fault tolerance with checkpointing
-- State management
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
 
-## Quick Start
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
 
-### 1. Start the Infrastructure
+## 🔐 Security, Risk & Reliability
 
-```bash
-# Start all services (Kafka, Zookeeper, Schema Registry, Flink)
-docker-compose up -d
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
 
-# Verify services are running
-docker-compose ps
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
 
-# Check Kafka UI at http://localhost:8080
-# Check Flink dashboard at http://localhost:8082
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-### 2. Install Python Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Produce Events
-
-```bash
-# Simulate 1000 user events
-python src/producer.py --count 1000 --delay 0.1
-
-# High-volume simulation (100 events/sec for 60 seconds)
-python src/producer.py --high-volume --rate 100 --duration 60
-
-# Custom configuration
-python src/producer.py \
-  --bootstrap-servers localhost:9092 \
-  --topic user-events \
-  --count 5000 \
-  --delay 0.05
-```
-
-### 4. Consume and Process Events
-
-```bash
-# Basic consumer
-python src/consumer.py --max-messages 100
-
-# Aggregating consumer with 30-second windows
-python src/consumer.py --aggregate --window 30
-
-# Custom configuration
-python src/consumer.py \
-  --bootstrap-servers localhost:9092 \
-  --topic user-events \
-  --group-id my-consumer-group
-```
-
-### 5. Run Flink Jobs
-
-```bash
-# Event counting job
-python src/flink_processor.py --job event-count
-
-# Revenue tracking job
-python src/flink_processor.py --job revenue
-
-# User session analysis job
-python src/flink_processor.py --job sessions
-```
-
-## Event Schema
-
-### Standard Event Structure
-
-```json
-{
-  "timestamp": "2025-12-12T10:30:00.000Z",
-  "event_type": "purchase",
-  "user_id": "user_123",
-  "version": "1.0",
-  "data": {
-    "product_id": "prod_456",
-    "amount": 99.99,
-    "currency": "USD",
-    "session_id": "session_789",
-    "device": "mobile",
-    "browser": "chrome"
-  }
-}
-```
-
-### Event Types
-
-- `page_view`: User views a page
-- `button_click`: User clicks a button
-- `form_submit`: Form submission
-- `purchase`: Purchase transaction
-- `add_to_cart`: Add item to cart
-- `remove_from_cart`: Remove item from cart
-- `search`: Search query
-- `login`: User login
-- `logout`: User logout
-- `signup`: User registration
-
-## Testing
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run with coverage
-pytest tests/ -v --cov=src --cov-report=html
-
-# Run specific test file
-pytest tests/test_producer.py -v
-```
-
-## Configuration
-
-### Kafka Topics
-
-- `user-events`: Raw user events (input)
-- `event-analytics`: Processed analytics (output)
-
-### Consumer Groups
-
-- `event-consumer-group`: Python consumer group
-- `flink-consumer-group`: Flink job consumer group
-
-### Performance Tuning
-
-**Producer:**
-```python
-# High throughput configuration
-producer = EventProducer(
-    acks='1',  # Leader acknowledgment only (faster)
-    compression_type='snappy',  # Fast compression
-    batch_size=32768,  # Larger batches
-    linger_ms=10  # Wait for batching
-)
-```
-
-**Consumer:**
-```python
-# Optimized consumer configuration
-consumer = EventConsumer(
-    max_poll_records=500,  # Fetch more records
-    fetch_min_bytes=1024,  # Min fetch size
-    session_timeout_ms=30000  # Allow longer processing
-)
-```
-
-## Monitoring
-
-### Kafka UI
-Access at `http://localhost:8080` to:
-- View topics and partitions
-- Monitor consumer lag
-- Browse messages
-- Manage consumer groups
-
-### Flink Dashboard
-Access at `http://localhost:8082` to:
-- Monitor running jobs
-- View checkpoints
-- Analyze job metrics
-- Debug failures
-
-### Consumer Statistics
-
-The consumer prints periodic statistics:
-```
-Total Events: 10000
-Elapsed Time: 120.45s
-Event Rate: 83.02 events/sec
-Errors: 0
-
-Top Event Types:
-  page_view: 4532
-  button_click: 2341
-  purchase: 1234
-
-Top Users:
-  user_123: 234 events
-  user_456: 198 events
-```
-
-## Scalability
-
-### Horizontal Scaling
-
-**Producers:**
-- Run multiple producer instances
-- Use different partition keys
-- Configure proper batching
-
-**Consumers:**
-- Scale consumer group members
-- One partition per consumer
-- Rebalancing happens automatically
-
-**Flink:**
-- Increase task manager count
-- Adjust parallelism
-- Configure more task slots
-
-### Kafka Partitioning
-
-```bash
-# Create topic with 10 partitions
-kafka-topics --create \
-  --bootstrap-server localhost:9092 \
-  --topic user-events \
-  --partitions 10 \
-  --replication-factor 1
-```
-
-## Troubleshooting
-
-### Producer Issues
-
-```bash
-# Check Kafka connectivity
-telnet localhost 9092
-
-# View producer metrics
-kafka-consumer-groups --bootstrap-server localhost:9092 --list
-```
-
-### Consumer Lag
-
-```bash
-# Check consumer group lag
-kafka-consumer-groups \
-  --bootstrap-server localhost:9092 \
-  --describe \
-  --group event-consumer-group
-```
-
-### Flink Job Failures
-
-```bash
-# View Flink logs
-docker logs flink-jobmanager
-docker logs flink-taskmanager
-
-# Check savepoints
-ls -la flink-checkpoints/
-```
-
-## Advanced Features
-
-### Exactly-Once Semantics
-
-Flink jobs use:
-- Checkpointing every 60 seconds
-- Kafka transactional writes
-- Idempotent producers
-- Two-phase commit protocol
-
-### Schema Evolution
-
-Schema Registry supports:
-- Backward compatibility
-- Forward compatibility
-- Schema versioning
-- Automatic validation
-
-## Performance Benchmarks
-
-- **Producer throughput**: 50,000+ events/sec (single instance)
-- **Consumer throughput**: 40,000+ events/sec (single instance)
-- **End-to-end latency**: <100ms (p99)
-- **Flink processing**: 100,000+ events/sec
-
-## Cleanup
-
-```bash
-# Stop all services
-docker-compose down
-
-# Remove volumes
-docker-compose down -v
-
-# Clean Flink state
-rm -rf flink-checkpoints/ flink-savepoints/
-```
-
-## Production Considerations
-
-1. **Security**: Enable SASL/SSL for Kafka
-2. **Monitoring**: Integrate with Prometheus/Grafana
-3. **Alerting**: Configure alerts for lag, errors
-4. **Backups**: Regular checkpoint backups
-5. **Capacity Planning**: Monitor disk, CPU, memory
-6. **Data Retention**: Configure topic retention policies
-
-## References
-
-- [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
-- [Apache Flink Documentation](https://flink.apache.org/)
-- [Confluent Schema Registry](https://docs.confluent.io/platform/current/schema-registry/)
-
-## License
-
-MIT
-
-## Code Generation Prompts
-
-This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
-
-### Data Pipelines
-
-#### 1. ETL Pipeline
-```
-Create a Python-based ETL pipeline using Apache Airflow that extracts data from PostgreSQL, transforms it with pandas, and loads it into a data warehouse with incremental updates
-```
-
-#### 2. Stream Processing
-```
-Generate a Kafka consumer in Python that processes real-time events, performs aggregations using sliding windows, and stores results in Redis with TTL
-```
-
-#### 3. Data Quality
-```
-Write a data validation framework that checks for schema compliance, null values, data freshness, and statistical anomalies, with alerting on failures
-```
-
-### How to Use These Prompts
-
-1. **Copy the prompt** from the code block above
-2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
-3. **Provide context** to your AI assistant about:
-   - Your development environment and tech stack
-   - Existing code patterns and conventions in this project
-   - Any constraints or requirements specific to your use case
-4. **Review and adapt** the generated code before using it
-5. **Test thoroughly** and adjust as needed for your specific scenario
-
-### Best Practices
-
-- Always review AI-generated code for security vulnerabilities
-- Ensure generated code follows your project's coding standards
-- Add appropriate error handling and logging
-- Write tests for AI-generated components
-- Document any assumptions or limitations
-- Keep sensitive information (credentials, keys) in environment variables
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
+
+## 🗺️ Roadmap
+
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
+
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [RUNBOOK.md](./RUNBOOK.md)
+- [docs](./docs)
+- [src](./src)
+- [tests](./tests)
+- [GitHub workflows](../../.github/workflows)
+
+## 🧾 Documentation Freshness
+
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
+
+## 11) Final Quality Checklist (Before Merge)
+
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

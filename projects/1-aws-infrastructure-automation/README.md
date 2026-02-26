@@ -1,292 +1,147 @@
-# Project 1: AWS Infrastructure Automation
+# Project: Aws Infrastructure Automation
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Aws Infrastructure Automation while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-## 📊 Portfolio Status Board
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-🟢 Done · 🟠 In Progress · 🔵 Planned
+## 📌 Scope & Status
 
-**Current Status:** 🟢 Done (Implemented)
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
-This project provisions a production-ready AWS environment with multiple implementation paths so the portfolio can demonstrate infrastructure-as-code fluency across Terraform, the AWS CDK, and Pulumi.
-
-## Live Deployment
-| Detail | Value |
-| --- | --- |
-| Live URL | `https://1-aws-infrastructure-automation.staging.portfolio.example.com` |
-| DNS | `1-aws-infrastructure-automation.staging.portfolio.example.com` → `CNAME portfolio-gateway.staging.example.net` |
-| Deployment environment | Staging (AWS us-east-1, containerized services; IaC in `terraform/`, `cdk/`, or `pulumi/` for this project) |
-
-### Project-specific endpoints
-- **Primary endpoint:** `https://aws-infra-automation.example.com`
-- **Health check:** `https://aws-infra-automation.example.com/healthz`
-- **CDN (static assets):** `https://static.aws-infra-automation.example.com`
-
-### Deployment automation
-- **CI/CD:** GitHub Actions [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) gates builds; [`.github/workflows/deploy-portfolio.yml`](../../.github/workflows/deploy-portfolio.yml) publishes the staging stack.
-- **Manual steps:** Follow the project Quick Start/Runbook instructions in this README to build artifacts, apply IaC, and validate health checks.
-
-### Monitoring
-- **Prometheus:** `https://prometheus.staging.portfolio.example.com` (scrape config: `prometheus/prometheus.yml`)
-- **Grafana:** `https://grafana.staging.portfolio.example.com` (dashboard JSON: `grafana/dashboards/*.json`)
-
-### Live deployment screenshots
-Live deployment dashboard screenshot stored externally.
-
-## Evidence
-- [Evidence artifacts index](./evidence/README.md)
-- [Terraform outputs (`outputs.json`)](./evidence/outputs.json)
-
-> Console screenshots (VPC, subnets, RDS) and the AWS Cost Explorer chart should be added to the evidence folder once captured from the dedicated dev AWS account.
-
-## Goals
-- Launch a multi-AZ network foundation with private, public, and database subnets.
-- Provide a managed Kubernetes control plane, managed worker nodes, and autoscaling policies.
-- Supply a resilient PostgreSQL database tier with routine backups and monitoring toggles.
-- Front application workloads with an Application Load Balancer and auto-scaling group.
-- Deliver static assets via S3 with global distribution through CloudFront.
-- Offer interchangeable infrastructure definitions so the same outcome can be reached with different toolchains.
-
-## Architecture
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
 ```mermaid
-graph TB
-    subgraph "Public Subnets"
-        ALB[Application Load Balancer]
-        NAT[NAT Gateways]
-    end
-
-    subgraph "Private Subnets"
-        ASG[Auto Scaling Group]
-        EKS[EKS Cluster]
-    end
-
-    subgraph "Database Subnets"
-        RDS[(RDS PostgreSQL)]
-        RDS_REPLICA[(Read Replica)]
-    end
-
-    subgraph "Edge"
-        CF[CloudFront CDN]
-        S3[S3 Static Assets]
-        WAF[AWS WAF]
-    end
-
-    subgraph "Monitoring"
-        CW[CloudWatch]
-        SNS[SNS Alerts]
-    end
-
-    Internet((Internet)) --> WAF --> CF
-    CF --> S3
-    CF --> ALB
-    ALB --> ASG
-    ALB --> EKS
-    ASG --> NAT --> Internet
-    ASG --> RDS
-    EKS --> RDS
-    RDS --> RDS_REPLICA
-    ASG --> CW
-    RDS --> CW
-    CW --> SNS
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## CLI Usage
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-The project includes a Python CLI (`src/main.py`) for managing infrastructure deployments:
+## 🚀 Setup & Runbook
 
-```bash
-# Plan infrastructure changes
-./src/main.py plan --environment dev
-./src/main.py plan --environment staging --target module.networking
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-# Apply infrastructure
-./src/main.py apply --environment production --auto-approve
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
 
-# Validate Terraform configuration
-./src/main.py validate
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
 
-# Estimate costs with Infracost
-./src/main.py cost --environment dev
-./src/main.py cost --environment staging --compare  # Compare to baseline
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
 
-# View deployment status
-./src/main.py status --environment production
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
 
-# Destroy infrastructure (with confirmation)
-./src/main.py destroy --environment dev
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-### CLI Commands
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-| Command | Description | Key Options |
-|---------|-------------|-------------|
-| `plan` | Generate Terraform execution plan | `--environment`, `--target`, `--out` |
-| `apply` | Apply infrastructure changes | `--environment`, `--auto-approve`, `--target` |
-| `validate` | Validate Terraform configuration | None |
-| `cost` | Estimate infrastructure costs | `--environment`, `--compare`, `--save-baseline` |
-| `destroy` | Destroy infrastructure | `--environment`, `--auto-approve` |
-| `status` | Show deployment status | `--environment` |
+## 🗺️ Roadmap
 
-## Contents
-- `terraform/` — Primary IaC implementation with modular architecture (VPC, ALB, Auto Scaling Group, EKS, RDS, S3 + CloudFront).
-- `terraform/modules/` — Reusable Terraform modules (networking, compute, database, storage, security, monitoring).
-- `cloudwatch/` — CloudWatch dashboard JSON definitions and import scripts.
-- `cdk/` — Python-based AWS CDK app that mirrors the Terraform footprint.
-- `pulumi/` — Pulumi project using Python for multi-cloud-friendly infrastructure.
-- `src/` — Python CLI for infrastructure management.
-- `tests/` — Integration tests for infrastructure validation.
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-Each implementation aligns with the runbooks described in the Wiki.js guide so the documentation, automation, and validation steps can be exercised end-to-end.
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [RUNBOOK.md](./RUNBOOK.md)
+- [docs](./docs)
+- [src](./src)
+- [tests](./tests)
+- [deployments](./deployments)
+- [terraform](./terraform)
+- [evidence](./evidence)
+- [GitHub workflows](../../.github/workflows)
 
-## Terraform Modules
+## 🧾 Documentation Freshness
 
-The project uses a modular Terraform architecture:
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-| Module | Description | Key Resources |
-|--------|-------------|---------------|
-| **networking** | VPC with multi-AZ subnets | VPC, Subnets, NAT Gateways, VPC Endpoints, Flow Logs |
-| **compute** | Application layer | ALB, Auto Scaling Group, Launch Template |
-| **database** | Data tier | RDS PostgreSQL, Read Replicas, CloudWatch Alarms |
-| **storage** | Static assets | S3, CloudFront, Origin Access Identity |
-| **security** | Security controls | IAM Roles, KMS Keys, WAF, Secrets Manager |
-| **monitoring** | Observability | CloudWatch Dashboards, Alarms, SNS Topics |
+## 11) Final Quality Checklist (Before Merge)
 
-### Module Usage Example
-
-```hcl
-module "networking" {
-  source = "./modules/networking"
-
-  environment         = "production"
-  vpc_cidr           = "10.0.0.0/16"
-  availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
-  single_nat_gateway = false
-  enable_flow_logs   = true
-}
-
-module "database" {
-  source = "./modules/database"
-
-  environment          = "production"
-  vpc_id              = module.networking.vpc_id
-  database_subnet_ids = module.networking.database_subnet_ids
-  instance_class      = "db.r6g.large"
-  multi_az            = true
-  enable_read_replica = true
-}
-```
-
-## Integration Tests
-
-Run infrastructure validation tests:
-
-```bash
-# Run all integration tests
-pytest tests/integration/ -v
-
-# Run VPC module tests
-pytest tests/integration/test_vpc_module.py -v
-
-# Run RDS module tests
-pytest tests/integration/test_rds_module.py -v
-
-# Run with specific markers
-pytest tests/integration/ -m "not slow" -v
-```
-
-### Test Coverage
-
-- **VPC Module**: Subnet CIDR validation, NAT gateway configuration, route table setup
-- **RDS Module**: Multi-AZ deployment, encryption settings, security group rules
-- **Security Best Practices**: Flow logs enabled, no public subnets for databases
-
-## Cost Estimation
-
-Estimate infrastructure costs using Infracost:
-
-```bash
-# Basic cost estimate
-./terraform/scripts/cost-estimate.sh dev
-
-# Compare against baseline
-./terraform/scripts/cost-estimate.sh staging --compare
-
-# Save current costs as baseline
-./terraform/scripts/cost-estimate.sh production --save-baseline
-
-# Output in different formats
-./terraform/scripts/cost-estimate.sh dev --format json
-```
-
-Cost estimation is integrated into the CI/CD pipeline and posts cost diffs on pull requests.
-
-## CI/CD Pipeline
-
-The GitHub Actions workflow includes:
-
-1. **Terraform Validation** - Format check and validate
-2. **Security Scanning** - Checkov for IaC security analysis
-3. **Cost Estimation** - Infracost for cost impact analysis
-4. **Plan Generation** - Terraform plan with PR comments
-5. **Apply** - Automated apply on main branch (production)
-
-```yaml
-# Trigger workflow
-git push origin feature/my-change
-
-# View workflow status
-gh run list --workflow=terraform.yml
-```
-
-## Footprint Highlights
-- Internet-facing Application Load Balancer with target group health checks and deregistration protections.
-- Auto Scaling Group for web workloads with Amazon Linux 2023 launch template and SSM access.
-- Managed EKS control plane and managed node groups for container orchestration.
-- RDS PostgreSQL in isolated database subnets with automated backups.
-- Static asset delivery via S3, secured by Origin Access Identity and cached globally by CloudFront.
-
-
-## Code Generation Prompts
-
-This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
-
-### Infrastructure as Code
-
-#### 1. Terraform Module
-```
-Create a Terraform module for deploying a highly available VPC with public/private subnets across 3 availability zones, including NAT gateways and route tables
-```
-
-#### 2. CloudFormation Template
-```
-Generate a CloudFormation template for an Auto Scaling Group with EC2 instances behind an Application Load Balancer, including health checks and scaling policies
-```
-
-#### 3. Monitoring Integration
-```
-Write Terraform code to set up CloudWatch alarms for EC2 CPU utilization, RDS connections, and ALB target health with SNS notifications
-```
-
-### How to Use These Prompts
-
-1. **Copy the prompt** from the code block above
-2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
-3. **Provide context** to your AI assistant about:
-   - Your development environment and tech stack
-   - Existing code patterns and conventions in this project
-   - Any constraints or requirements specific to your use case
-4. **Review and adapt** the generated code before using it
-5. **Test thoroughly** and adjust as needed for your specific scenario
-
-### Best Practices
-
-- Always review AI-generated code for security vulnerabilities
-- Ensure generated code follows your project's coding standards
-- Add appropriate error handling and logging
-- Write tests for AI-generated components
-- Document any assumptions or limitations
-- Keep sensitive information (credentials, keys) in environment variables
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

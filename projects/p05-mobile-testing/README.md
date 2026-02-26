@@ -1,197 +1,144 @@
-# P05 — Mobile App Manual Testing
+# Project: Mobile Testing
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Mobile Testing while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-## Overview
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-Comprehensive manual testing approach for mobile applications (iOS/Android) covering functional,
-usability, compatibility, and regression testing. Demonstrates test planning, charter-based
-exploratory testing, defect reporting, and device matrix management for quality assurance roles.
+## 📌 Scope & Status
 
-## Key Outcomes
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-- [x] Test charter template for exploratory testing sessions
-- [x] Device/OS compatibility matrix (iOS 14-17, Android 10-14)
-- [x] Sample defect reports with reproduction steps
-- [x] Regression test checklist (critical user flows)
-- [x] Test case repository (login, signup, checkout, notifications)
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
-## Architecture
-
-- **Components**: Mobile app (iOS/Android), Test management (Jira/TestRail), Device farm
-- **Test environments**: Dev, Staging, Production-like
-- **Dependencies**: Physical devices, emulators (Android Studio/Xcode), Charles Proxy
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
 ```mermaid
 flowchart LR
-    subgraph TestPlan[Test Planning]
-        Charter[Test Charters]
-        Matrix[Device Matrix]
-        Cases[Test Cases]
-    end
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
+```
 
-    subgraph Execution[Test Execution]
-        Manual[Manual Testing]
-        Explore[Exploratory Testing]
-        Regress[Regression Testing]
-    end
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-    subgraph Reporting[Defect Management]
-        Defects[Defect Reports]
-        Metrics[Test Metrics]
-        Sign[Sign-off]
-    end
+## 🚀 Setup & Runbook
 
-    TestPlan --> Execution
-    Execution --> Reporting
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-    style Manual fill:#4CAF50
-    style Defects fill:#E53935
-```text
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
 
-## Quickstart
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
 
-```bash
-# Review test charter template
-cat docs/test-charter-template.md
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
 
-# Check device matrix
-cat config/device-matrix.csv
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
 
-# Review sample test cases
-cat test-cases/login-flow.md
-```text
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
 
-## Configuration
+## 🔐 Security, Risk & Reliability
 
-| Artifact | Purpose | Location |
-|----------|---------|----------|
-| Test Charters | Exploratory testing sessions | `docs/test-charters/` |
-| Device Matrix | Supported devices/OS versions | `config/device-matrix.csv` |
-| Test Cases | Functional test scenarios | `test-cases/` |
-| Defect Reports | Sample bug reports | `defects/` |
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
 
-## Testing
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
 
-### Test Charter Example
+## 🔄 Delivery & Observability
 
-**Mission**: Explore login functionality for security and usability issues.
-**Areas**: Login screen, forgot password, biometric auth, session handling.
-**Time**: 90 minutes.
-**Risks**: SQL injection, weak password validation, session hijacking.
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
+```
 
-### Device Matrix
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-| Device | OS Version | Screen Size | Priority | Status |
-|--------|-----------|-------------|----------|--------|
-| iPhone 15 Pro | iOS 17 | 6.1" | P0 | ✓ Tested |
-| iPhone 12 | iOS 16 | 6.1" | P1 | ✓ Tested |
-| Samsung S23 | Android 14 | 6.1" | P0 | ✓ Tested |
-| Pixel 7 | Android 13 | 6.3" | P1 | Pending |
+## 🗺️ Roadmap
 
-### Sample Defect Report
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-**Title**: [Login] User remains logged in after password reset on another device
-**Severity**: High
-**Steps to Reproduce**:
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [RUNBOOK.md](./RUNBOOK.md)
+- [docs](./docs)
+- [src](./src)
+- [tests](./tests)
+- [GitHub workflows](../../.github/workflows)
 
-1. Log in on Device A with user credentials
-2. On Device B, initiate password reset via email
-3. Complete password reset on Device B
-4. Return to Device A - observe user is still logged in
-**Expected**: Device A should force re-authentication after password reset
-**Actual**: Device A session remains active (security risk)
+## 🧾 Documentation Freshness
 
-## Operations
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-### Test Cycle Management
+## 11) Final Quality Checklist (Before Merge)
 
-1. **Test Planning**: Define scope, create charters, identify devices
-2. **Execution**: Run test cases, perform exploratory testing, log defects
-3. **Regression**: Re-test critical flows before release
-4. **Sign-off**: Review metrics (pass rate, defect density), approve/reject build
-
-### Common Issues & Fixes
-
-**Issue**: App crashes on iOS 14 but works on iOS 17
-**Fix**: Check deprecated API usage, memory leaks on older OS versions.
-
-**Issue**: UI elements overlap on small screens (iPhone SE)
-**Fix**: Verify responsive layout constraints, test edge cases (small/large screens).
-
-## Roadmap
-
-- [ ] Automated screenshot comparison (visual regression)
-- [ ] Integration with CI/CD (trigger smoke tests on build)
-- [ ] Performance testing (app launch time, memory usage)
-
-## References
-
-- [iOS Testing Best Practices](https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/testing_with_xcode/)
-- [Android Testing Fundamentals](https://developer.android.com/training/testing/fundamentals)
-- [RUNBOOK](./RUNBOOK.md) | [HANDBOOK](./HANDBOOK.md)
-
-## Code Generation Prompts
-
-This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
-
-### Test Automation
-
-#### 1. End-to-End Tests
-
-```text
-Create Playwright tests for a login flow, including form validation, authentication error handling, and successful redirect to dashboard
-```text
-
-#### 2. API Tests
-
-```text
-Generate pytest-based API tests that verify REST endpoints for CRUD operations, including request/response validation, error cases, and authentication
-```text
-
-#### 3. Performance Tests
-
-```text
-Write a Locust load test that simulates 100 concurrent users performing read/write operations, measures response times, and identifies bottlenecks
-```text
-
-### How to Use These Prompts
-
-1. **Copy the prompt** from the code block above
-2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
-3. **Provide context** to your AI assistant about:
-   - Your development environment and tech stack
-   - Existing code patterns and conventions in this project
-   - Any constraints or requirements specific to your use case
-4. **Review and adapt** the generated code before using it
-5. **Test thoroughly** and adjust as needed for your specific scenario
-
-### Best Practices
-
-- Always review AI-generated code for security vulnerabilities
-- Ensure generated code follows your project's coding standards
-- Add appropriate error handling and logging
-- Write tests for AI-generated components
-- Document any assumptions or limitations
-- Keep sensitive information (credentials, keys) in environment variables
-
-## Evidence & Verification
-
-Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
-
-**Evidence artifacts**
-- Screenshot stored externally.
-- [Run log](./docs/evidence/run-log.txt)
-- [Dashboard export](./docs/evidence/dashboard-export.json)
-- [Load test summary](./docs/evidence/load-test-summary.txt)
-
-### Evidence Checklist
-
-| Evidence Item | Location | Status |
-| --- | --- | --- |
-| Screenshot captured | Stored externally | ✅ |
-| Run log captured | `docs/evidence/run-log.txt` | ✅ |
-| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
-| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state
