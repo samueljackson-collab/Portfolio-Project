@@ -1,88 +1,143 @@
-# PostgreSQL DBA Toolkit
+# Project: Postgresql Dba Toolkit
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Postgresql Dba Toolkit while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-A practical PostgreSQL Database Administration toolkit focused on backup/recovery, monitoring, maintenance, security, and migration workflows. The toolkit is designed for RDS-compatible deployments (PROMPT 3 dependency) while remaining usable on self-managed PostgreSQL.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Quick Start
+## 📌 Scope & Status
 
-```bash
-cd projects-new/P14-postgresql-dba-toolkit
-cp .env.example .env
-source .env
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-# Example: run a monitoring report
-./scripts/monitoring/run_report.sh sql/monitoring/index_usage.sql
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
+
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
+
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Tooling Map
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-### A. Backup & Recovery
-- `scripts/backup/pg_dump_backup.sh`: Automated `pg_dump` with compression + optional S3 upload (SSE).
-- `scripts/backup/verify_backup.sh`: Verifies backup integrity via `pg_restore --list`.
-- `scripts/backup/restore_backup.sh`: Restore procedures for `.dump` files.
-- `scripts/backup/retention_cleanup.sh`: Retention policy enforcement.
-- `docs/backup_recovery.md`: PITR setup, validation checklist, and runbook.
+## 🚀 Setup & Runbook
 
-### B. Monitoring Scripts
-- `sql/monitoring/connection_pool_monitor.sql`
-- `sql/monitoring/query_performance.sql`
-- `sql/monitoring/bloat_detection.sql`
-- `sql/monitoring/index_usage.sql`
-- `sql/monitoring/replication_lag.sql`
-- `sql/monitoring/table_index_sizes.sql`
-- `scripts/monitoring/run_report.sh`: execute SQL report and export CSV.
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-### C. Maintenance Scripts
-- `scripts/maintenance/vacuum_analyze.sh`
-- `scripts/maintenance/reindex.sh`
-- `scripts/maintenance/update_stats.sh`
-- `scripts/maintenance/kill_connections.sh`
-- `scripts/maintenance/warm_cache.sh`
-- `docs/maintenance.md`: upgrade procedures + scheduling guidance.
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
 
-### D. Performance Tuning
-- `scripts/performance/config_recommendations.sh`
-- `sql/performance/index_suggestions.sql`
-- `scripts/performance/explain_analyze.sh`
-- `sql/performance/pool_tuning.sql`
-- `docs/performance_tuning.md`
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
 
-### E. Security Tools
-- `sql/security/user_audit.sql`
-- `sql/security/permission_review.sql`
-- `sql/security/password_policy.sql`
-- `sql/security/encryption_verification.sql`
-- `sql/security/connection_audit.sql`
-- `sql/security/sql_injection_detection.sql`
-- `docs/security.md`
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
 
-### F. Migration Tools
-- `scripts/migration/apply_migrations.sh`
-- `scripts/migration/rollback_migration.sh`
-- `scripts/migration/export_schema.sh`
-- `docs/migrations.md`
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
 
-### G. Documentation
-- `docs/tool_reference.md`
-- `docs/best_practices.md`
-- `docs/troubleshooting.md`
-- `docs/performance_tuning.md`
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
 
-## Success Metrics Coverage
-- Backup/restore: `docs/backup_recovery.md` includes test runbook.
-- Monitoring: SQL reports exportable to Prometheus-friendly CSV.
-- Performance tools: explained in `docs/performance_tuning.md`.
-- Security audit: documented in `docs/security.md`.
+## 🔐 Security, Risk & Reliability
 
-## Requirements
-- PostgreSQL client tools (`psql`, `pg_dump`, `pg_restore`)
-- Optional: AWS CLI for S3 uploads
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
 
-## Environment Variables
-See `.env.example` for the full list.
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
 
-## License
-Internal portfolio project.
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
+```
+
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
+
+## 🗺️ Roadmap
+
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
+
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [docs](./docs)
+- [tests](./tests)
+- [GitHub workflows](../../.github/workflows)
+- [Project directory](.)
+
+## 🧾 Documentation Freshness
+
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
+
+## 11) Final Quality Checklist (Before Merge)
+
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

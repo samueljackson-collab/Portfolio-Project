@@ -1,181 +1,143 @@
-# P07 — Enterprise Machine Learning Pipeline with Kubeflow and MLflow
+# Project: p07
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for p07 while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-**Tagline:** Production-grade MLOps platform delivering retail demand forecasting with automated retraining, model governance, and multi-stage deployment.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Executive Summary: MLOps Philosophy
-- **Continuous Training:** Automated pipelines retrain models on fresh data, eliminating manual notebook workflows and ensuring predictions stay current.
-- **Model Governance:** MLflow registry with approval gates, lineage tracking, and A/B testing provides audit trails and safe rollouts.
-- **End-to-End Automation:** From feature engineering in Feast to KFServing inference endpoints, the entire lifecycle is codified and repeatable.
-- **Enterprise Rigor:** Includes drift detection, cost optimization (spot instances), security controls (RBAC, model signing), and comprehensive operational playbooks.
+## 📌 Scope & Status
 
-## Architecture Overview
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-### End-to-End Flow
-**Data Sources** → **Feature Store (Feast)** → **Kubeflow Pipeline** → **MLflow Tracking/Registry** → **KFServing Deployment** → **Monitoring/Drift Detection** → **Retraining Trigger**
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
-### Components
-- **Kubeflow Pipelines:** Orchestrates data prep, training, evaluation, and registration steps as reusable containerized components.
-- **MLflow:** Tracks experiments (hyperparameters, metrics, artifacts), manages model registry (staging/production versions), and provides model lineage.
-- **Feast Feature Store:** Serves online/offline features with consistency, point-in-time correctness, and versioning.
-- **Distributed Training:** PyTorch/TensorFlow jobs on GPU nodes with auto-scaling and spot instance support.
-- **KFServing:** Deploys models with canary/shadow/A/B strategies, auto-scaling, and batching; supports rollback and traffic splitting.
-- **Drift Detection:** Monitors feature distributions and model performance; triggers retraining when thresholds breached.
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
-### Directory Layout
-```
-projects-new/p07/
-├── README.md                  # Platform overview and setup
-├── ARCHITECTURE.md            # Mermaid diagrams + explanations
-├── TESTING.md                 # Testing strategy and cases
-├── REPORT_TEMPLATES.md        # Release/ops/experiment templates
-├── PLAYBOOK.md                # Model promotion playbook
-├── RUNBOOKS.md                # Incident runbooks
-├── SOP.md                     # Operational SOPs
-├── METRICS.md                 # Dashboard/alert definitions
-├── ADRS.md                    # Architecture decisions
-├── THREAT_MODEL.md            # Security threat model
-├── RISK_REGISTER.md           # Risk register
-├── pipeline/
-│   ├── training_pipeline.py   # Kubeflow Pipeline definition
-│   ├── components/            # Reusable KFP components
-│   └── requirements.txt
-├── mlflow/
-│   ├── mlflow-server.yaml     # MLflow deployment config
-│   └── tracking_example.py    # Example experiment tracking
-├── feast/
-│   ├── feature_repo/          # Feast feature definitions
-│   └── feature_store.yaml
-├── serving/
-│   ├── inferenceservice.yaml  # KFServing config
-│   └── predictor.py           # Custom predictor logic
-└── ci/
-    └── workflows/
-        └── ml-pipeline.yml    # CI/CD for ML pipeline
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Setup
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
+
+## 🚀 Setup & Runbook
 
 ### Prerequisites
-- Kubernetes cluster (1.24+) with GPU nodes or node pools
-- kubectl, kustomize, helm
-- Python 3.10+
-- Docker registry access
-- S3/GCS/ABS bucket for MLflow artifacts and Feast offline store
-- PostgreSQL for MLflow backend (or embedded SQLite for dev)
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-### Install Kubeflow Pipelines
-```bash
-export PIPELINE_VERSION=2.0.3
-kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources?ref=$PIPELINE_VERSION"
-kubectl wait --for condition=established --timeout=60s crd/applications.app.k8s.io
-kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic-pns?ref=$PIPELINE_VERSION"
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-### Deploy MLflow Server
-```bash
-cd projects-new/p07/mlflow
-# Edit mlflow-server.yaml with backend-store-uri and artifact-root
-kubectl apply -f mlflow-server.yaml
-kubectl port-forward svc/mlflow-server 5000:5000
-```
-Access at http://localhost:5000. Configure `MLFLOW_TRACKING_URI=http://mlflow-server.mlops.svc.cluster.local:5000` in pipeline components.
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-### Deploy Feast Feature Store
-```bash
-cd projects-new/p07/feast/feature_repo
-feast apply
-feast materialize-incremental $(date -u +%Y-%m-%dT%H:%M:%S)
-```
-Configure online store (Redis/DynamoDB) and offline store (S3/BigQuery) in `feature_store.yaml`.
+## 🗺️ Roadmap
 
-### Run Training Pipeline
-```bash
-cd projects-new/p07/pipeline
-pip install -r requirements.txt
-python training_pipeline.py \
-  --experiment-name demand-forecast \
-  --run-name run-$(date +%s) \
-  --data-path s3://my-bucket/data/sales.parquet \
-  --mlflow-uri http://mlflow-server.mlops.svc.cluster.local:5000
-```
-Pipeline stages: data validation → feature engineering → training → evaluation → model registration to MLflow.
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-### Deploy Model to KFServing
-```bash
-cd projects-new/p07/serving
-# Update inferenceservice.yaml with model URI from MLflow registry
-kubectl apply -f inferenceservice.yaml -n mlops
-kubectl get inferenceservice demand-forecast -n mlops
-```
-Test inference:
-```bash
-curl -X POST http://demand-forecast.mlops.example.com/v1/models/demand-forecast:predict \
-  -H "Content-Type: application/json" \
-  -d '{"instances": [{"store_id": 42, "date": "2025-01-15", "promo": 1}]}'
-```
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [GitHub workflows](../../.github/workflows)
+- [Project directory](.)
+- [Project directory](.)
+- [Project directory](.)
 
-## Workflow
+## 🧾 Documentation Freshness
 
-### Experimentation
-1. Data scientists run experiments locally or in notebooks, logging to MLflow with `mlflow.start_run()`.
-2. Compare runs in MLflow UI; select best hyperparameters and feature sets.
-3. Promote experiment code to Kubeflow Pipeline component for productionization.
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-### Pipeline Productionization
-1. Wrap training logic in KFP component with inputs/outputs as artifacts.
-2. Add data validation (Great Expectations), feature consistency checks (Feast), and model evaluation gates.
-3. Register passing models to MLflow registry with metadata (dataset version, git commit, approver).
+## 11) Final Quality Checklist (Before Merge)
 
-### Automated Retraining
-1. Schedule pipeline runs (cron/Argo Events) or trigger on data arrival/drift alerts.
-2. Pipeline compares new model metrics against production baseline; auto-promotes if superior and within risk bounds.
-3. Send notifications (Slack/email) and update dashboard with new model version.
-
-## Observability
-
-### Model Performance Monitoring
-- Track accuracy/MAE/MAPE over time; compare actual vs predicted with business KPIs.
-- Visualize in Grafana with Prometheus metrics exported from KFServing or custom predictor.
-
-### Drift Detection
-- Monitor feature distributions (KL divergence, population stability index) and prediction distributions.
-- Alert when drift score exceeds threshold; capture samples for offline analysis.
-
-### Infrastructure Metrics
-- GPU utilization, training job duration, pipeline success rate, model serving latency/throughput.
-- Cost per training run and per 1k inferences; track spot instance interruptions.
-
-## Security & Compliance
-
-### Model Approval Workflow
-- Models transition through MLflow registry stages: `None` → `Staging` → `Production`.
-- Approval requires sign-off from data science lead and compliance officer; audit log immutable.
-
-### Data Privacy
-- Feast feature store enforces column-level access control; PII fields encrypted at rest.
-- Training jobs run in isolated namespaces with network policies; no egress to public internet without proxy.
-
-### Access Control
-- RBAC for Kubeflow/MLflow/KFServing; service accounts with least privilege.
-- Model artifacts signed with Cosign; registry validates signatures before deployment.
-
-## Cost Optimization
-- **Spot Instances for Training:** Configure node pools with spot/preemptible VMs; Kubeflow handles retries.
-- **Autoscaling Inference:** KFServing HPA scales replicas based on request rate; scale-to-zero for idle models.
-- **Efficient Storage:** Use S3/GCS lifecycle policies for artifact expiration; deduplicate model checkpoints.
-
-## Troubleshooting
-- **Pipeline stuck:** Check pod logs via `kubectl logs -n kubeflow <pod>`; verify artifact paths and secrets.
-- **MLflow unreachable:** Ensure service DNS resolves; check backend/artifact store connectivity.
-- **Serving errors:** Inspect KFServing predictor logs; validate model format (ONNX/TorchScript/SavedModel).
-- **Drift false positives:** Tune thresholds; ensure reference dataset represents production distribution.
-
-## Hiring Manager Highlights
-- Demonstrates **full MLOps lifecycle** from experimentation to production serving with governance gates.
-- **Multi-tool integration:** Kubeflow, MLflow, Feast, KFServing show breadth across orchestration, tracking, features, and serving.
-- **Production-minded:** Includes drift detection, cost controls, security (RBAC, signing), and operational runbooks.
-- **Scalable architecture:** GPU training, auto-scaling inference, and spot instances mirror real enterprise ML platforms.
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

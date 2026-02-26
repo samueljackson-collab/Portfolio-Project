@@ -1,219 +1,144 @@
-# P07 — International Roaming Test Simulation
+# Project: Roaming Simulation
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Roaming Simulation while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-## Overview
-Telecom roaming test simulation framework with mock HLR/HSS, location update state machine, and comprehensive test scenarios for international roaming. Demonstrates understanding of mobile network protocols, state management, and telecommunications testing practices.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Key Outcomes
-- [x] Mock HLR/HSS implementation with subscriber database
-- [x] Location update state machine (idle, attached, roaming, detached)
-- [x] IMSI/MSISDN validation and routing logic
-- [x] Test scenarios for successful and failed roaming attempts
-- [x] Network selection algorithm simulation
-- [x] Billing trigger simulation for roaming events
+## 📌 Scope & Status
 
-## Architecture
-- **Components**: Mock HLR, Mock VLR, Subscriber DB, State Machine, Test Runner
-- **Protocols**: SS7 MAP simulation, Diameter Ro/Gy (simplified)
-- **Dependencies**: Python 3.9+, SQLite, pytest
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-```mermaid
-stateDiagram-v2
-    [*] --> Idle: Subscriber Registered
-    Idle --> LocationUpdate: Roam to Network
-    LocationUpdate --> Authenticating: Send IMSI
-    Authenticating --> Attached: Auth Success
-    Authenticating --> Rejected: Auth Failed
-    Attached --> Roaming: Service Active
-    Roaming --> LocationUpdate: Move to New Location
-    Roaming --> Detached: Power Off
-    Detached --> [*]
-    Rejected --> [*]
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
-    note right of Authenticating
-        HLR validates IMSI
-        Checks roaming agreement
-        Returns auth vectors
-    end note
-```
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
 ```mermaid
-flowchart TB
-    subgraph Home Network
-        HLR[Home Location Register<br/>HLR/HSS]
-        HSS_DB[(Subscriber DB)]
-        HLR --> HSS_DB
-    end
-
-    subgraph Visited Network
-        VLR[Visitor Location Register<br/>VLR/MME]
-        MSC[Mobile Switching Center]
-    end
-
-    subgraph Test Simulation
-        TestRunner[Test Runner]
-        StateEngine[State Machine Engine]
-        MockIMSI[IMSI Generator]
-    end
-
-    TestRunner --> StateEngine
-    StateEngine --> VLR
-    VLR -->|Location Update| HLR
-    HLR -->|Auth Vectors| VLR
-    VLR --> MSC
-    MockIMSI --> TestRunner
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Quickstart
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-```bash
-make setup
-make test
-make run-simulation
+## 🚀 Setup & Runbook
+
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
+
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-## Configuration
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-| Env Var | Purpose | Example | Required |
-|---------|---------|---------|----------|
-| `HOME_MCC_MNC` | Home network code | `310-410` (AT&T) | Yes |
-| `VISITED_MCC_MNC` | Visited network code | `208-01` (Orange FR) | Yes |
-| `ROAMING_AGREEMENT` | Roaming agreement status | `true`, `false` | Yes |
-| `SUBSCRIBER_DB` | SQLite database path | `data/subscribers.db` | No |
-| `SIMULATION_MODE` | Test mode | `full`, `fast`, `single` | No (default: `full`) |
+## 🗺️ Roadmap
 
-**Network Codes**: Use real MCC-MNC codes for realistic testing. See [ITU-T E.212](https://www.itu.int/en/ITU-T/inr/Pages/e212.aspx).
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-```bash
-cp config/roaming.yaml.example config/roaming.yaml
-# Edit config with your test scenarios
-```
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [RUNBOOK.md](./RUNBOOK.md)
+- [docs](./docs)
+- [src](./src)
+- [tests](./tests)
+- [GitHub workflows](../../.github/workflows)
 
-## Testing
+## 🧾 Documentation Freshness
 
-```bash
-# Run all roaming test scenarios
-make test
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-# Run specific test
-pytest tests/test_roaming_success.py -v
+## 11) Final Quality Checklist (Before Merge)
 
-# Run state machine tests
-pytest tests/test_state_machine.py -v
-
-# Run with coverage
-pytest --cov=src --cov-report=html
-
-# Simulate specific scenario
-python src/simulator.py --scenario international_roaming
-```
-
-## Operations
-
-### Logs, Metrics, Traces
-- **Simulation Logs**: `logs/simulation.log` (timestamped events)
-- **State Transitions**: `logs/state_transitions.log`
-- **HLR Queries**: `logs/hlr_queries.log`
-- **Metrics**: Success/failure rates, latency, billing events
-
-### Common Issues & Fixes
-
-**Issue**: Location update fails with "No roaming agreement"
-**Fix**: Check `ROAMING_AGREEMENT` in config, ensure visited MCC-MNC is in allowed list.
-
-**Issue**: Authentication fails unexpectedly
-**Fix**: Verify IMSI format (15 digits), check HLR subscriber database for valid entries.
-
-**Issue**: State machine stuck in "Authenticating"
-**Fix**: Increase timeout in `config/roaming.yaml`, check HLR mock is responding.
-
-## Security
-
-### Secrets Handling
-- **IMSI/MSISDN**: Use synthetic test data, never real subscriber information
-- **Authentication Keys (Ki)**: Generate test keys, rotate for each test run
-- **Database**: Encrypt subscriber database at rest
-
-### Test Data Privacy
-- Comply with GDPR/telecom regulations
-- Use synthetic data generators for IMSI/MSISDN
-- No PII in logs or test outputs
-
-## Roadmap
-
-- [ ] Add 5G SA roaming scenarios (NRF/UDM simulation)
-- [ ] Implement charging record generation (CDR/UDR)
-- [ ] Add network slicing simulation
-- [ ] Support steering of roaming (SoR) testing
-- [ ] Add fraud detection scenario testing
-
-## References
-
-- [3GPP TS 23.122 - NAS functions related to MS in idle mode](https://www.3gpp.org/DynaReport/23122.htm)
-- [3GPP TS 29.002 - Mobile Application Part (MAP) specification](https://www.3gpp.org/DynaReport/29002.htm)
-- [GSMA Roaming Hub Testing](https://www.gsma.com/services/roaming/)
-- [ITU-T E.212 - IMSI Numbering](https://www.itu.int/rec/T-REC-E.212/)
-
-
-## Code Generation Prompts
-
-This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
-
-### Test Automation
-
-#### 1. End-to-End Tests
-```
-Create Playwright tests for a login flow, including form validation, authentication error handling, and successful redirect to dashboard
-```
-
-#### 2. API Tests
-```
-Generate pytest-based API tests that verify REST endpoints for CRUD operations, including request/response validation, error cases, and authentication
-```
-
-#### 3. Performance Tests
-```
-Write a Locust load test that simulates 100 concurrent users performing read/write operations, measures response times, and identifies bottlenecks
-```
-
-### How to Use These Prompts
-
-1. **Copy the prompt** from the code block above
-2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
-3. **Provide context** to your AI assistant about:
-   - Your development environment and tech stack
-   - Existing code patterns and conventions in this project
-   - Any constraints or requirements specific to your use case
-4. **Review and adapt** the generated code before using it
-5. **Test thoroughly** and adjust as needed for your specific scenario
-
-### Best Practices
-
-- Always review AI-generated code for security vulnerabilities
-- Ensure generated code follows your project's coding standards
-- Add appropriate error handling and logging
-- Write tests for AI-generated components
-- Document any assumptions or limitations
-- Keep sensitive information (credentials, keys) in environment variables
-
-## Evidence & Verification
-
-Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
-
-**Evidence artifacts**
-- Screenshot stored externally.
-- [Run log](./docs/evidence/run-log.txt)
-- [Dashboard export](./docs/evidence/dashboard-export.json)
-- [Load test summary](./docs/evidence/load-test-summary.txt)
-
-### Evidence Checklist
-
-| Evidence Item | Location | Status |
-| --- | --- | --- |
-| Screenshot captured | Stored externally | ✅ |
-| Run log captured | `docs/evidence/run-log.txt` | ✅ |
-| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
-| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

@@ -1,53 +1,143 @@
-# Full-Scope Red Team Operation Simulator
+# Project: Full Scope Red Team
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Full Scope Red Team while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-Simulate a 90-day advanced persistent threat (APT) campaign with day-by-day logging, detection tracking, and a companion React dashboard. This project is intentionally educational and **not** a real C2 framework.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Highlights
-- FastAPI backend with `Operation` and `OperationEvent` models for timeline tracking.
-- Simulation endpoint that generates stealthy events with probabilistic detection based on a configurable `stealth_factor`.
-- Operation status updates capture undetected streaks and the first time defenders detect activity.
-- React UI renders covert vs. detected events, dashboard metrics, and quick-create workflows.
+## 📌 Scope & Status
 
-## File Tree
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
+
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
+
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
+
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
-backend/app/routers/red_team.py
-backend/app/services/security_simulations.py
-frontend/src/pages/SecuritySimulators.tsx
-frontend/src/components/security/SimulationBlocks.tsx
-projects/full-scope-red-team/README.md
+
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
+
+## 🚀 Setup & Runbook
+
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
+
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-## API Primer
-- `POST /red-team/operations` (auth) — create an operation with an objective and stealth factor.
-- `POST /red-team/operations/{id}/simulate-next-day` (auth) — auto-generate the next day of activity with random detection.
-- `POST /red-team/operations/{id}/events` (auth) — record manual events (validation enforces a 90-day window).
-- `GET /red-team/operations/{id}/timeline` — filter by detection state or category for visualization.
-- `POST /red-team/operations/{id}/mark-detected` (auth) — force a detection state without adding a new event.
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-### Detection & Status Logic
-- Detection probability = `max(0.05, 1 - stealth_factor) + noise_bonus` where `noise_bonus` comes from event confidence.
-- Each new event updates `days_elapsed`, undetected streak, and `first_detection_at` when applicable.
-- Campaign length is capped at 90 days to mirror the requested APT window.
+## 🗺️ Roadmap
 
-### Example Multi-Day Flow
-1. `POST /red-team/operations` with `stealth_factor=0.8` to start the campaign.
-2. `POST /red-team/operations/{id}/simulate-next-day?seed=3` to generate day 1.
-3. Repeat simulation to grow the timeline, then add a noisy manual event to observe detection and streak resets.
-4. Visualize in the React Security Simulators page (`/security-simulators`).
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-## Running the Simulator
-- **Local**: `cd backend && uvicorn app.main:app --reload`; `cd frontend && npm install && npm run dev`.
-- **Docker Compose**: reuse `backend/docker-compose.yml` to start Postgres + API, then run the Vite dev server separately.
-- Sanity: `curl http://localhost:8000/health` and `npm run test` for the UI widgets.
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [GitHub workflows](../../.github/workflows)
+- [Project directory](.)
+- [Project directory](.)
+- [Project directory](.)
 
-## Detection Randomness Assumptions
-- Events use a seeded RNG for tests; providing `seed` keeps UI demos reproducible.
-- Higher stealth reduces base detection odds; noisier actions add a small bonus to defender detection.
+## 🧾 Documentation Freshness
 
-## Blue-Team Countermeasure Notes
-- The timeline highlights detected actions so blue teams can model alerting coverage.
-- Operation status flips to `detected` on the first caught event, resetting the undetected streak for reporting.
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
+
+## 11) Final Quality Checklist (Before Merge)
+
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

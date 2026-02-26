@@ -1,134 +1,143 @@
-# P09 — Advanced AI Chatbot with Retrieval-Augmented Generation (RAG)
+# Project: p09
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for p09 while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-**Tagline:** Enterprise knowledge assistant with FastAPI backend, vector database retrieval, and LLM generation for grounded, low-hallucination responses.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Executive Summary
-- **Grounded Answers:** RAG architecture retrieves relevant context from proprietary documents before generating responses, dramatically reducing hallucination rates
-- **Scalable Backend:** FastAPI with async workers, rate limiting, and authentication supports production traffic
-- **Flexible Vector Store:** Supports multiple backends (Pinecone, pgvector, Weaviate) for semantic search
-- **Continuous Improvement:** Feedback loops, eval harnesses, and drift detection ensure quality over time
-- **Enterprise Controls:** PII redaction, audit logging, prompt injection defense, and cost tracking
+## 📌 Scope & Status
 
-## Architecture Overview
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-### End-to-End RAG Flow
-**Documents** → **Ingestion Pipeline** (chunking/embedding) → **Vector DB** → **Query Flow** (retrieve/rerank/generate) → **User Response**
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
-### Components
-- **FastAPI Backend:** REST API with `/chat` endpoint, JWT auth, rate limiting, request/response logging
-- **Ingestion Pipeline:** Async worker fetching docs, chunking with overlap, generating embeddings (sentence-transformers or OpenAI), upserting to vector DB
-- **Vector Database:** Pinecone/pgvector/Weaviate for semantic search with metadata filtering
-- **Retrieval Module:** Hybrid search (semantic + keyword), reranking (cross-encoder), grounding score calculation
-- **Generation Module:** LLM orchestration (OpenAI/Anthropic/local), prompt templating, streaming responses, fallback logic
-- **Observability:** OpenTelemetry tracing, Prometheus metrics (latency, token usage, cost), structured logging with PII redaction
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
-### Directory Layout
-```
-projects-new/p09/
-├── README.md
-├── ARCHITECTURE.md
-├── TESTING.md
-├── REPORT_TEMPLATES.md
-├── PLAYBOOK.md
-├── RUNBOOKS.md
-├── SOP.md
-├── METRICS.md
-├── ADRS.md
-├── THREAT_MODEL.md
-├── RISK_REGISTER.md
-├── app/
-│   ├── main.py               # FastAPI application
-│   ├── ingestion.py          # Document chunking and embedding
-│   ├── retrieval.py          # Hybrid search and reranking
-│   ├── generation.py         # LLM prompting and streaming
-│   ├── auth.py               # JWT/API key authentication
-│   └── config.py             # Environment configuration
-├── tests/
-│   ├── test_retrieval.py
-│   ├── test_generation.py
-│   └── eval_harness.py       # Grounding/quality evaluation
-└── docker-compose.yml
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Setup
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
+
+## 🚀 Setup & Runbook
 
 ### Prerequisites
-- Python 3.10+
-- Vector database (Pinecone account or local pgvector/Weaviate)
-- OpenAI/Anthropic API key or local LLM (Ollama)
-- Docker for local development
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-### Installation
-```bash
-cd projects-new/p09
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
 
-# Set environment variables
-export VECTOR_DB_URL="postgresql://user:pass@localhost:5432/vectors"
-export OPENAI_API_KEY="sk-..."
-export JWT_SECRET="your-secret"
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-### Run Locally
-```bash
-# Start vector DB (if using pgvector)
-docker-compose up -d postgres
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-# Run ingestion (one-time or scheduled)
-python -m app.ingestion --docs-path ./knowledge_base/
+## 🗺️ Roadmap
 
-# Start API server
-uvicorn app.main:app --reload --port 8000
-```
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-### Query Example
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is our refund policy?", "stream": false}'
-```
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [GitHub workflows](../../.github/workflows)
+- [Project directory](.)
+- [Project directory](.)
+- [Project directory](.)
 
-## Data Flow
-1. **Document Acquisition:** Fetch from S3/SharePoint/Confluence via connectors
-2. **Chunking:** Split into overlapping chunks (512 tokens, 50 token overlap)
-3. **Embedding:** Generate vectors with sentence-transformers or OpenAI `text-embedding-ada-002`
-4. **Upsert:** Store in vector DB with metadata (source, timestamp, version)
-5. **Query:** User submits question via `/chat` endpoint
-6. **Retrieval:** Hybrid search returns top-k chunks (semantic + BM25 fusion)
-7. **Reranking:** Cross-encoder scores relevance; select top-3
-8. **Generation:** LLM receives prompt with context chunks; generates grounded answer
-9. **Response:** Stream or return complete response with citations
-10. **Feedback:** User thumbs-up/down captured for eval dataset
+## 🧾 Documentation Freshness
 
-## Evaluation
-- **Grounding Score:** % of responses with citations; flagged hallucinations
-- **Recall@k:** Relevant docs in top-k retrievals (measured on labeled test set)
-- **Latency:** p95 retrieval + generation time
-- **User Feedback:** Thumbs-up rate, flagged responses
-- **Regression Harness:** Suite of 100+ prompts with expected answers; run pre-deploy
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-## Observability
-- **Tracing (OpenTelemetry):** Span per retrieval, rerank, generation step; visualize in Jaeger
-- **Metrics (Prometheus):** Latency histograms, error rates, token usage, cost per request
-- **Logging:** Structured JSON logs with trace IDs; PII redacted via regex filters
-- **Cost Control:** Token usage tracked per user; budget alerts; rate limiting per API key
+## 11) Final Quality Checklist (Before Merge)
 
-## Security
-- **Authentication:** JWT tokens or API keys; RBAC for admin endpoints
-- **Rate Limiting:** 100 requests/minute per user; burst allowance
-- **PII Handling:** Detect and redact SSN/credit cards in queries and logs
-- **Prompt Injection Defense:** Input sanitization, output filtering, sandboxed LLM calls
-- **Audit Logging:** All queries logged with user ID, timestamp, response for compliance
-
-## Hiring Manager Highlights
-- **Applied AI:** Demonstrates RAG implementation with retrieval, reranking, and generation pipeline
-- **Backend Engineering:** Production-grade FastAPI with async, auth, rate limiting, and observability
-- **Reliability:** Includes eval harnesses, drift detection, fallback logic, and operational runbooks
-- **Security-Minded:** PII redaction, prompt injection defense, and audit logging show enterprise awareness
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

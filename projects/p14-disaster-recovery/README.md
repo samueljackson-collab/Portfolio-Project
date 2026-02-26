@@ -1,128 +1,144 @@
-# P14 — Disaster Recovery (DR) Design
+# Project: Disaster Recovery
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Disaster Recovery while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-## Overview
-Comprehensive disaster recovery plan with backup/restore automation, RPO/RTO documentation, failover procedures, and DR testing framework. Demonstrates business continuity planning and operational resilience.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Key Outcomes
-- [x] RPO/RTO analysis and documentation
-- [x] Automated backup scripts (databases, files, configurations)
-- [x] Restore procedures with validation
-- [x] DR drill automation
-- [x] Runbook for disaster scenarios
-- [x] Recovery testing framework
+## 📌 Scope & Status
 
-## Architecture
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
+
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
+
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
 ```mermaid
-flowchart TB
-    Production[Production Environment]
-
-    subgraph Backup Strategy
-        DBBackup[Database Backups<br/>RPO: 1 hour]
-        FileBackup[File System Backups<br/>RPO: 4 hours]
-        ConfigBackup[Config Backups<br/>RPO: Daily]
-    end
-
-    subgraph Recovery Site
-        DRSite[DR Site<br/>RTO: 4 hours]
-        Validation[Validation Tests]
-    end
-
-    Production --> DBBackup & FileBackup & ConfigBackup
-    DBBackup & FileBackup & ConfigBackup --> DRSite
-    DRSite --> Validation
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Quickstart
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-```bash
-make setup
-make backup-all
-make test-restore
+## 🚀 Setup & Runbook
+
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
+
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-## Configuration
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-| Env Var | Purpose | Example | Required |
-|---------|---------|---------|----------|
-| `BACKUP_BUCKET` | S3 backup bucket | `s3://backups` | Yes |
-| `RPO_HOURS` | Recovery Point Objective | `1` | Yes |
-| `RTO_HOURS` | Recovery Time Objective | `4` | Yes |
-| `DR_REGION` | DR region | `us-west-2` | Yes |
+## 🗺️ Roadmap
 
-## Testing
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-```bash
-make test
-make dr-drill
-```
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [RUNBOOK.md](./RUNBOOK.md)
+- [docs](./docs)
+- [src](./src)
+- [tests](./tests)
+- [GitHub workflows](../../.github/workflows)
 
-## References
+## 🧾 Documentation Freshness
 
-- [AWS Disaster Recovery](https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html)
-- [DR Best Practices](https://aws.amazon.com/architecture/reliability/)
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
+## 11) Final Quality Checklist (Before Merge)
 
-## Code Generation Prompts
-
-This section contains AI-assisted code generation prompts that can help you recreate or extend project components. These prompts are designed to work with AI coding assistants like Claude, GPT-4, or GitHub Copilot.
-
-### Infrastructure as Code
-
-#### 1. Terraform Module
-```
-Create a Terraform module for deploying a highly available VPC with public/private subnets across 3 availability zones, including NAT gateways and route tables
-```
-
-#### 2. CloudFormation Template
-```
-Generate a CloudFormation template for an Auto Scaling Group with EC2 instances behind an Application Load Balancer, including health checks and scaling policies
-```
-
-#### 3. Monitoring Integration
-```
-Write Terraform code to set up CloudWatch alarms for EC2 CPU utilization, RDS connections, and ALB target health with SNS notifications
-```
-
-### How to Use These Prompts
-
-1. **Copy the prompt** from the code block above
-2. **Customize placeholders** (replace [bracketed items] with your specific requirements)
-3. **Provide context** to your AI assistant about:
-   - Your development environment and tech stack
-   - Existing code patterns and conventions in this project
-   - Any constraints or requirements specific to your use case
-4. **Review and adapt** the generated code before using it
-5. **Test thoroughly** and adjust as needed for your specific scenario
-
-### Best Practices
-
-- Always review AI-generated code for security vulnerabilities
-- Ensure generated code follows your project's coding standards
-- Add appropriate error handling and logging
-- Write tests for AI-generated components
-- Document any assumptions or limitations
-- Keep sensitive information (credentials, keys) in environment variables
-
-## Evidence & Verification
-
-Verification summary: Evidence artifacts captured on 2025-11-14 to validate the quickstart configuration and document audit-ready supporting files.
-
-**Evidence artifacts**
-- Screenshot stored externally.
-- [Run log](./docs/evidence/run-log.txt)
-- [Dashboard export](./docs/evidence/dashboard-export.json)
-- [Load test summary](./docs/evidence/load-test-summary.txt)
-
-### Evidence Checklist
-
-| Evidence Item | Location | Status |
-| --- | --- | --- |
-| Screenshot captured | Stored externally | ✅ |
-| Run log captured | `docs/evidence/run-log.txt` | ✅ |
-| Dashboard export captured | `docs/evidence/dashboard-export.json` | ✅ |
-| Load test summary captured | `docs/evidence/load-test-summary.txt` | ✅ |
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

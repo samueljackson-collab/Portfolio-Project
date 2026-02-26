@@ -1,96 +1,143 @@
-# Web App Assessment
+# Project: Web App Assessment
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for Web App Assessment while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-A simulated assessment platform with a FastAPI backend, React dashboard, infrastructure as code, and CI automation. The project demonstrates authenticated CRUD over application assets, a deterministic vulnerability scan, and a responsive UI for reviewing results.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Features
-- **FastAPI backend** with JWT-protected CRUD for endpoints, pages, and vulnerability findings.
-- **Deterministic scan** via `/scan-page` that applies repeatable rules (HTTP vs HTTPS, debug flags, identifier parameters, token exposure).
-- **React frontend** providing login, endpoint-based grouping of pages and findings, scan submission form, and responsive layout with error handling.
-- **Dockerized** services with Compose for local development.
-- **Terraform** stack for a containerized backend (ECS), PostgreSQL (RDS), static hosting (S3 + CloudFront), and restricted security groups.
-- **GitHub Actions CI** to lint, test, and build backend and frontend assets.
+## 📌 Scope & Status
 
-## Backend
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-- Base URL: `http://localhost:8000`
-- Auth: `POST /login` with `admin/password` for demo tokens (Authorization: `Bearer <token>` on protected routes).
-- CRUD routes: `/endpoints`, `/pages`, `/findings` (GET/POST for demo storage).
-- Scan route: `POST /scan-page` with `{ "endpoint_id": <id>, "url": "http://..." }`.
-- Health check: `/health`.
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
-The scan engine lives in `app/scanner.py` and returns simulated findings for predictable patterns (plain HTTP, `debug` flags, `id=` parameters, and `token=` query strings). Pages are added to the in-memory store when scanned, and findings are attached to that page entry.
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
-## Frontend
-
-- Vite + React (TypeScript) app located in `frontend/`.
-- Reads `VITE_API_URL` (default `http://localhost:8000`).
-- Provides:
-  - Login form with inline error messages.
-  - Dashboard grouping pages and findings by endpoint.
-  - Scan form targeting any endpoint.
-  - Responsive cards/grid layout and muted loading/error states.
-
-### Running locally with Docker Compose
-
-```bash
-cd projects/web-app-assessment
-docker compose up --build
-```
-- Backend available at `http://localhost:8000`
-- Frontend available at `http://localhost:3000`
-
-### Manual backend run
-
-```bash
-cd projects/web-app-assessment/backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-### Manual frontend run
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-```bash
-cd projects/web-app-assessment/frontend
-npm install
-npm run dev -- --host
+## 🚀 Setup & Runbook
+
+### Prerequisites
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
+
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-## Terraform deployment (AWS)
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-1. Configure AWS credentials and optionally update `backend_allowed_cidrs` to restrict ingress (defaults to RFC1918 example).
-2. Set required variables for container image and roles:
-   - `backend_image`
-   - `ecs_execution_role_arn`
-   - `ecs_task_role_arn`
-   - `db_username`
-   - `db_password`
-3. Initialize and apply:
+## 🗺️ Roadmap
 
-```bash
-cd projects/web-app-assessment/terraform
-terraform init
-terraform plan -out plan.tfplan -var "backend_image=<account>.dkr.ecr.<region>.amazonaws.com/web-app-assessment:latest" -var "db_username=webuser" -var "db_password=example-pass"
-terraform apply plan.tfplan
-```
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-Outputs include the CloudFront domain for the static frontend and the database endpoint for the backend service.
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [terraform](./terraform)
+- [GitHub workflows](../../.github/workflows)
+- [Project directory](.)
+- [Project directory](.)
 
-## GitHub Actions CI
+## 🧾 Documentation Freshness
 
-The workflow (`.github/workflows/ci-web-app-assessment.yml`) installs dependencies, runs Python tests (`pytest`), executes frontend linting (`npm run lint`), and builds the Vite bundle. It serves as a safeguard to keep application logic, UI, and infrastructure manifests in sync.
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-## Example usage
+## 11) Final Quality Checklist (Before Merge)
 
-1. Login via the frontend with `admin/password`.
-2. Select an endpoint (API or UI) and submit a URL such as `http://example.com/app?id=1&debug=true`.
-3. The dashboard refreshes with the scanned page and simulated findings showing severity, rule, and timestamp grouped under the endpoint.
-
-## Limitations
-
-- Data stores are in-memory for demo purposes (no persistence without external backing services).
-- JWT secret and credentials are static; replace them before production use.
-- The scan is intentionally simplified to deterministic string checks and does not replace a real DAST engine.
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

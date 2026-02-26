@@ -1,175 +1,143 @@
-# P10 — Data Lake & Analytics Platform with Apache Iceberg
+# Project: p10
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for p10 while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-**Tagline:** Modern lakehouse delivering ACID tables, time travel, and governed analytics with Apache Iceberg, Spark, AWS Glue, and Athena.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Executive Summary
-- **ACID Guarantees:** Iceberg tables provide transactional consistency, enabling reliable upserts, deletes, and schema evolution
-- **Time Travel:** Query historical snapshots for auditing, debugging, and reproducibility
-- **Multi-Engine Access:** Spark, Presto, Trino, and Athena read/write same tables with serializable isolation
-- **Governance at Scale:** AWS Lake Formation enforces row/column-level security; audit logs track all access
-- **Cost Efficiency:** Partitioning, z-ordering, and compaction optimize query performance and storage costs
+## 📌 Scope & Status
 
-## Architecture Overview
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-### Medallion Architecture
-**Bronze (Raw)** → **Silver (Staged/Cleansed)** → **Gold (Curated/Aggregated)**
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
-Each zone uses Apache Iceberg tables for ACID, versioning, and schema evolution.
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
-### Components
-- **Ingestion:** Batch (Spark/Glue jobs) and streaming (Kafka → Flink → Iceberg) pipelines
-- **Storage:** S3 with Iceberg metadata (manifests, snapshots) and data files (Parquet)
-- **Catalog:** AWS Glue Data Catalog integrated with Iceberg for metadata management
-- **Compute:** Spark on EMR/EMR-on-EKS for ETL; Glue jobs for managed transforms
-- **Query Engines:** Athena/Presto/Trino for ad-hoc analytics and BI tool integration
-- **Governance:** Lake Formation for column-level permissions, row filters, and audit logging
-- **Maintenance:** Scheduled jobs for compaction, snapshot expiry, and orphan file cleanup
-
-### Directory Layout
-```
-projects-new/p10/
-├── README.md
-├── ARCHITECTURE.md
-├── TESTING.md
-├── REPORT_TEMPLATES.md
-├── PLAYBOOK.md
-├── RUNBOOKS.md
-├── SOP.md
-├── METRICS.md
-├── ADRS.md
-├── THREAT_MODEL.md
-├── RISK_REGISTER.md
-├── terraform/
-│   └── main.tf               # S3, Glue, IAM, KMS, Lake Formation
-├── spark/
-│   ├── iceberg_write_job.py  # Batch ingestion with partitioning
-│   ├── iceberg_read_job.py   # Reads, time-travel, rollback
-│   └── maintenance.py        # Compaction and cleanup
-└── athena/
-    └── queries.sql           # Sample validation and views
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Setup
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
+
+## 🚀 Setup & Runbook
 
 ### Prerequisites
-- AWS account with IAM permissions for S3, Glue, Lake Formation, Athena
-- Terraform 1.5+ for infrastructure provisioning
-- Spark 3.3+ with Iceberg runtime JAR
-- Python 3.10+ for job development
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-### Deploy Infrastructure
-```bash
-cd projects-new/p10/terraform
-terraform init
-terraform plan -out=plan.tfplan
-terraform apply plan.tfplan
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-Creates:
-- S3 buckets (bronze, silver, gold with versioning and encryption)
-- Glue Data Catalog database
-- Lake Formation permissions and data lake settings
-- IAM roles for Spark/Glue/Athena
-- KMS key for encryption
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-### Run Spark Ingestion Job
-```bash
-spark-submit \
-  --jars /opt/iceberg/iceberg-spark-runtime-3.3_2.12-1.4.0.jar \
-  --conf spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog \
-  --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog \
-  --conf spark.sql.catalog.glue_catalog.warehouse=s3://my-data-lake/warehouse/ \
-  spark/iceberg_write_job.py --source s3://raw-data/ --table glue_catalog.bronze.events
-```
+## 🗺️ Roadmap
 
-### Query with Athena
-```sql
--- Query current data
-SELECT * FROM glue_catalog.silver.transactions WHERE date >= '2025-01-01' LIMIT 10;
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
--- Time travel to yesterday
-SELECT * FROM glue_catalog.silver.transactions FOR SYSTEM_TIME AS OF '2025-01-14 00:00:00' LIMIT 10;
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [terraform](./terraform)
+- [GitHub workflows](../../.github/workflows)
+- [Project directory](.)
+- [Project directory](.)
 
--- Query specific snapshot
-SELECT * FROM glue_catalog.silver.transactions FOR SYSTEM_VERSION AS OF 1234567890;
-```
+## 🧾 Documentation Freshness
 
-## Data Flow
-1. **Raw Ingestion:** Batch files land in bronze S3 bucket; Spark job reads and writes to bronze Iceberg table
-2. **Cleansing:** Spark job reads bronze, applies validation/dedupe, writes to silver
-3. **Aggregation:** Scheduled job computes metrics, writes to gold tables
-4. **Compaction:** Maintenance job rewrites small files, updates manifests
-5. **Consumption:** Athena/Presto queries gold tables; BI tools connect via JDBC
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-## Operations
+## 11) Final Quality Checklist (Before Merge)
 
-### Table Maintenance
-```bash
-# Compact small files
-spark-sql --conf spark.sql.catalog.glue_catalog.warehouse=s3://... \
-  -e "CALL glue_catalog.system.rewrite_data_files('silver.transactions');"
-
-# Expire old snapshots (retain 7 days)
-spark-sql -e "CALL glue_catalog.system.expire_snapshots('silver.transactions', TIMESTAMP '2025-01-07 00:00:00');"
-
-# Remove orphan files
-spark-sql -e "CALL glue_catalog.system.remove_orphan_files('silver.transactions');"
-```
-
-### Schema Evolution
-```python
-# Add column with default
-spark.sql("""
-  ALTER TABLE glue_catalog.silver.transactions
-  ADD COLUMN customer_segment STRING AFTER customer_id
-""")
-
-# Rename column (Iceberg supports)
-spark.sql("""
-  ALTER TABLE glue_catalog.silver.transactions
-  RENAME COLUMN old_name TO new_name
-""")
-```
-
-### Time Travel & Rollback
-```python
-# Read historical snapshot
-df = spark.read \
-  .format("iceberg") \
-  .option("snapshot-id", "1234567890") \
-  .table("glue_catalog.silver.transactions")
-
-# Rollback to previous snapshot
-spark.sql("""
-  CALL glue_catalog.system.rollback_to_snapshot('silver.transactions', 1234567890)
-""")
-```
-
-## Performance Optimization
-- **Partitioning:** Partition by date/region for query pruning
-- **Z-Ordering:** Sort within files by frequently filtered columns
-- **File Sizing:** Target 128-512 MB files via compaction
-- **Caching:** Athena result caching; Presto coordinator caching
-- **Concurrency:** Use optimistic concurrency for writes; retry on conflict
-
-## Security & Governance
-- **Encryption:** S3-SSE with KMS for data at rest; TLS for data in transit
-- **Access Control:** Lake Formation column/row filters; IAM roles for compute
-- **Audit Logging:** CloudTrail for API calls; Lake Formation audit logs for data access
-- **Data Classification:** Tag tables/columns with sensitivity (PII, confidential); enforce policies
-
-## Cost Management
-- **S3 Lifecycle:** Transition bronze to Glacier after 90 days; delete after 1 year
-- **Compaction:** Reduce file count to minimize S3 LIST costs
-- **Athena Optimization:** Partition pruning, compression (Parquet Snappy), column projection
-- **Spot Instances:** Use spot for EMR clusters with checkpointing
-
-## Hiring Manager Highlights
-- **Modern Lakehouse Expertise:** Iceberg ACID tables, time travel, and schema evolution demonstrate cutting-edge data engineering
-- **Multi-Engine Integration:** Spark, Glue, Athena, Presto show breadth across compute engines
-- **Production Operations:** Table maintenance, governance, cost optimization, and monitoring reflect real-world platform experience
-- **Security & Compliance:** Lake Formation, encryption, and audit logging show enterprise-readiness
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state

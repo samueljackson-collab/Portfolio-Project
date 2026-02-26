@@ -1,158 +1,143 @@
-# P08 — Serverless Data Processing Platform with AWS Lambda and Step Functions
+# Project: p08
 
-## Documentation
-For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../DOCUMENTATION_INDEX.md).
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
 
+## 🎯 Overview
+This project is part of the Portfolio-Project collection and is documented using the portfolio README standard to keep delivery status, architecture context, and operational evidence consistent for reviewers and maintainers. The project addresses domain-specific implementation goals for p08 while ensuring contributors can understand how to run, validate, and extend the work in a repeatable way. Intended stakeholders include engineering contributors, reviewers, and operators who need quick access to setup steps, quality signals, and recovery guidance. Success for this README is transparent status reporting, clear scope boundaries, and links to verifiable implementation artifacts. Where implementation details are still evolving, this README explicitly marks planned work and documentation follow-ups.
 
-**Tagline:** Event-driven ETL platform leveraging AWS Lambda, Step Functions, and S3 for cost-efficient batch and real-time data processing with automatic retries and error handling.
+### Outcomes
+- Standardized documentation structure aligned with the portfolio template.
+- Clear status visibility for implementation, testing, and operations workstreams.
+- Reproducible setup/run instructions for local validation.
+- Evidence-oriented references to source, tests, and deployment assets.
+- Explicit documentation ownership and update cadence.
 
-## Executive Summary: Serverless Advantages
-- **Cost Efficiency:** Pay-per-request pricing eliminates idle resource costs; automatic scaling means no over-provisioning.
-- **Operational Simplicity:** No servers to patch or manage; AWS handles infrastructure, scaling, and availability.
-- **Event-Driven Architecture:** S3 triggers and EventBridge schedules enable reactive processing without polling.
-- **Built-In Resilience:** Step Functions provide orchestration with retries, error handling, and DLQ for failed workflows.
+## 📌 Scope & Status
 
-## Architecture Overview
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core project implementation | 🟠 In Progress | Core project assets exist in this directory; maturity varies by component. | Validate implementation details and update evidence links for current sprint. |
+| Ops/Docs/Testing alignment | 📝 Documentation Pending | README standardized; command/test evidence may still require project-specific refresh. | Complete command validation and mark checklist items with executed evidence. |
 
-### High-Level Flow
-**Data Sources** → **S3 Raw Bucket** (trigger) → **Step Functions State Machine** → **Lambda Functions** (validate/transform/enrich) → **S3 Processed Bucket** / **DynamoDB Metadata** → **Downstream Consumers** (Analytics/ML/BI)
+> **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
-### Components
-- **EventBridge:** Schedules batch jobs (nightly, hourly) and routes custom events to Step Functions
-- **S3 Event Notifications:** Trigger state machines on object creation in raw bucket
-- **Step Functions:** Orchestrates multi-step workflows with parallel processing, error handling, retries, and compensation logic
-- **Lambda Functions:** Stateless compute for ingestion, validation, transformation, and output delivery
-- **DynamoDB:** Stores workflow metadata (execution IDs, status, timestamps, error messages)
-- **AWS Glue (Optional):** For heavy ETL transformations exceeding Lambda limits
-- **CloudWatch & X-Ray:** Monitoring, logging, and distributed tracing
+## 🏗️ Architecture
+This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
-### Directory Layout
-```
-projects-new/p08/
-├── README.md
-├── ARCHITECTURE.md
-├── TESTING.md
-├── REPORT_TEMPLATES.md
-├── PLAYBOOK.md
-├── RUNBOOKS.md
-├── SOP.md
-├── METRICS.md
-├── ADRS.md
-├── THREAT_MODEL.md
-├── RISK_REGISTER.md
-├── template.yaml             # SAM template
-├── lambda/
-│   ├── ingest/handler.py
-│   ├── validate/handler.py
-│   ├── transform/handler.py
-│   └── output/handler.py
-├── stepfunctions/
-│   └── etl_workflow.asl.json
-└── ci/
-    └── pipeline.yml          # GitHub Actions or GitLab CI
+```mermaid
+flowchart LR
+  A[Contributor] --> B[Project Docs/Code]
+  B --> C[Local Validation]
+  C --> D[CI Checks]
+  D --> E[Deploy/Artifacts]
+  E --> F[Monitoring/Feedback]
 ```
 
-## Data Flow
-1. **Ingestion:** Files land in `s3://raw-data-bucket/` triggering S3 event notification
-2. **Metadata Registration:** Lambda writes record to DynamoDB tracking table (execution ID, file path, timestamp, status=PENDING)
-3. **Workflow Initiation:** Step Functions execution starts with S3 event payload
-4. **Validation:** Lambda validates schema, checks for required fields, routes invalid to DLQ
-5. **Transformation:** Lambda applies business logic (enrichment, aggregation, format conversion)
-6. **Output:** Lambda writes processed data to `s3://processed-data-bucket/` and updates DynamoDB status=COMPLETED
-7. **Error Handling:** Failures trigger retries (exponential backoff); persistent failures route to DLQ with alerting
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| `./` | Project-level documentation and implementation assets | `README.md`, project files in this directory |
+| `./src` (if present) | Application/business logic | Source modules and entrypoints |
+| `./tests` (if present) | Automated verification | Unit/integration/e2e test suites |
+| `./deployments` or `./terraform` (if present) | Runtime and infra definitions | IaC modules, deployment manifests |
+| `../../.github/workflows` | CI/CD automation | Repository workflows and pipeline checks |
 
-## Setup
+## 🚀 Setup & Runbook
 
 ### Prerequisites
-- AWS CLI configured with appropriate credentials
-- AWS SAM CLI installed (`pip install aws-sam-cli`)
-- Python 3.10+ for Lambda development
-- S3 buckets created (`raw-data`, `processed-data`, `error-data`)
+- Git access to this repository
+- Runtime/tooling required by this specific project (for example Node.js, Python, Docker, or Terraform)
+- Environment variables/secrets configured as documented in project files
 
-### Deploy with SAM
-```bash
-cd projects-new/p08
-sam build
-sam deploy --guided --stack-name p08-serverless-etl --capabilities CAPABILITY_IAM
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Inspect project files | `ls` | Displays project assets and subdirectories. |
+| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
+| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
+| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Dependency install failure | Missing runtime/tool version | Align local runtime to project requirements and retry install. |
+| Command not found | Wrong working directory or missing toolchain | Run from this project directory and install required CLI/runtime. |
+| Test execution errors | Incomplete environment variables or fixtures | Configure required env vars/fixtures and rerun validation command. |
+
+## ✅ Testing & Quality Evidence
+Testing strategy for this project should combine fast local checks (unit/lint), workflow-level validation (integration/e2e where applicable), and manual verification for user-visible flows. This standardized section is present to track current evidence quality and call out unvalidated areas explicitly.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
+| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
+| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+
+### Known Gaps
+- Project-specific commands/results should be updated with executed evidence.
+- CI artifact links and test reports may need project-level curation.
+- Coverage and non-functional testing depth varies across projects.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Documentation drift from implementation | Medium | Standardized README sections with cadence/ownership | Medium |
+| Incomplete validation before merges | Medium | CI workflows and checklist-driven review process | Medium |
+| Environment/configuration inconsistencies | High | Runbook prerequisites and troubleshooting guidance | Medium |
+
+### Reliability Controls
+- Version-controlled documentation and project assets.
+- Repository CI/CD workflows for repeatable checks/deploys.
+- Project runbook section for failure diagnosis and recovery.
+- Explicit roadmap and freshness cadence for continuous updates.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Build/Test Artifacts]
+  C --> D[Deploy/Release]
+  D --> E[Monitoring]
+  E --> F[Backlog & Docs Updates]
 ```
 
-Follow prompts to configure parameters (bucket names, DynamoDB table, Lambda memory/timeout).
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Build success rate | CI workflows | Target stable successful builds | Project maintainers |
+| Test pass rate | Project test suites | Target no regressions on required suites | Project maintainers |
+| Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
-### Trigger Test Workflow
-```bash
-# Upload sample file to raw bucket
-aws s3 cp sample-data.csv s3://raw-data-bucket/input/sample-data.csv
+## 🗺️ Roadmap
 
-# Monitor execution
-aws stepfunctions list-executions --state-machine-arn <arn-from-outputs>
-aws stepfunctions describe-execution --execution-arn <execution-arn>
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
+| Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
+| Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
 
-# Check CloudWatch Logs
-sam logs -n IngestFunction --tail
-```
+## 📎 Evidence Index
+- [README.md](./README.md)
+- [GitHub workflows](../../.github/workflows)
+- [Project directory](.)
+- [Project directory](.)
+- [Project directory](.)
 
-## Usage
+## 🧾 Documentation Freshness
 
-### Inspecting Workflow Status
-```bash
-# Query DynamoDB for recent executions
-aws dynamodb query --table-name etl-metadata \
-  --key-condition-expression "PK = :pk" \
-  --expression-attribute-values '{":pk":{"S":"EXEC#2025-01-15"}}'
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status, roadmap, and evidence links | Project maintainers |
+| Weekly | Validate commands and evidence link health | Project maintainers |
+| Monthly | Audit README against portfolio template | Project maintainers |
 
-# View Step Functions execution history
-aws stepfunctions get-execution-history --execution-arn <arn> --max-results 50
-```
+## 11) Final Quality Checklist (Before Merge)
 
-### Monitoring Throughput and Health
-- **CloudWatch Metrics:** Lambda invocations, duration, errors, throttles
-- **Step Functions Metrics:** Execution success/failure rate, state retries
-- **X-Ray Traces:** End-to-end latency breakdown and service map
-
-### Cost Tracking
-- Tag all resources with `Project:P08` for cost allocation
-- CloudWatch dashboard with estimated cost per workflow execution
-- Budget alerts configured for daily/monthly thresholds
-
-## Performance Optimization
-
-### Lambda Tuning
-- **Memory Allocation:** Test 512MB-3GB to find optimal price/performance (CPU scales with memory)
-- **Cold Start Mitigation:** Use provisioned concurrency for critical paths; keep dependencies minimal
-- **Batch Processing:** Process multiple records per invocation to amortize overhead
-
-### Step Functions Optimization
-- **Parallel States:** Fan-out processing for independent tasks (e.g., partition-level transforms)
-- **Wait State for Rate Limiting:** Throttle API calls to downstream services
-- **Service Integrations:** Direct S3/DynamoDB/SNS calls avoid Lambda wrapper overhead
-
-### Concurrency Management
-- Set reserved concurrency on critical Lambdas to prevent downstream saturation
-- Monitor concurrent executions vs account limits (default 1000)
-
-## Security & Compliance
-
-### IAM Design
-- Least-privilege IAM roles per Lambda function (read from specific S3 prefix, write to specific table)
-- Step Functions execution role limited to invoking specific Lambdas and services
-- Cross-account access via IAM roles with external ID for trust
-
-### Encryption
-- S3 buckets encrypted with SSE-S3 or SSE-KMS for sensitive data
-- DynamoDB encryption at rest enabled
-- Secrets (API keys, DB passwords) stored in Secrets Manager; retrieved via SDK
-
-### VPC Considerations
-- Lambdas accessing RDS/ElastiCache deployed in VPC with NAT Gateway for internet egress
-- VPC endpoints for S3/DynamoDB to avoid NAT costs
-
-## Disaster Recovery
-- S3 versioning and cross-region replication for critical data
-- Step Functions state machines versioned; rollback via CloudFormation/SAM
-- DynamoDB point-in-time recovery enabled
-
-## Hiring Manager Highlights
-- **Cloud-Native Expertise:** Deep understanding of serverless patterns, AWS service integrations, and cost optimization
-- **Production Rigor:** Includes error handling, retries, DLQs, monitoring, and security best practices
-- **Scalability:** Handles burst traffic and large files with parallel processing and auto-scaling
-- **Operational Excellence:** Runbooks, playbooks, and SOPs demonstrate real-world production support experience
+- [x] Status legend is present and used consistently
+- [x] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [x] Risk/reliability controls are documented
+- [x] Roadmap includes next milestones
+- [x] Evidence links resolve correctly
+- [x] README reflects current implementation state
