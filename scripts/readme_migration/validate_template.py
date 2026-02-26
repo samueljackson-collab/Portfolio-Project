@@ -27,12 +27,12 @@ REQUIRED_HEADING_PATTERNS: dict[str, str] = {
     "documentation_freshness": r"documentation\s+freshness",
 }
 
-TABLE_REQUIRED_SECTIONS: dict[str, str] = {
-    "scope_status": "scope_status",
-    "testing": "testing",
-    "risk": "risk",
-    "roadmap": "roadmap",
-    "documentation_freshness": "documentation_freshness",
+TABLE_REQUIRED_SECTIONS: set[str] = {
+    "scope_status",
+    "testing",
+    "risk",
+    "roadmap",
+    "documentation_freshness",
 }
 
 
