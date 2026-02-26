@@ -2,7 +2,17 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
+
+
+def check_health() -> dict:
+    """Return standardized health check payload for testing."""
+    return {
+        "status": "ok",
+        "project": "1-aws-infrastructure-automation",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 def run_health_check() -> dict:

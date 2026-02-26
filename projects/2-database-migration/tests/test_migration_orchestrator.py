@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime, timezone
 
-from migration_orchestrator import (
+from src.migration_orchestrator import (
     DatabaseMigrationOrchestrator,
     DatabaseConfig,
     MigrationPhase,
@@ -113,7 +113,7 @@ class TestDatabaseMigrationOrchestrator:
     @pytest.fixture
     def orchestrator(self, source_config, target_config):
         """Migration orchestrator fixture"""
-        with patch('migration_orchestrator.boto3'):
+        with patch('src.migration_orchestrator.boto3'):
             return DatabaseMigrationOrchestrator(
                 source_config=source_config,
                 target_config=target_config,
@@ -129,7 +129,7 @@ class TestDatabaseMigrationOrchestrator:
         assert orchestrator.phase == MigrationPhase.INIT
         assert isinstance(orchestrator.metrics, MigrationMetrics)
 
-    @patch('migration_orchestrator.psycopg2.connect')
+    @patch('src.migration_orchestrator.psycopg2.connect')
     def test_validate_connectivity_success(self, mock_connect, orchestrator):
         """Test successful connectivity validation"""
         # Mock database connections
@@ -145,7 +145,7 @@ class TestDatabaseMigrationOrchestrator:
         assert result is True
         assert mock_connect.call_count == 2  # Source and target
 
-    @patch('migration_orchestrator.psycopg2.connect')
+    @patch('src.migration_orchestrator.psycopg2.connect')
     def test_validate_connectivity_failure(self, mock_connect, orchestrator):
         """Test connectivity validation failure"""
         # Simulate connection error
@@ -164,7 +164,7 @@ class TestDatabaseMigrationOrchestrator:
             assert orchestrator.phase == MigrationPhase.REPLICATION
             mock_debezium.assert_called_once()
 
-    @patch('migration_orchestrator.boto3.client')
+    @patch('src.migration_orchestrator.boto3.client')
     def test_setup_replication_with_dms(self, mock_boto_client, source_config, target_config):
         """Test replication setup with DMS"""
         mock_dms_client = MagicMock()

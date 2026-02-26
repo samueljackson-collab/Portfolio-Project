@@ -10,13 +10,23 @@ from __future__ import annotations
 import time
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from dataclasses import dataclass
 from enum import Enum
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import boto3
-from botocore.exceptions import ClientError
+
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    psycopg2 = None  # type: ignore
+    RealDictCursor = None  # type: ignore
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+except ImportError:
+    boto3 = None  # type: ignore
+    ClientError = Exception  # type: ignore
 
 # Configure logging
 logging.basicConfig(
