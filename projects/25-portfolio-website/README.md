@@ -21,6 +21,14 @@ Project 25 delivers a centralized documentation website for the full Portfolio-P
 
 > **Scope note:** In scope now is the static documentation platform, project content organization, and baseline operational/testing evidence. Intentionally deferred are advanced search analytics, full synthetic E2E browser validation, and production SLO automation details beyond currently documented staging assets.
 
+
+### Status Legend
+- 🟢 **Done**: Implemented and validated.
+- 🟠 **In Progress**: Actively being implemented or validated.
+- 🔵 **Planned**: Approved but not yet started.
+- 🔄 **Recovery/Rebuild**: Being restored, refactored, or remediated.
+- 📝 **Documentation Pending**: Work exists but documentation/evidence needs refresh.
+
 ## 🏗️ Architecture
 The project combines a VitePress-based documentation frontend (`docs/`) with lightweight Python utilities (`src/`) for health verification and smoke-style checks used by tests and container execution flows. Content authors update Markdown source files, VitePress renders and serves/builds the site, and CI/deployment workflows publish artifacts. Monitoring-related configuration files in `prometheus/` and `grafana/` provide observability assets aligned with deployment operations.
 

@@ -27,12 +27,12 @@ REQUIRED_HEADING_PATTERNS: dict[str, str] = {
     "documentation_freshness": r"documentation\s+freshness",
 }
 
-TABLE_REQUIRED_SECTIONS: set[str] = {
-    "scope_status",
-    "testing",
-    "risk",
-    "roadmap",
-    "documentation_freshness",
+TABLE_REQUIRED_SECTIONS: dict[str, str] = {
+    "scope_status": "scope_status",
+    "testing": "testing",
+    "risk": "risk",
+    "roadmap": "roadmap",
+    "documentation_freshness": "documentation_freshness",
 }
 
 
@@ -93,6 +93,8 @@ def extract_headings(lines: list[str]) -> list[Heading]:
 def find_heading(headings: Iterable[Heading], pattern: str) -> Heading | None:
     regex = re.compile(pattern, flags=re.IGNORECASE)
     for heading in headings:
+        if heading.level == 1:
+            continue
         if regex.search(heading.title):
             return heading
     return None
@@ -142,6 +144,9 @@ def validate_readme(path: Path) -> dict[str, object]:
 
     if re.search(r"status\s*(key|legend)", content, flags=re.IGNORECASE) is None:
         errors.append("missing_status_legend")
+
+    if re.search(r"final\s+quality\s+checklist\s*\(before\s+merge\)", content, flags=re.IGNORECASE) is None:
+        errors.append("missing_final_quality_checklist")
 
     architecture_heading = find_heading(headings, REQUIRED_HEADING_PATTERNS["architecture"])
     delivery_heading = find_heading(headings, REQUIRED_HEADING_PATTERNS["delivery"])
