@@ -21,6 +21,14 @@ This project is part of the Portfolio-Project collection and is documented using
 
 > **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
+
+### Status Legend
+- 🟢 **Done**: Implemented and validated.
+- 🟠 **In Progress**: Actively being implemented or validated.
+- 🔵 **Planned**: Approved but not yet started.
+- 🔄 **Recovery/Rebuild**: Being restored, refactored, or remediated.
+- 📝 **Documentation Pending**: Work exists but documentation/evidence needs refresh.
+
 ## 🏗️ Architecture
 This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
