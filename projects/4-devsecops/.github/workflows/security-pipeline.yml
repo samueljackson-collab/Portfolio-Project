@@ -577,8 +577,10 @@ jobs:
             echo "Critical findings: $CRITICAL"
             if [ "$CRITICAL" -gt "0" ]; then
               echo "::error::Security gate failed: $CRITICAL critical vulnerabilities found"
-              # Uncomment the next line to fail the build on critical findings
-              # exit 1
+             if [ "$CRITICAL" -gt "0" ]; then
+               echo "::error::Security gate failed: $CRITICAL critical vulnerabilities found"
+               exit 1
+             fi
             fi
           else
             echo "No security report found, skipping gate check"
