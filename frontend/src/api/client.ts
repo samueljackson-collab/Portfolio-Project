@@ -53,10 +53,17 @@ apiClient.interceptors.response.use(
       // Handle specific error status codes
       switch (error.response.status) {
         case 401:
-          // Unauthorized - clear token and redirect to login
+          // Unauthorized — clear stored credentials and send the user to login.
+          // NOTE: window.location is used intentionally here because this
+          // interceptor runs outside the React tree and does not have access
+          // to React Router's navigate(). The full-page reload also ensures
+          // all in-memory auth state is wiped cleanly.
           localStorage.removeItem('access_token')
           localStorage.removeItem('user')
-          window.location.href = '/login'
+          // Avoid redirect loops if the 401 is thrown from the login page itself
+          if (!window.location.pathname.startsWith('/login')) {
+            window.location.href = '/login'
+          }
           break
 
         case 403:

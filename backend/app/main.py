@@ -62,6 +62,17 @@ async def lifespan(app: FastAPI):
         logger.warning("Running in debug mode - initializing database")
         await init_db()
 
+    # Warn loudly if the application is using the built-in default secret key.
+    # A predictable SECRET_KEY allows an attacker to forge arbitrary JWT tokens.
+    _default_key_prefix = "development-secret-key"
+    if settings.secret_key.startswith(_default_key_prefix):
+        logger.critical(
+            "SECURITY WARNING: Using the default SECRET_KEY. "
+            "This key is publicly known and MUST be replaced before any "
+            "internet-facing or production deployment. "
+            "Set a random 32+ character value in your .env file."
+        )
+
     instrumentator.instrument(app).expose(app, include_in_schema=False)
 
     logger.info("Application startup complete")
@@ -87,13 +98,16 @@ app = FastAPI(
 
 
 # CORS Middleware
+# allow_headers is restricted to the headers this API actually requires.
+# Wildcard "*" was previously used and would allow any client-injected header,
+# which broadens the attack surface unnecessarily.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
+    expose_headers=["X-Process-Time"],
     max_age=3600,
 )
 
