@@ -286,7 +286,7 @@ flowchart LR
 
 The block below preserves previously existing README content to ensure historical documentation is retained.
 
-```md
+```markdown
 # Cloud Content Staging Area
 
 **Purpose:** Temporary location for organizing content from cloud sources before integrating into portfolio projects.
