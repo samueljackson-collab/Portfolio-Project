@@ -238,6 +238,67 @@ now exceeds 25 projects.
 
 ---
 
+## 📊 Current Project Progress (Master Snapshot)
+
+This snapshot expands the status-only view with an execution-progress estimate so reviewers can quickly see how far each project has moved from planning to evidence-backed completion.
+
+> **Progress scale:** 100% = implementation complete and portfolio-ready evidence available, 70–95% = implementation active with remaining validation/docs, 10–60% = roadmap/planning or early build phase.
+
+| Project | Title | Status | Current Progress | Notes |
+| --- | --- | --- | --- | --- |
+| 1 | AWS Infrastructure Automation | 🟢 Done | 100% | Core infra automation baseline completed and documented. |
+| 2 | Database Migration Platform | 🟢 Done | 100% | Migration pipeline and validation assets completed. |
+| 3 | Kubernetes CI/CD Platform | 🟢 Done | 100% | Cluster delivery pipeline and deployment workflow complete. |
+| 4 | DevSecOps Pipeline | 🟢 Done | 100% | Security-integrated CI/CD controls implemented. |
+| 5 | Real-time Data Streaming | 🟢 Done | 100% | End-to-end streaming architecture completed. |
+| 6 | MLOps Platform | 🟢 Done | 100% | Model lifecycle pipeline and operations path complete. |
+| 7 | Serverless Data Processing | 🟢 Done | 100% | Serverless processing workflow implemented and validated. |
+| 8 | Advanced AI Chatbot | 🟢 Done | 100% | RAG + tooling assistant feature set completed. |
+| 9 | Multi-Region Disaster Recovery | 🟢 Done | 100% | DR and failover validation scenarios complete. |
+| 10 | Blockchain Smart Contract Platform | 🟢 Done | 100% | Smart contract stack and testing workflow complete. |
+| 11 | IoT Data Ingestion & Analytics | 🟢 Done | 100% | Telemetry ingest and dashboarding path complete. |
+| 12 | Quantum Computing Integration | 🟢 Done | 100% | Hybrid quantum/classical workflows completed. |
+| 13 | Advanced Cybersecurity Platform | 🟢 Done | 100% | SOAR and security automation components complete. |
+| 14 | Edge AI Inference Platform | 🟢 Done | 100% | Edge inference runtime and service design complete. |
+| 15 | Real-time Collaborative Platform | 🟢 Done | 100% | Collaboration backend and reconciliation approach complete. |
+| 16 | Advanced Data Lake & Analytics | 🟢 Done | 100% | Medallion and analytics pipeline completed. |
+| 17 | Multi-Cloud Service Mesh | 🟢 Done | 100% | Multi-cluster mesh architecture implemented. |
+| 18 | GPU-Accelerated Computing | 🟢 Done | 100% | GPU simulation and orchestration workflow complete. |
+| 19 | Advanced Kubernetes Operators | 🟢 Done | 100% | Operator lifecycle automation complete. |
+| 20 | Blockchain Oracle Service | 🟢 Done | 100% | Oracle adapter + consumer workflow complete. |
+| 21 | Quantum-Safe Cryptography | 🟢 Done | 100% | Hybrid crypto proof-of-concept completed. |
+| 22 | Autonomous DevOps Platform | 🟢 Done | 100% | Event-driven remediation flow completed. |
+| 23 | Advanced Monitoring & Observability | 🟢 Done | 100% | Monitoring, alerting, and tracing assets complete. |
+| 24 | Portfolio Report Generator | 🟢 Done | 100% | Automated reporting pipeline completed. |
+| 25 | Portfolio Website & Documentation Hub | 🟢 Done | 100% | Documentation portal and portfolio structure complete. |
+| 26 | Homelab & Secure Network Build | 🟢 Done | 100% | Core homelab network architecture established. |
+| 27 | Virtualization & Core Services | 🟢 Done | 100% | Core services virtualized and productionized. |
+| 28 | Observability & Backups Stack | 🟢 Done | 100% | Monitoring + backup integration complete. |
+| 29 | Commercial E-commerce & Booking Systems Recovery | 🔄 Recovery/Rebuild | 55% | Recovery and reconstruction in progress with staged documentation updates. |
+| 30 | Database Infrastructure Module (Terraform RDS) | 🟠 In Progress | 75% | Terraform module baseline active; hardening and final evidence pending. |
+| 31 | Resume Set (SDE/Cloud/QA/Net/Cyber) | 🟠 In Progress | 80% | Multi-track resume set active with iterative refinements. |
+| 32 | GitOps Platform with IaC (Terraform + ArgoCD) | 🔵 Planned | 30% | Architecture and sequencing defined; implementation ramp-up pending. |
+| 33 | AWS Landing Zone (Organizations + SSO) | 🔵 Planned | 25% | Security baseline planning and account topology draft stage. |
+| 34 | Active Directory Design & Automation (DSC/Ansible) | 🔵 Planned | 20% | Domain automation approach outlined; build stage pending. |
+| 35 | SIEM Pipeline | 🔵 Planned | 20% | Ingest/detection design prepared; implementation not yet started. |
+| 36 | Adversary Emulation | 🔵 Planned | 15% | ATT&CK-aligned emulation design drafted. |
+| 37 | Incident Response Playbook | 🔵 Planned | 20% | IR framework and escalation model being drafted. |
+| 38 | Web App Login Test Plan | 🔵 Planned | 25% | Test strategy and coverage matrix planning phase. |
+| 39 | Selenium + PyTest CI | 🔵 Planned | 25% | CI automation blueprint defined; execution pending. |
+| 40 | Multi-OS Lab | 🔵 Planned | 30% | Lab topology and target OS matrix drafted. |
+| 41 | Document Packaging Pipeline | 🔵 Planned | 30% | Prompt-to-document workflow concept validated; productionization pending. |
+| 42 | IT Playbook (E2E Lifecycle) | 🔵 Planned | 20% | Lifecycle playbook outline prepared; content expansion pending. |
+| 43 | Engineer's Handbook (Standards/QA Gates) | 🔵 Planned | 20% | Standards and QA gate scaffolding in early draft stage. |
+
+### Portfolio Progress Totals
+
+- **Completed (🟢):** 28 / 43 projects (**65.1%**)
+- **In progress (🟠):** 2 / 43 projects (**4.7%**)
+- **Recovery/Rebuild (🔄):** 1 / 43 projects (**2.3%**)
+- **Planned (🔵):** 12 / 43 projects (**27.9%**)
+
+---
+
 ## 🧩 Project Visuals (Charts + Diagrams)
 
 ### Project 1: AWS Infrastructure Automation
