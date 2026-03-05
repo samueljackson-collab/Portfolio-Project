@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { orchestrationService } from '../api/services'
 import type { OrchestrationPlan, OrchestrationRun } from '../api/types'
 
@@ -8,6 +8,22 @@ const statusStyles: Record<OrchestrationRun['status'], string> = {
   failed: 'bg-rose-100 text-rose-800 border-rose-200'
 }
 
+/**
+ * OrchestrationConsole — authenticated page for launching and monitoring
+ * infrastructure deployments.
+ *
+ * HOW IT WORKS:
+ * 1. On mount, we load the available plans and any existing run history from
+ *    the backend. Plans are static; runs are in-memory on the server.
+ * 2. The user selects a plan, fills in change metadata, and clicks "Start
+ *    orchestration". The backend performs a dry-run validation and returns a
+ *    run record immediately with status 'succeeded'.
+ * 3. The new run is prepended to the local list so it appears at the top of
+ *    the run history table without a page reload.
+ * 4. A 5-second success banner clears itself via setTimeout. We store the
+ *    timeout ID in a ref so it can be cleared on unmount (prevents a React
+ *    warning about state updates on unmounted components).
+ */
 export const OrchestrationConsole: React.FC = () => {
   const [plans, setPlans] = useState<OrchestrationPlan[]>([])
   const [runs, setRuns] = useState<OrchestrationRun[]>([])
@@ -18,9 +34,18 @@ export const OrchestrationConsole: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
+  // Store the success-banner timeout ID so we can cancel it if the component
+  // unmounts before the 5 seconds expire. Without this, React warns:
+  // "Can't perform a React state update on an unmounted component."
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Derive the most recent run directly from state — no extra state variable
+  // needed, and this updates automatically whenever `runs` changes.
   const latestRun = useMemo(() => runs[0], [runs])
 
-  const loadData = async () => {
+  // Wrapped in useCallback so it can be safely included in dependency arrays
+  // and called from both useEffect (on mount) and the refresh button (if added).
+  const loadData = useCallback(async () => {
     try {
       const [plansResponse, runsResponse] = await Promise.all([
         orchestrationService.listPlans(),
@@ -28,6 +53,7 @@ export const OrchestrationConsole: React.FC = () => {
       ])
       setPlans(plansResponse)
       setRuns(runsResponse)
+      // Auto-select the first plan so the form is never in an empty state
       if (!selectedPlanId && plansResponse.length > 0) {
         setSelectedPlanId(plansResponse[0].id)
       }
@@ -35,11 +61,17 @@ export const OrchestrationConsole: React.FC = () => {
       console.error(err)
       setError('Unable to load orchestration data. Please retry.')
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally empty — we only want this to run once on mount
 
   useEffect(() => {
     loadData()
-  }, [])
+    // Cleanup: cancel any pending success banner timer when the component
+    // unmounts to prevent setState calls on a dead component.
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+    }
+  }, [loadData])
 
   const triggerRun = async () => {
     if (!selectedPlanId) return
@@ -53,15 +85,20 @@ export const OrchestrationConsole: React.FC = () => {
           change_window: windowLabel
         }
       })
+      // Prepend the new run so it appears at the top of the history table
       setRuns((prev) => [result, ...prev])
       setSuccess(`Run ${result.id} completed with status ${result.status}`)
       setChangeTicket('')
+
+      // Auto-dismiss the success banner after 5 seconds. Store the ID in a
+      // ref so the cleanup effect above can cancel it if needed.
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+      successTimerRef.current = setTimeout(() => setSuccess(null), 5000)
     } catch (err) {
       console.error(err)
       setError('Run could not be started. Check credentials and try again.')
     } finally {
       setLoading(false)
-      setTimeout(() => setSuccess(null), 5000)
     }
   }
 

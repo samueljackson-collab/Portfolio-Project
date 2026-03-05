@@ -49,14 +49,32 @@ class OrchestrationService:
         self._runs: Dict[str, Dict[str, object]] = {}
 
     def list_plans(self) -> List[Dict[str, str]]:
+        """Return all available orchestration plans.
+
+        Plans are defined at __init__ time and are immutable at runtime.
+        They represent the three deployment environments (dev, staging, prod)
+        and reference the Terraform vars file and Ansible playbook for each.
+        """
         return self._plans
 
     def list_runs(self) -> List[Dict[str, object]]:
+        """Return all recorded runs, sorted newest-first by start time.
+
+        NOTE: Runs are stored in a plain dict keyed by UUID. Sorting is done
+        at read time (not at write time) so insertions stay O(1).
+        """
         return sorted(
             self._runs.values(), key=lambda run: run["started_at"], reverse=True
         )
 
     def get_run(self, run_id: str) -> Dict[str, object]:
+        """Return a single run record by its UUID.
+
+        Raises:
+            HTTPException 404: If the run_id is not in the in-memory store.
+                               The `from exc` clause preserves the original
+                               KeyError in the traceback for easier debugging.
+        """
         try:
             return self._runs[run_id]
         except KeyError as exc:
@@ -72,6 +90,26 @@ class OrchestrationService:
         requested_by: str,
         parameters: Optional[Dict[str, str]] = None,
     ) -> Dict[str, object]:
+        """Create and record a new orchestration run.
+
+        This method simulates a deployment dry-run: it validates the plan,
+        builds an audit record with structured log lines and artifact paths,
+        then stores the result in memory. No real infrastructure is changed.
+
+        Args:
+            plan_id:      Must match the 'id' field of one of the plans in
+                          self._plans. Raises 404 if no match is found.
+            requested_by: The email of the authenticated user who triggered
+                          the run — used for the audit trail.
+            parameters:   Optional dict of run-time metadata (e.g. change_ticket,
+                          change_window) forwarded from the frontend console.
+
+        Returns:
+            The complete run record dict (matches the OrchestrationRun schema).
+
+        Raises:
+            HTTPException 404: If plan_id does not match any known plan.
+        """
         plan = next((plan for plan in self._plans if plan["id"] == plan_id), None)
         if not plan:
             raise HTTPException(
@@ -81,12 +119,14 @@ class OrchestrationService:
 
         run_id = str(uuid4())
         started_at = datetime.now(timezone.utc)
+
+        # Build simulated log output for the run. All three lines use f-strings
+        # for consistency — previously the third line used .format() which was
+        # a stylistic inconsistency with no functional difference.
         logs: List[str] = [
             f"[{started_at.isoformat()}] Validated tfvars: {plan['tfvars_file']}",
             "Running terraform fmt && validate",
-            "Queued Ansible deploy with playbook: {playbook_path}".format(
-                playbook_path=plan["playbook_path"],
-            ),
+            f"Queued Ansible deploy with playbook: {plan['playbook_path']}",
             "Streaming OTEL traces to collector",
         ]
 
@@ -94,6 +134,9 @@ class OrchestrationService:
             "id": run_id,
             "plan_id": plan_id,
             "environment": plan["environment"],
+            # Always 'succeeded' in the demo — no real infrastructure is changed.
+            # A production implementation would update this field asynchronously
+            # as the actual Terraform/Ansible run progresses.
             "status": "succeeded",
             "requested_by": requested_by,
             "parameters": parameters or {},
@@ -115,9 +158,22 @@ class OrchestrationService:
         return run_record
 
 
-def get_orchestration_service() -> OrchestrationService:
-    """Provide a shared service instance for FastAPI dependency injection."""
-    return orchestration_service
-
-
+# Module-level singleton — all FastAPI requests share this one instance so that
+# run history persists across requests within a single server process.
+# IMPORTANT: This means run history is lost when the server restarts.
+# For production use, replace the in-memory dict with a database-backed store.
 orchestration_service = OrchestrationService()
+
+
+def get_orchestration_service() -> OrchestrationService:
+    """FastAPI dependency that returns the shared OrchestrationService instance.
+
+    Usage in a router:
+        service: OrchestrationService = Depends(get_orchestration_service)
+
+    WHY A FUNCTION INSTEAD OF JUST INJECTING THE MODULE-LEVEL OBJECT:
+    FastAPI's Depends() system expects a callable. Wrapping the singleton in
+    this function allows FastAPI to call it at request time and also makes it
+    easy to override in tests (just override the dependency with a mock).
+    """
+    return orchestration_service

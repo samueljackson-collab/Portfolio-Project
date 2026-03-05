@@ -41,6 +41,22 @@ const Section: React.FC<{ title: string; children: React.ReactNode; subtitle?: s
   </div>
 )
 
+/**
+ * SecuritySimulators page — a red/blue team lab that lets users trigger
+ * server-side simulations and see the results rendered in real time.
+ *
+ * ARCHITECTURE:
+ * - All six simulator modules (Red Team, Ransomware, SOC, Threat Hunting,
+ *   Malware, EDR) are backed by real FastAPI endpoints — this is NOT mock data.
+ * - The backend stores state in memory, so data resets on server restart.
+ *   That is intentional for a portfolio demo; no persistent DB tables are
+ *   needed for simulation data.
+ *
+ * DEMO DATA INTENT:
+ * - Hardcoded strings like '90-day APT' or 'PowerShell lateral movement' are
+ *   intentional showcase values. They give reviewers a realistic feel for the
+ *   kind of data the system models without requiring manual input.
+ */
 const SecuritySimulators: React.FC = () => {
   const [operations, setOperations] = useState<Operation[]>([])
   const [incidents, setIncidents] = useState<Incident[]>([])
@@ -51,7 +67,12 @@ const SecuritySimulators: React.FC = () => {
   const [samples, setSamples] = useState<MalwareSample[]>([])
   const [endpoints, setEndpoints] = useState<Endpoint[]>([])
   const [deployment, setDeployment] = useState<DeploymentSummary | null>(null)
+  // loadError is shown to the user when the initial data fetch fails.
+  // Previously this was only logged to the console, giving no feedback.
+  const [loadError, setLoadError] = useState<string | null>(null)
 
+  // On mount, pre-populate all simulator sections with any existing server-side
+  // data. All seven requests run in parallel via Promise.all for speed.
   useEffect(() => {
     const load = async () => {
       const [ops, incs, existingAlerts, hyps, rulesData, eps, summary] = await Promise.all([
@@ -71,31 +92,73 @@ const SecuritySimulators: React.FC = () => {
       setEndpoints(eps)
       setDeployment(summary)
     }
-    load().catch(console.error)
+    load().catch((err) => {
+      // Surface the error in the UI so the user knows the backend is unreachable
+      // rather than staring at empty sections with no explanation.
+      console.error('SecuritySimulators: initial load failed', err)
+      setLoadError('Could not reach the backend. Make sure the API server is running and try refreshing.')
+    })
   }, [])
 
+  /**
+   * createOperation — starts a new red team APT operation on the backend and
+   * adds it to the local list.
+   *
+   * The name and objective are hardcoded intentionally: they demonstrate a
+   * realistic scenario (a 90-day advanced persistent threat) without requiring
+   * the user to fill out a form for a portfolio demo.
+   *
+   * BUG FIX: Previously this spread `...op, events: []`, which would silently
+   * discard any events the API returned in the creation response. Now we use
+   * the operation object exactly as returned by the server.
+   */
   const createOperation = async () => {
     const op = await redTeamService.createOperation({ name: '90-day APT', objective: 'Demonstrate stealth' })
-    setOperations((prev) => [...prev, { ...op, events: [] as OperationEvent[] }])
+    // Use the API response directly — do NOT force-overwrite op.events with []
+    setOperations((prev) => [...prev, op])
   }
 
+  /**
+   * simulateOperation — advances the operation by one simulated day on the
+   * backend (seed=3 makes the random events deterministic for demos), then
+   * refreshes the full operations list to show the new timeline event.
+   */
   const simulateOperation = async (operationId: string) => {
     await redTeamService.simulate(operationId, 3)
     const updated = await redTeamService.listOperations()
     setOperations(updated)
   }
 
+  /**
+   * createIncident — creates a ransomware incident and immediately runs the
+   * full lifecycle simulation in a single user action. The simulate() call
+   * returns the updated incident (with events), so we append that directly.
+   */
   const createIncident = async () => {
     const incident = await ransomwareService.createIncident({ name: 'Ransomware Drill' })
     const updated = await ransomwareService.simulate(incident.id)
     setIncidents((prev) => [...prev, updated])
   }
 
+  /**
+   * generateAlerts — asks the SOC backend to produce a batch of synthetic
+   * security alerts and replaces the current alert list with the result.
+   * "Generate" overwrites rather than appends to avoid confusion about which
+   * alerts are new.
+   */
   const generateAlerts = async () => {
     const generated = await socService.generateAlerts()
     setAlerts(generated)
   }
 
+  /**
+   * createHypothesis — demonstrates the full threat-hunting workflow in one
+   * click: create hypothesis → add a finding → promote the finding to a
+   * detection rule. This mirrors a real analyst workflow compressed for demo.
+   *
+   * Hardcoded values: 'PowerShell lateral movement' is a common real-world
+   * threat hunting scenario, chosen to make the demo feel authentic.
+   */
   const createHypothesis = async () => {
     const hypothesis = await huntingService.createHypothesis({
       title: 'PowerShell lateral movement',
@@ -110,6 +173,14 @@ const SecuritySimulators: React.FC = () => {
     setRules((prev) => [...prev, rule])
   }
 
+  /**
+   * createSample — registers a malware sample with a synthetic hash and
+   * immediately triggers backend analysis. The `analyze()` call runs simulated
+   * static and dynamic analysis and returns a report with a YARA rule.
+   *
+   * `sample_type: 'pe'` = Windows PE (Portable Executable) — the most common
+   * malware file format, chosen to make the demo feel realistic.
+   */
   const createSample = async () => {
     const sample = await malwareService.createSample({ name: 'locker-sim', file_hash: 'ff11aa22', sample_type: 'pe' })
     setSamples((prev) => [...prev, sample])
@@ -117,6 +188,12 @@ const SecuritySimulators: React.FC = () => {
     setMalware(detail)
   }
 
+  /**
+   * registerEndpoint — registers a new simulated host with the EDR platform
+   * using `agent_version: '1.0.0'`. Version 1.x agents are intentionally
+   * flagged as outdated by the EdrEndpointTable to demonstrate the upgrade
+   * workflow — see SimulationBlocks.tsx `isOutdated` for the version check.
+   */
   const registerEndpoint = async () => {
     await edrService.registerEndpoint({ hostname: `agent-${endpoints.length + 1}`, operating_system: 'linux', agent_version: '1.0.0' })
     const eps = await edrService.listEndpoints()
@@ -130,6 +207,14 @@ const SecuritySimulators: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">Security Simulators</h1>
         <p className="text-gray-600">Red/Blue team labs with day-by-day visibility and automation hooks.</p>
       </div>
+
+      {/* Error banner — only shown when the initial data load fails.
+          Gives users actionable feedback instead of empty sections. */}
+      {loadError && (
+        <div className="rounded-md bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700">
+          {loadError}
+        </div>
+      )}
 
       <Section title="Red Team Operation Simulator" subtitle="90-day APT with stealth vs detection visuals">
         <div className="flex items-center space-x-3">

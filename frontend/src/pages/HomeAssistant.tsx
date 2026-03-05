@@ -425,21 +425,27 @@ export const HomeAssistant: React.FC = () => {
     setTemperature(prev => Math.max(60, Math.min(85, prev + delta)))
 
   const copyToClipboard = useCallback(async (text: string, id: string) => {
+    // navigator.clipboard.writeText() is the modern standard (supported in all
+    // evergreen browsers since ~2018, >96% global coverage as of 2024).
+    // It requires a secure context (HTTPS or localhost). We removed the
+    // document.execCommand('copy') fallback because that API is deprecated and
+    // scheduled for removal — using it generates browser console warnings and
+    // will eventually break silently.
+    //
+    // If clipboard access fails (e.g. the page is served over plain HTTP in
+    // a non-localhost environment), we surface the error visually rather than
+    // silently failing or using a deprecated API.
     try {
       await navigator.clipboard.writeText(text)
-    } catch {
-      // Fallback for environments without Clipboard API
-      const el = document.createElement('textarea')
-      el.value = text
-      el.style.position = 'fixed'
-      el.style.opacity = '0'
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      document.body.removeChild(el)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch (err) {
+      console.warn('Clipboard write failed — ensure the page is served over HTTPS or localhost', err)
+      // Still show brief feedback so the user knows something happened.
+      // In a non-HTTPS environment they can manually copy from the code block.
+      setCopiedId(`${id}-error`)
+      setTimeout(() => setCopiedId(null), 2000)
     }
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
   }, [])
 
   const updateSetting = <K extends keyof DashboardSettings>(
