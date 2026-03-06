@@ -269,7 +269,7 @@ flowchart LR
 | Weekly | Validate links and evidence index | Project owner |
 | Monthly | README quality audit | Project owner |
 
-## 11) Final Quality Checklist (Before Merge)
+## Final Quality Checklist (Before Merge)
 
 - [ ] Status legend is present and used consistently
 - [ ] Architecture diagram renders in GitHub markdown preview
