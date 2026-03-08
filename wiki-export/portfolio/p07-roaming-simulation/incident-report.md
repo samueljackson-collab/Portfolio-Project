@@ -1,0 +1,25 @@
+---
+title: Roaming Incident Report Template
+description: - **Incident ID:** - **Date/Time (UTC):** - **Detected By:** (alert name / person) - **Impact Radius:** (regions, carriers, IMSI ranges) - **User Impact:** (dropped calls, degraded throughput) - **Tim
+tags: [documentation, portfolio]
+path: portfolio/p07-roaming-simulation/incident-report
+created: 2026-03-08T22:19:13.965504+00:00
+updated: 2026-03-08T22:04:38.081902+00:00
+---
+
+# Roaming Incident Report Template
+- **Incident ID:**
+- **Date/Time (UTC):**
+- **Detected By:** (alert name / person)
+- **Impact Radius:** (regions, carriers, IMSI ranges)
+- **User Impact:** (dropped calls, degraded throughput)
+- **Timeline:**
+  - T0 detection
+  - T+? containment
+  - T+? mitigation
+  - T+? recovery
+- **Root Cause:**
+- **Contributing Factors:**
+- **Data/Evidence:** (logs, event samples, metrics screenshots)
+- **Remediation:**
+- **Follow-ups:**
