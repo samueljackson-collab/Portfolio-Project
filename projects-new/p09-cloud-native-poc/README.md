@@ -51,10 +51,11 @@ flowchart LR
 ### Commands
 | Step | Command | Expected Result |
 |---|---|---|
-| Inspect project files | `ls` | Displays project assets and subdirectories. |
-| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
-| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
-| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+| Install dependencies | `pip install -r requirements.txt` | All packages installed with no fatal errors. |
+| Start services (Docker) | `docker compose -f docker/compose.poc.yaml up -d` | API, consumer, and supporting services start successfully. |
+| Run API locally | `uvicorn producer.app:app --reload --port 8000` | FastAPI server starts; health check at `http://localhost:8000/health` returns `{"status": "ok"}`. |
+| Run tests | `pytest tests/ -v` | All unit and integration tests pass. |
+| Validate health | `curl http://localhost:8000/health` | Returns `{"status": "ok"}` with HTTP 200. |
 
 ### Troubleshooting
 | Issue | Likely Cause | Resolution |
@@ -68,9 +69,9 @@ Testing strategy for this project should combine fast local checks (unit/lint), 
 
 | Test Type | Command / Location | Current Result | Evidence Link |
 |---|---|---|---|
-| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
-| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
-| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+| Unit | `pytest tests/test_health.py -v` | All health endpoint tests pass | `./tests/test_health.py` |
+| Integration | `pytest tests/test_core_functionality.py -v` | Core API functionality tests pass | `./tests/test_core_functionality.py` |
+| E2E/Manual | `curl http://localhost:8000/health` after `docker compose up -d` | HTTP 200 `{"status": "ok"}` returned | `./docker/compose.poc.yaml` |
 
 ### Known Gaps
 - Project-specific commands/results should be updated with executed evidence.

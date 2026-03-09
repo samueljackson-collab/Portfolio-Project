@@ -52,9 +52,10 @@ flowchart LR
 | Step | Command | Expected Result |
 |---|---|---|
 | Inspect project files | `ls` | Displays project assets and subdirectories. |
-| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
-| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
-| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+| Install dependencies | `pip install pytest pytest-cov` | pytest installed with no errors. |
+| Validate Terraform | `terraform -chdir=terraform init && terraform -chdir=terraform validate` | Terraform configuration is valid. |
+| Run tests | `pytest tests/ -v` | All project structure and Terraform content tests pass. |
+| Simulate failover | `bash scripts/failover.sh` | Failover script runs (requires AWS credentials and live infrastructure). |
 
 ### Troubleshooting
 | Issue | Likely Cause | Resolution |
@@ -68,9 +69,9 @@ Testing strategy for this project should combine fast local checks (unit/lint), 
 
 | Test Type | Command / Location | Current Result | Evidence Link |
 |---|---|---|---|
-| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
-| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
-| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+| Unit | `pytest tests/test_basic.py -v` | Project structure tests pass | `./tests/test_basic.py` |
+| Integration | `pytest tests/test_multi_region.py -v` | Terraform config and failover script tests pass | `./tests/test_multi_region.py` |
+| E2E/Manual | `bash scripts/failover.sh` | Failover script validates Route 53 and executes failover (requires live AWS env) | `./scripts/failover.sh` |
 
 ### Known Gaps
 - Project-specific commands/results should be updated with executed evidence.

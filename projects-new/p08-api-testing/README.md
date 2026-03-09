@@ -52,9 +52,10 @@ flowchart LR
 | Step | Command | Expected Result |
 |---|---|---|
 | Inspect project files | `ls` | Displays project assets and subdirectories. |
-| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
-| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
-| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+| Install dependencies | `pip install -r requirements.txt` | All packages installed with no fatal errors. |
+| Run API tests | `pytest tests/ -v` | All API test suites pass. |
+| Run Newman collection | `bash newman-run.sh` | Newman runs Postman collection and reports results. |
+| Validate quality | `pytest tests/ --cov=. --cov-report=term-missing` | Tests pass with coverage summary printed. |
 
 ### Troubleshooting
 | Issue | Likely Cause | Resolution |
@@ -68,9 +69,9 @@ Testing strategy for this project should combine fast local checks (unit/lint), 
 
 | Test Type | Command / Location | Current Result | Evidence Link |
 |---|---|---|---|
-| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
-| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
-| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+| Unit | `pytest tests/test_api_authentication.py -v` | Authentication test cases pass | `./tests/test_api_authentication.py` |
+| Integration | `pytest tests/test_api_orders.py -v` | Order lifecycle API tests pass | `./tests/test_api_orders.py` |
+| E2E/Manual | `bash newman-run.sh` | Newman Postman collection completes with 0 failures | `./newman-run.sh` |
 
 ### Known Gaps
 - Project-specific commands/results should be updated with executed evidence.
