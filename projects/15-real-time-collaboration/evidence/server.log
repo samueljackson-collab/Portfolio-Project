@@ -1,0 +1,84 @@
+/workspace/Portfolio-Project/projects/15-real-time-collaboration/src/collaboration_server.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+  from websockets.server import WebSocketServerProtocol
+2026-01-21 17:45:16,091 - collaboration-server - INFO - Starting collaboration server on 0.0.0.0:8765
+2026-01-21 17:45:16,093 - websockets.server - INFO - server listening on 0.0.0.0:8765
+2026-01-21 17:45:19,257 - websockets.server - INFO - connection open
+2026-01-21 17:45:19,259 - collaboration-server - INFO - User ClientA joined document demo-doc
+2026-01-21 17:45:19,764 - websockets.server - INFO - connection open
+2026-01-21 17:45:19,766 - collaboration-server - INFO - User ClientB joined document demo-doc
+2026-01-21 17:45:20,769 - collaboration-server - INFO - Applied operation doc=demo-doc user=clienta-83040c type=insert pos=0 len=20 version=1
+2026-01-21 17:45:21,270 - collaboration-server - INFO - Applied operation doc=demo-doc user=clientb-f377e7 type=insert pos=42 len=18 version=2
+2026-01-21 17:45:22,273 - collaboration-server - INFO - User ClientA left document demo-doc
+2026-01-21 17:45:22,274 - collaboration-server - INFO - User ClientB left document demo-doc
+2026-01-21 17:45:25,615 - websockets.server - INFO - connection open
+2026-01-21 17:45:25,618 - collaboration-server - INFO - User LoadUser0 joined document load-doc-1
+2026-01-21 17:45:25,819 - collaboration-server - INFO - Applied operation doc=load-doc-1 user=load-0-4a6df0 type=insert pos=0 len=6 version=1
+2026-01-21 17:45:25,820 - collaboration-server - INFO - User LoadUser0 left document load-doc-1
+2026-01-21 17:45:26,025 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,027 - collaboration-server - INFO - User LoadUser0 joined document load-doc-2
+2026-01-21 17:45:26,029 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,030 - collaboration-server - INFO - User LoadUser1 joined document load-doc-2
+2026-01-21 17:45:26,232 - collaboration-server - INFO - Applied operation doc=load-doc-2 user=load-0-650452 type=insert pos=0 len=6 version=1
+2026-01-21 17:45:26,232 - collaboration-server - INFO - Applied operation doc=load-doc-2 user=load-1-ddd46e type=insert pos=0 len=6 version=2
+2026-01-21 17:45:26,235 - collaboration-server - INFO - User LoadUser0 left document load-doc-2
+2026-01-21 17:45:26,236 - collaboration-server - INFO - User LoadUser1 left document load-doc-2
+2026-01-21 17:45:26,439 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,440 - collaboration-server - INFO - User LoadUser0 joined document load-doc-5
+2026-01-21 17:45:26,442 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,444 - collaboration-server - INFO - User LoadUser1 joined document load-doc-5
+2026-01-21 17:45:26,445 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,447 - collaboration-server - INFO - User LoadUser2 joined document load-doc-5
+2026-01-21 17:45:26,448 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,449 - collaboration-server - INFO - User LoadUser3 joined document load-doc-5
+2026-01-21 17:45:26,450 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,451 - collaboration-server - INFO - User LoadUser4 joined document load-doc-5
+2026-01-21 17:45:26,653 - collaboration-server - INFO - Applied operation doc=load-doc-5 user=load-0-4483ba type=insert pos=0 len=6 version=1
+2026-01-21 17:45:26,654 - collaboration-server - INFO - Applied operation doc=load-doc-5 user=load-1-4aadd9 type=insert pos=0 len=6 version=2
+2026-01-21 17:45:26,654 - collaboration-server - INFO - Applied operation doc=load-doc-5 user=load-2-3360d6 type=insert pos=0 len=6 version=3
+2026-01-21 17:45:26,655 - collaboration-server - INFO - Applied operation doc=load-doc-5 user=load-3-26e4c7 type=insert pos=0 len=6 version=4
+2026-01-21 17:45:26,655 - collaboration-server - INFO - Applied operation doc=load-doc-5 user=load-4-02685e type=insert pos=0 len=6 version=5
+2026-01-21 17:45:26,657 - collaboration-server - INFO - User LoadUser0 left document load-doc-5
+2026-01-21 17:45:26,658 - collaboration-server - INFO - User LoadUser1 left document load-doc-5
+2026-01-21 17:45:26,659 - collaboration-server - INFO - User LoadUser2 left document load-doc-5
+2026-01-21 17:45:26,659 - collaboration-server - INFO - User LoadUser4 left document load-doc-5
+2026-01-21 17:45:26,659 - collaboration-server - INFO - User LoadUser3 left document load-doc-5
+2026-01-21 17:45:26,862 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,863 - collaboration-server - INFO - User LoadUser0 joined document load-doc-10
+2026-01-21 17:45:26,865 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,867 - collaboration-server - INFO - User LoadUser1 joined document load-doc-10
+2026-01-21 17:45:26,869 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,870 - collaboration-server - INFO - User LoadUser2 joined document load-doc-10
+2026-01-21 17:45:26,872 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,873 - collaboration-server - INFO - User LoadUser3 joined document load-doc-10
+2026-01-21 17:45:26,875 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,877 - collaboration-server - INFO - User LoadUser4 joined document load-doc-10
+2026-01-21 17:45:26,878 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,879 - collaboration-server - INFO - User LoadUser5 joined document load-doc-10
+2026-01-21 17:45:26,882 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,884 - collaboration-server - INFO - User LoadUser6 joined document load-doc-10
+2026-01-21 17:45:26,885 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,888 - collaboration-server - INFO - User LoadUser7 joined document load-doc-10
+2026-01-21 17:45:26,890 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,892 - collaboration-server - INFO - User LoadUser8 joined document load-doc-10
+2026-01-21 17:45:26,897 - websockets.server - INFO - connection open
+2026-01-21 17:45:26,899 - collaboration-server - INFO - User LoadUser9 joined document load-doc-10
+2026-01-21 17:45:27,100 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-0-54cbf1 type=insert pos=0 len=6 version=1
+2026-01-21 17:45:27,102 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-1-a44d28 type=insert pos=0 len=6 version=2
+2026-01-21 17:45:27,102 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-2-4e10b9 type=insert pos=0 len=6 version=3
+2026-01-21 17:45:27,104 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-3-6775d2 type=insert pos=0 len=6 version=4
+2026-01-21 17:45:27,105 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-4-35d704 type=insert pos=0 len=6 version=5
+2026-01-21 17:45:27,105 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-5-00f883 type=insert pos=0 len=6 version=6
+2026-01-21 17:45:27,106 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-6-9f03d4 type=insert pos=0 len=6 version=7
+2026-01-21 17:45:27,106 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-7-f8ba3f type=insert pos=0 len=6 version=8
+2026-01-21 17:45:27,106 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-8-d3f937 type=insert pos=0 len=6 version=9
+2026-01-21 17:45:27,107 - collaboration-server - INFO - Applied operation doc=load-doc-10 user=load-9-98c819 type=insert pos=0 len=6 version=10
+2026-01-21 17:45:27,114 - collaboration-server - INFO - User LoadUser1 left document load-doc-10
+2026-01-21 17:45:27,115 - collaboration-server - INFO - User LoadUser0 left document load-doc-10
+2026-01-21 17:45:27,116 - collaboration-server - INFO - User LoadUser3 left document load-doc-10
+2026-01-21 17:45:27,116 - collaboration-server - INFO - User LoadUser2 left document load-doc-10
+2026-01-21 17:45:27,118 - collaboration-server - INFO - User LoadUser4 left document load-doc-10
+2026-01-21 17:45:27,119 - collaboration-server - INFO - User LoadUser5 left document load-doc-10
+2026-01-21 17:45:27,119 - collaboration-server - INFO - User LoadUser7 left document load-doc-10
+2026-01-21 17:45:27,119 - collaboration-server - INFO - User LoadUser6 left document load-doc-10
+2026-01-21 17:45:27,120 - collaboration-server - INFO - User LoadUser8 left document load-doc-10
+2026-01-21 17:45:27,120 - collaboration-server - INFO - User LoadUser9 left document load-doc-10

@@ -168,7 +168,7 @@ class TestVariablesTfContent:
         """Verify all variables have descriptions."""
         content = variables_tf.read_text()
         variable_count = content.count('variable "')
-        description_count = content.count('description =')
+        description_count = content.count("description =")
         # Allow some variance but most should have descriptions
         assert description_count >= variable_count * 0.8
 
@@ -196,7 +196,7 @@ class TestOutputsTfContent:
         """Verify outputs have descriptions."""
         content = outputs_tf.read_text()
         output_count = content.count('output "')
-        description_count = content.count('description =')
+        description_count = content.count("description =")
         # All outputs should have descriptions
         assert description_count >= output_count
 
@@ -237,13 +237,17 @@ class TestResourceNaming:
         """Verify resources follow naming conventions."""
         content = main_tf.read_text()
         # Resources should use project_tag variable in names
-        assert "${var.project_tag}" in content or "twisted-monk" in content or "twisted_monk" in content
+        assert (
+            "${var.project_tag}" in content
+            or "twisted-monk" in content
+            or "twisted_monk" in content
+        )
 
     def test_resources_tagged_with_name(self, main_tf):
         """Verify resources are tagged with Name."""
         content = main_tf.read_text()
         # Count tag definitions
-        name_tag_count = content.count('Name =') + content.count('Name=')
+        name_tag_count = content.count("Name =") + content.count("Name=")
         # Most resources should have Name tags
         assert name_tag_count > 0
 
@@ -269,7 +273,7 @@ class TestSecurityBestPractices:
         content = main_tf.read_text()
         if "aws_security_group" in content:
             sg_count = content.count('resource "aws_security_group"')
-            description_count = content.count('description =')
+            description_count = content.count("description =")
             assert description_count >= sg_count
 
     def test_vpc_enables_dns(self, main_tf):
@@ -296,19 +300,22 @@ class TestConditionalLogic:
         """Verify RDS resources use count for conditional creation."""
         content = main_tf.read_text()
         # Find RDS resources and check they use count
-        lines = content.split('\n')
+        lines = content.split("\n")
         in_rds_resource = False
         found_count = False
-        
+
         for line in lines:
-            if 'resource "aws_db_instance"' in line or 'resource "aws_db_subnet_group"' in line:
+            if (
+                'resource "aws_db_instance"' in line
+                or 'resource "aws_db_subnet_group"' in line
+            ):
                 in_rds_resource = True
             if in_rds_resource and "count = var.create_rds" in line:
                 found_count = True
                 break
             if in_rds_resource and "resource " in line and "aws_db" not in line:
                 in_rds_resource = False
-        
+
         assert found_count, "RDS resources should use conditional count"
 
     def test_eks_creation_is_conditional(self, main_tf):

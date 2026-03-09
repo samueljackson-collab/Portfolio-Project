@@ -1,5 +1,7 @@
 # Production Runbooks & Incident Response
 
+> This document is sanitized for portfolio sharing; hostnames, IPs, and identifiers are placeholders.
+
 ## Table of Contents
 1. [Incident Response Framework](#incident-response)
 2. [High CPU Usage](#runbook-cpu)

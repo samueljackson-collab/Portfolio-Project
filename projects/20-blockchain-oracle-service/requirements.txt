@@ -1,0 +1,17 @@
+# Web framework
+fastapi>=0.104
+uvicorn[standard]>=0.24
+pydantic>=2.5
+
+# Blockchain
+web3>=6.11
+eth-account>=0.10
+
+# HTTP client
+aiohttp>=3.9
+
+# Monitoring
+prometheus-client>=0.18
+
+# Utilities
+python-dotenv>=1.0

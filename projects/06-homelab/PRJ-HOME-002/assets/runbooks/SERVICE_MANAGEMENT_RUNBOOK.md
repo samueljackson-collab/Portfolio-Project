@@ -117,6 +117,8 @@ echo "password" | kinit admin
 klist  # Should show valid ticket
 
 # Test RADIUS (for wireless auth)
+# Replace <test_password> and <radius_secret> with actual values from password manager
+radtest testuser <test_password> 192.168.40.25 0 <radius_secret>
 radtest testuser password 192.168.40.25 0 testing123
 # Expected: "Access-Accept"
 

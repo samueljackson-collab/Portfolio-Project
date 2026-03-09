@@ -1,0 +1,1 @@
+{"predictions":[0.0,1.0],"model_version":"1","model_name":"random_forest_classifier","prediction_time_ms":10.8,"timestamp":"2026-01-21T17:28:50.073814+00:00"}

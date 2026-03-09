@@ -1,4 +1,5 @@
 """GPU-accelerated Monte Carlo simulation using CuPy."""
+
 from __future__ import annotations
 
 import argparse

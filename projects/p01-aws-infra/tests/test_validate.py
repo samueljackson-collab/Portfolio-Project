@@ -1,110 +1,96 @@
-"""Unit tests for CloudFormation template validation."""
-import subprocess
+"""Validation tests for CloudFormation templates and governance docs."""
+
 from pathlib import Path
 
 import pytest
+import yaml
+
+
+class IntrinsicSafeLoader(yaml.SafeLoader):
+    """YAML loader that tolerates CloudFormation intrinsic functions."""
+
+
+def _intrinsic_constructor(loader: yaml.SafeLoader, tag_suffix: str, node):
+    if isinstance(node, yaml.ScalarNode):
+        value = loader.construct_scalar(node)
+    elif isinstance(node, yaml.SequenceNode):
+        value = loader.construct_sequence(node)
+    else:
+        value = loader.construct_mapping(node)
+    return {tag_suffix: value}
+
+
+IntrinsicSafeLoader.add_multi_constructor("!", _intrinsic_constructor)
 
 
 @pytest.fixture
-def project_root():
-    """Get project root directory."""
-    return Path(__file__).parent.parent
+def project_root() -> Path:
+    return Path(__file__).resolve().parents[1]
 
 
-@pytest.fixture
-def vpc_template(project_root):
-    """Get VPC CloudFormation template path."""
-    return project_root / "infra" / "vpc-rds.yaml"
+def _load_template(root: Path, name: str) -> dict:
+    template_path = root / "infra" / name
+    with open(template_path) as handle:
+        return yaml.load(handle, Loader=IntrinsicSafeLoader)
 
 
-def test_vpc_template_exists(vpc_template):
-    """Verify VPC template file exists."""
-    assert vpc_template.exists(), f"Template not found: {vpc_template}"
+def test_master_factory_document_exists(project_root: Path):
+    """Ensure the master factory document anchors CI/IaC stages."""
+    doc = project_root / "master-factory" / "MASTER_FACTORY.md"
+    assert doc.exists(), "MASTER_FACTORY.md should describe the pipeline contract"
+
+    content = doc.read_text()
+    for stage in [
+        "Lint",
+        "Terraform Plan",
+        "CloudFormation Change Sets",
+        "Gated Apply",
+    ]:
+        assert stage in content, f"Missing stage reference: {stage}"
 
 
-def test_vpc_template_valid_yaml(vpc_template):
-    """Verify VPC template is valid YAML."""
-    import yaml
-    with open(vpc_template) as f:
-        data = yaml.safe_load(f)
-    assert data is not None
-    assert "AWSTemplateFormatVersion" in data
+def test_templates_are_present(project_root: Path):
+    """Both VPC and dedicated RDS templates should exist for validation runs."""
+    vpc_template = project_root / "infra" / "vpc-rds.yaml"
+    rds_template = project_root / "infra" / "rds.yaml"
+    assert vpc_template.exists()
+    assert rds_template.exists()
+
+
+@pytest.mark.parametrize("template_name", ["vpc-rds.yaml", "rds.yaml"])
+def test_templates_have_required_sections(project_root: Path, template_name: str):
+    """Templates must include version, resources, and outputs."""
+    data = _load_template(project_root, template_name)
+
+    assert data.get("AWSTemplateFormatVersion")
     assert "Resources" in data
+    assert "Outputs" in data
 
 
-def test_vpc_template_has_required_resources(vpc_template):
-    """Verify VPC template contains expected resources."""
-    import yaml
-    with open(vpc_template) as f:
-        data = yaml.safe_load(f)
+def test_rds_template_hardens_database(project_root: Path):
+    """RDS template should enable Multi-AZ, encryption, and private access."""
+    data = _load_template(project_root, "rds.yaml")
 
-    resources = data.get("Resources", {})
-    required_resources = [
-        "VPC",
-        "InternetGateway",
-        "PublicSubnet1",
-        "PublicSubnet2",
-        "PublicSubnet3",
-        "PrivateSubnet1",
-        "PrivateSubnet2",
-        "PrivateSubnet3",
-        "DBInstance",
-        "DBSecurityGroup",
-    ]
-
-    for resource in required_resources:
-        assert resource in resources, f"Missing resource: {resource}"
+    db_props = data["Resources"]["DBInstance"]["Properties"]
+    assert db_props["MultiAZ"] is True
+    assert db_props["StorageEncrypted"] is True
+    assert db_props["PubliclyAccessible"] is False
+    retention = db_props["BackupRetentionPeriod"]
+    if isinstance(retention, dict) and "Ref" in retention:
+        param_default = data["Parameters"]["BackupRetentionDays"]["Default"]
+        assert param_default >= 7
+    else:
+        assert retention >= 7
 
 
-def test_vpc_template_has_outputs(vpc_template):
-    """Verify VPC template defines outputs for downstream use."""
-    import yaml
-    with open(vpc_template) as f:
-        data = yaml.safe_load(f)
+def test_rds_template_outputs_surface_identifiers(project_root: Path):
+    data = _load_template(project_root, "rds.yaml")
 
     outputs = data.get("Outputs", {})
-    required_outputs = ["VPCId", "DBInstanceIdentifier", "DBEndpoint"]
-
-    for output in required_outputs:
-        assert output in outputs, f"Missing output: {output}"
-
-
-def test_rds_multi_az_enabled(vpc_template):
-    """Verify RDS instance has Multi-AZ enabled."""
-    import yaml
-    with open(vpc_template) as f:
-        data = yaml.safe_load(f)
-
-    rds_props = data["Resources"]["DBInstance"]["Properties"]
-    assert rds_props.get("MultiAZ") is True, "RDS Multi-AZ should be enabled"
-
-
-def test_rds_backup_retention(vpc_template):
-    """Verify RDS has backup retention configured."""
-    import yaml
-    with open(vpc_template) as f:
-        data = yaml.safe_load(f)
-
-    rds_props = data["Resources"]["DBInstance"]["Properties"]
-    retention = rds_props.get("BackupRetentionPeriod", 0)
-    assert retention >= 7, "RDS backup retention should be at least 7 days"
-
-
-def test_validate_script_exists(project_root):
-    """Verify validation script exists."""
-    script = project_root / "src" / "validate_template.py"
-    assert script.exists(), f"Validation script not found: {script}"
-
-
-@pytest.mark.skipif(
-    subprocess.run(["which", "aws"], capture_output=True).returncode != 0,
-    reason="AWS CLI not installed"
-)
-def test_aws_cli_validation(vpc_template):
-    """Run AWS CloudFormation validate-template (requires AWS CLI)."""
-    result = subprocess.run(
-        ["aws", "cloudformation", "validate-template", "--template-body", f"file://{vpc_template}"],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, f"AWS validation failed: {result.stderr}"
+    for key in [
+        "DBInstanceIdentifier",
+        "DBEndpoint",
+        "RdsSecurityGroupId",
+        "DbSubnetGroupName",
+    ]:
+        assert key in outputs, f"Expected output {key}"

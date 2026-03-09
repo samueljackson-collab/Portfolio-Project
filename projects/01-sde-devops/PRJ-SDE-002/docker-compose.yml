@@ -1,0 +1,879 @@
+# Enterprise Monitoring & Observability Stack
+# ============================================
+# Production-ready monitoring solution using CNCF graduated projects
+#
+# Stack Components:
+#   - Prometheus: Metrics collection and time-series database
+#   - Grafana: Visualization and dashboarding platform
+#   - Loki: Log aggregation system
+#   - Promtail: Log shipping agent
+#   - Alertmanager: Alert routing and notification management
+#   - Node Exporter: Host-level metrics exporter
+#   - cAdvisor: Container metrics exporter
+#
+# Architecture:
+#   - Two-tier network design (frontend/backend) for security
+#   - Named volumes for data persistence across container restarts
+#   - Health checks ensure service availability before marking as ready
+#   - Resource limits prevent resource exhaustion on shared infrastructure
+#   - Comprehensive monitoring of both infrastructure and containers
+#
+# Prerequisites:
+#   - Docker Engine 24.0+
+#   - Docker Compose V2
+#   - 4GB available memory
+#   - 50GB available disk space
+#
+# Quick Start:
+#   1. Copy .env.example to .env and configure
+#   2. Run: docker-compose up -d
+#   3. Verify: docker-compose ps (all services should be "healthy")
+#   4. Access Grafana: http://localhost:3000
+#
+# Author: Portfolio Project
+# Version: 1.0.0
+# Last Updated: 2024-11-24
+
+version: '3.8'
+
+# Named Volumes
+# =============
+# All persistent data stored in Docker-managed named volumes
+# Benefits: Automatic management, easy backup, survives container recreation
+# Location: /var/lib/docker/volumes/ on host
+volumes:
+  # Prometheus time-series database storage
+  # Contains: TSDB blocks, WAL (write-ahead log), indexes
+  # Growth rate: ~1-2GB per day with default retention (15 days)
+  # Backup strategy: Volume snapshot daily at 02:00 AM
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      # Stores on host filesystem for easier backup access
+      device: ${PROMETHEUS_DATA_PATH:-./data/prometheus}
+
+  # Grafana application data and dashboards
+  # Contains: Dashboard definitions, user preferences, plugins, SQLite database
+  # Size: Typically <500MB
+  # Backup strategy: Daily snapshot, critical for dashboard preservation
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${GRAFANA_DATA_PATH:-./data/grafana}
+
+  # Loki log storage
+  # Contains: Compressed log chunks, indexes, bloom filters
+  # Growth rate: Dependent on log volume, ~5-10GB per day typical
+  # Retention: 7 days configured (automatically purged)
+  loki_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOKI_DATA_PATH:-./data/loki}
+
+  # Alertmanager state and notification queue
+  # Contains: Silences, notification history, deduplicated alerts
+  # Size: Typically <100MB
+  alertmanager_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${ALERTMANAGER_DATA_PATH:-./data/alertmanager}
+
+# Networks
+# ========
+# Two-tier network architecture for security and isolation
+#
+# Design Philosophy:
+#   - Frontend: Services that need external access (Grafana UI)
+#   - Backend: Internal services that should not be directly exposed
+#   - This segmentation prevents direct access to metrics/logs databases
+#
+# Security Benefits:
+#   - Grafana can query Prometheus/Loki but external clients cannot
+#   - Exporters isolated on backend network
+#   - Reduces attack surface
+networks:
+  # Frontend Network
+  # Purpose: Services requiring external access (web UIs)
+  # Connected Services: Grafana, Prometheus (UI), Alertmanager (UI)
+  # Subnet: Auto-assigned by Docker (typically 172.x.x.x/16)
+  monitoring_frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+  # Backend Network
+  # Purpose: Internal service communication only
+  # Connected Services: All (Prometheus scrapes, Loki ingestion, etc.)
+  # No direct external access - accessed via frontend services only
+  monitoring_backend:
+    driver: bridge
+    internal: true  # No external connectivity, isolated
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+# Services
+# ========
+services:
+  # Prometheus - Metrics Collection and Time-Series Database
+  # =========================================================
+  # Purpose: Scrapes metrics from exporters, stores in TSDB, evaluates alert rules
+  # Query Language: PromQL for flexible metric queries and aggregations
+  # Architecture: Pull-based scraping every 15s from configured targets
+  # Performance: Handles ~50,000 samples/sec in this configuration
+  # Resource Requirements: 2GB memory for 15-day retention, 1 CPU core
+  prometheus:
+    # Image pinned to specific version for reproducibility
+    # Recommendation: Update quarterly after testing in non-prod
+    # Release notes: https://github.com/prometheus/prometheus/releases
+    image: prom/prometheus:v2.48.0
+
+    # Explicit container name for easier management and debugging
+    # Allows: docker logs prometheus, docker exec prometheus sh
+    container_name: prometheus
+
+    # Custom command-line arguments override default behavior
+    # Documentation: https://prometheus.io/docs/prometheus/latest/command-line/
+    command:
+      # --config.file: Path to main Prometheus configuration file
+      # Mounted as read-only volume to prevent accidental modification
+      # Hot-reload supported via: curl -X POST localhost:9090/-/reload
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+      # --storage.tsdb.path: Time-series database storage location
+      # Stored on named volume 'prometheus_data' for persistence
+      # Contains: chunks, WAL, indexes, tombstones
+      - '--storage.tsdb.path=/prometheus'
+
+      # --storage.tsdb.retention.time: Data retention period
+      # Set to 15 days balancing observability vs disk space
+      # Calculation: 15d * 50K samples/s * 1.5 bytes/sample ≈ 97GB
+      # Older data automatically deleted by Prometheus compaction
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'
+
+      # --web.enable-lifecycle: Enable HTTP management API endpoints
+      # Allows config reload without restart: POST /-/reload
+      # Security: Only exposed on localhost, not to monitoring_frontend
+      - '--web.enable-lifecycle'
+
+      # --web.console.libraries: Built-in console template libraries
+      # Provides reusable templates for Prometheus web UI consoles
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+
+      # --web.console.templates: Console template directory
+      # Pre-built dashboards accessible via Prometheus web UI
+      # Note: Grafana is preferred for visualization
+      - '--web.console.templates=/etc/prometheus/consoles'
+
+      # --web.enable-admin-api: Enable administrative API endpoints
+      # Allows: snapshot creation, TSDB stats, delete series
+      # Security: Use carefully, can impact performance and data
+      - '--web.enable-admin-api'
+
+    # Volume Mounts
+    # All configuration files mounted read-only (:ro) for security
+    # Data volume read-write for metric storage
+    volumes:
+      # Main configuration file
+      # Contains: global settings, scrape configs, alerting rules reference
+      # Hot-reloadable via API call (no restart required)
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+      # Alert rules directory
+      # Contains: All alerting and recording rules in YAML format
+      # Automatically discovered and loaded
+      # Evaluated every 'evaluation_interval' (15s default)
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+
+      # Persistent data volume
+      # Survives container recreation, essential for historical data
+      # Backup: Should be included in daily backup routine
+      - prometheus_data:/prometheus
+
+    # Network Configuration
+    # Connected to both networks for UI access and scraping capability
+    networks:
+      # Frontend: Allows Grafana to query Prometheus API
+      - monitoring_frontend
+      # Backend: Allows Prometheus to scrape exporters and services
+      - monitoring_backend
+
+    # Port Bindings
+    # Binds to 127.0.0.1 (localhost only) for security
+    # Production: Use reverse proxy (nginx/traefik) with auth and TLS
+    # Format: "host_ip:host_port:container_port"
+    ports:
+      - "127.0.0.1:9090:9090"  # Web UI and HTTP API
+
+    # Health Check Configuration
+    # Kubernetes-style health check ensures service is actually ready
+    # Prevents downstream services from querying before Prometheus is fully initialized
+    healthcheck:
+      # Test command: HTTP GET request to health endpoint
+      # --no-verbose: Suppress wget output for cleaner logs
+      # --tries=1: Fail fast, single attempt
+      # --spider: Don't download response body, just check availability
+      # Alternative: curl -f http://localhost:9090/-/healthy || exit 1
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+
+      # interval: Time between health checks
+      # 30s typical for production workloads
+      # Balance: More frequent = faster failure detection but higher overhead
+      interval: 30s
+
+      # timeout: Maximum time to wait for health check response
+      # 10s accommodates temporarily slow responses
+      # Prevents false negatives during high load
+      timeout: 10s
+
+      # retries: Consecutive failures before marking unhealthy
+      # 3 retries prevents transient issues from triggering restart
+      # Total time to unhealthy: retries * interval = 90s
+      retries: 3
+
+      # start_period: Grace period during container initialization
+      # Health check failures during this period don't count toward retries
+      # Allows time for: TSDB loading, rule evaluation, scrape target discovery
+      # Typical Prometheus startup time: 20-30s with existing data
+      start_period: 40s
+
+    # Restart Policy
+    # unless-stopped: Restart automatically except when explicitly stopped
+    # Ensures monitoring stays available after host reboots or crashes
+    # Alternative policies:
+    #   - 'no': Never restart (useful for debugging)
+    #   - 'always': Restart even when manually stopped (aggressive)
+    #   - 'on-failure': Only restart on non-zero exit code
+    restart: unless-stopped
+
+    # Resource Limits
+    # Prevents resource exhaustion and noisy neighbor problems
+    # Based on: 15-day retention, ~50K samples/sec, complex queries
+    deploy:
+      resources:
+        # Hard limits: Container killed if exceeded (OOM killer)
+        limits:
+          # 2GB memory: Handles query load + TSDB operations + ingestion
+          # Calculation basis:
+          #   - TSDB memory: ~1GB for chunks and indexes
+          #   - Query execution: ~512MB for complex range queries
+          #   - Overhead: ~512MB for GO runtime and buffers
+          # Increase if: OOM errors, query timeouts, high cardinality
+          memory: 2G
+
+          # 1.0 CPU: One full core for query execution
+          # Prometheus is CPU-bound during:
+          #   - Query evaluation (especially range queries with aggregations)
+          #   - Alert rule evaluation
+          #   - Compaction operations
+          # Increase if: Query latency >5s, compaction backlog
+          cpus: '1.0'
+
+        # Soft reservations: Guaranteed minimum resources
+        # Scheduler ensures these resources available before placement
+        # Useful in multi-tenant environments or Docker Swarm
+        reservations:
+          # 1GB reserved: Ensures baseline query performance
+          # Prevents OOM during startup when loading TSDB into memory
+          memory: 1G
+
+          # 0.5 CPU reserved: Guarantees scraping continues
+          # Even under host load, metric collection won't be starved
+          # Scraping has priority over complex queries
+          cpus: '0.5'
+
+    # Service Dependencies
+    # Ensures Alertmanager is healthy before Prometheus starts
+    # Rationale: Prometheus validates alertmanager endpoint during startup
+    # If Alertmanager unavailable, Prometheus logs errors (non-fatal)
+    depends_on:
+      alertmanager:
+        condition: service_healthy
+
+    # Container Labels
+    # Metadata for container management, filtering, and automation
+    labels:
+      # Project grouping for docker-compose
+      com.docker.compose.project: "monitoring-stack"
+
+      # Custom label for service classification
+      # Useful for automated tooling, monitoring, backup scripts
+      monitoring.role: "metrics"
+
+      # Backup policy indicator
+      # Scripts can filter by this label to determine backup strategy
+      backup.policy: "daily"
+      backup.retention: "30d"
+
+  # Grafana - Visualization and Dashboarding Platform
+  # ===================================================
+  # Purpose: Query Prometheus/Loki and create interactive dashboards
+  # Features: Alerting, annotations, user management, plugins
+  # Architecture: Backend (Go) + Frontend (React) in single container
+  # Performance: Handles hundreds of concurrent dashboard viewers
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+
+    # Environment Variables
+    # Grafana configuration via environment variables (12-factor app pattern)
+    # Documentation: https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/
+    environment:
+      # Security Configuration
+      # ======================
+
+      # GF_SECURITY_ADMIN_USER: Initial admin username
+      # Default: 'admin' (insecure, always change)
+      # Used only on first startup, stored in Grafana database
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER:-admin}
+
+      # GF_SECURITY_ADMIN_PASSWORD: Initial admin password
+      # CRITICAL: Change immediately after first login
+      # Production: Use strong password (20+ chars, mixed case, special chars)
+      # Stored hashed (bcrypt) in Grafana SQLite database
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD:-admin}
+
+      # GF_SECURITY_ADMIN_EMAIL: Admin email for notifications
+      - GF_SECURITY_ADMIN_EMAIL=${GF_SECURITY_ADMIN_EMAIL:-admin@localhost}
+
+      # Server Configuration
+      # ====================
+
+      # GF_SERVER_ROOT_URL: Public-facing URL for Grafana
+      # Important for: OAuth redirects, email links, sharing
+      # Production: Set to actual FQDN (https://grafana.yourdomain.com)
+      - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL:-http://localhost:3000}
+
+      # GF_SERVER_SERVE_FROM_SUB_PATH: Enable if behind reverse proxy at subpath
+      # Example: nginx serving Grafana at /grafana instead of /
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+
+      # Users & Authentication
+      # ======================
+
+      # GF_USERS_ALLOW_SIGN_UP: Disable self-registration
+      # Production: false (admin creates users)
+      # Development: true (easier testing)
+      - GF_USERS_ALLOW_SIGN_UP=false
+
+      # GF_USERS_ALLOW_ORG_CREATE: Prevent users from creating organizations
+      # Single-org deployment typical for homelab
+      - GF_USERS_ALLOW_ORG_CREATE=false
+
+      # GF_AUTH_ANONYMOUS_ENABLED: Allow viewing without login
+      # Useful for: Public status dashboards, embedded panels
+      # Security: Combine with GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+
+      # Plugins
+      # =======
+
+      # GF_INSTALL_PLUGINS: Comma-separated list of plugins to install at startup
+      # Plugins installed from: https://grafana.com/grafana/plugins/
+      # Format: plugin-id, plugin-id;version (for specific version)
+      # Installed to: /var/lib/grafana/plugins
+      - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS:-grafana-piechart-panel,grafana-clock-panel}
+
+      # Logging
+      # =======
+
+      # GF_LOG_MODE: Output destination (console, file, syslog)
+      # console: Logs to stdout (Docker best practice)
+      # Accessible via: docker logs grafana
+      - GF_LOG_MODE=console
+
+      # GF_LOG_LEVEL: Verbosity (debug, info, warn, error, critical)
+      # Production: info or warn
+      # Troubleshooting: debug (verbose, use temporarily)
+      - GF_LOG_LEVEL=info
+
+    # Volume Mounts
+    volumes:
+      # Persistent data: dashboards, plugins, SQLite database, user preferences
+      # Critical for maintaining configuration across restarts
+      - grafana_data:/var/lib/grafana
+
+      # Provisioning: Datasources
+      # Auto-configure Prometheus and Loki datasources on startup
+      # Read-only: Prevents UI from modifying (infrastructure-as-code)
+      # Users can still create additional datasources via UI
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+
+      # Provisioning: Dashboards configuration
+      # Points Grafana to directory containing dashboard JSON files
+      # Dashboards auto-imported on startup and periodically refreshed
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+
+      # Provisioning: Dashboard JSON files
+      # Actual dashboard definitions in JSON format
+      # Exported from Grafana UI or created programmatically
+      # Version controlled for change tracking
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+    networks:
+      # Frontend: Expose web UI to host
+      - monitoring_frontend
+      # Backend: Query Prometheus and Loki
+      - monitoring_backend
+
+    ports:
+      # Bind to localhost only for security
+      # Production: Use reverse proxy with TLS and authentication
+      - "127.0.0.1:3000:3000"
+
+    healthcheck:
+      # Grafana health endpoint: /api/health
+      # Returns: {"database": "ok", "version": "x.x.x"}
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          # 1GB memory: Adequate for typical dashboard rendering
+          # Increase if: Many concurrent users, complex queries, large result sets
+          memory: 1G
+
+          # 0.5 CPU: Dashboard rendering and query execution
+          # Grafana is I/O bound (waiting on datasources) more than CPU bound
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+    # Grafana should start after datasources are available
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+
+    labels:
+      com.docker.compose.project: "monitoring-stack"
+      monitoring.role: "visualization"
+      backup.policy: "daily"
+
+  # Alertmanager - Alert Routing and Notification Management
+  # ==========================================================
+  # Purpose: Receives alerts from Prometheus, deduplicates, groups, and routes to receivers
+  # Features: Grouping, inhibition, silencing, high availability clustering
+  # Architecture: Stateful (maintains silence state, notification history)
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+
+    command:
+      # --config.file: Main Alertmanager configuration
+      # Defines: Routes, receivers, inhibition rules, silences
+      # Hot-reloadable via: POST /-/reload
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+
+      # --storage.path: Persistent state storage
+      # Contains: Silences, notification log, nflog (notification deduplication)
+      # Must persist across restarts to maintain silences
+      - '--storage.path=/alertmanager'
+
+      # --web.external-url: Public URL for Alertmanager UI
+      # Used in: Alert links, console template URLs
+      # Set to reverse proxy URL in production
+      - '--web.external-url=http://localhost:9093'
+
+      # --cluster.listen-address: HA clustering address
+      # Format: host:port for peer-to-peer communication
+      # Single-node: Use 0.0.0.0:9094 (listening but no peers)
+      # Multi-node: Specify peer addresses with --cluster.peer
+      - '--cluster.listen-address=0.0.0.0:9094'
+
+      # --log.level: Logging verbosity (debug, info, warn, error)
+      - '--log.level=info'
+
+    volumes:
+      # Configuration file (read-only)
+      # Contains routing tree, receiver definitions, templates
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+
+      # Optional: Email/Slack notification templates
+      # Customize alert message formatting
+      # - ./alertmanager/templates:/etc/alertmanager/templates:ro
+
+      # Persistent state (read-write)
+      # CRITICAL: Must persist for silence and notification tracking
+      - alertmanager_data:/alertmanager
+
+    networks:
+      - monitoring_frontend  # Web UI access
+      - monitoring_backend   # Receive alerts from Prometheus
+
+    ports:
+      - "127.0.0.1:9093:9093"  # Web UI and API
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          # 512MB memory: Alertmanager is lightweight
+          # Primarily stores: Active alerts, silences, notification state
+          # Memory usage grows with: Alert volume, silence count
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+
+    labels:
+      com.docker.compose.project: "monitoring-stack"
+      monitoring.role: "alerting"
+      backup.policy: "daily"
+
+  # Loki - Log Aggregation System
+  # ===============================
+  # Purpose: Store and query logs with Prometheus-like label system
+  # Features: Multi-tenancy, compression, retention policies
+  # Architecture: Ingester receives logs, chunks written to storage, querier serves reads
+  # Query Language: LogQL (similar to PromQL)
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+
+    command:
+      # -config.file: Main Loki configuration
+      # Contains: Server, ingester, storage, limits, table_manager configs
+      # Comprehensive configuration required (no sensible defaults)
+      - '-config.file=/etc/loki/loki-config.yml'
+
+      # -target: Component to run (all, ingester, querier, distributor)
+      # all: Run all components in single process (monolithic mode)
+      # Production: Split into microservices for scalability
+      # Homelab: Monolithic is simpler and sufficient
+      - '-target=all'
+
+    volumes:
+      # Configuration file
+      # Complex configuration, see loki-config.yml for details
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+
+      # Data storage
+      # Contains: Chunks (compressed logs), indexes (boltdb), cache
+      # Growth: Depends on log volume, retention period
+      # Compression: Typically 10:1 ratio
+      - loki_data:/loki
+
+    networks:
+      - monitoring_frontend  # Grafana queries
+      - monitoring_backend   # Promtail pushes logs
+
+    ports:
+      - "127.0.0.1:3100:3100"  # HTTP API for queries and ingestion
+
+    healthcheck:
+      # Loki ready endpoint: /ready
+      # Returns 200 when all components initialized
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          # 1GB memory: Ingestion buffering + query cache
+          # Increase if: High log volume (>10GB/day), many concurrent queries
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+    labels:
+      com.docker.compose.project: "monitoring-stack"
+      monitoring.role: "logs"
+      backup.policy: "weekly"  # Logs have retention, less critical to backup
+
+  # Promtail - Log Shipping Agent
+  # ===============================
+  # Purpose: Discover log files, parse, label, and ship to Loki
+  # Features: Service discovery, multi-line parsing, label extraction
+  # Architecture: Lightweight agent, one per log source (host)
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+
+    command:
+      # -config.file: Promtail configuration
+      # Defines: Scrape configs (log file paths), pipeline stages (parsing), client (Loki URL)
+      - '-config.file=/etc/promtail/promtail-config.yml'
+
+    volumes:
+      # Configuration file
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+
+      # Docker container logs
+      # Path: /var/lib/docker/containers/*/*.log
+      # Format: JSON logs from Docker logging driver
+      # Promtail reads, parses JSON, extracts labels
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
+      # System logs (optional)
+      # Paths: /var/log/syslog, /var/log/auth.log, etc.
+      # Useful for: Host-level debugging, security monitoring
+      - /var/log:/var/log:ro
+
+      # Promtail positions file (track read position)
+      # Prevents re-reading logs after restart
+      # Contains: File path -> byte offset mapping
+      - ./promtail/positions.yml:/tmp/positions.yml
+
+    networks:
+      - monitoring_backend  # Push to Loki
+
+    # No port exposure needed (Promtail is a push agent, not scraped)
+
+    healthcheck:
+      # Promtail ready endpoint
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          # 256MB memory: Lightweight agent
+          # Memory usage: Buffering logs before batch push to Loki
+          # Increase if: Very high log volume (>100MB/s)
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
+    depends_on:
+      loki:
+        condition: service_healthy
+
+    labels:
+      com.docker.compose.project: "monitoring-stack"
+      monitoring.role: "log-shipper"
+
+  # Node Exporter - Host Metrics Exporter
+  # =======================================
+  # Purpose: Export hardware and OS metrics (CPU, memory, disk, network)
+  # Metrics: ~1000 metrics per host (node_* namespace)
+  # Architecture: Agent exposes /metrics endpoint, Prometheus scrapes
+  # Best Practice: Deploy one per physical/virtual host
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node-exporter
+
+    command:
+      # --path.rootfs: Root filesystem path for host metrics
+      # Mounted from host to access real system stats
+      # Without this, would see container's limited view
+      - '--path.rootfs=/host'
+
+      # --collector.filesystem.mount-points-exclude: Exclude virtual filesystems
+      # Regex to ignore: tmpfs, devtmpfs, etc. (not real disk space)
+      # Reduces metric cardinality, focuses on actual storage
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+      # --collector.netclass.ignored-devices: Exclude virtual network interfaces
+      # Ignore: docker, veth (container interfaces) - focus on physical NICs
+      - '--collector.netclass.ignored-devices=^(veth.*|docker.*|br-.*)$$'
+
+      # --collector.netdev.device-exclude: Same as above for netdev collector
+      - '--collector.netdev.device-exclude=^(veth.*|docker.*|br-.*)$$'
+
+      # Enable textfile collector for custom metrics
+      # --collector.textfile.directory: Directory to read custom metric files
+      # Format: *.prom files with Prometheus exposition format
+      # Use case: Custom scripts write metrics, node-exporter exposes
+      - '--collector.textfile.directory=/host/textfile_collector'
+
+    volumes:
+      # Mount host root filesystem as read-only
+      # Bind propagation: rslave (receive mount events from host)
+      # Critical for accurate disk, network, CPU metrics
+      - '/:/host:ro,rslave'
+
+    networks:
+      - monitoring_backend  # Scraped by Prometheus
+
+    # Port exposure not required if Prometheus in same network
+    # Exposing for optional external scraping or troubleshooting
+    ports:
+      - "127.0.0.1:9100:9100"
+
+    # Privileged and PID/Network host mode for accurate host metrics
+    # pid: host - See all host processes (for process metrics)
+    # network_mode: host - See actual host network interfaces
+    # Security: Node exporter read-only, minimal security risk
+    pid: host
+    network_mode: host
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          # Node exporter is very lightweight
+          # Memory: <50MB typical
+          # CPU: <5% typical (spikes during scrape)
+          memory: 128M
+          cpus: '0.1'
+        reservations:
+          memory: 64M
+          cpus: '0.05'
+
+    labels:
+      com.docker.compose.project: "monitoring-stack"
+      monitoring.role: "host-exporter"
+
+  # cAdvisor - Container Metrics Exporter
+  # =======================================
+  # Purpose: Export Docker container resource usage and performance metrics
+  # Metrics: CPU, memory, network, disk I/O per container
+  # Namespace: container_* metrics
+  # Alternative: Docker Engine built-in metrics (less detailed)
+  cadvisor:
+    # Note: ARM architecture uses different image
+    # amd64: gcr.io/cadvisor/cadvisor:v0.47.0
+    # arm64: gcr.io/cadvisor/cadvisor:v0.47.0 (multi-arch)
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor
+
+    # Privileged mode required for accessing cgroups and container stats
+    # Security: cAdvisor is read-only, minimal risk
+    privileged: true
+
+    # Device mounts for cgroup access
+    # Needed: Read cgroup metrics from kernel
+    devices:
+      - /dev/kmsg:/dev/kmsg
+
+    volumes:
+      # Root filesystem (read-only)
+      # cAdvisor needs visibility into host filesystem structure
+      - /:/rootfs:ro
+
+      # Docker socket for container discovery
+      # Lists running containers and their metadata
+      # Read-only: cAdvisor doesn't manage containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+      # Cgroups v1 hierarchy
+      # Primary source of container resource metrics
+      # CPU, memory, blkio stats read from here
+      - /sys:/sys:ro
+
+      # Docker storage info
+      # Disk usage per container filesystem
+      - /var/lib/docker/:/var/lib/docker:ro
+
+      # Disk statistics
+      # Used for calculating I/O metrics
+      - /dev/disk/:/dev/disk:ro
+
+    networks:
+      - monitoring_backend  # Scraped by Prometheus
+
+    ports:
+      - "127.0.0.1:8080:8080"  # Web UI and /metrics endpoint
+
+    healthcheck:
+      # cAdvisor health endpoint
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          # cAdvisor memory usage grows with container count
+          # Typical: ~200MB for 20-30 containers
+          # Increase if: Many containers (>50) or high metric resolution
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+
+    labels:
+      com.docker.compose.project: "monitoring-stack"
+      monitoring.role: "container-exporter"
+
+# Docker Compose Notes
+# ====================
+#
+# Starting the stack:
+#   docker-compose up -d
+#
+# Viewing logs:
+#   docker-compose logs -f [service_name]
+#   Example: docker-compose logs -f prometheus
+#
+# Restarting a service:
+#   docker-compose restart [service_name]
+#
+# Stopping the stack:
+#   docker-compose down
+#
+# Stopping and removing volumes (DATA LOSS):
+#   docker-compose down -v
+#
+# Updating images:
+#   docker-compose pull
+#   docker-compose up -d
+#
+# Scaling (if applicable):
+#   docker-compose up -d --scale [service]=[count]
+#
+# Checking service health:
+#   docker-compose ps
+#
+# Accessing a service shell:
+#   docker-compose exec [service] sh
+#
+# Validation:
+#   docker-compose config (validates YAML syntax)
+#
+# Monitoring:
+#   docker stats $(docker-compose ps -q)

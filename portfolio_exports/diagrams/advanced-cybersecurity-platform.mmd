@@ -1,0 +1,12 @@
+---
+title: Advanced Cybersecurity Platform - Architecture Overview
+---
+flowchart LR
+    user[Users / Clients]
+    ingress[Ingress / API Gateway]
+    app[Core Services]
+    data[(Data Stores)]
+    obs[Observability]
+    user --> ingress --> app --> data
+    app --> obs
+    obs --> app

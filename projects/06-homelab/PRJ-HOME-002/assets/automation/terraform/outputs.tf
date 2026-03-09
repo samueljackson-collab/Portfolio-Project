@@ -1,4 +1,14 @@
-output "wikijs_ip" {
-  description = "Wiki.js VM IP address"
-  value       = proxmox_vm_qemu.wikijs.default_ipv4_address
+output "wikijs_vm_name" {
+  description = "Wiki.js VM name"
+  value       = module.wikijs_vm.vm_name
+}
+
+output "wikijs_vm_id" {
+  description = "Wiki.js VM ID"
+  value       = module.wikijs_vm.vm_id
+}
+
+output "pihole_lxc_id" {
+  description = "Pi-hole LXC ID"
+  value       = module.pihole_lxc.container_id
 }

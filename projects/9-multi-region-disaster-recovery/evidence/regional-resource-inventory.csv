@@ -1,0 +1,11 @@
+region,resource_type,resource_name,status,notes
+us-east-1,VPC,dr-primary-vpc,active,Primary region VPC
+us-east-1,ALB,dr-alb-primary,active,Public ALB
+us-east-1,RDS,dr-global-cluster-writer,active,Writer cluster
+us-east-1,S3,dr-artifacts-primary,active,Replication source
+us-east-1,Route53,dr-primary-health-check,active,Primary health check
+us-west-2,VPC,dr-dr-vpc,active,DR region VPC
+us-west-2,ALB,dr-alb-dr,standby,DR ALB
+us-west-2,RDS,dr-global-cluster-reader,standby,Read replica cluster
+us-west-2,S3,dr-artifacts-dr,active,Replication destination
+us-west-2,Route53,dr-dr-health-check,active,DR health check

@@ -1,0 +1,28 @@
+# Web framework
+fastapi>=0.104
+uvicorn[standard]>=0.24
+pydantic>=2.5
+
+# Async HTTP client
+aiohttp>=3.9
+
+# Configuration
+pyyaml>=6.0
+
+# Monitoring
+prometheus-client>=0.18
+
+# Database
+asyncpg>=0.29
+sqlalchemy>=2.0
+
+# Redis for caching
+redis>=5.0
+
+# Security
+python-jose[cryptography]>=3.3
+passlib[bcrypt]>=1.7
+
+# Utilities
+python-multipart>=0.0.6
+httpx>=0.25

@@ -1,0 +1,12 @@
+# Sanitized PBS retention policy aligned with RPO/RTO targets
+
+policy-name: pbs-retention-policy
+keep-last: 7        # Always keep last 7 snapshots
+keep-daily: 14      # Two weeks of dailies
+keep-weekly: 6      # Six weeks of weeklies
+keep-monthly: 3     # Last quarter of monthlies
+prune-schedule: 'daily:02:45'
+verify-schedule: 'daily:04:00'
+notes:
+  - 'Adjust keep-weekly when datastore free space < 25%'
+  - 'Verify job runs after each prune cycle to detect corruption early'

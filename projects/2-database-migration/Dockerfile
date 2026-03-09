@@ -27,5 +27,9 @@ USER migrator
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/src
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD python src/health_check.py || exit 1
+
 # Run the migration orchestrator
 ENTRYPOINT ["python", "-m", "src.migration_orchestrator"]

@@ -1,0 +1,1537 @@
+{
+  "timestamp": "2026-03-08T22:19:03.804956+00:00",
+  "overall_completion": 91.0,
+  "projects": {
+    "total": 93,
+    "completed": 0,
+    "in_progress": 0,
+    "planned": 93,
+    "with_code": 87,
+    "with_docs": 93,
+    "with_tests": 78,
+    "with_demos": 0
+  },
+  "github": {
+    "total_commits": 0,
+    "total_files": 0,
+    "total_lines": 0,
+    "languages": {}
+  },
+  "documentation": {
+    "readme_files": 287,
+    "markdown_files": 1195,
+    "total_words": 1759274
+  },
+  "infrastructure": {
+    "docker_compose_files": 43,
+    "terraform_files": 181,
+    "kubernetes_manifests": 87,
+    "config_files": 0
+  },
+  "project_details": [
+    {
+      "name": "01-sde-devops",
+      "path": "projects/01-sde-devops",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 183,
+      "languages": [
+        "JSON",
+        "JavaScript",
+        "Shell",
+        "Terraform",
+        "TypeScript",
+        "YAML"
+      ]
+    },
+    {
+      "name": "02-cloud-architecture",
+      "path": "projects/02-cloud-architecture",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 16,
+      "languages": [
+        "JSON",
+        "Python",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "02-cloud-solutions",
+      "path": "projects/02-cloud-solutions",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 19,
+      "languages": [
+        "JSON",
+        "JavaScript",
+        "Python",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "03-cybersecurity",
+      "path": "projects/03-cybersecurity",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 26,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "04-qa-testing",
+      "path": "projects/04-qa-testing",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 10,
+      "languages": [
+        "JSON",
+        "YAML"
+      ]
+    },
+    {
+      "name": "05-networking-datacenter",
+      "path": "projects/05-networking-datacenter",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 16,
+      "languages": [
+        "JSON",
+        "Python",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "06-homelab",
+      "path": "projects/06-homelab",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 254,
+      "languages": [
+        "HTML",
+        "JSON",
+        "Shell",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "07-aiml-automation",
+      "path": "projects/07-aiml-automation",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 69,
+      "languages": [
+        "HTML",
+        "JSON",
+        "JavaScript",
+        "Python",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "08-web-data",
+      "path": "projects/08-web-data",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 80,
+      "file_count": 26,
+      "languages": [
+        "JSON",
+        "SQL",
+        "YAML"
+      ]
+    },
+    {
+      "name": "1-aws-infrastructure-automation",
+      "path": "projects/1-aws-infrastructure-automation",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 79,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "10-blockchain-smart-contract-platform",
+      "path": "projects/10-blockchain-smart-contract-platform",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 32,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "Solidity",
+        "TypeScript",
+        "YAML"
+      ]
+    },
+    {
+      "name": "11-iot-data-analytics",
+      "path": "projects/11-iot-data-analytics",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 28,
+      "languages": [
+        "JSON",
+        "Python",
+        "SQL",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "12-quantum-computing",
+      "path": "projects/12-quantum-computing",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "13-advanced-cybersecurity",
+      "path": "projects/13-advanced-cybersecurity",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 25,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "14-edge-ai-inference",
+      "path": "projects/14-edge-ai-inference",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "15-real-time-collaboration",
+      "path": "projects/15-real-time-collaboration",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "HTML",
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "16-advanced-data-lake",
+      "path": "projects/16-advanced-data-lake",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 29,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "17-multi-cloud-service-mesh",
+      "path": "projects/17-multi-cloud-service-mesh",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 19,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "18-gpu-accelerated-computing",
+      "path": "projects/18-gpu-accelerated-computing",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 17,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "19-advanced-kubernetes-operators",
+      "path": "projects/19-advanced-kubernetes-operators",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 18,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "2-database-migration",
+      "path": "projects/2-database-migration",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 77,
+      "languages": [
+        "JSON",
+        "Python",
+        "SQL",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "20-blockchain-oracle-service",
+      "path": "projects/20-blockchain-oracle-service",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 18,
+      "languages": [
+        "JSON",
+        "JavaScript",
+        "Python",
+        "Solidity",
+        "YAML"
+      ]
+    },
+    {
+      "name": "21-quantum-safe-cryptography",
+      "path": "projects/21-quantum-safe-cryptography",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 23,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "22-autonomous-devops-platform",
+      "path": "projects/22-autonomous-devops-platform",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 20,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "23-advanced-monitoring",
+      "path": "projects/23-advanced-monitoring",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 32,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "24-report-generator",
+      "path": "projects/24-report-generator",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 40,
+      "languages": [
+        "HTML",
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "25-portfolio-website",
+      "path": "projects/25-portfolio-website",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 48,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "3-kubernetes-cicd",
+      "path": "projects/3-kubernetes-cicd",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 47,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "4-devsecops",
+      "path": "projects/4-devsecops",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 57,
+      "languages": [
+        "HTML",
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "5-real-time-data-streaming",
+      "path": "projects/5-real-time-data-streaming",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 28,
+      "languages": [
+        "JSON",
+        "Python",
+        "SQL",
+        "YAML"
+      ]
+    },
+    {
+      "name": "6-mlops-platform",
+      "path": "projects/6-mlops-platform",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 31,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "7-serverless-data-processing",
+      "path": "projects/7-serverless-data-processing",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 27,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "8-advanced-ai-chatbot",
+      "path": "projects/8-advanced-ai-chatbot",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 19,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "9-multi-region-disaster-recovery",
+      "path": "projects/9-multi-region-disaster-recovery",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 37,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "PRJ-HOME-001",
+      "path": "projects/PRJ-HOME-001",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 70,
+      "file_count": 11,
+      "languages": [
+        "JSON"
+      ]
+    },
+    {
+      "name": "astradup-video-deduplication",
+      "path": "projects/astradup-video-deduplication",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 32,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "bash-devops-toolkit",
+      "path": "projects/bash-devops-toolkit",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 80,
+      "file_count": 47,
+      "languages": [
+        "Shell"
+      ]
+    },
+    {
+      "name": "custom-prometheus-exporter",
+      "path": "projects/custom-prometheus-exporter",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 30,
+      "languages": [
+        "Go",
+        "JSON",
+        "YAML"
+      ]
+    },
+    {
+      "name": "edr-platform",
+      "path": "projects/edr-platform",
+      "has_code": false,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 30,
+      "file_count": 1,
+      "languages": []
+    },
+    {
+      "name": "external-pen-test",
+      "path": "projects/external-pen-test",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 21,
+      "languages": [
+        "CSS",
+        "JSON",
+        "JavaScript",
+        "Python",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "full-scope-red-team",
+      "path": "projects/full-scope-red-team",
+      "has_code": false,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 30,
+      "file_count": 1,
+      "languages": []
+    },
+    {
+      "name": "internal-net-pentest",
+      "path": "projects/internal-net-pentest",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 25,
+      "languages": [
+        "HTML",
+        "JSON",
+        "JavaScript",
+        "Python",
+        "Shell",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "malware-analysis",
+      "path": "projects/malware-analysis",
+      "has_code": false,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 30,
+      "file_count": 1,
+      "languages": []
+    },
+    {
+      "name": "p01-aws-infra",
+      "path": "projects/p01-aws-infra",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 59,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p02-iam-hardening",
+      "path": "projects/p02-iam-hardening",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 25,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p03-hybrid-network",
+      "path": "projects/p03-hybrid-network",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 21,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p04-ops-monitoring",
+      "path": "projects/p04-ops-monitoring",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 34,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p05-mobile-testing",
+      "path": "projects/p05-mobile-testing",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p06-e2e-testing",
+      "path": "projects/p06-e2e-testing",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 23,
+      "languages": [
+        "JSON",
+        "TypeScript",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p07-roaming-simulation",
+      "path": "projects/p07-roaming-simulation",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 25,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p08-api-testing",
+      "path": "projects/p08-api-testing",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p09-cloud-native-poc",
+      "path": "projects/p09-cloud-native-poc",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 23,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p10-multi-region",
+      "path": "projects/p10-multi-region",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p11-serverless",
+      "path": "projects/p11-serverless",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 20,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p12-data-pipeline",
+      "path": "projects/p12-data-pipeline",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 21,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p13-ha-webapp",
+      "path": "projects/p13-ha-webapp",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 20,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p14-disaster-recovery",
+      "path": "projects/p14-disaster-recovery",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p15-cost-optimization",
+      "path": "projects/p15-cost-optimization",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "SQL",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p16-zero-trust",
+      "path": "projects/p16-zero-trust",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 21,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p17-terraform-multicloud",
+      "path": "projects/p17-terraform-multicloud",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 40,
+      "languages": [
+        "JSON",
+        "Python",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p18-k8s-cicd",
+      "path": "projects/p18-k8s-cicd",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p19-security-automation",
+      "path": "projects/p19-security-automation",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 21,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p20-observability",
+      "path": "projects/p20-observability",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "prompt-examples",
+      "path": "projects/prompt-examples",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 70,
+      "file_count": 13,
+      "languages": [
+        "Terraform"
+      ]
+    },
+    {
+      "name": "ransomware-incident-response",
+      "path": "projects/ransomware-incident-response",
+      "has_code": false,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 30,
+      "file_count": 1,
+      "languages": []
+    },
+    {
+      "name": "soc-implementation",
+      "path": "projects/soc-implementation",
+      "has_code": false,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 30,
+      "file_count": 1,
+      "languages": []
+    },
+    {
+      "name": "threat-hunting-program",
+      "path": "projects/threat-hunting-program",
+      "has_code": false,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 30,
+      "file_count": 1,
+      "languages": []
+    },
+    {
+      "name": "web-app-assessment",
+      "path": "projects/web-app-assessment",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 24,
+      "languages": [
+        "CSS",
+        "HTML",
+        "JSON",
+        "Python",
+        "Terraform",
+        "TypeScript",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P11-api-gateway-serverless",
+      "path": "projects-new/P11-api-gateway-serverless",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 70,
+      "file_count": 5,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P11-serverless-api-gateway",
+      "path": "projects-new/P11-serverless-api-gateway",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 44,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P12-data-pipeline",
+      "path": "projects-new/P12-data-pipeline",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 70,
+      "file_count": 4,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P12-data-pipeline-airflow",
+      "path": "projects-new/P12-data-pipeline-airflow",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 27,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P13-ha-webapp",
+      "path": "projects-new/P13-ha-webapp",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 23,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P14-disaster-recovery",
+      "path": "projects-new/P14-disaster-recovery",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 23,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P14-postgresql-dba-toolkit",
+      "path": "projects-new/P14-postgresql-dba-toolkit",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 46,
+      "languages": [
+        "Python",
+        "SQL",
+        "Shell"
+      ]
+    },
+    {
+      "name": "P15-cost-optimization",
+      "path": "projects-new/P15-cost-optimization",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 23,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P16-zero-trust",
+      "path": "projects-new/P16-zero-trust",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 23,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P17-terraform-multicloud",
+      "path": "projects-new/P17-terraform-multicloud",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 24,
+      "languages": [
+        "JSON",
+        "Python",
+        "Terraform",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P18-k8s-cicd",
+      "path": "projects-new/P18-k8s-cicd",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P19-security-automation",
+      "path": "projects-new/P19-security-automation",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 23,
+      "languages": [
+        "JSON",
+        "Python",
+        "Shell",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P20-observability",
+      "path": "projects-new/P20-observability",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 24,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P21-quantum-safe-crypto",
+      "path": "projects-new/P21-quantum-safe-crypto",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 70,
+      "file_count": 6,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P21-quantum-safe-cryptography",
+      "path": "projects-new/P21-quantum-safe-cryptography",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 18,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P22-autonomous-devops",
+      "path": "projects-new/P22-autonomous-devops",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 70,
+      "file_count": 5,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P22-autonomous-devops-platform",
+      "path": "projects-new/P22-autonomous-devops-platform",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 18,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P23-advanced-monitoring",
+      "path": "projects-new/P23-advanced-monitoring",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P24-report-generator",
+      "path": "projects-new/P24-report-generator",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 22,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P25-portfolio-website",
+      "path": "projects-new/P25-portfolio-website",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 24,
+      "languages": [
+        "HTML",
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "microservices-demo-app",
+      "path": "projects-new/microservices-demo-app",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 100,
+      "file_count": 50,
+      "languages": [
+        "JSON",
+        "Java",
+        "JavaScript",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p07",
+      "path": "projects-new/p07",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 14,
+      "languages": [
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p08",
+      "path": "projects-new/p08",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 17,
+      "languages": [
+        "JSON",
+        "Python",
+        "YAML"
+      ]
+    },
+    {
+      "name": "p09",
+      "path": "projects-new/p09",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": true,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 90,
+      "file_count": 10,
+      "languages": [
+        "Python"
+      ]
+    },
+    {
+      "name": "p10",
+      "path": "projects-new/p10",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 70,
+      "file_count": 7,
+      "languages": [
+        "Python",
+        "SQL",
+        "Terraform"
+      ]
+    }
+  ]
+}

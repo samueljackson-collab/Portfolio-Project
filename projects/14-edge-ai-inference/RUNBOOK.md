@@ -719,25 +719,25 @@ ssh jetson@jetson-device-01.local "sudo journalctl -u iotedge --since '10 minute
 
 #### Severity Classification
 
-**P0: Service Outage**
+### P0: Service Outage
 - All edge devices offline
 - Inference service crashed on critical devices
 - Model serving completely failed
 - Data loss occurring
 
-**P1: Degraded Service**
+### P1: Degraded Service
 - Multiple devices offline (>20%)
 - High inference latency (>200ms)
 - Model deployment failed across fleet
 - GPU failures
 
-**P2: Performance Issues**
+### P2: Performance Issues
 - Single device offline
 - Elevated latency (100-200ms)
 - Container restart loops
 - Disk space warnings
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Non-critical telemetry gaps
 - Individual inference errors
 - Minor performance degradation

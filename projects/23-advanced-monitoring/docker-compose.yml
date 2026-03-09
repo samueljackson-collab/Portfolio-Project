@@ -1,0 +1,341 @@
+version: '3.8'
+
+x-default-env: &default-env
+  env_file:
+    - .env
+
+x-default-deploy: &default-deploy
+  deploy:
+    resources:
+      limits:
+        cpus: "0.75"
+        memory: 1g
+      reservations:
+        cpus: "0.25"
+        memory: 256m
+
+services:
+  prometheus:
+    <<: [*default-env, *default-deploy]
+    image: prom/prometheus:v2.52.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION_TIME}'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  grafana:
+    <<: [*default-env, *default-deploy]
+    image: grafana/grafana:10.4.3
+    container_name: grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=${GRAFANA_ALLOW_SIGNUP}
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL}
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  alertmanager:
+    <<: [*default-env, *default-deploy]
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager-data:/alertmanager
+    command:
+      - /bin/sh
+      - -c
+      - |
+        SLACK_URL_ESCAPED=$(printf '%s\n' "$ALERTMANAGER_SLACK_API_URL" | sed -e 's/[\/&]/\\&/g')
+        PAGERDUTY_KEY_ESCAPED=$(printf '%s\n' "$ALERTMANAGER_PAGERDUTY_KEY" | sed -e 's/[\/&]/\\&/g')
+        sed \
+          -e "s/__ALERTMANAGER_SLACK_API_URL__/${SLACK_URL_ESCAPED}/g" \
+          -e "s/__ALERTMANAGER_PAGERDUTY_KEY__/${PAGERDUTY_KEY_ESCAPED}/g" \
+          /etc/alertmanager/alertmanager.yml > /tmp/alertmanager.yml
+        exec /bin/alertmanager --config.file=/tmp/alertmanager.yml --storage.path=/alertmanager
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9093/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  loki:
+    <<: [*default-env, *default-deploy]
+    image: grafana/loki:2.9.3
+    container_name: loki
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    ports:
+      - "127.0.0.1:3100:3100"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        RETENTION_ESCAPED=$(printf '%s\n' "$LOKI_RETENTION_PERIOD" | sed -e 's/[\/&]/\\&/g')
+        sed -e "s/\\${LOKI_RETENTION_PERIOD}/$RETENTION_ESCAPED/g" /etc/loki/local-config.yaml > /tmp/loki-config.yml
+        exec /usr/bin/loki -config.file=/tmp/loki-config.yml
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  promtail:
+    <<: [*default-env, *default-deploy]
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    volumes:
+      - ./loki/promtail-config.yml:/etc/promtail/config.yml
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command:
+      - /bin/sh
+      - -c
+      - |
+        HOST_ESCAPED=$(printf '%s\n' "$PROMTAIL_HOSTNAME" | sed -e 's/[\/&]/\\&/g')
+        sed -e "s/\\${PROMTAIL_HOSTNAME}/$HOST_ESCAPED/g" /etc/promtail/config.yml > /tmp/promtail-config.yml
+        exec /usr/bin/promtail -config.file=/tmp/promtail-config.yml
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9080/ready || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  node-exporter:
+    <<: [*default-env, *default-deploy]
+    image: prom/node-exporter:v1.8.1
+    container_name: node-exporter
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9100/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  cadvisor:
+    <<: [*default-env, *default-deploy]
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: cadvisor
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Custom Application Exporter
+  app-exporter:
+    <<: [*default-env, *default-deploy]
+    build:
+      context: ./exporters
+      dockerfile: Dockerfile
+    container_name: app-exporter
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - APP_VERSION=${APP_EXPORTER_VERSION}
+      - ENVIRONMENT=${APP_EXPORTER_ENVIRONMENT}
+      - AWS_REGION=${APP_EXPORTER_AWS_REGION}
+    networks:
+      - monitoring
+    restart: unless-stopped
+    command: ["python", "app_exporter.py", "--port", "8000", "--interval", "15"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8000/metrics || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Thanos Sidecar for Prometheus
+  thanos-sidecar:
+    <<: [*default-env, *default-deploy]
+    image: quay.io/thanos/thanos:v0.34.1
+    container_name: thanos-sidecar
+    volumes:
+      - prometheus-data:/prometheus
+      - ./thanos/bucket.yml:/etc/thanos/bucket.yml
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
+    command:
+      - 'sidecar'
+      - '--tsdb.path=/prometheus'
+      - '--prometheus.url=http://prometheus:9090'
+      - '--grpc-address=0.0.0.0:10901'
+      - '--http-address=0.0.0.0:10902'
+      - '--objstore.config-file=/etc/thanos/bucket.yml'
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:10902/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Thanos Query for unified view
+  thanos-query:
+    <<: [*default-env, *default-deploy]
+    image: quay.io/thanos/thanos:v0.34.1
+    container_name: thanos-query
+    command:
+      - 'query'
+      - '--http-address=0.0.0.0:9090'
+      - '--store=thanos-sidecar:10901'
+      - '--store=thanos-store:10901'
+    ports:
+      - "127.0.0.1:10904:9090"
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - thanos-sidecar
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Thanos Store Gateway for object storage
+  thanos-store:
+    <<: [*default-env, *default-deploy]
+    image: quay.io/thanos/thanos:v0.34.1
+    container_name: thanos-store
+    volumes:
+      - ./thanos/bucket.yml:/etc/thanos/bucket.yml
+      - thanos-store-data:/data
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
+    command:
+      - 'store'
+      - '--data-dir=/data'
+      - '--objstore.config-file=/etc/thanos/bucket.yml'
+      - '--grpc-address=0.0.0.0:10901'
+      - '--http-address=0.0.0.0:10902'
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:10902/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Thanos Compactor for data retention
+  thanos-compactor:
+    <<: [*default-env, *default-deploy]
+    image: quay.io/thanos/thanos:v0.34.1
+    container_name: thanos-compactor
+    volumes:
+      - ./thanos/bucket.yml:/etc/thanos/bucket.yml
+      - thanos-compactor-data:/data
+    environment:
+      # Required: Thanos object store credentials (prefer IAM roles in production)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:?S3 access key is required}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:?S3 secret key is required}
+      - AWS_REGION=${THANOS_S3_REGION:-us-east-1}
+    command:
+      - 'compact'
+      - '--data-dir=/data'
+      - '--objstore.config-file=/etc/thanos/bucket.yml'
+      - '--wait'
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:10902/-/healthy || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:
+  loki-data:
+  thanos-store-data:
+  thanos-compactor-data:
+
+networks:
+  monitoring:
+    driver: bridge

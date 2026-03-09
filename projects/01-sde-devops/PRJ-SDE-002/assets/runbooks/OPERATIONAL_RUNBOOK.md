@@ -31,6 +31,8 @@ This runbook provides step-by-step operational procedures for maintaining and tr
 - **Alerting:** Alertmanager
 - **Backup:** Proxmox Backup Server (PBS)
 
+> All hostnames/IPs in this document use placeholder demo values for sanitization.
+
 ### Service Criticality
 - **Criticality Level:** P1 (Core Infrastructure)
 - **RTO (Recovery Time Objective):** 1 hour
@@ -49,11 +51,11 @@ This runbook provides step-by-step operational procedures for maintaining and tr
 
 | Component | Host | Port | Purpose | Status Check |
 |-----------|------|------|---------|--------------|
-| Prometheus | 192.168.1.11 | 9090 | Metrics collection & storage | `curl http://192.168.1.11:9090/-/healthy` |
-| Grafana | 192.168.1.11 | 3000 | Visualization & dashboards | `curl http://192.168.1.11:3000/api/health` |
-| Loki | 192.168.1.11 | 3100 | Log aggregation | `curl http://192.168.1.11:3100/ready` |
-| Alertmanager | 192.168.1.11 | 9093 | Alert routing | `curl http://192.168.1.11:9093/-/healthy` |
-| PBS | 192.168.1.15 | 8007 | Backup server | `pvesh get /cluster/resources` |
+| Prometheus | 10.0.0.11 | 9090 | Metrics collection & storage | `curl http://10.0.0.11:9090/-/healthy` |
+| Grafana | 10.0.0.11 | 3000 | Visualization & dashboards | `curl http://10.0.0.11:3000/api/health` |
+| Loki | 10.0.0.11 | 3100 | Log aggregation | `curl http://10.0.0.11:3100/ready` |
+| Alertmanager | 10.0.0.11 | 9093 | Alert routing | `curl http://10.0.0.11:9093/-/healthy` |
+| PBS | 10.0.0.15 | 8007 | Backup server | `pvesh get /cluster/resources` |
 
 ### Service Dependencies
 
@@ -94,17 +96,17 @@ graph TD
 1. **Verify Alert Legitimacy**
    ```bash
    # Check if host is pingable
-   ping -c 4 192.168.1.21
+   ping -c 4 10.0.0.21
 
    # If no response, check from pfSense
-   ssh admin@192.168.1.1
-   ping 192.168.1.21
+   ssh admin@10.0.0.1
+   ping 10.0.0.21
    ```
 
 2. **Check Service Status on Target**
    ```bash
    # SSH to target (if accessible)
-   ssh admin@192.168.1.21
+   ssh admin@10.0.0.21
 
    # Check node_exporter service
    sudo systemctl status node_exporter
@@ -118,10 +120,10 @@ graph TD
 3. **Verify Network Connectivity**
    ```bash
    # Test connectivity from Prometheus host
-   ssh admin@192.168.1.11
+   ssh admin@10.0.0.11
 
    # Test port 9100 connectivity
-   nc -zv 192.168.1.21 9100
+   nc -zv 10.0.0.21 9100
 
    # Expected: "Connection succeeded"
    ```
@@ -146,14 +148,14 @@ Host unreachable?
 **Scenario A: VM Powered Off**
 ```bash
 # Power on VM via Proxmox CLI
-ssh root@192.168.1.10
+ssh root@10.0.0.10
 qm start <VMID>
 
 # Wait 2 minutes for boot and verify
 watch -n 5 'qm status <VMID>'
 
 # Verify services auto-start
-ssh admin@192.168.1.21 "systemctl is-active node_exporter"
+ssh admin@10.0.0.21 "systemctl is-active node_exporter"
 ```
 
 **Scenario B: Node Exporter Service Stopped**
@@ -176,15 +178,15 @@ sudo systemctl enable node_exporter
 # Check UFW rules
 sudo ufw status numbered
 
-# Allow Prometheus scraper (192.168.1.11)
-sudo ufw allow from 192.168.1.11 to any port 9100 proto tcp
+# Allow Prometheus scraper (10.0.0.11)
+sudo ufw allow from 10.0.0.11 to any port 9100 proto tcp
 
 # Verify connection
-curl http://192.168.1.21:9100/metrics
+curl http://10.0.0.21:9100/metrics
 ```
 
 #### Verification
-- [ ] Target shows "UP" in Prometheus UI (http://192.168.1.11:9090/targets)
+- [ ] Target shows "UP" in Prometheus UI (http://10.0.0.11:9090/targets)
 - [ ] Metrics visible in Grafana dashboard
 - [ ] Alert resolves in Alertmanager (auto-resolves after 2 successful scrapes)
 - [ ] Document incident in #incidents channel
@@ -296,7 +298,7 @@ sudo systemctl restart <SERVICE_NAME>
 **Scenario C: Resource Constraint (Underpowered VM)**
 ```bash
 # Check VM resource allocation
-ssh root@192.168.1.10
+ssh root@10.0.0.10
 qm config <VMID> | grep -E "(cores|memory)"
 
 # Current allocation:
@@ -461,7 +463,7 @@ docker system prune -a -f --volumes
 1. **Check Backup Status in PBS**
    ```bash
    # SSH to Proxmox host
-   ssh root@192.168.1.10
+   ssh root@10.0.0.10
 
    # List recent backup tasks
    pvesh get /cluster/tasks --limit 50 --source cluster | grep vzdump
@@ -476,10 +478,10 @@ docker system prune -a -f --volumes
    grep -i "error\|fail" /var/log/vzdump/*.log
 
    # Check PBS connectivity
-   ping -c 4 192.168.1.15
+   ping -c 4 10.0.0.15
 
    # Test PBS API
-   pvesh get /cluster/backup --target 192.168.1.15
+   pvesh get /cluster/backup --target 10.0.0.15
    ```
 
 3. **Verify Storage Availability**
@@ -488,7 +490,7 @@ docker system prune -a -f --volumes
    df -h | grep truenas
 
    # Mount should show:
-   # 192.168.1.5:/mnt/tank/backups  5.0T  1.2T  3.8T  24% /mnt/pbs-storage
+   # 10.0.0.5:/mnt/tank/backups  5.0T  1.2T  3.8T  24% /mnt/pbs-storage
 
    # Test write access
    touch /mnt/pbs-storage/test-$(date +%s).txt
@@ -509,7 +511,7 @@ docker system prune -a -f --volumes
 **Scenario A: Storage Full**
 ```bash
 # Check PBS storage usage
-ssh root@192.168.1.15
+ssh root@10.0.0.15
 proxmox-backup-manager datastore list
 
 # Prune old backups
@@ -526,19 +528,19 @@ df -h /mnt/datastore
 **Scenario B: Network Issue**
 ```bash
 # Test connectivity from Proxmox to PBS
-ssh root@192.168.1.10
-ping -c 10 192.168.1.15
+ssh root@10.0.0.10
+ping -c 10 10.0.0.15
 
 # If packet loss >5%, investigate network
-traceroute 192.168.1.15
+traceroute 10.0.0.15
 
 # Restart PBS service
-ssh root@192.168.1.15
+ssh root@10.0.0.15
 systemctl restart proxmox-backup-proxy
 systemctl restart proxmox-backup
 
 # Wait 2 minutes, then retry backup
-ssh root@192.168.1.10
+ssh root@10.0.0.10
 vzdump <VMID> --storage homelab-pbs --mode snapshot
 ```
 
@@ -568,7 +570,7 @@ tail -f /var/log/vzdump/<VMID>.log
 #### Post-Incident
 ```bash
 # Run full backup verification
-ssh root@192.168.1.10
+ssh root@10.0.0.10
 ./assets/scripts/verify-pbs-backups.sh
 
 # Document incident
@@ -593,7 +595,7 @@ ssh root@192.168.1.10
 
 **Diagnosis:**
 ```bash
-ssh admin@192.168.1.11
+ssh admin@10.0.0.11
 
 # Check Prometheus service
 sudo systemctl status prometheus
@@ -620,13 +622,13 @@ sudo nano /etc/prometheus/prometheus.yml
 scrape_configs:
   - job_name: 'node'
     static_configs:
-      - targets: ['192.168.1.20:9100', '192.168.1.21:9100']
+      - targets: ['10.0.0.20:9100', '10.0.0.21:9100']
 
 # 2. Reload Prometheus config (without restart)
 curl -X POST http://localhost:9090/-/reload
 
 # 3. Verify target appears in UI
-# http://192.168.1.11:9090/targets
+# http://10.0.0.11:9090/targets
 ```
 
 ---
@@ -646,7 +648,7 @@ sudo systemctl status grafana-server
 sudo tail -f /var/log/grafana/grafana.log
 
 # Test Prometheus datasource
-curl http://192.168.1.11:9090/api/v1/query?query=up
+curl http://10.0.0.11:9090/api/v1/query?query=up
 
 # Expected: {"status":"success","data":{...}}
 ```
@@ -658,7 +660,7 @@ curl http://192.168.1.11:9090/api/v1/query?query=up
 # 2. Test Prometheus connection (should show "Success")
 
 # If test fails:
-# - Check URL: http://192.168.1.11:9090 (not https)
+# - Check URL: http://10.0.0.11:9090 (not https)
 # - Check Prometheus is running
 # - Check firewall allows port 9090
 
@@ -684,7 +686,7 @@ curl http://192.168.1.11:9090/api/v1/query?query=up
 
 **Diagnosis:**
 ```bash
-ssh admin@192.168.1.11
+ssh admin@10.0.0.11
 
 # Check Alertmanager status
 sudo systemctl status alertmanager
@@ -709,17 +711,17 @@ sudo cat /etc/alertmanager/alertmanager.yml
 # 3. Silences configured
 
 # Test configuration
-amtool config show --alertmanager.url=http://192.168.1.11:9093
+amtool config show --alertmanager.url=http://10.0.0.11:9093
 
 # Check active silences
-amtool silence query --alertmanager.url=http://192.168.1.11:9093
+amtool silence query --alertmanager.url=http://10.0.0.11:9093
 
 # Remove all silences (if accidentally configured)
 amtool silence expire $(amtool silence query -q) \
-  --alertmanager.url=http://192.168.1.11:9093
+  --alertmanager.url=http://10.0.0.11:9093
 
 # Reload Alertmanager
-curl -X POST http://192.168.1.11:9093/-/reload
+curl -X POST http://10.0.0.11:9093/-/reload
 ```
 
 ---
@@ -740,7 +742,7 @@ curl -X POST http://192.168.1.11:9093/-/reload
 
 #### Steps
 ```bash
-ssh admin@192.168.1.11
+ssh admin@10.0.0.11
 
 # 1. Backup current version and data
 sudo systemctl stop prometheus
@@ -773,7 +775,7 @@ curl http://localhost:9090/-/healthy
 # Expected: Prometheus is Healthy.
 
 # 8. Check Grafana dashboards render correctly
-# Open: http://192.168.1.11:3000
+# Open: http://10.0.0.11:3000
 
 # 9. Document upgrade
 prometheus --version > /tmp/prometheus-version-after.txt
@@ -805,7 +807,7 @@ sudo systemctl start prometheus
 **Risk Level:** Low
 
 ```bash
-ssh admin@192.168.1.11
+ssh admin@10.0.0.11
 
 # Check current data size
 sudo du -sh /var/lib/prometheus/data/
@@ -828,7 +830,7 @@ sudo find /var/lib/prometheus/data -type d -name "0*" -mtime +15 -exec rm -rf {}
 
 **Steps:**
 ```bash
-ssh admin@192.168.1.11
+ssh admin@10.0.0.11
 
 # 1. Edit Prometheus config
 sudo nano /etc/prometheus/prometheus.yml
@@ -838,9 +840,9 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets:
-        - '192.168.1.20:9100'
-        - '192.168.1.21:9100'
-        - '192.168.1.25:9100'  # ← NEW TARGET
+        - '10.0.0.20:9100'
+        - '10.0.0.21:9100'
+        - '10.0.0.25:9100'  # ← NEW TARGET
 
 # 3. Validate configuration
 promtool check config /etc/prometheus/prometheus.yml
@@ -849,7 +851,7 @@ promtool check config /etc/prometheus/prometheus.yml
 curl -X POST http://localhost:9090/-/reload
 
 # 5. Verify target appears and is "UP"
-curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | select(.labels.instance=="192.168.1.25:9100")'
+curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | select(.labels.instance=="10.0.0.25:9100")'
 
 # 6. Add to Grafana dashboard variable if needed
 ```
@@ -863,7 +865,7 @@ curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | select(.
 **When to Use:** Before major changes, after critical VM creation
 
 ```bash
-ssh root@192.168.1.10
+ssh root@10.0.0.10
 
 # Backup single VM
 vzdump <VMID> --storage homelab-pbs --mode snapshot --compress zstd
@@ -883,7 +885,7 @@ tail -f /var/log/vzdump/<VMID>.log
 **Frequency:** Daily (automated via cron)
 
 ```bash
-ssh root@192.168.1.10
+ssh root@10.0.0.10
 
 # Run verification script
 ./assets/scripts/verify-pbs-backups.sh
@@ -909,7 +911,7 @@ ssh root@192.168.1.10
 **Scenario:** Prometheus fails to start due to data corruption
 
 ```bash
-ssh admin@192.168.1.11
+ssh admin@10.0.0.11
 
 # Check error logs
 sudo journalctl -u prometheus -n 100
@@ -940,7 +942,7 @@ sudo systemctl start prometheus
 **Scenario:** VM is corrupted or lost, need to restore from PBS
 
 ```bash
-ssh root@192.168.1.10
+ssh root@10.0.0.10
 
 # 1. List available backups
 pvesh get /nodes/proxmox-01/storage/homelab-pbs/content --vmid <VMID>
@@ -979,10 +981,10 @@ ssh admin@<RESTORED_VM_IP> "systemctl is-active node_exporter"
 - **Grafana Community:** https://community.grafana.com/
 
 ### Critical Service URLs
-- Prometheus: http://192.168.1.11:9090
-- Grafana: http://192.168.1.11:3000
-- Alertmanager: http://192.168.1.11:9093
-- PBS: https://192.168.1.15:8007
+- Prometheus: http://10.0.0.11:9090
+- Grafana: http://10.0.0.11:3000
+- Alertmanager: http://10.0.0.11:9093
+- PBS: https://10.0.0.15:8007
 
 ---
 

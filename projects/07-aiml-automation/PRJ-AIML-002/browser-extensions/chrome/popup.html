@@ -87,6 +87,50 @@
       margin-top: 15px;
     }
 
+    .search {
+      margin-top: 12px;
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .search input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .search-results {
+      margin-top: 10px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .search-item {
+      padding: 8px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+    }
+
+    .search-item:last-child {
+      border-bottom: none;
+    }
+
+    .search-item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .search-item-subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+      word-break: break-all;
+    }
+
     .stat-item {
       display: flex;
       justify-content: space-between;
@@ -135,9 +179,18 @@
     Organize Tabs Now
   </button>
 
+  <button class="button button-secondary" id="syncBtn">
+    Sync Now
+  </button>
+
   <button class="button button-secondary" id="settingsBtn">
     Settings
   </button>
+
+  <div class="search">
+    <input type="text" id="searchInput" placeholder="Search tabs..." />
+    <div class="search-results" id="searchResults"></div>
+  </div>
 
   <div class="stats">
     <div class="stat-item">

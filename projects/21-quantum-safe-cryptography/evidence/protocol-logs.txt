@@ -1,0 +1,7 @@
+2026-01-22 15:33:45,185 INFO Starting protocol flow capture
+2026-01-22 15:33:45,198 INFO Alice key_id=78b1d3513648b525 pqc_public=1184 classical_public=32
+2026-01-22 15:33:45,198 INFO Bob key_id=82ed3647da13dcb6 pqc_public=1184 classical_public=32
+2026-01-22 15:33:45,200 INFO Encapsulation pqc_ciphertext=64 classical_public=32
+2026-01-22 15:33:45,200 INFO Derived shared secret match=True length=32
+2026-01-22 15:33:45,203 INFO Signature algorithm=Dilithium3-FALLBACK public_key=32 signature=64 verified=True
+2026-01-22 15:33:45,203 INFO Protocol flow capture complete

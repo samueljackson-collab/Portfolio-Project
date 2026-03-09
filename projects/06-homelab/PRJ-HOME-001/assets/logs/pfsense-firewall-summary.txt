@@ -1,0 +1,6 @@
+[2025-11-10 09:05:43] pfSense=2.7.1 uptime=72d 04h
+[2025-11-10 09:05:43] interfaces=6 vlans=5 dhcp_scopes=5
+[2025-11-10 09:05:44] ruleset=default_deny inter_vlan=restricted
+[2025-11-10 09:05:44] suricata=enabled wan=inline dmz=inline
+[2025-11-10 09:05:44] vpn=openvpn clients_connected=2
+[2025-11-10 09:05:45] alerts_last_24h=0 blocked_intrusions=3

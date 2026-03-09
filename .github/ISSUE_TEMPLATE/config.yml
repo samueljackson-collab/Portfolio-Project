@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation Hub
+    url: https://github.com/samueljackson-collab/Portfolio-Project/blob/main/DOCUMENTATION_INDEX.md
+    about: Central documentation for architecture notes, runbooks, and project guides.
+  - name: Security Vulnerability Report
+    url: https://github.com/samueljackson-collab/Portfolio-Project/security/advisories/new
+    about: Please report security vulnerabilities privately.

@@ -1,0 +1,65 @@
+# Alert Rules for Quantum Computing
+
+groups:
+  - name: quantum_alerts
+    interval: 30s
+    rules:
+      - alert: QuantumJobFailed
+        expr: quantum_job_status{status="failed"} == 1
+        for: 1m
+        labels:
+          severity: warning
+          component: quantum
+        annotations:
+          summary: "Quantum job {{ $labels.job_id }} failed"
+          description: "Check error logs for job failure details"
+
+      - alert: HighCircuitDepth
+        expr: quantum_circuit_depth > 1000
+        for: 5m
+        labels:
+          severity: info
+          component: circuit
+        annotations:
+          summary: "High circuit depth detected"
+          description: "Circuit depth: {{ $value }} - consider optimization"
+
+      - alert: QubitCoherenceTimeLow
+        expr: quantum_qubit_t2_coherence_microseconds < 100
+        for: 10m
+        labels:
+          severity: warning
+          component: hardware
+        annotations:
+          summary: "Low qubit coherence time on {{ $labels.qubit_id }}"
+          description: "T2 coherence: {{ $value }}μs"
+
+      - alert: QuantumJobQueueBacklog
+        expr: quantum_job_queue_size > 100
+        for: 15m
+        labels:
+          severity: warning
+          component: orchestrator
+        annotations:
+          summary: "High quantum job queue backlog"
+          description: "{{ $value }} jobs waiting"
+
+      - alert: SimulatorMemoryHigh
+        expr: quantum_simulator_memory_bytes / quantum_simulator_memory_limit_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: simulator
+        annotations:
+          summary: "Quantum simulator memory usage high"
+          description: "Memory usage: {{ $value | humanizePercentage }}"
+
+      - alert: GateErrorRateHigh
+        expr: quantum_gate_error_rate > 0.01
+        for: 10m
+        labels:
+          severity: critical
+          component: hardware
+        annotations:
+          summary: "High gate error rate on {{ $labels.gate_type }}"
+          description: "Error rate: {{ $value }}"

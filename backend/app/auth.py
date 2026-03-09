@@ -14,7 +14,7 @@ Security Considerations:
 - Token signature prevents tampering
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -25,9 +25,7 @@ from app.config import settings
 
 # Password hashing context using bcrypt
 pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12
+    schemes=["pbkdf2_sha256"], deprecated="auto", pbkdf2_sha256__default_rounds=200000
 )
 
 
@@ -45,6 +43,13 @@ def hash_password(password: str) -> str:
         str: Hashed password safe for database storage
     """
     return pwd_context.hash(password)
+
+
+# Backwards-compatible alias --------------------------------------------------
+def get_password_hash(password: str) -> str:
+    """Compatibility wrapper around :func:`hash_password`."""
+
+    return hash_password(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -88,23 +93,23 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
     # Calculate expiration time
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.access_token_expire_minutes
         )
 
     # Add standard claims
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.utcnow(),
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.now(timezone.utc),
+        }
+    )
 
     # Encode and sign the token
     encoded_jwt = jwt.encode(
-        to_encode,
-        settings.secret_key,
-        algorithm=settings.algorithm
+        to_encode, settings.secret_key, algorithm=settings.algorithm
     )
 
     return encoded_jwt
@@ -137,9 +142,7 @@ def decode_access_token(token: str) -> dict:
     try:
         # Decode token with signature verification
         payload = jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=[settings.algorithm]
+            token, settings.secret_key, algorithms=[settings.algorithm]
         )
 
         # Extract subject (user identifier)

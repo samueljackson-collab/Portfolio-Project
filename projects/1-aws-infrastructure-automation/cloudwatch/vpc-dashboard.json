@@ -1,0 +1,172 @@
+{
+  "widgets": [
+    {
+      "type": "text",
+      "x": 0,
+      "y": 0,
+      "width": 24,
+      "height": 1,
+      "properties": {
+        "markdown": "# VPC Network Monitoring Dashboard\nMonitor VPC traffic, NAT Gateway usage, and network performance"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 1,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "NAT Gateway - Bytes Transferred",
+        "region": "${AWS_REGION}",
+        "metrics": [
+          ["AWS/NATGateway", "BytesInFromSource", "NatGatewayId", "${NAT_GATEWAY_ID}", {"stat": "Sum", "period": 300, "label": "Bytes In"}],
+          [".", "BytesOutToDestination", ".", ".", {"stat": "Sum", "period": 300, "label": "Bytes Out"}],
+          [".", "BytesInFromDestination", ".", ".", {"stat": "Sum", "period": 300, "label": "Return In"}],
+          [".", "BytesOutToSource", ".", ".", {"stat": "Sum", "period": 300, "label": "Return Out"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "yAxis": {
+          "left": {
+            "label": "Bytes",
+            "showUnits": false
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 1,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "NAT Gateway - Packets",
+        "region": "${AWS_REGION}",
+        "metrics": [
+          ["AWS/NATGateway", "PacketsInFromSource", "NatGatewayId", "${NAT_GATEWAY_ID}", {"stat": "Sum", "period": 300, "label": "Packets In"}],
+          [".", "PacketsOutToDestination", ".", ".", {"stat": "Sum", "period": 300, "label": "Packets Out"}],
+          [".", "PacketsDropCount", ".", ".", {"stat": "Sum", "period": 300, "label": "Dropped", "color": "#d62728"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 1,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "NAT Gateway - Connections",
+        "region": "${AWS_REGION}",
+        "metrics": [
+          ["AWS/NATGateway", "ActiveConnectionCount", "NatGatewayId", "${NAT_GATEWAY_ID}", {"stat": "Average", "period": 60, "label": "Active"}],
+          [".", "ConnectionAttemptCount", ".", ".", {"stat": "Sum", "period": 60, "label": "Attempts"}],
+          [".", "ConnectionEstablishedCount", ".", ".", {"stat": "Sum", "period": 60, "label": "Established"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 7,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "NAT Gateway - Error Rate",
+        "region": "${AWS_REGION}",
+        "metrics": [
+          ["AWS/NATGateway", "ErrorPortAllocation", "NatGatewayId", "${NAT_GATEWAY_ID}", {"stat": "Sum", "period": 300, "label": "Port Allocation Errors", "color": "#d62728"}],
+          [".", "IdleTimeoutCount", ".", ".", {"stat": "Sum", "period": 300, "label": "Idle Timeouts", "color": "#ff7f0e"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 7,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "VPC Flow Logs - Traffic Analysis",
+        "region": "${AWS_REGION}",
+        "metrics": [
+          ["${LOG_GROUP_NAMESPACE}", "IncomingBytes", {"stat": "Sum", "period": 300, "label": "Incoming Bytes"}],
+          [".", "OutgoingBytes", {"stat": "Sum", "period": 300, "label": "Outgoing Bytes"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "text",
+      "x": 0,
+      "y": 13,
+      "width": 24,
+      "height": 1,
+      "properties": {
+        "markdown": "## Network Interface Metrics"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 14,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "EC2 Network In/Out",
+        "region": "${AWS_REGION}",
+        "metrics": [
+          ["AWS/EC2", "NetworkIn", "AutoScalingGroupName", "${ASG_NAME}", {"stat": "Sum", "period": 300, "label": "Network In"}],
+          [".", "NetworkOut", ".", ".", {"stat": "Sum", "period": 300, "label": "Network Out"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "yAxis": {
+          "left": {
+            "label": "Bytes",
+            "showUnits": false
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 14,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "EC2 Network Packets",
+        "region": "${AWS_REGION}",
+        "metrics": [
+          ["AWS/EC2", "NetworkPacketsIn", "AutoScalingGroupName", "${ASG_NAME}", {"stat": "Sum", "period": 300, "label": "Packets In"}],
+          [".", "NetworkPacketsOut", ".", ".", {"stat": "Sum", "period": 300, "label": "Packets Out"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "log",
+      "x": 16,
+      "y": 14,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "VPC Flow Logs - Rejected Traffic",
+        "region": "${AWS_REGION}",
+        "query": "SOURCE '${FLOW_LOG_GROUP}' | fields @timestamp, srcAddr, dstAddr, dstPort, action | filter action = 'REJECT' | sort @timestamp desc | limit 20",
+        "view": "table"
+      }
+    }
+  ]
+}

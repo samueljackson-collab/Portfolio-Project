@@ -1,0 +1,59 @@
+graph TB
+    subgraph Internet
+        EXTERNAL[External Users]
+        CLOUDFLARE[Cloudflare DNS/CDN]
+    end
+
+    subgraph "Network Layer"
+        ROUTER[OPNsense Router<br/>Firewall + VPN]
+        SWITCH[Managed Switch<br/>VLAN Segmentation]
+        AP[UniFi Access Points<br/>WiFi Networks]
+    end
+
+    subgraph "Proxmox VE Host"
+        subgraph "Virtual Machines"
+            WIKIJS[Wiki.js Documentation<br/>Port 3000]
+            HOMEASSISTANT[Home Assistant<br/>Port 8123]
+            IMMICH[Immich Photo Management<br/>Port 2283]
+            POSTGRES[PostgreSQL Database<br/>Port 5432]
+        end
+
+        subgraph "LXC Containers"
+            NGINX[Nginx Proxy Manager<br/>Port 80/443]
+            PROMETHEUS[Prometheus<br/>Port 9090]
+            GRAFANA[Grafana Dashboards<br/>Port 3001]
+            LOKI[Loki Log Aggregation<br/>Port 3100]
+        end
+    end
+
+    subgraph "Storage"
+        ZFS[ZFS Storage Pool<br/>2TB RAID-Z]
+        BACKUP[Proxmox Backup Server<br/>External Drives]
+    end
+
+    EXTERNAL --> CLOUDFLARE
+    CLOUDFLARE --> ROUTER
+    ROUTER --> SWITCH
+    SWITCH --> AP
+    SWITCH --> NGINX
+    NGINX --> WIKIJS
+    NGINX --> HOMEASSISTANT
+    NGINX --> IMMICH
+    NGINX --> GRAFANA
+
+    WIKIJS --> POSTGRES
+    IMMICH --> POSTGRES
+
+    PROMETHEUS --> GRAFANA
+    LOKI --> GRAFANA
+
+    POSTGRES --> ZFS
+    WIKIJS --> ZFS
+    IMMICH --> ZFS
+
+    ZFS --> BACKUP
+
+    style EXTERNAL fill:#e1f5ff
+    style NGINX fill:#90ee90
+    style GRAFANA fill:#ffcc99
+    style PROMETHEUS fill:#ff9999

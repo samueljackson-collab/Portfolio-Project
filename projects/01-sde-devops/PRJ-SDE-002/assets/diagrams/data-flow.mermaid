@@ -1,0 +1,35 @@
+sequenceDiagram
+    participant NE as Node Exporter
+    participant PROM as Prometheus
+    participant GRAF as Grafana
+    participant AM as Alertmanager
+    participant USER as Admin User
+    
+    Note over NE: Collect system metrics
+    NE->>PROM: Expose metrics endpoint (:9100/metrics)
+    
+    loop Every 15 seconds
+        PROM->>NE: Scrape metrics
+        NE-->>PROM: Return metric data
+        PROM->>PROM: Store in TSDB
+    end
+    
+    Note over PROM: Evaluate alert rules every 15s
+    PROM->>PROM: Evaluate: CPU > 80% for 5m?
+    
+    alt Alert condition met
+        PROM->>AM: Send alert
+        AM->>AM: Group and route alert
+        AM->>USER: Send email notification
+    end
+    
+    Note over USER: Query data via Grafana
+    USER->>GRAF: Access dashboard
+    GRAF->>PROM: Query PromQL: rate(cpu[5m])
+    PROM-->>GRAF: Return time series data
+    GRAF-->>USER: Render visualization
+    
+    Note over USER: Direct Prometheus query
+    USER->>PROM: Access Prometheus UI
+    USER->>PROM: Query: node_memory_MemAvailable_bytes
+    PROM-->>USER: Return current value

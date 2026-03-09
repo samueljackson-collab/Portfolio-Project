@@ -1,0 +1,7 @@
+[2025-11-10 09:30:12] workflow=portfolio-delivery run_id=8142 status=success
+[2025-11-10 09:30:18] job=lint status=success duration=1m12s
+[2025-11-10 09:31:30] job=test status=success duration=2m05s
+[2025-11-10 09:33:38] job=build_push status=success image=ghcr.io/example/portfolio-api:3f1a2b9
+[2025-11-10 09:35:02] job=security_scan status=success trivy=pass dockle=pass
+[2025-11-10 09:36:18] job=deploy status=success strategy=canary
+[2025-11-10 09:37:05] artifacts=sbom,manifests,test-report uploaded=3

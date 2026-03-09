@@ -1,0 +1,19 @@
+---
+app_name: portfolio
+app_image: "ghcr.io/example/portfolio-api:latest"
+app_port: 8000
+app_env: "dev"
+otel_exporter_endpoint: "http://otel-collector.monitoring:4317"
+
+system_packages:
+  - python3-pip
+  - docker
+  - jq
+
+# Directory layout on the target hosts
+release_root: /opt/portfolio
+shared_dirs:
+  - logs
+  - env
+
+healthcheck_endpoint: "http://localhost:8000/health"

@@ -1,0 +1,847 @@
+{
+  "sidebar": {
+    "title": "Portfolio Projects",
+    "items": [
+      {
+        "text": "\ud83d\udce6 Production Ready",
+        "collapsed": false,
+        "items": [
+          {
+            "text": "AWS Infrastructure Automation",
+            "link": "/projects/aws-infrastructure-automation"
+          },
+          {
+            "text": "Advanced Monitoring & Observability",
+            "link": "/projects/advanced-monitoring-observability"
+          },
+          {
+            "text": "Database Migration Platform",
+            "link": "/projects/database-migration-platform"
+          },
+          {
+            "text": "IoT Data Analytics",
+            "link": "/projects/iot-data-analytics"
+          },
+          {
+            "text": "Kubernetes CI/CD Pipeline",
+            "link": "/projects/kubernetes-cicd"
+          },
+          {
+            "text": "MLOps Platform",
+            "link": "/projects/mlops-platform"
+          },
+          {
+            "text": "Multi-Region Disaster Recovery",
+            "link": "/projects/multi-region-disaster-recovery"
+          },
+          {
+            "text": "Portfolio Report Generator",
+            "link": "/projects/report-generator"
+          },
+          {
+            "text": "Portfolio Website",
+            "link": "/projects/portfolio-website"
+          },
+          {
+            "text": "Real-time Data Streaming",
+            "link": "/projects/real-time-data-streaming"
+          },
+          {
+            "text": "Serverless Data Processing",
+            "link": "/projects/serverless-data-processing"
+          }
+        ]
+      },
+      {
+        "text": "\ud83d\udce6 Advanced",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "Blockchain Smart Contract Platform",
+            "link": "/projects/blockchain-smart-contract-platform"
+          }
+        ]
+      },
+      {
+        "text": "\ud83d\udce6 Substantial",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "Advanced AI Chatbot",
+            "link": "/projects/advanced-ai-chatbot"
+          },
+          {
+            "text": "Advanced Cybersecurity Platform",
+            "link": "/projects/advanced-cybersecurity-platform"
+          },
+          {
+            "text": "Advanced Data Lake",
+            "link": "/projects/advanced-data-lake"
+          },
+          {
+            "text": "Advanced Kubernetes Operators",
+            "link": "/projects/advanced-kubernetes-operators"
+          },
+          {
+            "text": "Blockchain Oracle Service",
+            "link": "/projects/blockchain-oracle-service"
+          },
+          {
+            "text": "Edge AI Inference Platform",
+            "link": "/projects/edge-ai-inference-platform"
+          },
+          {
+            "text": "GPU-Accelerated Computing",
+            "link": "/projects/gpu-accelerated-computing"
+          },
+          {
+            "text": "Quantum Computing Integration",
+            "link": "/projects/quantum-computing-integration"
+          },
+          {
+            "text": "Quantum-Safe Cryptography",
+            "link": "/projects/quantum-safe-cryptography"
+          },
+          {
+            "text": "Real-time Collaboration Platform",
+            "link": "/projects/real-time-collaboration-platform"
+          }
+        ]
+      },
+      {
+        "text": "\ud83d\udce6 In Development",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "DevSecOps Pipeline",
+            "link": "/projects/devsecops-pipeline"
+          }
+        ]
+      },
+      {
+        "text": "\ud83d\udce6 Basic",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "Autonomous DevOps Platform",
+            "link": "/projects/autonomous-devops-platform"
+          },
+          {
+            "text": "Multi-Cloud Service Mesh",
+            "link": "/projects/multi-cloud-service-mesh"
+          }
+        ]
+      }
+    ]
+  },
+  "tags": {
+    "aws": [
+      {
+        "name": "AWS Infrastructure Automation",
+        "slug": "aws-infrastructure-automation",
+        "description": "Production-ready AWS environment using Terraform, CDK, and Pulumi. Features Mult"
+      },
+      {
+        "name": "Multi-Region Disaster Recovery",
+        "slug": "multi-region-disaster-recovery",
+        "description": "Resilient architecture with automated failover between AWS regions."
+      }
+    ],
+    "terraform": [
+      {
+        "name": "AWS Infrastructure Automation",
+        "slug": "aws-infrastructure-automation",
+        "description": "Production-ready AWS environment using Terraform, CDK, and Pulumi. Features Mult"
+      },
+      {
+        "name": "Multi-Region Disaster Recovery",
+        "slug": "multi-region-disaster-recovery",
+        "description": "Resilient architecture with automated failover between AWS regions."
+      }
+    ],
+    "infrastructure": [
+      {
+        "name": "AWS Infrastructure Automation",
+        "slug": "aws-infrastructure-automation",
+        "description": "Production-ready AWS environment using Terraform, CDK, and Pulumi. Features Mult"
+      }
+    ],
+    "eks": [
+      {
+        "name": "AWS Infrastructure Automation",
+        "slug": "aws-infrastructure-automation",
+        "description": "Production-ready AWS environment using Terraform, CDK, and Pulumi. Features Mult"
+      }
+    ],
+    "rds": [
+      {
+        "name": "AWS Infrastructure Automation",
+        "slug": "aws-infrastructure-automation",
+        "description": "Production-ready AWS environment using Terraform, CDK, and Pulumi. Features Mult"
+      }
+    ],
+    "database": [
+      {
+        "name": "Database Migration Platform",
+        "slug": "database-migration-platform",
+        "description": "Zero-downtime database migration orchestrator using Change Data Capture (CDC) wi"
+      }
+    ],
+    "migration": [
+      {
+        "name": "Database Migration Platform",
+        "slug": "database-migration-platform",
+        "description": "Zero-downtime database migration orchestrator using Change Data Capture (CDC) wi"
+      }
+    ],
+    "aws-dms": [
+      {
+        "name": "Database Migration Platform",
+        "slug": "database-migration-platform",
+        "description": "Zero-downtime database migration orchestrator using Change Data Capture (CDC) wi"
+      }
+    ],
+    "python": [
+      {
+        "name": "Database Migration Platform",
+        "slug": "database-migration-platform",
+        "description": "Zero-downtime database migration orchestrator using Change Data Capture (CDC) wi"
+      },
+      {
+        "name": "Real-time Data Streaming",
+        "slug": "real-time-data-streaming",
+        "description": "High-throughput event streaming pipeline using Apache Kafka and Flink with exact"
+      },
+      {
+        "name": "MLOps Platform",
+        "slug": "mlops-platform",
+        "description": "End-to-end MLOps workflow for training, evaluating, and deploying models with dr"
+      },
+      {
+        "name": "Quantum Computing Integration",
+        "slug": "quantum-computing-integration",
+        "description": "Hybrid quantum-classical workloads using Qiskit."
+      },
+      {
+        "name": "Advanced Cybersecurity Platform",
+        "slug": "advanced-cybersecurity-platform",
+        "description": "SOAR engine consolidating SIEM alerts with automated playbooks."
+      },
+      {
+        "name": "GPU-Accelerated Computing",
+        "slug": "gpu-accelerated-computing",
+        "description": "CUDA-based risk simulation engine with Dask."
+      },
+      {
+        "name": "Advanced Kubernetes Operators",
+        "slug": "advanced-kubernetes-operators",
+        "description": "Custom resource operator built with Kopf."
+      },
+      {
+        "name": "Quantum-Safe Cryptography",
+        "slug": "quantum-safe-cryptography",
+        "description": "Hybrid key exchange service using Kyber KEM."
+      },
+      {
+        "name": "Autonomous DevOps Platform",
+        "slug": "autonomous-devops-platform",
+        "description": "Event-driven automation layer for self-healing infrastructure."
+      },
+      {
+        "name": "Portfolio Report Generator",
+        "slug": "report-generator",
+        "description": "Automated report generation system using Jinja2 and WeasyPrint."
+      }
+    ],
+    "kafka": [
+      {
+        "name": "Database Migration Platform",
+        "slug": "database-migration-platform",
+        "description": "Zero-downtime database migration orchestrator using Change Data Capture (CDC) wi"
+      },
+      {
+        "name": "Real-time Data Streaming",
+        "slug": "real-time-data-streaming",
+        "description": "High-throughput event streaming pipeline using Apache Kafka and Flink with exact"
+      }
+    ],
+    "kubernetes": [
+      {
+        "name": "Kubernetes CI/CD Pipeline",
+        "slug": "kubernetes-cicd",
+        "description": "GitOps-driven continuous delivery pipeline combining GitHub Actions and ArgoCD f"
+      },
+      {
+        "name": "MLOps Platform",
+        "slug": "mlops-platform",
+        "description": "End-to-end MLOps workflow for training, evaluating, and deploying models with dr"
+      },
+      {
+        "name": "Multi-Cloud Service Mesh",
+        "slug": "multi-cloud-service-mesh",
+        "description": "Istio service mesh spanning AWS and GKE clusters."
+      },
+      {
+        "name": "Advanced Kubernetes Operators",
+        "slug": "advanced-kubernetes-operators",
+        "description": "Custom resource operator built with Kopf."
+      }
+    ],
+    "ci-cd": [
+      {
+        "name": "Kubernetes CI/CD Pipeline",
+        "slug": "kubernetes-cicd",
+        "description": "GitOps-driven continuous delivery pipeline combining GitHub Actions and ArgoCD f"
+      },
+      {
+        "name": "DevSecOps Pipeline",
+        "slug": "devsecops-pipeline",
+        "description": "Security-first CI pipeline integrating SAST, DAST, and container scanning."
+      }
+    ],
+    "argocd": [
+      {
+        "name": "Kubernetes CI/CD Pipeline",
+        "slug": "kubernetes-cicd",
+        "description": "GitOps-driven continuous delivery pipeline combining GitHub Actions and ArgoCD f"
+      }
+    ],
+    "github-actions": [
+      {
+        "name": "Kubernetes CI/CD Pipeline",
+        "slug": "kubernetes-cicd",
+        "description": "GitOps-driven continuous delivery pipeline combining GitHub Actions and ArgoCD f"
+      }
+    ],
+    "security": [
+      {
+        "name": "DevSecOps Pipeline",
+        "slug": "devsecops-pipeline",
+        "description": "Security-first CI pipeline integrating SAST, DAST, and container scanning."
+      },
+      {
+        "name": "Quantum-Safe Cryptography",
+        "slug": "quantum-safe-cryptography",
+        "description": "Hybrid key exchange service using Kyber KEM."
+      }
+    ],
+    "devops": [
+      {
+        "name": "DevSecOps Pipeline",
+        "slug": "devsecops-pipeline",
+        "description": "Security-first CI pipeline integrating SAST, DAST, and container scanning."
+      },
+      {
+        "name": "Autonomous DevOps Platform",
+        "slug": "autonomous-devops-platform",
+        "description": "Event-driven automation layer for self-healing infrastructure."
+      }
+    ],
+    "sast": [
+      {
+        "name": "DevSecOps Pipeline",
+        "slug": "devsecops-pipeline",
+        "description": "Security-first CI pipeline integrating SAST, DAST, and container scanning."
+      }
+    ],
+    "dast": [
+      {
+        "name": "DevSecOps Pipeline",
+        "slug": "devsecops-pipeline",
+        "description": "Security-first CI pipeline integrating SAST, DAST, and container scanning."
+      }
+    ],
+    "flink": [
+      {
+        "name": "Real-time Data Streaming",
+        "slug": "real-time-data-streaming",
+        "description": "High-throughput event streaming pipeline using Apache Kafka and Flink with exact"
+      }
+    ],
+    "streaming": [
+      {
+        "name": "Real-time Data Streaming",
+        "slug": "real-time-data-streaming",
+        "description": "High-throughput event streaming pipeline using Apache Kafka and Flink with exact"
+      }
+    ],
+    "docker": [
+      {
+        "name": "Real-time Data Streaming",
+        "slug": "real-time-data-streaming",
+        "description": "High-throughput event streaming pipeline using Apache Kafka and Flink with exact"
+      }
+    ],
+    "mlops": [
+      {
+        "name": "MLOps Platform",
+        "slug": "mlops-platform",
+        "description": "End-to-end MLOps workflow for training, evaluating, and deploying models with dr"
+      }
+    ],
+    "machine-learning": [
+      {
+        "name": "MLOps Platform",
+        "slug": "mlops-platform",
+        "description": "End-to-end MLOps workflow for training, evaluating, and deploying models with dr"
+      },
+      {
+        "name": "IoT Data Analytics",
+        "slug": "iot-data-analytics",
+        "description": "Edge-to-cloud ingestion stack with MQTT telemetry and anomaly detection."
+      }
+    ],
+    "mlflow": [
+      {
+        "name": "MLOps Platform",
+        "slug": "mlops-platform",
+        "description": "End-to-end MLOps workflow for training, evaluating, and deploying models with dr"
+      }
+    ],
+    "serverless": [
+      {
+        "name": "Serverless Data Processing",
+        "slug": "serverless-data-processing",
+        "description": "Event-driven analytics pipeline built on AWS serverless services (Lambda, Step F"
+      }
+    ],
+    "aws-lambda": [
+      {
+        "name": "Serverless Data Processing",
+        "slug": "serverless-data-processing",
+        "description": "Event-driven analytics pipeline built on AWS serverless services (Lambda, Step F"
+      }
+    ],
+    "data-engineering": [
+      {
+        "name": "Serverless Data Processing",
+        "slug": "serverless-data-processing",
+        "description": "Event-driven analytics pipeline built on AWS serverless services (Lambda, Step F"
+      }
+    ],
+    "step-functions": [
+      {
+        "name": "Serverless Data Processing",
+        "slug": "serverless-data-processing",
+        "description": "Event-driven analytics pipeline built on AWS serverless services (Lambda, Step F"
+      }
+    ],
+    "ai": [
+      {
+        "name": "Advanced AI Chatbot",
+        "slug": "advanced-ai-chatbot",
+        "description": "RAG chatbot indexing portfolio assets with tool-augmented workflows."
+      },
+      {
+        "name": "Autonomous DevOps Platform",
+        "slug": "autonomous-devops-platform",
+        "description": "Event-driven automation layer for self-healing infrastructure."
+      }
+    ],
+    "chatbot": [
+      {
+        "name": "Advanced AI Chatbot",
+        "slug": "advanced-ai-chatbot",
+        "description": "RAG chatbot indexing portfolio assets with tool-augmented workflows."
+      }
+    ],
+    "llm": [
+      {
+        "name": "Advanced AI Chatbot",
+        "slug": "advanced-ai-chatbot",
+        "description": "RAG chatbot indexing portfolio assets with tool-augmented workflows."
+      }
+    ],
+    "rag": [
+      {
+        "name": "Advanced AI Chatbot",
+        "slug": "advanced-ai-chatbot",
+        "description": "RAG chatbot indexing portfolio assets with tool-augmented workflows."
+      }
+    ],
+    "fastapi": [
+      {
+        "name": "Advanced AI Chatbot",
+        "slug": "advanced-ai-chatbot",
+        "description": "RAG chatbot indexing portfolio assets with tool-augmented workflows."
+      }
+    ],
+    "dr": [
+      {
+        "name": "Multi-Region Disaster Recovery",
+        "slug": "multi-region-disaster-recovery",
+        "description": "Resilient architecture with automated failover between AWS regions."
+      }
+    ],
+    "reliability": [
+      {
+        "name": "Multi-Region Disaster Recovery",
+        "slug": "multi-region-disaster-recovery",
+        "description": "Resilient architecture with automated failover between AWS regions."
+      }
+    ],
+    "automation": [
+      {
+        "name": "Multi-Region Disaster Recovery",
+        "slug": "multi-region-disaster-recovery",
+        "description": "Resilient architecture with automated failover between AWS regions."
+      },
+      {
+        "name": "Autonomous DevOps Platform",
+        "slug": "autonomous-devops-platform",
+        "description": "Event-driven automation layer for self-healing infrastructure."
+      },
+      {
+        "name": "Portfolio Report Generator",
+        "slug": "report-generator",
+        "description": "Automated report generation system using Jinja2 and WeasyPrint."
+      }
+    ],
+    "blockchain": [
+      {
+        "name": "Blockchain Smart Contract Platform",
+        "slug": "blockchain-smart-contract-platform",
+        "description": "DeFi protocol with modular smart contracts for staking and governance."
+      },
+      {
+        "name": "Blockchain Oracle Service",
+        "slug": "blockchain-oracle-service",
+        "description": "Chainlink-compatible external adapter."
+      }
+    ],
+    "solidity": [
+      {
+        "name": "Blockchain Smart Contract Platform",
+        "slug": "blockchain-smart-contract-platform",
+        "description": "DeFi protocol with modular smart contracts for staking and governance."
+      },
+      {
+        "name": "Blockchain Oracle Service",
+        "slug": "blockchain-oracle-service",
+        "description": "Chainlink-compatible external adapter."
+      }
+    ],
+    "smart-contracts": [
+      {
+        "name": "Blockchain Smart Contract Platform",
+        "slug": "blockchain-smart-contract-platform",
+        "description": "DeFi protocol with modular smart contracts for staking and governance."
+      }
+    ],
+    "web3": [
+      {
+        "name": "Blockchain Smart Contract Platform",
+        "slug": "blockchain-smart-contract-platform",
+        "description": "DeFi protocol with modular smart contracts for staking and governance."
+      }
+    ],
+    "iot": [
+      {
+        "name": "IoT Data Analytics",
+        "slug": "iot-data-analytics",
+        "description": "Edge-to-cloud ingestion stack with MQTT telemetry and anomaly detection."
+      },
+      {
+        "name": "Edge AI Inference Platform",
+        "slug": "edge-ai-inference-platform",
+        "description": "Containerized ONNX Runtime microservice for edge devices."
+      }
+    ],
+    "analytics": [
+      {
+        "name": "IoT Data Analytics",
+        "slug": "iot-data-analytics",
+        "description": "Edge-to-cloud ingestion stack with MQTT telemetry and anomaly detection."
+      }
+    ],
+    "timescaledb": [
+      {
+        "name": "IoT Data Analytics",
+        "slug": "iot-data-analytics",
+        "description": "Edge-to-cloud ingestion stack with MQTT telemetry and anomaly detection."
+      }
+    ],
+    "mqtt": [
+      {
+        "name": "IoT Data Analytics",
+        "slug": "iot-data-analytics",
+        "description": "Edge-to-cloud ingestion stack with MQTT telemetry and anomaly detection."
+      }
+    ],
+    "quantum-computing": [
+      {
+        "name": "Quantum Computing Integration",
+        "slug": "quantum-computing-integration",
+        "description": "Hybrid quantum-classical workloads using Qiskit."
+      }
+    ],
+    "qiskit": [
+      {
+        "name": "Quantum Computing Integration",
+        "slug": "quantum-computing-integration",
+        "description": "Hybrid quantum-classical workloads using Qiskit."
+      }
+    ],
+    "research": [
+      {
+        "name": "Quantum Computing Integration",
+        "slug": "quantum-computing-integration",
+        "description": "Hybrid quantum-classical workloads using Qiskit."
+      }
+    ],
+    "cybersecurity": [
+      {
+        "name": "Advanced Cybersecurity Platform",
+        "slug": "advanced-cybersecurity-platform",
+        "description": "SOAR engine consolidating SIEM alerts with automated playbooks."
+      }
+    ],
+    "soc": [
+      {
+        "name": "Advanced Cybersecurity Platform",
+        "slug": "advanced-cybersecurity-platform",
+        "description": "SOAR engine consolidating SIEM alerts with automated playbooks."
+      }
+    ],
+    "siem": [
+      {
+        "name": "Advanced Cybersecurity Platform",
+        "slug": "advanced-cybersecurity-platform",
+        "description": "SOAR engine consolidating SIEM alerts with automated playbooks."
+      }
+    ],
+    "soar": [
+      {
+        "name": "Advanced Cybersecurity Platform",
+        "slug": "advanced-cybersecurity-platform",
+        "description": "SOAR engine consolidating SIEM alerts with automated playbooks."
+      }
+    ],
+    "edge-ai": [
+      {
+        "name": "Edge AI Inference Platform",
+        "slug": "edge-ai-inference-platform",
+        "description": "Containerized ONNX Runtime microservice for edge devices."
+      }
+    ],
+    "inference": [
+      {
+        "name": "Edge AI Inference Platform",
+        "slug": "edge-ai-inference-platform",
+        "description": "Containerized ONNX Runtime microservice for edge devices."
+      }
+    ],
+    "onnx": [
+      {
+        "name": "Edge AI Inference Platform",
+        "slug": "edge-ai-inference-platform",
+        "description": "Containerized ONNX Runtime microservice for edge devices."
+      }
+    ],
+    "websockets": [
+      {
+        "name": "Real-time Collaboration Platform",
+        "slug": "real-time-collaboration-platform",
+        "description": "Operational Transform collaboration server with CRDT backup."
+      }
+    ],
+    "real-time": [
+      {
+        "name": "Real-time Collaboration Platform",
+        "slug": "real-time-collaboration-platform",
+        "description": "Operational Transform collaboration server with CRDT backup."
+      }
+    ],
+    "collaboration": [
+      {
+        "name": "Real-time Collaboration Platform",
+        "slug": "real-time-collaboration-platform",
+        "description": "Operational Transform collaboration server with CRDT backup."
+      }
+    ],
+    "crdt": [
+      {
+        "name": "Real-time Collaboration Platform",
+        "slug": "real-time-collaboration-platform",
+        "description": "Operational Transform collaboration server with CRDT backup."
+      }
+    ],
+    "data-lake": [
+      {
+        "name": "Advanced Data Lake",
+        "slug": "advanced-data-lake",
+        "description": "Medallion architecture with Delta Lake and structured streaming."
+      }
+    ],
+    "glue": [
+      {
+        "name": "Advanced Data Lake",
+        "slug": "advanced-data-lake",
+        "description": "Medallion architecture with Delta Lake and structured streaming."
+      }
+    ],
+    "athena": [
+      {
+        "name": "Advanced Data Lake",
+        "slug": "advanced-data-lake",
+        "description": "Medallion architecture with Delta Lake and structured streaming."
+      }
+    ],
+    "spark": [
+      {
+        "name": "Advanced Data Lake",
+        "slug": "advanced-data-lake",
+        "description": "Medallion architecture with Delta Lake and structured streaming."
+      }
+    ],
+    "service-mesh": [
+      {
+        "name": "Multi-Cloud Service Mesh",
+        "slug": "multi-cloud-service-mesh",
+        "description": "Istio service mesh spanning AWS and GKE clusters."
+      }
+    ],
+    "istio": [
+      {
+        "name": "Multi-Cloud Service Mesh",
+        "slug": "multi-cloud-service-mesh",
+        "description": "Istio service mesh spanning AWS and GKE clusters."
+      }
+    ],
+    "multi-cloud": [
+      {
+        "name": "Multi-Cloud Service Mesh",
+        "slug": "multi-cloud-service-mesh",
+        "description": "Istio service mesh spanning AWS and GKE clusters."
+      }
+    ],
+    "gpu": [
+      {
+        "name": "GPU-Accelerated Computing",
+        "slug": "gpu-accelerated-computing",
+        "description": "CUDA-based risk simulation engine with Dask."
+      }
+    ],
+    "cuda": [
+      {
+        "name": "GPU-Accelerated Computing",
+        "slug": "gpu-accelerated-computing",
+        "description": "CUDA-based risk simulation engine with Dask."
+      }
+    ],
+    "hpc": [
+      {
+        "name": "GPU-Accelerated Computing",
+        "slug": "gpu-accelerated-computing",
+        "description": "CUDA-based risk simulation engine with Dask."
+      }
+    ],
+    "operators": [
+      {
+        "name": "Advanced Kubernetes Operators",
+        "slug": "advanced-kubernetes-operators",
+        "description": "Custom resource operator built with Kopf."
+      }
+    ],
+    "kopf": [
+      {
+        "name": "Advanced Kubernetes Operators",
+        "slug": "advanced-kubernetes-operators",
+        "description": "Custom resource operator built with Kopf."
+      }
+    ],
+    "oracle": [
+      {
+        "name": "Blockchain Oracle Service",
+        "slug": "blockchain-oracle-service",
+        "description": "Chainlink-compatible external adapter."
+      }
+    ],
+    "chainlink": [
+      {
+        "name": "Blockchain Oracle Service",
+        "slug": "blockchain-oracle-service",
+        "description": "Chainlink-compatible external adapter."
+      }
+    ],
+    "cryptography": [
+      {
+        "name": "Quantum-Safe Cryptography",
+        "slug": "quantum-safe-cryptography",
+        "description": "Hybrid key exchange service using Kyber KEM."
+      }
+    ],
+    "post-quantum": [
+      {
+        "name": "Quantum-Safe Cryptography",
+        "slug": "quantum-safe-cryptography",
+        "description": "Hybrid key exchange service using Kyber KEM."
+      }
+    ],
+    "monitoring": [
+      {
+        "name": "Advanced Monitoring & Observability",
+        "slug": "advanced-monitoring-observability",
+        "description": "Unified observability stack with Prometheus, Tempo, Loki, and Grafana."
+      }
+    ],
+    "observability": [
+      {
+        "name": "Advanced Monitoring & Observability",
+        "slug": "advanced-monitoring-observability",
+        "description": "Unified observability stack with Prometheus, Tempo, Loki, and Grafana."
+      }
+    ],
+    "grafana": [
+      {
+        "name": "Advanced Monitoring & Observability",
+        "slug": "advanced-monitoring-observability",
+        "description": "Unified observability stack with Prometheus, Tempo, Loki, and Grafana."
+      }
+    ],
+    "prometheus": [
+      {
+        "name": "Advanced Monitoring & Observability",
+        "slug": "advanced-monitoring-observability",
+        "description": "Unified observability stack with Prometheus, Tempo, Loki, and Grafana."
+      }
+    ],
+    "reporting": [
+      {
+        "name": "Portfolio Report Generator",
+        "slug": "report-generator",
+        "description": "Automated report generation system using Jinja2 and WeasyPrint."
+      }
+    ],
+    "web": [
+      {
+        "name": "Portfolio Website",
+        "slug": "portfolio-website",
+        "description": "Static documentation portal generated with VitePress."
+      }
+    ],
+    "vitepress": [
+      {
+        "name": "Portfolio Website",
+        "slug": "portfolio-website",
+        "description": "Static documentation portal generated with VitePress."
+      }
+    ],
+    "documentation": [
+      {
+        "name": "Portfolio Website",
+        "slug": "portfolio-website",
+        "description": "Static documentation portal generated with VitePress."
+      }
+    ],
+    "vue": [
+      {
+        "name": "Portfolio Website",
+        "slug": "portfolio-website",
+        "description": "Static documentation portal generated with VitePress."
+      }
+    ]
+  },
+  "generated_at": "2026-01-22T18:25:20.849435",
+  "total_projects": 25
+}

@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portfolio-system
+  labels:
+    app.kubernetes.io/name: portfolio-operator
+    app.kubernetes.io/component: operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-operator
+  namespace: portfolio-system
+  labels:
+    app.kubernetes.io/name: portfolio-operator
+    app.kubernetes.io/component: operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: portfolio-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: portfolio-operator
+        app.kubernetes.io/component: operator
+    spec:
+      serviceAccountName: portfolio-operator
+      containers:
+        - name: operator
+          image: portfolio-operator:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --verbose
+            - --liveness=http://0.0.0.0:8080/healthz
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: OPERATOR_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-operator
+  namespace: portfolio-system
+  labels:
+    app.kubernetes.io/name: portfolio-operator
+spec:
+  selector:
+    app.kubernetes.io/name: portfolio-operator
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: portfolio-operator
+  namespace: portfolio-system
+  labels:
+    app.kubernetes.io/name: portfolio-operator
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: portfolio-operator
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s

@@ -1,3 +1,106 @@
+# Promtail Configuration - Complete Production Setup
+# =====================================================
+# Version: Promtail 2.9.0
+# Purpose: Log shipping agent for Loki log aggregation
+# Last Updated: November 6, 2025
+#
+# Configuration Philosophy:
+# ------------------------
+# This Promtail configuration is designed to collect logs from multiple sources:
+# - System logs (/var/log/syslog, /var/log/auth.log, etc.)
+# - Docker container logs (JSON format)
+# - Nginx access and error logs
+# - PostgreSQL logs
+# - Application logs (JSON structured logs)
+# - Custom service logs
+#
+# Key Design Decisions:
+# ---------------------
+# 1. Multiple Scrape Configs:
+#    - Each log source has dedicated scrape config
+#    - Enables source-specific parsing and labeling
+#    - Allows independent rate limiting per source
+#
+# 2. Pipeline Stages:
+#    - Regex extraction for unstructured logs
+#    - JSON parsing for structured logs
+#    - Timestamp parsing for accurate ordering
+#    - Label extraction for efficient querying
+#    - Label drops to reduce cardinality
+#
+# 3. Label Strategy:
+#    - Low-cardinality labels (job, host, service)
+#    - High-cardinality data in log lines, not labels
+#    - Static labels for environment/cluster
+#    - Dynamic labels from log content (limited)
+#
+# 4. Batching:
+#    - 1-second batch wait (balance latency vs. efficiency)
+#    - 1MB batch size (optimize network usage)
+#    - Automatic retries with backoff
+#
+# 5. Position Tracking:
+#    - Save read position to /tmp/positions.yaml
+#    - Prevents duplicate log ingestion on restart
+#    - Essential for reliable log collection
+#
+# =====================================================
+
+# =====================================================
+# SERVER CONFIGURATION
+# =====================================================
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0  # Disable gRPC server (not needed)
+  log_level: info
+  log_format: logfmt
+
+  # Health check endpoints
+  # http://localhost:9080/ready
+  # http://localhost:9080/metrics
+
+# =====================================================
+# POSITIONS (Read State Tracking)
+# =====================================================
+positions:
+  filename: /tmp/positions.yaml
+  sync_period: 10s
+  ignore_invalid_yaml: false
+
+# =====================================================
+# LOKI CLIENT CONFIGURATION
+# =====================================================
+clients:
+  - url: http://192.168.40.30:3100/loki/api/v1/push
+
+    # Batching configuration
+    batchwait: 1s        # Wait max 1 second before sending
+    batchsize: 1048576   # Send when batch reaches 1MB
+
+    # Retry configuration
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+
+    # Timeouts
+    timeout: 10s
+
+    # External labels (applied to all logs)
+    external_labels:
+      environment: homelab
+      cluster: primary
+
+# =====================================================
+# SCRAPE CONFIGURATIONS
+# =====================================================
+scrape_configs:
+
+  # ===================================================
+  # SCRAPE CONFIG 1: System Syslog
+  # ===================================================
+  # Collects general system logs from /var/log/syslog
+  # Parses standard syslog format: timestamp hostname process[pid]: message
 # Promtail Configuration - Production Homelab Setup
 # ==================================================
 # Last Updated: November 6, 2025

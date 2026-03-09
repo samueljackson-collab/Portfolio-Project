@@ -1,4 +1,5 @@
 """Autonomous remediation engine sample."""
+
 from __future__ import annotations
 
 import json
@@ -34,7 +35,9 @@ def scale_service(event: Event) -> None:
 
 
 def restart_pod(event: Event) -> None:
-    print(f"Restarting pod {event.metadata['pod']} in namespace {event.metadata['namespace']}")
+    print(
+        f"Restarting pod {event.metadata['pod']} in namespace {event.metadata['namespace']}"
+    )
 
 
 def main() -> None:

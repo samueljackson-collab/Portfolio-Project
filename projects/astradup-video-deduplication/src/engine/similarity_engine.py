@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SimilarityResult:
     """Container for similarity computation results"""
+
     video_id_1: str
     video_id_2: str
     visual_similarity: float
@@ -28,12 +29,14 @@ class SimilarityResult:
 
     def __str__(self) -> str:
         status = "DUPLICATE" if self.is_duplicate else "SIMILAR"
-        return (f"[{status}] {self.video_id_1} <-> {self.video_id_2}: "
-                f"{self.combined_similarity:.2%} "
-                f"(V:{self.visual_similarity:.2%}, "
-                f"A:{self.audio_similarity:.2%}, "
-                f"M:{self.metadata_similarity:.2%}, "
-                f"Conf:{self.confidence:.2%})")
+        return (
+            f"[{status}] {self.video_id_1} <-> {self.video_id_2}: "
+            f"{self.combined_similarity:.2%} "
+            f"(V:{self.visual_similarity:.2%}, "
+            f"A:{self.audio_similarity:.2%}, "
+            f"M:{self.metadata_similarity:.2%}, "
+            f"Conf:{self.confidence:.2%})"
+        )
 
 
 class SimilarityEngine:
@@ -53,7 +56,7 @@ class SimilarityEngine:
         self,
         visual_weight: float = VISUAL_WEIGHT,
         audio_weight: float = AUDIO_WEIGHT,
-        metadata_weight: float = METADATA_WEIGHT
+        metadata_weight: float = METADATA_WEIGHT,
     ):
         """
         Initialize similarity engine
@@ -69,17 +72,19 @@ class SimilarityEngine:
         self.audio_weight = audio_weight / total_weight
         self.metadata_weight = metadata_weight / total_weight
 
-        logger.info(f"Initialized SimilarityEngine with weights: "
-                   f"visual={self.visual_weight:.2f}, "
-                   f"audio={self.audio_weight:.2f}, "
-                   f"metadata={self.metadata_weight:.2f}")
+        logger.info(
+            f"Initialized SimilarityEngine with weights: "
+            f"visual={self.visual_weight:.2f}, "
+            f"audio={self.audio_weight:.2f}, "
+            f"metadata={self.metadata_weight:.2f}"
+        )
 
     def compute_visual_similarity(
         self,
         features1: Dict,
         features2: Dict,
         phash_weight: float = 0.4,
-        embedding_weight: float = 0.6
+        embedding_weight: float = 0.6,
     ) -> float:
         """
         Compute visual similarity using multiple methods
@@ -99,21 +104,19 @@ class SimilarityEngine:
         similarities = []
 
         # Perceptual hash similarity
-        if 'phashes' in features1 and 'phashes' in features2:
+        if "phashes" in features1 and "phashes" in features2:
             phash_sim = self._compare_phashes(
-                features1['phashes'],
-                features2['phashes']
+                features1["phashes"], features2["phashes"]
             )
-            similarities.append(('phash', phash_sim, phash_weight))
+            similarities.append(("phash", phash_sim, phash_weight))
             logger.debug(f"Perceptual hash similarity: {phash_sim:.4f}")
 
         # Deep embedding similarity
-        if 'embeddings' in features1 and 'embeddings' in features2:
+        if "embeddings" in features1 and "embeddings" in features2:
             embedding_sim = self._compare_embeddings(
-                features1['embeddings'],
-                features2['embeddings']
+                features1["embeddings"], features2["embeddings"]
             )
-            similarities.append(('embedding', embedding_sim, embedding_weight))
+            similarities.append(("embedding", embedding_sim, embedding_weight))
             logger.debug(f"Embedding similarity: {embedding_sim:.4f}")
 
         if not similarities:
@@ -131,7 +134,7 @@ class SimilarityEngine:
         features1: Dict,
         features2: Dict,
         fingerprint_weight: float = 0.7,
-        mfcc_weight: float = 0.3
+        mfcc_weight: float = 0.3,
     ) -> float:
         """
         Compute audio similarity using multiple methods
@@ -149,8 +152,8 @@ class SimilarityEngine:
             Audio similarity score (0.0 - 1.0)
         """
         # Handle videos without audio
-        has_audio1 = features1.get('has_audio', True)
-        has_audio2 = features2.get('has_audio', True)
+        has_audio1 = features1.get("has_audio", True)
+        has_audio2 = features2.get("has_audio", True)
 
         if not has_audio1 or not has_audio2:
             logger.debug("One or both videos have no audio")
@@ -159,21 +162,19 @@ class SimilarityEngine:
         similarities = []
 
         # Fingerprint similarity
-        if 'audio_fingerprint' in features1 and 'audio_fingerprint' in features2:
+        if "audio_fingerprint" in features1 and "audio_fingerprint" in features2:
             fp_sim = self._compare_fingerprints(
-                features1['audio_fingerprint'],
-                features2['audio_fingerprint']
+                features1["audio_fingerprint"], features2["audio_fingerprint"]
             )
-            similarities.append(('fingerprint', fp_sim, fingerprint_weight))
+            similarities.append(("fingerprint", fp_sim, fingerprint_weight))
             logger.debug(f"Audio fingerprint similarity: {fp_sim:.4f}")
 
         # MFCC similarity
-        if 'mfcc_features' in features1 and 'mfcc_features' in features2:
+        if "mfcc_features" in features1 and "mfcc_features" in features2:
             mfcc_sim = self._compare_mfcc(
-                features1['mfcc_features'],
-                features2['mfcc_features']
+                features1["mfcc_features"], features2["mfcc_features"]
             )
-            similarities.append(('mfcc', mfcc_sim, mfcc_weight))
+            similarities.append(("mfcc", mfcc_sim, mfcc_weight))
             logger.debug(f"MFCC similarity: {mfcc_sim:.4f}")
 
         if not similarities:
@@ -186,11 +187,7 @@ class SimilarityEngine:
 
         return float(audio_sim)
 
-    def compute_metadata_similarity(
-        self,
-        metadata1: Dict,
-        metadata2: Dict
-    ) -> float:
+    def compute_metadata_similarity(self, metadata1: Dict, metadata2: Dict) -> float:
         """
         Compute metadata similarity
 
@@ -209,19 +206,21 @@ class SimilarityEngine:
         similarities = []
 
         # Duration similarity (±5 seconds tolerance)
-        duration1 = metadata1.get('duration', 0)
-        duration2 = metadata2.get('duration', 0)
+        duration1 = metadata1.get("duration", 0)
+        duration2 = metadata2.get("duration", 0)
 
         if duration1 > 0 and duration2 > 0:
             duration_diff = abs(duration1 - duration2)
             duration_sim = max(0.0, 1.0 - (duration_diff / 5.0))  # 5 sec tolerance
             similarities.append(duration_sim)
-            logger.debug(f"Duration similarity: {duration_sim:.4f} "
-                        f"({duration1:.1f}s vs {duration2:.1f}s)")
+            logger.debug(
+                f"Duration similarity: {duration_sim:.4f} "
+                f"({duration1:.1f}s vs {duration2:.1f}s)"
+            )
 
         # Resolution similarity
-        res1 = (metadata1.get('width', 0), metadata1.get('height', 0))
-        res2 = (metadata2.get('width', 0), metadata2.get('height', 0))
+        res1 = (metadata1.get("width", 0), metadata1.get("height", 0))
+        res2 = (metadata2.get("width", 0), metadata2.get("height", 0))
 
         if res1[0] > 0 and res2[0] > 0:
             if res1 == res2:
@@ -234,24 +233,24 @@ class SimilarityEngine:
                 res_sim = 0.8 if aspect_diff < 0.1 else 0.5
 
             similarities.append(res_sim)
-            logger.debug(f"Resolution similarity: {res_sim:.4f} "
-                        f"({res1} vs {res2})")
+            logger.debug(f"Resolution similarity: {res_sim:.4f} " f"({res1} vs {res2})")
 
         # File size similarity (±20% tolerance)
-        size1 = metadata1.get('file_size', 0)
-        size2 = metadata2.get('file_size', 0)
+        size1 = metadata1.get("file_size", 0)
+        size2 = metadata2.get("file_size", 0)
 
         if size1 > 0 and size2 > 0:
             size_ratio = min(size1, size2) / max(size1, size2)
             # Linear scale from 0.8 to 1.0 -> similarity 0 to 1
             size_sim = max(0.0, (size_ratio - 0.8) / 0.2)
             similarities.append(size_sim)
-            logger.debug(f"File size similarity: {size_sim:.4f} "
-                        f"({size1} vs {size2} bytes)")
+            logger.debug(
+                f"File size similarity: {size_sim:.4f} " f"({size1} vs {size2} bytes)"
+            )
 
         # Frame rate similarity
-        fps1 = metadata1.get('fps', 0)
-        fps2 = metadata2.get('fps', 0)
+        fps1 = metadata1.get("fps", 0)
+        fps2 = metadata2.get("fps", 0)
 
         if fps1 > 0 and fps2 > 0:
             fps_diff = abs(fps1 - fps2)
@@ -269,10 +268,7 @@ class SimilarityEngine:
         return float(metadata_sim)
 
     def compute_combined_similarity(
-        self,
-        visual_sim: float,
-        audio_sim: float,
-        metadata_sim: float
+        self, visual_sim: float, audio_sim: float, metadata_sim: float
     ) -> Tuple[float, float]:
         """
         Compute weighted combined similarity and confidence
@@ -287,9 +283,9 @@ class SimilarityEngine:
         """
         # Weighted combination
         combined = (
-            self.visual_weight * visual_sim +
-            self.audio_weight * audio_sim +
-            self.metadata_weight * metadata_sim
+            self.visual_weight * visual_sim
+            + self.audio_weight * audio_sim
+            + self.metadata_weight * metadata_sim
         )
 
         # Confidence based on agreement between modalities
@@ -302,7 +298,9 @@ class SimilarityEngine:
         # High variance (low agreement) -> low confidence
         confidence = 1.0 - min(modality_variance, 0.5) / 0.5  # Range: [0.5, 1.0]
 
-        logger.debug(f"Combined similarity: {combined:.4f}, confidence: {confidence:.4f}")
+        logger.debug(
+            f"Combined similarity: {combined:.4f}, confidence: {confidence:.4f}"
+        )
 
         return float(combined), float(confidence)
 
@@ -313,7 +311,7 @@ class SimilarityEngine:
         video1_metadata: Dict,
         video2_metadata: Dict,
         video1_id: str = "video1",
-        video2_id: str = "video2"
+        video2_id: str = "video2",
     ) -> SimilarityResult:
         """
         Compare two videos using all available features
@@ -334,7 +332,9 @@ class SimilarityEngine:
         # Compute similarities
         visual_sim = self.compute_visual_similarity(video1_features, video2_features)
         audio_sim = self.compute_audio_similarity(video1_features, video2_features)
-        metadata_sim = self.compute_metadata_similarity(video1_metadata, video2_metadata)
+        metadata_sim = self.compute_metadata_similarity(
+            video1_metadata, video2_metadata
+        )
 
         # Combine similarities
         combined_sim, confidence = self.compute_combined_similarity(
@@ -352,7 +352,7 @@ class SimilarityEngine:
             metadata_similarity=metadata_sim,
             combined_similarity=combined_sim,
             is_duplicate=is_duplicate,
-            confidence=confidence
+            confidence=confidence,
         )
 
         logger.info(f"Comparison result: {result}")
@@ -380,9 +380,7 @@ class SimilarityEngine:
             return 0.0
 
     def _compare_embeddings(
-        self,
-        embeddings1: np.ndarray,
-        embeddings2: np.ndarray
+        self, embeddings1: np.ndarray, embeddings2: np.ndarray
     ) -> float:
         """
         Compare deep learning embeddings
@@ -447,16 +445,16 @@ def main():
     """Example usage of SimilarityEngine"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Compare two videos for similarity')
-    parser.add_argument('video1', help='Path to first video')
-    parser.add_argument('video2', help='Path to second video')
+    parser = argparse.ArgumentParser(description="Compare two videos for similarity")
+    parser.add_argument("video1", help="Path to first video")
+    parser.add_argument("video2", help="Path to second video")
 
     args = parser.parse_args()
 
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Initialize engine
@@ -469,42 +467,45 @@ def main():
     # For demo purposes, create dummy features
     # In production, extract actual features
     video1_features = {
-        'phashes': ['abc123', 'def456'],
-        'embeddings': np.random.randn(2048),
-        'has_audio': True,
-        'audio_fingerprint': 'fp1',
-        'mfcc_features': np.random.randn(26)
+        "phashes": ["abc123", "def456"],
+        "embeddings": np.random.randn(2048),
+        "has_audio": True,
+        "audio_fingerprint": "fp1",
+        "mfcc_features": np.random.randn(26),
     }
 
     video2_features = {
-        'phashes': ['abc124', 'def457'],
-        'embeddings': np.random.randn(2048),
-        'has_audio': True,
-        'audio_fingerprint': 'fp2',
-        'mfcc_features': np.random.randn(26)
+        "phashes": ["abc124", "def457"],
+        "embeddings": np.random.randn(2048),
+        "has_audio": True,
+        "audio_fingerprint": "fp2",
+        "mfcc_features": np.random.randn(26),
     }
 
     video1_metadata = {
-        'duration': 120.5,
-        'width': 1920,
-        'height': 1080,
-        'file_size': 50000000,
-        'fps': 30.0
+        "duration": 120.5,
+        "width": 1920,
+        "height": 1080,
+        "file_size": 50000000,
+        "fps": 30.0,
     }
 
     video2_metadata = {
-        'duration': 121.0,
-        'width': 1920,
-        'height': 1080,
-        'file_size': 51000000,
-        'fps': 30.0
+        "duration": 121.0,
+        "width": 1920,
+        "height": 1080,
+        "file_size": 51000000,
+        "fps": 30.0,
     }
 
     # Compare videos
     result = engine.compare_videos(
-        video1_features, video2_features,
-        video1_metadata, video2_metadata,
-        args.video1, args.video2
+        video1_features,
+        video2_features,
+        video1_metadata,
+        video2_metadata,
+        args.video1,
+        args.video2,
     )
 
     # Display results

@@ -1,0 +1,125 @@
+version: '3.8'
+
+# Local development environment with Hardhat node
+services:
+  # Local Ethereum Node (Hardhat)
+  hardhat:
+    image: node:18-alpine
+    working_dir: /app
+    command: >
+      sh -c "npm install && npx hardhat node --hostname 0.0.0.0"
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8545"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - blockchain-network
+
+  # Contract Deployer
+  deployer:
+    image: node:18-alpine
+    working_dir: /app
+    command: >
+      sh -c "npm install && npx hardhat run scripts/deploy.ts --network localhost"
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules
+    depends_on:
+      hardhat:
+        condition: service_healthy
+    environment:
+      - HARDHAT_NETWORK=localhost
+    profiles:
+      - deploy
+    networks:
+      - blockchain-network
+
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - RPC_URL=http://hardhat:8545
+      - CHAIN_ID=31337
+      - PRIVATE_KEY=${PRIVATE_KEY:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80}
+      - STAKING_CONTRACT_ADDRESS=${STAKING_CONTRACT_ADDRESS:-}
+      - STAKING_TOKEN_ADDRESS=${STAKING_TOKEN_ADDRESS:-}
+      - REWARD_TOKEN_ADDRESS=${REWARD_TOKEN_ADDRESS:-}
+      - PORT=8000
+    depends_on:
+      hardhat:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - blockchain-network
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - blockchain-network
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - blockchain-network
+
+  # Test Runner
+  test-runner:
+    image: node:18-alpine
+    working_dir: /app
+    command: >
+      sh -c "npm install && npx hardhat test"
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules
+    depends_on:
+      hardhat:
+        condition: service_healthy
+    environment:
+      - HARDHAT_NETWORK=localhost
+    profiles:
+      - testing
+    networks:
+      - blockchain-network
+
+volumes:
+  node_modules:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  blockchain-network:
+    driver: bridge

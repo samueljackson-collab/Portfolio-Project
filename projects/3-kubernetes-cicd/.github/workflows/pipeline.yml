@@ -116,6 +116,11 @@ jobs:
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG_DEV }}" | base64 -d > $HOME/.kube/config
 
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          version: 'v5.3.0'
+
       - name: Update image in manifests
         run: |
           cd projects/3-kubernetes-cicd/manifests
@@ -145,6 +150,12 @@ jobs:
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
+
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.5/argocd-linux-amd64
+          sudo install -m 555 argocd /usr/local/bin/argocd
+          rm argocd
 
       - name: Configure kubeconfig
         run: |
@@ -179,6 +190,12 @@ jobs:
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
+
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.5/argocd-linux-amd64
+          sudo install -m 555 argocd /usr/local/bin/argocd
+          rm argocd
 
       - name: Deploy with ArgoCD (Blue-Green)
         run: |

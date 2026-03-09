@@ -1,31 +1,41 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to the P01 AWS Infrastructure Automation project.
 
 ## [Unreleased]
 
 ### Added
-- CloudFormation template for VPC with 3 AZs (public/private subnets)
-- Multi-AZ RDS PostgreSQL instance with automated backups
-- DR drill automation script (`scripts/dr-drill.sh`)
-- Python template validation script
-- Pytest test suite for template validation
-- Makefile for common operations (setup, validate, test, deploy)
-- Complete documentation (README, HANDBOOK, RUNBOOK, PLAYBOOK)
-- Architecture and data flow diagrams (Mermaid)
-- ADR-0001: Initial technical direction (CloudFormation)
+- Complete Terraform alternative implementation with modular structure
+  - VPC module with 3-AZ deployment, NAT gateways, and VPC Flow Logs
+  - RDS module with Multi-AZ PostgreSQL, enhanced monitoring, and CloudWatch alarms
+  - IAM module with least-privilege roles and instance profiles
+- Comprehensive integration test suite
+  - VPC connectivity tests validating subnets, routing, and security
+  - RDS configuration tests for Multi-AZ, encryption, and backups
+  - RDS failover tests (manual execution for destructive testing)
+- DR drill automation script (`src/dr_drill.py`)
+  - Automated RDS failover initiation and monitoring
+  - CloudWatch metrics collection during failover
+  - JSON report generation with detailed results
+- Grafana dashboard for AWS infrastructure metrics
+  - VPC network monitoring
+  - RDS performance metrics
+  - NAT gateway usage tracking
+- Architecture Decision Records (ADRs)
+  - CloudFormation vs Terraform strategy
+  - State management approach
+  - Multi-AZ deployment rationale
+  - Database engine selection
+  - VPC Flow Logs enablement
+- Comprehensive threat model with STRIDE analysis
 
-### Security
-- Least-privilege IAM roles for CloudFormation execution
-- RDS security groups restricted to private subnets
-- Secrets Manager integration for database credentials
-- CloudWatch Logs export for RDS audit trails
+### Changed
+- Enhanced documentation with Terraform deployment instructions
+- Updated Makefile with Terraform targets
 
-## [0.1.0] - 2024-11-07
+## [1.0.0] - 2024-12-10
 
 ### Added
-- Initial project structure
-- DR drill script for RDS Multi-AZ failover testing
+- Initial CloudFormation template for VPC and RDS deployment
+- Basic validation scripts
+- Project structure with documentation framework

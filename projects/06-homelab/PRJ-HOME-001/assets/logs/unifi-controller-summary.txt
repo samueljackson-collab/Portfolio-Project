@@ -1,0 +1,6 @@
+[2025-11-10 09:02:11] controller=unifi-core status=healthy
+[2025-11-10 09:02:11] devices_online=18 aps=2 switches=1 gateways=1
+[2025-11-10 09:02:11] wlan=homelab-secure wpa3_enterprise=enabled radius=freeipa
+[2025-11-10 09:02:12] wlan=homelab-iot client_isolation=enabled vlan=20
+[2025-11-10 09:02:12] wlan=homelab-guest captive_portal=enabled vlan=30
+[2025-11-10 09:02:13] alert=none pending_adoptions=0 firmware=up_to_date

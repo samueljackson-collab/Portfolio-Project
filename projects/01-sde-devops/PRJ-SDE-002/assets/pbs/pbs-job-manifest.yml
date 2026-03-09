@@ -1,0 +1,30 @@
+# Proxmox Backup Server job manifest (sanitized example)
+apiVersion: pbs.homelab/v1alpha1
+kind: BackupJob
+metadata:
+  name: nightly-vm-backups
+  labels:
+    environment: portfolio-demo
+    project: PRJ-SDE-002
+spec:
+  schedule: "0 2 * * *"  # 02:00 UTC
+  mode: incremental
+  datastore: demo-datastore
+  retention:
+    keep-daily: 7
+    keep-weekly: 4
+    keep-monthly: 3
+  targets:
+    - vmid: demo-vm-01
+      name: grafana
+    - vmid: demo-vm-02
+      name: prometheus
+    - vmid: demo-vm-03
+      name: log-collector
+  hooks:
+    pre: 
+      - name: quiesce-services
+        command: ["/usr/local/bin/quiesce-services.sh", "--labels", "app=monitoring"]
+    post:
+      - name: verify-checksums
+        command: ["/usr/local/bin/verify-pbs-backups.sh", "--job", "nightly-vm-backups"]

@@ -1,39 +1,39 @@
-# Observability & Backups Stack
-
-**Status:** 🟢 Done
-
-## Description
-
-Monitoring/alerting stack using Prometheus, Grafana, Loki, and Alertmanager, integrated with Proxmox Backup Server.
-
-## Links
-
-- [Parent Documentation](../../../README.md)
-
-## Next Steps
-
-This is a placeholder README. Documentation and evidence will be added as the project progresses.
-
-## Contact
-
-For questions about this project, please reach out via [GitHub](https://github.com/sams-jackson) or [LinkedIn](https://www.linkedin.com/in/sams-jackson).
-
----
-*Placeholder — Documentation pending*
 # PRJ-SDE-002: Observability & Backups Stack
 
-**Status:** 🟢 Completed (Documentation Pending)
-**Category:** System Development Engineering / DevOps
+## Documentation
+For cross-project documentation, standards, and runbooks, see the [Portfolio Documentation Hub](../../../DOCUMENTATION_INDEX.md).
+
+
+**Status:** 🟢 Completed  
+**Category:** System Development Engineering / DevOps  
 **Technologies:** Prometheus, Grafana, Loki, Alertmanager, Proxmox Backup Server
 
----
+Comprehensive monitoring, logging, alerting, and backup automation for the homelab portfolio. The stack is designed around the USE/RED philosophies, emphasizes alert hygiene with linked runbooks, and documents PBS backup posture with verification evidence.
+
+## Quick Links
+- [Assets Index](./assets/README.md)
+- [Monitoring Philosophy (USE/RED)](./assets/docs/monitoring-philosophy.md)
+- [Alert Runbooks](./assets/runbooks/ALERT_RESPONSES.md)
+- [Operational Runbook](./assets/runbooks/OPERATIONAL_RUNBOOK.md)
+- [Grafana Dashboards](./assets/grafana/dashboards)
+- [Screenshots](./assets/screenshots)
+- [Log Samples](./assets/logs)
+- [Prometheus/Alertmanager/Loki/Promtail Configs](./assets/configs)
+- [Prometheus Example Config](./assets/configs/prometheus.example.yml)
+- [Alertmanager Example Config](./assets/alertmanager/alertmanager.example.yml)
+- [PBS Jobs & Retention Evidence](./assets/backups)
+- [Parent Documentation](../../../README.md)
+
+**Sanitization:** All artifacts use placeholder hosts/webhooks and demo data. Screenshots are scrubbed; configs omit credentials.
+
+Monitoring, logging, alerting, and backup stack built with Prometheus, Grafana, Loki, Alertmanager, Promtail, and Proxmox Backup Server (PBS). All assets are sanitized for portfolio sharing.
 
 ## Overview
-
 Implemented a comprehensive monitoring, logging, and alerting stack to observe homelab infrastructure and ensure data resilience through automated backups.
 
 ## Architecture
 
+## Architecture Snapshot
 ### Monitoring (Prometheus)
 - Metrics collection from multiple targets
 - Node exporter for system metrics (CPU, memory, disk, network)
@@ -70,21 +70,24 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - Retention policies and pruning
 
 ## How It Works
-
 1. **Provision Prometheus and exporters** on the Proxmox host, followed by Node Exporter installation on all VMs and containers.
 2. **Deploy Grafana** once Prometheus is scraping data to verify dashboards render correctly.
 3. **Configure Loki and Promtail** to begin ingesting logs alongside metrics.
 4. **Set up Alertmanager** with notification channels and connect it to Prometheus.
-5. **Integrate PBS** nightly jobs and mount TrueNAS NFS shares for resilient storage.
+5. **Integrate PBS** nightly jobs and mount NAS shares for resilient storage.
 
-**Configuration Locations**
-- Prometheus: `/etc/prometheus/prometheus.yml`, alert rules in `/etc/prometheus/alerts/`
-- Grafana dashboards: `/etc/grafana/provisioning/dashboards/`
-- Loki: `/etc/loki/loki-config.yml`
-- Promtail: `/etc/promtail/promtail-config.yml`
-- Alertmanager: `/etc/alertmanager/alertmanager.yml`
+**Configuration Locations (portfolio mirrors)**:
+- Prometheus: [`assets/configs/prometheus.yml`](./assets/configs/prometheus.yml), alert rules in [`assets/configs/alerts/`](./assets/configs/alerts/)
+- Grafana dashboards: [`assets/grafana/dashboards/`](./assets/grafana/dashboards/), including
+  [`infra-overview-export.json`](./assets/grafana/dashboards/infra-overview-export.json),
+  [`service-health.json`](./assets/grafana/dashboards/service-health.json), and
+  [`alerts-overview.json`](./assets/grafana/dashboards/alerts-overview.json)
+- Loki: [`assets/loki/loki-config.yml`](./assets/loki/loki-config.yml)
+- Promtail: [`assets/loki/promtail-config.yml`](./assets/loki/promtail-config.yml)
+- Alertmanager: [`assets/alertmanager/alertmanager.yml`](./assets/alertmanager/alertmanager.yml) and
+  [`assets/alertmanager/alertmanager.example.yml`](./assets/alertmanager/alertmanager.example.yml)
 
-**Service Management**
+**Service Management (example)**:
 - `sudo systemctl enable --now prometheus`
 - `sudo systemctl enable --now grafana-server`
 - `sudo systemctl enable --now loki`
@@ -92,39 +95,38 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - `sudo systemctl enable --now alertmanager`
 - `sudo systemctl enable --now proxmox-backup`
 
-**Network Flow Architecture**
+**Network Flow Architecture**:
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   Targets   │────▶│  Exporters  │────▶│ Prometheus  │
 │ (VMs/Hosts) │     │ (Port 9100+)│     │ (Port 9090) │
 └─────────────┘     └─────────────┘     └──────┬──────┘
-                                               │
-                    ┌──────────────────────────┼──────────────────────────┐
-                    │                          │                          │
-                    ▼                          ▼                          ▼
-            ┌───────────────┐         ┌──────────────┐         ┌─────────────┐
-            │ Alertmanager  │         │   Grafana    │         │    Loki     │
-            │  (Port 9093)  │         │ (Port 3000)  │         │ (Port 3100) │
-            └───────┬───────┘         └──────────────┘         └──────┬──────┘
-                    │                                                  │
-                    ▼                                                  ▼
-            ┌───────────────┐                                  ┌─────────────┐
-            │ Slack/Email   │                                  │  Promtail   │
-            │ Notifications │                                  │  (Logs)     │
-            └───────────────┘                                  └─────────────┘
+                                              │
+                   ┌──────────────────────────┼──────────────────────────┐
+                   │                          │                          │
+                   ▼                          ▼                          ▼
+           ┌───────────────┐         ┌──────────────┐         ┌─────────────┐
+           │ Alertmanager  │         │   Grafana    │         │    Loki     │
+           │  (Port 9093)  │         │ (Port 3000)  │         │ (Port 3100) │
+           └───────┬───────┘         └──────────────┘         └──────┬──────┘
+                   │                                                  │
+                   ▼                                                  ▼
+           ┌───────────────┐                                  ┌─────────────┐
+           │ Slack/Email   │                                  │  Promtail   │
+           │ Notifications │                                  │  (Logs)     │
+           └───────────────┘                                  └─────────────┘
 ```
 
 **Data Flow Overview**
-1. **Metrics Collection**: Node Exporters (9100), Proxmox Exporter (9221), and application-specific exporters expose metrics
-2. **Log Shipping**: Promtail agents tail log files and push to Loki (port 3100)
-3. **Scraping**: Prometheus scrapes all exporters every 15 seconds, evaluates alert rules every 30 seconds
-4. **Storage**: Prometheus stores metrics locally with 30-day retention; Loki stores logs with 14-day retention
-5. **Alerting**: Alertmanager receives alerts from Prometheus, groups/routes them to Slack channel #homelab-alerts
-6. **Visualization**: Grafana queries Prometheus and Loki, renders dashboards on port 3000
-7. **Backup**: PBS runs nightly at 02:00, snapshots are stored on TrueNAS NFS share at 192.168.1.10:/mnt/tank/backups
+1. **Metrics Collection**: Node Exporters (9100), Proxmox Exporter (9221), and application-specific exporters expose metrics.
+2. **Log Shipping**: Promtail agents tail log files and push to Loki (port 3100).
+3. **Scraping**: Prometheus scrapes all exporters every 15 seconds, evaluates alert rules every 30 seconds.
+4. **Storage**: Prometheus stores metrics locally with 30-day retention; Loki stores logs with 14-day retention.
+5. **Alerting**: Alertmanager receives alerts from Prometheus, groups/routes them to Slack channel #homelab-alerts.
+6. **Visualization**: Grafana queries Prometheus and Loki, renders dashboards on port 3000.
+7. **Backup**: PBS runs nightly at 02:00, snapshots are stored on TrueNAS NFS share at <NFS_SERVER>:/mnt/<DATASTORE>/backups.
 
 ## Key Dashboards
-
 ### Infrastructure Overview
 - Cluster resource utilization
 - Network throughput
@@ -144,7 +146,6 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - Mean time to resolve (MTTR)
 
 ## Alert Examples
-
 ### Critical Alerts
 - Host down or unreachable
 - Disk usage >90%
@@ -158,17 +159,16 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - Backup job duration increasing
 - Log error rate spike
 
-## Alert Examples and Responses
-
+## Alert Examples and Responses (Sanitized)
 | Alert Name | Trigger Condition | Severity | Response Time | Runbook |
 |------------|-------------------|----------|---------------|---------|
-| HostDown | `up == 0` for 2 minutes | Critical | 5 minutes | [HostDown](https://runbooks.homelab.local/HostDown) |
-| HighCPUUsage | CPU >80% for 15 minutes | Warning | 30 minutes | [HighCPUUsage](https://runbooks.homelab.local/HighCPUUsage) |
-| DiskSpaceLow | Free space <15% | Warning | 1 hour | [DiskSpaceLow](https://runbooks.homelab.local/DiskSpaceLow) |
-| BackupJobFailed | `proxmox_backup_job_last_status != 0` | Critical | 15 minutes | [BackupJobFailed](https://runbooks.homelab.local/BackupJobFailed) |
-| ServiceUnreachable | `probe_success == 0` for 5 minutes | Critical | 10 minutes | [ServiceUnreachable](https://runbooks.homelab.local/ServiceUnreachable) |
+| HostDown | `up == 0` for 2 minutes | Critical | 5 minutes | [HostDown](./assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-hostdown) |
+| HighCPUUsage | CPU >80% for 15 minutes | Warning | 30 minutes | [HighCPUUsage](./assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-highcpuusage) |
+| DiskSpaceLow | Free space <15% | Warning | 1 hour | [DiskSpaceLow](./assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-diskspacelow) |
+| BackupJobFailed | `proxmox_backup_job_last_status != 0` | Critical | 15 minutes | [BackupJobFailed](./assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-backupjobfailed) |
+| ServiceUnreachable | `probe_success == 0` for 5 minutes | Critical | 10 minutes | [Service Recovery](./assets/runbooks/OPERATIONAL_RUNBOOK.md#service-recovery) |
 
-**Example Slack Payload**
+**Example Slack Payload (Sanitized)**
 ```json
 {
   "status": "firing",
@@ -177,13 +177,13 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
     {
       "labels": {
         "alertname": "HostDown",
-        "instance": "192.168.1.21:9100",
+        "instance": "demo-vm-01:9100",
         "severity": "critical"
       },
       "annotations": {
-        "summary": "Host 192.168.1.21:9100 is unreachable",
-        "description": "Prometheus has not scraped 192.168.1.21:9100 for over two minutes. Investigate network connectivity or system health.",
-        "runbook": "https://runbooks.homelab.local/HostDown"
+        "summary": "Host demo-vm-01:9100 is unreachable",
+        "description": "Prometheus has not scraped demo-vm-01:9100 for over two minutes. Investigate network connectivity or system health.",
+        "runbook": "assets/runbooks/OPERATIONAL_RUNBOOK.md#alert-hostdown"
       }
     }
   ],
@@ -197,8 +197,16 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 }
 ```
 
-## Backup Configuration
+## Configurations
+- **Prometheus:** [`assets/configs/prometheus.yml`](./assets/configs/prometheus.yml) plus [`configs/alerts/demo-alerts.yml`](./assets/configs/alerts/demo-alerts.yml) and recording rules.
+- **Alertmanager:** [`assets/alertmanager/alertmanager.yml`](./assets/alertmanager/alertmanager.yml) uses environment variables for secrets and generic notification channels.
+- **Loki & Promtail:** [`assets/loki/loki-config.yml`](./assets/loki/loki-config.yml) and [`assets/loki/promtail-config.yml`](./assets/loki/promtail-config.yml) with log scrubbing and tenant labels.
 
+## Backups & PBS Evidence
+- Job manifest, retention report, and restore checklist under [`assets/pbs/`](./assets/pbs) with supporting guidance in [`backups-and-lessons.md`](./assets/docs/backups-and-lessons.md).
+- Metrics and alerts surface backup success ratios and retention drift (see `alerting-backup-overview.json`).
+
+## Backup Configuration
 ### Schedule
 - **Daily:** All VMs and containers (incremental)
 - **Weekly:** Full backup verification
@@ -215,34 +223,30 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 - Documentation of restore procedures
 
 ## Backup and Recovery Procedures
-
 **Schedule**
 - Nightly backups at 02:00 via Proxmox Backup Server job schedule.
 - Weekly verification tasks run on Sundays to validate snapshot integrity.
 - Monthly restore rehearsals verify end-to-end recovery steps.
 
 **Scope of Backups**
-- VMs: 192.168.1.20-24 (Wiki.js, Home Assistant, Immich, database, utility).
-- Containers: 192.168.1.30-32 (supporting services).
-- Configuration directories exported from `/etc/` for Prometheus, Grafana, Loki, and Alertmanager.
+- VMs and containers in the homelab cluster (sanitized inventory in [`pbs-job-manifest.yml`](./assets/pbs/pbs-job-manifest.yml)).
+- Configuration directories exported from `/etc/` for Prometheus, Grafana, Loki, and Alertmanager (represented in this repo as configs).
 
 **Retention Policy**
 - 7 daily restore points, 4 weekly rollups, 3 monthly archives retained on PBS.
 
 **Recovery Steps**
-1. Log in to PBS web UI at `https://192.168.1.15:8007`.
+1. Log in to PBS web UI (sanitized).
 2. Select the desired snapshot for the VM or container.
 3. Restore to the original ID or clone to a staging ID for validation.
 4. Power on the restored workload and confirm service availability.
 5. Re-run Prometheus `ServiceUnreachable` probes to ensure monitoring reflects the recovered service.
 
 **Automation Support**
-- Backup verification script: [`verify-pbs-backups.sh`](./assets/scripts/verify-pbs-backups.sh).
+- Backup verification script: [`verify-pbs-backups.sh`](./assets/scripts/verify-pbs-backups.sh) (see notes in `backups-and-lessons.md`).
 
 ## Metrics Cheat Sheet
-
 ### Essential PromQL Queries
-
 | Metric Goal | Prometheus Query | Expected Result |
 |-------------|------------------|-----------------|
 | CPU usage per host | `100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)` | Percentage utilization |
@@ -259,7 +263,6 @@ Implemented a comprehensive monitoring, logging, and alerting stack to observe h
 | Service uptime | `time() - process_start_time_seconds` | Seconds since start |
 
 ### Recording Rules (Pre-computed Metrics)
-
 ```yaml
 # /etc/prometheus/recording_rules.yml
 groups:
@@ -268,24 +271,24 @@ groups:
     rules:
       - record: instance:node_cpu_utilization:rate5m
         expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-      
+
       - record: instance:node_memory_utilization:ratio
         expr: 1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
-      
+
       - record: instance:node_disk_utilization:ratio
         expr: 1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|fuse.lxcfs"})
-      
+
       - record: job:http_request_rate:rate5m
         expr: sum(rate(http_requests_total[5m])) by (job)
-      
+
       - record: job:http_error_rate:rate5m
         expr: sum(rate(http_requests_total{status=~"5.."}[5m])) by (job) / sum(rate(http_requests_total[5m])) by (job)
 ```
 
 **Usage Notes:**
-- Recording rules reduce dashboard load time by pre-computing complex queries
-- Stored with 5-minute granularity for 90 days
-- Used in high-traffic dashboards and alerting rules
+- Recording rules reduce dashboard load time by pre-computing complex queries.
+- Stored with 5-minute granularity for 90 days.
+- Used in high-traffic dashboards and alerting rules.
 
 ## Skills Demonstrated
 
@@ -310,72 +313,529 @@ And the **RED Method** (Rate, Errors, Duration) for services:
 
 ## Documentation Status
 
-📝 **Pending:** Dashboard exports, Prometheus configurations, alert rule examples, and backup logs are being prepared and will be added to the `assets/` directory.
+📝 Dashboard exports, Prometheus configurations, alert rule examples, and backup evidence are provided in the `assets/` directory, including sanitized configs, screenshots, and PBS retention artifacts.
 
 ## Lessons Learned
 
 ### Technical Insights
-
 1. **Metrics Backend Selection**: Started with InfluxDB but migrated to Prometheus for richer querying (PromQL), better alerting integration, and stronger community support. The migration took 3 days but improved query performance by ~40%.
-
 2. **Scrape Interval Optimization**: Initial 5-second scrape interval filled disk quickly (80GB in 2 weeks). Settled on 15-second intervals which balanced granularity with 30-day retention, reducing storage to 12GB for the same period.
-
-3. **Alert Fatigue Mitigation**: Experienced 50+ alerts per day initially. Reduced to <5 daily by:
-   - Tuning thresholds based on historical data (e.g., disk alerts from 85% → 90%)
-   - Adding inhibition rules (e.g., HostDown suppresses all other alerts from that host)
-   - Implementing alert grouping windows (5 minutes) to batch related alerts
-   - Creating detailed runbooks for each alert to reduce investigation time
-
-4. **Backup Verification Critical**: The backup verification script (`verify-pbs-backups.sh`) discovered that PBS UI showed "OK" for 3 snapshots that were actually incomplete due to network timeouts. Now run verification within 1 hour of each backup completion.
-
-5. **Dashboard Standardization**: Created a dashboard template with consistent color schemes, panel layouts, and naming conventions. This reduced dashboard creation time from 2 hours to 20 minutes and accelerated onboarding for new homelab contributors.
+3. **Alert Fatigue Mitigation**: Experienced 50+ alerts per day initially. Reduced to <5 daily by tuning thresholds, adding inhibition rules, grouping alerts, and creating detailed runbooks.
+4. **Backup Verification Critical**: The verification script discovered that PBS UI showed "OK" for snapshots that were incomplete due to network timeouts. Now run verification within 1 hour of each backup completion.
+5. **Dashboard Standardization**: Created a dashboard template with consistent color schemes, panel layouts, and naming conventions to cut new dashboard creation time from 2 hours to 20 minutes.
 
 ### Operational Insights
-
-6. **Log Volume Management**: Application logs initially consumed 200GB/month. Implemented selective logging (error/warn only in production) and reduced retention from 30 to 14 days, cutting storage to 40GB/month.
-
-7. **Cardinality Awareness**: Added a label for every container ID in metrics, causing cardinality explosion (>100k series). Removed unnecessary labels and now maintain <50k series, improving query performance dramatically.
-
-8. **Alertmanager Routing Complexity**: Single Slack channel became noisy. Now route: Critical → #incidents + PagerDuty, Warning → #monitoring, Info → #homelab-events. Clear separation improved response time by 60%.
-
-9. **Grafana Access Control**: Initially gave all homelab users Admin rights. After accidental dashboard deletions, implemented role-based access: Viewers for most users, Editors for infra team, Admin for ops lead only.
-
-10. **Backup Testing Discipline**: Implemented monthly restore drills. Discovered that recovering PostgreSQL required WAL replay knowledge that wasn't documented. Now maintain detailed restore runbooks for each service type (database, application, stateful services).
+6. **Log Volume Management**: Reduced log retention from 30 to 14 days and trimmed logging levels to shrink log volume by ~80%.
+7. **Cardinality Awareness**: Removed high-cardinality container labels to keep time series under control and improve query performance.
+8. **Alertmanager Routing Complexity**: Routed Critical → incident channel + on-call, Warning → monitoring channel, Info → events channel for clearer response paths.
+9. **Grafana Access Control**: Replaced broad Admin access with Viewer/Editor roles and a small Admin group.
+10. **Backup Testing Discipline**: Monthly restore drills uncovered service-specific restore steps that now live in runbooks.
 
 ## Future Enhancements
-
 - Distributed tracing with Tempo or Jaeger
 - Synthetic monitoring (uptime checks)
-- Anomaly detection with machine learning
+- Anomaly detection
 - Cost tracking dashboards
 - SLO tracking and error budgets
 
 ## 📸 Screenshots and Evidence
+Binary screenshots are intentionally excluded from this repo to keep PRs text-only and review-friendly. See `assets/README.md` for guidance on capturing screenshots locally.
 
-### Monitoring & Visualization
+## Documentation Status
+✅ Dashboard exports, Prometheus configurations, alert rule examples, and backup artifacts are available in [`assets/`](./assets/README.md).
 
-![Infrastructure Overview Dashboard](./assets/screenshots/grafana-infrastructure-dashboard.png)
-*Grafana infrastructure dashboard showing CPU, memory, disk, and network metrics across all 9 homelab hosts (192.168.1.20-32). Displays real-time resource utilization with 15-second granularity, captured during normal operation with ~40% average CPU load.*
+## Sanitization
+All configs, dashboards, and PBS artifacts use placeholder hosts, tenant IDs, and credentials. Screenshots and sample data are synthetic to avoid exposing production details. README links point to sanitized assets inside this repo only.
 
-![Active Alerts Panel](./assets/screenshots/grafana-alerts-panel.png)
-*Grafana alerting panel showing current firing alerts with severity levels (Critical/Warning/Info). Screenshot captured during maintenance window showing 2 intentional warnings: DiskSpaceLow on database VM and scheduled backup job in progress.*
-
-![Prometheus Targets Page](./assets/screenshots/prometheus-targets.png)
-*Prometheus targets page (http://192.168.1.11:9090/targets) showing all 15 scrape endpoints with UP status. Includes Node Exporters (9100), Proxmox Exporter (9221), PostgreSQL Exporter (9187), and custom application exporters. All targets healthy with <100ms scrape duration.*
-
-### Logging & Alerting
-
-![Loki Log Explorer](./assets/screenshots/loki-log-explorer.png)
-*Loki log aggregation interface in Grafana showing log streams from 12 sources. LogQL query `{job="systemd-journal"} |= "error"` filtered across last 24 hours, displaying centralized error tracking from all VMs. Demonstrates log correlation during incident investigation.*
-
-![Alertmanager UI](./assets/screenshots/alertmanager-ui.png)
-*Alertmanager web interface (http://192.168.1.11:9093) showing alert grouping, silences, and inhibition rules. Screenshot shows 3 active silences for planned maintenance and alert routing configuration with Slack integration status.*
-
-### Backup & Recovery
-
-![Proxmox Backup Server Dashboard](./assets/screenshots/pbs-dashboard.png)
-*Proxmox Backup Server (PBS) web UI at https://192.168.1.15:8007 showing backup summary. Displays 63 total snapshots across 7 VMs, 28.4TB total backup size with deduplication ratio of 3.2:1 (effective storage 8.9TB). Backup verification status showing 100% integrity for all snapshots with retention policy enforcement active.*
+**Last Updated:** November 14, 2025
 
 ---
 
-**Last Updated:** October 28, 2025
+## 📋 Technical Specifications
+
+### Technology Stack
+
+| Component | Technology | Version | Purpose |
+|---|---|---|---|
+| Kubernetes | K8s | 1.28+ | Container orchestration platform |
+| Container Runtime | containerd | 1.7+ | OCI-compliant container runtime |
+| Service Mesh | Istio / Linkerd | Latest | Traffic management and mTLS |
+| GitOps | ArgoCD / Flux | Latest | Declarative continuous delivery |
+| Image Registry | Harbor / ECR / GCR | Latest | Secure container image storage |
+| Secrets | External Secrets Operator | Latest | Kubernetes secrets sync from Vault/AWS SM |
+| Policy Engine | OPA / Kyverno | Latest | Admission control and policy enforcement |
+| CI | GitHub Actions / Tekton | Latest | Automated pipeline triggers and builds |
+
+### Runtime Requirements
+
+| Requirement | Minimum | Recommended | Notes |
+|---|---|---|---|
+| CPU | 2 vCPU | 4 vCPU | Scale up for high-throughput workloads |
+| Memory | 4 GB RAM | 8 GB RAM | Tune heap/runtime settings accordingly |
+| Storage | 20 GB SSD | 50 GB NVMe SSD | Persistent volumes for stateful services |
+| Network | 100 Mbps | 1 Gbps | Low-latency interconnect for clustering |
+| OS | Ubuntu 22.04 LTS | Ubuntu 22.04 LTS | RHEL 8/9 also validated |
+
+---
+
+## ⚙️ Configuration Reference
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `APP_ENV` | Yes | `development` | Runtime environment: `development`, `staging`, `production` |
+| `LOG_LEVEL` | No | `INFO` | Log verbosity: `DEBUG`, `INFO`, `WARN`, `ERROR` |
+| `DB_HOST` | Yes | `localhost` | Primary database host address |
+| `DB_PORT` | No | `5432` | Database port number |
+| `DB_NAME` | Yes | — | Target database name |
+| `DB_USER` | Yes | — | Database authentication username |
+| `DB_PASSWORD` | Yes | — | Database password — use a secrets manager in production |
+| `API_PORT` | No | `8080` | Application HTTP server listen port |
+| `METRICS_PORT` | No | `9090` | Prometheus metrics endpoint port |
+| `HEALTH_CHECK_PATH` | No | `/health` | Liveness and readiness probe path |
+| `JWT_SECRET` | Yes (prod) | — | JWT signing secret — minimum 32 characters |
+| `TLS_CERT_PATH` | No | — | Path to PEM-encoded TLS certificate |
+| `TLS_KEY_PATH` | No | — | Path to PEM-encoded TLS private key |
+| `TRACE_ENDPOINT` | No | — | OpenTelemetry collector gRPC/HTTP endpoint |
+| `CACHE_TTL_SECONDS` | No | `300` | Default cache time-to-live in seconds |
+
+### Configuration Files
+
+| File | Location | Purpose | Managed By |
+|---|---|---|---|
+| Application config | `./config/app.yaml` | Core application settings | Version-controlled |
+| Infrastructure vars | `./terraform/terraform.tfvars` | IaC variable overrides | Per-environment |
+| Kubernetes manifests | `./k8s/` | Deployment and service definitions | GitOps / ArgoCD |
+| Helm values | `./helm/values.yaml` | Helm chart value overrides | Per-environment |
+| CI pipeline | `./.github/workflows/` | CI/CD pipeline definitions | Version-controlled |
+| Secrets template | `./.env.example` | Environment variable template | Version-controlled |
+
+---
+
+## 🔌 API & Interface Reference
+
+### Core Endpoints
+
+| Method | Endpoint | Auth | Description | Response |
+|---|---|---|---|---|
+| `GET` | `/api/v1/pipelines` | Bearer | List CI/CD pipeline runs | 200 OK |
+| `POST` | `/api/v1/pipelines/trigger` | Bearer | Trigger a pipeline run | 202 Accepted |
+| `GET` | `/api/v1/deployments` | Bearer | List active deployments and statuses | 200 OK |
+| `POST` | `/api/v1/deployments/rollback` | Bearer | Roll back a deployment to previous revision | 202 Accepted |
+| `GET` | `/api/v1/artifacts` | Bearer | List build artifacts | 200 OK |
+| `GET` | `/health` | None | Health check endpoint | 200 OK |
+| `GET` | `/metrics` | Bearer | Prometheus metrics scrape endpoint | 200 OK |
+
+### Authentication Flow
+
+This project uses Bearer token authentication for secured endpoints:
+
+1. **Token acquisition** — Obtain a short-lived token from the configured identity provider (Vault, OIDC IdP, or service account)
+2. **Token format** — JWT with standard claims (`sub`, `iat`, `exp`, `aud`)
+3. **Token TTL** — Default 1 hour; configurable per environment
+4. **Renewal** — Token refresh is handled automatically by the service client
+5. **Revocation** — Tokens may be revoked through the IdP or by rotating the signing key
+
+> **Security note:** Never commit API tokens or credentials to version control. Use environment variables or a secrets manager.
+
+---
+
+## 📊 Data Flow & Integration Patterns
+
+### Primary Data Flow
+
+```mermaid
+flowchart TD
+  A[Input Source / Trigger] --> B[Ingestion / Validation Layer]
+  B --> C{Valid?}
+  C -->|Yes| D[Core Processing Engine]
+  C -->|No| E[Error Queue / DLQ]
+  D --> F[Transformation / Enrichment]
+  F --> G[Output / Storage Layer]
+  G --> H[Downstream Consumers]
+  E --> I[Alert + Manual Review Queue]
+  H --> J[Monitoring / Feedback Loop]
+```
+
+### Integration Touchpoints
+
+| System | Integration Type | Direction | Protocol | SLA / Notes |
+|---|---|---|---|---|
+| Source systems | Event-driven | Inbound | REST / gRPC | < 100ms p99 latency |
+| Message broker | Pub/Sub | Bidirectional | Kafka / SQS / EventBridge | At-least-once delivery |
+| Primary data store | Direct | Outbound | JDBC / SDK | < 50ms p95 read |
+| Notification service | Webhook | Outbound | HTTPS | Best-effort async |
+| Monitoring stack | Metrics push | Outbound | Prometheus scrape | 15s scrape interval |
+| Audit/SIEM system | Event streaming | Outbound | Structured JSON / syslog | Async, near-real-time |
+| External APIs | HTTP polling/webhook | Bidirectional | REST over HTTPS | Per external SLA |
+
+---
+
+## 📈 Performance & Scalability
+
+### Performance Targets
+
+| Metric | Target | Warning Threshold | Alert Threshold | Measurement |
+|---|---|---|---|---|
+| Request throughput | 1,000 RPS | < 800 RPS | < 500 RPS | `rate(requests_total[5m])` |
+| P50 response latency | < 20ms | > 30ms | > 50ms | Histogram bucket |
+| P95 response latency | < 100ms | > 200ms | > 500ms | Histogram bucket |
+| P99 response latency | < 500ms | > 750ms | > 1,000ms | Histogram bucket |
+| Error rate | < 0.1% | > 0.5% | > 1% | Counter ratio |
+| CPU utilization | < 70% avg | > 75% | > 85% | Resource metrics |
+| Memory utilization | < 80% avg | > 85% | > 90% | Resource metrics |
+| Queue depth | < 100 msgs | > 500 msgs | > 1,000 msgs | Queue length gauge |
+
+### Scaling Strategy
+
+| Trigger Condition | Scale Action | Cooldown | Notes |
+|---|---|---|---|
+| CPU utilization > 70% for 3 min | Add 1 replica (max 10) | 5 minutes | Horizontal Pod Autoscaler |
+| Memory utilization > 80% for 3 min | Add 1 replica (max 10) | 5 minutes | HPA memory-based policy |
+| Queue depth > 500 messages | Add 2 replicas | 3 minutes | KEDA event-driven scaler |
+| Business hours schedule | Maintain minimum 3 replicas | — | Scheduled scaling policy |
+| Off-peak hours (nights/weekends) | Scale down to 1 replica | — | Cost optimization policy |
+| Zero traffic (dev/staging) | Scale to 0 | 10 minutes | Scale-to-zero enabled |
+
+---
+
+## 🔍 Monitoring & Alerting
+
+### Key Metrics Emitted
+
+| Metric Name | Type | Labels | Description |
+|---|---|---|---|
+| `app_requests_total` | Counter | `method`, `status`, `path` | Total HTTP requests received |
+| `app_request_duration_seconds` | Histogram | `method`, `path` | End-to-end request processing duration |
+| `app_active_connections` | Gauge | — | Current number of active connections |
+| `app_errors_total` | Counter | `type`, `severity`, `component` | Total application errors by classification |
+| `app_queue_depth` | Gauge | `queue_name` | Current message queue depth |
+| `app_processing_duration_seconds` | Histogram | `operation` | Duration of background processing operations |
+| `app_cache_hit_ratio` | Gauge | `cache_name` | Cache effectiveness (hit / total) |
+| `app_build_info` | Gauge | `version`, `commit`, `build_date` | Application version information |
+
+### Alert Definitions
+
+| Alert Name | Condition | Severity | Action Required |
+|---|---|---|---|
+| `HighErrorRate` | `error_rate > 1%` for 5 min | Critical | Page on-call; check recent deployments |
+| `HighP99Latency` | `p99_latency > 1s` for 5 min | Warning | Review slow query logs; scale if needed |
+| `PodCrashLoop` | `CrashLoopBackOff` detected | Critical | Check pod logs; investigate OOM or config errors |
+| `LowDiskSpace` | `disk_usage > 85%` | Warning | Expand PVC or clean up old data |
+| `CertificateExpiry` | `cert_expiry < 30 days` | Warning | Renew TLS certificate via cert-manager |
+| `ReplicationLag` | `lag > 30s` for 10 min | Critical | Investigate replica health and network |
+| `HighMemoryPressure` | `memory > 90%` for 5 min | Critical | Increase resource limits or scale out |
+
+### Dashboards
+
+| Dashboard | Platform | Key Panels |
+|---|---|---|
+| Service Overview | Grafana | RPS, error rate, p50/p95/p99 latency, pod health |
+| Infrastructure | Grafana | CPU, memory, disk, network per node and pod |
+| Application Logs | Kibana / Grafana Loki | Searchable logs with severity filters |
+| Distributed Traces | Jaeger / Tempo | Request traces, service dependency map |
+| SLO Dashboard | Grafana | Error budget burn rate, SLO compliance over time |
+
+---
+
+## 🚨 Incident Response & Recovery
+
+### Severity Classification
+
+| Severity | Definition | Initial Response | Communication Channel |
+|---|---|---|---|
+| SEV-1 Critical | Full service outage or confirmed data loss | < 15 minutes | PagerDuty page + `#incidents` Slack |
+| SEV-2 High | Significant degradation affecting multiple users | < 30 minutes | PagerDuty page + `#incidents` Slack |
+| SEV-3 Medium | Partial degradation with available workaround | < 4 hours | `#incidents` Slack ticket |
+| SEV-4 Low | Minor issue, no user-visible impact | Next business day | JIRA/GitHub issue |
+
+### Recovery Runbook
+
+**Step 1 — Initial Assessment**
+
+```bash
+# Check pod health
+kubectl get pods -n <namespace> -l app=<project-name> -o wide
+
+# Review recent pod logs
+kubectl logs -n <namespace> -l app=<project-name> --since=30m --tail=200
+
+# Check recent cluster events
+kubectl get events -n <namespace> --sort-by='.lastTimestamp' | tail -30
+
+# Describe failing pod for detailed diagnostics
+kubectl describe pod <pod-name> -n <namespace>
+```
+
+**Step 2 — Health Validation**
+
+```bash
+# Verify application health endpoint
+curl -sf https://<service-endpoint>/health | jq .
+
+# Check metrics availability
+curl -sf https://<service-endpoint>/metrics | grep -E "^app_"
+
+# Run automated smoke tests
+./scripts/smoke-test.sh --env <environment> --timeout 120
+```
+
+**Step 3 — Rollback Procedure**
+
+```bash
+# Initiate deployment rollback
+kubectl rollout undo deployment/<deployment-name> -n <namespace>
+
+# Monitor rollback progress
+kubectl rollout status deployment/<deployment-name> -n <namespace> --timeout=300s
+
+# Validate service health after rollback
+curl -sf https://<service-endpoint>/health | jq .status
+```
+
+**Step 4 — Post-Incident**
+
+- [ ] Update incident timeline in `#incidents` channel
+- [ ] Create post-incident review ticket within 24 hours (SEV-1/2)
+- [ ] Document root cause and corrective actions
+- [ ] Update runbook with new learnings
+- [ ] Review and update alerts if gaps were identified
+
+---
+
+## 🛡️ Compliance & Regulatory Controls
+
+### Control Mappings
+
+| Control | Framework | Requirement | Implementation |
+|---|---|---|---|
+| Encryption at rest | SOC2 CC6.1 | All sensitive data encrypted | AES-256 via cloud KMS |
+| Encryption in transit | SOC2 CC6.7 | TLS 1.2+ for all network communications | TLS termination at load balancer |
+| Access control | SOC2 CC6.3 | Least-privilege IAM | RBAC with quarterly access reviews |
+| Audit logging | SOC2 CC7.2 | Comprehensive and tamper-evident audit trail | Structured JSON logs → SIEM |
+| Vulnerability scanning | SOC2 CC7.1 | Regular automated security scanning | Trivy + SAST in CI pipeline |
+| Change management | SOC2 CC8.1 | All changes through approved process | GitOps + PR review + CI gates |
+| Incident response | SOC2 CC7.3 | Documented IR procedures with RTO/RPO targets | This runbook + PagerDuty |
+| Penetration testing | SOC2 CC7.1 | Annual third-party penetration test | External pentest + remediation |
+
+### Data Classification
+
+| Data Type | Classification | Retention Policy | Protection Controls |
+|---|---|---|---|
+| Application logs | Internal | 90 days hot / 1 year cold | Encrypted at rest |
+| User PII | Confidential | Per data retention policy | KMS + access controls + masking |
+| Service credentials | Restricted | Rotated every 90 days | Vault-managed lifecycle |
+| Metrics and telemetry | Internal | 15 days hot / 1 year cold | Standard encryption |
+| Audit events | Restricted | 7 years (regulatory requirement) | Immutable append-only log |
+| Backup data | Confidential | 30 days incremental / 1 year full | Encrypted + separate key material |
+
+---
+
+## 👥 Team & Collaboration
+
+### Project Ownership
+
+| Role | Responsibility | Team |
+|---|---|---|
+| Technical Lead | Architecture decisions, design reviews, merge approvals | Platform Engineering |
+| QA / Reliability Lead | Test strategy, quality gates, SLO definitions | QA & Reliability |
+| Security Lead | Threat modeling, security controls, vulnerability triage | Security Engineering |
+| Operations Lead | Deployment, runbook ownership, incident coordination | Platform Operations |
+| Documentation Owner | README freshness, evidence links, policy compliance | Project Maintainers |
+
+### Development Workflow
+
+```mermaid
+flowchart LR
+  A[Feature Branch] --> B[Local Tests Pass]
+  B --> C[Pull Request Opened]
+  C --> D[Automated CI Pipeline]
+  D --> E[Security Scan + Lint]
+  E --> F[Peer Code Review]
+  F --> G[Merge to Main]
+  G --> H[CD to Staging]
+  H --> I[Acceptance Tests]
+  I --> J[Production Deploy]
+  J --> K[Post-Deploy Monitoring]
+```
+
+### Contribution Checklist
+
+Before submitting a pull request to this project:
+
+- [ ] All unit tests pass locally (`make test-unit`)
+- [ ] Integration tests pass in local environment (`make test-integration`)
+- [ ] No new critical or high security findings from SAST/DAST scan
+- [ ] README and inline documentation updated to reflect changes
+- [ ] Architecture diagram updated if component structure changed
+- [ ] Risk register reviewed and updated if new risks were introduced
+- [ ] Roadmap milestones updated to reflect current delivery status
+- [ ] Evidence links verified as valid and reachable
+- [ ] Performance impact assessed for changes in hot code paths
+- [ ] Rollback plan documented for any production infrastructure change
+- [ ] Changelog entry added under `[Unreleased]` section
+
+---
+
+## 📚 Extended References
+
+### Internal Documentation
+
+| Document | Location | Purpose |
+|---|---|---|
+| Architecture Decision Records | `./docs/adr/` | Historical design decisions and rationale |
+| Threat Model | `./docs/threat-model.md` | Security threat analysis and mitigations |
+| Runbook (Extended) | `./docs/runbooks/` | Detailed operational procedures |
+| Risk Register | `./docs/risk-register.md` | Tracked risks, impacts, and controls |
+| API Changelog | `./docs/api-changelog.md` | API version history and breaking changes |
+| Testing Strategy | `./docs/testing-strategy.md` | Full test pyramid definition |
+
+### External References
+
+| Resource | Description |
+|---|---|
+| [12-Factor App](https://12factor.net) | Cloud-native application methodology |
+| [OWASP Top 10](https://owasp.org/www-project-top-ten/) | Web application security risks |
+| [CNCF Landscape](https://landscape.cncf.io) | Cloud-native technology landscape |
+| [SRE Handbook](https://sre.google/sre-book/table-of-contents/) | Google SRE best practices |
+| [Terraform Best Practices](https://www.terraform-best-practices.com) | IaC conventions and patterns |
+| [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework) | Security controls framework |
+
+---
+
+# 📘 Project README Template (Portfolio Standard)
+
+> **Status key:** 🟢 Done · 🟠 In Progress · 🔵 Planned · 🔄 Recovery/Rebuild · 📝 Documentation Pending
+
+## 🎯 Overview
+This README has been expanded to align with the portfolio documentation standard for **PRJ SDE 002**. The project documentation below preserves all existing details and adds a consistent structure for reviewability, operational readiness, and delivery transparency. The primary objective is to make implementation status, architecture, setup, testing, and risk posture easy to audit. Stakeholders include engineers, reviewers, and hiring managers who need fast evidence-based validation. Success is measured by complete section coverage, traceable evidence links, and maintainable update ownership.
+
+### Outcomes
+- Consistent documentation quality across the portfolio.
+- Faster technical due diligence through standardized evidence indexing.
+- Clear status tracking with explicit in-scope and deferred work.
+
+## 📌 Scope & Status
+
+| Area | Status | Notes | Next Milestone |
+|---|---|---|---|
+| Core implementation | 🟠 In Progress | Existing project content preserved and standardized sections added. | Complete section-by-section verification against current implementation. |
+| Ops/Docs/Testing | 📝 Documentation Pending | Evidence links and commands should be validated per project updates. | Refresh command outputs and evidence after next major change. |
+
+> **Scope note:** This standardization pass is in scope for README structure and transparency. Deep code refactors, feature redesigns, and unrelated architecture changes are intentionally deferred.
+
+## 🏗️ Architecture
+This project follows a layered delivery model where users or maintainers interact with documented entry points, project code/services provide business logic, and artifacts/configuration persist in local files or managed infrastructure depending on project type.
+
+```mermaid
+flowchart LR
+  A[Client/User] --> B[Frontend/API or CLI]
+  B --> C[Service or Project Logic]
+  C --> D[(Data/Artifacts/Infrastructure)]
+```
+
+| Component | Responsibility | Key Interfaces |
+|---|---|---|
+| Documentation (`README.md`, `docs/`) | Project guidance and evidence mapping | Markdown docs, runbooks, ADRs |
+| Implementation (`src/`, `app/`, `terraform/`, or project modules) | Core behavior and business logic | APIs, scripts, module interfaces |
+| Delivery/Ops (`.github/`, `scripts/`, tests) | Validation and operational checks | CI workflows, test commands, runbooks |
+
+## 🚀 Setup & Runbook
+
+### Prerequisites
+- Runtime/tooling required by this project (see existing sections below).
+- Access to environment variables/secrets used by this project.
+- Local dependencies (CLI tools, package managers, or cloud credentials).
+
+### Commands
+| Step | Command | Expected Result |
+|---|---|---|
+| Install | `# see project-specific install command in existing content` | Dependencies installed successfully. |
+| Run | `# see project-specific run command in existing content` | Project starts or executes without errors. |
+| Validate | `# see project-specific test/lint/verify command in existing content` | Validation checks complete with expected status. |
+
+### Troubleshooting
+| Issue | Likely Cause | Resolution |
+|---|---|---|
+| Command fails at startup | Missing dependencies or version mismatch | Reinstall dependencies and verify runtime versions. |
+| Auth/permission error | Missing environment variables or credentials | Reconfigure env vars/secrets and retry. |
+| Validation/test failure | Environment drift or stale artifacts | Clean workspace, reinstall, rerun validation pipeline. |
+
+## ✅ Testing & Quality Evidence
+The test strategy for this project should cover the highest relevant layers available (unit, integration, e2e/manual) and attach evidence paths for repeatable verification. Existing test notes and artifacts remain preserved below.
+
+| Test Type | Command / Location | Current Result | Evidence Link |
+|---|---|---|---|
+| Unit | `# project-specific` | n/a | `./tests` or project-specific path |
+| Integration | `# project-specific` | n/a | Project integration test docs/scripts |
+| E2E/Manual | `# project-specific` | n/a | Screenshots/runbook if available |
+
+### Known Gaps
+- Project-specific command results may need refresh if implementation changed recently.
+- Some evidence links may remain planned until next verification cycle.
+
+## 🔐 Security, Risk & Reliability
+
+| Risk | Impact | Current Control | Residual Risk |
+|---|---|---|---|
+| Misconfigured runtime or secrets | High | Documented setup prerequisites and env configuration | Medium |
+| Incomplete test coverage | Medium | Multi-layer testing guidance and evidence index | Medium |
+| Deployment/runtime regressions | Medium | CI/CD and runbook checkpoints | Medium |
+
+### Reliability Controls
+- Backups/snapshots based on project environment requirements.
+- Monitoring and alerting where supported by project stack.
+- Rollback path documented in project runbooks or deployment docs.
+- Runbook ownership maintained via documentation freshness policy.
+
+## 🔄 Delivery & Observability
+
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[CI Checks]
+  B --> C[Deploy or Release]
+  C --> D[Monitoring]
+  D --> E[Feedback Loop]
+```
+
+| Signal | Source | Threshold/Expectation | Owner |
+|---|---|---|---|
+| Error rate | CI/runtime logs | No sustained critical failures | Project owner |
+| Latency/Runtime health | App metrics or manual verification | Within expected baseline for project type | Project owner |
+| Availability | Uptime checks or deployment health | Service/jobs complete successfully | Project owner |
+
+## 🗺️ Roadmap
+
+| Milestone | Status | Target | Owner | Dependency/Blocker |
+|---|---|---|---|---|
+| README standardization alignment | 🟠 In Progress | Current cycle | Project owner | Requires per-project validation of commands/evidence |
+| Evidence hardening and command verification | 🔵 Planned | Next cycle | Project owner | Access to execution environment and tooling |
+| Documentation quality audit pass | 🔵 Planned | Monthly | Project owner | Stable implementation baseline |
+
+## 📎 Evidence Index
+- [Repository root](./)
+- [Documentation directory](./docs/)
+- [Tests directory](./tests/)
+- [CI workflows](./.github/workflows/)
+- [Project implementation files](./)
+
+## 🧾 Documentation Freshness
+
+| Cadence | Action | Owner |
+|---|---|---|
+| Per major merge | Update status + milestone notes | Project owner |
+| Weekly | Validate links and evidence index | Project owner |
+| Monthly | README quality audit | Project owner |
+
+## 11) Final Quality Checklist (Before Merge)
+
+- [ ] Status legend is present and used consistently
+- [ ] Architecture diagram renders in GitHub markdown preview
+- [ ] Setup commands are runnable and validated
+- [ ] Testing table includes current evidence
+- [ ] Risk/reliability controls are documented
+- [ ] Roadmap includes next milestones
+- [ ] Evidence links resolve correctly
+- [ ] README reflects current implementation state
+

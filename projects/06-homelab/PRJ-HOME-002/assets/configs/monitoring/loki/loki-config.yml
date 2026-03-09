@@ -1,3 +1,74 @@
+# Loki Configuration - Complete Production Setup
+# =====================================================
+# Version: Loki 2.9.0
+# Purpose: Centralized log aggregation for homelab infrastructure
+# Last Updated: November 6, 2025
+#
+# Configuration Philosophy:
+# ------------------------
+# This Loki configuration is designed for a homelab environment with:
+# - 10-15 log sources (VMs, containers, services)
+# - 30-day log retention (sufficient for troubleshooting, not excessive storage)
+# - Single-node deployment (multi-tenancy disabled for simplicity)
+# - BoltDB index (embedded database, no external DB required)
+# - Filesystem storage (simple, reliable, easy to backup)
+# - Conservative resource limits (prevent runaway log ingestion)
+#
+# Key Design Decisions:
+# ---------------------
+# 1. Storage Backend: Filesystem
+#    - Simple and reliable (no S3/GCS complexity for homelab)
+#    - Easy to backup with standard tools (rsync, Restic)
+#    - BoltDB shipper for index (embedded, no external DB)
+#    - Data stored in /loki/chunks (mounted volume)
+#
+# 2. Retention: 30 days
+#    - Balances storage cost vs. troubleshooting needs
+#    - Typical homelab issues discovered within days, not months
+#    - Can be extended to 90 days if storage allows
+#
+# 3. Ingestion Limits:
+#    - 5MB/s per stream (prevents single source from overwhelming)
+#    - 10000 streams per user (more than sufficient for homelab)
+#    - 256KB max line size (handles large stack traces)
+#
+# 4. Compaction:
+#    - Enabled for storage efficiency
+#    - Runs every 10 minutes
+#    - Merges small chunks into larger ones
+#
+# 5. Query Limits:
+#    - 5000 entries per query (reasonable for UI performance)
+#    - 30-day max query range (matches retention)
+#
+# =====================================================
+
+# =====================================================
+# SERVER CONFIGURATION
+# =====================================================
+# Controls HTTP and gRPC server behavior
+auth_enabled: false  # Multi-tenancy disabled (single homelab user)
+
+server:
+  # HTTP server for API queries and health checks
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+  # Timeouts
+  http_server_read_timeout: 60s
+  http_server_write_timeout: 60s
+  http_server_idle_timeout: 120s
+
+  # Logging
+  log_level: info
+  log_format: logfmt
+
+# =====================================================
+# INGESTER CONFIGURATION
+# =====================================================
+# Controls how logs are buffered in memory before flushing to storage
+ingester:
+  # Lifecycle management
 # Loki Configuration - Production Homelab Setup
 # ==============================================
 # Last Updated: November 6, 2025
@@ -16,6 +87,73 @@ ingester:
     ring:
       kvstore:
         store: inmemory
+      replication_factor: 1  # Single node, no replication needed
+
+    # Shutdown behavior
+    final_sleep: 0s  # Don't wait before shutdown
+
+  # Chunk management
+  chunk_idle_period: 1h        # Flush chunks idle for 1 hour
+  chunk_block_size: 262144     # 256KB chunk size (balance memory vs. I/O)
+  chunk_target_size: 1572864   # Target 1.5MB before flushing
+  chunk_retain_period: 30s     # Keep chunks in memory 30s after flush
+
+  # Write-ahead log (WAL) for durability
+  wal:
+    enabled: true
+    dir: /loki/wal
+    checkpoint_duration: 5m
+    flush_on_shutdown: true
+    replay_memory_ceiling: 1GB
+
+  # Max transfer size for gRPC
+  max_transfer_size: 0  # No limit
+
+# =====================================================
+# SCHEMA CONFIGURATION
+# =====================================================
+# Defines index and chunk storage schema (versioned for upgrades)
+schema_config:
+  configs:
+    # Schema version 11 (current stable)
+    - from: 2024-01-01
+      store: boltdb-shipper       # Index storage (embedded BoltDB)
+      object_store: filesystem    # Chunk storage (local filesystem)
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h               # Create new index every 24 hours
+
+# =====================================================
+# STORAGE CONFIGURATION
+# =====================================================
+storage_config:
+  # BoltDB Shipper (index storage)
+  boltdb_shipper:
+    active_index_directory: /loki/boltdb-shipper-active
+    cache_location: /loki/boltdb-shipper-cache
+    cache_ttl: 24h
+    shared_store: filesystem
+
+    # Index compaction for efficiency
+    compactor:
+      working_directory: /loki/boltdb-shipper-compactor
+      shared_store: filesystem
+      compaction_interval: 10m
+      retention_enabled: true
+      retention_delete_delay: 2h
+      retention_delete_worker_count: 150
+
+  # Filesystem storage (chunk data)
+  filesystem:
+    directory: /loki/chunks
+
+# =====================================================
+# COMPACTOR CONFIGURATION
+# =====================================================
+# Merges small index files into larger ones for efficiency
+compactor:
+  working_directory: /loki/boltdb-shipper-compactor
       replication_factor: 1
   chunk_idle_period: 30m
   chunk_block_size: 262144
@@ -48,6 +186,219 @@ compactor:
   compaction_interval: 10m
   retention_enabled: true
   retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+  delete_request_cancel_period: 24h
+
+# =====================================================
+# LIMITS CONFIGURATION
+# =====================================================
+# Resource limits to prevent abuse and ensure stability
+limits_config:
+  # Ingestion limits
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h  # Reject logs older than 7 days
+  creation_grace_period: 10m        # Allow logs from future (clock skew)
+
+  # Rate limits
+  ingestion_rate_mb: 10             # Max 10MB/s ingestion per tenant
+  ingestion_burst_size_mb: 20       # Allow 20MB burst
+  per_stream_rate_limit: 5MB        # Max 5MB/s per stream
+  per_stream_rate_limit_burst: 20MB # Allow 20MB burst per stream
+
+  # Cardinality limits
+  max_streams_per_user: 10000       # Max unique label combinations
+  max_global_streams_per_user: 10000
+
+  # Line size limits
+  max_line_size: 256KB              # Max log line size (large stack traces)
+  max_line_size_truncate: false     # Reject oversized lines, don't truncate
+
+  # Query limits
+  max_entries_limit_per_query: 5000 # Return max 5000 log lines per query
+  max_query_length: 721h            # Max 30 days query range
+  max_query_parallelism: 32         # Parallel query execution
+  max_query_series: 1000            # Max series per query
+
+  # Chunk limits
+  max_chunks_per_query: 2000000     # Prevent OOM from huge queries
+
+  # Cache limits
+  max_cache_freshness_per_query: 10m
+
+  # Label limits
+  max_label_name_length: 1024
+  max_label_value_length: 2048
+  max_label_names_per_series: 30
+
+  # Retention (applied per stream based on labels)
+  retention_period: 720h            # 30 days global retention
+
+# =====================================================
+# CHUNK STORE CONFIGURATION
+# =====================================================
+# Controls chunk caching and retrieval
+chunk_store_config:
+  # Chunk caching
+  chunk_cache_config:
+    enable_fifocache: true
+    fifocache:
+      max_size_bytes: 1GB           # 1GB chunk cache
+      ttl: 1h
+
+  # Write deduplication
+  write_dedupe_cache_config:
+    enable_fifocache: true
+    fifocache:
+      max_size_bytes: 100MB
+      ttl: 10m
+
+  # Query performance
+  max_look_back_period: 720h        # Match retention period
+  cache_lookback_period: 0s         # No cache lookback (always fresh)
+
+# =====================================================
+# QUERIER CONFIGURATION
+# =====================================================
+# Controls query execution and caching
+querier:
+  # Query parallelization
+  max_concurrent: 10                # Max 10 concurrent queries
+  query_timeout: 300s               # 5 minute query timeout
+
+  # Query optimization
+  query_ingesters_within: 3h        # Query ingesters for recent data
+  engine:
+    timeout: 300s
+    max_look_back_period: 30s       # Look back 30s for recent data
+
+# =====================================================
+# QUERY FRONTEND CONFIGURATION
+# =====================================================
+# Optional query frontend for splitting and caching
+query_frontend:
+  # Query splitting for parallelization
+  max_outstanding_per_tenant: 100
+  compress_responses: true
+
+  # Parallelization
+  parallelise_shardable_queries: true
+
+  # Results caching
+  results_cache:
+    cache:
+      enable_fifocache: true
+      fifocache:
+        max_size_bytes: 500MB
+        ttl: 24h
+
+# =====================================================
+# TABLE MANAGER CONFIGURATION
+# =====================================================
+# Manages index table lifecycle and retention
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 720h            # 30 days retention
+
+# =====================================================
+# RULER CONFIGURATION (Optional)
+# =====================================================
+# For alerting based on log patterns (future enhancement)
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /loki/rules-temp
+  alertmanager_url: http://192.168.40.30:9093
+  ring:
+    kvstore:
+      store: inmemory
+  enable_api: true
+  enable_alertmanager_v2: true
+
+# =====================================================
+# ANALYTICS CONFIGURATION
+# =====================================================
+# Disable analytics reporting (privacy)
+analytics:
+  reporting_enabled: false
+
+# =====================================================
+# OPERATIONAL NOTES
+# =====================================================
+#
+# Health Check:
+# curl http://192.168.40.30:3100/ready
+#
+# Query Logs (LogQL):
+# curl -G -s "http://192.168.40.30:3100/loki/api/v1/query_range" \
+#   --data-urlencode 'query={job="syslog"}' \
+#   --data-urlencode 'start=1h' | jq .
+#
+# View Ingestion Rate:
+# curl http://192.168.40.30:3100/metrics | grep loki_ingester_bytes_received_total
+#
+# Check Active Streams:
+# curl http://192.168.40.30:3100/metrics | grep loki_ingester_streams
+#
+# Configuration Validation:
+# docker run --rm -v $(pwd)/loki-config.yml:/etc/loki/config.yml \
+#   grafana/loki:2.9.0 -config.file=/etc/loki/config.yml -verify-config
+#
+# Storage Size Estimation:
+# - Average log rate: 100 KB/s across all sources
+# - Daily volume: 100 KB/s * 86400s = 8.6 GB/day
+# - 30-day retention: 8.6 GB * 30 = ~260 GB
+# - With compression (typical 10:1): ~26 GB actual storage
+#
+# Common LogQL Queries:
+# - All logs from service: {service="immich"}
+# - Errors only: {job="docker"} |= "error" != "context canceled"
+# - Rate of errors: rate({job="docker"} |= "error"[5m])
+# - Top 10 error messages: topk(10, sum by (message) (count_over_time({job="docker"} |= "error"[1h])))
+#
+# Troubleshooting:
+# - High memory usage: Reduce max_look_back_period, lower chunk_cache_config max_size_bytes
+# - Slow queries: Add more specific label filters, reduce query range
+# - Missing logs: Check Promtail status, verify Loki ingestion metrics
+# - Storage growing too fast: Review retention period, enable compaction, check for log spam
+#
+# Retention Policy:
+# - Default: 30 days for all logs
+# - Override per stream: Add retention rules in limits_config
+# - Example override: Keep critical logs 90 days, debug logs 7 days
+#
+# Backup Strategy:
+# 1. Stop Loki container
+# 2. Backup /loki/chunks and /loki/boltdb-shipper-active directories
+# 3. Store backup offsite (TrueNAS, cloud)
+# 4. Test restore quarterly
+#
+# Performance Tuning:
+# - For high log volume (>1GB/day): Increase ingestion_rate_mb to 20
+# - For many sources (>50): Increase max_streams_per_user to 50000
+# - For large queries: Increase max_entries_limit_per_query to 10000
+# - For more caching: Increase chunk_cache_config max_size_bytes to 2GB
+#
+# Integration with Grafana:
+# 1. Add Loki datasource: http://192.168.40.30:3100
+# 2. Test connection with query: {job="syslog"}
+# 3. Import dashboards from grafana.com/grafana/dashboards
+# 4. Recommended dashboard IDs: 13639, 15141, 15324
+#
+# Security Considerations:
+# - auth_enabled: false (single-user homelab, behind firewall)
+# - For external access: Enable auth, use Nginx proxy with basic auth
+# - Sensitive data: Consider log masking in Promtail pipelines
+# - Access control: Firewall rules to restrict port 3100 access
+#
+# Scaling Considerations (Future):
+# - Current config supports: 10-20 sources, 10-50 GB/day, 100-500 queries/day
+# - For scaling: Move to S3/GCS storage, add read replicas, enable multi-tenancy
+# - For HA: Deploy 3 Loki instances with memberlist clustering
+#
+# =====================================================
 
 limits_config:
   ingestion_rate_mb: 10

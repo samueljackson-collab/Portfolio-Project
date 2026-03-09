@@ -1,0 +1,63 @@
+---
+- name: Ensure base dependencies are present
+  package:
+    name: "{{ system_packages }}"
+    state: present
+
+- name: Enable and start Docker daemon
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Create application directories
+  file:
+    path: "{{ release_root }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ shared_dirs }}"
+
+- name: Render service environment file
+  template:
+    src: env.j2
+    dest: "{{ release_root }}/env/app.env"
+    mode: '0640'
+
+- name: Deploy application container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: "{{ app_image }}"
+    state: started
+    restart_policy: unless-stopped
+    env_file: "{{ release_root }}/env/app.env"
+    published_ports:
+      - "{{ app_port }}:{{ app_port }}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:{{ app_port }}/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+- name: Wait for healthcheck
+  uri:
+    url: "{{ healthcheck_endpoint }}"
+    status_code: 200
+  register: app_health
+  retries: 5
+  delay: 5
+  until: app_health.status == 200
+
+- name: Record deployment metadata
+  copy:
+    dest: "{{ release_root }}/logs/deployment.json"
+    content: |
+      {
+        "revision": "{{ lookup('env', 'DEPLOY_REVISION') | default('unknown', true) }}",
+        "environment": "{{ app_env }}",
+        "timestamp": "{{ ansible_date_time.iso8601 }}",
+        "host": "{{ inventory_hostname }}"
+      }
+    mode: '0644'

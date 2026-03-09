@@ -353,25 +353,25 @@ tail -100 /var/log/flink/flink-*-jobmanager-*.log | grep ERROR
 
 #### Severity Classification
 
-**P0: Complete Outage**
+### P0: Complete Outage
 - Kafka cluster completely down
 - All Flink jobs failed
 - Data loss detected
 - Zero message throughput
 
-**P1: Degraded Service**
+### P1: Degraded Service
 - One or more Kafka brokers down
 - Flink job repeatedly failing
 - High consumer lag (>10,000 messages)
 - Checkpoint failures (>5% failure rate)
 
-**P2: Warning State**
+### P2: Warning State
 - Slow event processing (>500ms p99)
 - Moderate consumer lag (1,000-10,000 messages)
 - Occasional checkpoint failures
 - High disk usage (>80%)
 
-**P3: Informational**
+### P3: Informational
 - Minor performance degradation
 - Low consumer lag (<1,000 messages)
 - Single checkpoint failure

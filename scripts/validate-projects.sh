@@ -1,233 +1,122 @@
+
 #!/bin/bash
 set -euo pipefail
 
 # Project Validation Script
-# Validates all 20 projects for completeness and standards compliance
+# Validates the P01–P20 canonical projects under `projects/`.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECTS_DIR="${SCRIPT_DIR}/../projects-new"
+PROJECTS_DIR="${SCRIPT_DIR}/../projects"
 
-# Color output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+GREEN='[0;32m'
+RED='[0;31m'
+YELLOW='[1;33m'
+BLUE='[0;34m'
+NC='[0m'
 
-# Counters
+required_files=("README.md" "CHANGELOG.md" "Makefile" ".env.example")
+optional_files=("RUNBOOK.md" "PLAYBOOK.md" "HANDBOOK.md")
+
 total_checks=0
 passed_checks=0
 failed_checks=0
+warning_checks=0
+project_count=0
 
-# Function to check if file exists
-check_file() {
-    local file="$1"
-    local description="$2"
-
+check_required_file() {
+    local path="$1"
+    local label="$2"
     total_checks=$((total_checks + 1))
-
-    if [ -f "$file" ]; then
-        echo -e "  ${GREEN}✓${NC} $description"
+    if [[ -f "$path" ]]; then
+        echo -e "  ${GREEN}✓${NC} ${label}"
         passed_checks=$((passed_checks + 1))
-        return 0
     else
-        echo -e "  ${RED}✗${NC} $description (missing: $file)"
+        echo -e "  ${RED}✗${NC} ${label} (missing: ${path})"
         failed_checks=$((failed_checks + 1))
-        return 1
     fi
 }
 
-# Function to check if directory exists
+check_optional_file() {
+    local path="$1"
+    local label="$2"
+    total_checks=$((total_checks + 1))
+    if [[ -f "$path" ]]; then
+        echo -e "  ${GREEN}✓${NC} ${label}"
+        passed_checks=$((passed_checks + 1))
+    else
+        echo -e "  ${YELLOW}⚠${NC} ${label} (optional)"
+        warning_checks=$((warning_checks + 1))
+    fi
+}
+
 check_dir() {
-    local dir="$1"
-    local description="$2"
-
+    local path="$1"
+    local label="$2"
     total_checks=$((total_checks + 1))
-
-    if [ -d "$dir" ]; then
-        echo -e "  ${GREEN}✓${NC} $description"
+    if [[ -d "$path" ]]; then
+        echo -e "  ${GREEN}✓${NC} ${label}"
         passed_checks=$((passed_checks + 1))
-        return 0
     else
-        echo -e "  ${RED}✗${NC} $description (missing: $dir)"
-        failed_checks=$((failed_checks + 1))
-        return 1
+        echo -e "  ${YELLOW}⚠${NC} ${label}"
+        warning_checks=$((warning_checks + 1))
     fi
 }
 
-# Function to validate a single project
 validate_project() {
     local project_dir="$1"
     local project_name=$(basename "$project_dir")
+    echo -e "
+${BLUE}Validating ${project_name}${NC}"
 
-    echo -e "\n${BLUE}Validating ${project_name}${NC}"
+    for file in "${required_files[@]}"; do
+        check_required_file "${project_dir}/${file}" "${file} present"
+    done
 
-    # Check documentation files
-    check_file "${project_dir}/README.md" "README.md exists"
-    check_file "${project_dir}/docs/HANDBOOK.md" "HANDBOOK.md exists"
-    check_file "${project_dir}/docs/RUNBOOK.md" "RUNBOOK.md exists"
-    check_file "${project_dir}/docs/PLAYBOOK.md" "PLAYBOOK.md exists"
-    check_file "${project_dir}/docs/ARCHITECTURE.md" "ARCHITECTURE.md exists"
+    for file in "${optional_files[@]}"; do
+        check_optional_file "${project_dir}/${file}" "${file} present"
+    done
 
-    # Check configuration files
-    check_file "${project_dir}/Makefile" "Makefile exists"
-    check_file "${project_dir}/.env.example" ".env.example exists"
-    check_file "${project_dir}/.gitignore" ".gitignore exists"
-    check_file "${project_dir}/Dockerfile" "Dockerfile exists"
-
-    # Check Python files
-    check_file "${project_dir}/requirements.txt" "requirements.txt exists"
-    check_file "${project_dir}/requirements-dev.txt" "requirements-dev.txt exists"
-
-    # Check directory structure
-    check_dir "${project_dir}/src" "src/ directory exists"
-    check_dir "${project_dir}/tests" "tests/ directory exists"
-    check_dir "${project_dir}/tests/unit" "tests/unit/ directory exists"
-    check_dir "${project_dir}/scripts" "scripts/ directory exists"
-    check_dir "${project_dir}/infrastructure" "infrastructure/ directory exists"
-    check_dir "${project_dir}/infrastructure/terraform" "infrastructure/terraform/ directory exists"
-    check_dir "${project_dir}/ci" "ci/ directory exists"
-
-    # Check source files
-    check_file "${project_dir}/src/main.py" "src/main.py exists"
-    check_file "${project_dir}/tests/unit/test_main.py" "tests/unit/test_main.py exists"
-
-    # Check IaC files
-    check_file "${project_dir}/infrastructure/terraform/main.tf" "Terraform main.tf exists"
-    check_file "${project_dir}/infrastructure/terraform/variables.tf" "Terraform variables.tf exists"
-
-    # Check CI/CD
-    check_file "${project_dir}/ci/ci-cd.yml" "CI/CD workflow exists"
-
-    # Check README content
-    if [ -f "${project_dir}/README.md" ]; then
-        total_checks=$((total_checks + 3))
-
-        if grep -q "Quick Start" "${project_dir}/README.md"; then
-            echo -e "  ${GREEN}✓${NC} README contains Quick Start section"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} README missing Quick Start section"
-            failed_checks=$((failed_checks + 1))
-        fi
-
-        if grep -q "Features" "${project_dir}/README.md"; then
-            echo -e "  ${GREEN}✓${NC} README contains Features section"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} README missing Features section"
-            failed_checks=$((failed_checks + 1))
-        fi
-
-        if grep -q "Documentation" "${project_dir}/README.md"; then
-            echo -e "  ${GREEN}✓${NC} README contains Documentation section"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} README missing Documentation section"
-            failed_checks=$((failed_checks + 1))
-        fi
+    if [[ -f "${project_dir}/requirements.txt" ]]; then
+        check_required_file "${project_dir}/requirements-dev.txt" "requirements-dev.txt present"
     fi
 
-    # Check HANDBOOK content
-    if [ -f "${project_dir}/docs/HANDBOOK.md" ]; then
-        total_checks=$((total_checks + 3))
-
-        if grep -q "Code Standards" "${project_dir}/docs/HANDBOOK.md"; then
-            echo -e "  ${GREEN}✓${NC} HANDBOOK contains Code Standards"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} HANDBOOK missing Code Standards"
-            failed_checks=$((failed_checks + 1))
-        fi
-
-        if grep -q "Testing Requirements" "${project_dir}/docs/HANDBOOK.md"; then
-            echo -e "  ${GREEN}✓${NC} HANDBOOK contains Testing Requirements"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} HANDBOOK missing Testing Requirements"
-            failed_checks=$((failed_checks + 1))
-        fi
-
-        if grep -q "Security Guidelines" "${project_dir}/docs/HANDBOOK.md"; then
-            echo -e "  ${GREEN}✓${NC} HANDBOOK contains Security Guidelines"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} HANDBOOK missing Security Guidelines"
-            failed_checks=$((failed_checks + 1))
-        fi
-    fi
-
-    # Check RUNBOOK content
-    if [ -f "${project_dir}/docs/RUNBOOK.md" ]; then
-        total_checks=$((total_checks + 3))
-
-        if grep -q "Deployment Procedures" "${project_dir}/docs/RUNBOOK.md"; then
-            echo -e "  ${GREEN}✓${NC} RUNBOOK contains Deployment Procedures"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} RUNBOOK missing Deployment Procedures"
-            failed_checks=$((failed_checks + 1))
-        fi
-
-        if grep -q "Troubleshooting" "${project_dir}/docs/RUNBOOK.md"; then
-            echo -e "  ${GREEN}✓${NC} RUNBOOK contains Troubleshooting"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} RUNBOOK missing Troubleshooting"
-            failed_checks=$((failed_checks + 1))
-        fi
-
-        if grep -q "Incident Response" "${project_dir}/docs/RUNBOOK.md"; then
-            echo -e "  ${GREEN}✓${NC} RUNBOOK contains Incident Response"
-            passed_checks=$((passed_checks + 1))
-        else
-            echo -e "  ${YELLOW}⚠${NC} RUNBOOK missing Incident Response"
-            failed_checks=$((failed_checks + 1))
-        fi
+    if [[ -d "${project_dir}/src" ]]; then
+        check_dir "${project_dir}/tests" "tests/ directory"
+        check_dir "${project_dir}/tests/integration" "tests/integration directory"
+        check_dir "${project_dir}/tests/e2e" "tests/e2e directory"
     fi
 }
 
-# Main execution
-echo -e "${BLUE}=== Project Validation Tool ===${NC}"
-echo -e "Validating 20 projects in ${PROJECTS_DIR}"
-
-if [ ! -d "${PROJECTS_DIR}" ]; then
-    echo -e "${RED}Error: Projects directory not found: ${PROJECTS_DIR}${NC}"
+if [[ ! -d "${PROJECTS_DIR}" ]]; then
+    echo -e "${RED}Projects directory not found: ${PROJECTS_DIR}${NC}"
     exit 1
 fi
 
-# Find and validate all projects
-project_count=0
-for project_dir in "${PROJECTS_DIR}"/P*; do
-    if [ -d "$project_dir" ]; then
-        validate_project "$project_dir"
-        project_count=$((project_count + 1))
-    fi
+mapfile -t project_dirs < <(find "${PROJECTS_DIR}" -maxdepth 1 -type d -name 'p[0-9][0-9]-*' | sort)
+
+if [[ ${#project_dirs[@]} -eq 0 ]]; then
+    echo -e "${RED}No P-series projects found under ${PROJECTS_DIR}${NC}"
+    exit 1
+fi
+
+for dir in "${project_dirs[@]}"; do
+    validate_project "$dir"
+    project_count=$((project_count + 1))
+    echo -e "  Path: ${dir}"
+    echo -e "  Summary: $(head -n 1 "$dir/README.md" 2>/dev/null || echo 'README missing')"
+    echo -e "${BLUE}-----------------------------${NC}"
+
 done
 
-# Summary
-echo -e "\n${BLUE}=== Validation Summary ===${NC}"
+echo -e "
+${BLUE}=== Validation Summary ===${NC}"
 echo -e "Projects validated: ${project_count}"
 echo -e "Total checks: ${total_checks}"
 echo -e "${GREEN}Passed: ${passed_checks}${NC}"
 echo -e "${RED}Failed: ${failed_checks}${NC}"
+echo -e "${YELLOW}Warnings: ${warning_checks}${NC}"
 
-# Calculate pass rate
-if [ $total_checks -gt 0 ]; then
-    pass_rate=$((100 * passed_checks / total_checks))
-    echo -e "Pass rate: ${pass_rate}%"
-
-    if [ $pass_rate -ge 95 ]; then
-        echo -e "\n${GREEN}✓ All projects meet quality standards!${NC}"
-        exit 0
-    elif [ $pass_rate -ge 80 ]; then
-        echo -e "\n${YELLOW}⚠ Projects mostly compliant, some improvements needed${NC}"
-        exit 0
-    else
-        echo -e "\n${RED}✗ Projects need significant improvements${NC}"
-        exit 1
-    fi
-else
-    echo -e "\n${RED}✗ No checks performed${NC}"
+if [[ ${failed_checks} -gt 0 ]]; then
     exit 1
 fi
+exit 0

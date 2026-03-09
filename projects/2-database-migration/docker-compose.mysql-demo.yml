@@ -1,0 +1,246 @@
+version: '3.8'
+
+# Docker Compose stack for MySQL to PostgreSQL migration demo
+# This demonstrates cross-database migration using Debezium CDC
+
+services:
+  # MySQL Source Database
+  mysql-source:
+    image: mysql:8.0
+    container_name: migration-mysql-source
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: sourcedb
+      MYSQL_USER: debezium
+      MYSQL_PASSWORD: dbzpass
+    command:
+      - --server-id=1
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --binlog-row-image=FULL
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-source-data:/var/lib/mysql
+      - ./init-scripts/mysql-source-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - migration-network
+
+  # PostgreSQL Target Database
+  postgres-target:
+    image: postgres:15
+    container_name: migration-postgres-target
+    environment:
+      POSTGRES_DB: targetdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-target-data:/var/lib/postgresql/data
+      - ./init-scripts/postgres-target-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Zookeeper (required for Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: migration-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Kafka broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: migration-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - migration-network
+
+  # Debezium Connect (CDC platform)
+  debezium:
+    image: debezium/connect:2.3
+    container_name: migration-debezium
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mysql-source:
+        condition: service_healthy
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: debezium-cluster
+      CONFIG_STORAGE_TOPIC: debezium_configs
+      OFFSET_STORAGE_TOPIC: debezium_offsets
+      STATUS_STORAGE_TOPIC: debezium_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      LOG_LEVEL: INFO
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - migration-network
+
+  # Kafka UI (for monitoring)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: migration-kafka-ui
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: migration-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    ports:
+      - "8080:8080"
+    networks:
+      - migration-network
+
+  # MySQL to PostgreSQL Migration Worker
+  migration-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: migration-worker
+    depends_on:
+      mysql-source:
+        condition: service_healthy
+      postgres-target:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      debezium:
+        condition: service_healthy
+    environment:
+      SOURCE_DB_TYPE: mysql
+      SOURCE_DB_HOST: mysql-source
+      SOURCE_DB_PORT: "3306"
+      SOURCE_DB_NAME: sourcedb
+      SOURCE_DB_USER: debezium
+      SOURCE_DB_PASSWORD: dbzpass
+      TARGET_DB_TYPE: postgresql
+      TARGET_DB_HOST: postgres-target
+      TARGET_DB_PORT: "5432"
+      TARGET_DB_NAME: targetdb
+      TARGET_DB_USER: postgres
+      TARGET_DB_PASSWORD: postgres
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DEBEZIUM_CONNECT_URL: http://debezium:8083
+      LOG_LEVEL: INFO
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./examples:/app/examples
+      - ./logs:/app/logs
+    networks:
+      - migration-network
+    command: ["python", "-m", "src.mysql_to_postgres_migration"]
+
+  # phpMyAdmin (for MySQL management)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: migration-phpmyadmin
+    depends_on:
+      - mysql-source
+    environment:
+      PMA_HOST: mysql-source
+      PMA_USER: root
+      PMA_PASSWORD: rootpass
+    ports:
+      - "8081:80"
+    networks:
+      - migration-network
+
+  # pgAdmin (for PostgreSQL management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: migration-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - migration-network
+
+volumes:
+  mysql-source-data:
+    driver: local
+  postgres-target-data:
+    driver: local
+  zookeeper-data:
+    driver: local
+  zookeeper-logs:
+    driver: local
+  kafka-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+
+networks:
+  migration-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/16

@@ -4,26 +4,50 @@ Main FastAPI application factory.
 This module creates and configures the FastAPI application instance.
 """
 
+import logging
+import time
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.exc import SQLAlchemyError
-import logging
-import time
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import health, auth, content
+from app.routers import (
+    health,
+    auth,
+    content,
+    photos,
+    backup,
+    orchestration,
+    red_team,
+    ransomware,
+    soc,
+    threat_hunting,
+    malware,
+    edr,
+)
 
 
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+# Configure Prometheus metrics instrumentator once during module import
+instrumentator = Instrumentator(
+    should_group_status_codes=True,
+    should_ignore_untemplated=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers={"/metrics"},
+)
 
 
 @asynccontextmanager
@@ -37,6 +61,19 @@ async def lifespan(app: FastAPI):
     if settings.debug:
         logger.warning("Running in debug mode - initializing database")
         await init_db()
+
+    # Warn loudly if the application is using the built-in default secret key.
+    # A predictable SECRET_KEY allows an attacker to forge arbitrary JWT tokens.
+    _default_key_prefix = "development-secret-key"
+    if settings.secret_key.startswith(_default_key_prefix):
+        logger.critical(
+            "SECURITY WARNING: Using the default SECRET_KEY. "
+            "This key is publicly known and MUST be replaced before any "
+            "internet-facing or production deployment. "
+            "Set a random 32+ character value in your .env file."
+        )
+
+    instrumentator.instrument(app).expose(app, include_in_schema=False)
 
     logger.info("Application startup complete")
 
@@ -61,13 +98,16 @@ app = FastAPI(
 
 
 # CORS Middleware
+# allow_headers is restricted to the headers this API actually requires.
+# Wildcard "*" was previously used and would allow any client-injected header,
+# which broadens the attack surface unnecessarily.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
+    expose_headers=["X-Process-Time"],
     max_age=3600,
 )
 
@@ -95,50 +135,45 @@ async def log_requests(request: Request, call_next):
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request,
-    exc: RequestValidationError
-):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle Pydantic validation errors."""
-    logger.warning(f"Validation error: {exc.errors()}")
+    raw_errors = exc.errors()
+    logger.warning(f"Validation error: {raw_errors}")
+
+    sanitized_errors = []
+    for err in raw_errors:
+        ctx = err.get("ctx")
+        if ctx and isinstance(ctx.get("error"), Exception):
+            ctx["error"] = str(ctx["error"])
+        sanitized_errors.append(err)
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "detail": exc.errors(),
-        }
+            "detail": sanitized_errors,
+        },
     )
 
 
 @app.exception_handler(SQLAlchemyError)
-async def sqlalchemy_exception_handler(
-    request: Request,
-    exc: SQLAlchemyError
-):
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
     """Handle database errors."""
     logger.error(f"Database error: {str(exc)}", exc_info=True)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "detail": "An internal error occurred. Please try again later."
-        }
+        content={"detail": "An internal error occurred. Please try again later."},
     )
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(
-    request: Request,
-    exc: Exception
-):
+async def general_exception_handler(request: Request, exc: Exception):
     """Catch-all handler for unexpected errors."""
     logger.error(f"Unexpected error: {str(exc)}", exc_info=True)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "detail": "An unexpected error occurred. Please contact support."
-        }
+        content={"detail": "An unexpected error occurred. Please contact support."},
     )
 
 
@@ -146,6 +181,15 @@ async def general_exception_handler(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(content.router)
+app.include_router(photos.router)
+app.include_router(backup.router)
+app.include_router(orchestration.router)
+app.include_router(red_team.router)
+app.include_router(ransomware.router)
+app.include_router(soc.router)
+app.include_router(threat_hunting.router)
+app.include_router(malware.router)
+app.include_router(edr.router)
 
 
 # Root endpoint
@@ -153,7 +197,7 @@ app.include_router(content.router)
     "/",
     tags=["Root"],
     summary="API Root",
-    description="Get API information and available endpoints"
+    description="Get API information and available endpoints",
 )
 async def root() -> dict:
     """API root endpoint."""
@@ -165,8 +209,11 @@ async def root() -> dict:
         "endpoints": {
             "auth": "/auth (register, login)",
             "content": "/content (CRUD operations)",
-            "health": "/health (status check)"
-        }
+            "photos": "/photos (photo upload and management)",
+            "backup": "/backup (backup status and management)",
+            "health": "/health (status check)",
+            "orchestration": "/orchestration (plans, runs)",
+        },
     }
 
 

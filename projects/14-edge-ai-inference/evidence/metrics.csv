@@ -1,0 +1,4 @@
+name,power_watts,target_latency_ms,runs,p50_ms,p95_ms,avg_ms,throughput_ips,energy_j_per_inf
+Jetson Nano (sim),5.0,45.0,60,45.0,45.0,45.0,22.22222222222222,0.22499999999999998
+Jetson Orin (sim),15.0,12.0,60,12.0,12.0,12.0,83.33333333333334,0.18
+Coral Edge TPU (sim),6.0,20.0,60,20.0,20.0,20.0,50.0,0.12

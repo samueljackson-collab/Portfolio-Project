@@ -1,0 +1,5 @@
+MLflow model registry snapshot
+Model: random_forest_classifier
+Version: 1
+Stage: Production
+Status: READY

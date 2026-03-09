@@ -1,0 +1,20 @@
+{
+  "shares": [
+    {
+      "name": "homelab-backups",
+      "path": "/mnt/tank/homelab/backups",
+      "purpose": "Proxmox Backup Server exports",
+      "browseable": true,
+      "guest_ok": false,
+      "valid_users": ["backup-admin", "proxmox"]
+    },
+    {
+      "name": "homelab-media",
+      "path": "/mnt/tank/homelab/media",
+      "purpose": "Media library for Immich and Plex",
+      "browseable": true,
+      "guest_ok": false,
+      "valid_users": ["media-admin", "immich"]
+    }
+  ]
+}

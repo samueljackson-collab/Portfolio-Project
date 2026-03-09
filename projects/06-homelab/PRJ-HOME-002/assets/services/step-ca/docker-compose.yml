@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  step-ca:
+    image: smallstep/step-ca:0.27.1
+    container_name: step-ca
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./ca.json:/home/step/config/ca.json:ro
+      - step-ca-certs:/home/step/certs
+      - step-ca-secrets:/home/step/secrets
+      - step-ca-db:/home/step/db
+    environment:
+      - STEPCA_INIT_NAME=Homelab Step CA
+      - STEPCA_INIT_DNS_NAMES=ca.homelab.local
+      - STEPCA_INIT_ADDRESS=:9000
+      - STEPCA_INIT_PROVISIONER=homelab-admin
+      - STEPCA_INIT_PASSWORD_FILE=/home/step/secrets/password
+volumes:
+  step-ca-certs:
+  step-ca-secrets:
+  step-ca-db:

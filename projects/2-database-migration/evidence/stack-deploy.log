@@ -1,0 +1,2 @@
+$ docker compose -f compose.demo.yml up -d source-db target-db zookeeper kafka debezium kafka-ui pgadmin
+bash: command not found: docker

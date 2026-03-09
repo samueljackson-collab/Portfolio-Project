@@ -25,6 +25,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 1,
         title: 'Infrastructure Foundations',
+        duration: DEFAULT_WEEK_DURATION,
+        status: 'completed',
         topics: [
           'Terraform AWS Setup',
           'VPC Design & Implementation',
@@ -41,6 +43,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 2,
         title: 'Compute & Load Balancing',
+        duration: '5-7 days',
+        status: 'in-progress',
         topics: [
           'EC2 Auto Scaling Groups',
           'Application Load Balancer',
@@ -57,6 +61,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 3,
         title: 'Database & Storage',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'RDS PostgreSQL Multi-AZ',
           'ElastiCache Redis Cluster',
@@ -73,6 +79,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 4,
         title: 'Container Orchestration',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'EKS Cluster Setup',
           'Node Groups Configuration',
@@ -89,6 +97,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 5,
         title: 'Monitoring & Observability',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Prometheus Setup',
           'Grafana Dashboards',
@@ -105,6 +115,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 6,
         title: 'Event-Driven Architecture',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'SQS Queue Configuration',
           'SNS Topics & Subscriptions',
@@ -121,6 +133,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 7,
         title: 'Disaster Recovery',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Backup Automation',
           'Cross-Region Replication',
@@ -137,6 +151,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 8,
         title: 'Security Hardening',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'IAM Policies & Roles',
           'Secrets Management',
@@ -173,6 +189,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 1,
         title: 'CI/CD Pipeline Setup',
+        duration: '5-7 days',
+        status: 'completed',
         topics: [
           'GitHub Actions Workflows',
           'Multi-stage Pipelines',
@@ -189,6 +207,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 2,
         title: 'GitOps Implementation',
+        duration: '5-7 days',
+        status: 'in-progress',
         topics: [
           'ArgoCD Installation',
           'Application Manifests',
@@ -205,6 +225,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 3,
         title: 'Configuration Management',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Ansible Playbooks',
           'Inventory Management',
@@ -221,6 +243,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 4,
         title: 'Container Registry',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Registry Setup',
           'Image Scanning',
@@ -237,6 +261,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 5,
         title: 'Deployment Strategies',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Blue-Green Deployments',
           'Canary Releases',
@@ -253,6 +279,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 6,
         title: 'Pipeline Optimization',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Build Caching',
           'Parallel Execution',
@@ -289,6 +317,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 1,
         title: 'Test Framework Setup',
+        duration: '5-7 days',
+        status: 'completed',
         topics: [
           'Jest Configuration',
           'Cypress Setup',
@@ -305,6 +335,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 2,
         title: 'API Testing',
+        duration: '5-7 days',
+        status: 'in-progress',
         topics: [
           'REST API Testing',
           'GraphQL Testing',
@@ -321,6 +353,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 3,
         title: 'E2E Testing',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'User Flow Testing',
           'Cross-browser Testing',
@@ -337,6 +371,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 4,
         title: 'Performance Testing',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Load Testing',
           'Stress Testing',
@@ -353,6 +389,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 5,
         title: 'Security Testing',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'OWASP Top 10',
           'Penetration Testing',
@@ -369,6 +407,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 6,
         title: 'CI/CD Integration',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Automated Testing',
           'Quality Gates',
@@ -405,6 +445,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 1,
         title: 'Architecture Fundamentals',
+        duration: '5-7 days',
+        status: 'completed',
         topics: [
           'Design Principles',
           'Architecture Patterns',
@@ -421,6 +463,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 2,
         title: 'Microservices Design',
+        duration: '5-7 days',
+        status: 'in-progress',
         topics: [
           'Service Boundaries',
           'API Gateway Patterns',
@@ -437,6 +481,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 3,
         title: 'Event-Driven Architecture',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Event Sourcing',
           'CQRS Pattern',
@@ -453,6 +499,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 4,
         title: 'Scalability Patterns',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Horizontal Scaling',
           'Caching Strategies',
@@ -469,6 +517,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 5,
         title: 'Security Architecture',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Zero Trust Security',
           'Identity & Access',
@@ -485,6 +535,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 6,
         title: 'Resilience Patterns',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Circuit Breakers',
           'Retry Policies',
@@ -501,6 +553,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 7,
         title: 'Multi-Region Architecture',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Global Load Balancing',
           'Data Replication',
@@ -517,6 +571,8 @@ export const roleContent: Record<RoleKey, RoleContent> = {
       {
         number: 8,
         title: 'Cost Optimization',
+        duration: '5-7 days',
+        status: 'planned',
         topics: [
           'Resource Optimization',
           'Reserved Capacity',

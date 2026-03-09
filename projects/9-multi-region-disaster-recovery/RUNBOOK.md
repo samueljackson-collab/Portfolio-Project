@@ -517,22 +517,22 @@ curl https://status.aws.amazon.com/
 
 #### Severity Classification
 
-**P0: Primary Region Complete Failure**
+### P0: Primary Region Complete Failure
 - All services in primary region unavailable
 - Cannot reach any primary endpoints
 - Multiple health checks failing
 
-**P1: Partial Primary Region Failure**
+### P1: Partial Primary Region Failure
 - Some services degraded in primary region
 - Elevated error rates
 - Replication lag > 10 seconds
 
-**P2: Secondary Region Issues**
+### P2: Secondary Region Issues
 - Secondary region degraded but primary healthy
 - Replication delayed but functional
 - DR drill failures
 
-**P3: Warning State**
+### P3: Warning State
 - Elevated latency between regions
 - Minor replication delays
 - Individual health check failures

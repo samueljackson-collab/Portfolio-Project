@@ -1,0 +1,7 @@
+{
+  "error": "Hardhat compiler download failed (HH502). Deployment/test run could not proceed in this environment.",
+  "network": "hardhat",
+  "deployer": null,
+  "gasUsage": [],
+  "timestamp": "2026-01-21T17:24:31.855325Z"
+}

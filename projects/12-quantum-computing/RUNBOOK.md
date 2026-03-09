@@ -532,25 +532,25 @@ tail -100 logs/portfolio_optimizer.log | grep -i error
 
 #### Severity Classification
 
-**P0: Complete Service Failure**
+### P0: Complete Service Failure
 - All quantum backends unreachable
 - AWS Batch compute environment down
 - All optimization jobs failing
 - Classical fallback also failing
 
-**P1: Degraded Service**
+### P1: Degraded Service
 - Quantum backend unavailable (fallback working)
 - AWS Batch jobs stuck in queue
 - High job failure rate (> 25%)
 - Results not being saved to S3
 
-**P2: Performance Issues**
+### P2: Performance Issues
 - High quantum queue wait times
 - Slow job completion
 - Degraded result quality
 - Intermittent backend connectivity
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual job failure
 - Non-critical algorithm warnings
 - Monitoring gaps

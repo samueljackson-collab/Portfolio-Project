@@ -1,0 +1,8 @@
+Action Item,Project(s),Phase,Priority,Status
+Add GitHub Actions to Critical Projects,"1, 2, 3, 4, 6",Week 1-2,Immediate,Planned
+Create Template Workflow File,All,Week 1-2,Immediate,Planned
+Add pytest to all Python Projects,"2, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 18, 19, 21, 22, 24",Week 3-4,High,Planned
+Create Dockerfile Templates,Python/Node/Terraform templates,Week 5-6,High,Planned
+Dockerization priority projects,"6, 7, 8, 25",Week 5-6,High,Planned
+Add prometheus/metrics support,"1, 6, 7, 23",Week 7-8,High,Planned
+Complete Missing Terraform/CDK Implementations,"2, 3, 4, 5, 8, 11, 14, 15, 16, 17, 20, 23, 25",Week 9-12,Medium,Planned

@@ -1,0 +1,20 @@
+{
+  "plan": {
+    "aws": {
+      "actions": [
+        "create_vpc",
+        "create_s3_bucket"
+      ]
+    },
+    "azure": {
+      "actions": [
+        "create_rg",
+        "create_storage_account"
+      ]
+    }
+  },
+  "apply": {
+    "status": "applied",
+    "resources": 4
+  }
+}

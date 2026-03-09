@@ -435,6 +435,8 @@ pvecm add 192.168.40.10
 
 # 5. Configure storage
 # Add PBS storage:
+# For automation, store the password in an environment variable: export PBS_PASSWORD='your-secret-password'
+# The command will prompt for password if not provided via environment
 pvesm add pbs pbs-backup \
   --server 192.168.40.50 \
   --datastore datastore1 \

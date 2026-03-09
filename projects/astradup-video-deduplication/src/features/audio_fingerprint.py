@@ -29,10 +29,7 @@ class AudioFingerprinter:
         logger.info(f"Initialized AudioFingerprinter with sample_rate={sample_rate}")
 
     def extract_audio(
-        self,
-        video_path: str,
-        output_path: Optional[str] = None,
-        overwrite: bool = True
+        self, video_path: str, output_path: Optional[str] = None, overwrite: bool = True
     ) -> str:
         """
         Extract audio track from video
@@ -56,18 +53,22 @@ class AudioFingerprinter:
         logger.debug(f"Extracting audio from {video_path} to {output_path}")
 
         cmd = [
-            'ffmpeg',
-            '-i', video_path,
-            '-vn',  # No video
-            '-acodec', 'pcm_s16le',
-            '-ar', str(self.sample_rate),
-            '-ac', '1',  # Mono
+            "ffmpeg",
+            "-i",
+            video_path,
+            "-vn",  # No video
+            "-acodec",
+            "pcm_s16le",
+            "-ar",
+            str(self.sample_rate),
+            "-ac",
+            "1",  # Mono
         ]
 
         if overwrite:
-            cmd.append('-y')  # Overwrite
+            cmd.append("-y")  # Overwrite
         else:
-            cmd.append('-n')  # No overwrite
+            cmd.append("-n")  # No overwrite
 
         cmd.append(output_path)
 
@@ -76,11 +77,11 @@ class AudioFingerprinter:
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                timeout=300  # 5 minute timeout
+                timeout=300,  # 5 minute timeout
             )
 
             if result.returncode != 0:
-                error_msg = result.stderr.decode('utf-8', errors='ignore')
+                error_msg = result.stderr.decode("utf-8", errors="ignore")
                 raise RuntimeError(f"FFmpeg failed: {error_msg}")
 
             logger.info(f"Audio extracted successfully: {output_path}")
@@ -107,15 +108,10 @@ class AudioFingerprinter:
         """
         logger.debug(f"Generating fingerprint for: {audio_path}")
 
-        cmd = ['fpcalc', '-json', audio_path]
+        cmd = ["fpcalc", "-json", audio_path]
 
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
 
             if result.returncode != 0:
                 raise RuntimeError(f"fpcalc failed: {result.stderr}")
@@ -123,11 +119,13 @@ class AudioFingerprinter:
             data = json.loads(result.stdout)
 
             fingerprint_data = {
-                'fingerprint': data.get('fingerprint', ''),
-                'duration': data.get('duration', 0)
+                "fingerprint": data.get("fingerprint", ""),
+                "duration": data.get("duration", 0),
             }
 
-            logger.debug(f"Fingerprint generated: duration={fingerprint_data['duration']}s")
+            logger.debug(
+                f"Fingerprint generated: duration={fingerprint_data['duration']}s"
+            )
 
             return fingerprint_data
 
@@ -140,10 +138,7 @@ class AudioFingerprinter:
             raise
 
     def compare_fingerprints(
-        self,
-        fp1: str,
-        fp2: str,
-        method: str = 'jaccard'
+        self, fp1: str, fp2: str, method: str = "jaccard"
     ) -> float:
         """
         Compare two Chromaprint fingerprints
@@ -166,13 +161,13 @@ class AudioFingerprinter:
 
             # Ensure same length by padding
             max_len = max(len(bits1), len(bits2))
-            bits1 = np.pad(bits1, (0, max_len - len(bits1)), mode='constant')
-            bits2 = np.pad(bits2, (0, max_len - len(bits2)), mode='constant')
+            bits1 = np.pad(bits1, (0, max_len - len(bits1)), mode="constant")
+            bits2 = np.pad(bits2, (0, max_len - len(bits2)), mode="constant")
 
-            if method == 'jaccard':
+            if method == "jaccard":
                 # Jaccard similarity
                 similarity = 1.0 - jaccard(bits1, bits2)
-            elif method == 'hamming':
+            elif method == "hamming":
                 # Hamming similarity
                 hamming_dist = np.sum(bits1 != bits2)
                 similarity = 1.0 - (hamming_dist / len(bits1))
@@ -208,10 +203,7 @@ class AudioFingerprinter:
             return np.array([], dtype=np.uint8)
 
     def extract_mfcc(
-        self,
-        audio_path: str,
-        n_mfcc: int = 13,
-        use_librosa: bool = True
+        self, audio_path: str, n_mfcc: int = 13, use_librosa: bool = True
     ) -> np.ndarray:
         """
         Extract MFCC features from audio
@@ -296,13 +288,13 @@ class AudioFingerprinter:
 
             frames = []
             for i in range(0, len(audio) - frame_size, hop_size):
-                frame = audio[i:i + frame_size]
+                frame = audio[i : i + frame_size]
                 frames.append(frame)
 
             # Compute DCT on each frame (simplified MFCC)
             mfccs = []
             for frame in frames:
-                mfcc_frame = dct(frame, norm='ortho')[:n_mfcc]
+                mfcc_frame = dct(frame, norm="ortho")[:n_mfcc]
                 mfccs.append(mfcc_frame)
 
             mfccs = np.array(mfccs)
@@ -329,19 +321,25 @@ def main():
     """Example usage of AudioFingerprinter"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Extract audio fingerprint from video')
-    parser.add_argument('video', help='Path to video file')
-    parser.add_argument('--compare', help='Second video to compare')
-    parser.add_argument('--method', default='jaccard', choices=['jaccard', 'hamming'],
-                       help='Comparison method')
-    parser.add_argument('--mfcc', action='store_true', help='Also extract MFCC features')
+    parser = argparse.ArgumentParser(description="Extract audio fingerprint from video")
+    parser.add_argument("video", help="Path to video file")
+    parser.add_argument("--compare", help="Second video to compare")
+    parser.add_argument(
+        "--method",
+        default="jaccard",
+        choices=["jaccard", "hamming"],
+        help="Comparison method",
+    )
+    parser.add_argument(
+        "--mfcc", action="store_true", help="Also extract MFCC features"
+    )
 
     args = parser.parse_args()
 
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Initialize fingerprinter
@@ -368,9 +366,7 @@ def main():
 
         # Compare fingerprints
         similarity = fingerprinter.compare_fingerprints(
-            fp1_data['fingerprint'],
-            fp2_data['fingerprint'],
-            method=args.method
+            fp1_data["fingerprint"], fp2_data["fingerprint"], method=args.method
         )
 
         print(f"\n{'='*60}")

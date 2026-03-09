@@ -1,0 +1,65 @@
+# Alert Rules for MLOps Platform
+
+groups:
+  - name: mlops_alerts
+    interval: 30s
+    rules:
+      - alert: ModelInferenceLatencyHigh
+        expr: model_inference_latency_seconds{quantile="0.95"} > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: inference
+        annotations:
+          summary: "High inference latency for model {{ $labels.model_name }}"
+          description: "P95 latency is {{ $value }}s"
+
+      - alert: ModelAccuracyDrift
+        expr: (model_current_accuracy - model_baseline_accuracy) < -0.05
+        for: 30m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "Model accuracy drift detected for {{ $labels.model_name }}"
+          description: "Accuracy dropped by {{ $value }}"
+
+      - alert: TrainingJobFailed
+        expr: ml_training_job_status{status="failed"} == 1
+        for: 1m
+        labels:
+          severity: warning
+          component: training
+        annotations:
+          summary: "Training job {{ $labels.job_name }} failed"
+          description: "Check training logs"
+
+      - alert: GPUUtilizationLow
+        expr: DCGM_FI_DEV_GPU_UTIL < 30
+        for: 30m
+        labels:
+          severity: info
+          component: gpu
+        annotations:
+          summary: "Low GPU utilization on {{ $labels.gpu }}"
+          description: "GPU utilization is {{ $value }}%"
+
+      - alert: ModelPredictionErrors
+        expr: rate(model_prediction_errors_total[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: inference
+        annotations:
+          summary: "High prediction error rate for {{ $labels.model_name }}"
+          description: "Error rate: {{ $value }}"
+
+      - alert: FeatureStoreLatencyHigh
+        expr: feature_store_latency_seconds{quantile="0.95"} > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: feature-store
+        annotations:
+          summary: "High feature store latency"
+          description: "P95 latency is {{ $value }}s"

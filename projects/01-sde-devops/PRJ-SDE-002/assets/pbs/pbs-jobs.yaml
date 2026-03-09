@@ -1,0 +1,44 @@
+# Sanitized Proxmox Backup Server job definitions
+# Replace placeholders before deploying
+
+jobs:
+  - id: nightly-vm-backup
+    datastore: pbs-demo
+    schedule: 'daily:00:30'
+    mode: snapshot
+    node: pve-demo
+    prune-policy: pbs-retention-policy
+    bandwidth-limit-mbps: 200
+    notify-user: backup-ops@example.local
+    verify-after-backup: true
+    hooks:
+      pre-backup: '/usr/local/bin/pre-flight.sh'
+      post-backup: '/usr/local/bin/notify-success.sh'
+    comment: 'Nightly VM backups for demo environment'
+
+  - id: weekly-synthetic-full
+    datastore: pbs-demo
+    schedule: 'sunday:03:00'
+    mode: synthetic-full
+    node: pve-demo
+    prune-policy: pbs-retention-policy
+    bandwidth-limit-mbps: 150
+    comment: 'Weekly synthetic full to control dedup fragmentation'
+
+  - id: config-backups
+    datastore: pbs-config
+    schedule: 'hourly'
+    mode: snapshot
+    node: infra-ops
+    prune-policy: short-retention
+    comment: 'Config backups for Prometheus/Grafana/Alertmanager definitions'
+
+prune-policies:
+  pbs-retention-policy:
+    keep-last: 7
+    keep-daily: 14
+    keep-weekly: 6
+    keep-monthly: 3
+  short-retention:
+    keep-last: 24
+    keep-daily: 3

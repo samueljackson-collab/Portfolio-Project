@@ -2,9 +2,12 @@
 
 ## Overview
 
-Production operations runbook for Project 2 Database Migration Platform. This runbook covers zero-downtime PostgreSQL database migrations using Debezium CDC (Change Data Capture), migration orchestration, cutover procedures, validation, and rollback operations.
+Production operations runbook for Project 2 Database Migration Platform. This runbook covers zero-
+downtime PostgreSQL database migrations using Debezium CDC (Change Data Capture), migration
+orchestration, cutover procedures, validation, and rollback operations.
 
 **System Components:**
+
 - Debezium CDC connector for PostgreSQL
 - Apache Kafka for change data streaming
 - Kafka Connect for connector management
@@ -33,6 +36,7 @@ Production operations runbook for Project 2 Database Migration Platform. This ru
 ### Dashboards
 
 #### Migration Overview Dashboard
+
 ```bash
 # Check Debezium connector status
 curl http://localhost:8083/connectors/postgres-source-connector/status | jq
@@ -45,12 +49,14 @@ python src/migration_orchestrator.py status --migration-id <migration-id>
 ```
 
 #### Kafka Connect Dashboard
+
 - Connector health and task status
 - Throughput metrics (messages/sec)
 - Error rates and DLQ (Dead Letter Queue) messages
 - Consumer lag per topic
 
 #### Database Health Dashboard
+
 ```bash
 # Source database metrics
 psql -h source-db -U postgres -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
@@ -82,6 +88,7 @@ psql -h source-db -U postgres -c "SELECT * FROM pg_replication_slots;"
 ### Migration Setup
 
 #### Initialize Migration Environment
+
 ```bash
 # Navigate to project directory
 cd /home/user/Portfolio-Project/projects/2-database-migration
@@ -97,6 +104,7 @@ curl http://localhost:8083/ | jq
 ```
 
 #### Configure Debezium Connector
+
 ```bash
 # Create connector configuration
 cat > config/postgres-source-connector.json << 'EOF'
@@ -129,6 +137,7 @@ curl http://localhost:8083/connectors/postgres-source-connector/status | jq
 ```
 
 #### Create Target Database
+
 ```bash
 # Connect to target database
 psql -h target-db.example.com -U postgres
@@ -147,6 +156,7 @@ psql -h target-db.example.com -U postgres production_new -c "\dt"
 ### Migration Execution
 
 #### Start Migration (Initial Snapshot)
+
 ```bash
 # Initialize migration
 python src/migration_orchestrator.py init \
@@ -166,6 +176,7 @@ python src/migration_orchestrator.py status --migration-id migration-20251110
 ```
 
 #### Monitor Replication Lag
+
 ```bash
 # Check replication lag continuously
 watch -n 5 'python src/migration_orchestrator.py lag --migration-id migration-20251110'
@@ -185,6 +196,7 @@ psql -h source-db.example.com -U postgres -c "
 ```
 
 #### Validate Data Consistency
+
 ```bash
 # Run validation script
 python src/migration_orchestrator.py validate \
@@ -208,6 +220,7 @@ python src/migration_orchestrator.py report \
 ### Cutover Operations
 
 #### Pre-Cutover Checklist
+
 ```bash
 # 1. Verify replication lag is minimal
 python src/migration_orchestrator.py lag --migration-id migration-20251110
@@ -225,6 +238,7 @@ echo "Migration cutover scheduled for $(date -d '+15 minutes')" | mail -s "DB Mi
 ```
 
 #### Execute Cutover
+
 ```bash
 # 1. Start cutover procedure
 python src/migration_orchestrator.py cutover \
@@ -251,6 +265,7 @@ curl https://app.example.com/api/users/1
 ```
 
 #### Post-Cutover Validation
+
 ```bash
 # 1. Check application logs for errors
 tail -f /var/log/application/app.log | grep -i "database\|error"
@@ -277,6 +292,7 @@ psql -h target-db.example.com -U postgres -c "
 ### Rollback Operations
 
 #### Emergency Rollback
+
 ```bash
 # 1. Initiate immediate rollback
 python src/migration_orchestrator.py rollback \
@@ -322,12 +338,14 @@ EOF
 ### Detection
 
 **Automated Detection:**
+
 - Debezium connector status alerts
 - Replication lag threshold alerts
 - Data validation failure alerts
 - Kafka Connect health checks
 
 **Manual Detection:**
+
 ```bash
 # Check connector health
 curl http://localhost:8083/connectors/postgres-source-connector/status | jq '.connector.state'
@@ -346,25 +364,29 @@ python src/migration_orchestrator.py validate --migration-id migration-20251110
 
 #### Severity Classification
 
-**P0: Critical Migration Failure**
+### P0: Critical Migration Failure
+
 - Data loss detected
 - Debezium connector failed during cutover
 - Cutover failed, applications down
 - Significant data inconsistency (>1% mismatch)
 
-**P1: Degraded Migration**
+### P1: Degraded Migration
+
 - High replication lag (>60 seconds)
 - Connector restarting frequently
 - Schema mismatch detected
 - Performance degradation on target
 
-**P2: Warning State**
+### P2: Warning State
+
 - Moderate replication lag (5-60 seconds)
 - Connector task restarted once
 - Minor data validation warnings
 - Kafka disk usage high
 
-**P3: Informational**
+### P3: Informational
+
 - Slow query on source database
 - Kafka consumer lag increasing slowly
 - Non-critical connector configuration issues
@@ -374,6 +396,7 @@ python src/migration_orchestrator.py validate --migration-id migration-20251110
 #### P0: Debezium Connector Failed During Cutover
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Check connector status
 curl http://localhost:8083/connectors/postgres-source-connector/status | jq
@@ -391,6 +414,7 @@ echo "Migration failed, rollback initiated" | mail -s "P0: Migration Failure" te
 ```
 
 **Investigation (2-15 minutes):**
+
 ```bash
 # Check connector logs
 curl http://localhost:8083/connectors/postgres-source-connector/status | jq '.tasks[].trace'
@@ -407,6 +431,7 @@ telnet source-db.example.com 5432
 ```
 
 **Resolution:**
+
 ```bash
 # If connector can be restarted
 curl -X POST http://localhost:8083/connectors/postgres-source-connector/restart
@@ -424,6 +449,7 @@ python src/migration_orchestrator.py init --migration-id migration-20251110-retr
 #### P0: Data Loss Detected
 
 **Immediate Actions (0-2 minutes):**
+
 ```bash
 # 1. Halt migration immediately
 python src/migration_orchestrator.py halt --migration-id migration-20251110
@@ -439,6 +465,7 @@ python src/migration_orchestrator.py rollback --migration-id migration-20251110 
 ```
 
 **Investigation (2-30 minutes):**
+
 ```bash
 # Compare row counts
 python src/migration_orchestrator.py compare \
@@ -461,6 +488,7 @@ curl http://localhost:8083/connectors/postgres-source-connector/offsets | jq
 ```
 
 **Recovery:**
+
 ```bash
 # Restore missing data from source
 pg_dump -h source-db.example.com -U postgres production -t users | \
@@ -478,6 +506,7 @@ python src/migration_orchestrator.py validate --migration-id migration-20251110
 #### P1: High Replication Lag
 
 **Investigation:**
+
 ```bash
 # Check replication lag
 python src/migration_orchestrator.py lag --migration-id migration-20251110
@@ -505,6 +534,7 @@ psql -h target-db.example.com -U postgres -c "
 ```
 
 **Mitigation:**
+
 ```bash
 # Increase Kafka Connect workers
 # Edit connect-distributed.properties
@@ -523,6 +553,7 @@ docker restart kafka-connect
 #### P1: Schema Mismatch Detected
 
 **Investigation:**
+
 ```bash
 # Export schemas for comparison
 pg_dump -h source-db.example.com -U postgres -s production > /tmp/source-schema.sql
@@ -540,6 +571,7 @@ psql -h target-db.example.com -U postgres production_new -c "
 ```
 
 **Resolution:**
+
 ```bash
 # Apply schema changes to target
 psql -h target-db.example.com -U postgres production_new < schema-updates.sql
@@ -555,6 +587,7 @@ python src/migration_orchestrator.py restart --migration-id migration-20251110
 ### Post-Incident
 
 **After Resolution:**
+
 ```bash
 # Document incident
 cat > incidents/incident-$(date +%Y%m%d-%H%M).md << 'EOF'
@@ -593,6 +626,7 @@ EOF
 ### Essential Troubleshooting Commands
 
 #### Debezium Connector Issues
+
 ```bash
 # Check connector status
 curl http://localhost:8083/connectors/postgres-source-connector/status | jq
@@ -614,6 +648,7 @@ curl -X POST http://localhost:8083/connectors \
 ```
 
 #### Kafka Issues
+
 ```bash
 # List topics
 kafka-topics --list --bootstrap-server localhost:9092
@@ -635,6 +670,7 @@ kafka-console-consumer --bootstrap-server localhost:9092 \
 ```
 
 #### Database Replication Issues
+
 ```bash
 # Check replication slots on source
 psql -h source-db.example.com -U postgres -c "
@@ -665,12 +701,14 @@ psql -h target-db.example.com -U postgres production_new -c "
 #### Issue: Connector Stuck in FAILED State
 
 **Symptoms:**
+
 ```bash
 $ curl http://localhost:8083/connectors/postgres-source-connector/status | jq '.connector.state'
 "FAILED"
 ```
 
 **Diagnosis:**
+
 ```bash
 # Check error message
 curl http://localhost:8083/connectors/postgres-source-connector/status | jq '.connector.trace'
@@ -680,6 +718,7 @@ docker logs kafka-connect | grep ERROR
 ```
 
 **Solution:**
+
 ```bash
 # Restart connector
 curl -X POST http://localhost:8083/connectors/postgres-source-connector/restart
@@ -697,10 +736,12 @@ curl -X POST http://localhost:8083/connectors \
 #### Issue: Replication Slot Not Advancing
 
 **Symptoms:**
+
 - Replication lag continuously increasing
 - WAL disk usage growing on source database
 
 **Diagnosis:**
+
 ```bash
 # Check replication slot status
 psql -h source-db.example.com -U postgres -c "
@@ -714,6 +755,7 @@ curl http://localhost:8083/connectors/postgres-source-connector/status | jq '.ta
 ```
 
 **Solution:**
+
 ```bash
 # If connector is not active, restart it
 curl -X POST http://localhost:8083/connectors/postgres-source-connector/restart
@@ -733,11 +775,13 @@ curl -X POST http://localhost:8083/connectors \
 #### Issue: Data Inconsistency Between Source and Target
 
 **Symptoms:**
+
 - Row count mismatch
 - Checksum validation failures
 - Missing records
 
 **Diagnosis:**
+
 ```bash
 # Compare row counts
 python src/migration_orchestrator.py compare \
@@ -753,6 +797,7 @@ psql -h source-db.example.com -U postgres production -c "
 ```
 
 **Solution:**
+
 ```bash
 # Resync specific table
 python src/migration_orchestrator.py resync \
@@ -779,6 +824,7 @@ python src/migration_orchestrator.py validate --migration-id migration-20251110 
 ### Backup Strategy
 
 #### Pre-Migration Backups
+
 ```bash
 # Backup source database
 pg_dump -h source-db.example.com -U postgres production > backups/source-pre-migration-$(date +%Y%m%d).sql
@@ -794,6 +840,7 @@ cp /etc/app/database.conf backups/app-database-conf-$(date +%Y%m%d).conf
 ```
 
 #### Continuous Backups During Migration
+
 ```bash
 # Source database automated snapshots (AWS RDS)
 aws rds create-db-snapshot \
@@ -809,6 +856,7 @@ kafka-console-consumer --bootstrap-server localhost:9092 \
 ### Recovery Procedures
 
 #### Recover Failed Migration
+
 ```bash
 # 1. Rollback to source
 python src/migration_orchestrator.py rollback --migration-id migration-20251110
@@ -826,6 +874,7 @@ curl https://api.example.com/health
 ```
 
 #### Recover from Kafka Data Loss
+
 ```bash
 # Restore Kafka topic from backup
 kafka-console-producer --bootstrap-server localhost:9092 \
@@ -850,6 +899,7 @@ python src/migration_orchestrator.py restart --migration-id migration-20251110
 ### Routine Maintenance
 
 #### Daily Tasks
+
 ```bash
 # Check migration progress
 python src/migration_orchestrator.py status --migration-id migration-20251110
@@ -865,6 +915,7 @@ tail -100 logs/migration-orchestrator.log | grep ERROR
 ```
 
 #### Weekly Tasks
+
 ```bash
 # Run data validation
 python src/migration_orchestrator.py validate --migration-id migration-20251110
@@ -885,6 +936,7 @@ mv logs/migration-*.log archives/$(date +%Y-%m)/ 2>/dev/null || true
 ```
 
 #### Monthly Tasks
+
 ```bash
 # Clean up old Kafka topics
 kafka-topics --delete --bootstrap-server localhost:9092 \
@@ -954,6 +1006,7 @@ python src/migration_orchestrator.py compare --migration-id <id> --table <table-
 ---
 
 **Document Metadata:**
+
 - **Version:** 1.0
 - **Last Updated:** 2025-11-10
 - **Owner:** Data Engineering Team

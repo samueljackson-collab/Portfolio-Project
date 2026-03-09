@@ -14,10 +14,16 @@ def validate_with_aws_cli(template_path: Path) -> bool:
     """Validate template using AWS CloudFormation validate-template API."""
     try:
         result = subprocess.run(
-            ["aws", "cloudformation", "validate-template", "--template-body", f"file://{template_path}"],
+            [
+                "aws",
+                "cloudformation",
+                "validate-template",
+                "--template-body",
+                f"file://{template_path}",
+            ],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
         print(f"✓ AWS validation passed: {template_path.name}")
         return True
@@ -46,7 +52,9 @@ def validate_with_cfn_lint(template_path: Path) -> bool:
             if result.stdout:
                 findings = json.loads(result.stdout)
                 for finding in findings:
-                    print(f"  {finding['Level']}: {finding['Message']} (Rule: {finding['Rule']['Id']})")
+                    print(
+                        f"  {finding['Level']}: {finding['Message']} (Rule: {finding['Rule']['Id']})"
+                    )
             return False
     except FileNotFoundError:
         print("⚠ cfn-lint not found. Install: pip install cfn-lint")

@@ -1,4 +1,5 @@
 """Hybrid key exchange demonstration."""
+
 from __future__ import annotations
 
 import secrets
@@ -46,7 +47,9 @@ def hybrid_key_exchange() -> bytes:
     shared = private_key.exchange(ec.ECDH(), peer_key.public_key())
 
     combined = kyber_secret_sender + kyber_secret_receiver + shared
-    hkdf = HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b"portfolio-hybrid")
+    hkdf = HKDF(
+        algorithm=hashes.SHA256(), length=32, salt=None, info=b"portfolio-hybrid"
+    )
     return hkdf.derive(combined)
 
 

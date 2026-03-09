@@ -8,7 +8,7 @@ Health checks are used by:
 - CI/CD pipelines to verify deployment success
 """
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
@@ -28,11 +28,9 @@ router = APIRouter(
     response_model=HealthResponse,
     status_code=status.HTTP_200_OK,
     summary="Health Check",
-    description="Check if the API and its dependencies are operational"
+    description="Check if the API and its dependencies are operational",
 )
-async def health_check(
-    db: AsyncSession = Depends(get_db)
-) -> HealthResponse:
+async def health_check(db: AsyncSession = Depends(get_db)) -> HealthResponse:
     """
     Perform health check of the API and its dependencies.
 
@@ -50,7 +48,8 @@ async def health_check(
     return HealthResponse(
         status=overall_status,
         version=settings.version,
-        database=database_status
+        database=database_status,
+        service=settings.app_name,
     )
 
 
@@ -58,7 +57,7 @@ async def health_check(
     "/liveness",
     status_code=status.HTTP_200_OK,
     summary="Liveness Probe",
-    description="Simple liveness check without dependency verification"
+    description="Simple liveness check without dependency verification",
 )
 async def liveness() -> dict:
     """
@@ -73,11 +72,9 @@ async def liveness() -> dict:
     "/readiness",
     status_code=status.HTTP_200_OK,
     summary="Readiness Probe",
-    description="Check if service is ready to accept traffic"
+    description="Check if service is ready to accept traffic",
 )
-async def readiness(
-    db: AsyncSession = Depends(get_db)
-) -> dict:
+async def readiness(db: AsyncSession = Depends(get_db)) -> dict:
     """
     Kubernetes readiness probe.
 
@@ -85,10 +82,10 @@ async def readiness(
     """
     try:
         await db.execute(text("SELECT 1"))
-        return {"status": "ready"}
+        return {"status": "ready", "database": "connected"}
     except Exception:
-        from fastapi import Response
         return Response(
-            content='{"status": "not ready"}',
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+            content='{"status": "not ready", "database": "disconnected"}',
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            media_type="application/json",
         )

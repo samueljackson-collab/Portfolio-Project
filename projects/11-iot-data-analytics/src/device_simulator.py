@@ -1,4 +1,5 @@
 """Simulate IoT devices publishing telemetry to MQTT."""
+
 from __future__ import annotations
 
 import json

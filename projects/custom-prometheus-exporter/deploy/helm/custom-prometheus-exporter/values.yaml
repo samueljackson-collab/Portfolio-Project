@@ -1,0 +1,24 @@
+replicaCount: 1
+image:
+  repository: custom-exporter
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 9108
+config:
+  data: |
+    server:
+      address: "0.0.0.0"
+      port: 9108
+    logging:
+      level: "info"
+    scrape:
+      interval: 30s
+    feature_flags:
+      enable_api: true
+      enable_files: false
+      enable_sql: false
+serviceMonitor:
+  enabled: true
+  interval: 30s

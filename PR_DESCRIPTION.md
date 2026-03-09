@@ -55,11 +55,11 @@ backend/
 - `GET /auth/me` - Get current user (protected)
 
 #### Content Management
-- `GET /content` - List all content (paginated)
-- `GET /content/{id}` - Get single content item
-- `POST /content` - Create content (protected)
-- `PUT /content/{id}` - Update content (owner only)
-- `DELETE /content/{id}` - Delete content (owner only)
+- `GET /content` - List published content (public; auth includes owner's drafts)
+- `GET /content/{id}` - Get single content item (public if published, owner-only for drafts)
+- `POST /content` - Create content (**protected**)
+- `PUT /content/{id}` - Update content (**owner only**)
+- `DELETE /content/{id}` - Delete content (**owner only**)
 
 #### Health
 - `GET /health` - Overall health status

@@ -1,0 +1,51 @@
+{
+  "summary": {
+    "total_alerts": 8,
+    "mttr_minutes_mean": 13.62,
+    "mttr_minutes_median": 13.0,
+    "mttr_minutes_min": 7,
+    "mttr_minutes_max": 22
+  },
+  "alert_metrics": [
+    {
+      "id": "alert-101",
+      "severity": "critical",
+      "mttr_minutes": 9
+    },
+    {
+      "id": "alert-102",
+      "severity": "high",
+      "mttr_minutes": 12
+    },
+    {
+      "id": "alert-103",
+      "severity": "medium",
+      "mttr_minutes": 18
+    },
+    {
+      "id": "alert-104",
+      "severity": "high",
+      "mttr_minutes": 14
+    },
+    {
+      "id": "alert-105",
+      "severity": "low",
+      "mttr_minutes": 22
+    },
+    {
+      "id": "alert-106",
+      "severity": "critical",
+      "mttr_minutes": 7
+    },
+    {
+      "id": "alert-107",
+      "severity": "medium",
+      "mttr_minutes": 16
+    },
+    {
+      "id": "alert-108",
+      "severity": "high",
+      "mttr_minutes": 11
+    }
+  ]
+}

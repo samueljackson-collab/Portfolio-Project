@@ -1,4 +1,5 @@
 """FastAPI application implementing a retrieval-augmented chatbot."""
+
 from __future__ import annotations
 
 import asyncio
@@ -36,7 +37,10 @@ class VectorStore:
 
 class PromptFormatter:
     def build_prompt(self, question: str, docs: List[RetrievedDocument]) -> str:
-        context = "\n\n".join(f"Source: {doc.metadata.get('source', 'unknown')}\n{doc.content}" for doc in docs)
+        context = "\n\n".join(
+            f"Source: {doc.metadata.get('source', 'unknown')}\n{doc.content}"
+            for doc in docs
+        )
         return (
             "You are an enterprise solutions assistant."
             "Use the provided documentation to answer the user's question."
@@ -97,9 +101,21 @@ class ChatbotService:
 
 def get_service() -> ChatbotService:
     documents = [
-        RetrievedDocument(content="Terraform automation for AWS multi-account setups.", score=0.98, metadata={"source": "project-1"}),
-        RetrievedDocument(content="GitOps strategy leveraging ArgoCD and progressive delivery.", score=0.92, metadata={"source": "project-3"}),
-        RetrievedDocument(content="Kafka streaming pipeline with Flink stateful aggregations.", score=0.88, metadata={"source": "project-5"}),
+        RetrievedDocument(
+            content="Terraform automation for AWS multi-account setups.",
+            score=0.98,
+            metadata={"source": "project-1"},
+        ),
+        RetrievedDocument(
+            content="GitOps strategy leveraging ArgoCD and progressive delivery.",
+            score=0.92,
+            metadata={"source": "project-3"},
+        ),
+        RetrievedDocument(
+            content="Kafka streaming pipeline with Flink stateful aggregations.",
+            score=0.88,
+            metadata={"source": "project-5"},
+        ),
     ]
     return ChatbotService(VectorStore(documents), DummyLLM())
 
@@ -108,7 +124,9 @@ app = FastAPI(title="Portfolio Chatbot")
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, service: ChatbotService = Depends(get_service)) -> ChatResponse:
+async def chat(
+    request: ChatRequest, service: ChatbotService = Depends(get_service)
+) -> ChatResponse:
     stream = await service.answer(request.question)
     content = b"".join([chunk async for chunk in stream.body_iterator])  # type: ignore[attr-defined]
     sources = json.loads(stream.headers.get("X-Chatbot-Sources", "[]"))
@@ -116,5 +134,7 @@ async def chat(request: ChatRequest, service: ChatbotService = Depends(get_servi
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, service: ChatbotService = Depends(get_service)) -> None:
+async def websocket_endpoint(
+    websocket: WebSocket, service: ChatbotService = Depends(get_service)
+) -> None:
     await service.websocket_answer(websocket)

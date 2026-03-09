@@ -1,0 +1,66 @@
+graph TB
+    subgraph "Application Layer"
+        APP1[Application Instance 1]
+        APP2[Application Instance 2]
+        APP3[Application Instance 3]
+    end
+
+    subgraph "Connection Pooling"
+        PGBOUNCER[PgBouncer Connection Pool]
+    end
+
+    subgraph "Database Cluster"
+        PRIMARY[PostgreSQL Primary<br/>Read/Write]
+        REPLICA1[PostgreSQL Replica 1<br/>Read-Only]
+        REPLICA2[PostgreSQL Replica 2<br/>Read-Only]
+    end
+
+    subgraph "High Availability"
+        PATRONI[Patroni Cluster Manager]
+        ETCD[etcd Consensus Store]
+        HAPROXY[HAProxy Load Balancer]
+    end
+
+    subgraph "Backup & Recovery"
+        WAL[WAL Archiving<br/>S3/MinIO]
+        BACKUP[pgBackRest<br/>Point-in-Time Recovery]
+    end
+
+    subgraph "Monitoring"
+        EXPORTER[PostgreSQL Exporter]
+        PROMETHEUS[Prometheus]
+        GRAFANA[Grafana Dashboards]
+    end
+
+    APP1 --> PGBOUNCER
+    APP2 --> PGBOUNCER
+    APP3 --> PGBOUNCER
+
+    PGBOUNCER --> HAPROXY
+    HAPROXY --> PRIMARY
+    HAPROXY --> REPLICA1
+    HAPROXY --> REPLICA2
+
+    PRIMARY -.streaming replication.-> REPLICA1
+    PRIMARY -.streaming replication.-> REPLICA2
+
+    PATRONI --> PRIMARY
+    PATRONI --> REPLICA1
+    PATRONI --> REPLICA2
+    PATRONI --> ETCD
+
+    PRIMARY --> WAL
+    PRIMARY --> BACKUP
+
+    EXPORTER --> PROMETHEUS
+    PROMETHEUS --> GRAFANA
+
+    PRIMARY --> EXPORTER
+    REPLICA1 --> EXPORTER
+    REPLICA2 --> EXPORTER
+
+    style PRIMARY fill:#90ee90
+    style REPLICA1 fill:#ffffcc
+    style REPLICA2 fill:#ffffcc
+    style HAPROXY fill:#ff9999
+    style PATRONI fill:#ffcc99

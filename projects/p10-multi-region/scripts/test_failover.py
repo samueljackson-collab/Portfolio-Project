@@ -6,9 +6,10 @@ import boto3
 import time
 import sys
 
+
 def test_failover():
     """Test failover between regions."""
-    route53 = boto3.client('route53')
+    route53 = boto3.client("route53")
 
     print("Testing Route 53 failover mechanism...")
     print("This will check health check status and DNS resolution.")
@@ -19,13 +20,16 @@ def test_failover():
 
     # Check health checks
     health_checks = route53.list_health_checks()
-    for hc in health_checks['HealthChecks']:
-        hc_id = hc['Id']
+    for hc in health_checks["HealthChecks"]:
+        hc_id = hc["Id"]
         status = route53.get_health_check_status(HealthCheckId=hc_id)
-        print(f"Health Check {hc_id}: {status['HealthCheckObservations'][0]['StatusReport']['Status']}")
+        print(
+            f"Health Check {hc_id}: {status['HealthCheckObservations'][0]['StatusReport']['Status']}"
+        )
 
     print("✓ Failover test completed")
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(test_failover())

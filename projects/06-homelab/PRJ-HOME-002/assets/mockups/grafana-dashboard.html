@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafana - Portfolio Application Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0b0c0e;
+            color: #d8d9da;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: #181b1f;
+            border-bottom: 1px solid #2a2e33;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .logo svg {
+            width: 24px;
+            height: 24px;
+            fill: #ff6b00;
+        }
+
+        .dashboard-title {
+            color: #ff6b00;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .time-picker {
+            background: #242529;
+            border: 1px solid #3d3e42;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #d8d9da;
+            cursor: pointer;
+        }
+
+        .refresh-badge {
+            background: #00d084;
+            color: #0b0c0e;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .icon-button {
+            background: transparent;
+            border: none;
+            color: #d8d9da;
+            padding: 6px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .icon-button:hover {
+            background: #242529;
+        }
+
+        /* Dashboard Grid */
+        .dashboard {
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+
+        .panel {
+            background: #181b1f;
+            border: 1px solid #2a2e33;
+            border-radius: 4px;
+            padding: 16px;
+            min-height: 200px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #d8d9da;
+        }
+
+        .panel-menu {
+            color: #8e8f91;
+            cursor: pointer;
+        }
+
+        /* Stat Panels */
+        .stat-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #8e8f91;
+            text-align: center;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .trend-up {
+            color: #00d084;
+        }
+
+        .trend-down {
+            color: #ff5252;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-healthy {
+            background: rgba(0, 208, 132, 0.15);
+            color: #00d084;
+        }
+
+        .status-warning {
+            background: rgba(255, 184, 0, 0.15);
+            color: #ffb800;
+        }
+
+        /* Grid Sizes */
+        .span-3 { grid-column: span 3; }
+        .span-4 { grid-column: span 4; }
+        .span-6 { grid-column: span 6; }
+        .span-8 { grid-column: span 8; }
+        .span-12 { grid-column: span 12; }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 12px;
+        }
+
+        .chart-container-large {
+            height: 350px;
+        }
+
+        /* Table */
+        .metric-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .metric-table th {
+            text-align: left;
+            padding: 8px;
+            font-size: 12px;
+            color: #8e8f91;
+            font-weight: 500;
+            border-bottom: 1px solid #2a2e33;
+        }
+
+        .metric-table td {
+            padding: 8px;
+            font-size: 13px;
+            border-bottom: 1px solid #2a2e33;
+        }
+
+        .metric-bar {
+            height: 20px;
+            background: rgba(0, 208, 132, 0.3);
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            background: #00d084;
+            border-radius: 3px;
+        }
+
+        /* Alert Status */
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 184, 0, 0.1);
+            border-left: 3px solid #ffb800;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+            background: #ffb800;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #0b0c0e;
+            font-weight: bold;
+        }
+
+        /* Footer */
+        .dashboard-footer {
+            background: #181b1f;
+            border-top: 1px solid #2a2e33;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #8e8f91;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 16px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.green { background: #00d084; }
+        .status-dot.yellow { background: #ffb800; }
+        .status-dot.red { background: #ff5252; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                </svg>
+                Grafana
+            </div>
+            <div class="dashboard-title">Portfolio Application - Production</div>
+        </div>
+        <div class="header-right">
+            <div class="time-picker">Last 6 hours ▼</div>
+            <div class="refresh-badge">30s</div>
+            <button class="icon-button">⭐</button>
+            <button class="icon-button">⚙️</button>
+        </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard">
+        <!-- Uptime Stat -->
+        <div class="panel span-3 stat-panel">
+            <div class="panel-header" style="position: absolute; top: 16px; left: 16px;">
+                <div class="panel-title">Application Health</div>
+            </div>
+            <div class="stat-value trend-up">99.97%</div>
+            <div class="stat-label">Uptime (7 days)</div>
+            <div class="stat-trend trend-up">
+                <span>↗</span> All systems operational
+            </div>
+        </div>
+
+        <!-- Request Rate Stat -->
+        <div class="panel span-3 stat-panel">
+            <div class="panel-header" style="position: absolute; top: 16px; left: 16px;">
+                <div class="panel-title">Request Rate</div>
+            </div>
+            <div class="stat-value trend-up">1,234</div>
+            <div class="stat-label">req/s</div>
+            <div class="stat-trend trend-up">
+                <span>↗</span> +12% vs previous hour
+            </div>
+        </div>
+
+        <!-- Response Time Stat -->
+        <div class="panel span-3 stat-panel">
+            <div class="panel-header" style="position: absolute; top: 16px; left: 16px;">
+                <div class="panel-title">Response Time (P95)</div>
+            </div>
+            <div class="stat-value trend-up">234ms</div>
+            <div class="stat-label">Within SLA</div>
+            <div class="stat-trend trend-up">
+                <span class="status-badge status-healthy">HEALTHY</span>
+            </div>
+        </div>
+
+        <!-- Error Budget Stat -->
+        <div class="panel span-3 stat-panel">
+            <div class="panel-header" style="position: absolute; top: 16px; left: 16px;">
+                <div class="panel-title">Error Budget</div>
+            </div>
+            <div class="stat-value trend-up">92.5%</div>
+            <div class="stat-label">Remaining</div>
+            <div class="stat-trend trend-up">
+                <span>↗</span> 7.5% consumed
+            </div>
+        </div>
+
+        <!-- HTTP Request Duration Chart -->
+        <div class="panel span-12">
+            <div class="panel-header">
+                <div class="panel-title">HTTP Request Duration (Percentiles)</div>
+                <div class="panel-menu">⋮</div>
+            </div>
+            <div class="chart-container chart-container-large">
+                <canvas id="requestDurationChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Request Rate Chart -->
+        <div class="panel span-6">
+            <div class="panel-header">
+                <div class="panel-title">Request Rate & Error Rate</div>
+                <div class="panel-menu">⋮</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="requestRateChart"></canvas>
+            </div>
+        </div>
+
+        <!-- CPU Usage Chart -->
+        <div class="panel span-6">
+            <div class="panel-header">
+                <div class="panel-title">Pod CPU Usage</div>
+                <div class="panel-menu">⋮</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="cpuUsageChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Endpoints Table -->
+        <div class="panel span-6">
+            <div class="panel-header">
+                <div class="panel-title">Top Endpoints by Request Count</div>
+                <div class="panel-menu">⋮</div>
+            </div>
+            <table class="metric-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Requests</th>
+                        <th>Avg Duration</th>
+                        <th>Error %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>/api/users</td>
+                        <td>45.2K</td>
+                        <td>134ms</td>
+                        <td style="color: #00d084">0.1%</td>
+                    </tr>
+                    <tr>
+                        <td>/api/products</td>
+                        <td>32.1K</td>
+                        <td>267ms</td>
+                        <td style="color: #00d084">0.3%</td>
+                    </tr>
+                    <tr>
+                        <td>/api/orders</td>
+                        <td>12.8K</td>
+                        <td>456ms</td>
+                        <td style="color: #ffb800">0.5%</td>
+                    </tr>
+                    <tr>
+                        <td>/api/auth/login</td>
+                        <td>8.9K</td>
+                        <td>89ms</td>
+                        <td style="color: #00d084">0.0%</td>
+                    </tr>
+                    <tr>
+                        <td>/api/search</td>
+                        <td>7.2K</td>
+                        <td>178ms</td>
+                        <td style="color: #00d084">0.2%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="panel span-6">
+            <div class="panel-header">
+                <div class="panel-title">Active Alerts</div>
+                <div class="panel-menu">⋮</div>
+            </div>
+            <div class="alert-item">
+                <div class="alert-icon">⚠</div>
+                <div>
+                    <div style="font-weight: 500;">Response Time SLA Warning</div>
+                    <div style="color: #8e8f91; font-size: 12px; margin-top: 4px;">
+                        P95 response time approaching threshold (480ms / 500ms SLA)
+                    </div>
+                    <div style="color: #8e8f91; font-size: 11px; margin-top: 4px;">
+                        Triggered 2 minutes ago
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: rgba(0, 208, 132, 0.1); border-left: 3px solid #00d084; border-radius: 4px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 20px; height: 20px; background: #00d084; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #0b0c0e; font-weight: bold;">✓</div>
+                    <div style="font-size: 13px;">
+                        <div style="font-weight: 500; color: #00d084;">All Other Checks Passing</div>
+                        <div style="color: #8e8f91; font-size: 12px; margin-top: 4px;">15 health checks OK</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Queries Chart -->
+        <div class="panel span-6">
+            <div class="panel-header">
+                <div class="panel-title">Database Performance</div>
+                <div class="panel-menu">⋮</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="databaseChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Memory Usage Chart -->
+        <div class="panel span-6">
+            <div class="panel-header">
+                <div class="panel-title">Memory Usage</div>
+                <div class="panel-menu">⋮</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="memoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="dashboard-footer">
+        <div class="status-indicators">
+            <div class="status-indicator">
+                <div class="status-dot green"></div>
+                <span>All Systems Operational</span>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot yellow"></div>
+                <span>1 Performance Warning</span>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot red"></div>
+                <span>0 Outages</span>
+            </div>
+        </div>
+        <div>Last updated: 30 seconds ago</div>
+    </div>
+
+    <script>
+        // Chart.js default settings
+        Chart.defaults.color = '#8e8f91';
+        Chart.defaults.borderColor = '#2a2e33';
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+        // Generate time labels
+        const timeLabels = [];
+        for (let i = 360; i >= 0; i -= 10) {
+            const date = new Date();
+            date.setMinutes(date.getMinutes() - i);
+            timeLabels.push(date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+        }
+
+        // HTTP Request Duration Chart
+        const ctx1 = document.getElementById('requestDurationChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'p50',
+                        data: Array.from({ length: 37 }, () => 150 + Math.random() * 50),
+                        borderColor: '#00d084',
+                        backgroundColor: 'rgba(0, 208, 132, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'p95',
+                        data: Array.from({ length: 37 }, () => 300 + Math.random() * 150),
+                        borderColor: '#ffb800',
+                        backgroundColor: 'rgba(255, 184, 0, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'p99',
+                        data: Array.from({ length: 37 }, () => 500 + Math.random() * 300),
+                        borderColor: '#ff9900',
+                        backgroundColor: 'rgba(255, 153, 0, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'SLA Threshold',
+                        data: Array(37).fill(500),
+                        borderColor: '#ff5252',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        backgroundColor: '#181b1f',
+                        borderColor: '#2a2e33',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2a2e33' },
+                        ticks: { maxTicksLimit: 10 }
+                    },
+                    y: {
+                        grid: { color: '#2a2e33' },
+                        title: { display: true, text: 'Response Time (ms)' }
+                    }
+                }
+            }
+        });
+
+        // Request Rate Chart
+        const ctx2 = document.getElementById('requestRateChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'Requests/s',
+                        data: Array.from({ length: 37 }, () => 1000 + Math.random() * 500),
+                        borderColor: '#0dadea',
+                        backgroundColor: 'rgba(13, 173, 234, 0.2)',
+                        fill: true,
+                        yAxisID: 'y',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Error Rate %',
+                        data: Array.from({ length: 37 }, () => 0.1 + Math.random() * 0.3),
+                        borderColor: '#ff5252',
+                        backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                        yAxisID: 'y1',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2a2e33' },
+                        ticks: { maxTicksLimit: 8 }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        grid: { color: '#2a2e33' },
+                        title: { display: true, text: 'Requests/s' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'Error %' }
+                    }
+                }
+            }
+        });
+
+        // CPU Usage Chart
+        const ctx3 = document.getElementById('cpuUsageChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'portfolio-prod-1',
+                        data: Array.from({ length: 37 }, () => 30 + Math.random() * 20),
+                        borderColor: '#00d084',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'portfolio-prod-2',
+                        data: Array.from({ length: 37 }, () => 35 + Math.random() * 25),
+                        borderColor: '#0dadea',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'portfolio-prod-3',
+                        data: Array.from({ length: 37 }, () => 25 + Math.random() * 20),
+                        borderColor: '#ff9900',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2a2e33' },
+                        ticks: { maxTicksLimit: 8 }
+                    },
+                    y: {
+                        grid: { color: '#2a2e33' },
+                        title: { display: true, text: 'CPU %' },
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Database Chart
+        const ctx4 = document.getElementById('databaseChart').getContext('2d');
+        new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'Read Queries/s',
+                        data: Array.from({ length: 37 }, () => 400 + Math.random() * 200),
+                        borderColor: '#0dadea',
+                        backgroundColor: 'rgba(13, 173, 234, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Write Queries/s',
+                        data: Array.from({ length: 37 }, () => 50 + Math.random() * 30),
+                        borderColor: '#00d084',
+                        backgroundColor: 'rgba(0, 208, 132, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2a2e33' },
+                        ticks: { maxTicksLimit: 8 }
+                    },
+                    y: {
+                        grid: { color: '#2a2e33' },
+                        title: { display: true, text: 'Queries/s' },
+                        stacked: true
+                    }
+                }
+            }
+        });
+
+        // Memory Chart
+        const ctx5 = document.getElementById('memoryChart').getContext('2d');
+        new Chart(ctx5, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [
+                    {
+                        label: 'Used Memory',
+                        data: Array.from({ length: 37 }, () => 60 + Math.random() * 10),
+                        borderColor: '#7d64ff',
+                        backgroundColor: 'rgba(125, 100, 255, 0.3)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Cached',
+                        data: Array.from({ length: 37 }, () => 20 + Math.random() * 5),
+                        borderColor: '#00d084',
+                        backgroundColor: 'rgba(0, 208, 132, 0.3)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2a2e33' },
+                        ticks: { maxTicksLimit: 8 }
+                    },
+                    y: {
+                        grid: { color: '#2a2e33' },
+                        title: { display: true, text: 'Memory %' },
+                        max: 100,
+                        stacked: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

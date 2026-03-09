@@ -57,11 +57,14 @@ describe('Popup Script', () => {
         'statusIndicator',
         'statusText',
         'organizeBtn',
+        'syncBtn',
         'settingsBtn',
         'tabCount',
         'groupCount',
         'lastOrganized',
         'openApp',
+        'searchInput',
+        'searchResults',
       ];
 
       elements.forEach((id) => {

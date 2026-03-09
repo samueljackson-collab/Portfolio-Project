@@ -1,0 +1,5 @@
+[2025-11-10 09:36:22] app=portfolio-api sync=started revision=3f1a2b9
+[2025-11-10 09:36:29] resources=14 healthy=14 synced=14
+[2025-11-10 09:36:45] rollout=portfolio-api-canary step=3 weight=50% analysis=pass
+[2025-11-10 09:37:01] rollout=portfolio-api-canary step=5 weight=100% analysis=pass
+[2025-11-10 09:37:08] app=portfolio-api sync=completed status=healthy

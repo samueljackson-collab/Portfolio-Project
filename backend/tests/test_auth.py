@@ -28,9 +28,7 @@ async def test_register_user(client: AsyncClient, sample_user_data: dict):
 
 @pytest.mark.asyncio
 async def test_register_duplicate_email(
-    client: AsyncClient,
-    test_user: User,
-    sample_user_data: dict
+    client: AsyncClient, test_user: User, sample_user_data: dict
 ):
     """Test registration with duplicate email fails."""
     # Try to register with existing email
@@ -47,10 +45,7 @@ async def test_register_invalid_email(client: AsyncClient):
     """Test registration with invalid email format."""
     response = await client.post(
         "/auth/register",
-        json={
-            "email": "not-an-email",
-            "password": "securepassword123"
-        }
+        json={"email": "not-an-email", "password": "securepassword123"},
     )
 
     assert response.status_code == 422  # Validation error
@@ -60,11 +55,7 @@ async def test_register_invalid_email(client: AsyncClient):
 async def test_register_short_password(client: AsyncClient):
     """Test registration with password that's too short."""
     response = await client.post(
-        "/auth/register",
-        json={
-            "email": "test@example.com",
-            "password": "short"
-        }
+        "/auth/register", json={"email": "test@example.com", "password": "short"}
     )
 
     assert response.status_code == 422  # Validation error
@@ -74,11 +65,7 @@ async def test_register_short_password(client: AsyncClient):
 async def test_login_success(client: AsyncClient, test_user: User):
     """Test successful login with valid credentials."""
     response = await client.post(
-        "/auth/login",
-        data={
-            "username": test_user.email,
-            "password": "testpassword123"
-        }
+        "/auth/login", data={"username": test_user.email, "password": "testpassword123"}
     )
 
     assert response.status_code == 200
@@ -92,11 +79,7 @@ async def test_login_success(client: AsyncClient, test_user: User):
 async def test_login_wrong_password(client: AsyncClient, test_user: User):
     """Test login with incorrect password."""
     response = await client.post(
-        "/auth/login",
-        data={
-            "username": test_user.email,
-            "password": "wrongpassword"
-        }
+        "/auth/login", data={"username": test_user.email, "password": "wrongpassword"}
     )
 
     assert response.status_code == 401
@@ -108,10 +91,7 @@ async def test_login_nonexistent_user(client: AsyncClient):
     """Test login with non-existent email."""
     response = await client.post(
         "/auth/login",
-        data={
-            "username": "nonexistent@example.com",
-            "password": "anypassword"
-        }
+        data={"username": "nonexistent@example.com", "password": "anypassword"},
     )
 
     assert response.status_code == 401
@@ -119,10 +99,7 @@ async def test_login_nonexistent_user(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user(
-    authenticated_client: AsyncClient,
-    test_user: User
-):
+async def test_get_current_user(authenticated_client: AsyncClient, test_user: User):
     """Test retrieving current user information with valid token."""
     response = await authenticated_client.get("/auth/me")
 
@@ -156,11 +133,8 @@ async def test_login_form_data(client: AsyncClient, test_user: User):
     """Test login accepts form data (OAuth2 spec compliance)."""
     response = await client.post(
         "/auth/login",
-        data={
-            "username": test_user.email,
-            "password": "testpassword123"
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        data={"username": test_user.email, "password": "testpassword123"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
 
     assert response.status_code == 200

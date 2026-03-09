@@ -12,7 +12,7 @@ from sklearn.preprocessing import LabelEncoder
 import pandas as pd
 
 # Configuration
-MODEL_NAME = 'distilbert-base-uncased'
+MODEL_NAME = "distilbert-base-uncased"
 MAX_LENGTH = 512
 BATCH_SIZE = 32
 EPOCHS = 10
@@ -21,15 +21,15 @@ NUM_CATEGORIES = 9
 
 # Categories
 CATEGORIES = [
-    'Work',
-    'Research',
-    'Shopping',
-    'Social Media',
-    'Entertainment',
-    'News',
-    'Finance',
-    'Education',
-    'Other',
+    "Work",
+    "Research",
+    "Shopping",
+    "Social Media",
+    "Entertainment",
+    "News",
+    "Finance",
+    "Education",
+    "Other",
 ]
 
 
@@ -48,8 +48,12 @@ class TabClassifierModel:
         bert_model = TFDistilBertModel.from_pretrained(MODEL_NAME)
 
         # Input layer
-        input_ids = tf.keras.Input(shape=(MAX_LENGTH,), dtype=tf.int32, name='input_ids')
-        attention_mask = tf.keras.Input(shape=(MAX_LENGTH,), dtype=tf.int32, name='attention_mask')
+        input_ids = tf.keras.Input(
+            shape=(MAX_LENGTH,), dtype=tf.int32, name="input_ids"
+        )
+        attention_mask = tf.keras.Input(
+            shape=(MAX_LENGTH,), dtype=tf.int32, name="attention_mask"
+        )
 
         # BERT encoder
         bert_output = bert_model(input_ids, attention_mask=attention_mask)[0]
@@ -58,21 +62,18 @@ class TabClassifierModel:
         pooled = bert_output[:, 0, :]
 
         # Classification head
-        dense = tf.keras.layers.Dense(256, activation='relu')(pooled)
+        dense = tf.keras.layers.Dense(256, activation="relu")(pooled)
         dropout = tf.keras.layers.Dropout(0.3)(dense)
-        outputs = tf.keras.layers.Dense(NUM_CATEGORIES, activation='softmax')(dropout)
+        outputs = tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax")(dropout)
 
         # Create model
-        self.model = tf.keras.Model(
-            inputs=[input_ids, attention_mask],
-            outputs=outputs
-        )
+        self.model = tf.keras.Model(inputs=[input_ids, attention_mask], outputs=outputs)
 
         # Compile
         self.model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
-            loss='categorical_crossentropy',
-            metrics=['accuracy', tf.keras.metrics.F1Score(average='macro')]
+            loss="categorical_crossentropy",
+            metrics=["accuracy", tf.keras.metrics.F1Score(average="macro")],
         )
 
         print("Model created successfully")
@@ -81,26 +82,25 @@ class TabClassifierModel:
     def prepare_dataset(self, df):
         """Prepare dataset for training"""
         # Combine text fields
-        texts = df['title'] + ' ' + df['url'] + ' ' + df['description'].fillna('')
+        texts = df["title"] + " " + df["url"] + " " + df["description"].fillna("")
 
         # Tokenize
         encodings = self.tokenizer(
             texts.tolist(),
             truncation=True,
-            padding='max_length',
+            padding="max_length",
             max_length=MAX_LENGTH,
-            return_tensors='tf'
+            return_tensors="tf",
         )
 
         # Encode labels
         labels = tf.keras.utils.to_categorical(
-            self.label_encoder.transform(df['category']),
-            num_classes=NUM_CATEGORIES
+            self.label_encoder.transform(df["category"]), num_classes=NUM_CATEGORIES
         )
 
         return {
-            'input_ids': encodings['input_ids'],
-            'attention_mask': encodings['attention_mask']
+            "input_ids": encodings["input_ids"],
+            "attention_mask": encodings["attention_mask"],
         }, labels
 
     def train(self, train_data, val_data):
@@ -111,22 +111,14 @@ class TabClassifierModel:
         # Callbacks
         callbacks = [
             tf.keras.callbacks.EarlyStopping(
-                monitor='val_loss',
-                patience=3,
-                restore_best_weights=True
+                monitor="val_loss", patience=3, restore_best_weights=True
             ),
             tf.keras.callbacks.ModelCheckpoint(
-                'best_model.h5',
-                monitor='val_f1_score',
-                mode='max',
-                save_best_only=True
+                "best_model.h5", monitor="val_f1_score", mode="max", save_best_only=True
             ),
             tf.keras.callbacks.ReduceLROnPlateau(
-                monitor='val_loss',
-                factor=0.5,
-                patience=2,
-                min_lr=1e-7
-            )
+                monitor="val_loss", factor=0.5, patience=2, min_lr=1e-7
+            ),
         ]
 
         # Train
@@ -137,12 +129,14 @@ class TabClassifierModel:
             epochs=EPOCHS,
             batch_size=BATCH_SIZE,
             callbacks=callbacks,
-            verbose=1
+            verbose=1,
         )
 
         return history
 
-    def convert_to_tflite(self, output_path='tab_classifier.tflite', representative_dataset=None):
+    def convert_to_tflite(
+        self, output_path="tab_classifier.tflite", representative_dataset=None
+    ):
         """Convert model to TensorFlow Lite"""
         print("Converting to TensorFlow Lite...")
 
@@ -160,7 +154,7 @@ class TabClassifierModel:
         tflite_model = converter.convert()
 
         # Save
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             f.write(tflite_model)
 
         print(f"TFLite model saved to {output_path}")
@@ -179,7 +173,7 @@ class TabClassifierModel:
         return results
 
 
-def load_dataset(dataset_path='dataset.csv'):
+def load_dataset(dataset_path="dataset.csv"):
     """Load tab dataset"""
     # In production, load from actual dataset file
     # For this demo, create a sample dataset
@@ -187,34 +181,34 @@ def load_dataset(dataset_path='dataset.csv'):
 
     # Sample data (in production, load from CSV/database)
     sample_data = {
-        'title': [
-            'LinkedIn - Professional Network',
-            'Wikipedia - Free Encyclopedia',
-            'Amazon - Online Shopping',
-            'Facebook - Social Network',
-            'YouTube - Video Platform',
+        "title": [
+            "LinkedIn - Professional Network",
+            "Wikipedia - Free Encyclopedia",
+            "Amazon - Online Shopping",
+            "Facebook - Social Network",
+            "YouTube - Video Platform",
         ],
-        'url': [
-            'https://linkedin.com',
-            'https://wikipedia.org',
-            'https://amazon.com',
-            'https://facebook.com',
-            'https://youtube.com',
+        "url": [
+            "https://linkedin.com",
+            "https://wikipedia.org",
+            "https://amazon.com",
+            "https://facebook.com",
+            "https://youtube.com",
         ],
-        'description': [
-            'Professional networking site',
-            'Free online encyclopedia',
-            'Online shopping and e-commerce',
-            'Social media platform',
-            'Video sharing platform',
+        "description": [
+            "Professional networking site",
+            "Free online encyclopedia",
+            "Online shopping and e-commerce",
+            "Social media platform",
+            "Video sharing platform",
         ],
-        'category': [
-            'Work',
-            'Research',
-            'Shopping',
-            'Social Media',
-            'Entertainment',
-        ]
+        "category": [
+            "Work",
+            "Research",
+            "Shopping",
+            "Social Media",
+            "Entertainment",
+        ],
     }
 
     df = pd.DataFrame(sample_data)
@@ -263,10 +257,10 @@ def main():
 
     # Convert to TFLite
     print("\nConverting to TensorFlow Lite...")
-    classifier.convert_to_tflite('../tab_classifier.tflite')
+    classifier.convert_to_tflite("../tab_classifier.tflite")
 
     print("\nTraining complete!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

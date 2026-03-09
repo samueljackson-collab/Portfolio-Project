@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autonomous-devops-platform-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autonomous-devops-platform-worker
+  template:
+    metadata:
+      labels:
+        app: autonomous-devops-platform-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: worker
+          image: ghcr.io/example/autonomous-devops-platform:latest
+          command: ["python", "consumer/worker.py"]
+          volumeMounts:
+            - name: artifacts
+              mountPath: /app/artifacts
+          securityContext:
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: artifacts
+          emptyDir: {}

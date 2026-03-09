@@ -1,0 +1,67 @@
+# Prometheus Configuration for Multi-region Disaster Recovery
+# Monitors cross-region replication, failover, RPO/RTO metrics
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    cluster: 'dr'
+    environment: 'production'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Primary region metrics
+  - job_name: 'primary-region'
+    static_configs:
+      - targets: ['primary-prometheus:9090']
+    relabel_configs:
+      - target_label: region
+        replacement: 'us-east-1'
+
+  # Secondary region metrics
+  - job_name: 'secondary-region'
+    static_configs:
+      - targets: ['secondary-prometheus:9090']
+    relabel_configs:
+      - target_label: region
+        replacement: 'us-west-2'
+
+  # DR orchestrator
+  - job_name: 'dr-orchestrator'
+    static_configs:
+      - targets: ['dr-orchestrator:8080']
+
+  # RDS replication metrics
+  - job_name: 'rds-replication'
+    static_configs:
+      - targets: ['cloudwatch-exporter:9106']
+    params:
+      module: [rds]
+
+  # Route53 health checks
+  - job_name: 'route53'
+    static_configs:
+      - targets: ['cloudwatch-exporter:9106']
+    params:
+      module: [route53]
+
+  # S3 replication metrics
+  - job_name: 's3-replication'
+    static_configs:
+      - targets: ['s3-replication-exporter:9107']
+
+  # Backup verification
+  - job_name: 'backup-verifier'
+    static_configs:
+      - targets: ['backup-verifier:9091']

@@ -10,6 +10,7 @@ This module handles:
 
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -32,12 +33,9 @@ router = APIRouter(
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register New User",
-    description="Create a new user account with email and password"
+    description="Create a new user account with email and password",
 )
-async def register(
-    user_data: UserCreate,
-    db: AsyncSession = Depends(get_db)
-) -> User:
+async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
     """
     Register a new user account.
 
@@ -52,15 +50,12 @@ async def register(
         HTTPException 400: If email already registered
     """
     # Check if user already exists
-    result = await db.execute(
-        select(User).where(User.email == user_data.email)
-    )
+    result = await db.execute(select(User).where(User.email == user_data.email))
     existing_user = result.scalar_one_or_none()
 
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
     # Hash password before storing
@@ -68,9 +63,7 @@ async def register(
 
     # Create new user
     new_user = User(
-        email=user_data.email,
-        hashed_password=hashed_password,
-        is_active=True
+        email=user_data.email, hashed_password=hashed_password, is_active=True
     )
 
     db.add(new_user)
@@ -85,11 +78,10 @@ async def register(
     response_model=Token,
     status_code=status.HTTP_200_OK,
     summary="User Login",
-    description="Authenticate user and receive JWT token"
+    description="Authenticate user and receive JWT token",
 )
 async def login(
-    credentials: UserLogin,
-    db: AsyncSession = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
 ) -> Token:
     """
     Authenticate user and generate JWT token.
@@ -111,35 +103,29 @@ async def login(
     )
 
     # Look up user
-    result = await db.execute(
-        select(User).where(User.email == credentials.email)
-    )
+    result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
 
     # User not found or password incorrect
-    if not user or not verify_password(credentials.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise credentials_exception
 
     # Check if account is active
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is inactive"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive"
         )
 
     # Create JWT token
-    access_token_expires = timedelta(
-        minutes=settings.access_token_expire_minutes
-    )
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
-        data={"sub": user.email},
-        expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
 
     return Token(
         access_token=access_token,
         token_type="bearer",
-        expires_in=int(access_token_expires.total_seconds())
+        expires_in=int(access_token_expires.total_seconds()),
     )
 
 
@@ -147,11 +133,9 @@ async def login(
     "/me",
     response_model=UserResponse,
     summary="Get Current User",
-    description="Get the currently authenticated user's information"
+    description="Get the currently authenticated user's information",
 )
-async def get_current_user_info(
-    current_user: User = Depends(get_current_user)
-) -> User:
+async def get_current_user_info(current_user: User = Depends(get_current_user)) -> User:
     """
     Get information about the currently authenticated user.
 

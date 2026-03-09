@@ -1,0 +1,122 @@
+{
+  "title": "Alerting & Backup Overview",
+  "schemaVersion": 39,
+  "editable": true,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Alert Health",
+      "id": 1,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "type": "stat",
+      "id": 2,
+      "title": "Active Critical Alerts",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 3, "w": 6, "x": 0, "y": 1},
+      "targets": [
+        {"expr": "count(ALERTS{severity=\"critical\",alertstate=\"firing\"})", "refId": "A"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 3}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto"}
+    },
+    {
+      "type": "stat",
+      "id": 3,
+      "title": "Backup Success Ratio (24h)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 3, "w": 6, "x": 6, "y": 1},
+      "targets": [
+        {
+          "expr": "sum(increase(pbs_backup_completed_total[24h])) / sum(increase(pbs_backup_attempted_total[24h]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 0.95},
+              {"color": "green", "value": 0.98}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto"}
+    },
+    {
+      "type": "timeseries",
+      "id": 4,
+      "title": "Alert Volume by Severity",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 1},
+      "targets": [
+        {"expr": "sum by (severity) (rate(ALERTS[5m]))", "refId": "A"}
+      ],
+      "options": {
+        "legend": {"showLegend": true, "placement": "right"},
+        "tooltip": {"mode": "single"}
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 5,
+      "title": "Backup Duration (p95)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(pbs_backup_duration_seconds_bucket[15m])))",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {"showLegend": true},
+        "tooltip": {"mode": "multi"}
+      }
+    },
+    {
+      "type": "row",
+      "title": "Runbook Links",
+      "id": 6,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 11}
+    },
+    {
+      "type": "text",
+      "id": 7,
+      "title": "Runbooks",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 12},
+      "options": {
+        "content": "- Critical alerts → [Operational Runbook](../runbooks/OPERATIONAL_RUNBOOK.md)\n- Backup failures → [Restore Checklist](../pbs/pbs-restore-checklist.md)\n- Alert routing → [Alertmanager Template](../alertmanager/alertmanager.yml)"
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "type": "custom",
+        "query": "prod,staging",
+        "current": {"text": "prod", "value": "prod"}
+      }
+    ]
+  },
+  "time": {"from": "now-6h", "to": "now"}
+}

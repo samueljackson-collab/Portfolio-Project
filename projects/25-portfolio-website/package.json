@@ -7,6 +7,8 @@
     "docs:build": "vitepress build docs"
   },
   "devDependencies": {
-    "vitepress": "^1.0.0"
+    "vitepress": "^1.0.0",
+    "mermaid": "^10.6.1",
+    "vitepress-plugin-mermaid": "^2.0.13"
   }
 }

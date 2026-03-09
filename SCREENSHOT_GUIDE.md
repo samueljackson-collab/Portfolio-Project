@@ -1,5 +1,7 @@
 # SCREENSHOT GUIDE FOR PORTFOLIO
+
 # ================================
+
 # How to capture, organize, and catalog screenshots for your portfolio
 
 ## OVERVIEW
@@ -12,7 +14,8 @@ This guide shows you exactly how to take professional screenshots of your infras
 
 ### What to Screenshot
 
-#### For PRJ-HOME-001 (Network Infrastructure):
+#### For PRJ-HOME-001 (Network Infrastructure)
+
 1. **UniFi Controller Dashboard**
    - Main dashboard showing all devices
    - Network topology view
@@ -33,13 +36,15 @@ This guide shows you exactly how to take professional screenshots of your infras
    - Any physical setup photos
 
 **Recommended Tools:**
+
 - Browser built-in (Ctrl+Shift+S in Firefox, Cmd+Shift+4 on Mac)
 - Windows Snipping Tool
 - macOS Screenshot (Cmd+Shift+3 for full screen, Cmd+Shift+4 for selection)
 
 ---
 
-#### For PRJ-HOME-002 (Virtualization):
+#### For PRJ-HOME-002 (Virtualization)
+
 1. **Proxmox Dashboard**
    - Datacenter view (node list)
    - Summary page for each node
@@ -68,7 +73,8 @@ This guide shows you exactly how to take professional screenshots of your infras
 
 ---
 
-#### For PRJ-SDE-002 (Observability):
+#### For PRJ-SDE-002 (Observability)
+
 1. **Grafana Dashboards**
    - Infrastructure overview dashboard
    - Node exporter dashboard
@@ -95,27 +101,31 @@ This guide shows you exactly how to take professional screenshots of your infras
 
 ### Screenshot Best Practices
 
-#### Resolution & Quality:
+#### Resolution & Quality
+
 ```
 Minimum: 1920x1080 (Full HD)
 Recommended: 2560x1440 (2K) or higher
 Format: PNG (best quality) or JPG (if PNG too large)
 ```
 
-#### What to Include:
+#### What to Include
+
 - ✅ Navigation bars (shows context)
 - ✅ Timestamps (proves it's your system)
 - ✅ Key metrics and data
 - ✅ Multiple views of same system
 
-#### What to Redact:
+#### What to Redact
+
 - ❌ Real IP addresses (use browser dev tools to edit page before screenshot)
 - ❌ Real hostnames (unless they're obviously homelab)
 - ❌ Email addresses
 - ❌ API keys or tokens
 - ❌ Client names or proprietary data
 
-#### Pro Tips:
+#### Pro Tips
+
 1. **Clean up before screenshots:**
    - Close unrelated tabs
    - Clear notifications
@@ -137,11 +147,13 @@ Format: PNG (best quality) or JPG (if PNG too large)
 ### Step 1: Collect Screenshots in One Directory
 
 Create a temporary directory for new screenshots:
+
 ```bash
 mkdir ~/portfolio-screenshots
 ```
 
 Move/copy all screenshots there:
+
 ```bash
 mv ~/Downloads/Screenshot*.png ~/portfolio-screenshots/
 mv ~/Pictures/Screenshots/*.png ~/portfolio-screenshots/
@@ -154,6 +166,7 @@ mv ~/Pictures/Screenshots/*.png ~/portfolio-screenshots/
 The organization tool auto-categorizes by filename, so descriptive names help:
 
 **Good Names:**
+
 ```
 grafana-dashboard-infrastructure.png
 proxmox-cluster-summary.png
@@ -163,12 +176,14 @@ prometheus-targets-healthy.png
 ```
 
 **Tool Will Auto-Detect:**
+
 - "grafana" → dashboards category
 - "proxmox" → infrastructure category
 - "unifi" → networking category
 - "prometheus" → monitoring category
 
 **Bad Names:**
+
 ```
 Screenshot 2024-11-06 at 3.41.23 PM.png  (No context)
 IMG_1234.png  (Generic)
@@ -179,11 +194,13 @@ IMG_1234.png  (Generic)
 ### Step 3: Run Organization Tool
 
 Navigate to portfolio repository:
+
 ```bash
 cd ~/Portfolio-Project
 ```
 
 **Option A: Auto-Detect Project (if filename contains project ID)**
+
 ```bash
 python3 scripts/organize-screenshots.py ~/portfolio-screenshots
 
@@ -191,6 +208,7 @@ python3 scripts/organize-screenshots.py ~/portfolio-screenshots
 ```
 
 **Option B: Specify Project Explicitly**
+
 ```bash
 # For homelab network screenshots
 python3 scripts/organize-screenshots.py ~/portfolio-screenshots --project PRJ-HOME-001
@@ -203,6 +221,7 @@ python3 scripts/organize-screenshots.py ~/portfolio-screenshots --project PRJ-SD
 ```
 
 **Option C: Dry Run (Preview First)**
+
 ```bash
 # See what would happen without actually moving files
 python3 scripts/organize-screenshots.py ~/portfolio-screenshots --project PRJ-HOME-001 --dry-run
@@ -215,6 +234,7 @@ python3 scripts/organize-screenshots.py ~/portfolio-screenshots --project PRJ-HO
 ### Step 4: Review Organization
 
 The tool will:
+
 1. ✅ Categorize screenshots automatically
 2. ✅ Rename with consistent format: `PRJ-XXX_category_NN_YYYYMMDD.png`
 3. ✅ Detect and skip duplicates
@@ -223,6 +243,7 @@ The tool will:
 6. ✅ Create JSON index
 
 **Check the results:**
+
 ```bash
 # View the catalog
 cat projects/06-homelab/PRJ-HOME-001/assets/screenshots/README.md
@@ -331,29 +352,39 @@ The tool automatically categorizes based on filename keywords:
 ## PART 5: TROUBLESHOOTING
 
 ### Problem: "Could not determine project"
+
 **Solution:** Use `--project` flag explicitly:
+
 ```bash
 python3 scripts/organize-screenshots.py ~/screenshots --project PRJ-HOME-001
 ```
 
 ### Problem: "Duplicate detected"
+
 **Solution:** This is expected if you've already organized this file. The tool detects duplicates by content (MD5 hash), not filename.
 
 ### Problem: "Wrong category assigned"
+
 **Solution:** Rename file to include category keyword before organizing:
+
 ```bash
 mv screenshot.png grafana-dashboard-overview.png
 ```
 
 ### Problem: "PIL not installed" warning
+
 **Solution:** Install Pillow for full metadata extraction:
+
 ```bash
 pip install Pillow
 ```
+
 (Tool works without it, but metadata will be limited)
 
 ### Problem: "Permission denied"
+
 **Solution:** Ensure script is executable:
+
 ```bash
 chmod +x scripts/organize-screenshots.py
 ```
@@ -363,6 +394,7 @@ chmod +x scripts/organize-screenshots.py
 ## PART 6: ADVANCED USAGE
 
 ### Batch Processing Multiple Projects
+
 ```bash
 # Organize screenshots for multiple projects in one go
 for project in PRJ-HOME-001 PRJ-HOME-002 PRJ-SDE-002; do
@@ -373,6 +405,7 @@ done
 ```
 
 ### Custom Screenshot Directory Structure
+
 ```bash
 # If you have screenshots already organized by project:
 ~/screenshots/
@@ -387,6 +420,7 @@ python3 scripts/organize-screenshots.py ~/screenshots/monitoring --project PRJ-S
 ```
 
 ### Re-organizing Existing Screenshots
+
 ```bash
 # If you need to recategorize, just re-run the tool
 # It will detect existing files as duplicates and skip them
@@ -440,6 +474,7 @@ projects/PROJECT/assets/screenshots/
 ```
 
 The README.md will show:
+
 - Image previews (GitHub renders these automatically)
 - Original filenames
 - Metadata (size, dimensions, date)
@@ -467,6 +502,7 @@ The README.md will show:
 4. **Documentation:**
    - The auto-generated README is great for GitHub
    - Reference screenshots in your project READMEs:
+
      ```markdown
      ![Infrastructure Dashboard](./assets/screenshots/dashboards/PRJ-SDE-002_dashboards_01_20241107.png)
      ```
@@ -483,6 +519,7 @@ The README.md will show:
 6. ✅ View on GitHub to see inline images
 
 **Time Estimate:**
+
 - Taking screenshots: 30-60 minutes per project
 - Organizing with tool: 5-10 minutes per batch
 - Review and commit: 10-15 minutes

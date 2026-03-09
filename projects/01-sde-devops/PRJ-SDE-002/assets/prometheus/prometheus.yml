@@ -1,149 +1,86 @@
-# Prometheus Configuration for Homelab Observability Stack
-# Project: PRJ-SDE-002 - Observability & Monitoring Implementation
-# Location: projects/01-sde-devops/PRJ-SDE-002/assets/prometheus/prometheus.yml
-
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: 'homelab'
-    environment: 'production'
-    datacenter: 'home'
+    environment: 'homelab'
+    cluster: 'primary'
 
-# Alertmanager configuration
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets:
-            - 'localhost:9093'
-
-# Load rules once and periodically evaluate them according to the global 'evaluation_interval'
 rule_files:
-  - "/etc/prometheus/alerts/*.yml"
-  - "/etc/prometheus/rules/*.yml"
+  - "alerts/*.yml"
+  - "recording_rules/*.yml"
 
-# Scrape configurations
 scrape_configs:
+  # Node Exporter - System metrics
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['192.168.10.10:9100', '192.168.10.5:9100']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__meta_ec2_availability_zone]
+        target_label: availability_zone
+
   # Prometheus self-monitoring
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
-        labels:
-          instance_type: 'monitoring'
-          service: 'prometheus'
+    metrics_path: /metrics
+    scrape_interval: 30s
 
-  # Node Exporter - Proxmox Host
-  - job_name: 'node-exporter-proxmox'
+  # cAdvisor - Container metrics
+  - job_name: 'cadvisor'
     static_configs:
-      - targets: ['192.168.1.10:9100']
-        labels:
-          instance_type: 'hypervisor'
-          hostname: 'proxmox-host'
-          role: 'compute'
+      - targets: ['192.168.10.10:8080']
+    scrape_interval: 30s
+    metrics_path: /metrics
 
-  # Node Exporter - Virtual Machines
-  - job_name: 'node-exporter-vms'
-    static_configs:
-      - targets:
-          - '192.168.1.20:9100'
-          - '192.168.1.21:9100'
-          - '192.168.1.22:9100'
-          - '192.168.1.23:9100'
-          - '192.168.1.24:9100'
-        labels:
-          instance_type: 'vm'
-          environment: 'production'
-
-  # Node Exporter - LXC Containers
-  - job_name: 'node-exporter-containers'
-    static_configs:
-      - targets:
-          - '192.168.1.30:9100'
-          - '192.168.1.31:9100'
-          - '192.168.1.32:9100'
-        labels:
-          instance_type: 'container'
-          container_type: 'lxc'
-
-  # Proxmox VE Exporter
-  - job_name: 'proxmox-exporter'
-    static_configs:
-      - targets: ['192.168.1.10:9221']
-        labels:
-          instance_type: 'exporter'
-          exporter_type: 'proxmox'
-          service: 'virtualization-metrics'
-
-  # TrueNAS Exporter
-  - job_name: 'truenas-exporter'
-    static_configs:
-      - targets: ['192.168.1.5:9273']
-        labels:
-          instance_type: 'storage'
-          exporter_type: 'truenas'
-          service: 'storage-metrics'
-
-  # Blackbox Exporter - HTTP Probes
-  - job_name: 'blackbox-http'
+  # Blackbox Exporter - HTTP/HTTPS checks
+  - job_name: 'blackbox_http'
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
       - targets:
-          - http://192.168.1.20
-          - http://192.168.1.21
-          - http://192.168.1.22
-          - https://192.168.1.5
+        - https://wiki.homelab.local
+        - https://homeassistant.homelab.local
+        - https://immich.homelab.local
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: localhost:9115
+        replacement: 192.168.10.10:9115
 
-  # Blackbox Exporter - ICMP Probes
-  - job_name: 'blackbox-icmp'
-    metrics_path: /probe
-    params:
-      module: [icmp]
+  # Backup Server metrics
+  - job_name: 'proxmox_backup_server'
     static_configs:
-      - targets:
-          - 192.168.1.10
-          - 192.168.1.20
-          - 192.168.1.21
-          - 192.168.1.22
-          - 192.168.1.23
-          - 192.168.1.24
-          - 192.168.1.5
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target
-      - source_labels: [__param_target]
-        target_label: instance
-      - target_label: __address__
-        replacement: localhost:9115
+      - targets: ['192.168.10.15:8006']
+    scrape_interval: 60s
+    metrics_path: /metrics
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
 
-  # Grafana metrics
-  - job_name: 'grafana'
-    static_configs:
-      - targets: ['localhost:3000']
-        labels:
-          instance_type: 'monitoring'
-          service: 'grafana'
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - 192.168.10.10:9093
 
-  # Loki metrics
-  - job_name: 'loki'
-    static_configs:
-      - targets: ['localhost:3100']
-        labels:
-          instance_type: 'monitoring'
-          service: 'loki'
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus
+    retention: 30d
 
-  # Alertmanager metrics
-  - job_name: 'alertmanager'
-    static_configs:
-      - targets: ['localhost:9093']
-        labels:
-          instance_type: 'monitoring'
-          service: 'alertmanager'
+# Remote write for long-term storage (optional)
+remote_write:
+  - url: http://192.168.10.10:3100/api/prom/push
+    queue_config:
+      capacity: 2500
+      max_shards: 200
+      min_shards: 1
+      max_samples_per_send: 500

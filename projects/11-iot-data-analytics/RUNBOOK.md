@@ -520,25 +520,25 @@ psql -h localhost -U postgres -d iot_analytics -c \
 
 #### Severity Classification
 
-**P0: Complete Data Loss**
+### P0: Complete Data Loss
 - AWS IoT Core unreachable
 - All devices disconnected
 - No data flowing to TimescaleDB
 - Critical system component failure
 
-**P1: Partial Data Loss**
+### P1: Partial Data Loss
 - Firehose delivery stream stopped
 - TimescaleDB connection lost
 - > 50% devices offline
 - High message loss rate (> 5%)
 
-**P2: Degraded Performance**
+### P2: Degraded Performance
 - High ingestion latency (> 10 seconds)
 - Some devices offline (< 50%)
 - Slow database queries
 - Anomaly detection delayed
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual device offline
 - Grafana dashboard slow
 - Non-critical alerts

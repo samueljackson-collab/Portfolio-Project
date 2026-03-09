@@ -1,0 +1,177 @@
+version: 2
+updates:
+  # ============================================================================
+  # DOCKER DEPENDENCIES - GROUPED BY BASE IMAGE
+  # ============================================================================
+  # All Docker updates are now grouped by base image type, scanning from root
+  # directory. This consolidates 80+ separate directory configs into 5 groups.
+  # Result: 1 PR per base image type instead of 1 PR per directory.
+  # ============================================================================
+
+  # Group 1: All Python Docker Images
+  # Consolidates all Python-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      python-docker-all:
+        patterns:
+          - "python*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "python"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 2: All Node.js Docker Images
+  # Consolidates all Node-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      node-docker-all:
+        patterns:
+          - "node*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "node"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 3: All Alpine Linux Docker Images
+  # Consolidates all Alpine-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      alpine-docker-all:
+        patterns:
+          - "alpine*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "alpine"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 4: All Golang Docker Images
+  # Consolidates all Golang-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      golang-docker-all:
+        patterns:
+          - "golang*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "golang"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 5: All Java/OpenJDK Docker Images
+  # Consolidates all Java-based Dockerfiles across the repository
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      java-docker-all:
+        patterns:
+          - "openjdk*"
+          - "eclipse-temurin*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "java"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # Group 6: Other Docker Images (Nginx, Postgres, Redis, etc.)
+  # Catches any other Docker base images not covered above
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      other-docker-all:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "python*"
+          - "node*"
+          - "alpine*"
+          - "golang*"
+          - "openjdk*"
+          - "eclipse-temurin*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "docker"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"
+
+  # ============================================================================
+  # PYTHON PIP DEPENDENCIES - SINGLE GROUPED UPDATE
+  # ============================================================================
+  # Scans all Python requirements files from root, creates 1 consolidated PR
+  # instead of 1 PR per directory. Dramatically reduces PR count.
+  # ============================================================================
+
+  # Group 7: All Python pip Dependencies
+  # Consolidates all pip dependencies across the repository
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      python-dependencies-all:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "python"
+      - "pip"
+    open-pull-requests-limit: 5
+    assignees:
+      - "Codex"

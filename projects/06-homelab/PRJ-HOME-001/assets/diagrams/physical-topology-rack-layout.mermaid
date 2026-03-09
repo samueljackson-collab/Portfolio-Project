@@ -1,0 +1,62 @@
+flowchart TB
+    %% Physical topology focused on rack layout, cabling, and power
+    subgraph Rack[12U Wall Rack]
+        direction TB
+        UPS[UPS 1500VA\nDedicated 15A Circuit]
+        PatchPanel[24-Port Patch Panel\nCat6a Runs]
+        UDMP[UniFi Dream Machine Pro\nWAN/LAN]
+        Switch24[UniFi Switch 24 PoE\nPoE Budget 95W]
+        NVR[Protect NVR\nCCTV Storage]
+        Proxmox[Proxmox Host\nVLAN 40]
+        TrueNAS[TrueNAS\nVLAN 40]
+        PiHole[Pi-hole\nVLAN 10]
+    end
+
+    subgraph Rooms[Home Runs]
+        Living[Living Room Jack\nCat6a 25ft]
+        Office[Office Jack\nCat6a 75ft]
+        Bedroom[Bedroom Jack\nCat6a 50ft]
+        AP1[AP #1\nPoE]
+        AP2[AP #2\nPoE]
+        AP3[AP #3\nPoE]
+    end
+
+    ISP[ISP Modem\nBridge Mode]
+
+    %% Cabling
+    ISP -->|Coax/Fiber| UPS
+    UPS -->|Dedicated Power\nBattery Backup| UDMP
+    UPS -->|Dedicated Power| Switch24
+    UPS -->|Dedicated Power| NVR
+    UPS -->|Dedicated Power| Proxmox
+    UPS -->|Dedicated Power| TrueNAS
+    UPS -->|Dedicated Power| PiHole
+
+    UDMP -->|Cat6a WAN| ISP
+    UDMP -->|Cat6a LAN\nTrunk| Switch24
+    Switch24 -->|Cat6a Patch| PatchPanel
+
+    PatchPanel -->|Cat6a Home Run| Living
+    PatchPanel -->|Cat6a Home Run| Office
+    PatchPanel -->|Cat6a Home Run| Bedroom
+
+    Living -->|Cat6a + PoE| AP1
+    Office -->|Cat6a + PoE| AP2
+    Bedroom -->|Cat6a + PoE| AP3
+
+    %% Rack device uplinks
+    Switch24 -->|Cat6a| Proxmox
+    Switch24 -->|Cat6a| TrueNAS
+    Switch24 -->|Cat6a| PiHole
+    Switch24 -->|Cat6a| NVR
+
+    %% Styling
+    classDef power fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef rack fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef runs fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef edge fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    class UPS power
+    class Rack rack
+    class Rooms runs
+    class ISP edge

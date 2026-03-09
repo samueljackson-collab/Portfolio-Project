@@ -1,12 +1,31 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid(
+  defineConfig({
   title: 'Sam Jackson - Enterprise Portfolio',
   description: 'Technical portfolio showcasing 25 enterprise-grade projects across Infrastructure, AI/ML, Security, and Emerging Technologies',
+  lang: 'en-US',
+
+  // Sitemap generation
+  sitemap: {
+    hostname: 'https://portfolio.samjackson.dev'
+  },
 
   head: [
     ['meta', { name: 'author', content: 'Sam Jackson' }],
-    ['meta', { name: 'keywords', content: 'DevOps, Cloud Architecture, AWS, Kubernetes, Machine Learning, Cybersecurity, Portfolio' }]
+    ['meta', { name: 'keywords', content: 'DevOps, Cloud Architecture, AWS, Kubernetes, Machine Learning, Cybersecurity, Portfolio' }],
+    ['meta', { name: 'theme-color', content: '#3eaf7c' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: 'Sam Jackson - Enterprise Portfolio' }],
+    ['meta', { property: 'og:description', content: 'Technical portfolio showcasing 25 enterprise-grade projects' }],
+    ['meta', { property: 'og:image', content: '/portfolio-og.png' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
+    // Performance hints
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' }]
   ],
 
   themeConfig: {
@@ -86,6 +105,7 @@ export default defineConfig({
       {
         text: '📚 Guides & Resources',
         items: [
+          { text: 'Complete Portfolio Overview (with Diagrams)', link: '/main/complete-overview' },
           { text: 'Wiki.js Setup Guide', link: '/wikijs' }
         ]
       }
@@ -116,6 +136,32 @@ export default defineConfig({
       light: 'github-light',
       dark: 'github-dark'
     },
-    lineNumbers: true
+    lineNumbers: true,
+    config: (md) => {
+      // Enable Mermaid diagrams
+      md.set({ breaks: true })
+    }
+  },
+
+  // Mermaid configuration
+  mermaid: {
+    theme: 'default',
+    themeVariables: {
+      primaryColor: '#2563eb',
+      primaryTextColor: '#fff',
+      primaryBorderColor: '#1e40af',
+      lineColor: '#64748b',
+      secondaryColor: '#06b6d4',
+      tertiaryColor: '#f8fafc'
+    }
+  },
+
+  vue: {
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => tag === 'mjx-container'
+      }
+    }
   }
 })
+)

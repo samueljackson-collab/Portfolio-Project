@@ -41,7 +41,7 @@ test-webkit: ## Run tests on WebKit only
 
 report: ## Open HTML test report
 	@echo "Opening test report..."
-	npx playwright show-report
+	npx playwright show-report reports/playwright-html
 
 trace: ## Show trace viewer (specify TRACE_FILE)
 	@if [ -z "$(TRACE_FILE)" ]; then \
@@ -63,7 +63,7 @@ lint: ## Lint test files
 	fi
 
 clean: ## Clean test artifacts and reports
-	rm -rf test-results playwright-report .playwright
+	rm -rf reports test-results playwright-report .playwright
 	rm -rf node_modules package-lock.json
 	find . -type f -name "*.zip" -delete
 

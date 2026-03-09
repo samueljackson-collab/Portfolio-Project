@@ -1,0 +1,81 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Dependencies
+node_modules/
+vendor/
+bower_components/
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+ENV/
+.venv
+
+# Build Output
+dist/
+build/
+*.egg-info/
+.next/
+out/
+.nuxt
+.cache
+.parcel-cache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Secrets & Credentials
+*.pem
+*.key
+*.p12
+.secrets
+credentials.json
+
+# Test Coverage
+coverage/
+.nyc_output
+*.lcov
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+
+# Package Manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# OS and IDE specific
+.history/
+.vscode-test/

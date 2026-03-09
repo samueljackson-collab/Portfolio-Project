@@ -1,0 +1,23 @@
+Alert alert-101 score=1.00
+[ACTION] Isolating host prod-db-2
+[ACTION] Opening ticket for alert-101 severity=critical
+Alert alert-102 score=1.00
+[ACTION] Isolating host prod-web-3
+[ACTION] Opening ticket for alert-102 severity=high
+Alert alert-103 score=0.72
+[ACTION] Isolating host corp-vpn-1
+[ACTION] Opening ticket for alert-103 severity=medium
+Alert alert-104 score=1.00
+[ACTION] Isolating host prod-api-1
+[ACTION] Opening ticket for alert-104 severity=high
+Alert alert-105 score=0.42
+[ACTION] Opening ticket for alert-105 severity=low
+Alert alert-106 score=1.00
+[ACTION] Isolating host prod-payments-1
+[ACTION] Opening ticket for alert-106 severity=critical
+Alert alert-107 score=0.72
+[ACTION] Isolating host corp-mail-2
+[ACTION] Opening ticket for alert-107 severity=medium
+Alert alert-108 score=1.00
+[ACTION] Isolating host prod-web-2
+[ACTION] Opening ticket for alert-108 severity=high

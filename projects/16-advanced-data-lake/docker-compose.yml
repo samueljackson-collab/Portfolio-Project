@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  data-lake:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: data-lake
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_GROUP_ID=data-lake-ingest
+      - KAFKA_TOPICS=events
+      - OUTPUT_PATH=/data/bronze
+      - LOG_LEVEL=INFO
+    volumes:
+      - bronze-data:/data/bronze
+      - silver-data:/data/silver
+      - gold-data:/data/gold
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  bronze-to-silver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bronze-to-silver
+    command: >
+      python -m src.bronze_to_silver
+      --input /data/bronze
+      --output /data/silver/output.parquet
+    volumes:
+      - bronze-data:/data/bronze:ro
+      - silver-data:/data/silver
+    profiles:
+      - batch
+
+  silver-to-gold:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: silver-to-gold
+    command: >
+      python -m src.silver_to_gold
+      --input /data/silver/output.parquet
+      --output /data/gold
+      --granularity daily
+    volumes:
+      - silver-data:/data/silver:ro
+      - gold-data:/data/gold
+    profiles:
+      - batch
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: datalake-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: datalake-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=datalake123
+    volumes:
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  bronze-data:
+  silver-data:
+  gold-data:
+  zookeeper-data:
+  kafka-data:
+  prometheus-data:
+  grafana-data:

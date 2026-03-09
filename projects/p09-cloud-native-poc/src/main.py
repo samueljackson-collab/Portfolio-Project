@@ -10,14 +10,14 @@ import logging
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='{"time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}'
+    format='{"time": "%(asctime)s", "level": "%(levelname)s", "message": "%(message)s"}',
 )
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Cloud-Native POC API",
     description="Proof-of-concept cloud-native application with FastAPI",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 
@@ -108,4 +108,5 @@ async def delete_item(item_id: int):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

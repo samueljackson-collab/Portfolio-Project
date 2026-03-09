@@ -11,7 +11,7 @@ This module provides:
 
 from uuid import UUID
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 
@@ -21,9 +21,14 @@ from app.schemas import (
     ContentCreate,
     ContentUpdate,
     ContentResponse,
-    ContentListResponse
+    ContentListResponse,
 )
-from app.dependencies import get_current_user
+from app.dependencies import (
+    get_current_user,
+    get_optional_user,
+    raise_not_found,
+    check_ownership,
+)
 
 
 router = APIRouter(
@@ -36,15 +41,15 @@ router = APIRouter(
     "",
     response_model=ContentListResponse,
     summary="List Content",
-    description="Get paginated list of content items with optional filtering"
+    description="Get paginated list of content items with optional filtering",
 )
 async def list_content(
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
     published_only: bool = Query(True, description="Show only published content"),
-    search: Optional[str] = Query(None, description="Search in title and body")
+    search: Optional[str] = Query(None, description="Search in title and body"),
 ) -> ContentListResponse:
     """
     List content items with pagination and filtering.
@@ -67,24 +72,17 @@ async def list_content(
     if current_user:
         # Authenticated: show own content + published from others
         query = query.where(
-            or_(
-                Content.owner_id == current_user.id,
-                Content.is_published == True
-            )
+            or_(Content.owner_id == current_user.id, Content.is_published)
         )
     else:
         # Not authenticated: only published content
-        if published_only:
-            query = query.where(Content.is_published == True)
+        query = query.where(Content.is_published)
 
     # Apply search filter
     if search:
         search_pattern = f"%{search}%"
         query = query.where(
-            or_(
-                Content.title.ilike(search_pattern),
-                Content.body.ilike(search_pattern)
-            )
+            or_(Content.title.ilike(search_pattern), Content.body.ilike(search_pattern))
         )
 
     # Count total items (before pagination)
@@ -107,11 +105,7 @@ async def list_content(
     pages = (total + page_size - 1) // page_size
 
     return ContentListResponse(
-        items=items,
-        total=total,
-        page=page,
-        page_size=page_size,
-        pages=pages
+        items=items, total=total, page=page, page_size=page_size, pages=pages
     )
 
 
@@ -119,12 +113,12 @@ async def list_content(
     "/{content_id}",
     response_model=ContentResponse,
     summary="Get Content",
-    description="Get a single content item by ID"
+    description="Get a single content item by ID",
 )
 async def get_content(
     content_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_optional_user),
 ) -> Content:
     """
     Get a single content item by ID.
@@ -140,24 +134,16 @@ async def get_content(
     Raises:
         HTTPException 404: Content not found or not authorized
     """
-    result = await db.execute(
-        select(Content).where(Content.id == content_id)
-    )
+    result = await db.execute(select(Content).where(Content.id == content_id))
     content = result.scalar_one_or_none()
 
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
+        raise_not_found("Content")
 
     # Check authorization
     if not content.is_published:
         if not current_user or content.owner_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Content not found"
-            )
+            raise_not_found("Content")
 
     return content
 
@@ -167,12 +153,12 @@ async def get_content(
     response_model=ContentResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create Content",
-    description="Create a new content item (requires authentication)"
+    description="Create a new content item (requires authentication)",
 )
 async def create_content(
     content_data: ContentCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> Content:
     """
     Create a new content item.
@@ -185,10 +171,7 @@ async def create_content(
     Returns:
         ContentResponse: Created content item
     """
-    new_content = Content(
-        **content_data.model_dump(),
-        owner_id=current_user.id
-    )
+    new_content = Content(**content_data.model_dump(), owner_id=current_user.id)
 
     db.add(new_content)
     await db.commit()
@@ -201,13 +184,13 @@ async def create_content(
     "/{content_id}",
     response_model=ContentResponse,
     summary="Update Content",
-    description="Update an existing content item (owner only)"
+    description="Update an existing content item (owner only)",
 )
 async def update_content(
     content_id: UUID,
     content_data: ContentUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> Content:
     """
     Update an existing content item.
@@ -225,23 +208,14 @@ async def update_content(
         HTTPException 404: Content not found
         HTTPException 403: Not authorized (not the owner)
     """
-    result = await db.execute(
-        select(Content).where(Content.id == content_id)
-    )
+    result = await db.execute(select(Content).where(Content.id == content_id))
     content = result.scalar_one_or_none()
 
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
+        raise_not_found("Content")
 
     # Check ownership
-    if content.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this content"
-        )
+    check_ownership(content, current_user, "update this content")
 
     # Update fields that were provided
     update_data = content_data.model_dump(exclude_unset=True)
@@ -258,12 +232,12 @@ async def update_content(
     "/{content_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete Content",
-    description="Delete a content item (owner only)"
+    description="Delete a content item (owner only)",
 )
 async def delete_content(
     content_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> None:
     """
     Delete a content item.
@@ -277,23 +251,14 @@ async def delete_content(
         HTTPException 404: Content not found
         HTTPException 403: Not authorized (not the owner)
     """
-    result = await db.execute(
-        select(Content).where(Content.id == content_id)
-    )
+    result = await db.execute(select(Content).where(Content.id == content_id))
     content = result.scalar_one_or_none()
 
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
+        raise_not_found("Content")
 
     # Check ownership
-    if content.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this content"
-        )
+    check_ownership(content, current_user, "delete this content")
 
     await db.delete(content)
     await db.commit()

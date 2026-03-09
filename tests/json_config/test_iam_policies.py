@@ -117,7 +117,7 @@ class TestGitHubActionsPolicyStructure:
             if isinstance(actions, str):
                 actions = [actions]
             all_actions.extend(actions)
-        
+
         assert any("ec2:" in action for action in all_actions)
 
     def test_has_rds_permissions(self, github_actions_policy):
@@ -128,7 +128,7 @@ class TestGitHubActionsPolicyStructure:
             if isinstance(actions, str):
                 actions = [actions]
             all_actions.extend(actions)
-        
+
         assert any("rds:" in action for action in all_actions)
 
 
@@ -191,7 +191,7 @@ class TestS3StatePermissions:
                 if isinstance(actions, str):
                     actions = [actions]
                 s3_actions.extend(actions)
-        
+
         assert any("s3:GetObject" in action for action in s3_actions)
 
     def test_s3_permissions_include_put_object(self, github_actions_policy):
@@ -203,7 +203,7 @@ class TestS3StatePermissions:
                 if isinstance(actions, str):
                     actions = [actions]
                 s3_actions.extend(actions)
-        
+
         assert any("s3:PutObject" in action for action in s3_actions)
 
     def test_s3_permissions_include_list_bucket(self, github_actions_policy):
@@ -215,7 +215,7 @@ class TestS3StatePermissions:
                 if isinstance(actions, str):
                     actions = [actions]
                 s3_actions.extend(actions)
-        
+
         assert any("s3:ListBucket" in action for action in s3_actions)
 
 
@@ -231,7 +231,7 @@ class TestDynamoDBLockPermissions:
                 if isinstance(actions, str):
                     actions = [actions]
                 dynamodb_actions.extend(actions)
-        
+
         assert any("dynamodb:GetItem" in action for action in dynamodb_actions)
 
     def test_dynamodb_permissions_include_put_item(self, github_actions_policy):
@@ -243,7 +243,7 @@ class TestDynamoDBLockPermissions:
                 if isinstance(actions, str):
                     actions = [actions]
                 dynamodb_actions.extend(actions)
-        
+
         assert any("dynamodb:PutItem" in action for action in dynamodb_actions)
 
     def test_dynamodb_permissions_include_delete_item(self, github_actions_policy):
@@ -255,7 +255,7 @@ class TestDynamoDBLockPermissions:
                 if isinstance(actions, str):
                     actions = [actions]
                 dynamodb_actions.extend(actions)
-        
+
         assert any("dynamodb:DeleteItem" in action for action in dynamodb_actions)
 
 
@@ -275,14 +275,18 @@ class TestSecurityBestPractices:
             if "Resource" in stmt and stmt["Resource"] != "*":
                 has_resource_restriction = True
                 break
-        
+
         # At least state bucket should have specific resource
-        assert has_resource_restriction, "Policy should have some resource-specific restrictions"
+        assert (
+            has_resource_restriction
+        ), "Policy should have some resource-specific restrictions"
 
     def test_trust_policy_uses_string_equals(self, github_oidc_trust_policy):
         """Verify trust policy uses StringEquals for exact matching."""
         policy_str = json.dumps(github_oidc_trust_policy)
-        assert "StringEquals" in policy_str, "Trust policy should use StringEquals for security"
+        assert (
+            "StringEquals" in policy_str
+        ), "Trust policy should use StringEquals for security"
 
 
 class TestPolicyPlaceholders:

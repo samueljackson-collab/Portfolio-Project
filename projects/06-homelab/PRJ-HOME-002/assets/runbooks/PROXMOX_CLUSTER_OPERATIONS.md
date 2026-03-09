@@ -21,6 +21,7 @@
 ## Overview
 
 ### Cluster Architecture
+
 - **Nodes:** 3 (proxmox-01, proxmox-02, proxmox-03)
 - **IP Addresses:** 192.168.40.10-12
 - **Cluster Name:** homelab-cluster
@@ -28,14 +29,16 @@
 - **HA Services:** FreeIPA, Pi-hole, Nginx, Syslog
 
 ### Access Points
+
 | Component | URL/IP | Credentials |
 |-----------|--------|-------------|
-| Node 1 WebGUI | https://192.168.40.10:8006 | Password Manager |
-| Node 2 WebGUI | https://192.168.40.11:8006 | Password Manager |
-| Node 3 WebGUI | https://192.168.40.12:8006 | Password Manager |
+| Node 1 WebGUI | <https://192.168.40.10:8006> | Password Manager |
+| Node 2 WebGUI | <https://192.168.40.11:8006> | Password Manager |
+| Node 3 WebGUI | <https://192.168.40.12:8006> | Password Manager |
 | Cluster View | Any node URL | Same credentials |
 
 ### Service Level Objectives
+
 - **Availability:** 99.95% (HA services)
 - **RTO:** 1 hour (critical services), 4 hours (standard)
 - **RPO:** 24 hours (daily backups)
@@ -47,6 +50,7 @@
 ### Check Cluster Status
 
 #### Via WebGUI
+
 ```
 1. Login to any node
 2. Navigate to: Datacenter → Summary
@@ -57,6 +61,7 @@
 ```
 
 #### Via CLI
+
 ```bash
 # SSH to any node
 ssh root@192.168.40.10
@@ -81,6 +86,7 @@ cat /etc/pve/corosync.conf
 ### Monitor Cluster Health
 
 #### Daily Health Check
+
 ```bash
 # On any cluster node
 ssh root@192.168.40.10
@@ -105,6 +111,7 @@ apt update && apt list --upgradable
 ```
 
 #### Weekly Health Check
+
 ```bash
 # Check Ceph cluster health (if using Ceph)
 ceph status
@@ -121,11 +128,13 @@ journalctl -p err -since "1 week ago"
 ### Add New Node to Cluster
 
 **Prerequisites:**
+
 - Proxmox VE installed on new node
 - Network connectivity to cluster
 - Same Proxmox version as existing nodes
 
 **Procedure:**
+
 ```bash
 # On existing cluster node (e.g., proxmox-01):
 ssh root@192.168.40.10
@@ -181,6 +190,7 @@ pmxcfs -l  # Restart local cluster filesystem
 ### Create New VM
 
 #### Via WebGUI
+
 ```
 1. Right-click node → Create VM
 2. General:
@@ -212,6 +222,7 @@ pmxcfs -l  # Restart local cluster filesystem
 ```
 
 #### Via CLI
+
 ```bash
 # SSH to target node
 ssh root@192.168.40.10
@@ -238,6 +249,7 @@ qm start 101
 ### VM Lifecycle Management
 
 #### Start VM
+
 ```bash
 # Via CLI
 ssh root@192.168.40.10
@@ -248,6 +260,7 @@ qm start <VMID>
 ```
 
 #### Stop VM (Graceful Shutdown)
+
 ```bash
 # Via CLI
 qm shutdown <VMID>
@@ -261,6 +274,7 @@ qm shutdown <VMID> --timeout 60
 ```
 
 #### Stop VM (Immediate)
+
 ```bash
 # Via CLI (use only if shutdown hangs)
 qm stop <VMID>
@@ -270,6 +284,7 @@ qm stop <VMID>
 ```
 
 #### Restart VM
+
 ```bash
 # Via CLI
 qm reboot <VMID>  # Graceful restart
@@ -280,6 +295,7 @@ qm reset <VMID>   # Hard reset
 ```
 
 #### Delete VM
+
 ```bash
 # Via CLI
 # 1. Stop VM first
@@ -298,11 +314,13 @@ qm destroy <VMID> --purge
 **Use Case:** Move running VM between nodes without downtime
 
 **Prerequisites:**
+
 - VM disk on shared storage (Ceph)
 - Network connectivity between nodes
 - Sufficient resources on target node
 
 **Procedure:**
+
 ```bash
 # Via CLI
 ssh root@192.168.40.10
@@ -345,6 +363,7 @@ qm migrate <VMID> <TARGET_NODE> --targetstorage <STORAGE>
 ### VM Snapshots
 
 #### Create Snapshot
+
 ```bash
 # Via CLI
 ssh root@192.168.40.10
@@ -361,6 +380,7 @@ qm snapshot <VMID> <SNAPSHOT_NAME> --vmstate
 ```
 
 #### List Snapshots
+
 ```bash
 # Via CLI
 qm listsnapshot <VMID>
@@ -370,6 +390,7 @@ qm listsnapshot <VMID>
 ```
 
 #### Restore Snapshot
+
 ```bash
 # Via CLI (stop VM first)
 qm stop <VMID>
@@ -382,6 +403,7 @@ qm start <VMID>
 ```
 
 #### Delete Snapshot
+
 ```bash
 # Via CLI
 qm delsnapshot <VMID> <SNAPSHOT_NAME>
@@ -398,6 +420,7 @@ qm delsnapshot <VMID> <SNAPSHOT_NAME>
 ### HA Configuration
 
 #### Enable HA for VM
+
 ```bash
 # Via CLI
 ssh root@192.168.40.10
@@ -417,6 +440,7 @@ ha-manager set vm:<VMID> --state started --max_restart 2 --max_relocate 2
 ```
 
 #### Check HA Status
+
 ```bash
 # Via CLI
 ha-manager status
@@ -430,6 +454,7 @@ ha-manager config
 ```
 
 #### Disable HA for VM
+
 ```bash
 # Via CLI
 ha-manager remove vm:<VMID>
@@ -508,6 +533,7 @@ echo c > /proc/sysrq-trigger
 ### Resource Usage
 
 #### Check Node Resources
+
 ```bash
 # CPU, memory, disk usage
 pvesh get /nodes/<NODE>/status
@@ -521,6 +547,7 @@ pvesh get /nodes/<NODE>/rrddata?timeframe=hour
 ```
 
 #### Check VM Resources
+
 ```bash
 # All VMs on node
 qm list
@@ -535,6 +562,7 @@ pvesh get /nodes/<NODE>/qemu/<VMID>/rrddata?timeframe=hour
 ### Storage Performance
 
 #### Check Ceph Performance
+
 ```bash
 # Ceph cluster status
 ceph status
@@ -550,6 +578,7 @@ ceph health detail
 ```
 
 #### Storage Latency Test
+
 ```bash
 # Write test (on VM)
 dd if=/dev/zero of=/tmp/test.img bs=1G count=1 oflag=dsync
@@ -581,6 +610,7 @@ iperf3 -c 192.168.40.10
 ### Cluster Issues
 
 #### Node Shows "Unknown" Status
+
 ```bash
 # On affected node
 systemctl status pve-cluster
@@ -595,6 +625,7 @@ pvecm status
 ```
 
 #### Quorum Lost
+
 ```bash
 # Check quorum status
 pvecm status
@@ -610,6 +641,7 @@ systemctl restart corosync
 ```
 
 #### Split Brain Prevention
+
 ```bash
 # Ensure proper quorum settings
 pvecm status
@@ -622,6 +654,7 @@ pvecm qdevice setup <QDEVICE_IP>
 ### VM Issues
 
 #### VM Won't Start
+
 ```bash
 # Check VM config
 qm config <VMID>
@@ -637,6 +670,7 @@ journalctl -u qemu-server@<VMID> -n 50
 ```
 
 #### VM Performance Issues
+
 ```bash
 # Check CPU steal time (inside VM)
 top
@@ -656,6 +690,7 @@ qm monitor <VMID>
 ```
 
 #### VM Disk Full
+
 ```bash
 # On host, resize disk
 qm resize <VMID> scsi0 +10G
@@ -673,6 +708,7 @@ xfs_growfs /
 ### Storage Issues
 
 #### Ceph HEALTH_WARN
+
 ```bash
 # Check detailed health
 ceph health detail
@@ -691,6 +727,7 @@ ceph pg dump  # Find stuck PGs
 ```
 
 #### Storage Unavailable
+
 ```bash
 # Check storage status
 pvesm status
@@ -713,12 +750,14 @@ iscsiadm -m session  # Show active sessions
 **Scenario:** Node crashes or becomes unresponsive
 
 **Immediate Actions:**
+
 1. **Don't Panic** - HA will handle automatic failover
 2. **Verify HA Status** - Check if VMs migrated automatically
 3. **Monitor Other Nodes** - Ensure they're handling extra load
 4. **Document** - Note time and symptoms
 
 **Detailed Response:**
+
 ```bash
 # On surviving nodes:
 ssh root@192.168.40.11
@@ -741,6 +780,7 @@ qm start <VMID>
 ```
 
 **Recovery:**
+
 ```bash
 # Once failed node is back online:
 ssh root@192.168.40.10
@@ -760,6 +800,7 @@ journalctl -p err -since "1 hour ago"
 **Scenario:** Ceph cluster unhealthy, VMs can't access storage
 
 **Critical Assessment:**
+
 ```bash
 # Check Ceph status
 ceph status
@@ -777,6 +818,7 @@ ceph pg stat
 **Response Based on Severity:**
 
 **Scenario A: 1 OSD Down (Minor)**
+
 ```bash
 # Single OSD failure, data still available (3-way replication)
 # Action: Monitor, Ceph will self-heal
@@ -791,6 +833,7 @@ systemctl start ceph-osd@<OSD_ID>
 ```
 
 **Scenario B: 2+ OSDs Down (Critical)**
+
 ```bash
 # Data may be unavailable
 # Action: Emergency recovery
@@ -812,6 +855,7 @@ done
 **Scenario:** All nodes down (power outage, network failure)
 
 **Recovery Procedure:**
+
 ```bash
 # 1. Power on nodes in order (wait for each to fully boot)
 # Node 1 (proxmox-01): Primary
@@ -847,6 +891,7 @@ qm start <VMID>
 **Scenario:** Apply updates, hardware maintenance
 
 **Procedure:**
+
 ```bash
 # 1. Migrate all VMs off node
 ssh root@192.168.40.10
@@ -886,6 +931,7 @@ reboot
 ## Best Practices
 
 ### VM Management
+
 - Always use cloud-init templates for new VMs
 - Enable QEMU guest agent on all VMs
 - Use descriptive VM names (purpose-role-number)
@@ -893,18 +939,21 @@ reboot
 - Enable autostart for critical services
 
 ### Storage
+
 - Use Ceph for HA VMs (shared storage)
 - Use local storage for non-HA VMs (better performance)
 - Monitor storage usage, keep below 80%
 - Regular scrubs for data integrity
 
 ### Backups
+
 - Daily backups of all production VMs
 - Test restore procedures quarterly
 - Store backups on separate storage
 - Offsite backups for critical data
 
 ### Updates
+
 - Review release notes before updating
 - Test updates on non-production node first
 - Update one node at a time

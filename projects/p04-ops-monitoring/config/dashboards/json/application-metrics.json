@@ -1,0 +1,60 @@
+{
+  "id": null,
+  "uid": "backend-app-metrics",
+  "title": "Backend Application Metrics",
+  "tags": ["portfolio", "backend"],
+  "timezone": "",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request Rate",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{service=\"backend\"}[5m]))",
+          "legendFormat": "{{method}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "95th Percentile Latency",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"backend\"}[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (5m)",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{service=\"backend\", status_code=~\"5..\"}[5m]))",
+          "legendFormat": "5xx"
+        }
+      ],
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Active Requests",
+      "datasource": {"type": "prometheus", "uid": "prometheus-default"},
+      "targets": [
+        {
+          "expr": "sum(http_requests_inprogress{service=\"backend\"})",
+          "legendFormat": "in-progress"
+        }
+      ],
+      "gridPos": {"h": 6, "w": 18, "x": 6, "y": 8}
+    }
+  ]
+}

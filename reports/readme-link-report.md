@@ -151,19 +151,19 @@ Total README files created: **21**
 
 #### Asset Directory READMEs
 
-18. **projects/01-sde-devops/PRJ-SDE-002/assets/README.md**
+1. **projects/01-sde-devops/PRJ-SDE-002/assets/README.md**
     - Title: Observability & Backups Stack - Assets
     - Description: Evidence, diagrams, and supporting materials
 
-19. **projects/06-homelab/PRJ-HOME-001/assets/README.md**
+2. **projects/06-homelab/PRJ-HOME-001/assets/README.md**
     - Title: Homelab & Secure Network Build - Assets
     - Description: Evidence, diagrams, and supporting materials
 
-20. **projects/06-homelab/PRJ-HOME-002/assets/README.md**
+3. **projects/06-homelab/PRJ-HOME-002/assets/README.md**
     - Title: Virtualization & Core Services - Assets
     - Description: Evidence, diagrams, and supporting materials
 
-21. **projects/08-web-data/PRJ-WEB-001/assets/README.md**
+4. **projects/08-web-data/PRJ-WEB-001/assets/README.md**
     - Title: Commercial E-commerce & Booking Systems - Assets
     - Description: Evidence, diagrams, and supporting materials
 
@@ -184,11 +184,13 @@ Updated all vague link text to use consistent terminology:
 **Content Incorporated:** Partially
 
 **Summary:**
+
 - This PR renamed directories from `projects/` to `infrastructure/` and `documentation/`
 - Created placeholder READMEs for project directories
 - However, current main branch still uses `projects/` structure
 
 **Decision:**
+
 - Used the current main branch structure (`projects/`) as authoritative
 - Did not incorporate the directory restructuring from PR #72
 - Focused on populating READMEs in the existing structure
@@ -200,11 +202,13 @@ Updated all vague link text to use consistent terminology:
 **Content Incorporated:** Substantially
 
 **Summary:**
+
 - This PR added comprehensive project READMEs with executive summaries
 - Created folders: `projects/homelab/`, `projects/virtualization/`, `projects/observability/`, `projects/ecommerce/`
 - Added detailed descriptions and artifact planning
 
 **Decision:**
+
 - Incorporated the improved project descriptions and status indicators
 - Used the structure and naming conventions from this PR where applicable
 - Extended the approach to cover all project folders mentioned in main README
@@ -251,6 +255,7 @@ For questions about this project, please reach out via [GitHub](https://github.c
 ## Project Metadata Preservation
 
 All placeholder content includes:
+
 - **Status indicators** from the top-level README (🟢 Done, 🟠 In Progress, 🔵 Planned, 🔄 Recovery)
 - **Descriptions** extracted from the project listings in README.md
 - **Clear placeholder marking** to indicate this is interim content
@@ -270,6 +275,7 @@ All placeholder content includes:
 ### Link Resolution Test
 
 All previously broken links now resolve:
+
 - Directory links → Point to README.md in the directory
 - Asset links → Point to assets/README.md
 - All link text uses consistent "Project README" terminology

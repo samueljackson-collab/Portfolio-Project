@@ -1,0 +1,143 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv
+venv/
+ENV/
+env/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+junit.xml
+pytest.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.sublime-project
+.sublime-workspace
+
+# Newman/Postman
+out/
+reports/
+*.log
+newman-report-*.json
+newman-cli-report-*.txt
+newman-report-*.html
+
+# Node modules (if using npm)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Docker
+.dockerignore
+
+# OS specific
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Sensitive files
+secrets.json
+credentials.json
+*.pem
+*.key
+*.cert
+
+# Local development
+local-config.json
+debug.log
+
+# Test data
+test-results/
+test-output/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+
+# IDE specific
+*.code-workspace
+
+# Custom patterns
+*.orig
+*.rej
+
+# Backup files
+*.backup
+*.bak
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Dependency directories
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Local configuration overrides
+.env.local
+.env.*.local
+
+# Generated reports
+reports/
+output/
+results/

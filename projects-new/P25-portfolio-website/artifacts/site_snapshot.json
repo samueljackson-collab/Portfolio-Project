@@ -1,0 +1,15 @@
+{
+  "pages": [
+    {
+      "path": "/",
+      "title": "Home",
+      "content": "Welcome to the portfolio."
+    },
+    {
+      "path": "/projects",
+      "title": "Projects",
+      "content": "Project listing placeholder."
+    }
+  ],
+  "deployed": true
+}

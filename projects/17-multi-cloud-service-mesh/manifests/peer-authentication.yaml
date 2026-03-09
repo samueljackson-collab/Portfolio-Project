@@ -1,0 +1,123 @@
+# PeerAuthentication Policies for mTLS Configuration
+# Enforces mutual TLS across the service mesh
+---
+# Mesh-wide STRICT mTLS (all services must use mTLS)
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+---
+# Namespace-level mTLS for bookinfo
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: bookinfo
+spec:
+  mtls:
+    mode: STRICT
+---
+# Allow PERMISSIVE mode for gradual migration (example)
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: migration-permissive
+  namespace: legacy
+spec:
+  mtls:
+    mode: PERMISSIVE
+---
+# Workload-specific mTLS exception for external health checks
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: productpage-mtls
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    # Allow plaintext health checks on port 15021
+    15021:
+      mode: DISABLE
+---
+# mTLS for monitoring namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: monitoring
+spec:
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    # Prometheus metrics endpoint
+    9090:
+      mode: PERMISSIVE
+    # Grafana
+    3000:
+      mode: PERMISSIVE
+---
+# Cross-cluster mTLS configuration
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: cross-cluster-mtls
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: eastwestgateway
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    15443:
+      mode: STRICT  # Cross-cluster traffic must always be encrypted
+---
+# RequestAuthentication for JWT validation
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: jwt-auth
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  jwtRules:
+    - issuer: "https://auth.example.com"
+      jwksUri: "https://auth.example.com/.well-known/jwks.json"
+      audiences:
+        - "bookinfo-api"
+      fromHeaders:
+        - name: Authorization
+          prefix: "Bearer "
+      forwardOriginalToken: true
+---
+# Additional RequestAuthentication for API gateway
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: api-jwt-auth
+  namespace: bookinfo
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  jwtRules:
+    - issuer: "https://auth.example.com"
+      jwksUri: "https://auth.example.com/.well-known/jwks.json"
+      audiences:
+        - "bookinfo-api"
+        - "bookinfo-admin"
+    - issuer: "https://accounts.google.com"
+      jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
+      audiences:
+        - "bookinfo-google-client"

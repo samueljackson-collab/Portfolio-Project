@@ -18,6 +18,7 @@ import urllib.parse
 from pathlib import Path
 import zlib
 
+
 def find_mermaid_files(root_dir):
     """Find all .mmd and .mermaid files in the directory tree"""
     mermaid_files = []
@@ -30,27 +31,29 @@ def find_mermaid_files(root_dir):
 
     return sorted(mermaid_files)
 
+
 def encode_mermaid(mermaid_code):
     """Encode Mermaid code for mermaid.ink API"""
     # Remove any leading/trailing whitespace
     mermaid_code = mermaid_code.strip()
 
     # Encode to bytes
-    encoded = mermaid_code.encode('utf-8')
+    encoded = mermaid_code.encode("utf-8")
 
     # Compress with zlib
     compressed = zlib.compress(encoded, level=9)
 
     # Base64 encode
-    b64 = base64.urlsafe_b64encode(compressed).decode('utf-8')
+    b64 = base64.urlsafe_b64encode(compressed).decode("utf-8")
 
     return b64
+
 
 def convert_to_png(mermaid_file, output_file):
     """Convert a Mermaid file to PNG using mermaid.ink API"""
     try:
         # Read Mermaid file
-        with open(mermaid_file, 'r', encoding='utf-8') as f:
+        with open(mermaid_file, "r", encoding="utf-8") as f:
             mermaid_code = f.read()
 
         # Encode for API
@@ -75,6 +78,7 @@ def convert_to_png(mermaid_file, output_file):
 
     except Exception as e:
         return False, str(e)
+
 
 def main():
     # Determine root directory
@@ -106,7 +110,7 @@ def main():
 
     for mermaid_file in mermaid_files:
         # Generate output filename
-        output_file = mermaid_file.with_suffix('.png')
+        output_file = mermaid_file.with_suffix(".png")
 
         # Display relative path
         try:
@@ -139,6 +143,7 @@ def main():
     print("=" * 60)
 
     return 0 if fail_count == 0 else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

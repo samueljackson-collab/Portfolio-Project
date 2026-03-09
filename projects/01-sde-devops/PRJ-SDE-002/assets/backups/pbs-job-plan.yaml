@@ -1,0 +1,32 @@
+# Sanitized PBS job definitions for PRJ-SDE-002
+jobs:
+  - name: nightly-hv-snapshots
+    type: vzdump
+    schedule: '02:00'
+    pool: production
+    datastore: truenas-nfs
+    prune:
+      keep-last: 3
+      keep-daily: 7
+      keep-weekly: 4
+    notes: "Covers hypervisor and infrastructure VMs"
+  - name: k8s-control-plane
+    type: vzdump
+    schedule: '02:30'
+    pool: k8s
+    datastore: truenas-nfs
+    prune:
+      keep-last: 3
+      keep-daily: 14
+      keep-weekly: 6
+    notes: "Control plane and etcd backups with staggered start"
+  - name: observability-stack
+    type: vzdump
+    schedule: '03:00'
+    pool: monitoring
+    datastore: truenas-nfs
+    prune:
+      keep-last: 5
+      keep-daily: 14
+      keep-weekly: 8
+    notes: "Prometheus/Grafana/Loki nodes with WAL snapshots"

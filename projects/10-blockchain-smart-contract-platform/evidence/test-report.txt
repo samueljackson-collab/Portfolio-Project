@@ -1,0 +1,24 @@
+Downloading compiler 0.8.20
+Error HH502: Couldn't download compiler version list. Please check your internet connection and try again.
+
+HardhatError: HH502: Couldn't download compiler version list. Please check your internet connection and try again.
+    at /workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/internal/solidity/compiler/downloader.ts:178:17
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async MultiProcessMutex._executeFunctionAndReleaseMutex (/workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/internal/util/multi-process-mutex.ts:77:19)
+    at async CompilerDownloader.downloadCompiler (/workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/internal/solidity/compiler/downloader.ts:163:5)
+    at async SimpleTaskDefinition.action (/workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/builtin-tasks/compile.ts:588:7)
+    at async Environment._runTaskDefinition (/workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at async Environment.run (/workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at async SimpleTaskDefinition.action (/workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/builtin-tasks/compile.ts:740:36)
+    at async Environment._runTaskDefinition (/workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at async Environment.run (/workspace/Portfolio-Project/projects/10-blockchain-smart-contract-platform/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+
+    Caused by: AggregateError
+        at internalConnectMultiple (node:net:1134:18)
+        at internalConnectMultiple (node:net:1210:5)
+        at internalConnectMultiple (node:net:1210:5)
+        at internalConnectMultiple (node:net:1210:5)
+        at internalConnectMultiple (node:net:1210:5)
+        at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+        at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1552:7)
+        at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:134:8)

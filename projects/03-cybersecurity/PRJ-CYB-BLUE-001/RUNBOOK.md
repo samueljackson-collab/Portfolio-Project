@@ -68,6 +68,9 @@ curl -X GET "https://${OPENSEARCH_ENDPOINT}/security-events-*/_search" \
 #### GuardDuty Threat Analysis Dashboard
 ```bash
 # View threat types distribution
+curl -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-*/_search" \
+  -H 'Content-Type: application/json' \
+  -d '{
 aws opensearch search \
   --index-name "guardduty-findings-*" \
   --body '{
@@ -80,6 +83,9 @@ aws opensearch search \
   }'
 
 # High-severity findings (last 7 days)
+curl -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-*/_search" \
+  -H 'Content-Type: application/json' \
+  -d '{
 aws opensearch search \
   --index-name "guardduty-findings-*" \
   --body '{
@@ -96,6 +102,9 @@ aws opensearch search \
   }'
 
 # Findings by service (EC2, S3, IAM)
+curl -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-*/_search" \
+  -H 'Content-Type: application/json' \
+  -d '{
 aws opensearch search \
   --index-name "guardduty-findings-*" \
   --body '{
@@ -376,6 +385,13 @@ INSTANCE_ID=$(curl -s -X GET "https://${OPENSEARCH_ENDPOINT}/guardduty-findings-
     "size": 1,
     "query": {"range": {"severity": {"gte": 7}}},
     "_source": ["resource.instanceDetails.instanceId"]
+  }' | jq -r '.hits.hits[0]._source.resource.instanceDetails.instanceId // ""')
+
+# Check if instance was found
+if [ -z "$INSTANCE_ID" ]; then
+  echo "No instance found for high-severity GuardDuty finding."
+  exit 1
+fi
   }' | jq -r '.hits.hits[0]._source.resource.instanceDetails.instanceId')
 
 # Search network logs for that instance
@@ -723,7 +739,7 @@ aws logs filter-log-events \
 
 #### Severity Classification
 
-**P0: Critical Security Incident**
+### P0: Critical Security Incident
 - GuardDuty severity ≥ 8 with confirmed exploitation
 - Ransomware or malware detected
 - Data breach confirmed (sensitive data exposed)
@@ -731,7 +747,7 @@ aws logs filter-log-events \
 - Complete SIEM pipeline failure
 - Critical infrastructure compromise
 
-**P1: High Severity Security Event**
+### P1: High Severity Security Event
 - GuardDuty severity 7 (high-severity threat)
 - Suspected data exfiltration
 - Brute force attack in progress
@@ -739,7 +755,7 @@ aws logs filter-log-events \
 - Security group widely opened (0.0.0.0/0)
 - GuardDuty or CloudTrail disabled
 
-**P2: Medium Severity Security Event**
+### P2: Medium Severity Security Event
 - GuardDuty severity 4-6
 - Failed authentication attempts (< 10)
 - Suspicious API activity
@@ -747,7 +763,7 @@ aws logs filter-log-events \
 - Configuration drift from baseline
 - Log ingestion delays
 
-**P3: Low Severity Security Event**
+### P3: Low Severity Security Event
 - GuardDuty severity 0-3
 - Informational findings
 - Policy violations (non-critical)

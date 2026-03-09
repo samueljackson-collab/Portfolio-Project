@@ -1,0 +1,85 @@
+# Alert Rules for Edge AI Inference
+
+groups:
+  - name: edge_ai_alerts
+    interval: 30s
+    rules:
+      - alert: EdgeNodeOffline
+        expr: up{job="edge-nodes"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: edge
+        annotations:
+          summary: "Edge node {{ $labels.instance }} is offline"
+          description: "Edge inference capability reduced"
+
+      - alert: HighInferenceLatency
+        expr: edge_inference_latency_ms{quantile="0.95"} > 500
+        for: 10m
+        labels:
+          severity: warning
+          component: inference
+        annotations:
+          summary: "High inference latency on {{ $labels.instance }}"
+          description: "P95 latency: {{ $value }}ms"
+
+      - alert: InferenceErrorRateHigh
+        expr: rate(edge_inference_errors_total[5m]) / rate(edge_inference_requests_total[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          component: inference
+        annotations:
+          summary: "High inference error rate"
+          description: "Error rate: {{ $value | humanizePercentage }}"
+
+      - alert: ModelSyncFailed
+        expr: edge_model_sync_status{status="failed"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: model-sync
+        annotations:
+          summary: "Model sync failed for {{ $labels.model_name }}"
+          description: "Edge devices may have outdated models"
+
+      - alert: EdgeDeviceMemoryHigh
+        expr: (edge_memory_used_bytes / edge_memory_total_bytes) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: edge
+        annotations:
+          summary: "High memory usage on edge device {{ $labels.device_id }}"
+          description: "Memory usage: {{ $value | humanizePercentage }}"
+
+      - alert: EdgeDeviceCPUThrottling
+        expr: edge_cpu_throttled_seconds_total > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: edge
+        annotations:
+          summary: "CPU throttling detected on {{ $labels.device_id }}"
+          description: "Performance may be degraded"
+
+      - alert: ModelAccuracyDrift
+        expr: edge_model_accuracy < 0.85
+        for: 30m
+        labels:
+          severity: warning
+          component: ml
+        annotations:
+          summary: "Model accuracy drift on {{ $labels.model_name }}"
+          description: "Current accuracy: {{ $value }}"
+
+      - alert: InferenceThroughputLow
+        expr: rate(edge_inference_requests_total[5m]) < 10
+        for: 15m
+        labels:
+          severity: info
+          component: inference
+        annotations:
+          summary: "Low inference throughput on {{ $labels.instance }}"
+          description: "Throughput: {{ $value }} req/sec"

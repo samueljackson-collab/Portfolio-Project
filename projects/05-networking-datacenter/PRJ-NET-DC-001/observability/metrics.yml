@@ -1,0 +1,10 @@
+server:
+  port: 9110
+  scrape_interval: 30s
+metrics:
+  - name: core_switches_configured
+    type: gauge
+    help: "Number of core switches defined in the sample topology"
+    labels:
+      service: networking-datacenter
+      stage: sample

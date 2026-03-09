@@ -1,0 +1,4 @@
+layer,size_mb,path
+bronze,0.0002,data/bronze.json
+silver,0.0001,evidence/silver/silver.csv
+gold,0.0002,evidence/gold/gold_data.csv

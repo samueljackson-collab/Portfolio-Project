@@ -1,0 +1,5 @@
+[p20-observability] Verification log
+- Evidence capture date: 2025-11-14
+- Scope: quickstart validation, config review, automation dry-run, lint checks.
+- Key artifacts: dashboard-export.json, load-test-summary.txt.
+- Result: baseline evidence captured for README/RUNBOOK linkage.

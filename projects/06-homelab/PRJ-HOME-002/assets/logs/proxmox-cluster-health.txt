@@ -1,0 +1,5 @@
+[2025-11-10 09:15:20] cluster=homelab-ha nodes=3 quorum=ok
+[2025-11-10 09:15:20] node=px1 cpu=22% mem=48% storage=62% status=online
+[2025-11-10 09:15:20] node=px2 cpu=17% mem=53% storage=58% status=online
+[2025-11-10 09:15:20] node=px3 cpu=19% mem=46% storage=60% status=online
+[2025-11-10 09:15:21] ceph=healthy osd=9/9 mon=3/3 pg_clean=100%

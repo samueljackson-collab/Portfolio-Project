@@ -1,0 +1,5 @@
+[2025-11-10 08:42:19] alert=NodeDiskUsageHigh severity=warning status=resolved
+[2025-11-10 08:42:19] receiver=slack channel=#homelab-alerts delivery=success
+[2025-11-10 08:42:20] alert=BackupJobLag severity=info status=resolved
+[2025-11-10 08:42:20] receiver=email recipients=ops@example.internal delivery=success
+[2025-11-10 08:42:20] silences_active=2

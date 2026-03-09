@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mr-primary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mr-primary
+  template:
+    metadata:
+      labels:
+        app: mr-primary
+    spec:
+      containers:
+        - name: primary
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mr-secondary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mr-secondary
+  template:
+    metadata:
+      labels:
+        app: mr-secondary
+    spec:
+      containers:
+        - name: secondary
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mr-primary
+spec:
+  selector:
+    app: mr-primary
+  ports:
+    - port: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mr-secondary
+spec:
+  selector:
+    app: mr-secondary
+  ports:
+    - port: 80

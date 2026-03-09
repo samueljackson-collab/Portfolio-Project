@@ -1,0 +1,225 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: portfoliostacks.portfolio.example.com
+spec:
+  group: portfolio.example.com
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  description: Container image to deploy
+                version:
+                  type: string
+                  default: "latest"
+                  description: Image version/tag
+                replicas:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+                  default: 1
+                  description: Number of replicas
+                port:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
+                  default: 8080
+                  description: Container port
+                env:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  description: Environment variables
+                resources:
+                  type: object
+                  properties:
+                    requests:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    limits:
+                      type: object
+                      additionalProperties:
+                        type: string
+                ingress:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                      default: false
+                    host:
+                      type: string
+                config:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  description: ConfigMap data
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: ["Pending", "Running", "Failed", "Terminating"]
+                version:
+                  type: string
+                replicas:
+                  type: integer
+                readyReplicas:
+                  type: integer
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                lastReconcileTime:
+                  type: string
+                  format: date-time
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Image
+          type: string
+          jsonPath: .spec.image
+        - name: Version
+          type: string
+          jsonPath: .spec.version
+        - name: Replicas
+          type: integer
+          jsonPath: .spec.replicas
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+  scope: Namespaced
+  names:
+    plural: portfoliostacks
+    singular: portfoliostack
+    kind: PortfolioStack
+    shortNames:
+      - ps
+      - pstack
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: databasemigrations.portfolio.example.com
+spec:
+  group: portfolio.example.com
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - database
+                - migrations
+              properties:
+                database:
+                  type: object
+                  required:
+                    - host
+                    - name
+                  properties:
+                    host:
+                      type: string
+                    port:
+                      type: integer
+                      default: 5432
+                    name:
+                      type: string
+                    secretRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        usernameKey:
+                          type: string
+                          default: "username"
+                        passwordKey:
+                          type: string
+                          default: "password"
+                migrations:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - version
+                      - sql
+                    properties:
+                      version:
+                        type: string
+                      sql:
+                        type: string
+                      rollback:
+                        type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: ["Pending", "Running", "Completed", "Failed", "RollingBack"]
+                currentVersion:
+                  type: string
+                appliedMigrations:
+                  type: array
+                  items:
+                    type: string
+                failedMigration:
+                  type: string
+                error:
+                  type: string
+                lastMigrationTime:
+                  type: string
+                  format: date-time
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Database
+          type: string
+          jsonPath: .spec.database.name
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Version
+          type: string
+          jsonPath: .status.currentVersion
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+  scope: Namespaced
+  names:
+    plural: databasemigrations
+    singular: databasemigration
+    kind: DatabaseMigration
+    shortNames:
+      - dbm
+      - dbmig

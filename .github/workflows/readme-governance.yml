@@ -1,0 +1,77 @@
+name: README Governance
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  readme-compliance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run README validator
+        id: validator
+        continue-on-error: true
+        run: ./scripts/readme-validator.sh
+
+      - name: Run markdown link checker
+        id: linkcheck
+        continue-on-error: true
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --format markdown
+            --output artifacts/link-check-report.md
+            docs/readme-governance.md projects/README.md projects-new/README.md terraform/README.md
+
+      - name: Build non-compliance issue body
+        if: steps.validator.outcome == 'failure' || steps.linkcheck.outcome == 'failure'
+        run: |
+          mkdir -p artifacts
+          {
+            echo "# README Governance Non-Compliance Report"
+            echo
+            echo "Automated check detected documentation governance violations."
+            echo
+            echo "- Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo "## README Validator"
+            if [[ -f artifacts/readme-noncompliance-report.md ]]; then
+              cat artifacts/readme-noncompliance-report.md
+            else
+              echo "Validator report not found."
+            fi
+            echo
+            echo "## Link Checker"
+            if [[ -f artifacts/link-check-report.md ]]; then
+              cat artifacts/link-check-report.md
+            else
+              echo "Link checker report not found."
+            fi
+          } > artifacts/readme-governance-issue.md
+
+      - name: Upload governance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readme-governance-reports
+          path: artifacts/*.md
+
+      - name: Open issue for non-compliance
+        if: steps.validator.outcome == 'failure' || steps.linkcheck.outcome == 'failure'
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "README governance non-compliance report"
+          content-filepath: artifacts/readme-governance-issue.md
+          labels: |
+            documentation
+            compliance

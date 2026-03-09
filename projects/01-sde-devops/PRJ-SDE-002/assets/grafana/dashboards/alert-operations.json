@@ -1,0 +1,67 @@
+{
+  "id": null,
+  "uid": "alert-ops",
+  "title": "Alert Operations",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Active Critical Alerts",
+      "id": 1,
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "count(ALERTS{severity=\"critical\", alertstate=\"firing\"})",
+          "legendFormat": "critical"
+        }
+      ],
+      "options": {"colorMode": "value", "graphMode": "area", "reduceOptions": {"calcs": ["last"], "fields": "", "values": false}},
+      "fieldConfig": {"defaults": {"unit": "none"}, "overrides": []}
+    },
+    {
+      "type": "graph",
+      "title": "MTTA / MTTR (Last 7d)",
+      "id": 2,
+      "gridPos": {"h": 8, "w": 12, "x": 6, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum(rate(alert_mtta_seconds_bucket[5m])) by (le))", "legendFormat": "p50 MTTA"},
+        {"expr": "histogram_quantile(0.9, sum(rate(alert_mtta_seconds_bucket[5m])) by (le))", "legendFormat": "p90 MTTA"},
+        {"expr": "histogram_quantile(0.5, sum(rate(alert_mttr_seconds_bucket[5m])) by (le))", "legendFormat": "p50 MTTR"},
+        {"expr": "histogram_quantile(0.9, sum(rate(alert_mttr_seconds_bucket[5m])) by (le))", "legendFormat": "p90 MTTR"}
+      ],
+      "options": {"legend": {"show": true}},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []}
+    },
+    {
+      "type": "timeseries",
+      "title": "Log Noise",
+      "id": 3,
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {
+          "expr": "sum(rate({job=\"containers\", severity=\"ERROR\"}[5m])) by (app)",
+          "legendFormat": "{{app}}"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "rps"}, "overrides": []},
+      "options": {"legend": {"showLegend": true}}
+    },
+    {
+      "type": "stat",
+      "title": "Open Silences",
+      "id": 4,
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "targets": [
+        {"expr": "count(alertmanager_silences{state=\"active\"})", "legendFormat": "silences"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "none"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["last"], "fields": "", "values": false}}
+    }
+  ],
+  "templating": {"list": []},
+  "annotations": {"list": []}
+}

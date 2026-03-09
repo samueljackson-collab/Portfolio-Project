@@ -734,25 +734,25 @@ curl -s http://localhost:8080/api/metrics | \
 
 #### Severity Classification
 
-**P0: Security Incident in Progress**
+### P0: Security Incident in Progress
 - SOAR engine completely down during active incident
 - Critical asset compromise confirmed
 - Mass credential breach
 - Automated containment failing
 
-**P1: Operational Degradation**
+### P1: Operational Degradation
 - SOAR engine degraded performance
 - High-severity alerts not processing
 - Response automation failures
 - Threat intelligence feeds unavailable
 
-**P2: Reduced Capability**
+### P2: Reduced Capability
 - Single enrichment adapter failing
 - Playbook execution slow
 - Elevated false positive rate
 - Non-critical automation issues
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual playbook timeout
 - Single alert processing error
 - Non-critical configuration warnings

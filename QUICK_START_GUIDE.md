@@ -1,6 +1,7 @@
 # Quick Start Guide: Adding Your Code to GitHub
 
-**Purpose:** Fast reference for uploading code from local zip folders to this portfolio repository
+**Purpose:** Fast reference for uploading code from local zip folders to this
+portfolio repository
 
 ---
 
@@ -8,7 +9,7 @@
 
 Your portfolio needs these missing assets directories:
 
-```
+```text
 projects/06-homelab/PRJ-HOME-001/assets/  ← Network diagrams, configs
 projects/06-homelab/PRJ-HOME-002/assets/  ← Service configs, backups
 projects/01-sde-devops/PRJ-SDE-002/assets/ ← Dashboards, monitoring configs
@@ -23,9 +24,10 @@ professional/resume/                      ← Resume PDFs
 ## 🚀 Three Methods (Pick One)
 
 ### Method 1: GitHub Web Interface (Easiest)
+
 **Best for:** Small files, quick uploads
 
-1. Go to https://github.com/samueljackson-collab/Portfolio-Project
+1. Go to <https://github.com/samueljackson-collab/Portfolio-Project>
 2. Navigate to desired directory
 3. Click "Add file" → "Upload files"
 4. Drag your files, add commit message
@@ -36,11 +38,12 @@ professional/resume/                      ← Resume PDFs
 ---
 
 ### Method 2: GitHub Desktop (User-Friendly)
+
 **Best for:** Non-technical users, visual interface
 
-1. **Install:** Download from https://desktop.github.com/
+1. **Install:** Download from <https://desktop.github.com/>
 2. **Clone:** File → Clone Repository → Select this repo
-3. **Add Files:** 
+3. **Add Files:**
    - Extract your zip
    - Copy files to the cloned folder
    - GitHub Desktop auto-detects changes
@@ -53,9 +56,11 @@ professional/resume/                      ← Resume PDFs
 ---
 
 ### Method 3: Git Command Line (Most Powerful)
+
 **Best for:** Large uploads, power users
 
 #### One-Time Setup
+
 ```bash
 # Install Git (if not already installed)
 # Windows: https://git-scm.com/
@@ -106,7 +111,8 @@ git push origin main
 ## 📁 Where to Put Your Files
 
 ### Homelab Network (PRJ-HOME-001)
-```
+
+```text
 projects/06-homelab/PRJ-HOME-001/assets/
 ├── diagrams/
 │   ├── network-topology.png         ← Physical/logical network
@@ -119,7 +125,8 @@ projects/06-homelab/PRJ-HOME-001/assets/
 ```
 
 ### Virtualization (PRJ-HOME-002)
-```
+
+```text
 projects/06-homelab/PRJ-HOME-002/assets/
 ├── diagrams/
 │   └── service-architecture.png     ← VM/container layout
@@ -131,7 +138,8 @@ projects/06-homelab/PRJ-HOME-002/assets/
 ```
 
 ### Observability (PRJ-SDE-002)
-```
+
+```text
 projects/01-sde-devops/PRJ-SDE-002/assets/
 ├── dashboards/
 │   └── *.json                       ← Grafana dashboards
@@ -143,7 +151,8 @@ projects/01-sde-devops/PRJ-SDE-002/assets/
 ```
 
 ### E-commerce Recovery (PRJ-WEB-001)
-```
+
+```text
 projects/08-web-data/PRJ-WEB-001/assets/
 ├── code/
 │   ├── sql/*.sql                    ← SQL scripts (sanitized)
@@ -155,7 +164,8 @@ projects/08-web-data/PRJ-WEB-001/assets/
 ```
 
 ### Resumes
-```
+
+```text
 professional/resume/
 ├── 2025-11-04_Jackson_Sam_SystemDevelopmentEngineer.pdf
 ├── 2025-11-04_Jackson_Sam_CloudEngineer.pdf
@@ -169,14 +179,16 @@ professional/resume/
 **MUST sanitize these in all files:**
 
 - [ ] Real IP addresses → Use 10.0.0.0, 192.168.0.0, or example.com
-- [ ] Passwords/API keys → Remove or use placeholders: `YOUR_PASSWORD_HERE`
+- [ ] Passwords/API keys → Remove or use placeholders:
+`YOUR_PASSWORD_HERE`
 - [ ] Real domain names → Use example.com
-- [ ] Email addresses → Use example@example.com
+- [ ] Email addresses → Use <example@example.com>
 - [ ] Client names → Remove or anonymize
 - [ ] Personal photos → Remove or blur
 - [ ] Screenshot sensitive data → Crop or blur
 
 **Files to NEVER commit:**
+
 - `terraform.tfvars` (has secrets)
 - `.env` files (has secrets)
 - Private keys (`.pem`, `.key`)
@@ -226,6 +238,7 @@ git checkout main
 ## 🐛 Troubleshooting
 
 ### "Authentication failed"
+
 ```bash
 # Use personal access token instead of password
 # Create token at: https://github.com/settings/tokens
@@ -233,6 +246,7 @@ git checkout main
 ```
 
 ### "File too large" (>100MB)
+
 ```bash
 # Use Git LFS
 git lfs install
@@ -245,6 +259,7 @@ git push
 ```
 
 ### "Merge conflict"
+
 ```bash
 # Pull first, then push
 git pull origin main
@@ -255,6 +270,7 @@ git push origin main
 ```
 
 ### "Permission denied"
+
 ```bash
 # Check SSH keys or use HTTPS with token
 git remote set-url origin https://github.com/samueljackson-collab/Portfolio-Project.git
@@ -265,9 +281,9 @@ git remote set-url origin https://github.com/samueljackson-collab/Portfolio-Proj
 ## 📞 Need More Help?
 
 1. **Detailed guide:** Read `MISSING_DOCUMENTS_ANALYSIS.md`
-2. **Git documentation:** https://git-scm.com/doc
-3. **GitHub guides:** https://guides.github.com/
-4. **GitHub Desktop help:** https://docs.github.com/en/desktop
+2. **Git documentation:** <https://git-scm.com/doc>
+3. **GitHub guides:** <https://guides.github.com/>
+4. **GitHub Desktop help:** <https://docs.github.com/en/desktop>
 
 ---
 

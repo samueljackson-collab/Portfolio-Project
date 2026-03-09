@@ -1,0 +1,66 @@
+[
+  {
+    "id": "alert-101",
+    "severity": "critical",
+    "source_ip": "198.51.100.22",
+    "asset_id": "prod-db-2",
+    "description": "Suspicious privilege escalation attempt",
+    "tags": ["privilege-escalation", "endpoint"]
+  },
+  {
+    "id": "alert-102",
+    "severity": "high",
+    "source_ip": "203.0.113.9",
+    "asset_id": "prod-web-3",
+    "description": "SQL injection payload detected",
+    "tags": ["web-attack", "injection"]
+  },
+  {
+    "id": "alert-103",
+    "severity": "medium",
+    "source_ip": "192.0.2.45",
+    "asset_id": "corp-vpn-1",
+    "description": "Multiple failed VPN logins",
+    "tags": ["authentication", "anomaly"]
+  },
+  {
+    "id": "alert-104",
+    "severity": "high",
+    "source_ip": "198.51.100.78",
+    "asset_id": "prod-api-1",
+    "description": "Data exfiltration attempt",
+    "tags": ["data-exfiltration", "network"]
+  },
+  {
+    "id": "alert-105",
+    "severity": "low",
+    "source_ip": "203.0.113.120",
+    "asset_id": "corp-laptop-7",
+    "description": "Suspicious DNS query",
+    "tags": ["dns", "command-and-control"]
+  },
+  {
+    "id": "alert-106",
+    "severity": "critical",
+    "source_ip": "192.0.2.66",
+    "asset_id": "prod-payments-1",
+    "description": "Ransomware behavior detected",
+    "tags": ["malware", "ransomware"]
+  },
+  {
+    "id": "alert-107",
+    "severity": "medium",
+    "source_ip": "198.51.100.33",
+    "asset_id": "corp-mail-2",
+    "description": "Suspicious email attachment",
+    "tags": ["phishing", "email"]
+  },
+  {
+    "id": "alert-108",
+    "severity": "high",
+    "source_ip": "203.0.113.77",
+    "asset_id": "prod-web-2",
+    "description": "Brute force login attack",
+    "tags": ["authentication", "brute-force"]
+  }
+]

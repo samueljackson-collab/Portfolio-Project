@@ -1,0 +1,22 @@
+flowchart LR
+  WAN[ISP WAN] --> FW[pfsense Firewall]
+  FW -->|VLAN trunk| SW[UniFi Switch 24 PoE]
+  SW --> AP1[U6 Pro AP #1]
+  SW --> AP2[U6 Pro AP #2]
+  SW --> PMX[Proxmox Cluster]
+  SW --> NAS[TrueNAS Storage]
+  SW --> DMZ[DMZ Services]
+  subgraph VLANs
+    Trusted[Trusted 10]
+    IoT[IoT 20]
+    Guest[Guest 30]
+    Servers[Servers 40]
+    DMZNet[DMZ 50]
+  end
+  SW --> Trusted
+  SW --> IoT
+  SW --> Guest
+  SW --> Servers
+  SW --> DMZNet
+  PMX -->|Mgmt| Servers
+  DMZ -->|NAT| WAN

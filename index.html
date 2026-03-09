@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Samuel Jackson - System Development Engineer, DevOps & QA Enthusiast, Full-Stack Web Developer Portfolio">
+    <meta name="author" content="Samuel Jackson">
+    <title>Sam Jackson - Portfolio</title>
+    
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+    
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e293b;
+            --accent: #06b6d4;
+            --text: #334155;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--light);
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .badges {
+            margin-top: 1rem;
+        }
+
+        .badges img {
+            margin-right: 0.5rem;
+        }
+
+        #content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        #content h1 {
+            color: var(--secondary);
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        #content h2 {
+            color: var(--secondary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        #content h3 {
+            color: var(--primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        #content a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        #content a:hover {
+            text-decoration: underline;
+        }
+
+        #content ul, #content ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        #content li {
+            margin-bottom: 0.5rem;
+        }
+
+        #content code {
+            background: var(--light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'Courier New', monospace;
+        }
+
+        #content pre {
+            background: var(--secondary);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        #content pre code {
+            background: transparent;
+            color: white;
+            padding: 0;
+        }
+
+        #content blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        #content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        #content th, #content td {
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        #content th {
+            background: var(--light);
+            font-weight: 600;
+        }
+
+        /* Mermaid diagram styling */
+        .mermaid {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text);
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Error state */
+        .error {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.75rem;
+            }
+
+            #content {
+                padding: 1rem;
+            }
+        }
+
+        /* Status emoji styling */
+        #content p:has(> strong:first-child) {
+            padding: 0.5rem 0;
+        }
+
+        details {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--light);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            user-select: none;
+        }
+
+        summary:hover {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sam Jackson</h1>
+        <p>System Development Engineer · DevOps & QA Enthusiast · Full-Stack Web Developer</p>
+        <div class="badges">
+            <a href="https://github.com/samueljackson-collab/Portfolio-Project/actions/workflows/ci.yml">
+                <img src="https://github.com/samueljackson-collab/Portfolio-Project/workflows/CI/badge.svg?branch=main" alt="CI Status">
+            </a>
+        </div>
+    </header>
+
+    <div id="content">
+        <div class="loading">Loading portfolio README</div>
+    </div>
+
+    <script>
+        // Configure marked options
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            mangle: false
+        });
+
+        // Fetch and render README
+        async function loadReadme() {
+            const contentDiv = document.getElementById('content');
+            
+            try {
+                // Fetch README.md from the repository
+                const response = await fetch('README.md');
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load README.md: ${response.status} ${response.statusText}`);
+                }
+                
+                let markdown = await response.text();
+                
+                // Convert markdown to HTML
+                let html = marked.parse(markdown);
+                
+                // Replace code blocks with mermaid class for proper rendering
+                html = html.replace(
+                    /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
+                    '<div class="mermaid">$1</div>'
+                );
+                
+                // Set the content
+                contentDiv.innerHTML = html;
+                
+                // Initialize Mermaid rendering
+                if (typeof mermaid !== 'undefined') {
+                    mermaid.run({
+                        querySelector: '.mermaid'
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Error loading README:', error);
+                contentDiv.innerHTML = `
+                    <div class="error">
+                        <h2>Error Loading Content</h2>
+                        <p>Failed to load the README.md file: ${error.message}</p>
+                        <p>Please visit the <a href="https://github.com/samueljackson-collab/Portfolio-Project">GitHub repository</a> directly.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load README when page loads
+        window.addEventListener('DOMContentLoaded', loadReadme);
+    </script>
+</body>
+</html>

@@ -41,9 +41,13 @@ __pycache__/
 *.pfx
 .env
 .env.*
+!.env.example
 *secrets*
 *password*
 *credential*
+
+# Generated IAM policies (use templates instead)
+github_actions_ci_policy.json
 
 # Personal notes and drafts (use /tmp or dedicated private repo instead)
 PRIVATE_NOTES.md

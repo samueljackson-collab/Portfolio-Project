@@ -1,0 +1,26 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: k8s-cicd-demo-pdb
+  labels:
+    app: k8s-cicd-demo
+spec:
+  # Ensure at least 2 replicas are always available during disruptions
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: k8s-cicd-demo
+---
+# Alternative PDB using maxUnavailable (use one or the other)
+# apiVersion: policy/v1
+# kind: PodDisruptionBudget
+# metadata:
+#   name: k8s-cicd-demo-pdb-max
+#   labels:
+#     app: k8s-cicd-demo
+# spec:
+#   # Allow at most 1 pod to be unavailable during disruptions
+#   maxUnavailable: 1
+#   selector:
+#     matchLabels:
+#       app: k8s-cicd-demo

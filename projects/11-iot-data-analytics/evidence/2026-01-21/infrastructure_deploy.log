@@ -1,0 +1,3 @@
+## Infrastructure deployment attempt (terraform)
+Command: terraform -version
+bash: command not found: terraform

@@ -1,0 +1,4 @@
+Unable to capture target schema before migration because Docker is not available in this environment.
+
+Attempted command:
+  docker exec -i migration-target-db pg_dump --schema-only --dbname=postgresql://postgres:postgres@localhost:5433/targetdb

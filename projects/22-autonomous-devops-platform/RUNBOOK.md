@@ -513,25 +513,25 @@ curl -s http://localhost:9000/api/integrations/health | jq '.[] | select(.health
 
 #### Severity Classification
 
-**P0: Platform Failure**
+### P0: Platform Failure
 - Autonomous engine completely down
 - Event processing stopped
 - All workflows failing
 - Critical integration failures (monitoring)
 
-**P1: Degraded Operations**
+### P1: Degraded Operations
 - High workflow failure rate (>20%)
 - Event processing backlog
 - Multiple integration failures
 - Stuck workflows causing backpressure
 
-**P2: Performance Issues**
+### P2: Performance Issues
 - Slow workflow execution
 - Elevated error rates (5-20%)
 - Individual integration failures
 - Queue depth approaching limits
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Individual workflow failures
 - Non-critical integration warnings
 - Transient errors

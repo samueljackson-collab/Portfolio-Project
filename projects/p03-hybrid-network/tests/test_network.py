@@ -1,4 +1,5 @@
 """Unit tests for network connectivity tooling."""
+
 import subprocess
 from pathlib import Path
 
@@ -34,8 +35,6 @@ def test_wireguard_config_template_exists(project_root):
 def test_localhost_connectivity():
     """Verify localhost connectivity (example test)."""
     result = subprocess.run(
-        ["ping", "-c", "1", "127.0.0.1"],
-        capture_output=True,
-        timeout=5
+        ["ping", "-c", "1", "127.0.0.1"], capture_output=True, timeout=5
     )
     assert result.returncode == 0, "Localhost should be reachable"

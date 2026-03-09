@@ -1,0 +1,36 @@
+{
+  "baseline_selection": [
+    {
+      "symbol": "MSFT",
+      "expected_return": 0.09,
+      "risk_weight": 0.04
+    },
+    {
+      "symbol": "GOOG",
+      "expected_return": 0.1,
+      "risk_weight": 0.05
+    },
+    {
+      "symbol": "AWS",
+      "expected_return": 0.12,
+      "risk_weight": 0.07
+    }
+  ],
+  "baseline_score": 0.31,
+  "quantum_runtime_s": [
+    0.00623146700036159,
+    0.002373999000155891,
+    0.0022722379999322584,
+    0.0021860080005353666,
+    0.002311132000613725
+  ],
+  "classical_runtime_s": [
+    1.1107000318588689e-05,
+    6.4300002122763544e-06,
+    5.122999937157147e-06,
+    4.612999873643275e-06,
+    7.050000021990854e-06
+  ],
+  "quantum_runtime_avg_s": 0.003074968800319766,
+  "classical_runtime_avg_s": 6.864600072731264e-06
+}

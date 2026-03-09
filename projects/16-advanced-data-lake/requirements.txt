@@ -1,2 +1,16 @@
+# Data processing
 pandas>=2.0
 pyarrow>=12.0
+
+# Streaming
+confluent-kafka>=2.3
+
+# Validation
+pydantic>=2.5
+
+# Monitoring
+prometheus-client>=0.18
+
+# Utilities
+python-json-logger>=2.0
+matplotlib>=3.8

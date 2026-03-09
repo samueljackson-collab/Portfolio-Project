@@ -13,26 +13,68 @@ from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # Categories for classification
-CATEGORIES = ['work', 'research', 'shopping', 'social', 'entertainment', 'news', 'custom']
+CATEGORIES = [
+    "work",
+    "research",
+    "shopping",
+    "social",
+    "entertainment",
+    "news",
+    "custom",
+]
 
 # Feature extraction patterns
 DOMAIN_PATTERNS = {
-    'work': ['github.com', 'gitlab.com', 'stackoverflow.com', 'docs.google.com',
-             'notion.so', 'slack.com', 'teams.microsoft.com', 'zoom.us'],
-    'research': ['wikipedia.org', 'scholar.google.com', 'arxiv.org', 'medium.com', 'dev.to'],
-    'shopping': ['amazon.com', 'ebay.com', 'etsy.com', 'shopify.com', 'walmart.com'],
-    'social': ['facebook.com', 'twitter.com', 'instagram.com', 'linkedin.com', 'reddit.com'],
-    'entertainment': ['youtube.com', 'netflix.com', 'spotify.com', 'twitch.tv', 'hulu.com'],
-    'news': ['news.google.com', 'bbc.com', 'cnn.com', 'reuters.com', 'nytimes.com']
+    "work": [
+        "github.com",
+        "gitlab.com",
+        "stackoverflow.com",
+        "docs.google.com",
+        "notion.so",
+        "slack.com",
+        "teams.microsoft.com",
+        "zoom.us",
+    ],
+    "research": [
+        "wikipedia.org",
+        "scholar.google.com",
+        "arxiv.org",
+        "medium.com",
+        "dev.to",
+    ],
+    "shopping": ["amazon.com", "ebay.com", "etsy.com", "shopify.com", "walmart.com"],
+    "social": [
+        "facebook.com",
+        "twitter.com",
+        "instagram.com",
+        "linkedin.com",
+        "reddit.com",
+    ],
+    "entertainment": [
+        "youtube.com",
+        "netflix.com",
+        "spotify.com",
+        "twitch.tv",
+        "hulu.com",
+    ],
+    "news": ["news.google.com", "bbc.com", "cnn.com", "reuters.com", "nytimes.com"],
 }
 
 KEYWORD_PATTERNS = {
-    'work': ['github', 'code', 'api', 'docs', 'documentation', 'developer', 'programming'],
-    'research': ['research', 'study', 'paper', 'journal', 'academic', 'scholar'],
-    'shopping': ['buy', 'shop', 'cart', 'price', 'order', 'product'],
-    'social': ['social', 'friend', 'post', 'share', 'like', 'comment'],
-    'entertainment': ['video', 'watch', 'movie', 'music', 'play', 'stream'],
-    'news': ['news', 'article', 'breaking', 'latest', 'report']
+    "work": [
+        "github",
+        "code",
+        "api",
+        "docs",
+        "documentation",
+        "developer",
+        "programming",
+    ],
+    "research": ["research", "study", "paper", "journal", "academic", "scholar"],
+    "shopping": ["buy", "shop", "cart", "price", "order", "product"],
+    "social": ["social", "friend", "post", "share", "like", "comment"],
+    "entertainment": ["video", "watch", "movie", "music", "play", "stream"],
+    "news": ["news", "article", "breaking", "latest", "report"],
 }
 
 
@@ -109,10 +151,10 @@ def extract_features_real(url, title, content):
         features.append(min(score, 1.0))
 
     # URL structure features
-    path_depth = len(url.split('/')) - 3  # Subtract protocol and domain
+    path_depth = len(url.split("/")) - 3  # Subtract protocol and domain
     features.append(min(path_depth / 10.0, 1.0))
-    features.append(1.0 if '?' in url else 0.0)
-    features.append(1.0 if '#' in url else 0.0)
+    features.append(1.0 if "?" in url else 0.0)
+    features.append(1.0 if "#" in url else 0.0)
 
     return features
 
@@ -121,20 +163,20 @@ def build_model(input_dim, num_classes):
     """
     Build neural network model for tab classification
     """
-    model = models.Sequential([
-        layers.Input(shape=(input_dim,)),
-        layers.Dense(128, activation='relu'),
-        layers.Dropout(0.3),
-        layers.Dense(64, activation='relu'),
-        layers.Dropout(0.2),
-        layers.Dense(32, activation='relu'),
-        layers.Dense(num_classes, activation='softmax')
-    ])
+    model = models.Sequential(
+        [
+            layers.Input(shape=(input_dim,)),
+            layers.Dense(128, activation="relu"),
+            layers.Dropout(0.3),
+            layers.Dense(64, activation="relu"),
+            layers.Dropout(0.2),
+            layers.Dense(32, activation="relu"),
+            layers.Dense(num_classes, activation="softmax"),
+        ]
+    )
 
     model.compile(
-        optimizer='adam',
-        loss='sparse_categorical_crossentropy',
-        metrics=['accuracy']
+        optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
     )
 
     return model
@@ -158,32 +200,31 @@ def train_model(X_train, y_train, X_val, y_val):
 
     # Callbacks
     early_stopping = EarlyStopping(
-        monitor='val_loss',
-        patience=10,
-        restore_best_weights=True
+        monitor="val_loss", patience=10, restore_best_weights=True
     )
 
     checkpoint = ModelCheckpoint(
-        'tab_classifier_best.h5',
-        monitor='val_accuracy',
+        "tab_classifier_best.h5",
+        monitor="val_accuracy",
         save_best_only=True,
-        mode='max'
+        mode="max",
     )
 
     # Train
     history = model.fit(
-        X_train, y_train_encoded,
+        X_train,
+        y_train_encoded,
         validation_data=(X_val, y_val_encoded),
         epochs=100,
         batch_size=32,
         callbacks=[early_stopping, checkpoint],
-        verbose=1
+        verbose=1,
     )
 
     return model, label_encoder, history
 
 
-def convert_to_tflite(model, output_path='tab_classifier.tflite'):
+def convert_to_tflite(model, output_path="tab_classifier.tflite"):
     """
     Convert Keras model to TensorFlow Lite format
     """
@@ -196,13 +237,14 @@ def convert_to_tflite(model, output_path='tab_classifier.tflite'):
     tflite_model = converter.convert()
 
     # Save
-    with open(output_path, 'wb') as f:
+    with open(output_path, "wb") as f:
         f.write(tflite_model)
 
     print(f"Model saved to {output_path}")
 
     # Get model size
     import os
+
     size_kb = os.path.getsize(output_path) / 1024
     print(f"Model size: {size_kb:.2f} KB")
 
@@ -226,11 +268,11 @@ def evaluate_model(model, X_test, y_test, label_encoder):
     from sklearn.metrics import classification_report, confusion_matrix
 
     print("\nClassification Report:")
-    print(classification_report(
-        y_test_encoded,
-        predicted_classes,
-        target_names=label_encoder.classes_
-    ))
+    print(
+        classification_report(
+            y_test_encoded, predicted_classes, target_names=label_encoder.classes_
+        )
+    )
 
     print("\nConfusion Matrix:")
     print(confusion_matrix(y_test_encoded, predicted_classes))
@@ -273,13 +315,11 @@ def main():
     convert_to_tflite(model)
 
     # Save label encoder
-    with open('label_encoder.json', 'w') as f:
-        json.dump({
-            'classes': label_encoder.classes_.tolist()
-        }, f)
+    with open("label_encoder.json", "w") as f:
+        json.dump({"classes": label_encoder.classes_.tolist()}, f)
 
     print("\nTraining complete!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

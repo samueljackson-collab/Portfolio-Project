@@ -23,9 +23,13 @@
 ## Overview
 
 ### Purpose
-This runbook provides operational procedures for managing and troubleshooting the homelab network infrastructure, including pfSense firewall, UniFi switching/wireless, VLAN segmentation, and security controls.
+
+This runbook provides operational procedures for managing and troubleshooting
+the homelab network infrastructure, including pfSense firewall, UniFi
+switching/wireless, VLAN segmentation, and security controls.
 
 ### Scope
+
 - **Firewall:** pfSense (192.168.1.1)
 - **Switching:** UniFi Switch 24 POE (192.168.1.2)
 - **Wireless:** 2x UniFi U6 Pro Access Points (192.168.1.3-4)
@@ -33,11 +37,13 @@ This runbook provides operational procedures for managing and troubleshooting th
 - **Security:** Suricata IPS, OpenVPN, WPA3 Enterprise
 
 ### Service Criticality
+
 - **Criticality Level:** P0 (Critical Infrastructure)
 - **RTO (Recovery Time Objective):** 30 minutes
 - **RPO (Recovery Point Objective):** 24 hours (config backups)
 
 ### Key Metrics
+
 - **Uptime Target:** 99.9% (8.76 hours downtime/year)
 - **Incident Response Time:** <10 minutes (network outage), <30 minutes (VLAN issue)
 - **Security Incident Response:** <5 minutes (critical IPS alert)
@@ -95,6 +101,7 @@ Internet → DMZ (VLAN 50): ALLOW ports 80, 443 (port forward)
 ### INCIDENT: Complete Network Outage
 
 **Symptoms:**
+
 - All devices lose connectivity
 - Cannot access pfSense WebGUI
 - Wireless networks disappear
@@ -105,6 +112,7 @@ Internet → DMZ (VLAN 50): ALLOW ports 80, 443 (port forward)
 #### Immediate Actions
 
 1. **Verify Physical Layer**
+
    ```bash
    # Check if you can console into pfSense
    # Physical access to firewall or IPMI/iLO
@@ -124,21 +132,31 @@ Internet → DMZ (VLAN 50): ALLOW ports 80, 443 (port forward)
 
 2. **Check WAN Connectivity**
    ```bash
+
    # At pfSense shell
+
    ping -c 4 8.8.8.8
 
    # If fails, check WAN interface
+
    ifconfig <WAN_INTERFACE>
+
    # Verify IP address assigned by ISP
 
    # Check ISP modem
+
    # Physically inspect: Power, Link, Online lights should be solid
 
    # Reboot modem if necessary
+
    # 1. Unplug power from modem
+
    # 2. Wait 30 seconds
+
    # 3. Plug back in
+
    # 4. Wait 2-5 minutes for sync
+
    ```
 
 3. **Check pfSense Services**
@@ -157,6 +175,7 @@ Internet → DMZ (VLAN 50): ALLOW ports 80, 443 (port forward)
    ```
 
 4. **Test LAN Connectivity**
+
    ```bash
    # From pfSense shell, ping a device on LAN
    ping -c 4 192.168.1.2  # UniFi Switch
@@ -187,25 +206,34 @@ Can you access pfSense console?
 
 **Scenario A: WAN Down (ISP Issue)**
 ```bash
+
 # Verify WAN interface
+
 ifconfig <WAN_INTERFACE>
 
 # Request new DHCP lease from ISP
+
 dhclient -r <WAN_INTERFACE>  # Release
 sleep 5
 dhclient <WAN_INTERFACE>      # Renew
 
 # Or via WebGUI (if accessible from LAN):
+
 # Status → Interfaces → WAN → Release / Renew
 
 # Test connectivity
+
 ping -c 4 8.8.8.8
 ping -c 4 google.com
 
 # If still down, call ISP support:
+
 # - Account number: <YOUR_ACCOUNT>
+
 # - Service address: <YOUR_ADDRESS>
+
 # - Report: "No sync on cable modem"
+
 ```
 
 **Scenario B: LAN Services Down**
@@ -223,6 +251,7 @@ ps aux | grep -E "unbound|dhcpd|ntpd"
 ```
 
 **Scenario C: Firewall Rules Broken (Recent Change)**
+
 ```bash
 # Check recent changes
 clog /var/log/filter.log | head -50
@@ -264,11 +293,14 @@ pfctl -s rules
 
 1. **Identify Affected VLAN**
    ```bash
+
    # From client on affected VLAN
+
    ip addr show  # Linux/Mac
    ipconfig      # Windows
 
    # Note VLAN subnet (e.g., 192.168.20.x = VLAN 20 IoT)
+
    ```
 
 2. **Test Connectivity Stages**
@@ -291,6 +323,7 @@ pfctl -s rules
    ```
 
 3. **Check Firewall Rules**
+
    ```bash
    # Via pfSense WebGUI:
    # Firewall → Rules → <VLAN_INTERFACE> (e.g., IoT_VLAN20)
@@ -317,24 +350,37 @@ pfctl -s rules
 
 **Scenario A: Firewall Rule Blocking**
 ```bash
+
 # Via pfSense WebGUI:
+
 # Firewall → Rules → IoT (VLAN 20)
 
 # Add rule at TOP of list:
+
 # ┌─────────────────────────────┐
+
 # │ Action: Pass                │
+
 # │ Interface: IoT              │
+
 # │ Address Family: IPv4        │
+
 # │ Protocol: Any               │
+
 # │ Source: IoT subnet          │
+
 # │ Destination: Any            │
+
 # │ Description: Allow internet │
+
 # └─────────────────────────────┘
 
 # Click "Save" → "Apply Changes"
 
 # Test immediately from client
+
 ping 8.8.8.8
+
 ```
 
 **Scenario B: DNS Not Resolving**
@@ -356,6 +402,7 @@ nslookup google.com 192.168.20.1
 ```
 
 **Scenario C: NAT Not Configured**
+
 ```bash
 # Via pfSense WebGUI:
 # Firewall → NAT → Outbound
@@ -400,16 +447,23 @@ curl -I https://google.com
 
 1. **Check UniFi Controller Status**
    ```bash
+
    # Via browser: https://192.168.1.2:8443
+
    # Or SSH to UniFi Switch
+
    ssh admin@192.168.1.2
 
    # Check if controller is running
+
    ps aux | grep unifi
 
    # Check access points status
+
    # UniFi UI → Devices → Access Points
+
    # Status should be: "Connected" (green)
+
    ```
 
 2. **Check Access Point Connectivity**
@@ -427,6 +481,7 @@ curl -I https://google.com
    ```
 
 3. **Check PoE Power Delivery**
+
    ```bash
    # Via UniFi UI:
    # Devices → UniFi Switch → Port Manager
@@ -453,24 +508,33 @@ curl -I https://google.com
 
 **Scenario A: Access Point Offline (No PoE)**
 ```bash
+
 # Via UniFi UI:
+
 # Devices → UniFi Switch → Port 2 (AP1) → Settings
 
 # Disable PoE:
+
 # PoE: Off → Apply
 
 # Wait 10 seconds
 
 # Re-enable PoE:
+
 # PoE: Auto (802.3at) → Apply
 
 # Monitor AP boot (takes 2-3 minutes)
+
 # Watch for LED sequence:
+
 # - White flashing = Booting
+
 # - White solid = Upgrading firmware
+
 # - Blue solid = Connected and adopted
 
 # Verify in UI: Status should change to "Connected"
+
 ```
 
 **Scenario B: SSID Not Broadcasting**
@@ -494,6 +558,7 @@ curl -I https://google.com
 ```
 
 **Scenario C: WPA3 Enterprise Authentication Fails**
+
 ```bash
 # Via pfSense or RADIUS server
 # Check FreeIPA RADIUS service
@@ -543,18 +608,27 @@ radtest testuser password 192.168.40.25 0 testing123
 
 1. **Assess Alert Severity**
    ```bash
+
    # Via pfSense WebGUI:
+
    # Services → Suricata → Alerts
 
    # Check alert details:
+
    # - Priority: 1 (Critical), 2 (High), 3 (Medium)
+
    # - Category: Exploit, Malware, Scan, Policy Violation
+
    # - Source/Destination IPs
 
    # Common critical alerts:
+
    # - "ET EXPLOIT" → Active exploitation attempt
+
    # - "ET MALWARE" → Malware command & control
+
    # - "ET DROP" → Known malicious IP
+
    ```
 
 2. **Identify Affected Host**
@@ -570,6 +644,7 @@ radtest testuser password 192.168.40.25 0 testing123
    ```
 
 3. **Immediate Containment (If Critical)**
+
    ```bash
    # Option 1: Block at firewall (temporary)
    # Via pfSense WebGUI:
@@ -609,18 +684,27 @@ radtest testuser password 192.168.40.25 0 testing123
 
 **Step 1: Analyze Traffic**
 ```bash
+
 # Via pfSense: Diagnostics → Packet Capture
+
 # - Interface: <VLAN_INTERFACE>
+
 # - Host Address: 192.168.1.25 (affected host)
+
 # - Capture file: /tmp/capture-$(date +%s).pcap
 
 # Start capture for 2 minutes
 
 # Download PCAP and analyze with Wireshark
+
 # Look for:
+
 # - Unusual ports (e.g., 4444, 31337)
+
 # - Unencrypted credentials (HTTP Basic Auth)
+
 # - DNS queries to suspicious domains
+
 ```
 
 **Step 2: Check Host Logs**
@@ -647,6 +731,7 @@ sudo find /tmp -type f -executable   # Executable files in /tmp
 ```
 
 **Step 3: Correlate with Threat Intelligence**
+
 ```bash
 # Check external IP reputation
 curl -s https://www.abuseipdb.com/check/<EXTERNAL_IP>/json?key=<API_KEY> | jq .
@@ -663,20 +748,29 @@ curl -s https://www.virustotal.com/vtapi/v2/file/report?apikey=<KEY>&resource=<H
 
 **Scenario A: False Positive (Safe Traffic)**
 ```bash
+
 # Via pfSense WebGUI:
+
 # Services → Suricata → Suppression
 
 # Add suppression rule:
+
 # ┌──────────────────────────────────────┐
+
 # │ SID: <SIGNATURE_ID>                  │
+
 # │ Track by: Source IP                  │
+
 # │ IP Address: 192.168.1.25             │
+
 # │ Description: Update server traffic   │
+
 # └──────────────────────────────────────┘
 
 # Save → Apply Changes
 
 # Document decision in incident log
+
 ```
 
 **Scenario B: Confirmed Compromise**
@@ -716,6 +810,7 @@ scp admin@192.168.1.25:/tmp/evidence-*.tar.gz /mnt/incident-response/
 ```
 
 **Scenario C: Scanning Activity (Reconnaissance)**
+
 ```bash
 # If alert shows port scanning from internal IP:
 # This could be:
@@ -760,17 +855,23 @@ scp admin@192.168.1.25:/tmp/evidence-*.tar.gz /mnt/incident-response/
 
 **Diagnosis:**
 ```bash
+
 # Test DNS resolution from client
+
 nslookup google.com 192.168.1.1
 
 # If fails, test from pfSense
+
 dig @127.0.0.1 google.com
 
 # If succeeds on pfSense but fails from client:
+
 # → Firewall rule blocking port 53
 
 # If fails on pfSense:
+
 # → Unbound service issue or upstream DNS down
+
 ```
 
 **Resolution:**
@@ -806,11 +907,13 @@ nslookup google.com 192.168.1.1
 ### DHCP Not Assigning IPs
 
 **Symptoms:**
+
 - Device gets APIPA address (169.254.x.x)
 - Cannot obtain network configuration
 - Static IP works but DHCP doesn't
 
 **Diagnosis:**
+
 ```bash
 # Via pfSense WebGUI:
 # Status → System Logs → DHCP
@@ -828,36 +931,53 @@ nslookup google.com 192.168.1.1
 
 **Resolution:**
 ```bash
+
 # Check DHCP service status
+
 # Via pfSense WebGUI:
+
 # Status → Services
+
 # dhcpd should show "Running"
 
 # If stopped:
+
 # Click "Start"
 
 # Check DHCP pool has available IPs
+
 # Services → DHCP Server → <VLAN>
 
 # For VLAN 20 (IoT):
+
 # Range: 192.168.20.50 to 192.168.20.200
+
 # Total IPs: 151
 
 # Check leases:
+
 # Status → DHCP Leases
+
 # Count active leases, compare to pool size
 
 # If pool exhausted:
+
 # Option 1: Expand range
+
 # Services → DHCP Server → IoT
+
 # Range to: 192.168.20.250
 
 # Option 2: Reduce lease time
+
 # Default lease time: 7200 (2 hours)
+
 # Maximum lease time: 86400 (24 hours)
 
 # Restart DHCP service:
+
 # Services → DHCP Server → Save → Apply Changes
+
 ```
 
 ---
@@ -888,6 +1008,7 @@ nslookup google.com 192.168.1.1
 ```
 
 **Resolution:**
+
 ```bash
 # Restart OpenVPN server
 # Status → OpenVPN → Server: <NAME> → Restart
@@ -929,47 +1050,71 @@ nslookup google.com 192.168.1.1
 
 #### Steps
 ```bash
+
 # 1. Backup configuration
+
 # Diagnostics → Backup & Restore
+
 # Download config.xml to safe location with date:
+
 # pfsense-config-2025-11-06.xml
 
 # 2. Review release notes
+
 # Visit: https://docs.netgate.com/pfsense/en/latest/releases/
+
 # Check for breaking changes or known issues
 
 # 3. Install updates
+
 # System → Update → System Update
+
 # Click "Confirm" to download and install
 
 # 4. Wait for reboot (5-10 minutes)
+
 # Dashboard will become unavailable during reboot
 
 # 5. Verify services after reboot
+
 # Status → Services
+
 # All should show "Running":
+
 # - dpinger
+
 # - Unbound
+
 # - dhcpd
+
 # - sshd
 
 # 6. Test connectivity
+
 # From client device:
+
 ping 8.8.8.8              # Internet
 nslookup google.com       # DNS
 ssh admin@server.local    # Internal routing
 
 # 7. Check Suricata IPS (if installed)
+
 # Services → Suricata → Interfaces
+
 # All should show "Running"
 
 # If Suricata fails to start:
+
 # - Check rulesets are updated
+
 # - Restart interface: Click "Start"
 
 # 8. Monitor firewall logs for anomalies
+
 # Status → System Logs → Firewall
+
 # Look for unexpected BLOCK entries
+
 ```
 
 #### Rollback (If Issues Occur)
@@ -992,12 +1137,14 @@ ssh admin@server.local    # Internal routing
 **When to Use:** Opening port, allowing new service, inter-VLAN access
 
 #### Best Practices
+
 1. **Principle of Least Privilege:** Only allow what's necessary
 2. **Specific Sources/Destinations:** Avoid "any to any"
 3. **Logging:** Enable logging for new rules (disable after verification)
 4. **Documentation:** Add clear description
 
 #### Steps
+
 ```bash
 # Via pfSense WebGUI:
 # Firewall → Rules → <INTERFACE>
@@ -1045,75 +1192,129 @@ nslookup google.com 192.168.40.35
 
 #### Steps
 ```bash
+
 # 1. Plan VLAN configuration
+
 # - VLAN ID: 60 (example: Cameras)
+
 # - Subnet: 192.168.60.0/24
+
 # - Gateway: 192.168.60.1 (pfSense)
+
 # - DHCP Range: 192.168.60.100-200
 
 # 2. Configure VLAN in pfSense
+
 # Interfaces → Assignments → VLANs → Add
+
 # ┌───────────────────────────┐
+
 # │ Parent Interface: igb0    │
+
 # │ VLAN Tag: 60              │
+
 # │ Description: Cameras      │
+
 # └───────────────────────────┘
+
 # Save
 
 # 3. Assign interface
+
 # Interfaces → Assignments
+
 # Available network ports: VLAN 60 on igb0 (opt6)
+
 # Click "Add" → Save
 
 # 4. Enable and configure interface
+
 # Interfaces → OPT6
+
 # ┌───────────────────────────────────┐
+
 # │ Enable: ✓ (checked)               │
+
 # │ Description: Cameras              │
+
 # │ IPv4 Configuration Type: Static   │
+
 # │ IPv4 Address: 192.168.60.1/24     │
+
 # └───────────────────────────────────┘
+
 # Save → Apply Changes
 
 # 5. Configure DHCP for VLAN
+
 # Services → DHCP Server → Cameras
+
 # ┌───────────────────────────────────┐
+
 # │ Enable: ✓                         │
+
 # │ Range: 192.168.60.100 to          │
+
 # │        192.168.60.200             │
+
 # │ DNS Servers: 192.168.40.35        │
+
 # │ Gateway: 192.168.60.1             │
+
 # └───────────────────────────────────┘
+
 # Save
 
 # 6. Create firewall rules
+
 # Firewall → Rules → Cameras
+
 # Add rules:
+
 # - Allow Cameras → Internet (HTTP/HTTPS only)
+
 # - Allow Trusted → Cameras (viewing access)
+
 # - Block Cameras → All other VLANs
 
 # 7. Configure VLAN on UniFi Switch
+
 # Via UniFi UI:
+
 # Settings → Networks → Create New Network
+
 # ┌─────────────────────────────┐
+
 # │ Name: Cameras               │
+
 # │ VLAN ID: 60                 │
+
 # │ Gateway/Subnet: 192.168.60.1/24 │
+
 # │ DHCP Mode: None (pfSense handles) │
+
 # └─────────────────────────────┘
+
 # Save
 
 # Assign VLAN to switch ports:
+
 # Devices → UniFi Switch → Port Manager
+
 # Ports 10-14 → Network: Cameras (untagged)
 
 # 8. Test connectivity
+
 # Connect device to port 10, verify:
+
 # - Gets IP 192.168.60.x
+
 # - Can ping gateway 192.168.60.1
+
 # - Can access internet
+
 # - Cannot ping other VLANs (192.168.1.x)
+
 ```
 
 ---
@@ -1225,11 +1426,13 @@ nslookup google.com 192.168.40.35
 ### Complete Firewall Failure (Hardware)
 
 **Symptoms:**
+
 - pfSense will not boot
 - Hardware failure indicated
 - Smoke/burning smell from device
 
 **Recovery Steps:**
+
 ```bash
 # 1. Prepare replacement hardware
 # - Same or better CPU/RAM/NICs
@@ -1307,23 +1510,31 @@ nslookup google.com 192.168.40.35
 
 **pfSense Shell:**
 ```bash
+
 # Restart network interfaces
+
 pfSsh.php playback interfaces
 
 # Restart all services
+
 pfSsh.php playback services
 
 # View routing table
+
 netstat -rn
 
 # Show firewall state table
+
 pfctl -s state
 
 # View loaded firewall rules
+
 pfctl -s rules
 
 # Restart Unbound DNS
+
 pfSsh.php playback svc restart unbound
+
 ```
 
 **UniFi CLI (via SSH):**
@@ -1351,16 +1562,19 @@ speedtest
 ### Escalation Contacts
 
 **Tier 1 (Self-Service):**
+
 - This runbook
 - pfSense documentation: https://docs.netgate.com/
 - UniFi forums: https://community.ui.com/
 
 **Tier 2 (Community Support):**
+
 - pfSense subreddit: r/PFSENSE
 - UniFi subreddit: r/Ubiquiti
 - HomeLab subreddit: r/homelab
 
 **Tier 3 (Professional Support):**
+
 - Netgate Support (paid): https://www.netgate.com/support/
 - Ubiquiti Support: https://help.ui.com/
 

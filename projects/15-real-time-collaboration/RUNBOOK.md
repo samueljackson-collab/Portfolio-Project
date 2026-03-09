@@ -689,25 +689,25 @@ psql -h localhost -U collaboration -d collaboration -c \
 
 #### Severity Classification
 
-**P0: Complete Service Outage**
+### P0: Complete Service Outage
 - WebSocket gateway down
 - All operations failing
 - Data loss occurring
 - Authentication system down
 
-**P1: Degraded Service**
+### P1: Degraded Service
 - High operation latency (>200ms)
 - Partial WebSocket failures
 - CRDT reconciliation failing
 - Some users unable to connect
 
-**P2: Performance Issues**
+### P2: Performance Issues
 - Elevated latency (100-200ms)
 - Slow presence updates
 - Queue depths increasing
 - Individual connection drops
 
-**P3: Minor Issues**
+### P3: Minor Issues
 - Occasional operation retry
 - Single document sync issue
 - Non-critical logging errors

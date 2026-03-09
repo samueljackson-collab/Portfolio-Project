@@ -45,7 +45,9 @@ def test_authentication_folder_exists(collection_file):
     with open(collection_file) as f:
         data = json.load(f)
 
-    auth_folder = next((item for item in data["item"] if item["name"] == "Authentication"), None)
+    auth_folder = next(
+        (item for item in data["item"] if item["name"] == "Authentication"), None
+    )
     assert auth_folder is not None
     assert "item" in auth_folder
     assert len(auth_folder["item"]) > 0
@@ -70,13 +72,17 @@ def test_requests_have_tests(collection_file):
 
 def test_environment_template_exists():
     """Verify environment template exists."""
-    template = Path(__file__).parent.parent / "collections" / "environment.template.json"
+    template = (
+        Path(__file__).parent.parent / "collections" / "environment.template.json"
+    )
     assert template.exists()
 
 
 def test_environment_template_valid():
     """Verify environment template is valid."""
-    template = Path(__file__).parent.parent / "collections" / "environment.template.json"
+    template = (
+        Path(__file__).parent.parent / "collections" / "environment.template.json"
+    )
     with open(template) as f:
         data = json.load(f)
 

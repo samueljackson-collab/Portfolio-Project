@@ -1,0 +1,64 @@
+name: Platform CI
+
+on:
+  push:
+    branches: [ work ]
+  pull_request:
+    branches: [ work ]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run backend tests
+        env:
+          TEST_DATABASE_URL: sqlite+aiosqlite:///./test.db
+        run: |
+          cd backend
+          pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install and build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build -- --mode production
+
+  infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+      - name: Terraform fmt
+        run: terraform -chdir=infrastructure/terraform/environments fmt -check
+      - name: Terraform init
+        run: terraform -chdir=infrastructure/terraform/environments init -backend=false
+      - name: Terraform validate
+        run: terraform -chdir=infrastructure/terraform/environments validate
+      - name: Ansible lint
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core ansible-lint
+          ansible-lint infrastructure/ansible/playbooks/site.yml

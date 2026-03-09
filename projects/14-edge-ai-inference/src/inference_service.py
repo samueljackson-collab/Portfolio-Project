@@ -1,4 +1,5 @@
 """Edge inference helper using ONNX Runtime."""
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,9 @@ def preprocess(image_path: str) -> np.ndarray:
 
 
 def run_inference(model_path: str, image_path: str) -> np.ndarray:
-    session = ort.InferenceSession(model_path, providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+    session = ort.InferenceSession(
+        model_path, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+    )
     input_name = session.get_inputs()[0].name
     outputs = session.run(None, {input_name: preprocess(image_path)})
     return outputs[0]

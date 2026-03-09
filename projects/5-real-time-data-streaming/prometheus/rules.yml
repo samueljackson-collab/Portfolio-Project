@@ -1,0 +1,55 @@
+# Alert Rules for Real-time Data Streaming
+
+groups:
+  - name: streaming_alerts
+    interval: 30s
+    rules:
+      - alert: KafkaConsumerLagHigh
+        expr: kafka_consumergroup_lag > 10000
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+        annotations:
+          summary: "High consumer lag for {{ $labels.consumergroup }}"
+          description: "Consumer lag is {{ $value }} messages"
+
+      - alert: KafkaBrokerDown
+        expr: kafka_brokers < 3
+        for: 2m
+        labels:
+          severity: critical
+          component: kafka
+        annotations:
+          summary: "Kafka broker count is low"
+          description: "Only {{ $value }} brokers available"
+
+      - alert: FlinkJobFailed
+        expr: flink_jobmanager_job_uptime_seconds == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: flink
+        annotations:
+          summary: "Flink job {{ $labels.job_name }} failed"
+          description: "Job is not running"
+
+      - alert: StreamProcessingLatencyHigh
+        expr: stream_processing_latency_seconds > 30
+        for: 10m
+        labels:
+          severity: warning
+          component: processing
+        annotations:
+          summary: "High stream processing latency"
+          description: "Latency is {{ $value }}s"
+
+      - alert: KafkaUnderReplicatedPartitions
+        expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+        annotations:
+          summary: "Kafka has under-replicated partitions"
+          description: "{{ $value }} partitions are under-replicated"

@@ -1,0 +1,24 @@
+# Requirements for secure.py
+# The vulnerable.py uses basic stdlib + flask for demonstration
+
+# Web framework
+flask>=2.3.0
+
+# Security middleware
+flask-talisman>=1.0.0
+flask-limiter>=3.0.0
+
+# Password hashing
+bcrypt>=4.0.0
+
+# SQL with parameterized queries
+sqlalchemy>=2.0.0
+
+# Safe XML parsing
+defusedxml>=0.7.0
+
+# HTTP client
+requests>=2.31.0
+
+# HTML escaping (included with Flask, but explicit)
+markupsafe>=2.1.0

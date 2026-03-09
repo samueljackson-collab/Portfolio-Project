@@ -1,0 +1,161 @@
+# Grafana Dashboard Provisioning
+# ================================
+# Automatically provisions dashboards from JSON files on startup.
+# Benefits: Version control, consistent deployment, backup/restore.
+#
+# Documentation: https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards
+# Author: Portfolio Project
+# Last Updated: 2024-11-24
+
+# API Version
+apiVersion: 1
+
+# Dashboard Providers
+# ===================
+# Defines where Grafana should look for dashboard JSON files.
+#
+providers:
+  # Provider 1: Local Filesystem
+  # -----------------------------
+  # Loads dashboards from local directory.
+  #
+  - name: 'default'
+    # Organization ID (multi-org Grafana)
+    # 1 = Default organization
+    # Single-org setup: Always use 1
+    orgId: 1
+
+    # Folder: Grafana folder to place dashboards in
+    # Empty string = General folder (root)
+    # Create folders to organize dashboards:
+    #   - Infrastructure
+    #   - Applications
+    #   - Business Metrics
+    folder: ''
+
+    # Folder UID: Unique identifier for folder
+    # Auto-generated if not specified
+    # folderUid: ''
+
+    # Type: Where to load dashboards from
+    # Options:
+    #   - file: Local filesystem (most common)
+    #   - http: Remote HTTP endpoint
+    type: file
+
+    # Disable deletion: Prevent deleting provisioned dashboards via UI
+    # true: Can't delete via UI (safe, recommended)
+    # false: Can delete via UI (dangerous, dashboard removed until reprovisioned)
+    disableDeletion: false
+
+    # Update interval: How often to scan for dashboard changes
+    # Format: Duration string (e.g., 30s, 5m, 1h)
+    # 0 or omit: Check only on startup
+    # >0: Periodically reload dashboards (useful for development)
+    #
+    # Development: 30s (see changes quickly)
+    # Production: 0 or 5m (reduce I/O)
+    updateIntervalSeconds: 30
+
+    # Allow UI updates: Can edit dashboards via UI
+    # true: Edit in UI, changes not persisted (lost on reload)
+    # false: Read-only in UI (safe, prevents confusion)
+    #
+    # Recommended: false (force changes via JSON file)
+    allowUiUpdates: false
+
+    # Options: Path and file matching configuration
+    options:
+      # Path: Directory containing dashboard JSON files
+      # Absolute path or relative to Grafana working directory
+      # Docker: Mount volume to this path
+      path: /var/lib/grafana/dashboards
+
+      # Folder: Subfolder within path (optional)
+      # folder: monitoring
+
+      # File patterns: Which files to load (optional)
+      # Glob patterns supported
+      # Default: All .json files
+      # Example: ['/dashboards/*.json', '/dashboards/**/*.json']
+      # Recursive: Use ** to search subdirectories
+
+# Provisioning Behavior
+# ======================
+#
+# On Startup:
+#   - Grafana scans path for JSON files
+#   - Creates dashboards if not exist
+#   - Updates existing dashboards (based on UID)
+#
+# Updates (if updateIntervalSeconds > 0):
+#   - Grafana periodically rescans path
+#   - Detects changes to JSON files
+#   - Updates dashboards automatically
+#   - No Grafana restart required
+#
+# Dashboard UID:
+#   - Each dashboard JSON should have unique "uid" field
+#   - UID used to identify dashboard for updates
+#   - Without UID: New dashboard created each time (duplicates)
+#   - With UID: Existing dashboard updated
+#
+# UI Edits (if allowUiUpdates: true):
+#   - Changes in UI are temporary
+#   - Lost on next provisioning reload
+#   - Warning shown in UI: "Dashboard is managed by provisioning"
+#   - To persist: Export JSON from UI, update file
+#
+# Deletion:
+#   - Removing JSON file does NOT delete dashboard
+#   - Must be deleted via UI or API
+#   - Or set disableDeletion: false and remove file
+#
+# Multiple Providers:
+#   - Can define multiple providers
+#   - Load dashboards from different directories
+#   - Organize by team, environment, purpose
+
+# Advanced Examples
+# =================
+#
+# Multiple Dashboard Folders:
+# ---------------------------
+# providers:
+#   - name: 'infrastructure'
+#     orgId: 1
+#     folder: 'Infrastructure'
+#     type: file
+#     options:
+#       path: /var/lib/grafana/dashboards/infrastructure
+#
+#   - name: 'applications'
+#     orgId: 1
+#     folder: 'Applications'
+#     type: file
+#     options:
+#       path: /var/lib/grafana/dashboards/applications
+#
+# Remote HTTP Dashboards:
+# -----------------------
+# - name: 'remote-dashboards'
+#   orgId: 1
+#   folder: 'Remote'
+#   type: http
+#   options:
+#     url: https://dashboard-repo.example.com/dashboards
+#     # Basic auth for HTTP endpoint
+#     # basicAuth: true
+#     # basicAuthUser: ${HTTP_USER}
+#     # basicAuthPassword: ${HTTP_PASSWORD}
+#
+# Development Mode (Frequent Reloads):
+# ------------------------------------
+# - name: 'dev-dashboards'
+#   orgId: 1
+#   folder: 'Development'
+#   type: file
+#   updateIntervalSeconds: 10  # Reload every 10 seconds
+#   allowUiUpdates: true        # Allow UI edits
+#   options:
+#     path: /var/lib/grafana/dashboards/dev

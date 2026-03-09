@@ -1,0 +1,31 @@
+#cloud-config
+# Debian 12 Cloud-Init Template
+# Purpose: Baseline configuration for Debian VMs in homelab
+
+hostname: debian-template
+manage_etc_hosts: true
+
+users:
+  - name: debian
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAA... homelab-admin"
+
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+  - curl
+  - vim
+  - htop
+  - ufw
+
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - ufw allow OpenSSH
+  - ufw --force enable
+  - echo "Debian template initialized" > /etc/motd
+
+final_message: "Debian cloud-init completed after $UPTIME seconds"

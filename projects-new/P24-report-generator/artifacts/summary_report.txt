@@ -1,0 +1,5 @@
+Executive Summary
+-----------------
+This demo shows how a templated report might be generated for stakeholders.
+Date: 2025-12-08
+Key Metrics: uptime=99.9%, cost=$12k

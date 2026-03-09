@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # GPU-enabled inference service
+  inference-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: edge-inference-gpu
+    ports:
+      - "8000:8000"
+    environment:
+      - MODELS_DIR=/app/models
+      - CACHE_MAX_MODELS=5
+      - CACHE_MAX_MEMORY_MB=4096
+      - LOG_LEVEL=INFO
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./models:/app/models
+      - inference-cache:/app/cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 8G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    profiles:
+      - gpu
+
+  # CPU-only inference service (for edge devices)
+  inference-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: cpu-only
+    container_name: edge-inference-cpu
+    ports:
+      - "8000:8000"
+    environment:
+      - MODELS_DIR=/app/models
+      - CACHE_MAX_MODELS=3
+      - CACHE_MAX_MEMORY_MB=1024
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./models:/app/models
+      - inference-cache:/app/cache
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    profiles:
+      - cpu
+
+  # Default service (CPU)
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: cpu-only
+    container_name: edge-inference
+    ports:
+      - "8000:8000"
+    environment:
+      - MODELS_DIR=/app/models
+      - CACHE_MAX_MODELS=5
+      - CACHE_MAX_MEMORY_MB=2048
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./models:/app/models
+      - inference-cache:/app/cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: edge-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: edge-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=edge123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  inference-cache:
+  prometheus-data:
+  grafana-data:

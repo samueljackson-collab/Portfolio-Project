@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-mock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-mock
+  template:
+    metadata:
+      labels:
+        app: api-mock
+    spec:
+      containers:
+        - name: mock
+          image: node:20-alpine
+          command: ["node", "producer/mock.js"]
+          ports:
+            - containerPort: 8080
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: api-contract-tests
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: newman
+          image: postman/newman
+          command: ["run", "producer/collections/core.postman_collection.json", "-e", "producer/env/local.postman_environment.json", "--timeout", "60000"]

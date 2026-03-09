@@ -1,0 +1,122 @@
+{
+  "type": "record",
+  "name": "UserEvent",
+  "namespace": "com.portfolio.streaming.events",
+  "doc": "User event schema for real-time streaming",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "doc": "Unique event identifier (UUID)"
+    },
+    {
+      "name": "user_id",
+      "type": "string",
+      "doc": "User identifier"
+    },
+    {
+      "name": "session_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Session identifier"
+    },
+    {
+      "name": "event_type",
+      "type": {
+        "type": "enum",
+        "name": "EventType",
+        "symbols": [
+          "PAGE_VIEW",
+          "CLICK",
+          "PURCHASE",
+          "ADD_TO_CART",
+          "SEARCH",
+          "LOGIN",
+          "LOGOUT",
+          "REGISTRATION"
+        ]
+      },
+      "doc": "Type of event"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "Event timestamp in milliseconds since epoch"
+    },
+    {
+      "name": "page_url",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Page URL where event occurred"
+    },
+    {
+      "name": "referrer",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Referrer URL"
+    },
+    {
+      "name": "user_agent",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "User agent string"
+    },
+    {
+      "name": "ip_address",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Client IP address"
+    },
+    {
+      "name": "device_type",
+      "type": ["null", {
+        "type": "enum",
+        "name": "DeviceType",
+        "symbols": ["DESKTOP", "MOBILE", "TABLET", "OTHER"]
+      }],
+      "default": null,
+      "doc": "Device type"
+    },
+    {
+      "name": "properties",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "default": {},
+      "doc": "Additional event properties"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "type": "record",
+        "name": "EventMetadata",
+        "fields": [
+          {
+            "name": "producer_id",
+            "type": "string",
+            "doc": "ID of the producer that generated this event"
+          },
+          {
+            "name": "schema_version",
+            "type": "string",
+            "default": "1.0.0",
+            "doc": "Schema version"
+          },
+          {
+            "name": "environment",
+            "type": {
+              "type": "enum",
+              "name": "Environment",
+              "symbols": ["DEVELOPMENT", "STAGING", "PRODUCTION"]
+            },
+            "default": "PRODUCTION",
+            "doc": "Environment where event was generated"
+          }
+        ]
+      },
+      "doc": "Event metadata"
+    }
+  ]
+}

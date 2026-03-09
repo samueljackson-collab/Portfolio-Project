@@ -1,0 +1,88 @@
+apiVersion: portfolio.example.com/v1alpha1
+kind: PortfolioStack
+metadata:
+  name: my-app
+  namespace: default
+spec:
+  image: nginx
+  version: "1.25"
+  replicas: 2
+  port: 80
+  env:
+    ENVIRONMENT: production
+    LOG_LEVEL: info
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+  ingress:
+    enabled: true
+    host: my-app.example.com
+  config:
+    app.conf: |
+      server {
+        listen 80;
+        location / {
+          return 200 'Hello from PortfolioStack!';
+        }
+      }
+---
+apiVersion: portfolio.example.com/v1alpha1
+kind: PortfolioStack
+metadata:
+  name: api-service
+  namespace: default
+spec:
+  image: my-registry/api-service
+  version: "v1.2.0"
+  replicas: 3
+  port: 8080
+  env:
+    DATABASE_URL: postgresql://db:5432/myapp
+    REDIS_URL: redis://redis:6379
+    LOG_FORMAT: json
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "512Mi"
+  ingress:
+    enabled: true
+    host: api.example.com
+---
+apiVersion: portfolio.example.com/v1alpha1
+kind: DatabaseMigration
+metadata:
+  name: myapp-migrations
+  namespace: default
+spec:
+  database:
+    host: postgres.default.svc.cluster.local
+    port: 5432
+    name: myapp
+    secretRef:
+      name: postgres-credentials
+      usernameKey: username
+      passwordKey: password
+  migrations:
+    - version: "001"
+      sql: |
+        CREATE TABLE users (
+          id SERIAL PRIMARY KEY,
+          email VARCHAR(255) NOT NULL UNIQUE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      rollback: DROP TABLE users;
+    - version: "002"
+      sql: |
+        ALTER TABLE users ADD COLUMN name VARCHAR(255);
+      rollback: ALTER TABLE users DROP COLUMN name;
+    - version: "003"
+      sql: |
+        CREATE INDEX idx_users_email ON users(email);
+      rollback: DROP INDEX idx_users_email;
