@@ -52,9 +52,9 @@ flowchart LR
 | Step | Command | Expected Result |
 |---|---|---|
 | Inspect project files | `ls` | Displays project assets and subdirectories. |
-| Install dependencies | `[project-specific install command]` | Dependencies are installed with no fatal errors. |
-| Run project | `[project-specific run command]` | Project starts or executes expected workflow. |
-| Validate quality | `[project-specific test/lint command]` | Tests/checks complete and report current status. |
+| Install dependencies | `pip install -r requirements.txt` | All packages installed with no fatal errors. |
+| Run demo | `python demo.py` | Roaming simulation scenarios execute and results print to stdout. |
+| Validate quality | `pytest tests/ -v` | All unit and integration tests pass. |
 
 ### Troubleshooting
 | Issue | Likely Cause | Resolution |
@@ -68,9 +68,9 @@ Testing strategy for this project should combine fast local checks (unit/lint), 
 
 | Test Type | Command / Location | Current Result | Evidence Link |
 |---|---|---|---|
-| Unit | `[project-specific unit command]` | n/a in this standardization pass | `./tests` |
-| Integration | `[project-specific integration command]` | n/a in this standardization pass | `./tests` |
-| E2E/Manual | `[project-specific e2e/manual steps]` | n/a in this standardization pass | `./README.md` |
+| Unit | `pytest tests/test_state_transitions.py -v` | All state machine tests pass | `./tests/test_state_transitions.py` |
+| Integration | `pytest tests/test_integration.py -v` | Multi-network roaming journey tests pass | `./tests/test_integration.py` |
+| E2E/Manual | `python demo.py` | All 3 demo scenarios complete without errors | `./demo.py` |
 
 ### Known Gaps
 - Project-specific commands/results should be updated with executed evidence.
