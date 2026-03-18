@@ -28,6 +28,8 @@ node_modules/
 
 # Tests
 coverage/
+.coverage
+*.db
 __pycache__/
 *.pyc
 *.pyo
