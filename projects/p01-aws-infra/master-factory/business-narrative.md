@@ -1,0 +1,3 @@
+# Business Narrative
+
+The P01 AWS Infrastructure Automation initiative delivers a hardened, repeatable stack for application teams. By codifying the VPC, ALB, and RDS footprint with Terraform + CloudFormation, we reduce provisioning time from weeks to hours while embedding guardrails (Config, GuardDuty, WAF). Quarterly DR drills validate business continuity with documented RPO/RTO targets and evidence artifacts, satisfying audit requirements and reducing downtime risk. Automated reporting and observability provide leadership with transparent uptime, cost, and resilience metrics tied directly to customer experience.
