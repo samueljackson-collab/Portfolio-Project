@@ -9,12 +9,13 @@ This module handles:
 """
 
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_db
+from app.rate_limit import limiter
 from app.models import User
 from app.schemas import UserCreate, UserResponse, UserLogin, Token
 from app.auth import hash_password, verify_password, create_access_token
@@ -35,7 +36,8 @@ router = APIRouter(
     summary="Register New User",
     description="Create a new user account with email and password",
 )
-async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
+@limiter.limit("10/minute")
+async def register(request: Request, user_data: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
     """
     Register a new user account.
 
@@ -80,8 +82,11 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
     summary="User Login",
     description="Authenticate user and receive JWT token",
 )
+@limiter.limit("5/minute")
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db),
 ) -> Token:
     """
     Authenticate user and generate JWT token.

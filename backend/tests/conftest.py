@@ -22,6 +22,7 @@ from app.database import Base, get_db
 from app.config import settings
 from app.models import User, Content
 from app.auth import get_password_hash
+from app.rate_limit import limiter
 
 
 # Use test database URL
@@ -48,6 +49,17 @@ TestSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    """Reset the in-memory rate limit counters before every test.
+
+    Without this, the tests share a single 'session' and quickly exhaust the
+    5/minute login limit, causing cascading 429 failures in later tests.
+    """
+    limiter._storage.reset()
+    yield
 
 
 @pytest.fixture(scope="session")
