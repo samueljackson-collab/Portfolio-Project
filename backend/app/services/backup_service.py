@@ -16,6 +16,7 @@ import os
 import asyncio
 import aiofiles
 import hashlib
+import shlex
 from pathlib import Path
 from typing import List, Optional, Dict
 from datetime import datetime
@@ -84,7 +85,7 @@ class BackupLocation:
                     "-o",
                     "ConnectTimeout=5",
                     "-o",
-                    "StrictHostKeyChecking=no",
+                    "StrictHostKeyChecking=accept-new",
                     f"{self.ssh_user}@{self.ssh_host}",
                     "echo",
                     "OK",
@@ -251,21 +252,26 @@ async def sync_file_via_rsync(
             f"{backup_location.ssh_user}@{backup_location.ssh_host}:{dest_path}"
         )
 
-        # Create remote directory first
-        mkdir_cmd = (
-            f"ssh {backup_location.ssh_user}@{backup_location.ssh_host} "
-            f"'mkdir -p {dest_path.parent}'"
-        )
-        proc = await asyncio.create_subprocess_shell(
-            mkdir_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        # Create remote directory first — use exec (no shell) for the local ssh
+        # invocation; quote the remote path so the remote shell cannot be injected.
+        proc = await asyncio.create_subprocess_exec(
+            "ssh",
+            "-o", "StrictHostKeyChecking=accept-new",
+            "-o", "BatchMode=yes",
+            f"{backup_location.ssh_user}@{backup_location.ssh_host}",
+            f"mkdir -p {shlex.quote(str(dest_path.parent))}",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         await proc.communicate()
 
-        # Rsync file with compression and checksum verification
-        rsync_cmd = f"rsync -az --checksum {source_path} {remote_dest}"
-
-        proc = await asyncio.create_subprocess_shell(
-            rsync_cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        # Rsync file with compression and checksum verification.
+        # Pass args as a list — no shell interpolation of source or dest.
+        proc = await asyncio.create_subprocess_exec(
+            "rsync", "-az", "--checksum",
+            str(source_path), remote_dest,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
 
         stdout, stderr = await proc.communicate()
@@ -339,13 +345,15 @@ async def verify_backups(photo_path: str) -> Dict[str, bool]:
         backup_file = backup_location.get_full_path(photo_path)
 
         if backup_location.remote:
-            # Check remote file existence via SSH
-            check_cmd = (
-                f"ssh {backup_location.ssh_user}@{backup_location.ssh_host} "
-                f"'test -f {backup_file} && echo exists'"
-            )
-            proc = await asyncio.create_subprocess_shell(
-                check_cmd,
+            # Check remote file existence via SSH.
+            # Use exec (no shell) locally; quote the remote path so the remote
+            # shell cannot be injected.
+            proc = await asyncio.create_subprocess_exec(
+                "ssh",
+                "-o", "StrictHostKeyChecking=accept-new",
+                "-o", "BatchMode=yes",
+                f"{backup_location.ssh_user}@{backup_location.ssh_host}",
+                f"test -f {shlex.quote(str(backup_file))} && echo exists",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
