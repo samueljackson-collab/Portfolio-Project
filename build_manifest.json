@@ -1,0 +1,569 @@
+{
+  "projects": [
+    {
+      "name": "AWS Infra Automation (CloudFormation)",
+      "roles": ["Systems Dev Eng", "Solutions Architect", "Cloud Architect"],
+      "priority": "High",
+      "components": [
+        {
+          "type": "Infrastructure Code (CloudFormation)",
+          "status": "Complete",
+          "path": "projects/aws_infra_automation/cloudformation_templates/"
+        },
+        {
+          "type": "README Documentation",
+          "status": "Incomplete",
+          "path": "projects/aws_infra_automation/README.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Architecture Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Runbook (Stack Operations)",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "IAM Security Hardening",
+      "roles": ["Systems Dev Eng", "Solutions Architect", "Cloud Architect"],
+      "priority": "High",
+      "components": [
+        {
+          "type": "Security Scripts/Policies",
+          "status": "Complete",
+          "path": "projects/iam_security_hardening/policies/"
+        },
+        {
+          "type": "Security Report",
+          "status": "Incomplete",
+          "path": "projects/iam_security_hardening/SecurityReport.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Architecture Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Audit Runbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        },
+        {
+          "type": "Summary Presentation",
+          "status": "Missing",
+          "ai_instructions": "Final Presentation Generation"
+        }
+      ]
+    },
+    {
+      "name": "Hybrid Network Connectivity Lab",
+      "roles": ["Systems Dev Eng", "Solutions Architect", "Cloud Architect"],
+      "priority": "High",
+      "components": [
+        {
+          "type": "Network Configurations",
+          "status": "Complete",
+          "path": "projects/hybrid_network_lab/configs/"
+        },
+        {
+          "type": "Lab Guide Documentation",
+          "status": "Incomplete",
+          "path": "projects/hybrid_network_lab/Guide.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Network Topology Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Connectivity Test Playbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Operational Monitoring & Automation",
+      "roles": ["Systems Dev Eng", "Solutions Architect", "Cloud Architect"],
+      "priority": "High",
+      "components": [
+        {
+          "type": "Monitoring Config (Prometheus/Grafana)",
+          "status": "Complete",
+          "path": "projects/ops_monitoring_automation/monitoring_configs/"
+        },
+        {
+          "type": "Automation Scripts",
+          "status": "Complete",
+          "path": "projects/ops_monitoring_automation/automation_scripts/"
+        },
+        {
+          "type": "Strategy Document",
+          "status": "Incomplete",
+          "path": "projects/ops_monitoring_automation/MonitoringStrategy.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Monitoring Architecture Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Incident Response Runbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Mobile App Manual Testing",
+      "roles": ["QA Tester"],
+      "priority": "Low",
+      "components": [
+        {
+          "type": "Test Cases Document",
+          "status": "Complete",
+          "path": "projects/mobile_app_testing/TestCases.xlsx"
+        },
+        {
+          "type": "Test Results Summary",
+          "status": "Missing",
+          "ai_instructions": "Testing Playbook/QA Plan Generation"
+        },
+        {
+          "type": "README Documentation",
+          "status": "Incomplete",
+          "path": "projects/mobile_app_testing/README.md",
+          "ai_instructions": "Project Documentation Generation"
+        }
+      ]
+    },
+    {
+      "name": "Web App Automated Testing",
+      "roles": ["QA Tester"],
+      "priority": "Low",
+      "components": [
+        {
+          "type": "Automated Test Scripts",
+          "status": "Complete",
+          "path": "projects/web_app_autotest/scripts/"
+        },
+        {
+          "type": "Framework README",
+          "status": "Incomplete",
+          "path": "projects/web_app_autotest/README.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Test Architecture Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        }
+      ]
+    },
+    {
+      "name": "International Roaming Test Simulation",
+      "roles": ["QA Tester"],
+      "priority": "Low",
+      "components": [
+        {
+          "type": "Roaming Simulation Plan",
+          "status": "Complete",
+          "path": "projects/roaming_test_simulation/Plan.md"
+        },
+        {
+          "type": "Environment Setup Guide",
+          "status": "Incomplete",
+          "path": "projects/roaming_test_simulation/SetupGuide.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Troubleshooting Playbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Backend API Testing",
+      "roles": ["QA Tester"],
+      "priority": "Low",
+      "components": [
+        {
+          "type": "API Test Collection",
+          "status": "Complete",
+          "path": "projects/backend_api_testing/PostmanCollection.json"
+        },
+        {
+          "type": "Coverage Report",
+          "status": "Incomplete",
+          "path": "projects/backend_api_testing/TestReport.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Performance Test Summary",
+          "status": "Missing",
+          "ai_instructions": "Testing Playbook/QA Plan Generation"
+        }
+      ]
+    },
+    {
+      "name": "Cloud-Native POC Deployment",
+      "roles": ["Systems Dev Eng", "Solutions Architect", "Cloud Architect"],
+      "priority": "High",
+      "components": [
+        {
+          "type": "POC Application Code",
+          "status": "Complete",
+          "path": "projects/cloud_native_poc/app_code/"
+        },
+        {
+          "type": "Deployment Scripts/Configs",
+          "status": "Complete",
+          "path": "projects/cloud_native_poc/deployment_scripts/"
+        },
+        {
+          "type": "POC Report",
+          "status": "Incomplete",
+          "path": "projects/cloud_native_poc/POC_Report.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Cloud Architecture Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Summary Presentation",
+          "status": "Missing",
+          "ai_instructions": "Final Presentation Generation"
+        }
+      ]
+    },
+    {
+      "name": "Scalable Multi-Region Architecture",
+      "roles": ["Systems Dev Eng", "Solutions Architect", "Cloud Architect"],
+      "priority": "High",
+      "components": [
+        {
+          "type": "Design Document",
+          "status": "Complete",
+          "path": "projects/multi_region_architecture/Design.md"
+        },
+        {
+          "type": "Deployment Guide",
+          "status": "Incomplete",
+          "path": "projects/multi_region_architecture/DeploymentGuide.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Multi-Region Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Failover Runbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "API Gateway & Serverless Integration",
+      "roles": ["Systems Dev Eng", "Solutions Architect", "Cloud Architect"],
+      "priority": "High",
+      "components": [
+        {
+          "type": "Serverless Code (Lambdas)",
+          "status": "Complete",
+          "path": "projects/serverless_integration/lambda_code/"
+        },
+        {
+          "type": "API Gateway Config",
+          "status": "Complete",
+          "path": "projects/serverless_integration/api_gateway_config/"
+        },
+        {
+          "type": "Integration Doc",
+          "status": "Incomplete",
+          "path": "projects/serverless_integration/Integration.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Architecture Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Ops Troubleshooting Playbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Data Pipeline Architecture",
+      "roles": ["Systems Dev Eng", "Solutions Architect", "Cloud Architect"],
+      "priority": "High",
+      "components": [
+        {
+          "type": "Pipeline Code/Config",
+          "status": "Complete",
+          "path": "projects/data_pipeline/code/"
+        },
+        {
+          "type": "Design Write-up",
+          "status": "Incomplete",
+          "path": "projects/data_pipeline/Design.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Pipeline Flow Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Recovery Runbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "High Availability Web App",
+      "roles": ["Solutions Architect", "Cloud Architect"],
+      "priority": "Medium",
+      "components": [
+        {
+          "type": "Architecture Design Doc",
+          "status": "Complete",
+          "path": "projects/ha_web_app/Design.md"
+        },
+        {
+          "type": "Deployment Instructions",
+          "status": "Incomplete",
+          "path": "projects/ha_web_app/Deployment.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "HA Architecture Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "HA Test Plan",
+          "status": "Missing",
+          "ai_instructions": "Testing Playbook/QA Plan Generation"
+        },
+        {
+          "type": "Maintenance Runbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Disaster Recovery Design",
+      "roles": ["Solutions Architect", "Cloud Architect"],
+      "priority": "Medium",
+      "components": [
+        {
+          "type": "DR Strategy Document",
+          "status": "Complete",
+          "path": "projects/disaster_recovery/Strategy.md"
+        },
+        {
+          "type": "DR Procedure Playbook",
+          "status": "Incomplete",
+          "path": "projects/disaster_recovery/DR_Playbook.md",
+          "ai_instructions": "Runbook Generation"
+        },
+        {
+          "type": "DR Architecture Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Executive Presentation",
+          "status": "Missing",
+          "ai_instructions": "Final Presentation Generation"
+        }
+      ]
+    },
+    {
+      "name": "Cloud Cost Optimization Lab",
+      "roles": ["Solutions Architect", "Cloud Architect"],
+      "priority": "Medium",
+      "components": [
+        {
+          "type": "Cost Analysis Scripts",
+          "status": "Complete",
+          "path": "projects/cost_optimization/scripts/"
+        },
+        {
+          "type": "Optimization Report",
+          "status": "Incomplete",
+          "path": "projects/cost_optimization/Report.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Cost Summary Slides",
+          "status": "Missing",
+          "ai_instructions": "Final Presentation Generation"
+        },
+        {
+          "type": "Cost Monitoring Runbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Zero-Trust Cloud Architecture",
+      "roles": ["Solutions Architect", "Cloud Architect"],
+      "priority": "Medium",
+      "components": [
+        {
+          "type": "Zero-Trust Model Doc",
+          "status": "Complete",
+          "path": "projects/zero_trust/Model.md"
+        },
+        {
+          "type": "Implementation Roadmap",
+          "status": "Incomplete",
+          "path": "projects/zero_trust/Roadmap.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Zero-Trust Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Policy Guidelines Playbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Terraform Multi-Cloud Deployment",
+      "roles": ["Cloud Engineer"],
+      "priority": "Low",
+      "components": [
+        {
+          "type": "Terraform Scripts",
+          "status": "Complete",
+          "path": "projects/multi_cloud_terraform/scripts/"
+        },
+        {
+          "type": "Multi-Cloud Notes",
+          "status": "Incomplete",
+          "path": "projects/multi_cloud_terraform/Notes.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Multi-Cloud Arch Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Terraform Troubleshooting Guide",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "CI/CD Pipeline with Kubernetes",
+      "roles": ["Cloud Engineer"],
+      "priority": "Low",
+      "components": [
+        {
+          "type": "Pipeline Config (YAML/Helm)",
+          "status": "Complete",
+          "path": "projects/cicd_k8s/pipeline.yml"
+        },
+        {
+          "type": "Pipeline Documentation",
+          "status": "Incomplete",
+          "path": "projects/cicd_k8s/README.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "CI/CD Flow Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Onboarding Playbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Cloud Security Automation",
+      "roles": ["Systems Dev Eng", "Cloud Engineer"],
+      "priority": "Medium",
+      "components": [
+        {
+          "type": "Automation Scripts",
+          "status": "Complete",
+          "path": "projects/cloud_sec_automation/scripts/"
+        },
+        {
+          "type": "Scripts README",
+          "status": "Incomplete",
+          "path": "projects/cloud_sec_automation/README.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Automation Workflow Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "Response Runbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    },
+    {
+      "name": "Observability Engineering",
+      "roles": ["Solutions Architect", "Cloud Engineer"],
+      "priority": "Medium",
+      "components": [
+        {
+          "type": "Observability Stack Configs",
+          "status": "Complete",
+          "path": "projects/observability/configs/"
+        },
+        {
+          "type": "Best Practices Guide",
+          "status": "Incomplete",
+          "path": "projects/observability/BestPractices.md",
+          "ai_instructions": "Project Documentation Generation"
+        },
+        {
+          "type": "Observability Flow Diagram",
+          "status": "Missing",
+          "ai_instructions": "Architecture Diagram Generation"
+        },
+        {
+          "type": "On-Call Playbook",
+          "status": "Missing",
+          "ai_instructions": "Runbook Generation"
+        }
+      ]
+    }
+  ]
+}
