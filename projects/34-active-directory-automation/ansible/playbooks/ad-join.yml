@@ -1,0 +1,252 @@
+---
+# ad-join.yml
+# Join Linux machines to an Active Directory domain using realmd + SSSD
+# Tested on: RHEL/CentOS 8/9, Debian 11/12, Ubuntu 20.04/22.04
+#
+# Required variables (use ansible-vault for secrets):
+#   vault_ad_user     - AD user with permission to join computers (e.g. svc-deploy)
+#   vault_ad_password - Password for the AD join account
+#
+# Usage:
+#   ansible-playbook -i inventory/lab.ini playbooks/ad-join.yml \
+#     --ask-vault-pass --limit app01.corp.contoso.local
+
+- name: Join Linux machines to Active Directory
+  hosts: linux_servers
+  become: true
+
+  vars:
+    ad_domain:        "corp.contoso.local"
+    ad_realm:         "CORP.CONTOSO.LOCAL"
+    ad_workgroup:     "CONTOSO"
+    ad_ou:            "OU=Servers,DC=corp,DC=contoso,DC=local"
+    ad_user:          "{{ vault_ad_user }}"
+    ad_password:      "{{ vault_ad_password }}"
+    sssd_cache_creds: true
+    allow_groups:
+      - "IT-Admins@corp.contoso.local"
+      - "DevOps-Team@corp.contoso.local"
+      - "Help-Desk@corp.contoso.local"
+    sudo_groups:
+      - "%IT-Admins@corp.contoso.local"
+      - "%DevOps-Team@corp.contoso.local"
+
+  pre_tasks:
+
+    - name: Verify the target host is reachable
+      ansible.builtin.ping:
+
+    - name: Set hostname to FQDN (idempotent)
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Ensure /etc/hosts has a loopback entry for the FQDN
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: "^127\\.0\\.1\\.1"
+        line: "127.0.1.1 {{ inventory_hostname }} {{ inventory_hostname_short }}"
+        state: present
+
+  tasks:
+
+    # ------------------------------------------------------------------
+    # 1. Install required packages
+    # ------------------------------------------------------------------
+
+    - name: Install AD join packages (RHEL/CentOS family)
+      ansible.builtin.dnf:
+        name:
+          - realmd
+          - sssd
+          - sssd-tools
+          - sssd-ad
+          - adcli
+          - krb5-workstation
+          - samba-common-tools
+          - oddjob
+          - oddjob-mkhomedir
+          - authselect
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install AD join packages (Debian/Ubuntu family)
+      ansible.builtin.apt:
+        name:
+          - realmd
+          - sssd
+          - sssd-tools
+          - adcli
+          - packagekit
+          - samba-common
+          - oddjob
+          - oddjob-mkhomedir
+          - krb5-user
+          - libpam-sss
+          - libnss-sss
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    # ------------------------------------------------------------------
+    # 2. Configure Kerberos client
+    # ------------------------------------------------------------------
+
+    - name: Deploy krb5.conf
+      ansible.builtin.template:
+        src: ../templates/krb5.conf.j2
+        dest: /etc/krb5.conf
+        owner: root
+        group: root
+        mode: "0644"
+      vars:
+        kdc_hosts:
+          - "dc01.corp.contoso.local"
+          - "dc02.corp.contoso.local"
+
+    # ------------------------------------------------------------------
+    # 3. Enable and start required services
+    # ------------------------------------------------------------------
+
+    - name: Enable oddjobd service
+      ansible.builtin.service:
+        name: oddjobd
+        enabled: true
+        state: started
+
+    # ------------------------------------------------------------------
+    # 4. Check current domain membership
+    # ------------------------------------------------------------------
+
+    - name: Check if already joined to domain
+      ansible.builtin.command: realm list
+      register: realm_list_output
+      changed_when: false
+      failed_when: false
+
+    - name: Set fact — is_domain_joined
+      ansible.builtin.set_fact:
+        is_domain_joined: "{{ ad_domain in realm_list_output.stdout }}"
+
+    # ------------------------------------------------------------------
+    # 5. Join the domain
+    # ------------------------------------------------------------------
+
+    - name: Discover the AD realm
+      ansible.builtin.command: realm discover {{ ad_domain }}
+      register: realm_discover
+      changed_when: false
+      when: not is_domain_joined
+
+    - name: Join domain (place computer object in correct OU)
+      ansible.builtin.expect:
+        command: >
+          realm join --user={{ ad_user }}
+          --computer-ou="{{ ad_ou }}"
+          --os-name="{{ ansible_distribution }}"
+          --os-version="{{ ansible_distribution_version }}"
+          {{ ad_domain }}
+        responses:
+          "Password for .*:": "{{ ad_password }}"
+        timeout: 60
+      register: realm_join_result
+      when: not is_domain_joined
+      no_log: true
+
+    - name: Confirm domain join succeeded
+      ansible.builtin.command: realm list
+      register: realm_confirm
+      changed_when: false
+      failed_when: ad_domain not in realm_confirm.stdout
+
+    # ------------------------------------------------------------------
+    # 6. Configure SSSD
+    # ------------------------------------------------------------------
+
+    - name: Deploy sssd.conf
+      ansible.builtin.template:
+        src: ../templates/sssd.conf.j2
+        dest: /etc/sssd/sssd.conf
+        owner: root
+        group: root
+        mode: "0600"
+      vars:
+        sssd_domain: "{{ ad_domain }}"
+        sssd_realm:  "{{ ad_realm }}"
+        sssd_ldap_uri: "ldap://dc01.corp.contoso.local ldap://dc02.corp.contoso.local"
+      notify: Restart sssd
+
+    - name: Enable SSSD service
+      ansible.builtin.service:
+        name: sssd
+        enabled: true
+        state: started
+
+    # ------------------------------------------------------------------
+    # 7. Configure PAM for home directory creation
+    # ------------------------------------------------------------------
+
+    - name: Enable mkhomedir via authselect (RHEL/CentOS)
+      ansible.builtin.command: authselect select sssd with-mkhomedir --force
+      when: ansible_os_family == "RedHat"
+      changed_when: true
+
+    - name: Enable mkhomedir via PAM (Debian/Ubuntu)
+      ansible.builtin.command: pam-auth-update --enable mkhomedir
+      when: ansible_os_family == "Debian"
+      changed_when: true
+
+    # ------------------------------------------------------------------
+    # 8. Restrict login to allowed AD groups
+    # ------------------------------------------------------------------
+
+    - name: Permit only specified AD groups to log in
+      ansible.builtin.command: >
+        realm permit --groups {{ allow_groups | join(' ') }}
+      changed_when: true
+
+    # ------------------------------------------------------------------
+    # 9. Configure sudo for AD groups
+    # ------------------------------------------------------------------
+
+    - name: Deploy sudoers file for AD groups
+      ansible.builtin.template:
+        src: ../templates/sudoers-ad.j2
+        dest: /etc/sudoers.d/ad-groups
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+      vars:
+        sudo_ad_groups: "{{ sudo_groups }}"
+
+    # ------------------------------------------------------------------
+    # 10. Validate AD authentication
+    # ------------------------------------------------------------------
+
+    - name: Verify AD user lookup works (id jsmith)
+      ansible.builtin.command: id "jsmith@corp.contoso.local"
+      register: id_check
+      changed_when: false
+      failed_when: id_check.rc != 0
+      ignore_errors: true
+
+    - name: Report AD user lookup result
+      ansible.builtin.debug:
+        msg: "AD user lookup: {{ id_check.stdout | default('FAILED - check SSSD logs') }}"
+
+  handlers:
+
+    - name: Restart sssd
+      ansible.builtin.service:
+        name: sssd
+        state: restarted
+
+  post_tasks:
+
+    - name: Display join summary
+      ansible.builtin.debug:
+        msg:
+          - "Host        : {{ inventory_hostname }}"
+          - "Domain      : {{ ad_domain }}"
+          - "Join Status : {{ 'JOINED' if ad_domain in realm_confirm.stdout else 'FAILED' }}"
+          - "OU Target   : {{ ad_ou }}"

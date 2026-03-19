@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: deployments
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: alerts
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: gitops-platform
+    app.kubernetes.io/component: api
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/samueljackson-collab/Portfolio-Project
+    targetRevision: HEAD
+    path: projects/32-gitops-platform/environments/dev
+    helm:
+      releaseName: backend
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: app.name
+          value: backend
+        - name: app.component
+          value: api
+        - name: image.repository
+          value: python
+        - name: image.tag
+          value: "3.12-slim"
+        - name: service.port
+          value: "8000"
+        - name: service.targetPort
+          value: "8000"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backend
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+  revisionHistoryLimit: 5
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

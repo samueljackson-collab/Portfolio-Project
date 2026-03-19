@@ -1,0 +1,190 @@
+$ cd terraform && terraform init
+
+Initializing the backend...
+Initializing provider plugins...
+- Finding tehcyx/kind versions matching "~> 0.2"...
+- Finding hashicorp/helm versions matching "~> 2.12"...
+- Finding hashicorp/kubernetes versions matching "~> 2.24"...
+- Installing tehcyx/kind v0.2.1...
+- Installed tehcyx/kind v0.2.1 (self-signed, key ID 123456789ABCDEF0)
+- Installing hashicorp/helm v2.12.1...
+- Installed hashicorp/helm v2.12.1 (signed by HashiCorp)
+- Installing hashicorp/kubernetes v2.24.0...
+- Installed hashicorp/kubernetes v2.24.0 (signed by HashiCorp)
+
+Terraform has been successfully initialized!
+
+$ terraform plan
+
+Terraform used the selected providers to generate the following execution plan.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # kind_cluster.gitops will be created
+  + resource "kind_cluster" "gitops" {
+      + client_certificate     = (known after apply)
+      + client_key             = (sensitive value)
+      + cluster_ca_certificate = (known after apply)
+      + endpoint               = (known after apply)
+      + id                     = (known after apply)
+      + kubeconfig             = (sensitive value)
+      + kubeconfig_path        = (known after apply)
+      + name                   = "gitops-demo"
+
+      + kind_config {
+          + api_version = "kind.x-k8s.io/v1alpha4"
+          + kind        = "Cluster"
+
+          + node {
+              + role = "control-plane"
+            }
+
+          + node {
+              + role = "worker"
+            }
+
+          + node {
+              + role = "worker"
+            }
+        }
+    }
+
+  # helm_release.argocd will be created
+  + resource "helm_release" "argocd" {
+      + atomic                     = false
+      + chart                      = "argo-cd"
+      + cleanup_on_fail            = false
+      + create_namespace           = true
+      + dependency_update          = false
+      + disable_crd_hooks          = false
+      + disable_openapi_validation = false
+      + disable_webhooks           = false
+      + force_update               = false
+      + id                         = (known after apply)
+      + lint                       = false
+      + max_history                = 0
+      + metadata                   = (known after apply)
+      + name                       = "argocd"
+      + namespace                  = "argocd"
+      + pass_credentials           = false
+      + recreate_pods              = false
+      + render_subchart_notes      = true
+      + replace                    = false
+      + repository                 = "https://argoproj.github.io/argo-helm"
+      + reset_values               = false
+      + reuse_values               = false
+      + skip_crds                  = false
+      + status                     = "deployed"
+      + timeout                    = 300
+      + verify                     = false
+      + version                    = "5.51.6"
+      + wait                       = true
+      + wait_for_jobs              = false
+
+      + set {
+          + name  = "server.service.type"
+          + value = "NodePort"
+        }
+    }
+
+  # kubernetes_namespace.environments["backend"] will be created
+  + resource "kubernetes_namespace" "environments" {
+      + id = (known after apply)
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "environment" = "dev"
+              + "managed-by"  = "terraform"
+            }
+          + name             = "backend"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+    }
+
+  # kubernetes_namespace.environments["frontend"] will be created
+  + resource "kubernetes_namespace" "environments" {
+      + id = (known after apply)
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "environment" = "dev"
+              + "managed-by"  = "terraform"
+            }
+          + name             = "frontend"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+    }
+
+  # kubernetes_namespace.environments["monitoring"] will be created
+  + resource "kubernetes_namespace" "environments" {
+      + id = (known after apply)
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "environment" = "dev"
+              + "managed-by"  = "terraform"
+            }
+          + name             = "monitoring"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+    }
+
+Plan: 5 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + argocd_admin_password_command = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+  + argocd_namespace              = "argocd"
+  + argocd_port_forward_command   = "kubectl port-forward svc/argocd-server -n argocd 8080:443"
+  + argocd_version                = "5.51.6"
+  + app_namespaces                = ["backend", "frontend", "monitoring"]
+  + cluster_endpoint              = (known after apply)
+  + cluster_name                  = "gitops-demo"
+  + kubeconfig_path               = (known after apply)
+
+$ terraform apply -auto-approve
+
+kind_cluster.gitops: Creating...
+kind_cluster.gitops: Still creating... [10s elapsed]
+kind_cluster.gitops: Still creating... [20s elapsed]
+kind_cluster.gitops: Still creating... [30s elapsed]
+kind_cluster.gitops: Still creating... [40s elapsed]
+kind_cluster.gitops: Still creating... [50s elapsed]
+kind_cluster.gitops: Still creating... [60s elapsed]
+kind_cluster.gitops: Creation complete after 68s [id=gitops-demo]
+
+kubernetes_namespace.environments["frontend"]: Creating...
+kubernetes_namespace.environments["backend"]: Creating...
+kubernetes_namespace.environments["monitoring"]: Creating...
+kubernetes_namespace.environments["frontend"]: Creation complete after 0s [id=frontend]
+kubernetes_namespace.environments["backend"]: Creation complete after 0s [id=backend]
+kubernetes_namespace.environments["monitoring"]: Creation complete after 0s [id=monitoring]
+
+helm_release.argocd: Creating...
+helm_release.argocd: Still creating... [10s elapsed]
+helm_release.argocd: Still creating... [20s elapsed]
+helm_release.argocd: Still creating... [30s elapsed]
+helm_release.argocd: Still creating... [40s elapsed]
+helm_release.argocd: Still creating... [50s elapsed]
+helm_release.argocd: Still creating... [60s elapsed]
+helm_release.argocd: Still creating... [70s elapsed]
+helm_release.argocd: Still creating... [80s elapsed]
+helm_release.argocd: Still creating... [90s elapsed]
+helm_release.argocd: Creation complete after 97s [id=argocd]
+
+Apply complete! Resources: 5 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+argocd_admin_password_command = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+argocd_namespace              = "argocd"
+argocd_port_forward_command   = "kubectl port-forward svc/argocd-server -n argocd 8080:443"
+argocd_version                = "5.51.6"
+app_namespaces                = ["backend", "frontend", "monitoring"]
+cluster_endpoint              = "https://127.0.0.1:42169"
+cluster_name                  = "gitops-demo"
+kubeconfig_path               = "/home/user/.kube/config"

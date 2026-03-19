@@ -1,0 +1,29 @@
+=== Resume Portfolio Statistics ===
+Generated: 2026-01-15 10:23:41
+Resume directory: /home/user/Portfolio-Project/professional/resume
+
+File                                       Words   Lines  Sections
+----------------------------------------------------------------------
+Cloud_Engineer_Resume.md                     847     202         8
+Cover_Letter_Template.md                     412     124         5
+Cybersecurity_Analyst_Resume.md              923     198        10
+Network_Engineer_Resume.md                   812     182         8
+QA_Engineer_Resume.md                        756     176         8
+System_Development_Engineer_Resume.md        701     146         7
+----------------------------------------------------------------------
+Total                                       4451    1028        46
+
+Top Keywords by Track:
+  Cloud Engineer     AWS, Terraform, Kubernetes, CI/CD, Infrastructure
+  Cybersecurity      SIEM, SOC, Threat Hunting, IR, Zero Trust
+  Network            BGP, OSPF, VLANs, Cisco, Network Security
+  QA Engineer        pytest, Selenium, Test Automation, CI/CD, Quality Gates
+  SDE                Python, FastAPI, Microservices, Docker, System Design
+
+=== Summary ===
+Total files analyzed : 6
+Total word count     : 4,451
+Total line count     : 1,028
+Total sections       : 46
+Average words/file   : 741
+Total size on disk   : 47.7K

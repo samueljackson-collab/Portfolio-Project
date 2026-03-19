@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: deployments
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: alerts
+  labels:
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/part-of: gitops-platform
+    app.kubernetes.io/component: web
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/samueljackson-collab/Portfolio-Project
+    targetRevision: HEAD
+    path: projects/32-gitops-platform/environments/dev
+    helm:
+      releaseName: frontend
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: app.name
+          value: frontend
+        - name: app.component
+          value: web
+        - name: image.repository
+          value: nginx
+        - name: image.tag
+          value: "1.25.3-alpine"
+        - name: service.port
+          value: "80"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+  revisionHistoryLimit: 5
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

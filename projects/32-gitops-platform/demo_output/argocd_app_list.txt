@@ -1,0 +1,63 @@
+$ argocd app list
+NAME         CLUSTER                         NAMESPACE  PROJECT  STATUS  HEALTH   SYNCPOLICY  CONDITIONS  REPO                                                          PATH                                                      TARGET
+app-of-apps  https://kubernetes.default.svc  argocd     default  Synced  Healthy  Auto-Prune  <none>      https://github.com/samueljackson-collab/Portfolio-Project      projects/32-gitops-platform/argocd/apps                   HEAD
+backend      https://kubernetes.default.svc  backend    default  Synced  Healthy  Auto-Prune  <none>      https://github.com/samueljackson-collab/Portfolio-Project      projects/32-gitops-platform/environments/dev              HEAD
+frontend     https://kubernetes.default.svc  frontend   default  Synced  Healthy  Auto-Prune  <none>      https://github.com/samueljackson-collab/Portfolio-Project      projects/32-gitops-platform/environments/dev              HEAD
+monitoring   https://kubernetes.default.svc  monitoring default  Synced  Healthy  Auto-Prune  <none>      https://github.com/samueljackson-collab/Portfolio-Project      projects/32-gitops-platform/environments/dev              HEAD
+
+$ argocd app get app-of-apps
+Name:               argocd/app-of-apps
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          argocd
+URL:                https://localhost:8080/applications/app-of-apps
+Source:
+- Repo:             https://github.com/samueljackson-collab/Portfolio-Project
+  Target:           HEAD
+  Path:             projects/32-gitops-platform/argocd/apps
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to HEAD (a3f9b12)
+Health Status:      Healthy
+
+GROUP  KIND         NAMESPACE  NAME            STATUS   HEALTH  HOOK  MESSAGE
+       Application  argocd     backend         Synced   Synced        application.argoproj.io/backend created
+       Application  argocd     frontend        Synced   Synced        application.argoproj.io/frontend created
+       Application  argocd     monitoring      Synced   Synced        application.argoproj.io/monitoring created
+
+$ argocd app get frontend
+Name:               argocd/frontend
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          frontend
+URL:                https://localhost:8080/applications/frontend
+Source:
+- Repo:             https://github.com/samueljackson-collab/Portfolio-Project
+  Target:           HEAD
+  Path:             projects/32-gitops-platform/environments/dev
+  Helm Values:      values.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to HEAD (a3f9b12)
+Health Status:      Healthy
+
+GROUP   KIND        NAMESPACE  NAME          STATUS  HEALTH   HOOK  MESSAGE
+        Namespace   frontend   frontend      Synced  Healthy        namespace/frontend created
+apps    Deployment  frontend   frontend      Synced  Healthy        deployment.apps/frontend configured
+        Service     frontend   frontend      Synced  Healthy        service/frontend created
+        ConfigMap   frontend   frontend-cfg  Synced  Healthy        configmap/frontend-cfg created
+
+$ kubectl get pods -A
+NAMESPACE    NAME                                       READY   STATUS    RESTARTS   AGE
+argocd       argocd-application-controller-0            1/1     Running   0          8m
+argocd       argocd-dex-server-5b6b9f64b8-k9t4r         1/1     Running   0          8m
+argocd       argocd-notifications-controller-7d68f-rgh  1/1     Running   0          8m
+argocd       argocd-redis-6d97f5b7b6-lxvm9              1/1     Running   0          8m
+argocd       argocd-repo-server-74b5f5698b-zq9ts        1/1     Running   0          8m
+argocd       argocd-server-59b9db7b6f-jk8xt             1/1     Running   0          8m
+backend      backend-7d4b9c8f6-hpqrs                    1/1     Running   0          3m
+frontend     frontend-5f8c9d7b4-mnbvc                   1/1     Running   0          3m
+monitoring   alertmanager-monitoring-0                  2/2     Running   0          4m
+monitoring   monitoring-grafana-6d8f5b7c9d-tkjhg        3/3     Running   0          4m
+monitoring   monitoring-kube-state-metrics-7b9d-vnxqp   1/1     Running   0          4m
+monitoring   prometheus-monitoring-0                    2/2     Running   0          4m

