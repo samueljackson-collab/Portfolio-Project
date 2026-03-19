@@ -835,6 +835,10 @@ Backup Server.
 [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets/README.md) ·  
 [Screenshots/Logs](./projects/01-sde-devops/PRJ-SDE-002/assets/screenshots/README.md)
 
+### Blockchain Oracle Service
+**Description** Simulated on-chain oracle network that aggregates weighted price feeds, performs anomaly filtering, and signs payloads before durable blockchain publication.
+**Links**: [Repo/Folder](./projects/20-blockchain-oracle/) · [Source](./projects/20-blockchain-oracle/blockchain_oracle_service.py)
+
 ---
 
 ## 🔄 Past Projects Requiring Recovery
