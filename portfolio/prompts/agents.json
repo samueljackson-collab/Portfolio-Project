@@ -1,0 +1,4 @@
+{
+  "_comment": "Agent definitions moved to prompts/.private/ai_instruction_bank.json to centralize AI-focused instructions.",
+  "$ref": "./.private/ai_instruction_bank.json#agents"
+}
