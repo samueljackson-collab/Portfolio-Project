@@ -1,0 +1,5 @@
+apiVersion: v2
+name: monitoring-stack
+description: Deploy Prometheus and Grafana components
+version: 0.1.0
+appVersion: "1.0.0"
