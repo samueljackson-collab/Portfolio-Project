@@ -1,0 +1,18 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["backend/app"]
+
+[tool.coverage.report]
+fail_under = 80
+skip_empty = true
+
+[tool.bandit]
+targets = ["backend/app"]
+exclude_dirs = ["backend/tests"]

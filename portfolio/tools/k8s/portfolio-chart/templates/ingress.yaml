@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "portfolio.fullname" . }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: {{ .Values.ingressHost | default "portfolio.local" }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "portfolio.fullname" . }}-frontend
+                port:
+                  number: {{ .Values.service.frontendPort }}
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "portfolio.fullname" . }}-backend
+                port:
+                  number: {{ .Values.service.backendPort }}
