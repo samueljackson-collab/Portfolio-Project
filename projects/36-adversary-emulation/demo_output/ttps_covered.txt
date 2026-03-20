@@ -1,0 +1,180 @@
+===========================================================================
+=== ATT&CK Techniques Covered — APT29 Emulation Plan ===
+===========================================================================
+Plan:    APT29 (Cozy Bear) Emulation Plan v1.0
+Author:  Sam Jackson
+Date:    2025-11-15
+Total:   18 unique ATT&CK techniques across 6 tactics
+===========================================================================
+
+--- INITIAL ACCESS ---
+
+  T1566.001  Spearphishing Attachment
+             Adversaries may send spearphishing emails with malicious
+             attachments to gain initial access. APT29 crafts targeted
+             emails with documents containing embedded code.
+             Test: AT-001 | Safe: Yes
+
+  T1566.002  Spearphishing Link
+             Adversaries may send spearphishing emails with malicious
+             links to gain initial access. Links typically lead to
+             credential harvesting sites or payload delivery pages.
+             Test: AT-002 | Safe: Yes
+
+  T1195.002  Compromise Software Supply Chain
+             Adversaries may manipulate software prior to delivery to
+             cause compromised software to be installed. APT29 is
+             attributed to the SolarWinds SUNBURST supply chain attack.
+             Test: AT-003 | Safe: Yes
+
+--- EXECUTION ---
+
+  T1059.004  Unix Shell
+             Adversaries may abuse Unix shell commands and scripts for
+             execution. Unix shells are often used by adversaries to
+             execute various TTPs via the command line interpreter.
+             Test: AT-004 | Safe: Yes
+
+  T1059.006  Python
+             Adversaries may abuse Python commands and scripts for
+             execution. APT29 uses Python-based tools for post-
+             exploitation activities in Linux environments.
+             Test: AT-005 | Safe: Yes
+
+  T1203      Exploitation for Client Execution
+             Adversaries may exploit software vulnerabilities in client
+             applications to execute code. APT29 has used browser and
+             document exploits to execute initial payloads.
+             Test: AT-006 | Safe: Yes
+
+  T1047      Windows Management Instrumentation
+             Adversaries may abuse WMI to achieve execution. APT29 uses
+             WMI event subscriptions for persistent execution and for
+             running commands without spawning new processes.
+             Test: AT-007 | Safe: Yes
+
+--- PERSISTENCE ---
+
+  T1053.003  Cron
+             Adversaries may abuse the cron utility to perform task
+             scheduling for initial or recurring execution. APT29 uses
+             cron jobs to maintain persistent access on Linux systems.
+             Test: AT-008 | Safe: Yes
+
+  T1546.004  Unix Shell Configuration Modification
+             Adversaries may establish persistence by modifying Unix
+             shell configuration files (e.g., .bashrc, .profile) to
+             execute malicious code at user login.
+             Test: AT-009 | Safe: Yes
+
+  T1505.003  Web Shell
+             Adversaries may backdoor web servers with web shells to
+             establish persistent access to systems. APT29 drops web
+             shells on compromised servers for persistent C2 access.
+             Test: AT-010 | Safe: Yes
+
+  T1098      Account Manipulation
+             Adversaries may manipulate accounts to maintain or improve
+             access. APT29 modifies account permissions and adds
+             accounts to privileged groups for persistence.
+             Test: AT-011 | Safe: Yes
+
+--- PRIVILEGE ESCALATION ---
+
+  T1548.003  Sudo and Sudo Caching
+             Adversaries may perform sudo caching and/or use sudoers
+             configuration to elevate privileges. APT29 exploits
+             misconfigured sudo rules on Linux systems.
+             Test: AT-012 | Safe: Yes
+
+  T1055      Process Injection
+             Adversaries may inject code into processes to evade
+             process-based defenses and elevate privileges. APT29
+             injects into trusted system processes to blend in.
+             Test: AT-013 | Safe: Yes
+
+  T1078      Valid Accounts
+             Adversaries may obtain and abuse legitimate credentials
+             to gain access to systems. APT29 harvests credentials
+             extensively for lateral movement.
+             Test: AT-014 | Safe: Yes
+
+  T1134      Access Token Manipulation
+             Adversaries may modify access tokens to operate under
+             a different user or system security context. APT29 uses
+             token manipulation to perform actions as SYSTEM.
+             Test: AT-015 | Safe: Yes
+
+--- DEFENSE EVASION ---
+
+  T1070.004  File Deletion
+             Adversaries may delete files left behind by actions to
+             minimize footprint. APT29 carefully cleans up artifacts
+             to avoid forensic investigation.
+             Test: AT-016 | Safe: Yes
+
+  T1036.005  Match Legitimate Name or Location
+             Adversaries may match or approximate the name or location
+             of legitimate files or resources. APT29 names malicious
+             files after legitimate Windows processes.
+             Test: AT-017 | Safe: Yes
+
+  T1027      Obfuscated Files or Information
+             Adversaries may attempt to make an executable or file
+             difficult to discover or analyze. APT29 heavily encodes
+             payloads using base64 and XOR encryption.
+             Test: AT-018 | Safe: Yes
+
+--- DISCOVERY ---
+
+  T1082      System Information Discovery
+             Adversaries may attempt to get detailed information about
+             the OS and hardware. APT29 profiles target systems to
+             inform subsequent attack phases.
+             Test: AT-021 | Safe: Yes
+
+  T1033      System Owner/User Discovery
+             Adversaries may attempt to identify the primary user,
+             currently logged in user, or users that commonly use a
+             system. APT29 enumerates user context for targeting.
+             Test: AT-022 | Safe: Yes
+
+  T1016      System Network Configuration Discovery
+             Adversaries may look for details about the network
+             configuration and settings of systems. APT29 enumerates
+             network configuration to identify lateral movement targets.
+             Test: AT-023 | Safe: Yes
+
+  T1083      File and Directory Discovery
+             Adversaries may enumerate files and directories to find
+             valuable data. APT29 searches for configuration files,
+             credentials, and sensitive documents.
+             Test: AT-024 | Safe: Yes
+
+===========================================================================
+=== Coverage by Tactic ===
+===========================================================================
+
+  Initial Access        3 tests    3 techniques
+  Execution             4 tests    4 techniques
+  Persistence           4 tests    4 techniques
+  Privilege Escalation  4 tests    4 techniques
+  Defense Evasion       5 tests    5 techniques
+  Discovery             4 tests    4 techniques
+  -------------------------------------------------
+  TOTAL                24 tests   24 techniques (18 unique IDs)
+
+===========================================================================
+=== MITRE ATT&CK Navigator Coverage (ASCII) ===
+===========================================================================
+
+  Tactic           | Covered Techniques
+  -----------------+--------------------------------------------------
+  Initial Access   | T1566.001  T1566.002  T1195.002
+  Execution        | T1059.004  T1059.006  T1203     T1047
+  Persistence      | T1053.003  T1546.004  T1505.003 T1098
+  Priv Escalation  | T1548.003  T1055      T1078     T1134
+  Defense Evasion  | T1070.004  T1036.005  T1027     T1562.001 T1078.003
+  Discovery        | T1082      T1033      T1016     T1083
+
+===========================================================================

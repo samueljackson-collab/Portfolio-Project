@@ -1,0 +1,74 @@
+---
+# ansible/site.yml — Main playbook for Multi-OS Lab
+# Runs common tasks on all VMs, then OS-specific roles based on os_type
+- name: Apply common baseline to all lab VMs
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: common
+
+- name: Apply Ubuntu-specific hardening
+  hosts: ubuntu
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: ubuntu-baseline
+
+  vars:
+    ufw_allowed_ports:
+      - 22
+      - 80
+      - 443
+    fail2ban_maxretry: 3
+    fail2ban_bantime: 3600
+    ssh_port: 22
+
+- name: Apply Kali security tool configuration
+  hosts: kali
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: kali-setup
+
+  vars:
+    msf_workspace: "portfolio-lab"
+    install_wordlists: true
+    configure_proxychains: true
+
+- name: Apply Debian minimal server hardening
+  hosts: debian
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Ensure nftables is running
+      ansible.builtin.systemd:
+        name: nftables
+        state: started
+        enabled: true
+
+    - name: Ensure chrony is running
+      ansible.builtin.systemd:
+        name: chrony
+        state: started
+        enabled: true
+
+    - name: Ensure fail2ban is running on Debian
+      ansible.builtin.systemd:
+        name: fail2ban
+        state: started
+        enabled: true
+
+    - name: Verify unattended-upgrades is active
+      ansible.builtin.command: unattended-upgrades --dry-run
+      register: uu_check
+      changed_when: false
+      failed_when: false
+
+    - name: Report unattended-upgrades status
+      ansible.builtin.debug:
+        msg: "unattended-upgrades dry-run: {{ uu_check.rc }}"

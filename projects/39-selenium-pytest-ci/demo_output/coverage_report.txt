@@ -1,0 +1,26 @@
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.11.14-final-0 _______________
+
+Name              Stmts   Miss  Cover   Missing
+-----------------------------------------------
+app/__init__.py       0      0   100%
+app/app.py           38      1    97%   78
+-----------------------------------------------
+TOTAL                38      1    97%
+
+Coverage Summary
+================
+- app/app.py: 97% coverage (38 statements, 1 missed)
+  - Line 78: `app.run(debug=False, port=5002)` — only executed when run directly,
+    not under test client (expected; __main__ guard).
+
+- Overall project coverage: 97%
+
+Test breakdown by class:
+  TestLoginFunctionality  : 5 tests  — login form rendering, valid/invalid credentials
+  TestSessionManagement   : 3 tests  — auth guards on /dashboard, /profile, /logout
+  TestNavigation          : 2 tests  — root redirect logic (unauthenticated/authenticated)
+  test_navigation module  : 7 tests  — form fields, username display, nav links, multi-user
+
+Total: 17 tests | 17 passed | 0 failed | 0 errors
+Run time: 0.26s

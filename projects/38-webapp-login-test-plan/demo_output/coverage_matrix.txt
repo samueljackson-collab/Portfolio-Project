@@ -1,0 +1,80 @@
+===========================================================================
+=== Traceability Matrix — Login Application Test Plan ===
+===========================================================================
+Plan:    TP-LOGIN-001 v1.0
+Author:  Sam Jackson
+Date:    2026-01-15
+Total Requirements: 27 | Total Coverage: 100% on all P1 items
+===========================================================================
+
+Requirement ID  | Requirement Description                                   | Test Cases          | Coverage | Status
+----------------|-----------------------------------------------------------|---------------------|----------|-------
+REQ-F001        | Authenticate valid users with correct credentials         | TC-F001             | 100%     | Pass
+REQ-F002        | Reject invalid credentials with 401 response              | TC-F002 TC-F006-007 | 100%     | Pass
+REQ-F003        | Lock account after 5 failed attempts (429)                | TC-F003 TC-S003     | 100%     | Pass
+REQ-F004        | Create session on successful login                        | TC-F004             | 100%     | Pass
+REQ-F005        | Clear session on logout                                   | TC-F005 TC-F015     | 100%     | Pass
+REQ-F006        | Handle missing/malformed request body gracefully          | TC-F008 TC-F013     | 100%     | Pass
+REQ-F007        | Return user role in profile response                      | TC-F009 TC-F010     | 100%     | Pass
+REQ-F008        | Health endpoint returns 200 without authentication        | TC-F011             | 100%     | Pass
+REQ-F009        | Accept and return application/json content type           | TC-A001 TC-F013     | 100%     | Pass
+REQ-S001        | Not vulnerable to SQL injection via login fields          | TC-S001             | 100%     | Pass
+REQ-S002        | Protect against XSS via login fields                      | TC-S002             | 100%     | Pass
+REQ-S003        | Enforce rate limiting per IP address                      | TC-S003 TC-S005     | 100%     | Pass
+REQ-S004        | Not vulnerable to session fixation attacks                | TC-S004             | 100%     | Pass
+REQ-S005        | Rate limiting lockout triggers precisely at threshold     | TC-S005             | 100%     | Pass
+REQ-S006        | Not reveal whether a username exists (user enumeration)   | TC-S006             | 100%     | Pass
+REQ-S007        | Never return password or hash in any response             | TC-S007             | 100%     | Pass
+REQ-S008        | Error messages shall not expose internal details          | TC-S008             | 100%     | Pass
+REQ-S009        | Login endpoint rejects non-POST HTTP methods with 405    | TC-S009             | 100%     | Pass
+REQ-S010        | Session cookie has appropriate security attributes        | TC-S010             | Partial  | Pass
+REQ-S011        | No permissive CORS headers on protected endpoints         | TC-S011             | 100%     | Pass
+REQ-S012        | Profile endpoint rejects unauthenticated/tampered reqs   | TC-S012 TC-F004     | 100%     | Pass
+REQ-P001        | Login endpoint P95 response < 200ms under normal load    | TC-P001 TC-P002     | 100%     | Pass
+REQ-P002        | Health endpoint average response < 10ms                  | TC-P003             | 100%     | Pass
+REQ-P003        | Profile endpoint average response < 50ms under load      | TC-P005             | 100%     | Pass
+REQ-A001        | API responses use application/json Content-Type          | TC-A001             | 100%     | Pass
+REQ-A002        | Error messages human-readable without technical jargon   | TC-A002             | 100%     | Pass
+REQ-A003        | Response structure consistent across all endpoints       | TC-A003             | 100%     | Pass
+
+===========================================================================
+=== Coverage Summary by Category ===
+===========================================================================
+
+  Category        Requirements  Pass  Fail  Partial
+  --------------- ------------- ----- ----- -------
+  Functional      9             9     0     0
+  Security        12            12    0     0
+  Performance     3             3     0     0
+  Accessibility   3             3     0     0
+  --------------- ------------- ----- ----- -------
+  TOTAL           27            27    0     0
+
+  Overall Coverage: 100% (P1 Critical: 100%)
+
+===========================================================================
+=== Test Case Count by Category ===
+===========================================================================
+
+  Category        Test Cases
+  --------------- ----------
+  Functional      15 (TC-F001 — TC-F015)
+  Security        12 (TC-S001 — TC-S012)
+  Performance      5 (TC-P001 — TC-P005)
+  Accessibility    3 (TC-A001 — TC-A003)
+  --------------- ----------
+  TOTAL           35
+
+===========================================================================
+=== Risk Register Summary ===
+===========================================================================
+
+  Risk ID  Description                              Probability  Impact   Status
+  -------- ---------------------------------------- ----------- -------- -------
+  R001     In-memory session state lost on restart  High         Medium   Accepted (demo)
+  R002     SHA-256 password hashing (not bcrypt)    High         High     Accepted (demo)
+  R003     Rate limiting by IP only                 Medium       Medium   Documented
+  R004     No HTTPS enforcement                     High         High     Accepted (demo)
+  R005     Secret key generated randomly at start   Medium       Medium   Accepted (demo)
+
+===========================================================================

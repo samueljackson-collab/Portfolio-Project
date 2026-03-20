@@ -1,0 +1,262 @@
+==============================================================================
+=== Active Directory Infrastructure Report ===
+==============================================================================
+Domain                : corp.contoso.local
+Forest                : corp.contoso.local
+Generated             : 2026-01-15 09:15:22
+Forest Functional Level: Windows Server 2019
+Domain Functional Level: Windows Server 2019
+
+
+──────────────────────────────────────────────────────────────────────────────
+=== FSMO Role Holders ===
+──────────────────────────────────────────────────────────────────────────────
+  Schema Master        : DC01.corp.contoso.local
+  Domain Naming Master : DC01.corp.contoso.local
+  PDC Emulator         : DC01.corp.contoso.local
+  RID Master           : DC01.corp.contoso.local
+  Infrastructure Master: DC02.corp.contoso.local
+
+──────────────────────────────────────────────────────────────────────────────
+=== Domain Controllers ===
+──────────────────────────────────────────────────────────────────────────────
+  Hostname   : DC01.corp.contoso.local
+  IP Address : 192.168.10.10
+  Site       : HQ-Site
+  OS         : Windows Server 2022 Datacenter
+  FSMO Roles : PDC Emulator, RID Master, Schema Master, Naming Master
+  Global Cat.: YES
+  Uptime     : 147 days
+  Repl Status: OK
+
+  Hostname   : DC02.corp.contoso.local
+  IP Address : 192.168.10.11
+  Site       : HQ-Site
+  OS         : Windows Server 2022 Datacenter
+  FSMO Roles : Infrastructure Master
+  Global Cat.: YES
+  Uptime     : 142 days
+  Repl Status: OK
+
+
+──────────────────────────────────────────────────────────────────────────────
+=== OU Structure ===
+──────────────────────────────────────────────────────────────────────────────
+DC=corp,DC=contoso,DC=local
+├── OU=IT (12 users, 3 groups)
+│   ├── OU=Admins (4 users)
+│   ├── OU=Help-Desk (8 users)
+│   └── OU=DevOps (4 users)
+├── OU=HR (23 users, 1 groups)
+├── OU=Finance (18 users, 2 groups)
+├── OU=Operations (31 users, 4 groups)
+├── OU=ServiceAccounts (15 users)
+├── OU=Servers (22 computer objects)
+│   ├── OU=AppServers (6 computer objects)
+│   ├── OU=WebServers (4 computer objects)
+│   ├── OU=DBServers (3 computer objects)
+│   └── OU=FileServers (2 computer objects)
+├── OU=Workstations (87 computer objects)
+└── OU=Security (6 groups)
+
+  Total Enabled Users  : 24
+  Total Disabled Users : 2
+  Total User Objects   : 26
+  Total Computers      : 109
+  Total Groups         : 10
+
+──────────────────────────────────────────────────────────────────────────────
+=== User Accounts ===
+──────────────────────────────────────────────────────────────────────────────
+  Username           Display Name           Department   Title                                Enabled  Pwd Age  Last Logon
+  ────────────────── ────────────────────── ──────────── ──────────────────────────────────── ──────── ───────  ──────────
+  jsmith             John Smith             IT           Senior Systems Administrator         Yes         22d  2026-01-14
+  mmartinez          Maria Martinez         IT           Network Administrator                Yes          8d  2026-01-15
+  rchen              Robert Chen            IT           DevOps Engineer                      Yes         14d  2026-01-15
+  apatel             Anita Patel            IT           DevOps Engineer                      Yes         31d  2026-01-13
+  twilson            Tyler Wilson           IT           Help Desk Technician II              Yes         17d  2026-01-15
+  lnguyen            Linh Nguyen            IT           Help Desk Technician I               Yes         45d  2026-01-14
+  adavis             Amanda Davis           HR           HR Manager                           Yes         12d  2026-01-15
+  kjohnson           Karen Johnson          HR           HR Specialist                        Yes         55d  2026-01-14
+  bthompson          Brian Thompson         HR           Recruiter                            Yes         68d  2026-01-13
+  slee               Sophia Lee             HR           HR Coordinator                       Yes         77d  2026-01-10
+  mwhite             Michael White          Finance      Finance Director                     Yes         19d  2026-01-15
+  jrobinson          Jennifer Robinson      Finance      Senior Accountant                    Yes         38d  2026-01-14
+  dgarcia            David Garcia           Finance      Financial Analyst                    Yes         52d  2026-01-12
+  cwalker            Christine Walker       Finance      Accounts Payable Specialist          Yes          6d  2026-01-15
+  phall              Patrick Hall           Operations   Operations Manager                   Yes         24d  2026-01-15
+  nyoung             Nancy Young            Operations   Operations Analyst                   Yes         33d  2026-01-14
+  skorea             Samuel Korea           Operations   Logistics Coordinator                Yes         41d  2026-01-13
+  emorris            Elena Morris           Operations   Supply Chain Analyst                 Yes         60d  2026-01-11
+  fanderson          Frank Anderson         Operations   Warehouse Supervisor                 Yes          9d  2026-01-15
+  vtaylor            Victoria Taylor        Operations   Operations Coordinator               Yes         82d  2026-01-08
+  svc-backup         SVC Backup Agent       IT           Service Account                      Yes        210d  2026-01-15
+  svc-monitoring     SVC Monitoring Agent   IT           Service Account                      Yes        210d  2026-01-15
+  svc-deploy         SVC Deployment Agent   IT           Service Account                      Yes        210d  2026-01-15
+  tblake             Thomas Blake           Operations   Former Analyst                       No         125d  2025-09-14
+  lprice             Laura Price            HR           Former Recruiter                     No         107d  2025-10-02
+  ghill              Gregory Hill           Finance      Former Accountant                    Yes        177d  2025-07-22
+
+──────────────────────────────────────────────────────────────────────────────
+=== Security Groups ===
+──────────────────────────────────────────────────────────────────────────────
+  Group Name                   Scope        OU                   Members 
+  ──────────────────────────── ──────────── ──────────────────── ────────
+  IT-Admins                    Global       OU=IT                2       
+  Help-Desk                    Global       OU=IT                2       
+  DevOps-Team                  Global       OU=IT                2       
+  HR-Users                     Global       OU=HR                4       
+  Finance-Users                Global       OU=Finance           4       
+  Operations-Users             Global       OU=Operations        6       
+  VPN-Users                    Universal    OU=Security          6       
+  Remote-Desktop-Users         Universal    OU=Security          4       
+  Domain Admins                Global       CN=Users             1       
+  Protected Users              Global       CN=Users             2       
+
+  Group Membership Detail:
+    IT-Admins:
+      - jsmith
+      - mmartinez
+    Help-Desk:
+      - twilson
+      - lnguyen
+    DevOps-Team:
+      - rchen
+      - apatel
+    HR-Users:
+      - adavis
+      - kjohnson
+      - bthompson
+      - slee
+    Finance-Users:
+      - mwhite
+      - jrobinson
+      - dgarcia
+      - cwalker
+    Operations-Users:
+      - phall
+      - nyoung
+      - skorea
+      - emorris
+      - fanderson
+      - vtaylor
+    VPN-Users:
+      - jsmith
+      - mmartinez
+      - rchen
+      - apatel
+      - mwhite
+      - adavis
+    Remote-Desktop-Users:
+      - jsmith
+      - mmartinez
+      - rchen
+      - apatel
+    Domain Admins:
+      - Administrator
+    Protected Users:
+      - jsmith
+      - mmartinez
+
+──────────────────────────────────────────────────────────────────────────────
+=== Group Policy Objects ===
+──────────────────────────────────────────────────────────────────────────────
+  GPO Name                                 Linked To                              Status     Enforced
+  ──────────────────────────────────────── ────────────────────────────────────── ────────── ────────
+  Default Domain Policy                    DC=corp,DC=contoso,DC=local            Enabled    Yes
+  Baseline-Security-Policy                 DC=corp,DC=contoso,DC=local            Enabled    Yes
+  Domain-Audit-Policy                      DC=corp,DC=contoso,DC=local            Enabled    Yes
+  Workstation-Standard-Policy              OU=Workstations                        Enabled    No
+  Server-Hardening-Policy                  OU=Servers                             Enabled    No
+  IT-Admin-Rights                          OU=Admins,OU=IT                        Enabled    No
+  Help-Desk-Rights                         OU=Help-Desk,OU=IT                     Enabled    No
+  Finance-AppLocker                        OU=Finance                             Enabled    No
+
+──────────────────────────────────────────────────────────────────────────────
+=== Password Policies ===
+──────────────────────────────────────────────────────────────────────────────
+  Default Domain Password Policy:
+    Min Length             : 14 characters
+    Max Password Age       : 90 days
+    Password History       : 24 passwords remembered
+    Complexity Required    : Yes
+    Lockout Threshold      : 5 attempts
+    Lockout Duration       : 30 minutes
+
+  Fine-Grained Password Policies:
+    IT-Admins-PSO (Precedence applies to: IT-Admins):
+      Min Length     : 16 characters
+      Max Password Age: 60 days
+      Lockout Threshold: 3 attempts
+    ServiceAccounts-PSO (Precedence applies to: svc-*):
+      Min Length     : 24 characters
+      Max Password Age: 365 days
+      Lockout Threshold: 0 attempts
+
+──────────────────────────────────────────────────────────────────────────────
+=== DNS Zones ===
+──────────────────────────────────────────────────────────────────────────────
+  Zone Name                                Type            Records  Dynamic Update
+  ──────────────────────────────────────── ────────────── ────────  ──────────────
+  corp.contoso.local                       Primary              48  Yes
+  contoso.local                            Primary              12  Yes
+  10.168.192.in-addr.arpa                  Primary              12  Yes
+  20.168.192.in-addr.arpa                  Primary              22  Yes
+  30.168.192.in-addr.arpa                  Primary              87  Yes
+  .                                        Root Hints           13  No
+
+──────────────────────────────────────────────────────────────────────────────
+=== Replication Status ===
+──────────────────────────────────────────────────────────────────────────────
+  Source   Dest     Partition                                          Failures  Status
+  ──────── ──────── ────────────────────────────────────────────────── ────────  ────────
+  DC01     DC02     DC=corp,DC=contoso,DC=local                               0  OK
+  DC02     DC01     DC=corp,DC=contoso,DC=local                               0  OK
+  DC01     DC02     CN=Schema,CN=Configuration,DC=corp,DC=contoso,DC..        0  OK
+  DC02     DC01     CN=Schema,CN=Configuration,DC=corp,DC=contoso,DC..        0  OK
+
+──────────────────────────────────────────────────────────────────────────────
+=== Stale Account Analysis ===
+──────────────────────────────────────────────────────────────────────────────
+  Accounts not logged in for 90+ days (enabled): 1
+    - ghill              Last logon: 2025-07-22  OU: OU=Finance
+
+  Disabled accounts: 2
+    - tblake             Last logon: 2025-09-14
+    - lprice             Last logon: 2025-10-02
+
+  Locked accounts: 0
+    None
+
+  Accounts with password older than 60 days: 7
+    - bthompson          Password age: 68 days
+    - slee               Password age: 77 days
+    - vtaylor            Password age: 82 days
+    - svc-backup         Password age: 210 days
+    - svc-monitoring     Password age: 210 days
+    - svc-deploy         Password age: 210 days
+    - ghill              Password age: 177 days
+
+──────────────────────────────────────────────────────────────────────────────
+=== Security Summary & Recommendations ===
+──────────────────────────────────────────────────────────────────────────────
+  [PASS] AD Recycle Bin is enabled
+  [PASS] Forest and domain functional level: Windows Server 2019
+  [PASS] Fine-grained password policies configured for privileged accounts
+  [PASS] LDAP signing enforced (LDAPServerIntegrity = 2)
+  [PASS] SMBv1 disabled on all domain controllers
+  [PASS] NTLMv1 disabled (LmCompatibilityLevel = 5)
+  [PASS] Kerberos AES encryption enforced for krbtgt
+  [PASS] AD replication healthy — 0 failures on all partitions
+  [PASS] Advanced audit policy configured for account logon and management
+  [PASS] Protected Users group in use for privileged accounts
+
+  [WARN] 3 accounts inactive for 90+ days — review and disable if no longer needed
+  [WARN] 2 disabled accounts still have mailboxes — review with HR
+  [WARN] svc-backup password age: 210 days — consider managed service account (gMSA)
+  [INFO] Tier-0 admin workstation (PAW) not yet provisioned
+  [INFO] Consider enabling Privileged Access Management (PAM) feature
+
+==============================================================================
+Report generated by generate_ad_report.py  |  2026-01-15 09:15:22
+==============================================================================

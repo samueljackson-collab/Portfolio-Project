@@ -1,0 +1,4 @@
+document_id,title,type,template,generated_at,word_count,file_size_bytes,status
+DOC-2026-001,Q4 2025 Infrastructure Health Report,report,report-template,2026-03-19T21:21:14,355,2185,complete
+DOC-2026-002,Database Migration Runbook,runbook,runbook-template,2026-03-19T21:21:14,484,3897,complete
+DOC-2026-003,INC-2025-1115 Post Incident Report,incident_report,incident-report-template,2026-03-19T21:21:14,845,5230,complete

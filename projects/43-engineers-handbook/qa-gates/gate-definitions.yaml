@@ -1,0 +1,139 @@
+# QA Gate Definitions — Machine-Readable
+# Consumed by qa-gates/gate-checker.py
+# Version: 2.1 | Updated: 2026-01-10
+
+gates:
+  - id: GATE-001
+    name: "Python Format Check"
+    category: code_quality
+    tool: "black"
+    command: "black --check ."
+    applies_to: ["python"]
+    severity: block
+    max_runtime_seconds: 30
+    description: "All Python code must be formatted with black (line-length=88)"
+
+  - id: GATE-002
+    name: "Python Lint"
+    category: code_quality
+    tool: "ruff"
+    command: "ruff check ."
+    applies_to: ["python"]
+    severity: block
+    max_runtime_seconds: 60
+    description: "No ruff lint violations allowed"
+
+  - id: GATE-003
+    name: "Python Type Check"
+    category: code_quality
+    tool: "mypy"
+    command: "mypy src/ --strict"
+    applies_to: ["python"]
+    severity: block
+    max_runtime_seconds: 120
+    description: "mypy --strict must pass with no errors"
+
+  - id: GATE-004
+    name: "Unit Tests"
+    category: testing
+    tool: "pytest"
+    command: "pytest tests/unit/ -v"
+    applies_to: ["python", "node"]
+    severity: block
+    max_runtime_seconds: 300
+    description: "All unit tests must pass"
+
+  - id: GATE-005
+    name: "Test Coverage"
+    category: testing
+    tool: "pytest-cov"
+    command: "pytest --cov=src --cov-fail-under=80"
+    applies_to: ["python"]
+    severity: block
+    max_runtime_seconds: 300
+    threshold: 80
+    description: "Line+branch coverage must be >= 80%"
+
+  - id: GATE-006
+    name: "Integration Tests"
+    category: testing
+    tool: "pytest"
+    command: "pytest tests/integration/ -v"
+    applies_to: ["python", "node"]
+    severity: block
+    max_runtime_seconds: 600
+    description: "All integration tests must pass (Docker dependencies required)"
+
+  - id: GATE-007
+    name: "SAST Security Scan"
+    category: security
+    tool: "semgrep"
+    command: "semgrep --config=auto --error ."
+    applies_to: ["python", "node", "typescript"]
+    severity: block_on_high
+    max_runtime_seconds: 180
+    min_severity_to_block: "HIGH"
+    description: "No HIGH or CRITICAL SAST findings"
+
+  - id: GATE-008
+    name: "Dependency Vulnerability Scan"
+    category: security
+    tool: "pip-audit"
+    command: "pip-audit --require-hashes"
+    applies_to: ["python"]
+    severity: block_on_high
+    max_runtime_seconds: 120
+    min_severity_to_block: "HIGH"
+    description: "No HIGH or CRITICAL CVEs in dependencies"
+
+  - id: GATE-009
+    name: "Container Image Scan"
+    category: security
+    tool: "trivy"
+    command: "trivy image --exit-code 1 --severity CRITICAL $(IMAGE)"
+    applies_to: ["docker"]
+    severity: block_on_critical
+    max_runtime_seconds: 300
+    min_severity_to_block: "CRITICAL"
+    description: "No CRITICAL CVEs in container image"
+
+  - id: GATE-010
+    name: "IaC Security Scan"
+    category: security
+    tool: "tfsec"
+    command: "tfsec . --minimum-severity HIGH"
+    applies_to: ["terraform"]
+    severity: block_on_high
+    max_runtime_seconds: 120
+    min_severity_to_block: "HIGH"
+    description: "No HIGH or CRITICAL tfsec findings in Terraform"
+
+  - id: GATE-011
+    name: "Terraform Format"
+    category: code_quality
+    tool: "terraform"
+    command: "terraform fmt -check -recursive"
+    applies_to: ["terraform"]
+    severity: block
+    max_runtime_seconds: 30
+    description: "All Terraform files must be formatted with terraform fmt"
+
+  - id: GATE-012
+    name: "Terraform Validate"
+    category: code_quality
+    tool: "terraform"
+    command: "terraform validate"
+    applies_to: ["terraform"]
+    severity: block
+    max_runtime_seconds: 60
+    description: "terraform validate must pass"
+
+  - id: GATE-013
+    name: "Dockerfile Lint"
+    category: code_quality
+    tool: "hadolint"
+    command: "hadolint Dockerfile"
+    applies_to: ["docker"]
+    severity: warn
+    max_runtime_seconds: 10
+    description: "Dockerfile best-practice lint (non-blocking but reported)"

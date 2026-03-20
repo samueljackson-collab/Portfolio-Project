@@ -1,0 +1,171 @@
+================================================================================
+  MULTI-OS LAB — COMPARATIVE ANALYSIS REPORT
+  Generated: 2026-01-15 09:10:00
+  Lab VMs: Ubuntu 22.04 LTS | Kali Linux 2024.1 | Debian 12 (Bookworm)
+================================================================================
+
+================================================================================
+=                          OS OVERVIEW TABLE                                   =
+================================================================================
+Field                | Ubuntu 22.04 LTS        | Kali Linux 2024.1       | Debian 12 (Bookworm)
+-------------------- | ------------------------ | ------------------------ | ------------------------
+Type                 | General Purpose          | Security Research        | Stable Server
+IP Address           | 192.168.56.10            | 192.168.56.20            | 192.168.56.30
+Kernel               | 5.15.0-91-generic        | 6.6.9-amd64              | 6.1.0-18-amd64
+Init System          | systemd                  | systemd                  | systemd
+Package Manager      | apt/dpkg                 | apt/dpkg                 | apt/dpkg
+Default Shell        | bash 5.1.16              | zsh 5.9                  | bash 5.2.15
+Python Version       | 3.10.12                  | 3.11.8                   | 3.11.2
+
+================================================================================
+=                        PERFORMANCE COMPARISON                                =
+================================================================================
+Metric                 | Ubuntu 22.04 LTS        | Kali Linux 2024.1       | Debian 12 (Bookworm)
+---------------------- | ------------------------ | ------------------------ | -----------------------
+Memory Idle (MB)       | 312                      | 487                      | 178
+Boot Time (s)          | 8.4                      | 12.1                     | 5.2
+Disk Usage (GB)        | 4.2                      | 18.7                     | 2.8
+
+================================================================================
+=                    BENCHMARK RESULTS — ASCII BAR CHART                       =
+================================================================================
+
+  Boot Time (s)   [lower is better]
+  [U] Ubuntu 22.04 LTS         ████████████████████████████            8.4
+  [K] Kali Linux 2024.1        ████████████████████████████████████████ 12.1
+  [D] Debian 12 (Bookworm)     █████████████████                        5.2
+
+  Memory Idle (MB)   [lower is better]
+  [U] Ubuntu 22.04 LTS         █████████████████████████               312
+  [K] Kali Linux 2024.1        ████████████████████████████████████████ 487
+  [D] Debian 12 (Bookworm)     ██████████████                           178
+
+  Disk Usage (GB)   [lower is better]
+  [U] Ubuntu 22.04 LTS         █████████                                4.2
+  [K] Kali Linux 2024.1        ████████████████████████████████████████ 18.7
+  [D] Debian 12 (Bookworm)     ██████                                   2.8
+
+  Disk Write (MB/s)   [higher is better]
+  [U] Ubuntu 22.04 LTS         █████████████████████████████████████    485
+  [K] Kali Linux 2024.1        █████████████████████████████████        421
+  [D] Debian 12 (Bookworm)     ████████████████████████████████████████ 511
+
+  Disk Read (MB/s)   [higher is better]
+  [U] Ubuntu 22.04 LTS         ██████████████████████████████████████   1842
+  [K] Kali Linux 2024.1        ████████████████████████████████████     1756
+  [D] Debian 12 (Bookworm)     ████████████████████████████████████████ 1923
+
+  CPU Sysbench (events/sec)   [higher is better]
+  [U] Ubuntu 22.04 LTS         ██████████████████████████████████████   8247
+  [K] Kali Linux 2024.1        █████████████████████████████████████    7891
+  [D] Debian 12 (Bookworm)     ████████████████████████████████████████ 8512
+
+  Network iperf3 (Mbps)   [higher is better]
+  [U] Ubuntu 22.04 LTS         ████████████████████████████████████████ 940
+  [K] Kali Linux 2024.1        ██████████████████████████████████████   937
+  [D] Debian 12 (Bookworm)     ████████████████████████████████████████ 940
+
+  Filesystem IOPS Read   [higher is better]
+  [U] Ubuntu 22.04 LTS         █████████████████████████████████████    42500
+  [K] Kali Linux 2024.1        ███████████████████████████████████      39200
+  [D] Debian 12 (Bookworm)     ████████████████████████████████████████ 45100
+
+================================================================================
+=                            FEATURE MATRIX                                    =
+================================================================================
+Feature                        | Ubuntu 22   | Kali 2024   | Debian 12
+------------------------------ | ----------- | ----------- | -----------
+AppArmor                       |     YES     |     no      |     YES
+systemd init                   |     YES     |     YES     |     YES
+UFW firewall                   |     YES     |     no      |     no
+nftables                       |     no      |     no      |     YES
+auditd                         |     YES     |     no      |     no
+Docker native                  |     YES     |     YES     |     YES
+Unattended upgrades            |     YES     |     no      |     YES
+Metasploit                     |     no      |     YES     |     no
+Wireshark                      |     no      |     YES     |     no
+LTS/Stable release             |     YES     |     no      |     YES
+Rolling release                |     no      |     YES     |     no
+ARM64 support                  |     YES     |     YES     |     YES
+snap package support           |     YES     |     no      |     no
+chrony NTP                     |     YES     |     YES     |     YES
+
+================================================================================
+=                    USE CASE RECOMMENDATION MATRIX                            =
+================================================================================
+  Use Case                            Recommended OS                 Reason
+--------------------------------------------------------------------------------
+  Web application hosting             Debian 12 (Bookworm)           Smallest footprint, rock-solid stability
+  Development workstation             Ubuntu 22.04 LTS               LTS support, large ecosystem, Docker native
+  CI/CD build agent                   Ubuntu 22.04 LTS               LTS support, large ecosystem, Docker native
+  Container host                      Debian 12 (Bookworm)           Smallest footprint, rock-solid stability
+  Penetration testing                 Kali Linux 2024.1              600+ pre-installed security tools
+  Network forensics                   Kali Linux 2024.1              600+ pre-installed security tools
+  Security research                   Kali Linux 2024.1              600+ pre-installed security tools
+  Production database server          Debian 12 (Bookworm)           Smallest footprint, rock-solid stability
+  Embedded/IoT                        Debian 12 (Bookworm)           Smallest footprint, rock-solid stability
+  Machine learning workload           Ubuntu 22.04 LTS               LTS support, large ecosystem, Docker native
+  Capture The Flag (CTF)              Kali Linux 2024.1              600+ pre-installed security tools
+  Minimal VPS                         Debian 12 (Bookworm)           Smallest footprint, rock-solid stability
+
+================================================================================
+=                           SECURITY PROFILES                                  =
+================================================================================
+
+  Ubuntu 22.04 LTS [192.168.56.10]
+  Type                : General Purpose
+  Security Features   : AppArmor, UFW, auditd
+  Strengths           : LTS support, Large ecosystem, Docker native
+  Primary Use Cases   : Web servers, Development, CI/CD agents
+
+  Kali Linux 2024.1 [192.168.56.20]
+  Type                : Security Research
+  Security Features   : pre-installed 600+ tools, metasploit, burpsuite
+  Strengths           : Comprehensive toolset, Rolling release, ARM support
+  Primary Use Cases   : Penetration testing, Forensics, Security research
+
+  Debian 12 (Bookworm) [192.168.56.30]
+  Type                : Stable Server
+  Security Features   : AppArmor, nftables, apt-listchanges
+  Strengths           : Rock-solid stability, Small footprint, Security patches
+  Primary Use Cases   : Production servers, Containers, Embedded
+
+================================================================================
+=                          NETWORK TOPOLOGY                                    =
+================================================================================
+
+  Host Machine: 192.168.56.1 (VirtualBox NAT bridge)
+  │
+  ├── ubuntu-22  [192.168.56.10]  Ubuntu 22.04 LTS   — General Purpose
+  │   Services: SSH:22, HTTP:80, HTTPS:443, Docker
+  │
+  ├── kali-2024  [192.168.56.20]  Kali Linux 2024.1  — Security Research
+  │   Services: SSH:22, Metasploit, BurpSuite, Wireshark
+  │
+  └── debian-12  [192.168.56.30]  Debian 12 Bookworm — Stable Server
+      Services: SSH:22, nftables firewall, chrony NTP
+
+  Private Network: 192.168.56.0/24 (host-only)
+  All VMs can reach each other and the host.
+
+================================================================================
+=                              SUMMARY                                         =
+================================================================================
+
+  FASTEST BOOT:        Debian 12 (Bookworm)  — 5.2 seconds
+  LOWEST MEMORY:       Debian 12 (Bookworm)  — 178 MB idle
+  SMALLEST DISK:       Debian 12 (Bookworm)  — 2.8 GB
+  BEST FOR PENTESTING: Kali Linux 2024.1     — 600+ tools pre-installed
+  BEST FOR DEVOPS:     Ubuntu 22.04 LTS      — LTS + Docker + large ecosystem
+  BEST FOR PROD:       Debian 12 (Bookworm)  — stability + small footprint
+  BEST CPU PERF:       Debian 12 (Bookworm)  — 8512 events/sec (sysbench)
+  BEST DISK WRITE:     Debian 12 (Bookworm)  — 511 MB/s
+  BEST DISK READ:      Debian 12 (Bookworm)  — 1923 MB/s
+
+  All three VMs run systemd and use apt/dpkg package management.
+  Network: 192.168.56.0/24 private (host-only) network.
+  Vagrant provider: VirtualBox. Provisioned with shell + Ansible.
+
+================================================================================
+  End of report. Total VMs analysed: 3
+================================================================================

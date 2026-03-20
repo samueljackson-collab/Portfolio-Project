@@ -1,0 +1,59 @@
+title: Privilege Escalation via Admin Group Modification with Special Logon
+id: b2c3d4e5-f6a7-8901-bcde-f12345678901
+status: stable
+description: >
+  Detects a sequence of events indicating privilege escalation: a user logs on with
+  special privileges (Event 4672) followed by an addition to a security-enabled global
+  group (Event 4728). The combination suggests a user leveraged existing elevated access
+  to further escalate by adding accounts to sensitive groups such as Domain Admins or
+  Administrators.
+author: Sam Jackson
+date: 2025/11/20
+modified: 2026/01/10
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://attack.mitre.org/techniques/T1098/
+  - https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4672
+  - https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4728
+logsource:
+  product: windows
+  service: security
+detection:
+  special_logon:
+    EventID: 4672
+    PrivilegeList|contains:
+      - 'SeDebugPrivilege'
+      - 'SeTcbPrivilege'
+      - 'SeImpersonatePrivilege'
+      - 'SeAssignPrimaryTokenPrivilege'
+  group_modification:
+    EventID: 4728
+    TargetUserName|contains:
+      - 'Domain Admins'
+      - 'Administrators'
+      - 'Enterprise Admins'
+      - 'Schema Admins'
+      - 'Group Policy Creator Owners'
+  timeframe: 30m
+  condition: special_logon and group_modification | near SubjectUserName
+falsepositives:
+  - Domain controller promotions and demotions performed by authorized administrators
+  - Scheduled privileged account provisioning by IT operations
+  - Active Directory migration projects
+  - Legitimate administrative group membership changes during change windows
+level: high
+tags:
+  - attack.privilege_escalation
+  - attack.persistence
+  - attack.t1078
+  - attack.t1078.002
+  - attack.t1098
+  - attack.t1098.001
+fields:
+  - EventID
+  - SubjectUserName
+  - SubjectDomainName
+  - TargetUserName
+  - MemberName
+  - PrivilegeList
+  - Computer

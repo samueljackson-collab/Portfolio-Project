@@ -1,0 +1,208 @@
+---
+# ansible/roles/ubuntu-baseline/tasks/main.yml
+# Ubuntu 22.04 hardening: UFW, fail2ban, unattended-upgrades, SSH config, AppArmor
+
+- name: Install Ubuntu hardening packages
+  ansible.builtin.apt:
+    name:
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - apt-listchanges
+      - auditd
+      - apparmor
+      - apparmor-utils
+      - lynis
+    state: present
+    update_cache: true
+
+# ── UFW Firewall ──────────────────────────────────────────────────────────────
+- name: Reset UFW to defaults
+  community.general.ufw:
+    state: reset
+
+- name: Set UFW default incoming policy to deny
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Set UFW default outgoing policy to allow
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Allow SSH through UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ ssh_port | default('22') }}"
+    proto: tcp
+    comment: "Allow SSH"
+
+- name: Allow all traffic from lab private network
+  community.general.ufw:
+    rule: allow
+    src: "192.168.56.0/24"
+    comment: "Lab private network"
+
+- name: Allow additional ports defined in ufw_allowed_ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ ufw_allowed_ports | default([]) }}"
+  when: ufw_allowed_ports is defined
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+    logging: "on"
+
+# ── Fail2ban ──────────────────────────────────────────────────────────────────
+- name: Deploy fail2ban jail.local configuration
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [DEFAULT]
+      bantime   = {{ fail2ban_bantime  | default(3600) }}
+      findtime  = 600
+      maxretry  = {{ fail2ban_maxretry | default(5) }}
+      backend   = systemd
+      destemail = root@localhost
+      action    = %(action_mw)s
+
+      [sshd]
+      enabled  = true
+      port     = ssh
+      filter   = sshd
+      maxretry = {{ fail2ban_maxretry | default(3) }}
+      bantime  = {{ fail2ban_bantime  | default(7200) }}
+
+      [apache-auth]
+      enabled  = false
+
+      [nginx-http-auth]
+      enabled  = false
+  notify: Restart fail2ban
+
+- name: Enable and start fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: started
+    enabled: true
+
+# ── Unattended Upgrades ───────────────────────────────────────────────────────
+- name: Deploy unattended-upgrades configuration
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      Unattended-Upgrade::Allowed-Origins {
+          "${distro_id}:${distro_codename}-security";
+          "${distro_id}ESMApps:${distro_codename}-apps-security";
+          "${distro_id}ESM:${distro_codename}-infra-security";
+      };
+      Unattended-Upgrade::Package-Blacklist {};
+      Unattended-Upgrade::DevRelease "false";
+      Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+      Unattended-Upgrade::MinimalSteps "true";
+      Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+      Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
+      Unattended-Upgrade::Remove-Unused-Dependencies "false";
+      Unattended-Upgrade::Automatic-Reboot "false";
+      Unattended-Upgrade::Automatic-Reboot-Time "03:00";
+
+- name: Enable automatic updates timer
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Download-Upgradeable-Packages "1";
+      APT::Periodic::AutocleanInterval "7";
+      APT::Periodic::Unattended-Upgrade "1";
+
+# ── SSH Hardening ─────────────────────────────────────────────────────────────
+- name: Configure SSH hardening parameters
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: "^#?Protocol",              line: "Protocol 2" }
+    - { regexp: "^#?MaxAuthTries",          line: "MaxAuthTries 3" }
+    - { regexp: "^#?LoginGraceTime",        line: "LoginGraceTime 30" }
+    - { regexp: "^#?PermitRootLogin",       line: "PermitRootLogin no" }
+    - { regexp: "^#?X11Forwarding",         line: "X11Forwarding no" }
+    - { regexp: "^#?AllowTcpForwarding",    line: "AllowTcpForwarding no" }
+    - { regexp: "^#?ClientAliveInterval",   line: "ClientAliveInterval 300" }
+    - { regexp: "^#?ClientAliveCountMax",   line: "ClientAliveCountMax 2" }
+    - { regexp: "^#?UseDNS",               line: "UseDNS no" }
+    - { regexp: "^#?LogLevel",              line: "LogLevel VERBOSE" }
+  notify: Restart sshd
+
+# ── AppArmor ──────────────────────────────────────────────────────────────────
+- name: Ensure AppArmor service is running
+  ansible.builtin.systemd:
+    name: apparmor
+    state: started
+    enabled: true
+
+- name: Set all AppArmor profiles to enforce mode
+  ansible.builtin.command: aa-enforce /etc/apparmor.d/*
+  register: aa_enforce
+  changed_when: "'Setting' in aa_enforce.stdout"
+  failed_when: false
+
+# ── Auditd ────────────────────────────────────────────────────────────────────
+- name: Enable and start auditd
+  ansible.builtin.systemd:
+    name: auditd
+    state: started
+    enabled: true
+
+- name: Deploy basic audit rules
+  ansible.builtin.copy:
+    dest: /etc/audit/rules.d/99-hardening.rules
+    owner: root
+    group: root
+    mode: "0640"
+    content: |
+      # Delete all current rules
+      -D
+      # Set buffer size
+      -b 8192
+      # Audit sudo usage
+      -w /usr/bin/sudo -p x -k sudo_usage
+      # Audit passwd changes
+      -w /etc/passwd -p wa -k passwd_changes
+      -w /etc/shadow -p wa -k shadow_changes
+      -w /etc/sudoers -p wa -k sudoers_changes
+      # Audit SSH keys
+      -w /etc/ssh/sshd_config -p wa -k sshd_config
+      # Audit failed logins
+      -w /var/log/auth.log -p wa -k auth_log
+  notify: Restart auditd
+
+handlers:
+  - name: Restart fail2ban
+    ansible.builtin.systemd:
+      name: fail2ban
+      state: restarted
+
+  - name: Restart sshd
+    ansible.builtin.systemd:
+      name: sshd
+      state: restarted
+
+  - name: Restart auditd
+    ansible.builtin.systemd:
+      name: auditd
+      state: restarted

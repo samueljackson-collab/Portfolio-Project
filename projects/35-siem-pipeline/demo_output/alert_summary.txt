@@ -1,0 +1,31 @@
+Total events: 30
+
+Event types:
+  authentication_failure: 10
+  authentication_success: 5
+  process_start: 5
+  network_connection: 4
+  group_member_added: 3
+  special_logon: 3
+
+Severity distribution:
+  Level 1: 9
+  Level 3: 16
+  Level 4: 4
+  Level 5: 1
+
+Total alerts fired: 21
+
+Alert breakdown:
+  Failed Logon Attempt: 10
+  Admin Group Membership Change: 3
+  Suspicious Process Execution: 3
+  Special Privileges Logon: 3
+  Large Outbound Data Transfer: 2
+
+Top source IPs:
+  192.168.10.15: 6 events
+  203.0.113.45: 5 events
+  198.51.100.7: 5 events
+  192.168.30.10: 4 events
+  192.168.20.10: 3 events

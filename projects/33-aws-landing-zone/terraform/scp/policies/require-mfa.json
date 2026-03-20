@@ -1,0 +1,37 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyHighRiskActionsWithoutMFA",
+      "Effect": "Deny",
+      "Action": [
+        "iam:AttachRolePolicy",
+        "iam:AttachUserPolicy",
+        "iam:CreateAccessKey",
+        "iam:CreateLoginProfile",
+        "iam:CreateUser",
+        "iam:DeleteAccessKey",
+        "iam:DeleteLoginProfile",
+        "iam:DeleteUser",
+        "iam:DetachRolePolicy",
+        "iam:DetachUserPolicy",
+        "iam:PutUserPolicy",
+        "iam:UpdateAccessKey",
+        "iam:UpdateLoginProfile",
+        "sts:AssumeRole"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "BoolIfExists": {
+          "aws:MultiFactorAuthPresent": "false"
+        },
+        "StringNotLike": {
+          "aws:PrincipalArn": [
+            "arn:aws:iam::*:role/aws-reserved/sso.amazonaws.com/*",
+            "arn:aws:iam::*:role/OrganizationAccountAccessRole"
+          ]
+        }
+      }
+    }
+  ]
+}
