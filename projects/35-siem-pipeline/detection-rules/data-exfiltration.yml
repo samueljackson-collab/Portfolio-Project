@@ -1,0 +1,71 @@
+title: Large Outbound Data Transfer Outside Business Hours
+id: d4e5f6a7-b8c9-0123-defa-234567890123
+status: stable
+description: >
+  Detects potential data exfiltration by identifying large outbound network transfers
+  (exceeding 100 MB in a single flow or aggregated over 15 minutes) destined for
+  external IP addresses (non-RFC1918) during off-business hours (before 07:00 or
+  after 20:00 local time, or on weekends). Large transfers during off-hours are
+  anomalous for most organizations and warrant immediate investigation.
+author: Sam Jackson
+date: 2025/11/25
+modified: 2026/01/10
+references:
+  - https://attack.mitre.org/techniques/T1041/
+  - https://attack.mitre.org/techniques/T1048/
+  - https://attack.mitre.org/techniques/T1048.003/
+logsource:
+  product: zeek
+  service: conn
+detection:
+  large_transfer:
+    orig_bytes|gte: 104857600
+  outbound_direction:
+    local_orig: true
+    local_resp: false
+  suspicious_protocols:
+    proto|contains:
+      - 'tcp'
+      - 'udp'
+    service|not_contains:
+      - 'dns'
+      - 'ntp'
+  timeframe: 15m
+  condition: large_transfer and outbound_direction and not suspicious_protocols | sum(orig_bytes) by id.orig_h > 104857600
+  time_filter:
+    # Off-hours: before 07:00 or after 20:00, or Saturday/Sunday
+    # Implemented via pipeline enrichment — hour outside [7, 20)
+    business_hours: false
+falsepositives:
+  - Authorized large backups to cloud storage (S3, Azure Blob, GCS)
+  - Software update distribution servers
+  - Video conference recordings uploaded after hours
+  - Authorized bulk data exports by data engineering teams
+  - CDN origin pull operations
+level: high
+tags:
+  - attack.exfiltration
+  - attack.t1041
+  - attack.t1048
+  - attack.t1048.003
+  - attack.collection
+  - attack.t1005
+fields:
+  - id.orig_h
+  - id.resp_h
+  - id.resp_p
+  - proto
+  - service
+  - orig_bytes
+  - resp_bytes
+  - duration
+  - orig_pkts
+  - conn_state
+enrichment:
+  geoip:
+    - id.resp_h
+  threat_intel:
+    - id.resp_h
+  dns_reverse:
+    - id.resp_h
+    - id.orig_h

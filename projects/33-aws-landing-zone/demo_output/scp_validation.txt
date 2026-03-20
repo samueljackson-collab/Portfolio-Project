@@ -1,0 +1,23 @@
+=== AWS Landing Zone SCP Validation ===
+Validating 4 SCP policy files...
+
+[PASS] deny-root-actions.json - Valid JSON
+[PASS] deny-root-actions.json - Has Version field: 2012-10-17
+[PASS] deny-root-actions.json - Has 1 Statement(s)
+[PASS] deny-root-actions.json - Statement[0]: Effect=Deny, Actions=3, Resource=*
+[PASS] require-mfa.json - Valid JSON
+[PASS] require-mfa.json - Has Version field: 2012-10-17
+[PASS] require-mfa.json - Has 1 Statement(s)
+[PASS] require-mfa.json - Statement[0]: Effect=Deny, Actions=14, Resource=*
+[PASS] restrict-regions.json - Valid JSON
+[PASS] restrict-regions.json - Has Version field: 2012-10-17
+[PASS] restrict-regions.json - Has 2 Statement(s)
+[PASS] restrict-regions.json - Statement[0]: Effect=Deny, Actions=35, Resource=*
+[PASS] restrict-regions.json - Statement[1]: Effect=Allow, Actions=8, Resource=*
+[PASS] deny-internet-gateways.json - Valid JSON
+[PASS] deny-internet-gateways.json - Has Version field: 2012-10-17
+[PASS] deny-internet-gateways.json - Has 1 Statement(s)
+[PASS] deny-internet-gateways.json - Statement[0]: Effect=Deny, Actions=4, Resource=*
+
+==========================================
+17/17 checks passed. All SCPs are valid.

@@ -1,0 +1,23 @@
+name: Selenium UI Tests
+on:
+  push:
+    branches: [main, "claude/*"]
+  pull_request:
+    branches: [main]
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install flask pytest pytest-cov
+          cd projects/39-selenium-pytest-ci
+          pip install -r requirements.txt
+      - name: Run UI tests
+        run: |
+          cd projects/39-selenium-pytest-ci
+          python -m pytest tests/ -v --tb=short --cov=app --cov-report=term-missing

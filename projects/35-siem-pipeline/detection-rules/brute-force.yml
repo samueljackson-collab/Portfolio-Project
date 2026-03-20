@@ -1,0 +1,31 @@
+title: Windows Brute Force Login Attempts
+id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+status: stable
+description: Detects multiple failed login attempts from a single source IP within a short time window indicating a brute force or password spray attack.
+author: Sam Jackson
+date: 2025/11/15
+modified: 2026/01/10
+references:
+  - https://attack.mitre.org/techniques/T1110/
+  - https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4625
+    LogonType|contains:
+      - '2'
+      - '3'
+      - '10'
+  timeframe: 5m
+  condition: selection | count() by TargetUserName, IpAddress > 10
+falsepositives:
+  - Password synchronization tools
+  - Scheduled tasks with expired credentials
+  - Vulnerability scanners
+level: high
+tags:
+  - attack.credential_access
+  - attack.t1110
+  - attack.t1110.001

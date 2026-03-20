@@ -1,0 +1,190 @@
+{
+  "index_patterns": ["security-events-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 2,
+      "number_of_replicas": 1,
+      "index.lifecycle.name": "security-events-ilm",
+      "index.lifecycle.rollover_alias": "security-events",
+      "index.refresh_interval": "5s",
+      "index.codec": "best_compression",
+      "index.mapping.total_fields.limit": 2000
+    },
+    "mappings": {
+      "dynamic": "true",
+      "dynamic_templates": [
+        {
+          "strings_as_keyword": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "keyword",
+              "ignore_above": 1024
+            }
+          }
+        }
+      ],
+      "properties": {
+        "@timestamp":             {"type": "date"},
+        "ecs": {
+          "properties": {
+            "version": {"type": "keyword"}
+          }
+        },
+        "event": {
+          "properties": {
+            "id":             {"type": "keyword"},
+            "type":           {"type": "keyword"},
+            "category":       {"type": "keyword"},
+            "outcome":        {"type": "keyword"},
+            "severity":       {"type": "integer"},
+            "severity_label": {"type": "keyword"},
+            "module":         {"type": "keyword"},
+            "dataset":        {"type": "keyword"},
+            "created":        {"type": "date"},
+            "ingested":       {"type": "date"}
+          }
+        },
+        "host": {
+          "properties": {
+            "name":           {"type": "keyword"},
+            "hostname":       {"type": "keyword"},
+            "ip":             {"type": "ip"},
+            "os": {
+              "properties": {
+                "name":       {"type": "keyword"},
+                "version":    {"type": "keyword"},
+                "family":     {"type": "keyword"}
+              }
+            }
+          }
+        },
+        "user": {
+          "properties": {
+            "name":           {"type": "keyword"},
+            "domain":         {"type": "keyword"},
+            "target_name":    {"type": "keyword"},
+            "target_domain":  {"type": "keyword"},
+            "id":             {"type": "keyword"}
+          }
+        },
+        "source": {
+          "properties": {
+            "ip":             {"type": "ip"},
+            "port":           {"type": "integer"},
+            "hostname":       {"type": "keyword"},
+            "geo": {
+              "properties": {
+                "country_name":   {"type": "keyword"},
+                "country_code2":  {"type": "keyword"},
+                "city_name":      {"type": "keyword"},
+                "region_name":    {"type": "keyword"},
+                "location":       {"type": "geo_point"}
+              }
+            }
+          }
+        },
+        "destination": {
+          "properties": {
+            "ip":             {"type": "ip"},
+            "port":           {"type": "integer"},
+            "hostname":       {"type": "keyword"}
+          }
+        },
+        "dest": {
+          "properties": {
+            "ip":             {"type": "ip"},
+            "port":           {"type": "integer"}
+          }
+        },
+        "process": {
+          "properties": {
+            "name":           {"type": "keyword"},
+            "executable":     {"type": "keyword"},
+            "pid":            {"type": "integer"},
+            "command_line":   {"type": "wildcard"},
+            "parent": {
+              "properties": {
+                "name":       {"type": "keyword"},
+                "executable": {"type": "keyword"},
+                "pid":        {"type": "integer"}
+              }
+            }
+          }
+        },
+        "network": {
+          "properties": {
+            "direction":      {"type": "keyword"},
+            "protocol":       {"type": "keyword"},
+            "bytes":          {"type": "long"},
+            "packets":        {"type": "long"},
+            "transport":      {"type": "keyword"}
+          }
+        },
+        "alert": {
+          "properties": {
+            "name":           {"type": "keyword"},
+            "severity":       {"type": "keyword"}
+          }
+        },
+        "geoip": {
+          "properties": {
+            "country_name":   {"type": "keyword"},
+            "country_code2":  {"type": "keyword"},
+            "city_name":      {"type": "keyword"},
+            "region_name":    {"type": "keyword"},
+            "location":       {"type": "geo_point"},
+            "autonomous_system_number":       {"type": "long"},
+            "autonomous_system_organization": {"type": "keyword"}
+          }
+        },
+        "threat": {
+          "properties": {
+            "indicator": {
+              "properties": {
+                "country":    {"type": "keyword"}
+              }
+            }
+          }
+        },
+        "winlog": {
+          "properties": {
+            "logon_type":     {"type": "keyword"},
+            "channel":        {"type": "keyword"},
+            "provider_name":  {"type": "keyword"}
+          }
+        },
+        "ssh": {
+          "properties": {
+            "auth_method":    {"type": "keyword"}
+          }
+        },
+        "pam": {
+          "properties": {
+            "service":        {"type": "keyword"}
+          }
+        },
+        "sudo": {
+          "properties": {
+            "tty":            {"type": "keyword"},
+            "cwd":            {"type": "keyword"},
+            "run_as_user":    {"type": "keyword"}
+          }
+        },
+        "message":            {"type": "text", "fields": {"keyword": {"type": "keyword", "ignore_above": 4096}}},
+        "tags":               {"type": "keyword"},
+        "labels":             {"type": "object", "dynamic": true}
+      }
+    },
+    "aliases": {
+      "security-events": {}
+    }
+  },
+  "composed_of": [],
+  "priority": 100,
+  "version": 1,
+  "_meta": {
+    "description": "SIEM security events index template (ECS 8.x)",
+    "managed_by": "siem-pipeline",
+    "created": "2026-01-10"
+  }
+}

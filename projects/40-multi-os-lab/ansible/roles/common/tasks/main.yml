@@ -1,0 +1,108 @@
+---
+# ansible/roles/common/tasks/main.yml
+# Common tasks applied to ALL lab VMs: hostname, timezone, NTP, motd, sysctl
+- name: Set system hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Ensure /etc/hosts has the correct hostname entry
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: "^127\\.0\\.1\\.1"
+    line: "127.0.1.1  {{ inventory_hostname }}"
+    state: present
+
+- name: Set timezone to UTC
+  community.general.timezone:
+    name: "UTC"
+
+- name: Ensure chrony (NTP) is installed
+  ansible.builtin.package:
+    name: chrony
+    state: present
+
+- name: Deploy chrony configuration
+  ansible.builtin.copy:
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      pool 0.pool.ntp.org iburst
+      pool 1.pool.ntp.org iburst
+      pool 2.pool.ntp.org iburst
+      driftfile /var/lib/chrony/drift
+      makestep 1.0 3
+      rtcsync
+      logdir /var/log/chrony
+  notify: Restart chrony
+
+- name: Ensure chrony service is enabled and running
+  ansible.builtin.systemd:
+    name: chrony
+    state: started
+    enabled: true
+
+- name: Apply common sysctl hardening parameters
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+  loop:
+    - { key: "net.ipv4.tcp_syncookies",              value: "1" }
+    - { key: "net.ipv4.conf.all.accept_redirects",   value: "0" }
+    - { key: "net.ipv4.conf.all.send_redirects",     value: "0" }
+    - { key: "net.ipv4.conf.all.log_martians",        value: "1" }
+    - { key: "kernel.randomize_va_space",             value: "2" }
+    - { key: "fs.protected_hardlinks",                value: "1" }
+    - { key: "fs.protected_symlinks",                 value: "1" }
+
+- name: Deploy /etc/issue.net banner
+  ansible.builtin.copy:
+    dest: /etc/issue.net
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      =====================================================================
+      Portfolio Lab — Authorised Access Only
+      All activities are logged and monitored.
+      Hostname: {{ inventory_hostname }}
+      =====================================================================
+
+- name: Enable issue.net banner in SSH
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?Banner"
+    line: "Banner /etc/issue.net"
+  notify: Restart sshd
+
+- name: Ensure logrotate is configured for syslog
+  ansible.builtin.lineinfile:
+    path: /etc/logrotate.d/syslog
+    line: "rotate 14"
+    create: true
+    mode: "0644"
+
+- name: Collect and display system information
+  ansible.builtin.debug:
+    msg:
+      - "Hostname    : {{ ansible_hostname }}"
+      - "OS          : {{ ansible_distribution }} {{ ansible_distribution_version }}"
+      - "Kernel      : {{ ansible_kernel }}"
+      - "Architecture: {{ ansible_architecture }}"
+      - "Memory (MB) : {{ ansible_memtotal_mb }}"
+      - "CPUs        : {{ ansible_processor_vcpus }}"
+      - "IP Address  : {{ ansible_default_ipv4.address | default('N/A') }}"
+
+handlers:
+  - name: Restart chrony
+    ansible.builtin.systemd:
+      name: chrony
+      state: restarted
+
+  - name: Restart sshd
+    ansible.builtin.systemd:
+      name: sshd
+      state: restarted

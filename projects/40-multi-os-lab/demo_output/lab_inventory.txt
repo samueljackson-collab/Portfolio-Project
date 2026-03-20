@@ -1,0 +1,90 @@
+=== Multi-OS Lab Inventory ===
+Generated: 2026-01-15 09:10:00
+
+================================================================================
+Vagrant Status:
+================================================================================
+Current machine states:
+
+ubuntu-22                 running (virtualbox)
+kali-2024                 running (virtualbox)
+debian-12                 running (virtualbox)
+
+This environment represents multiple VMs. The VMs are all running. You
+may also bring specific machines up or halt them individually.
+
+================================================================================
+Ansible Inventory:
+================================================================================
+[ubuntu]
+192.168.56.10 ansible_user=vagrant hostname=ubuntu-22 os="Ubuntu 22.04.3 LTS" kernel=5.15.0-91-generic
+
+[kali]
+192.168.56.20 ansible_user=vagrant hostname=kali-2024 os="Kali GNU/Linux Rolling (2024.1)" kernel=6.6.9-amd64
+
+[debian]
+192.168.56.30 ansible_user=vagrant hostname=debian-12 os="Debian GNU/Linux 12 (bookworm)" kernel=6.1.0-18-amd64
+
+[all:vars]
+ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+================================================================================
+Network Topology:
+================================================================================
+  Host: 192.168.56.1 (Vagrant VirtualBox host-only bridge)
+  │
+  ├── ubuntu-22: 192.168.56.10 (Ubuntu 22.04 LTS — General Purpose)
+  │   Open Ports: 22/tcp (SSH)
+  │   Docker:     running (v24.0.7)
+  │   Services:   sshd, docker, ufw, fail2ban, auditd, chrony
+  │
+  ├── kali-2024:  192.168.56.20 (Kali Linux 2024.1 — Security Research)
+  │   Open Ports: 22/tcp (SSH)
+  │   Tools:      metasploit, burpsuite, wireshark, nmap, sqlmap, hydra
+  │   Services:   sshd, postgresql (MSF db), chrony
+  │
+  └── debian-12:  192.168.56.30 (Debian 12 Bookworm — Stable Server)
+      Open Ports: 22/tcp (SSH)
+      Firewall:   nftables active (default deny inbound)
+      Services:   sshd, nftables, fail2ban, chrony, unattended-upgrades
+
+================================================================================
+SSH Access:
+================================================================================
+  vagrant ssh ubuntu-22
+  vagrant ssh kali-2024
+  vagrant ssh debian-12
+
+  Or directly:
+  ssh -i ~/.vagrant.d/insecure_private_key vagrant@192.168.56.10
+  ssh -i ~/.vagrant.d/insecure_private_key vagrant@192.168.56.20
+  ssh -i ~/.vagrant.d/insecure_private_key vagrant@192.168.56.30
+
+================================================================================
+Ansible Ad-Hoc Commands:
+================================================================================
+  # Ping all hosts
+  ansible all -m ping
+
+  # Gather uptime from all hosts
+  ansible all -m command -a "uptime"
+
+  # Check free memory
+  ansible all -m command -a "free -m"
+
+  # Run full playbook
+  ansible-playbook ansible/site.yml
+
+================================================================================
+Resource Utilisation (at idle):
+================================================================================
+  Host          Memory Used   CPU%   Disk Used   Uptime
+  ----------    -----------   ----   ---------   ------
+  ubuntu-22     312 MB        2.1%   4.2 GB      00:23:14
+  kali-2024     487 MB        3.4%   18.7 GB     00:18:52
+  debian-12     178 MB        0.8%   2.8 GB      00:25:31
+
+================================================================================
+End of Lab Inventory
+================================================================================

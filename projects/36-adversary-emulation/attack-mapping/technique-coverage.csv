@@ -1,0 +1,48 @@
+technique_id,technique_name,tactic,plan,test_id,detection_rule,status
+T1566.001,Spearphishing Attachment,Initial Access,APT29,AT-001,sigma/suspicious-double-extension-file.yml,Covered
+T1566.002,Spearphishing Link,Initial Access,APT29,AT-002,sigma/phishing-link-click-simulation.yml,Covered
+T1195.002,Compromise Software Supply Chain,Initial Access,APT29,AT-003,sigma/trojanized-update-artifact.yml,Covered
+T1059.004,Unix Shell,Execution,APT29,AT-004,sigma/shell-exec-obfuscated-args.yml,Covered
+T1059.006,Python,Execution,APT29,AT-005,sigma/python-inline-exec.yml,Covered
+T1203,Exploitation for Client Execution,Execution,APT29,AT-006,sigma/browser-child-process-anomaly.yml,Covered
+T1047,Windows Management Instrumentation,Execution,APT29,AT-007,sigma/wmi-event-subscription-exec.yml,Covered
+T1053.003,Cron,Persistence,APT29,AT-008,sigma/malicious-cron-entry.yml,Covered
+T1546.004,Unix Shell Configuration Modification,Persistence,APT29,AT-009,sigma/shell-profile-modification.yml,Covered
+T1505.003,Web Shell,Persistence,APT29,AT-010,sigma/webshell-creation-detected.yml,Covered
+T1098,Account Manipulation,Persistence,APT29,AT-011,sigma/account-group-modification.yml,Covered
+T1548.003,Sudo and Sudo Caching,Privilege Escalation,APT29,AT-012,sigma/sudo-config-access.yml,Covered
+T1055,Process Injection,Privilege Escalation,APT29,AT-013,sigma/process-injection-detected.yml,Covered
+T1078,Valid Accounts,Privilege Escalation,APT29,AT-014,sigma/service-account-anomalous-login.yml,Covered
+T1134,Access Token Manipulation,Privilege Escalation,APT29,AT-015,sigma/token-manipulation-event.yml,Covered
+T1070.004,File Deletion,Defense Evasion,APT29,AT-016,sigma/log-file-deletion.yml,Covered
+T1036.005,Match Legitimate Name or Location,Defense Evasion,APT29,AT-017,sigma/masquerading-file-name.yml,Covered
+T1027,Obfuscated Files or Information,Defense Evasion,APT29,AT-018,sigma/base64-encoded-payload-on-disk.yml,Covered
+T1562.001,Disable or Modify Tools,Defense Evasion,APT29,AT-019,sigma/security-tool-disabled.yml,Covered
+T1078.003,Local Accounts,Defense Evasion,APT29,AT-020,sigma/unexpected-local-account-creation.yml,Covered
+T1082,System Information Discovery,Discovery,APT29,AT-021,sigma/system-info-discovery-burst.yml,Covered
+T1033,System Owner/User Discovery,Discovery,APT29,AT-022,sigma/user-discovery-enumeration.yml,Covered
+T1016,System Network Configuration Discovery,Discovery,APT29,AT-023,sigma/network-config-discovery.yml,Covered
+T1083,File and Directory Discovery,Discovery,APT29,AT-024,sigma/file-directory-discovery.yml,Covered
+T1566.001,Spearphishing Attachment,Initial Access,FIN7,FIN7-AT-001,sigma/fin7-financial-lure-doc.yml,Covered
+T1204.002,Malicious File,Initial Access,FIN7,FIN7-AT-002,sigma/office-child-process-spawned.yml,Covered
+T1189,Drive-by Compromise,Initial Access,FIN7,FIN7-AT-003,sigma/browser-executable-download.yml,Covered
+T1059.001,PowerShell,Execution,FIN7,FIN7-AT-004,sigma/powershell-encoded-command.yml,Covered
+T1059.005,Visual Basic,Execution,FIN7,FIN7-AT-005,sigma/wscript-user-dir-execution.yml,Covered
+T1218.005,Mshta,Execution,FIN7,FIN7-AT-006,sigma/mshta-remote-url-execution.yml,Covered
+T1053.005,Scheduled Task,Persistence,FIN7,FIN7-AT-008,sigma/malicious-scheduled-task.yml,Covered
+T1547.001,Registry Run Keys / Startup Folder,Persistence,FIN7,FIN7-AT-009,sigma/registry-run-key-modification.yml,Covered
+T1543.003,Windows Service,Persistence,FIN7,FIN7-AT-010,sigma/service-installed-non-standard-path.yml,Covered
+T1546.003,WMI Event Subscription,Persistence,FIN7,FIN7-AT-011,sigma/wmi-persist-event-subscription.yml,Covered
+T1055.001,DLL Injection,Privilege Escalation,FIN7,FIN7-AT-012,sigma/dll-injection-cross-process.yml,Covered
+T1068,Exploitation for Privilege Escalation,Privilege Escalation,FIN7,FIN7-AT-013,sigma/local-privesc-exploit-pattern.yml,Covered
+T1078.002,Domain Accounts,Privilege Escalation,FIN7,FIN7-AT-014,sigma/domain-account-privilege-change.yml,Covered
+T1134.001,Token Impersonation/Theft,Privilege Escalation,FIN7,FIN7-AT-015,sigma/token-impersonation-system.yml,Covered
+T1140,Deobfuscate/Decode Files or Information,Defense Evasion,FIN7,FIN7-AT-016,sigma/payload-deobfuscation-detected.yml,Covered
+T1112,Modify Registry,Defense Evasion,FIN7,FIN7-AT-017,sigma/defender-disabled-via-registry.yml,Covered
+T1070.001,Clear Windows Event Logs,Defense Evasion,FIN7,FIN7-AT-018,sigma/security-eventlog-cleared.yml,Covered
+T1562.004,Disable or Modify System Firewall,Defense Evasion,FIN7,FIN7-AT-019,sigma/firewall-rule-added-for-unusual-program.yml,Covered
+T1027.001,Binary Padding,Defense Evasion,FIN7,FIN7-AT-020,sigma/binary-padding-detected.yml,Covered
+T1057,Process Discovery,Discovery,FIN7,FIN7-AT-021,sigma/process-discovery-enumeration.yml,Covered
+T1049,System Network Connections Discovery,Discovery,FIN7,FIN7-AT-022,sigma/network-connection-discovery.yml,Covered
+T1087.001,Local Account,Discovery,FIN7,FIN7-AT-023,sigma/passwd-file-access.yml,Covered
+T1082,System Information Discovery,Discovery,FIN7,FIN7-AT-024,sigma/system-info-discovery-burst.yml,Covered

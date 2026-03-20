@@ -1,0 +1,80 @@
+========================================================================
+  INCIDENT TIMELINE — INC-2026-0042
+  Type: Ransomware — LockBit 3.0 | Severity: P1
+========================================================================
+
+  2026-01-15 07:52 UTC  [Initial Access      ]  [Attacker  ]
+    → User jsmith opens malicious Word attachment (CVE-2024-21413)
+      System: JSMITH-WS
+
+  2026-01-15 07:54 UTC  [Execution           ]  [Attacker  ]
+    → WINWORD.EXE spawns PowerShell; EDR medium-severity alert fired
+      System: JSMITH-WS
+
+  2026-01-15 08:01 UTC  [Lateral Movement    ]  [Attacker  ]
+    → PsExec lateral movement to FIN-SRV-01 and FIN-SRV-02
+      System: FIN-SRV-01, FIN-SRV-02
+
+  2026-01-15 08:03 UTC  [Impact              ]  [Attacker  ]
+    → Volume Shadow Copy deletion on FIN-SRV-01 (vssadmin.exe)
+      System: FIN-SRV-01
+
+  2026-01-15 08:07 UTC  [Impact              ]  [Attacker  ]
+    → First .lockbit encrypted files detected — EDR escalates to HIGH
+      System: FIN-SRV-01
+
+  2026-01-15 08:14 UTC  [Detection           ]  [SOC       ]
+    → SOC Analyst acknowledges alert; IC declared; bridge call opened
+      System: SOC
+
+  2026-01-15 08:29 UTC  [Containment         ]  [SOC       ]
+    → All 3 affected hosts isolated via CrowdStrike console
+      System: FIN-SRV-01, FIN-SRV-02, JSMITH-WS
+
+  2026-01-15 08:41 UTC  [Containment         ]  [SOC       ]
+    → C2 IPs added to perimeter block list
+      System: Firewall
+
+  2026-01-15 09:01 UTC  [Containment         ]  [SOC       ]
+    → Containment confirmed — no further spread detected
+      System: Network
+
+  2026-01-15 09:15 UTC  [Eradication         ]  [IR Team   ]
+    → Forensic image of FIN-SRV-01 captured
+      System: FIN-SRV-01
+
+  2026-01-15 11:30 UTC  [Eradication         ]  [IR Team   ]
+    → Root cause confirmed: CVE-2024-21413 + weak MFA on jsmith
+      System: JSMITH-WS
+
+  2026-01-15 14:28 UTC  [Recovery            ]  [Infra     ]
+    → FIN-SRV-01 restored from 2026-01-14 backup — validated
+      System: FIN-SRV-01
+
+  2026-01-15 14:44 UTC  [Recovery            ]  [Infra     ]
+    → FIN-SRV-02 restored from backup
+      System: FIN-SRV-02
+
+  2026-01-15 15:06 UTC  [Recovery            ]  [IT        ]
+    → jsmith workstation rebuilt from golden image — user access restored
+      System: JSMITH-WS
+
+------------------------------------------------------------------------
+  METRICS
+------------------------------------------------------------------------
+  MTTD (Mean Time to Detect):   22 min
+  MTTC (Mean Time to Contain):  15 min
+  MTTR (Mean Time to Recover):  6h 37m
+  Total incident duration:       7h 14m
+
+  Total events: 14
+    Containment: 3
+    Detection: 1
+    Eradication: 2
+    Execution: 1
+    Impact: 2
+    Initial Access: 1
+    Lateral Movement: 1
+    Recovery: 3
+
+========================================================================

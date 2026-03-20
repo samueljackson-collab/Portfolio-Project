@@ -1,0 +1,43 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /home/user/Portfolio-Project
+configfile: pytest.ini
+plugins: anyio-3.7.1, cov-7.0.0
+collecting ... collected 33 items
+
+tests/test_login_app.py::TestHealthCheck::test_health_returns_200 PASSED [  3%]
+tests/test_login_app.py::TestHealthCheck::test_health_returns_healthy_status PASSED [  6%]
+tests/test_login_app.py::TestHealthCheck::test_health_returns_version PASSED [  9%]
+tests/test_login_app.py::TestFunctionalLogin::test_valid_login_admin PASSED [ 12%]
+tests/test_login_app.py::TestFunctionalLogin::test_valid_login_user1 PASSED [ 15%]
+tests/test_login_app.py::TestFunctionalLogin::test_valid_login_testuser PASSED [ 18%]
+tests/test_login_app.py::TestFunctionalLogin::test_wrong_password PASSED [ 21%]
+tests/test_login_app.py::TestFunctionalLogin::test_nonexistent_user PASSED [ 24%]
+tests/test_login_app.py::TestFunctionalLogin::test_empty_username PASSED [ 27%]
+tests/test_login_app.py::TestFunctionalLogin::test_empty_password PASSED [ 30%]
+tests/test_login_app.py::TestFunctionalLogin::test_rate_limiting_activates_after_5_failures PASSED [ 33%]
+tests/test_login_app.py::TestFunctionalLogin::test_rate_limit_resets_on_success PASSED [ 36%]
+tests/test_login_app.py::TestFunctionalLogin::test_login_returns_user_field_on_success PASSED [ 39%]
+tests/test_login_app.py::TestFunctionalLogin::test_missing_json_body PASSED [ 42%]
+tests/test_login_app.py::TestSessionManagement::test_profile_requires_auth PASSED [ 45%]
+tests/test_login_app.py::TestSessionManagement::test_authenticated_profile_access PASSED [ 48%]
+tests/test_login_app.py::TestSessionManagement::test_admin_profile_shows_admin_role PASSED [ 51%]
+tests/test_login_app.py::TestSessionManagement::test_logout_clears_session PASSED [ 54%]
+tests/test_login_app.py::TestSessionManagement::test_logout_requires_auth PASSED [ 57%]
+tests/test_login_app.py::TestSessionManagement::test_logout_returns_success_message PASSED [ 60%]
+tests/test_login_app.py::TestAuthorization::test_admin_accesses_admin_endpoint PASSED [ 63%]
+tests/test_login_app.py::TestAuthorization::test_non_admin_blocked_from_admin PASSED [ 66%]
+tests/test_login_app.py::TestAuthorization::test_unauthenticated_admin_endpoint_returns_401 PASSED [ 69%]
+tests/test_login_app.py::TestSecurity::test_sql_injection_username PASSED [ 72%]
+tests/test_login_app.py::TestSecurity::test_sql_injection_password PASSED [ 75%]
+tests/test_login_app.py::TestSecurity::test_password_not_in_response PASSED [ 78%]
+tests/test_login_app.py::TestSecurity::test_password_hash_not_in_response PASSED [ 81%]
+tests/test_login_app.py::TestSecurity::test_xss_payload_in_username PASSED [ 84%]
+tests/test_login_app.py::TestSecurity::test_null_bytes_in_credentials PASSED [ 87%]
+tests/test_login_app.py::TestSecurity::test_very_long_username PASSED    [ 90%]
+tests/test_login_app.py::TestSecurity::test_very_long_password PASSED    [ 93%]
+tests/test_login_app.py::TestSecurity::test_json_injection_nested_objects PASSED [ 96%]
+tests/test_login_app.py::TestSecurity::test_rate_limit_not_bypassed_by_username_case PASSED [100%]
+
+============================== 33 passed in 0.20s ==============================

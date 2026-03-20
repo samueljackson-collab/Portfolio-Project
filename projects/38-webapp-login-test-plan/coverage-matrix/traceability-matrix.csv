@@ -1,0 +1,28 @@
+Requirement ID,Requirement Description,Test Cases,Coverage %,Status
+REQ-F001,System shall authenticate valid users with correct credentials,TC-F001,100%,Pass
+REQ-F002,System shall reject invalid credentials with 401 response,TC-F002 TC-F006 TC-F007,100%,Pass
+REQ-F003,System shall lock account after 5 failed attempts with 429 response,TC-F003 TC-S003 TC-F012,100%,Pass
+REQ-F004,System shall create a session on successful login,TC-F004,100%,Pass
+REQ-F005,System shall clear the session on logout,TC-F005 TC-F015,100%,Pass
+REQ-F006,System shall handle missing or malformed request body gracefully,TC-F008 TC-F013,100%,Pass
+REQ-F007,System shall return user role in profile response,TC-F009 TC-F010,100%,Pass
+REQ-F008,Health endpoint shall return 200 without authentication,TC-F011,100%,Pass
+REQ-F009,System shall accept and return application/json content type,TC-A001 TC-F013,100%,Pass
+REQ-S001,System shall not be vulnerable to SQL injection via login fields,TC-S001,100%,Pass
+REQ-S002,System shall protect against XSS via login fields,TC-S002,100%,Pass
+REQ-S003,System shall enforce rate limiting per IP address,TC-S003 TC-S005,100%,Pass
+REQ-S004,System shall not be vulnerable to session fixation attacks,TC-S004,100%,Pass
+REQ-S005,Rate limiting lockout shall trigger precisely at threshold,TC-S005,100%,Pass
+REQ-S006,System shall not reveal whether a username exists (user enumeration),TC-S006,100%,Pass
+REQ-S007,System shall never return password or password hash in any response,TC-S007,100%,Pass
+REQ-S008,Error messages shall not expose internal implementation details,TC-S008,100%,Pass
+REQ-S009,Login endpoint shall reject non-POST HTTP methods with 405,TC-S009,100%,Pass
+REQ-S010,Session cookie shall have appropriate security attributes,TC-S010,Partial,Pass
+REQ-S011,System shall not include permissive CORS headers on protected endpoints,TC-S011,100%,Pass
+REQ-S012,Profile endpoint shall reject unauthenticated and tampered requests,TC-S012 TC-F004,100%,Pass
+REQ-P001,Login endpoint shall respond within 200ms at P95 under normal load,TC-P001 TC-P002,100%,Pass
+REQ-P002,Health endpoint shall respond within 10ms on average,TC-P003,100%,Pass
+REQ-P003,Profile endpoint shall respond within 50ms on average under load,TC-P005,100%,Pass
+REQ-A001,API responses shall use application/json Content-Type,TC-A001,100%,Pass
+REQ-A002,Error messages shall be human-readable without technical jargon,TC-A002,100%,Pass
+REQ-A003,Response structure shall be consistent across all endpoints,TC-A003,100%,Pass

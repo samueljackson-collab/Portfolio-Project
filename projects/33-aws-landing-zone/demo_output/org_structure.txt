@@ -1,0 +1,49 @@
+AWS Organization: o-abc1234567
+├── Root (r-ab12)
+│   ├── Security OU (ou-ab12-sec00001)
+│   │   ├── Account: security-audit (123456789012)
+│   │   └── Account: log-archive (234567890123)
+│   ├── Infrastructure OU (ou-ab12-inf00001)
+│   │   └── Account: shared-services (345678901234)
+│   ├── Workloads OU (ou-ab12-wrk00001)
+│   │   ├── Production OU (ou-ab12-prd00001)
+│   │   └── Non-Production OU (ou-ab12-npd00001)
+│   └── Sandbox OU (ou-ab12-sbx00001)
+│       └── Account: sandbox-dev (456789012345)
+
+SCPs Applied:
+  - deny-root-actions      → Root (all accounts)
+  - require-mfa            → Root (all accounts)
+  - restrict-regions       → Workloads OU
+  - deny-internet-gateways → Security OU
+
+Trusted AWS Services Enabled:
+  - cloudtrail.amazonaws.com
+  - config.amazonaws.com
+  - sso.amazonaws.com
+  - securityhub.amazonaws.com
+  - guardduty.amazonaws.com
+  - access-analyzer.amazonaws.com
+  - account.amazonaws.com
+
+$ aws organizations list-accounts --query 'Accounts[*].[Id,Name,Status]' --output table
+-----------------------------------------------------
+|                    ListAccounts                   |
++----------------+------------------+---------------+
+| 123456789000   | Management       | ACTIVE        |
+| 123456789012   | security-audit   | ACTIVE        |
+| 234567890123   | log-archive      | ACTIVE        |
+| 345678901234   | shared-services  | ACTIVE        |
+| 456789012345   | sandbox-dev      | ACTIVE        |
++----------------+------------------+---------------+
+
+$ aws organizations list-policies --filter SERVICE_CONTROL_POLICY \
+    --query 'Policies[*].[Id,Name,Description]' --output table
+---------------------------------------------------------------------------
+|                          ListPolicies                                    |
++----------------------+----------------------+---------------------------+
+| p-deny0001           | DenyRootActions      | Denies root account...    |
+| p-mfa00001           | RequireMFA           | Requires MFA for...       |
+| p-rgn00001           | RestrictRegions      | Restricts deployments...  |
+| p-igw00001           | DenyInternetGateways | Prevents creation of...   |
++----------------------+----------------------+---------------------------+

@@ -1,0 +1,188 @@
+---
+# ansible/roles/kali-setup/tasks/main.yml
+# Kali Linux security tool configuration and workspace setup
+
+- name: Update Kali package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install additional Kali tools via apt
+  ansible.builtin.apt:
+    name:
+      - kali-tools-top10
+      - kali-tools-web
+      - kali-tools-passwords
+      - kali-tools-forensics
+      - kali-tools-wireless
+      - golang
+      - ruby
+      - ruby-dev
+      - libpcap-dev
+      - libssl-dev
+    state: present
+  ignore_errors: true  # Some meta-packages may not be available in all Kali releases
+
+# ── Metasploit workspace configuration ───────────────────────────────────────
+- name: Ensure PostgreSQL is started (for Metasploit)
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: true
+  ignore_errors: true
+
+- name: Initialise Metasploit database
+  ansible.builtin.command: msfdb init
+  args:
+    creates: /usr/share/metasploit-framework/.msf4/db
+  become: true
+  become_user: root
+  ignore_errors: true
+
+- name: Create MSF workspace directory for vagrant user
+  ansible.builtin.file:
+    path: /home/vagrant/.msf4/workspaces
+    state: directory
+    owner: vagrant
+    group: vagrant
+    mode: "0750"
+
+- name: Create lab MSF workspace config
+  ansible.builtin.copy:
+    dest: /home/vagrant/.msf4/workspaces/portfolio-lab.rc
+    owner: vagrant
+    group: vagrant
+    mode: "0640"
+    content: |
+      workspace -a portfolio-lab
+      workspace portfolio-lab
+      setg RHOSTS 192.168.56.0/24
+      setg LHOST 192.168.56.20
+
+# ── Wordlists ─────────────────────────────────────────────────────────────────
+- name: Extract rockyou.txt if compressed
+  ansible.builtin.command:
+    cmd: gunzip -k /usr/share/wordlists/rockyou.txt.gz
+    creates: /usr/share/wordlists/rockyou.txt
+  ignore_errors: true
+  when: install_wordlists | default(true)
+
+- name: Create symlink to SecLists (if installed)
+  ansible.builtin.file:
+    src: /usr/share/seclists
+    dest: /home/vagrant/wordlists
+    state: link
+    owner: vagrant
+    group: vagrant
+  ignore_errors: true
+
+# ── Proxychains4 configuration ────────────────────────────────────────────────
+- name: Install proxychains4
+  ansible.builtin.apt:
+    name: proxychains4
+    state: present
+
+- name: Configure proxychains4 for lab use
+  ansible.builtin.copy:
+    dest: /etc/proxychains4.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # proxychains4.conf — portfolio lab configuration
+      strict_chain
+      proxy_dns
+      remote_dns_subnet 224
+      tcp_read_time_out 15000
+      tcp_connect_time_out 8000
+      [ProxyList]
+      # Add SOCKS5/HTTP proxies below for chaining
+      # socks5 127.0.0.1 9050  # Tor
+  when: configure_proxychains | default(false)
+
+# ── Tool configuration directory ──────────────────────────────────────────────
+- name: Create lab tools config directory
+  ansible.builtin.file:
+    path: /home/vagrant/lab-tools
+    state: directory
+    owner: vagrant
+    group: vagrant
+    mode: "0755"
+
+- name: Create target inventory file
+  ansible.builtin.copy:
+    dest: /home/vagrant/lab-tools/targets.txt
+    owner: vagrant
+    group: vagrant
+    mode: "0640"
+    content: |
+      # Lab target inventory
+      # Host          | IP             | OS              | Services
+      ubuntu-22       192.168.56.10    Ubuntu 22.04 LTS  SSH,HTTP,Docker
+      debian-12       192.168.56.30    Debian 12         SSH
+
+- name: Create nmap scan helper script
+  ansible.builtin.copy:
+    dest: /home/vagrant/lab-tools/scan-lab.sh
+    owner: vagrant
+    group: vagrant
+    mode: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # scan-lab.sh — Quick nmap scan of the lab network
+      set -euo pipefail
+      echo "[*] Scanning lab network 192.168.56.0/24 ..."
+      nmap -sV -sC -O --open -T4 192.168.56.0/24 \
+           -oN /home/vagrant/lab-tools/scan-$(date +%Y%m%d-%H%M%S).txt
+      echo "[*] Scan complete. Results saved."
+
+# ── Zsh shell configuration ───────────────────────────────────────────────────
+- name: Set default shell to zsh for vagrant user
+  ansible.builtin.user:
+    name: vagrant
+    shell: /usr/bin/zsh
+
+- name: Deploy .zshrc for vagrant
+  ansible.builtin.copy:
+    dest: /home/vagrant/.zshrc
+    owner: vagrant
+    group: vagrant
+    mode: "0644"
+    content: |
+      # Kali Lab .zshrc
+      export HISTSIZE=10000
+      export HISTFILESIZE=20000
+      export PATH=$PATH:/usr/share/metasploit-framework:/usr/sbin
+
+      # Aliases
+      alias ll='ls -alF'
+      alias nse='ls /usr/share/nmap/scripts/ | grep'
+      alias msf='msfconsole -r ~/.msf4/workspaces/portfolio-lab.rc'
+      alias scan='~/lab-tools/scan-lab.sh'
+
+      # Plugins
+      source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null || true
+      source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null || true
+
+      # Prompt
+      PROMPT='%F{red}[kali-lab]%f %F{green}%~%f %# '
+
+# ── Verify key tools ──────────────────────────────────────────────────────────
+- name: Verify metasploit is installed
+  ansible.builtin.command: msfconsole --version
+  register: msf_version
+  changed_when: false
+  failed_when: false
+
+- name: Report Metasploit version
+  ansible.builtin.debug:
+    msg: "Metasploit: {{ msf_version.stdout | default('Not found') }}"
+
+- name: Verify nmap is installed
+  ansible.builtin.command: nmap --version
+  register: nmap_version
+  changed_when: false
+
+- name: Report nmap version
+  ansible.builtin.debug:
+    msg: "nmap: {{ nmap_version.stdout_lines[0] | default('Not found') }}"

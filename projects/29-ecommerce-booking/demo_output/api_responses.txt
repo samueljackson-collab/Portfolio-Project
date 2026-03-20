@@ -1,0 +1,27 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-7.4.3, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /home/user/Portfolio-Project/projects/29-ecommerce-booking
+plugins: anyio-3.7.1
+collecting ... collected 18 items
+
+tests/test_api.py::test_health_check PASSED                              [  5%]
+tests/test_api.py::test_list_products PASSED                             [ 11%]
+tests/test_api.py::test_filter_products_by_category PASSED               [ 16%]
+tests/test_api.py::test_filter_products_by_price PASSED                  [ 22%]
+tests/test_api.py::test_get_product_by_id PASSED                         [ 27%]
+tests/test_api.py::test_get_product_not_found PASSED                     [ 33%]
+tests/test_api.py::test_create_product PASSED                            [ 38%]
+tests/test_api.py::test_create_product_duplicate_sku PASSED              [ 44%]
+tests/test_api.py::test_list_orders PASSED                               [ 50%]
+tests/test_api.py::test_get_order_by_id PASSED                           [ 55%]
+tests/test_api.py::test_create_order PASSED                              [ 61%]
+tests/test_api.py::test_create_order_invalid_user PASSED                 [ 66%]
+tests/test_api.py::test_list_bookings PASSED                             [ 72%]
+tests/test_api.py::test_filter_bookings_by_resource PASSED               [ 77%]
+tests/test_api.py::test_get_booking PASSED                               [ 83%]
+tests/test_api.py::test_create_booking PASSED                            [ 88%]
+tests/test_api.py::test_booking_overlap_rejected PASSED                  [ 94%]
+tests/test_api.py::test_delete_booking PASSED                            [100%]
+
+============================== 18 passed in 1.04s ==============================

@@ -1,0 +1,39 @@
+====================================================================
+  QA GATE COMPLIANCE REPORT
+  Project: p01-aws-infra
+====================================================================
+
+  CODE QUALITY
+  --------------------------------------------------
+  ✅ [GATE-001] Python Format Check
+  ✅ [GATE-002] Python Lint
+  ✅ [GATE-003] Python Type Check
+  ✅ [GATE-011] Terraform Format
+       19 Terraform file(s) found
+  ✅ [GATE-012] Terraform Validate
+       19 Terraform file(s), variables.tf: ✓
+  ⚠️  [GATE-013] Dockerfile Lint
+       Dockerfile issues: missing USER directive, missing HEALTHCHECK
+
+  TESTING
+  --------------------------------------------------
+  ✅ [GATE-004] Unit Tests
+       5 test file(s) found
+  ✅ [GATE-005] Test Coverage
+       Coverage gate: ≥ 80% required
+  ✅ [GATE-006] Integration Tests
+       5 test file(s) found
+
+  SECURITY
+  --------------------------------------------------
+  ✅ [GATE-007] SAST Security Scan
+  ✅ [GATE-008] Dependency Vulnerability Scan
+  ⚠️  [GATE-009] Container Image Scan
+       Dockerfile issues: missing USER directive, missing HEALTHCHECK
+  ✅ [GATE-010] IaC Security Scan
+
+  ==================================================
+  Summary: 11 passed, 2 warned, 0 skipped, 0 failed
+  Total gates evaluated: 13
+  ✅ All applicable gates passed — PR eligible for merge.
+====================================================================

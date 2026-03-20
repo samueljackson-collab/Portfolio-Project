@@ -1,0 +1,205 @@
+version: '3.8'
+
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Zookeeper (required by Kafka)
+  # ─────────────────────────────────────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: siem-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Kafka broker
+  # ─────────────────────────────────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: siem-kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 72
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Kafka topic provisioner (one-shot init container)
+  # ─────────────────────────────────────────────────────────────────────────────
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: siem-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic security-events       --replication-factor 1 --partitions 3
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic network-flows         --replication-factor 1 --partitions 3
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic endpoint-telemetry   --replication-factor 1 --partitions 3
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic siem-critical-alerts --replication-factor 1 --partitions 1
+      echo 'Kafka topics created.'
+      "
+    restart: "no"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Elasticsearch
+  # ─────────────────────────────────────────────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: siem-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.license.self_generated.type=basic
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - bootstrap.memory_lock=true
+      - cluster.name=siem-cluster
+      - node.name=siem-node-01
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Elasticsearch index template loader (one-shot)
+  # ─────────────────────────────────────────────────────────────────────────────
+  es-setup:
+    image: curlimages/curl:8.4.0
+    container_name: siem-es-setup
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./elasticsearch/index-templates:/templates:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      echo 'Loading index template...'
+      curl -s -X PUT 'http://elasticsearch:9200/_index_template/security-events' \
+        -H 'Content-Type: application/json' \
+        -d @/templates/security-events.json
+      echo 'Index template loaded.'
+      curl -s -X PUT 'http://elasticsearch:9200/_ilm/policy/security-events-ilm' \
+        -H 'Content-Type: application/json' \
+        -d '{
+          \"policy\": {
+            \"phases\": {
+              \"hot\":    {\"min_age\": \"0ms\", \"actions\": {\"rollover\": {\"max_size\": \"10gb\", \"max_age\": \"1d\"}}},
+              \"warm\":   {\"min_age\": \"7d\",  \"actions\": {\"allocate\": {\"number_of_replicas\": 0}, \"forcemerge\": {\"max_num_segments\": 1}}},
+              \"cold\":   {\"min_age\": \"30d\", \"actions\": {\"freeze\": {}}},
+              \"delete\": {\"min_age\": \"90d\", \"actions\": {\"delete\": {}}}
+            }
+          }
+        }'
+      echo 'ILM policy applied.'
+      "
+    restart: "no"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Logstash
+  # ─────────────────────────────────────────────────────────────────────────────
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.1
+    container_name: siem-logstash
+    restart: unless-stopped
+    ports:
+      - "5044:5044"
+      - "5140:5140/udp"
+      - "5140:5140/tcp"
+      - "5000:5000"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - logstash-alerts:/var/log/logstash/alerts
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+      - PIPELINE_WORKERS=2
+      - PIPELINE_BATCH_SIZE=125
+      - PIPELINE_BATCH_DELAY=50
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9600/_node/stats | grep -q 'pipeline'"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Kibana
+  # ─────────────────────────────────────────────────────────────────────────────
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.1
+    container_name: siem-kibana
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a6c10925682e591bffcab6911c06786d
+      - SERVER_NAME=siem-kibana
+      - LOGGING_ROOT_LEVEL=warn
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q 'available'"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+
+volumes:
+  esdata:
+    driver: local
+  logstash-alerts:
+    driver: local
+
+networks:
+  default:
+    name: siem-network
+    driver: bridge

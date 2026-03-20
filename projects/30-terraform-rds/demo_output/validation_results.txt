@@ -1,0 +1,33 @@
+=== Terraform RDS Module Validation ===
+Project root: /home/user/Portfolio-Project/projects/30-terraform-rds
+
+[PASS] modules/rds/main.tf exists
+[PASS] modules/rds/variables.tf exists
+[PASS] modules/rds/outputs.tf exists
+[PASS] modules/rds/versions.tf exists
+
+[PASS] aws_db_instance resource found in main.tf
+[PASS] aws_db_subnet_group resource found in main.tf
+[PASS] aws_security_group resource found in main.tf
+[PASS] aws_cloudwatch_metric_alarm resource found in main.tf
+[PASS] aws_secretsmanager_secret resource found in main.tf
+[PASS] aws_db_parameter_group resource found in main.tf
+[PASS] aws_iam_role resource found in main.tf
+
+[PASS] Output 'db_instance_endpoint' defined
+[PASS] Output 'db_instance_port' defined
+[PASS] Output 'db_instance_id' defined
+[PASS] Output 'db_instance_arn' defined
+[PASS] Output 'db_subnet_group_name' defined
+[PASS] Output 'security_group_id' defined
+[PASS] Output 'secret_arn' defined
+
+[PASS] All 18 required variables defined
+
+[PASS] examples/postgres/main.tf exists
+[PASS] examples/mysql/main.tf exists
+[PASS] versions.tf contains required_version constraint
+[PASS] versions.tf specifies hashicorp/aws provider
+
+==========================================
+23/23 checks passed

@@ -1,0 +1,317 @@
+---
+# roles/ad-domain/tasks/main.yml
+# Ansible role tasks for configuring a Windows Server as an Active Directory
+# Domain Controller. Handles: feature installation, domain promotion,
+# DNS configuration, site/subnet creation, OU structure, and post-config checks.
+#
+# Role Variables (set in defaults/main.yml or passed at play level):
+#   ad_domain_name        - FQDN of the domain (corp.contoso.local)
+#   ad_domain_netbios     - NetBIOS name (CONTOSO)
+#   ad_safe_mode_password - DSRM password (vault-encrypted)
+#   ad_db_path            - NTDS database path
+#   ad_log_path           - NTDS log path
+#   ad_sysvol_path        - SYSVOL path
+#   ad_forest_level       - Forest functional level (WinThreshold)
+#   ad_domain_level       - Domain functional level (WinThreshold)
+#   ad_site_name          - Primary AD site name
+
+# ---------------------------------------------------------------------------
+# 1. Pre-flight checks
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Check OS version is supported"
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == "Windows"
+      - ansible_distribution_major_version | int >= 10
+    fail_msg: "This role requires Windows Server 2016 or newer"
+    success_msg: "OS check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+- name: "AD-DOMAIN | Check static IP is configured"
+  ansible.windows.win_powershell:
+    script: |
+      $adapters = Get-NetIPAddress -AddressFamily IPv4 |
+        Where-Object { $_.InterfaceAlias -notmatch 'Loopback' -and $_.PrefixOrigin -eq 'Manual' }
+      if ($adapters.Count -eq 0) {
+        Write-Error "No static IP configured — required for DC"
+        exit 1
+      }
+      Write-Output "Static IP: $($adapters[0].IPAddress)"
+  register: static_ip_check
+
+- name: "AD-DOMAIN | Display static IP"
+  ansible.builtin.debug:
+    msg: "{{ static_ip_check.output }}"
+
+# ---------------------------------------------------------------------------
+# 2. Install Windows Features
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Install AD-Domain-Services feature"
+  ansible.windows.win_feature:
+    name: AD-Domain-Services
+    state: present
+    include_management_tools: true
+  register: adds_feature
+
+- name: "AD-DOMAIN | Install DNS Server feature"
+  ansible.windows.win_feature:
+    name: DNS
+    state: present
+    include_management_tools: true
+  register: dns_feature
+
+- name: "AD-DOMAIN | Install GPMC feature"
+  ansible.windows.win_feature:
+    name: GPMC
+    state: present
+
+- name: "AD-DOMAIN | Reboot if features required restart"
+  ansible.windows.win_reboot:
+    reboot_timeout: 600
+    post_reboot_delay: 30
+  when: adds_feature.reboot_required or dns_feature.reboot_required
+
+# ---------------------------------------------------------------------------
+# 3. Promote to Domain Controller
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Check if already a Domain Controller"
+  ansible.windows.win_powershell:
+    script: |
+      $isDC = (Get-WmiObject Win32_ComputerSystem).DomainRole -in @(4, 5)
+      Write-Output $isDC
+  register: is_dc_check
+
+- name: "AD-DOMAIN | Set is_domain_controller fact"
+  ansible.builtin.set_fact:
+    is_domain_controller: "{{ 'True' in is_dc_check.output }}"
+
+- name: "AD-DOMAIN | Promote server to Domain Controller (new forest)"
+  ansible.windows.win_powershell:
+    script: |
+      $safeModePassword = ConvertTo-SecureString "{{ ad_safe_mode_password }}" -AsPlainText -Force
+      Install-ADDSForest `
+        -DomainName "{{ ad_domain_name }}" `
+        -DomainNetBIOSName "{{ ad_domain_netbios }}" `
+        -SafeModeAdministratorPassword $safeModePassword `
+        -DatabasePath "{{ ad_db_path | default('C:\\Windows\\NTDS') }}" `
+        -LogPath "{{ ad_log_path | default('C:\\Windows\\NTDS') }}" `
+        -SysvolPath "{{ ad_sysvol_path | default('C:\\Windows\\SYSVOL') }}" `
+        -ForestMode "{{ ad_forest_level | default('WinThreshold') }}" `
+        -DomainMode "{{ ad_domain_level | default('WinThreshold') }}" `
+        -InstallDns:$true `
+        -NoRebootOnCompletion:$false `
+        -Force:$true `
+        -Confirm:$false
+  register: domain_promotion
+  when: not is_domain_controller
+  no_log: true
+
+- name: "AD-DOMAIN | Wait for server to come back after promotion reboot"
+  ansible.builtin.wait_for_connection:
+    delay: 60
+    timeout: 600
+  when: not is_domain_controller
+
+# ---------------------------------------------------------------------------
+# 4. Wait for AD services to be ready
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Wait for ADWS to respond"
+  ansible.windows.win_powershell:
+    script: |
+      $maxWait = 300
+      $elapsed = 0
+      do {
+        Start-Sleep -Seconds 10
+        $elapsed += 10
+        try {
+          $domain = Get-ADDomain -ErrorAction Stop
+          Write-Output "Domain ready: $($domain.DNSRoot)"
+          exit 0
+        } catch {
+          Write-Output "Waiting for AD... ($elapsed seconds elapsed)"
+        }
+      } while ($elapsed -lt $maxWait)
+      Write-Error "AD did not become ready within $maxWait seconds"
+      exit 1
+  register: ad_ready_check
+
+- name: "AD-DOMAIN | Display AD readiness status"
+  ansible.builtin.debug:
+    msg: "{{ ad_ready_check.output }}"
+
+# ---------------------------------------------------------------------------
+# 5. Configure AD Sites and Services
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Create primary site"
+  ansible.windows.win_powershell:
+    script: |
+      $site = Get-ADReplicationSite -Filter "Name -eq '{{ ad_site_name }}'" -ErrorAction SilentlyContinue
+      if (-not $site) {
+        New-ADReplicationSite -Name "{{ ad_site_name }}" -Description "Primary HQ site"
+        Write-Output "Site '{{ ad_site_name }}' created"
+      } else {
+        Write-Output "Site '{{ ad_site_name }}' already exists"
+      }
+
+- name: "AD-DOMAIN | Create subnet for HQ site"
+  ansible.windows.win_powershell:
+    script: |
+      $subnet = Get-ADReplicationSubnet -Filter "Name -eq '192.168.10.0/24'" -ErrorAction SilentlyContinue
+      if (-not $subnet) {
+        New-ADReplicationSubnet -Name "192.168.10.0/24" -Site "{{ ad_site_name }}" -Description "HQ Server VLAN"
+        Write-Output "Subnet 192.168.10.0/24 created"
+      }
+      $subnet2 = Get-ADReplicationSubnet -Filter "Name -eq '192.168.20.0/24'" -ErrorAction SilentlyContinue
+      if (-not $subnet2) {
+        New-ADReplicationSubnet -Name "192.168.20.0/24" -Site "{{ ad_site_name }}" -Description "Server VLAN"
+        Write-Output "Subnet 192.168.20.0/24 created"
+      }
+      $subnet3 = Get-ADReplicationSubnet -Filter "Name -eq '192.168.30.0/24'" -ErrorAction SilentlyContinue
+      if (-not $subnet3) {
+        New-ADReplicationSubnet -Name "192.168.30.0/24" -Site "{{ ad_site_name }}" -Description "Workstation VLAN"
+        Write-Output "Subnet 192.168.30.0/24 created"
+      }
+
+# ---------------------------------------------------------------------------
+# 6. Build OU structure
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Create top-level OUs"
+  ansible.windows.win_powershell:
+    script: |
+      $domainDN = (Get-ADDomain).DistinguishedName
+      $ous = @(
+        @{ Name = "IT";             Path = $domainDN;              Desc = "Information Technology" },
+        @{ Name = "HR";             Path = $domainDN;              Desc = "Human Resources" },
+        @{ Name = "Finance";        Path = $domainDN;              Desc = "Finance Department" },
+        @{ Name = "Operations";     Path = $domainDN;              Desc = "Operations Department" },
+        @{ Name = "ServiceAccounts";Path = $domainDN;              Desc = "Service accounts" },
+        @{ Name = "Servers";        Path = $domainDN;              Desc = "Server objects" },
+        @{ Name = "Workstations";   Path = $domainDN;              Desc = "Workstation objects" },
+        @{ Name = "Security";       Path = $domainDN;              Desc = "Security groups" }
+      )
+      foreach ($ou in $ous) {
+        $existing = Get-ADOrganizationalUnit -Filter "Name -eq '$($ou.Name)'" -SearchBase $ou.Path -SearchScope OneLevel -ErrorAction SilentlyContinue
+        if (-not $existing) {
+          New-ADOrganizationalUnit -Name $ou.Name -Path $ou.Path -Description $ou.Desc
+          Write-Output "Created OU: $($ou.Name)"
+        } else {
+          Write-Output "OU exists: $($ou.Name)"
+        }
+      }
+
+- name: "AD-DOMAIN | Create sub-OUs under IT"
+  ansible.windows.win_powershell:
+    script: |
+      $domainDN = (Get-ADDomain).DistinguishedName
+      $itOU = "OU=IT,$domainDN"
+      $subOUs = @(
+        @{ Name = "Admins";    Desc = "IT Administrators" },
+        @{ Name = "Help-Desk"; Desc = "Help Desk Technicians" },
+        @{ Name = "DevOps";    Desc = "DevOps Engineers" }
+      )
+      foreach ($ou in $subOUs) {
+        $existing = Get-ADOrganizationalUnit -Filter "Name -eq '$($ou.Name)'" -SearchBase $itOU -SearchScope OneLevel -ErrorAction SilentlyContinue
+        if (-not $existing) {
+          New-ADOrganizationalUnit -Name $ou.Name -Path $itOU -Description $ou.Desc
+          Write-Output "Created sub-OU: $($ou.Name) under IT"
+        }
+      }
+
+- name: "AD-DOMAIN | Create sub-OUs under Servers"
+  ansible.windows.win_powershell:
+    script: |
+      $domainDN = (Get-ADDomain).DistinguishedName
+      $serverOU = "OU=Servers,$domainDN"
+      $subOUs = @(
+        @{ Name = "AppServers";  Desc = "Application servers" },
+        @{ Name = "WebServers";  Desc = "Web/IIS servers" },
+        @{ Name = "DBServers";   Desc = "Database servers" },
+        @{ Name = "FileServers"; Desc = "File servers" }
+      )
+      foreach ($ou in $subOUs) {
+        $existing = Get-ADOrganizationalUnit -Filter "Name -eq '$($ou.Name)'" -SearchBase $serverOU -SearchScope OneLevel -ErrorAction SilentlyContinue
+        if (-not $existing) {
+          New-ADOrganizationalUnit -Name $ou.Name -Path $serverOU -Description $ou.Desc
+          Write-Output "Created sub-OU: $($ou.Name) under Servers"
+        }
+      }
+
+# ---------------------------------------------------------------------------
+# 7. Enable AD Recycle Bin
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Enable Active Directory Recycle Bin"
+  ansible.windows.win_powershell:
+    script: |
+      $feature = Get-ADOptionalFeature -Filter "Name -eq 'Recycle Bin Feature'"
+      if ($feature.EnabledScopes.Count -eq 0) {
+        Enable-ADOptionalFeature "Recycle Bin Feature" `
+          -Scope ForestOrConfigurationSet `
+          -Target "{{ ad_domain_name }}" `
+          -Confirm:$false
+        Write-Output "AD Recycle Bin enabled"
+      } else {
+        Write-Output "AD Recycle Bin already enabled"
+      }
+
+# ---------------------------------------------------------------------------
+# 8. Configure DNS forwarders
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Configure DNS forwarders (8.8.8.8, 8.8.4.4)"
+  ansible.windows.win_powershell:
+    script: |
+      Set-DnsServerForwarder -IPAddress 8.8.8.8, 8.8.4.4 -PassThru
+      Write-Output "DNS forwarders configured"
+
+- name: "AD-DOMAIN | Create DNS reverse lookup zone for server subnet"
+  ansible.windows.win_powershell:
+    script: |
+      $zone = Get-DnsServerZone -Name "20.168.192.in-addr.arpa" -ErrorAction SilentlyContinue
+      if (-not $zone) {
+        Add-DnsServerPrimaryZone -NetworkID "192.168.20.0/24" -ReplicationScope "Domain"
+        Write-Output "Reverse lookup zone for 192.168.20.0/24 created"
+      } else {
+        Write-Output "Reverse lookup zone already exists"
+      }
+
+# ---------------------------------------------------------------------------
+# 9. Verification
+# ---------------------------------------------------------------------------
+
+- name: "AD-DOMAIN | Run dcdiag tests"
+  ansible.windows.win_powershell:
+    script: |
+      dcdiag /test:replications /test:netlogons /test:services /test:dns
+  register: dcdiag_output
+  changed_when: false
+  ignore_errors: true
+
+- name: "AD-DOMAIN | Display dcdiag results"
+  ansible.builtin.debug:
+    msg: "{{ dcdiag_output.output | default([]) }}"
+
+- name: "AD-DOMAIN | Final domain summary"
+  ansible.windows.win_powershell:
+    script: |
+      $domain  = Get-ADDomain
+      $forest  = Get-ADForest
+      $dcCount = (Get-ADDomainController -Filter *).Count
+      Write-Output "Domain         : $($domain.DNSRoot)"
+      Write-Output "NetBIOS        : $($domain.NetBIOSName)"
+      Write-Output "Forest Level   : $($forest.ForestMode)"
+      Write-Output "Domain Level   : $($domain.DomainMode)"
+      Write-Output "DC Count       : $dcCount"
+      Write-Output "PDC Emulator   : $($domain.PDCEmulator)"
+      Write-Output "RID Master     : $($domain.RIDMaster)"
+      Write-Output "Infra Master   : $($domain.InfrastructureMaster)"
+  register: domain_summary
+
+- name: "AD-DOMAIN | Print domain summary"
+  ansible.builtin.debug:
+    msg: "{{ domain_summary.output }}"

@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "name": "Sony WH-1000XM5 Wireless Headphones",
+    "category": "electronics",
+    "price": 349.99,
+    "stock": 42,
+    "description": "Industry-leading noise canceling with Auto NC Optimizer, 30-hour battery life, Speak-to-Chat technology.",
+    "sku": "PRD-001"
+  },
+  {
+    "id": 2,
+    "name": "Apple iPad Air 5th Generation",
+    "category": "electronics",
+    "price": 749.00,
+    "stock": 18,
+    "description": "M1 chip, 10.9-inch Liquid Retina display, 5G capable, USB-C connector.",
+    "sku": "PRD-002"
+  },
+  {
+    "id": 3,
+    "name": "Logitech MX Master 3S Mouse",
+    "category": "electronics",
+    "price": 99.99,
+    "stock": 75,
+    "description": "8K DPI sensor, quiet clicks, MagSpeed electromagnetic scrolling, works on any surface.",
+    "sku": "PRD-003"
+  },
+  {
+    "id": 4,
+    "name": "Samsung 27-inch 4K Monitor",
+    "category": "electronics",
+    "price": 429.95,
+    "stock": 23,
+    "description": "UHD 4K resolution, 60Hz refresh rate, HDR10, USB-C connectivity, adjustable stand.",
+    "sku": "PRD-004"
+  },
+  {
+    "id": 5,
+    "name": "Clean Code by Robert C. Martin",
+    "category": "books",
+    "price": 38.99,
+    "stock": 120,
+    "description": "A handbook of agile software craftsmanship. Essential reading for every software developer.",
+    "sku": "PRD-005"
+  },
+  {
+    "id": 6,
+    "name": "Designing Data-Intensive Applications",
+    "category": "books",
+    "price": 54.99,
+    "stock": 85,
+    "description": "By Martin Kleppmann. The big ideas behind reliable, scalable, and maintainable systems.",
+    "sku": "PRD-006"
+  },
+  {
+    "id": 7,
+    "name": "The Pragmatic Programmer 20th Anniversary",
+    "category": "books",
+    "price": 49.99,
+    "stock": 67,
+    "description": "By David Thomas and Andrew Hunt. Your journey to mastery, updated for modern development.",
+    "sku": "PRD-007"
+  },
+  {
+    "id": 8,
+    "name": "Patagonia Better Sweater Fleece Jacket",
+    "category": "clothing",
+    "price": 139.00,
+    "stock": 34,
+    "description": "Classic fleece jacket made from 100% recycled polyester. Fair Trade Certified sewn.",
+    "sku": "PRD-008"
+  },
+  {
+    "id": 9,
+    "name": "Levi's 511 Slim Fit Jeans",
+    "category": "clothing",
+    "price": 69.50,
+    "stock": 98,
+    "description": "Slim fit through the thigh and leg opening. Sits below the waist. Stretch denim.",
+    "sku": "PRD-009"
+  },
+  {
+    "id": 10,
+    "name": "Allbirds Men's Tree Runners",
+    "category": "clothing",
+    "price": 118.00,
+    "stock": 56,
+    "description": "Made with FSC-certified eucalyptus tree fiber. Lightweight, breathable, machine washable.",
+    "sku": "PRD-010"
+  }
+]
