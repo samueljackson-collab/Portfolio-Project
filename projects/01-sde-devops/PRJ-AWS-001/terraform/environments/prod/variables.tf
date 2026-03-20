@@ -30,7 +30,16 @@ variable "max_size" { type = number default = 4 }
 variable "app_port" { type = number default = 8080 }
 variable "health_check_path" { type = string default = "/healthz" }
 variable "target_cpu_utilization" { type = number default = 50 }
-variable "db_port" { type = number default = 3306 }
+variable "db_port" {
+  description = "Port used by the database engine (propagates to security groups and NACL rules)"
+  type        = number
+  default     = 3306
+
+  validation {
+    condition     = var.db_port >= 1 && var.db_port <= 65535
+    error_message = "Database port must be between 1 and 65535."
+  }
+}
 
 variable "db_name" { type = string default = "appdb" }
 variable "db_engine" { type = string default = "mysql" }
