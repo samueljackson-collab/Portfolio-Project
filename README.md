@@ -764,6 +764,10 @@ Backup Server.
 [Dashboards](./projects/01-sde-devops/PRJ-SDE-002/assets/README.md) ·  
 [Screenshots/Logs](./projects/01-sde-devops/PRJ-SDE-002/assets/screenshots/README.md)
 
+### AWS Multi-Tier Production Infrastructure
+**Description** Terraform-built, multi-AZ reference architecture with autoscaling web tier, Multi-AZ PostgreSQL, CloudWatch/CloudTrail observability, and AWS Backup runbooks tuned for SaaS reliability.
+**Links**: [Repo/Folder](./projects/02-cloud-architecture/PRJ-CLOUD-002/) · [Architecture](./projects/02-cloud-architecture/PRJ-CLOUD-002/docs/architecture.md) · [Operations](./projects/02-cloud-architecture/PRJ-CLOUD-002/docs/operations.md)
+
 ---
 
 ## 🟢 Previously Planned/In-Progress — Now Complete
