@@ -743,6 +743,10 @@ for isolated IoT, guest, and trusted networks.
 [Evidence/Diagrams](./projects/06-homelab/PRJ-HOME-001/assets/README.md) ·  
 [Screenshots/Logs](./projects/06-homelab/PRJ-HOME-001/assets/screenshots/README.md)
 
+### Enterprise Architecture & Operations Diagrams
+**Description** Multi-region AWS reference architecture covering infrastructure, CI/CD, monitoring, security, and data flow patterns used across active projects.
+**Links**: [Interactive Diagrams](./projects/02-cloud-architecture/PRJ-CLOUD-001/index.html)
+
 ### Virtualization & Core Services
 
 **Status:** 🟢 Complete · 📝 Docs pending
