@@ -118,6 +118,9 @@ criteria, and regression checklists. Builds monitoring dashboards for golden sig
 
 </details>
 
+### 📘 Enterprise Architecture Guide
+- **[Enterprise Architecture & Implementation Guide](./docs/enterprise-architecture.md)** — Production-ready blueprint covering system design, infrastructure, security, testing, and operations for the portfolio platform.
+
 ---
 
 ## 🧪 Validation & Evidence Workflow
