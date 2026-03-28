@@ -1,0 +1,47 @@
+site_name: "Samuel Jackson — Security & DevOps Portfolio"
+repo_url: "https://github.com/samueljackson-collab/Portfolio-Project"
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - tables
+  - footnotes
+  - def_list
+nav:
+  - Home: index.md
+  - Portfolio: PROJECT_INDEX.md
+  - Red Team:
+      - "Red Team Project 1 (slug: p-rt-01)": red-team/p-rt-01.md
+      - "Red Team Project 2 (slug: p-rt-02)": red-team/p-rt-02.md
+      - "Red Team Project 3 (slug: p-rt-03)": red-team/p-rt-03.md
+      - "Red Team Project 4 (slug: p-rt-04)": red-team/p-rt-04.md
+      - "Red Team Project 5 (slug: p-rt-05)": red-team/p-rt-05.md
+  - Blue Team:
+      - "Blue Team Project 1 (slug: p-bt-01)": blue-team/p-bt-01.md
+      - "Blue Team Project 2 (slug: p-bt-02)": blue-team/p-bt-02.md
+      - "Blue Team Project 3 (slug: p-bt-03)": blue-team/p-bt-03.md
+      - "Blue Team Project 4 (slug: p-bt-04)": blue-team/p-bt-04.md
+      - "Blue Team Project 5 (slug: p-bt-05)": blue-team/p-bt-05.md
+  - Cloud Security:
+      - "Cloud Security Project 1 (slug: p-cs-01)": cloud-security/p-cs-01.md
+      - "Cloud Security Project 2 (slug: p-cs-02)": cloud-security/p-cs-02.md
+      - "Cloud Security Project 3 (slug: p-cs-03)": cloud-security/p-cs-03.md
+      - "Cloud Security Project 4 (slug: p-cs-04)": cloud-security/p-cs-04.md
+      - "Cloud Security Project 5 (slug: p-cs-05)": cloud-security/p-cs-05.md
+  - DevOps / SRE:
+      - "DevOps/SRE Project 1 (slug: p-devops-01)": devops/p-devops-01.md
+      - "DevOps/SRE Project 2 (slug: p-devops-02)": devops/p-devops-02.md
+      - "DevOps/SRE Project 3 (slug: p-devops-03)": devops/p-devops-03.md
+      - "DevOps/SRE Project 4 (slug: p-devops-04)": devops/p-devops-04.md
+      - "DevOps/SRE Project 5 (slug: p-devops-05)": devops/p-devops-05.md
+  - GRC:
+      - "GRC Project 1 (slug: p-grc-01)": grc/p-grc-01.md
+      - "GRC Project 2 (slug: p-grc-02)": grc/p-grc-02.md
+      - "GRC Project 3 (slug: p-grc-03)": grc/p-grc-03.md
+      - "GRC Project 4 (slug: p-grc-04)": grc/p-grc-04.md
+      - "GRC Project 5 (slug: p-grc-05)": grc/p-grc-05.md
