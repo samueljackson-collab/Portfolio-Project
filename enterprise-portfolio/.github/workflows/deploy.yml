@@ -1,0 +1,39 @@
+name: Portfolio CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'enterprise-portfolio/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: enterprise-portfolio
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Validate portfolio structure
+        run: ./scripts/portfolio-validator.py
+
+      - name: Run project validations
+        run: ./scripts/validate-deployment.sh
+
+      - name: Terraform fmt check
+        run: terraform fmt -recursive -check
+
+      - name: List projects
+        run: ./scripts/list-projects.sh
