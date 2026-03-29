@@ -118,6 +118,9 @@ criteria, and regression checklists. Builds monitoring dashboards for golden sig
 
 </details>
 
+## 📊 Success Metrics & Analytics Operations
+Success criteria, dashboards, alert routing, and data-quality rituals for the portfolio are documented in [docs/success-metrics.md](./docs/success-metrics.md).
+
 ---
 
 ## 🧪 Validation & Evidence Workflow
