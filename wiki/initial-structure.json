@@ -1,0 +1,37 @@
+[
+  {
+    "title": "Home",
+    "slug": "home",
+    "content": "# Portfolio Home\nWelcome to the 25-project portfolio. Track progress, links, and evidence here.",
+    "isPublished": true,
+    "parent": null
+  },
+  {
+    "title": "Projects",
+    "slug": "projects",
+    "content": "# Projects\nIndex of all projects with links to docs, code, and runbooks.",
+    "isPublished": true,
+    "parent": "home"
+  },
+  {
+    "title": "P01 - CloudFormation VPC",
+    "slug": "projects/p01-cloudformation-vpc",
+    "content": "## P01\nDeploy playbook for IAM baseline and VPC with NAT gateways and subnet groups.",
+    "isPublished": true,
+    "parent": "projects"
+  },
+  {
+    "title": "P03 - CI/CD GitOps",
+    "slug": "projects/p03-cicd-gitops",
+    "content": "## P03\nArgoCD-driven pipeline with canary rollout and security gates.",
+    "isPublished": true,
+    "parent": "projects"
+  },
+  {
+    "title": "P25 - Observability",
+    "slug": "projects/p25-observability",
+    "content": "## P25\nPrometheus, Grafana, and Jaeger baseline with alerts and dashboards.",
+    "isPublished": true,
+    "parent": "projects"
+  }
+]
