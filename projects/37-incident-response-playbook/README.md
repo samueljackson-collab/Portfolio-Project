@@ -101,3 +101,21 @@ SLA table, communication templates, incident ticket and PIR templates, timeline 
 - Communication frameworks for executives, legal, and customers
 - Python automation for incident timeline analysis
 - Tabletop exercise and PIR documentation
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Release Prep — 🟠 In Progress |
+| Next milestone date | 2026-08-09 |
+| Owner | SRE Team |
+| Dependency / blocker | Dependency on shared platform backlog for 37-incident-response-playbook |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-08-09 | SRE Team | 🟠 In Progress | Advance core deliverables for 37-incident-response-playbook. |
+| Milestone 2: validation and evidence update | 2026-09-19 | SRE Team | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

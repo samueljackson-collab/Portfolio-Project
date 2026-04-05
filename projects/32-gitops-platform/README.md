@@ -290,3 +290,21 @@ Plan: 5 to add, 0 to change, 0 to destroy.
 └── tests/
     └── test_manifests.py # 71 pytest tests — all pass
 ```
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Hardening — 🔄 Recovery/Rebuild |
+| Next milestone date | 2026-03-14 |
+| Owner | DevOps Guild |
+| Dependency / blocker | Dependency on shared platform backlog for 32-gitops-platform |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-03-14 | DevOps Guild | 🔄 Recovery/Rebuild | Advance core deliverables for 32-gitops-platform. |
+| Milestone 2: validation and evidence update | 2026-04-24 | DevOps Guild | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

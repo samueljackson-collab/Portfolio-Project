@@ -55,6 +55,48 @@ def run_git_command(args: list[str]) -> str:
     return completed.stdout.strip()
 
 
+def load_metadata(metadata_file: Path) -> dict[str, dict[str, object]]:
+    payload = json.loads(metadata_file.read_text(encoding="utf-8"))
+    return payload.get("projects", {})
+
+
+def discover_project_readmes() -> list[str]:
+    return sorted(path.relative_to(REPO_ROOT).as_posix() for path in (REPO_ROOT / "projects").glob("*/README.md"))
+
+
+def validate_project_metadata(metadata_file: Path) -> list[str]:
+    errors: list[str] = []
+    metadata = load_metadata(metadata_file)
+    project_readmes = discover_project_readmes()
+
+    for readme in project_readmes:
+        item = metadata.get(readme)
+        if not item:
+            errors.append(f"missing_project_metadata:{readme}")
+            continue
+
+        if not str(item.get("phase_status", "")).strip():
+            errors.append(f"missing_phase_status:{readme}")
+        if not str(item.get("next_milestone_date", "")).strip():
+            errors.append(f"missing_next_milestone_date:{readme}")
+        if not str(item.get("owner", "")).strip():
+            errors.append(f"missing_owner:{readme}")
+        if not str(item.get("dependency_blocker", "")).strip():
+            errors.append(f"missing_dependency_blocker:{readme}")
+
+        roadmap = item.get("roadmap", [])
+        if not roadmap:
+            errors.append(f"missing_roadmap_rows:{readme}")
+            continue
+        for idx, milestone in enumerate(roadmap, start=1):
+            if not str(milestone.get("target_date", "")).strip():
+                errors.append(f"missing_roadmap_target_date:{readme}:row{idx}")
+            if not str(milestone.get("owner", "")).strip():
+                errors.append(f"missing_roadmap_owner:{readme}:row{idx}")
+
+    return errors
+
+
 def discover_readmes(mode: str, base_ref: str) -> list[Path]:
     if mode == "full":
         return sorted(
@@ -183,6 +225,12 @@ def main() -> int:
         default="origin/main",
         help="Git base ref for changed mode (default: origin/main)",
     )
+    parser.add_argument(
+        "--metadata-file",
+        type=Path,
+        default=Path("scripts/readme_migration/project_status_metadata.json"),
+        help="Path to centralized project metadata JSON.",
+    )
     args = parser.parse_args()
 
     try:
@@ -192,6 +240,7 @@ def main() -> int:
         return 2
 
     results = [validate_readme(path) for path in readmes]
+    metadata_errors = validate_project_metadata((REPO_ROOT / args.metadata_file).resolve())
     non_compliant = [item for item in results if not item["compliant"]]
 
     report = {
@@ -199,15 +248,22 @@ def main() -> int:
         "base_ref": args.base_ref if args.mode == "changed" else None,
         "checked_files": len(results),
         "non_compliant_files": len(non_compliant),
+        "metadata_errors": metadata_errors,
         "files": results,
     }
 
     print(json.dumps(report, indent=2))
     print()
 
+    if metadata_errors:
+        print("README metadata validation summary: issues detected:")
+        for error in metadata_errors:
+            print(f"- {error}")
+        print()
+
     if not results:
         print("README template validation summary: no README files matched the selected scope.")
-    elif not non_compliant:
+    elif not non_compliant and not metadata_errors:
         print("README template validation summary: all checked README files are compliant.")
     else:
         print("README template validation summary: non-compliant README files detected:")
@@ -215,7 +271,7 @@ def main() -> int:
             errors = ", ".join(item["errors"])
             print(f"- {item['path']}: {errors}")
 
-    return 1 if non_compliant else 0
+    return 1 if non_compliant or metadata_errors else 0
 
 
 if __name__ == "__main__":

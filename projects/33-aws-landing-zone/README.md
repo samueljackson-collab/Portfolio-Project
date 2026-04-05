@@ -304,3 +304,21 @@ Full output: [`demo_output/scp_validation.txt`](demo_output/scp_validation.txt)
 - **Account vending** — Documented process for creating new accounts in under 30 minutes
 - **Network segmentation** — Transit Gateway hub-and-spoke design with Security OU isolated from internet
 - **Compliance by default** — New accounts inherit SCPs from parent OU automatically
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Release Prep — 🟠 In Progress |
+| Next milestone date | 2026-04-17 |
+| Owner | QA Automation |
+| Dependency / blocker | Dependency on shared platform backlog for 33-aws-landing-zone |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-04-17 | QA Automation | 🟠 In Progress | Advance core deliverables for 33-aws-landing-zone. |
+| Milestone 2: validation and evidence update | 2026-05-27 | QA Automation | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

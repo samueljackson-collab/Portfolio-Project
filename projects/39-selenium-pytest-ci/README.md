@@ -178,3 +178,21 @@ Full output in [`demo_output/test_run.txt`](demo_output/test_run.txt) and [`demo
 - **GitHub Actions CI** — automated test execution and coverage reporting on every commit
 - **97% code coverage** — only the `if __name__ == "__main__"` guard is untested (expected)
 - **Real Selenium readiness** — POM classes use `selenium.webdriver` and are drop-in ready for Chrome/Firefox with WebDriver installed
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Build — 🔵 Planned |
+| Next milestone date | 2026-09-12 |
+| Owner | DevOps Guild |
+| Dependency / blocker | Dependency on shared platform backlog for 39-selenium-pytest-ci |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-09-12 | DevOps Guild | 🔵 Planned | Advance core deliverables for 39-selenium-pytest-ci. |
+| Milestone 2: validation and evidence update | 2026-10-22 | DevOps Guild | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->
