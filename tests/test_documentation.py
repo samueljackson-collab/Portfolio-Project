@@ -586,3 +586,75 @@ class TestDocumentationMetadata:
             assert (
                 len(title_text) > 10
             ), f"{runbook.name} has too short a title: '{title_text}'"
+
+
+class TestRootReadmeGovernance:
+    """Policy checks that keep root README maintainable and current-state focused."""
+
+    ROOT_README_MAX_LINES = 700
+    REQUIRED_CURRENT_STATE_SECTIONS = [
+        "## ⚡ Quick Navigation",
+        "## 🧪 Validation & Evidence Workflow",
+        "## 📊 Current Portfolio State (Actionable)",
+    ]
+    REQUIRED_ACTIONABLE_REFERENCES = [
+        "PORTFOLIO_VALIDATION.md",
+        "docs/runbooks/README.md",
+        "docs/evidence-tracker.md",
+        "tests/README.md",
+    ]
+
+    def test_root_readme_max_size(self):
+        """Root README should stay within a maintainable line-count budget."""
+        readme = BASE_PATH / "README.md"
+        content = readme.read_text()
+        line_count = len(content.splitlines())
+
+        assert line_count <= self.ROOT_README_MAX_LINES, (
+            f"README.md is too large ({line_count} lines). "
+            f"Maximum allowed is {self.ROOT_README_MAX_LINES} lines."
+        )
+
+    def test_root_readme_has_required_current_state_sections(self):
+        """Root README should include required current-state operational sections."""
+        readme = BASE_PATH / "README.md"
+        content = readme.read_text()
+
+        missing_sections = [
+            section
+            for section in self.REQUIRED_CURRENT_STATE_SECTIONS
+            if section not in content
+        ]
+        assert not missing_sections, (
+            "README.md is missing required current-state sections: "
+            + ", ".join(missing_sections)
+        )
+
+    def test_root_readme_current_state_quality(self):
+        """Current-state section should contain concrete, actionable links."""
+        readme = BASE_PATH / "README.md"
+        content = readme.read_text()
+
+        section_match = re.search(
+            r"## 📊 Current Portfolio State \(Actionable\)\s+(.*?)(?=\n## |\Z)",
+            content,
+            re.DOTALL,
+        )
+        assert section_match, "README.md missing 'Current Portfolio State (Actionable)'"
+
+        section_content = section_match.group(1).strip()
+        # Basic quality floor: enough text to be useful, not a placeholder.
+        assert len(section_content) >= 250, (
+            "Current Portfolio State (Actionable) section is too short. "
+            "Add actionable runbook/test/evidence guidance."
+        )
+
+        missing_references = [
+            ref
+            for ref in self.REQUIRED_ACTIONABLE_REFERENCES
+            if ref not in section_content
+        ]
+        assert not missing_references, (
+            "Current-state section is missing actionable references: "
+            + ", ".join(missing_references)
+        )
