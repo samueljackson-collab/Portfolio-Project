@@ -379,7 +379,7 @@ def download():
         requested_path = (base_dir / filename).resolve()
 
         # Ensure the resolved path is within the base directory
-        if not str(requested_path).startswith(str(base_dir)):
+        if not requested_path.is_relative_to(base_dir):
             logger.warning(f"Path traversal attempt: {filename}")
             return jsonify({'error': 'Access denied'}), 403
 
