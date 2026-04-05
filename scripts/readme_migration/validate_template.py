@@ -8,9 +8,11 @@ import json
 import re
 import subprocess
 import sys
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import unquote
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -34,6 +36,14 @@ TABLE_REQUIRED_SECTIONS: dict[str, str] = {
     "roadmap": "roadmap",
     "documentation_freshness": "documentation_freshness",
 }
+
+LOCAL_LINK_SECTION_PATTERNS: tuple[str, ...] = (
+    r"evidence\s+index",
+    r"setup\s*&\s*runbook",
+    r"delivery\s*&\s*observability",
+)
+
+MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
 @dataclass
@@ -173,6 +183,52 @@ def has_non_empty_table(section_lines: list[str]) -> bool:
     return False
 
 
+def iter_section_headings(headings: list[Heading], patterns: Iterable[str]) -> Iterator[Heading]:
+    compiled = [re.compile(pattern, flags=re.IGNORECASE) for pattern in patterns]
+    for heading in headings:
+        if any(regex.search(heading.title) for regex in compiled):
+            yield heading
+
+
+def normalize_markdown_target(target: str) -> str:
+    candidate = target.strip()
+    if candidate.startswith("<") and candidate.endswith(">"):
+        candidate = candidate[1:-1].strip()
+    if " " in candidate:
+        candidate = candidate.split(" ", 1)[0]
+    candidate = candidate.split("#", 1)[0]
+    candidate = candidate.split("?", 1)[0]
+    return unquote(candidate)
+
+
+def is_local_relative_target(target: str) -> bool:
+    if not target:
+        return False
+    lowered = target.lower()
+    if target.startswith("#") or target.startswith("/"):
+        return False
+    if "://" in target or lowered.startswith("mailto:"):
+        return False
+    return True
+
+
+def find_broken_local_links(path: Path, lines: list[str], headings: list[Heading]) -> list[str]:
+    errors: list[str] = []
+    for heading in iter_section_headings(headings, LOCAL_LINK_SECTION_PATTERNS):
+        for line_no, line in enumerate(lines[heading.start:heading.end], start=heading.start + 1):
+            for match in MARKDOWN_LINK_PATTERN.finditer(line):
+                target = normalize_markdown_target(match.group(1))
+                if not is_local_relative_target(target):
+                    continue
+                link_path = (path.parent / target).resolve()
+                if link_path.exists():
+                    continue
+                errors.append(
+                    f"broken_local_link:{line_no}:{heading.title}:{target}"
+                )
+    return errors
+
+
 def validate_readme(path: Path) -> dict[str, object]:
     content = path.read_bytes().decode("utf-8", errors="replace")
     lines = content.splitlines()
@@ -209,6 +265,8 @@ def validate_readme(path: Path) -> dict[str, object]:
         section_lines = lines[section_heading.start:section_heading.end]
         if not has_non_empty_table(section_lines):
             errors.append(f"missing_non_empty_table:{table_name}")
+
+    errors.extend(find_broken_local_links(path, lines, headings))
 
     return {
         "path": str(path.relative_to(REPO_ROOT)),

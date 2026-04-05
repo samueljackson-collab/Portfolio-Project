@@ -256,9 +256,9 @@ flowchart LR
 
 ## 📎 Evidence Index
 - [Repository root](./)
-- [Documentation directory](./docs/)
-- [Tests directory](./tests/)
-- [CI workflows](./.github/workflows/)
+- [Documentation directory](../docs/)
+- [Tests directory](../tests/)
+- [CI workflows](../.github/workflows/)
 - [Project implementation files](./)
 
 ## 🧾 Documentation Freshness
@@ -279,4 +279,3 @@ flowchart LR
 - [ ] Roadmap includes next milestones
 - [ ] Evidence links resolve correctly
 - [ ] README reflects current implementation state
-
