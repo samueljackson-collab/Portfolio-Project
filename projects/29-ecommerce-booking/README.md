@@ -481,3 +481,21 @@ tests/test_api.py::test_delete_booking PASSED                            [100%]
 - Docker Compose for single-command deployment
 - Environment variable configuration for database URL
 - ASGI server (Uvicorn) for production-ready serving
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Hardening — 🔄 Recovery/Rebuild |
+| Next milestone date | 2026-11-22 |
+| Owner | Platform Team |
+| Dependency / blocker | Dependency on shared platform backlog for 29-ecommerce-booking |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-11-22 | Platform Team | 🔄 Recovery/Rebuild | Advance core deliverables for 29-ecommerce-booking. |
+| Milestone 2: validation and evidence update | 2026-12-28 | Platform Team | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

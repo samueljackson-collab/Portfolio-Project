@@ -250,3 +250,21 @@ Full output in [demo_output/ad_report.txt](demo_output/ad_report.txt)
 │   └── test_configs.py        # pytest validation suite
 └── README.md
 ```
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Build — 🔵 Planned |
+| Next milestone date | 2026-05-20 |
+| Owner | Platform Team |
+| Dependency / blocker | Dependency on shared platform backlog for 34-active-directory-automation |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-05-20 | Platform Team | 🔵 Planned | Advance core deliverables for 34-active-directory-automation. |
+| Milestone 2: validation and evidence update | 2026-06-28 | Platform Team | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

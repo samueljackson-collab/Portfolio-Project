@@ -416,3 +416,21 @@ bash scripts/run_validation.sh
 │   └── validation_results.txt
 └── README.md
 ```
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Build — 🔵 Planned |
+| Next milestone date | 2026-01-08 |
+| Owner | Security Engineering |
+| Dependency / blocker | Dependency on shared platform backlog for 30-terraform-rds |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-01-08 | Security Engineering | 🔵 Planned | Advance core deliverables for 30-terraform-rds. |
+| Milestone 2: validation and evidence update | 2026-02-18 | Security Engineering | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

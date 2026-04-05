@@ -244,3 +244,21 @@ The template includes a "Tips for Customization" section with a pre-flight check
 | **Shell Scripting** | `generate_pdf_index.sh` uses portable Bash for cross-platform file metadata extraction |
 | **Documentation** | This README: diagrams, tables, instructions — written for a real hiring audience |
 | **Career Strategy** | Multi-track resume system demonstrates understanding of targeted job searching |
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Integration — 🟢 Delivered |
+| Next milestone date | 2026-02-11 |
+| Owner | SRE Team |
+| Dependency / blocker | Dependency on shared platform backlog for 31-resume-set |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-02-11 | SRE Team | 🟢 Delivered | Advance core deliverables for 31-resume-set. |
+| Milestone 2: validation and evidence update | 2026-03-21 | SRE Team | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

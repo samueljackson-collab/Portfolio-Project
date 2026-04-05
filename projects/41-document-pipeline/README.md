@@ -226,3 +226,21 @@ gen.export_index()  # writes document_index.csv
 - **ZIP packaging with manifest** — `pdf_packager.py` creates distributable bundles with a machine-readable `manifest.json` for downstream consumers
 - **Comprehensive tests** — 18 pytest tests covering template loading, Markdown output correctness, CSV headers, file existence, and ZIP integrity
 - **Zero heavy dependencies** — only `pyyaml` required; no PDF libraries, no Excel libraries, no web frameworks
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Release Prep — 🟠 In Progress |
+| Next milestone date | 2026-12-21 |
+| Owner | Data Engineering |
+| Dependency / blocker | Dependency on shared platform backlog for 41-document-pipeline |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-12-21 | Data Engineering | 🟠 In Progress | Advance core deliverables for 41-document-pipeline. |
+| Milestone 2: validation and evidence update | 2026-01-28 | Data Engineering | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

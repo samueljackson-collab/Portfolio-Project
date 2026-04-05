@@ -165,3 +165,21 @@ Full template: [`elasticsearch/index-templates/security-events.json`](elasticsea
 - Log normalisation and enrichment pipeline design
 - Detection engineering: threshold logic, field conditions, false positive suppression
 - Blue team tooling: SOC dashboard layout and alert triage workflow
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Integration — 🟢 Delivered |
+| Next milestone date | 2026-06-23 |
+| Owner | Data Engineering |
+| Dependency / blocker | Dependency on shared platform backlog for 35-siem-pipeline |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-06-23 | Data Engineering | 🟢 Delivered | Advance core deliverables for 35-siem-pipeline. |
+| Milestone 2: validation and evidence update | 2026-07-28 | Data Engineering | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

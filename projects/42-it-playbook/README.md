@@ -99,3 +99,21 @@ python -m pytest tests/ -v
 - Patch management policy with CVSS-based SLAs
 - Data governance and decommission process design
 - Completed example artifacts (charter, ADR) showing practical application
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Build — 🔵 Planned |
+| Next milestone date | 2026-01-24 |
+| Owner | Security Engineering |
+| Dependency / blocker | Dependency on shared platform backlog for 42-it-playbook |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-01-24 | Security Engineering | 🔵 Planned | Advance core deliverables for 42-it-playbook. |
+| Milestone 2: validation and evidence update | 2026-02-28 | Security Engineering | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

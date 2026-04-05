@@ -1,0 +1,1588 @@
+{
+  "projects": {
+    "projects/1-aws-infrastructure-automation/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-05-08",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 1-aws-infrastructure-automation",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-05-08",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 1-aws-infrastructure-automation."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-06-18",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/10-blockchain-smart-contract-platform/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-06-11",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 10-blockchain-smart-contract-platform",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-06-11",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 10-blockchain-smart-contract-platform."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-07-21",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/11-iot-data-analytics/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-07-14",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 11-iot-data-analytics",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-07-14",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 11-iot-data-analytics."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-08-24",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/12-quantum-computing/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-08-17",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 12-quantum-computing",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-08-17",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 12-quantum-computing."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-09-27",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/13-advanced-cybersecurity/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-09-20",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for 13-advanced-cybersecurity",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-09-20",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 13-advanced-cybersecurity."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-10-28",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/14-edge-ai-inference/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-10-23",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for 14-edge-ai-inference",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-10-23",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 14-edge-ai-inference."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-11-28",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/15-real-time-collaboration/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-11-26",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 15-real-time-collaboration",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-11-26",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 15-real-time-collaboration."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-12-28",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/16-advanced-data-lake/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-12-09",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 16-advanced-data-lake",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-12-09",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 16-advanced-data-lake."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-01-19",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/17-multi-cloud-service-mesh/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-01-12",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 17-multi-cloud-service-mesh",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-01-12",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 17-multi-cloud-service-mesh."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-02-22",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/18-gpu-accelerated-computing/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-02-15",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 18-gpu-accelerated-computing",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-02-15",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 18-gpu-accelerated-computing."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-03-25",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/19-advanced-kubernetes-operators/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-03-18",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for 19-advanced-kubernetes-operators",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-03-18",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 19-advanced-kubernetes-operators."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-04-28",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/2-database-migration/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-04-21",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for 2-database-migration",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-04-21",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 2-database-migration."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-05-28",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/20-blockchain-oracle-service/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-05-24",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 20-blockchain-oracle-service",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-05-24",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 20-blockchain-oracle-service."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-06-28",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/21-quantum-safe-cryptography/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-06-27",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 21-quantum-safe-cryptography",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-06-27",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 21-quantum-safe-cryptography."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-07-28",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/22-autonomous-devops-platform/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-07-10",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 22-autonomous-devops-platform",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-07-10",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 22-autonomous-devops-platform."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-08-20",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/23-advanced-monitoring/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-08-13",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 23-advanced-monitoring",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-08-13",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 23-advanced-monitoring."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-09-23",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/24-report-generator/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-09-16",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for 24-report-generator",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-09-16",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 24-report-generator."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-10-26",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/25-portfolio-website/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-10-19",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for 25-portfolio-website",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-10-19",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 25-portfolio-website."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-11-28",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/29-ecommerce-booking/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-11-22",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 29-ecommerce-booking",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-11-22",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 29-ecommerce-booking."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-12-28",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/3-kubernetes-cicd/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-12-25",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 3-kubernetes-cicd",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-12-25",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 3-kubernetes-cicd."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-01-28",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/30-terraform-rds/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-01-08",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 30-terraform-rds",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-01-08",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 30-terraform-rds."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-02-18",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/31-resume-set/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-02-11",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 31-resume-set",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-02-11",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 31-resume-set."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-03-21",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/32-gitops-platform/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-03-14",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for 32-gitops-platform",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-03-14",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 32-gitops-platform."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-04-24",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/33-aws-landing-zone/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-04-17",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for 33-aws-landing-zone",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-04-17",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 33-aws-landing-zone."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-05-27",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/34-active-directory-automation/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-05-20",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 34-active-directory-automation",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-05-20",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 34-active-directory-automation."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-06-28",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/35-siem-pipeline/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-06-23",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 35-siem-pipeline",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-06-23",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 35-siem-pipeline."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-07-28",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/36-adversary-emulation/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-07-26",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 36-adversary-emulation",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-07-26",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 36-adversary-emulation."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-08-28",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/37-incident-response-playbook/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-08-09",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 37-incident-response-playbook",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-08-09",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 37-incident-response-playbook."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-09-19",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/39-selenium-pytest-ci/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-09-12",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for 39-selenium-pytest-ci",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-09-12",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 39-selenium-pytest-ci."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-10-22",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/4-devsecops/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-10-15",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for 4-devsecops",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-10-15",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 4-devsecops."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-11-25",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/40-multi-os-lab/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-11-18",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 40-multi-os-lab",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-11-18",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 40-multi-os-lab."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-12-28",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/41-document-pipeline/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-12-21",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 41-document-pipeline",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-12-21",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 41-document-pipeline."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-01-28",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/42-it-playbook/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-01-24",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 42-it-playbook",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-01-24",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 42-it-playbook."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-02-28",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/43-engineers-handbook/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-02-27",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 43-engineers-handbook",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-02-27",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 43-engineers-handbook."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-03-28",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/5-real-time-data-streaming/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-03-10",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for 5-real-time-data-streaming",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-03-10",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 5-real-time-data-streaming."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-04-20",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/6-mlops-platform/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-04-13",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for 6-mlops-platform",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-04-13",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for 6-mlops-platform."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-05-23",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/7-serverless-data-processing/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-05-16",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for 7-serverless-data-processing",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-05-16",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for 7-serverless-data-processing."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-06-26",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/8-advanced-ai-chatbot/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-06-19",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 8-advanced-ai-chatbot",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-06-19",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for 8-advanced-ai-chatbot."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-07-28",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/9-multi-region-disaster-recovery/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-07-22",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for 9-multi-region-disaster-recovery",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-07-22",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for 9-multi-region-disaster-recovery."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-08-28",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/PRJ-HOME-001/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-08-25",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for PRJ-HOME-001",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-08-25",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for PRJ-HOME-001."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-09-28",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/astradup-video-deduplication/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-09-08",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for astradup-video-deduplication",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-09-08",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for astradup-video-deduplication."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-10-18",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/bash-devops-toolkit/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-10-11",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for bash-devops-toolkit",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-10-11",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for bash-devops-toolkit."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-11-21",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/custom-prometheus-exporter/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-11-14",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for custom-prometheus-exporter",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-11-14",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for custom-prometheus-exporter."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-12-24",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/edr-platform/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-12-17",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for edr-platform",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-12-17",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for edr-platform."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-01-27",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/external-pen-test/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-01-20",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for external-pen-test",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-01-20",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for external-pen-test."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-02-28",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/full-scope-red-team/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-02-23",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for full-scope-red-team",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-02-23",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for full-scope-red-team."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-03-28",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/internal-net-pentest/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-03-26",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for internal-net-pentest",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-03-26",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for internal-net-pentest."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-04-28",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/malware-analysis/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-04-09",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for malware-analysis",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-04-09",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for malware-analysis."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-05-19",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p01-aws-infra/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-05-12",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for p01-aws-infra",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-05-12",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for p01-aws-infra."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-06-22",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p02-iam-hardening/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-06-15",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for p02-iam-hardening",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-06-15",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for p02-iam-hardening."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-07-25",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p03-hybrid-network/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-07-18",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for p03-hybrid-network",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-07-18",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for p03-hybrid-network."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-08-28",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p04-ops-monitoring/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-08-21",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for p04-ops-monitoring",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-08-21",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for p04-ops-monitoring."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-09-28",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p05-mobile-testing/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-09-24",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for p05-mobile-testing",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-09-24",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for p05-mobile-testing."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-10-28",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p06-e2e-testing/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-10-27",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for p06-e2e-testing",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-10-27",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for p06-e2e-testing."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-11-28",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p07-roaming-simulation/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-11-10",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for p07-roaming-simulation",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-11-10",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for p07-roaming-simulation."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-12-20",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p08-api-testing/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-12-13",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for p08-api-testing",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-12-13",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for p08-api-testing."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-01-23",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p09-cloud-native-poc/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-01-16",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for p09-cloud-native-poc",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-01-16",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for p09-cloud-native-poc."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-02-26",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p10-multi-region/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-02-19",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for p10-multi-region",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-02-19",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for p10-multi-region."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-03-28",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p11-serverless/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-03-22",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for p11-serverless",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-03-22",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for p11-serverless."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-04-28",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p12-data-pipeline/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-04-25",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for p12-data-pipeline",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-04-25",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for p12-data-pipeline."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-05-28",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p13-ha-webapp/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-05-08",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for p13-ha-webapp",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-05-08",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for p13-ha-webapp."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-06-18",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p14-disaster-recovery/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-06-11",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for p14-disaster-recovery",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-06-11",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for p14-disaster-recovery."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-07-21",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p15-cost-optimization/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-07-14",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for p15-cost-optimization",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-07-14",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for p15-cost-optimization."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-08-24",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p16-zero-trust/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-08-17",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for p16-zero-trust",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-08-17",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for p16-zero-trust."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-09-27",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p17-terraform-multicloud/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-09-20",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for p17-terraform-multicloud",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-09-20",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for p17-terraform-multicloud."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-10-28",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p18-k8s-cicd/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-10-23",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for p18-k8s-cicd",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-10-23",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for p18-k8s-cicd."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-11-28",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p19-security-automation/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-11-26",
+      "owner": "Platform Team",
+      "dependency_blocker": "Dependency on shared platform backlog for p19-security-automation",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-11-26",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for p19-security-automation."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-12-28",
+          "owner": "Platform Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/p20-observability/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-12-09",
+      "owner": "Data Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for p20-observability",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-12-09",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for p20-observability."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-01-19",
+          "owner": "Data Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/ransomware-incident-response/README.md": {
+      "phase_status": "Build \u2014 \ud83d\udd35 Planned",
+      "next_milestone_date": "2026-01-12",
+      "owner": "Security Engineering",
+      "dependency_blocker": "Dependency on shared platform backlog for ransomware-incident-response",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-01-12",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Advance core deliverables for ransomware-incident-response."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-02-22",
+          "owner": "Security Engineering",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/soc-implementation/README.md": {
+      "phase_status": "Integration \u2014 \ud83d\udfe2 Delivered",
+      "next_milestone_date": "2026-02-15",
+      "owner": "SRE Team",
+      "dependency_blocker": "Dependency on shared platform backlog for soc-implementation",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-02-15",
+          "owner": "SRE Team",
+          "status": "\ud83d\udfe2 Delivered",
+          "notes": "Advance core deliverables for soc-implementation."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-03-25",
+          "owner": "SRE Team",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/threat-hunting-program/README.md": {
+      "phase_status": "Hardening \u2014 \ud83d\udd04 Recovery/Rebuild",
+      "next_milestone_date": "2026-03-18",
+      "owner": "DevOps Guild",
+      "dependency_blocker": "Dependency on shared platform backlog for threat-hunting-program",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-03-18",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd04 Recovery/Rebuild",
+          "notes": "Advance core deliverables for threat-hunting-program."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-04-28",
+          "owner": "DevOps Guild",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    },
+    "projects/web-app-assessment/README.md": {
+      "phase_status": "Release Prep \u2014 \ud83d\udfe0 In Progress",
+      "next_milestone_date": "2026-04-21",
+      "owner": "QA Automation",
+      "dependency_blocker": "Dependency on shared platform backlog for web-app-assessment",
+      "roadmap": [
+        {
+          "milestone": "Milestone 1: implementation checkpoint",
+          "target_date": "2026-04-21",
+          "owner": "QA Automation",
+          "status": "\ud83d\udfe0 In Progress",
+          "notes": "Advance core deliverables for web-app-assessment."
+        },
+        {
+          "milestone": "Milestone 2: validation and evidence update",
+          "target_date": "2026-05-28",
+          "owner": "QA Automation",
+          "status": "\ud83d\udd35 Planned",
+          "notes": "Publish test evidence and update runbook links."
+        }
+      ]
+    }
+  }
+}

@@ -253,3 +253,21 @@ Expected output: **70 passed**
 - **Security automation** — Python tooling to load, validate, and execute plans
 - **Documentation quality** — structured YAML schema, methodology docs, test coverage
 - **Defensive security focus** — all work supports defenders, not attackers
+
+## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Hardening — 🔄 Recovery/Rebuild |
+| Next milestone date | 2026-07-26 |
+| Owner | Security Engineering |
+| Dependency / blocker | Dependency on shared platform backlog for 36-adversary-emulation |
+<!-- END AUTO STATUS TABLE -->
+
+## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-07-26 | Security Engineering | 🔄 Recovery/Rebuild | Advance core deliverables for 36-adversary-emulation. |
+| Milestone 2: validation and evidence update | 2026-08-28 | Security Engineering | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->

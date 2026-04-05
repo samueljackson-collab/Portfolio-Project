@@ -13,6 +13,14 @@ Project 25 delivers a centralized documentation website for the full Portfolio-P
 - Integrate deployment and operational visibility via GitHub workflows and Prometheus/Grafana assets.
 
 ## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Integration — 🟢 Delivered |
+| Next milestone date | 2026-10-19 |
+| Owner | QA Automation |
+| Dependency / blocker | Dependency on shared platform backlog for 25-portfolio-website |
+<!-- END AUTO STATUS TABLE -->
 
 | Area | Status | Notes | Next Milestone |
 |---|---|---|---|
@@ -28,7 +36,6 @@ Project 25 delivers a centralized documentation website for the full Portfolio-P
 - 🔵 **Planned**: Approved but not yet started.
 - 🔄 **Recovery/Rebuild**: Being restored, refactored, or remediated.
 - 📝 **Documentation Pending**: Work exists but documentation/evidence needs refresh.
-
 ## 🏗️ Architecture
 The project combines a VitePress-based documentation frontend (`docs/`) with lightweight Python utilities (`src/`) for health verification and smoke-style checks used by tests and container execution flows. Content authors update Markdown source files, VitePress renders and serves/builds the site, and CI/deployment workflows publish artifacts. Monitoring-related configuration files in `prometheus/` and `grafana/` provide observability assets aligned with deployment operations.
 
@@ -123,6 +130,12 @@ flowchart LR
 | Search availability | Runbook-defined health signal | Target 99.5% | Project maintainers |
 
 ## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-10-19 | QA Automation | 🟢 Delivered | Advance core deliverables for 25-portfolio-website. |
+| Milestone 2: validation and evidence update | 2026-11-28 | QA Automation | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->
 
 | Milestone | Status | Target | Owner | Dependency/Blocker |
 |---|---|---|---|---|
@@ -130,7 +143,6 @@ flowchart LR
 | Add docs validation scripts (link check, markdown lint) to `package.json` and CI | 🔵 Planned | Next sprint | Project maintainers | Needs agreed lint/link tooling |
 | Add browser-level E2E smoke for critical documentation paths | 🔵 Planned | Q2 2026 | Project maintainers | Requires test framework selection and CI runtime budget |
 | Publish explicit ownership map for docs/runbook sections | 🔵 Planned | Q2 2026 | Project maintainers | Coordination across contributors |
-
 ## 📎 Evidence Index
 - [Primary docs entrypoint](./docs/index.md)
 - [Portfolio project page](./docs/projects/25-portfolio-website.md)

@@ -13,6 +13,14 @@ This project is part of the Portfolio-Project collection and is documented using
 - Explicit documentation ownership and update cadence.
 
 ## 📌 Scope & Status
+<!-- BEGIN AUTO STATUS TABLE -->
+| Field | Value |
+| --- | --- |
+| Current phase/status | Integration — 🟢 Delivered |
+| Next milestone date | 2026-06-11 |
+| Owner | Data Engineering |
+| Dependency / blocker | Dependency on shared platform backlog for 10-blockchain-smart-contract-platform |
+<!-- END AUTO STATUS TABLE -->
 
 | Area | Status | Notes | Next Milestone |
 |---|---|---|---|
@@ -28,7 +36,6 @@ This project is part of the Portfolio-Project collection and is documented using
 - 🔵 **Planned**: Approved but not yet started.
 - 🔄 **Recovery/Rebuild**: Being restored, refactored, or remediated.
 - 📝 **Documentation Pending**: Work exists but documentation/evidence needs refresh.
-
 ## 🏗️ Architecture
 This project follows a repository-aligned structure with project assets in the local directory, optional source/runtime components, optional tests, and optional infrastructure/deployment definitions. Contributors change project code/docs, validate with local commands, and propagate updates through repository CI/CD workflows where applicable.
 
@@ -117,13 +124,18 @@ flowchart LR
 | Availability/health | Runtime monitoring/runbook checks | Target service/project-specific objective | Project maintainers |
 
 ## 🗺️ Roadmap
+<!-- BEGIN AUTO ROADMAP TABLE -->
+| Milestone | Target date | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Milestone 1: implementation checkpoint | 2026-06-11 | Data Engineering | 🟢 Delivered | Advance core deliverables for 10-blockchain-smart-contract-platform. |
+| Milestone 2: validation and evidence update | 2026-07-21 | Data Engineering | 🔵 Planned | Publish test evidence and update runbook links. |
+<!-- END AUTO ROADMAP TABLE -->
 
 | Milestone | Status | Target | Owner | Dependency/Blocker |
 |---|---|---|---|---|
 | Align README with portfolio standard | 🟢 Done | Current update | Project maintainers | None |
 | Replace placeholder commands with validated commands/results | 🟠 In Progress | Next sprint | Project maintainers | Project-specific runtime/test readiness |
 | Expand quality/observability evidence links | 🔵 Planned | Upcoming milestone | Project maintainers | CI/reporting integration depth |
-
 ## 📎 Evidence Index
 - [README.md](./README.md)
 - [RUNBOOK.md](./RUNBOOK.md)
