@@ -496,22 +496,22 @@ This README has been expanded to align with the portfolio documentation standard
 
 > **Scope note:** This standardization pass is in scope for README structure and transparency. Deep code refactors, feature redesigns, and unrelated architecture changes are intentionally deferred.
 
-## 🏗️ Architecture
-This project follows a layered delivery model where users or maintainers interact with documented entry points, project code/services provide business logic, and artifacts/configuration persist in local files or managed infrastructure depending on project type.
+| Install | `No install step (documentation-only)` | Dependencies installed or not required for this project type. |
+| Run | `No runtime step (documentation-only)` | Runtime entrypoint executes or is documented as not applicable. |
+| Validate | `markdownlint README.md` | Validation command is present for this project layout. |
+| Unit | `Manual review` | Documented (run in project environment) | `./README.md` |
+| Integration | `Manual review` | Documented (run in project environment) | `./README.md` |
+| E2E/Manual | `manual verification` | Documented runbook-based check | `./README.md` |
+| Error rate | CI/runtime logs | No sustained critical failures | @samueljackson-collab |
+| Latency/Runtime health | App metrics or manual verification | Within expected baseline for project type | @samueljackson-collab |
+| Availability | Uptime checks or deployment health | Service/jobs complete successfully | @samueljackson-collab |
 
-```mermaid
-flowchart LR
-  A[Client/User] --> B[Frontend/API or CLI]
-  B --> C[Service or Project Logic]
-  C --> D[(Data/Artifacts/Infrastructure)]
-```
-
-| Component | Responsibility | Key Interfaces |
-|---|---|---|
-| Documentation (`README.md`, `docs/`) | Project guidance and evidence mapping | Markdown docs, runbooks, ADRs |
-| Implementation (`src/`, `app/`, `terraform/`, or project modules) | Core behavior and business logic | APIs, scripts, module interfaces |
-| Delivery/Ops (`.github/`, `scripts/`, tests) | Validation and operational checks | CI workflows, test commands, runbooks |
-
+| README standardization alignment | 🟢 Done | 2026-04-05 | @samueljackson-collab | Placeholder scan and command validation completed |
+| Evidence hardening and command verification | 🟢 Done | 2026-04-05 | @samueljackson-collab | Evidence paths mapped to project-local directories |
+| Documentation quality audit pass | 🟢 Done | 2026-04-05 | @samueljackson-collab | README placeholders removed and validation guardrail added |
+| Per major merge | Update status + milestone notes | @samueljackson-collab |
+| Weekly | Validate links and evidence index | @samueljackson-collab |
+| Monthly | README quality audit | @samueljackson-collab |
 ## 🚀 Setup & Runbook
 
 ### Prerequisites
