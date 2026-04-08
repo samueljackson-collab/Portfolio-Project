@@ -1,0 +1,169 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-api
+  namespace: zero-trust-demo
+  labels:
+    app: demo-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-api
+  template:
+    metadata:
+      labels:
+        app: demo-api
+    spec:
+      containers:
+        - name: api
+          image: hashicorp/http-echo:1.0
+          args:
+            - "-text=demo-api ok"
+            - "-listen=:8080"
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+        - name: opa
+          image: openpolicyagent/opa:0.64.1
+          args:
+            - "run"
+            - "--server"
+            - "--config-file=/config/opa-config.yaml"
+            - "--set=plugins.envoy_ext_authz_grpc.addr=:9191"
+            - "--set=plugins.envoy_ext_authz_grpc.query=data.envoy.authz.allow"
+            - "/config/policy.rego"
+          ports:
+            - containerPort: 8181
+              name: opa-api
+            - containerPort: 9191
+              name: opa-grpc
+          volumeMounts:
+            - name: opa-config
+              mountPath: /config
+      volumes:
+        - name: opa-config
+          configMap:
+            name: opa-demo-policy
+            items:
+              - key: policy.rego
+                path: policy.rego
+              - key: opa-config.yaml
+                path: opa-config.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-api
+  namespace: zero-trust-demo
+  labels:
+    app: demo-api
+spec:
+  selector:
+    app: demo-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-frontend
+  namespace: zero-trust-demo
+  labels:
+    app: demo-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-frontend
+  template:
+    metadata:
+      labels:
+        app: demo-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
+              name: frontend-content
+        - name: opa
+          image: openpolicyagent/opa:0.64.1
+          args:
+            - "run"
+            - "--server"
+            - "--config-file=/config/opa-config.yaml"
+            - "--set=plugins.envoy_ext_authz_grpc.addr=:9191"
+            - "--set=plugins.envoy_ext_authz_grpc.query=data.envoy.authz.allow"
+            - "/config/policy.rego"
+          ports:
+            - containerPort: 8181
+              name: opa-api
+            - containerPort: 9191
+              name: opa-grpc
+          volumeMounts:
+            - name: opa-config
+              mountPath: /config
+      volumes:
+        - name: frontend-content
+          configMap:
+            name: frontend-html
+        - name: opa-config
+          configMap:
+            name: opa-demo-policy
+            items:
+              - key: policy.rego
+                path: policy.rego
+              - key: opa-config.yaml
+                path: opa-config.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-frontend
+  namespace: zero-trust-demo
+  labels:
+    app: demo-frontend
+spec:
+  selector:
+    app: demo-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-html
+  namespace: zero-trust-demo
+  labels:
+    app: demo-frontend
+    component: content
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Zero-Trust Demo Frontend</title>
+      </head>
+      <body>
+        <h1>Zero-Trust Demo</h1>
+        <p>This nginx pod represents a caller with an OPA sidecar. Call the API service with:</p>
+        <pre>curl -H "x-identity: demo-frontend" http://demo-api.zero-trust-demo.svc.cluster.local:8080</pre>
+        <p>Requests missing the header will be denied by OPA according to <code>k8s/opa-config.yaml</code>.</p>
+      </body>
+    </html>
