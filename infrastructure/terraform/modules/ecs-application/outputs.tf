@@ -75,6 +75,92 @@ output "ecs_tasks_security_group_id" {
   value       = aws_security_group.ecs_tasks.id
 }
 
+# Structured outputs for downstream modules and documentation
+output "target_groups" {
+  description = "Structured metadata about the ALB target groups"
+  value = {
+    application = {
+      arn         = aws_lb_target_group.app.arn
+      name        = aws_lb_target_group.app.name
+      port        = aws_lb_target_group.app.port
+      protocol    = aws_lb_target_group.app.protocol
+      target_type = aws_lb_target_group.app.target_type
+      health_check = {
+        path                = aws_lb_target_group.app.health_check[0].path
+        matcher             = aws_lb_target_group.app.health_check[0].matcher
+        interval            = aws_lb_target_group.app.health_check[0].interval
+        timeout             = aws_lb_target_group.app.health_check[0].timeout
+        healthy_threshold   = aws_lb_target_group.app.health_check[0].healthy_threshold
+        unhealthy_threshold = aws_lb_target_group.app.health_check[0].unhealthy_threshold
+      }
+    }
+  }
+}
+
+output "security_groups" {
+  description = "Structured metadata about security groups used by the service"
+  value = {
+    alb = {
+      id          = aws_security_group.alb.id
+      name        = aws_security_group.alb.name
+      description = aws_security_group.alb.description
+      ingress_rules = [for rule in aws_security_group.alb.ingress : {
+        from_port   = rule.from_port
+        to_port     = rule.to_port
+        protocol    = rule.protocol
+        cidr_blocks = try(rule.cidr_blocks, [])
+        security_groups = try(rule.security_groups, [])
+        description = try(rule.description, null)
+      }]
+      egress_rules = [for rule in aws_security_group.alb.egress : {
+        from_port   = rule.from_port
+        to_port     = rule.to_port
+        protocol    = rule.protocol
+        cidr_blocks = try(rule.cidr_blocks, [])
+        description = try(rule.description, null)
+      }]
+    }
+    ecs_tasks = {
+      id          = aws_security_group.ecs_tasks.id
+      name        = aws_security_group.ecs_tasks.name
+      description = aws_security_group.ecs_tasks.description
+      ingress_rules = [for rule in aws_security_group.ecs_tasks.ingress : {
+        from_port   = rule.from_port
+        to_port     = rule.to_port
+        protocol    = rule.protocol
+        cidr_blocks = try(rule.cidr_blocks, [])
+        security_groups = try(rule.security_groups, [])
+        description = try(rule.description, null)
+      }]
+      egress_rules = [for rule in aws_security_group.ecs_tasks.egress : {
+        from_port   = rule.from_port
+        to_port     = rule.to_port
+        protocol    = rule.protocol
+        cidr_blocks = try(rule.cidr_blocks, [])
+        description = try(rule.description, null)
+      }]
+    }
+  }
+}
+
+output "scaling_policies" {
+  description = "Structured metadata about autoscaling policies"
+  value = var.enable_autoscaling ? {
+    cpu = {
+      arn          = aws_appautoscaling_policy.ecs_cpu[0].arn
+      name         = aws_appautoscaling_policy.ecs_cpu[0].name
+      target_value = aws_appautoscaling_policy.ecs_cpu[0].target_tracking_scaling_policy_configuration[0].target_value
+      metric_type  = aws_appautoscaling_policy.ecs_cpu[0].target_tracking_scaling_policy_configuration[0].predefined_metric_specification[0].predefined_metric_type
+    }
+    memory = {
+      arn          = aws_appautoscaling_policy.ecs_memory[0].arn
+      name         = aws_appautoscaling_policy.ecs_memory[0].name
+      target_value = aws_appautoscaling_policy.ecs_memory[0].target_tracking_scaling_policy_configuration[0].target_value
+      metric_type  = aws_appautoscaling_policy.ecs_memory[0].target_tracking_scaling_policy_configuration[0].predefined_metric_specification[0].predefined_metric_type
+    }
+  } : {}
+}
+
 output "cloudwatch_log_group_name" {
   description = "Name of the CloudWatch log group"
   value       = aws_cloudwatch_log_group.app.name
