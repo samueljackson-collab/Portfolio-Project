@@ -104,6 +104,11 @@ variable "db_port" {
   description = "Database port for private subnet NACL rules"
   type        = number
   default     = 3306
+
+  validation {
+    condition     = var.db_port >= 1 && var.db_port <= 65535
+    error_message = "Database port must be between 1 and 65535."
+  }
 }
 
 variable "common_tags" {
