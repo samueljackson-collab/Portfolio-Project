@@ -29,6 +29,9 @@ This project is part of the Portfolio-Project collection and is documented using
 
 > **Scope note:** In scope for this documentation pass is README standardization, section completeness, and explicit status signaling. Deferred to project-specific follow-up are deeper implementation narratives, measured SLO evidence, and expanded automated quality gates where not yet available.
 
+### Evidence
+Deployment and metrics evidence are tracked in [`evidence/README.md`](./evidence/README.md).
+
 
 ### Status Legend
 - 🟢 **Done**: Implemented and validated.
