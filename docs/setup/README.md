@@ -23,7 +23,7 @@ If you have **Docker and Docker Compose** installed, the backend stack (API + da
 git clone https://github.com/samueljackson-collab/portfolio-project.git
 cd portfolio-project/backend
 cp .env.example .env          # fill in POSTGRES_PASSWORD and SECRET_KEY
-docker-compose up --build
+docker compose up --build
 ```
 
 The API will be available at `http://localhost:8000` and the interactive docs at `http://localhost:8000/docs`.
