@@ -1,8 +1,8 @@
-fastapi==0.110.0
-uvicorn==0.27.1
-grpcio==1.62.1
-protobuf==4.25.3
-opentelemetry-api==1.23.0
-opentelemetry-sdk==1.23.0
-opentelemetry-exporter-otlp==1.23.0
-pytest==8.1.1
+fastapi==0.135.3
+uvicorn==0.44.0
+grpcio==1.80.0
+protobuf==7.34.1
+opentelemetry-api==1.41.0
+opentelemetry-sdk==1.41.0
+opentelemetry-exporter-otlp==1.41.0
+pytest==9.0.3
