@@ -23,7 +23,7 @@ import {
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter basename="/portfolio-project">
         <AuthProvider>
           <div className="min-h-screen bg-gray-50">
             <Navbar />

@@ -63,9 +63,8 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.app_name}")
     logger.info(f"Debug mode: {settings.debug}")
 
-    if settings.debug:
-        logger.warning("Running in debug mode - initializing database")
-        await init_db()
+    logger.info("Initializing database tables...")
+    await init_db()
 
     # Warn loudly if the application is using the built-in default secret key.
     # A predictable SECRET_KEY allows an attacker to forge arbitrary JWT tokens.
