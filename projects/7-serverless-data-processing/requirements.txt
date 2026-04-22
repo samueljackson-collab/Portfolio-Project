@@ -1,4 +1,4 @@
-boto3>=1.28
-aws-lambda-powertools>=2.12
-pytest>=7.4
+boto3>=1.42.93
+aws-lambda-powertools>=3.28.0
+pytest>=9.0.3
 boto3>=1.28.0
