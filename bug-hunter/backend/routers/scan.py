@@ -1,8 +1,10 @@
 from __future__ import annotations
 import asyncio
+import json
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
@@ -88,3 +90,73 @@ async def get_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
     findings = list(findings_result.scalars().all())
     session.findings = findings
     return session
+
+
+@router.get("/{scan_id}/events")
+async def scan_events(scan_id: str):
+    """SSE endpoint that streams findings as the scan progresses."""
+
+    async def generate():
+        from database import AsyncSessionLocal
+        sent_ids: set[str] = set()
+
+        async with AsyncSessionLocal() as db:
+            while True:
+                db.expire_all()
+
+                result = await db.execute(select(ScanSession).where(ScanSession.id == scan_id))
+                scan = result.scalar_one_or_none()
+                if not scan:
+                    yield f"data: {json.dumps({'error': 'scan not found'})}\n\n"
+                    break
+
+                findings_result = await db.execute(
+                    select(BugFinding)
+                    .where(BugFinding.session_id == scan_id)
+                    .order_by(BugFinding.severity)
+                )
+                all_findings = list(findings_result.scalars().all())
+                new_findings = [f for f in all_findings if f.id not in sent_ids]
+
+                for f in new_findings:
+                    sent_ids.add(f.id)
+
+                if new_findings or scan.status in ("complete", "failed"):
+                    payload = {
+                        "status": scan.status,
+                        "critical_count": scan.critical_count,
+                        "high_count": scan.high_count,
+                        "medium_count": scan.medium_count,
+                        "low_count": scan.low_count,
+                        "risk_score": scan.risk_score,
+                        "new_findings": [
+                            {
+                                "id": f.id,
+                                "session_id": f.session_id,
+                                "title": f.title,
+                                "description": f.description,
+                                "severity": f.severity,
+                                "category": f.category,
+                                "platform": f.platform,
+                                "line_number": f.line_number,
+                                "code_snippet": f.code_snippet,
+                                "recommendation": f.recommendation,
+                                "cwe_id": f.cwe_id,
+                                "cvss_score": f.cvss_score,
+                                "evidence": f.evidence,
+                            }
+                            for f in new_findings
+                        ],
+                    }
+                    yield f"data: {json.dumps(payload)}\n\n"
+
+                if scan.status in ("complete", "failed"):
+                    break
+
+                await asyncio.sleep(0.5)
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )

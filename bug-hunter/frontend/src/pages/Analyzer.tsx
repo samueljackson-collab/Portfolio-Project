@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { scansApi } from '../api/client'
 import type { Platform, ScanSession, BugFinding } from '../api/types'
 import { PlatformTabBar, PLATFORMS, PLATFORM_CONFIG } from '../components/PlatformTab'
 import { SeverityBadge } from '../components/SeverityBadge'
 import { FindingRow } from '../components/FindingRow'
-import { ProgressBar } from '../components/ProgressBar'
+import { LiveScanFeed, type FeedResult } from '../components/LiveScanFeed'
 
 const PLATFORM_EXTENSIONS: Record<Platform, string> = {
   android: '.java, .kt, .xml',
@@ -28,11 +28,12 @@ type TabState = {
   filename: string
   scanId: string | null
   scanData: ScanSession | null
+  showFeed: boolean
   error: string | null
 }
 
 function makeFreshState(): TabState {
-  return { code: '', filename: '', scanId: null, scanData: null, error: null }
+  return { code: '', filename: '', scanId: null, scanData: null, showFeed: false, error: null }
 }
 
 function FilterBar({
@@ -88,7 +89,6 @@ export function Analyzer() {
   )
   const [submitting, setSubmitting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [search, setSearch] = useState('')
   const [filterSeverity, setFilterSeverity] = useState('')
@@ -106,42 +106,52 @@ export function Analyzer() {
     setFilterCategory('')
   }, [activePlatform])
 
-  useEffect(() => {
-    if (pollingRef.current) clearInterval(pollingRef.current)
-    const { scanId, scanData } = state
-    if (!scanId || scanData?.status === 'complete' || scanData?.status === 'failed') return
-
-    pollingRef.current = setInterval(async () => {
-      try {
-        const data = await scansApi.get(scanId)
-        updateState(activePlatform, { scanData: data })
-        if (data.status === 'complete' || data.status === 'failed') {
-          if (pollingRef.current) clearInterval(pollingRef.current)
-        }
-      } catch { /* noop */ }
-    }, 1500)
-
-    return () => { if (pollingRef.current) clearInterval(pollingRef.current) }
-  }, [state.scanId, state.scanData?.status, activePlatform, updateState])
-
   const handleSubmit = async () => {
     const { code, filename } = state
-    if (!code.trim()) { updateState(activePlatform, { error: 'Please paste or upload code to analyze.' }); return }
+    if (!code.trim()) {
+      updateState(activePlatform, { error: 'Please paste or upload code to analyze.' })
+      return
+    }
     setSubmitting(true)
-    updateState(activePlatform, { error: null, scanId: null, scanData: null })
+    updateState(activePlatform, { error: null, scanId: null, scanData: null, showFeed: false })
     try {
       const session = await scansApi.create({
         platform: activePlatform,
         filename: filename || `unnamed.${activePlatform}`,
         code_content: code,
       })
-      updateState(activePlatform, { scanId: session.id, scanData: session })
+      updateState(activePlatform, { scanId: session.id, scanData: session, showFeed: true })
     } catch {
       updateState(activePlatform, { error: 'Failed to start scan. Is the backend running?' })
     } finally {
       setSubmitting(false)
     }
   }
+
+  const handleFeedComplete = useCallback((result: FeedResult) => {
+    setTabStates(prev => {
+      const cur = prev[activePlatform]
+      return {
+        ...prev,
+        [activePlatform]: {
+          ...cur,
+          showFeed: false,
+          scanData: cur.scanData
+            ? {
+                ...cur.scanData,
+                status:         result.status as ScanSession['status'],
+                critical_count: result.critical_count,
+                high_count:     result.high_count,
+                medium_count:   result.medium_count,
+                low_count:      result.low_count,
+                risk_score:     result.risk_score,
+                findings:       result.findings,
+              }
+            : cur.scanData,
+        },
+      }
+    })
+  }, [activePlatform])
 
   const handleFile = (file: File) => {
     const reader = new FileReader()
@@ -166,12 +176,18 @@ export function Analyzer() {
     if (filterCategory && f.category !== filterCategory) return false
     if (search) {
       const q = search.toLowerCase()
-      return f.title.toLowerCase().includes(q) || f.description.toLowerCase().includes(q) || f.category.toLowerCase().includes(q)
+      return (
+        f.title.toLowerCase().includes(q) ||
+        f.description.toLowerCase().includes(q) ||
+        f.category.toLowerCase().includes(q)
+      )
     }
     return true
   })
 
-  const platformCfg = PLATFORM_CONFIG[activePlatform]
+  const isScanning = state.showFeed ||
+    state.scanData?.status === 'running' ||
+    state.scanData?.status === 'pending'
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -180,7 +196,10 @@ export function Analyzer() {
         <p className="text-gray-500 text-sm mt-1">Select a platform, paste code or upload a file, then run the scanner.</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Input panel — fades while scanning */}
+      <div
+        className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-opacity duration-300 ${isScanning ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}
+      >
         <PlatformTabBar active={activePlatform} onChange={p => setActivePlatform(p)} />
 
         <div className="p-6 space-y-4">
@@ -189,7 +208,7 @@ export function Analyzer() {
               <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Filename</label>
               <input
                 type="text"
-                placeholder={`e.g. MainActivity.java`}
+                placeholder="e.g. MainActivity.java"
                 value={state.filename}
                 onChange={e => updateState(activePlatform, { filename: e.target.value })}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -247,10 +266,7 @@ export function Analyzer() {
           <div className="flex justify-between items-center">
             {state.scanData?.status === 'complete' && (
               <button
-                onClick={() => {
-                  // navigate to report if one exists
-                  navigate(`/scan/${state.scanId}`)
-                }}
+                onClick={() => navigate(`/scan/${state.scanId}`)}
                 className="text-sm text-blue-600 hover:underline"
               >
                 View full scan →
@@ -259,10 +275,10 @@ export function Analyzer() {
             <div className="ml-auto">
               <button
                 onClick={handleSubmit}
-                disabled={submitting || state.scanData?.status === 'running' || state.scanData?.status === 'pending'}
+                disabled={submitting || isScanning}
                 className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-2 rounded-lg text-sm transition-colors"
               >
-                {submitting ? 'Submitting...' : 'Run Scan'}
+                {submitting ? 'Submitting…' : 'Run Scan'}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -272,26 +288,60 @@ export function Analyzer() {
         </div>
       </div>
 
-      {(state.scanData?.status === 'pending' || state.scanData?.status === 'running') && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <ProgressBar label={`Analyzing ${activePlatform} code with ${platformCfg.label} ruleset...`} />
-        </div>
+      {/* Live terminal feed — shown while scan is running via SSE */}
+      {state.showFeed && state.scanId && (
+        <LiveScanFeed
+          scanId={state.scanId}
+          filename={state.filename || 'unnamed'}
+          platform={activePlatform}
+          onComplete={handleFeedComplete}
+        />
       )}
 
-      {state.scanData?.status === 'complete' && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Results panel — appears after feed completes */}
+      {state.scanData?.status === 'complete' && !state.showFeed && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-4">
               <h2 className="font-bold text-gray-900">Scan Results</h2>
               <div className="flex gap-2 text-xs">
-                {state.scanData.critical_count > 0 && <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold">{state.scanData.critical_count} Critical</span>}
-                {state.scanData.high_count > 0 && <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-semibold">{state.scanData.high_count} High</span>}
-                {state.scanData.medium_count > 0 && <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">{state.scanData.medium_count} Medium</span>}
-                {state.scanData.low_count > 0 && <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">{state.scanData.low_count} Low</span>}
+                {(state.scanData.critical_count ?? 0) > 0 && (
+                  <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold">
+                    {state.scanData.critical_count} Critical
+                  </span>
+                )}
+                {(state.scanData.high_count ?? 0) > 0 && (
+                  <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-semibold">
+                    {state.scanData.high_count} High
+                  </span>
+                )}
+                {(state.scanData.medium_count ?? 0) > 0 && (
+                  <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
+                    {state.scanData.medium_count} Medium
+                  </span>
+                )}
+                {(state.scanData.low_count ?? 0) > 0 && (
+                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                    {state.scanData.low_count} Low
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500">Risk Score: <strong className={state.scanData.risk_score >= 70 ? 'text-red-600' : state.scanData.risk_score >= 40 ? 'text-orange-500' : 'text-green-600'}>{state.scanData.risk_score.toFixed(0)}/100</strong></span>
+              <span className="text-sm text-gray-500">
+                Risk Score:{' '}
+                <strong
+                  className={
+                    (state.scanData.risk_score ?? 0) >= 70
+                      ? 'text-red-600'
+                      : (state.scanData.risk_score ?? 0) >= 40
+                      ? 'text-orange-500'
+                      : 'text-green-600'
+                  }
+                >
+                  {(state.scanData.risk_score ?? 0).toFixed(0)}/100
+                </strong>
+              </span>
               <button
                 onClick={() => navigate(`/scan/${state.scanId}`)}
                 className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 font-semibold"
@@ -303,7 +353,9 @@ export function Analyzer() {
 
           <div className="p-5">
             {findings.length === 0 ? (
-              <p className="text-center text-green-600 py-6 font-medium">No vulnerabilities detected in this scan.</p>
+              <p className="text-center text-green-600 py-6 font-medium">
+                No vulnerabilities detected in this scan.
+              </p>
             ) : (
               <>
                 <FilterBar
@@ -314,7 +366,9 @@ export function Analyzer() {
                   total={findings.length} filtered={filtered.length}
                 />
                 {filtered.length === 0 ? (
-                  <p className="text-center text-gray-400 py-6 text-sm">No findings match your filters.</p>
+                  <p className="text-center text-gray-400 py-6 text-sm">
+                    No findings match your filters.
+                  </p>
                 ) : (
                   <div className="overflow-x-auto rounded-lg border border-gray-100">
                     <table className="w-full text-sm">
@@ -344,7 +398,7 @@ export function Analyzer() {
         </div>
       )}
 
-      {state.scanData?.status === 'failed' && (
+      {state.scanData?.status === 'failed' && !state.showFeed && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-red-700 text-sm">
           Scan failed. Please try again or check the backend logs.
         </div>

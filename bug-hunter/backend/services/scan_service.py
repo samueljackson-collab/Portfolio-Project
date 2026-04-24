@@ -76,39 +76,49 @@ async def run_scan(session_id: str, db: AsyncSession) -> None:
         return
 
     try:
+        session.status = "running"
+        await db.commit()
+
         analyzers = PLATFORM_ANALYZERS.get(session.platform, [WebAnalyzer()])
-        all_findings: list[RawFinding] = []
+        all_raw: list[RawFinding] = []
+        seen: set[tuple] = set()
 
         for analyzer in analyzers:
-            found = await asyncio.to_thread(analyzer.analyze, session.code_content, session.filename)
-            all_findings.extend(found)
+            async for raw in analyzer.analyze_streaming(session.code_content, session.filename):
+                key = (raw.title, raw.line_number)
+                if key in seen:
+                    continue
+                seen.add(key)
+                all_raw.append(raw)
 
-        all_findings = deduplicate(all_findings)
-        all_findings.sort(key=lambda f: SEVERITY_ORDER.get(f.severity, 99))
+                finding = BugFinding(
+                    id=str(uuid.uuid4()),
+                    session_id=session_id,
+                    title=raw.title,
+                    description=raw.description,
+                    severity=raw.severity,
+                    category=raw.category,
+                    platform=raw.platform,
+                    line_number=raw.line_number,
+                    code_snippet=raw.code_snippet,
+                    recommendation=raw.recommendation,
+                    cwe_id=raw.cwe_id,
+                    cvss_score=raw.cvss_score,
+                    evidence=raw.evidence,
+                )
+                db.add(finding)
 
-        for raw in all_findings:
-            finding = BugFinding(
-                id=str(uuid.uuid4()),
-                session_id=session_id,
-                title=raw.title,
-                description=raw.description,
-                severity=raw.severity,
-                category=raw.category,
-                platform=raw.platform,
-                line_number=raw.line_number,
-                code_snippet=raw.code_snippet,
-                recommendation=raw.recommendation,
-                cwe_id=raw.cwe_id,
-                cvss_score=raw.cvss_score,
-                evidence=raw.evidence,
-            )
-            db.add(finding)
+                if raw.severity == "Critical":
+                    session.critical_count += 1
+                elif raw.severity == "High":
+                    session.high_count += 1
+                elif raw.severity == "Medium":
+                    session.medium_count += 1
+                elif raw.severity == "Low":
+                    session.low_count += 1
+                session.risk_score = compute_risk_score(all_raw)
+                await db.commit()
 
-        session.critical_count = sum(1 for f in all_findings if f.severity == "Critical")
-        session.high_count = sum(1 for f in all_findings if f.severity == "High")
-        session.medium_count = sum(1 for f in all_findings if f.severity == "Medium")
-        session.low_count = sum(1 for f in all_findings if f.severity == "Low")
-        session.risk_score = compute_risk_score(all_findings)
         session.status = "complete"
         session.completed_at = datetime.utcnow()
         await db.commit()

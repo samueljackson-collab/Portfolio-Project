@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import re
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
@@ -28,6 +29,23 @@ class BaseAnalyzer(ABC):
     # ------------------------------------------------------------------ #
     #  Public entry point                                                  #
     # ------------------------------------------------------------------ #
+
+    async def analyze_streaming(self, code: str, filename: str):
+        """Async generator that yields RawFindings rule-by-rule for live streaming."""
+        lines = code.splitlines()
+        rules = self.rules()
+        initial: list[RawFinding] = []
+
+        for rule_idx, rule in enumerate(rules):
+            batch = await asyncio.to_thread(self._apply_rule, rule, lines, rule_idx)
+            for finding in batch:
+                initial.append(finding)
+                yield finding
+            await asyncio.sleep(0)  # yield control to event loop between rules
+
+        cross = await asyncio.to_thread(self._cross_rule_pass, initial, lines, rules)
+        for finding in cross:
+            yield finding
 
     def analyze(self, code: str, filename: str) -> list[RawFinding]:
         lines = code.splitlines()
