@@ -1,25 +1,34 @@
 from __future__ import annotations
 import asyncio
 import json
+import logging
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
+from auth import require_api_key
+from config import MAX_CODE_SIZE_BYTES
 from database import get_db
+from limiter import limiter
 from models import ScanSession, BugFinding
 from schemas import ScanCreateRequest, ScanSessionOut, ScanSessionSummary
 from services.scan_service import detect_language, run_scan
 
+logger = logging.getLogger("bughunter.scan")
 router = APIRouter(prefix="/api/scans", tags=["scans"])
 
 VALID_PLATFORMS = {"android", "ios", "windows", "macos", "web"}
 
 
-@router.post("", response_model=ScanSessionSummary, status_code=201)
+@router.post("", response_model=ScanSessionSummary, status_code=201,
+             dependencies=[Depends(require_api_key)])
+@limiter.limit("5/minute")
 async def create_scan(
+    request: Request,
     body: ScanCreateRequest,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
@@ -28,6 +37,13 @@ async def create_scan(
         raise HTTPException(status_code=422, detail=f"Platform must be one of: {', '.join(VALID_PLATFORMS)}")
     if not body.code_content.strip():
         raise HTTPException(status_code=422, detail="code_content must not be empty")
+
+    code_bytes = len(body.code_content.encode("utf-8"))
+    if code_bytes > MAX_CODE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"code_content exceeds the {MAX_CODE_SIZE_BYTES // 1024} KB limit",
+        )
 
     session_id = str(uuid.uuid4())
     language = detect_language(body.filename, body.code_content)
@@ -45,6 +61,8 @@ async def create_scan(
     await db.commit()
     await db.refresh(session)
 
+    logger.info("Scan %s created for platform=%s file=%s size=%d bytes",
+                session_id, body.platform, body.filename, code_bytes)
     background_tasks.add_task(_run_scan_task, session_id)
 
     return session
@@ -56,8 +74,11 @@ async def _run_scan_task(session_id: str) -> None:
         await run_scan(session_id, db)
 
 
-@router.get("", response_model=list[ScanSessionSummary])
+@router.get("", response_model=list[ScanSessionSummary],
+            dependencies=[Depends(require_api_key)])
+@limiter.limit("30/minute")
 async def list_scans(
+    request: Request,
     platform: str | None = Query(None),
     status: str | None = Query(None),
     limit: int = Query(50, le=200),
@@ -73,26 +94,21 @@ async def list_scans(
     return result.scalars().all()
 
 
-@router.get("/{scan_id}", response_model=ScanSessionOut)
+@router.get("/{scan_id}", response_model=ScanSessionOut,
+            dependencies=[Depends(require_api_key)])
 async def get_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(ScanSession).where(ScanSession.id == scan_id)
+        select(ScanSession)
+        .where(ScanSession.id == scan_id)
+        .options(selectinload(ScanSession.findings))
     )
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="Scan not found")
-
-    findings_result = await db.execute(
-        select(BugFinding)
-        .where(BugFinding.session_id == scan_id)
-        .order_by(BugFinding.severity)
-    )
-    findings = list(findings_result.scalars().all())
-    session.findings = findings
     return session
 
 
-@router.get("/{scan_id}/events")
+@router.get("/{scan_id}/events", dependencies=[Depends(require_api_key)])
 async def scan_events(scan_id: str):
     """SSE endpoint that streams findings as the scan progresses."""
 

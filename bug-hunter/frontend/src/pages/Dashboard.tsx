@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { scansApi } from '../api/client'
 import type { ScanSession } from '../api/types'
-import { SeverityBadge, riskScoreBg } from '../components/SeverityBadge'
+import { riskScoreBg } from '../components/SeverityBadge'
 import { PlatformBadge } from '../components/PlatformTab'
 
 function StatCard({ label, value, color }: { label: string; value: number | string; color: string }) {
@@ -40,8 +40,6 @@ export function Dashboard() {
   const avgRisk = scans.length
     ? Math.round(scans.reduce((s, sc) => s + sc.risk_score, 0) / scans.length)
     : 0
-
-  const maxFindings = Math.max(1, ...scans.map(sc => sc.critical_count + sc.high_count + sc.medium_count + sc.low_count))
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

@@ -4,7 +4,10 @@ import re
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
-CROSS_RULE_CONTEXT_RADIUS = 15  # lines above/below a finding to re-inspect
+# Number of lines above/below a primary finding to re-inspect with the full
+# rule set (pass 2). Wider windows catch cascading patterns at the cost of
+# more cross-rule noise.
+CROSS_RULE_CONTEXT_RADIUS = 15
 
 
 @dataclass

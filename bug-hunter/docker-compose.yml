@@ -3,19 +3,30 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    networks:
+      - internal
     volumes:
-      - ./data:/app/data
+      - bughunter_data:/app/data
     environment:
       - DATABASE_URL=sqlite+aiosqlite:////app/data/bughunter.db
       - CORS_ORIGINS=http://localhost:5173,http://localhost:80
+      # Set API_KEY to a strong secret in production
+      - API_KEY=${API_KEY:-}
+      - DEBUG=${DEBUG:-false}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: "1G"
+        reservations:
+          cpus: "0.25"
+          memory: "256M"
 
   frontend:
     build:
@@ -23,7 +34,24 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5173:80"
+    networks:
+      - internal
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "128M"
+        reservations:
+          cpus: "0.1"
+          memory: "64M"
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  bughunter_data:
