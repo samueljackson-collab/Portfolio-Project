@@ -8,7 +8,6 @@ export function Reports() {
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filterPlatform, setFilterPlatform] = useState('')
 
   useEffect(() => {
     reportsApi.list({ limit: 100 }).then(setReports).finally(() => setLoading(false))
