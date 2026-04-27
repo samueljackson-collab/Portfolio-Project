@@ -187,7 +187,10 @@ POSTGRES_DB=portfolio_db
 
 # Required — must match POSTGRES_* above
 # For Docker Compose the host is "db"; for Native use "localhost"
+# For Native (Path B):
 DATABASE_URL=postgresql+asyncpg://portfolio_user:change-me-to-a-strong-password@localhost:5432/portfolio_db
+# For Docker (Path A):
+# DATABASE_URL=postgresql+asyncpg://portfolio_user:change-me-to-a-strong-password@db:5432/portfolio_db
 
 # Required — generate a random 32-character hex string
 # Run: openssl rand -hex 32
