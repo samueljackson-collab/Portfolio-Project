@@ -262,10 +262,12 @@ npx playwright install
 
 This downloads Chromium, Firefox, and WebKit browser binaries. The download is ~250 MB.
 
-**Windows / macOS / Linux — additional system dependencies (Linux only):**
+**Playwright system dependencies (Linux only — installer available on all platforms):**
 ```bash
 npx playwright install-deps
 ```
+
+> Note: On macOS and Windows, this installer is available but typically doesn't need to install additional packages. On Linux, it installs required system libraries for browser automation.
 
 **Run E2E tests:**
 ```bash

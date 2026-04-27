@@ -34,6 +34,9 @@ import type {
   EndpointAlert,
   EndpointPolicy,
   DeploymentSummary,
+  OrchestrationPlan,
+  OrchestrationRun,
+  OrchestrationRunRequest,
 } from './types'
 
 /**

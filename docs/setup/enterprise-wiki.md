@@ -29,7 +29,7 @@ When running locally you will have:
 │  - rehype-raw (HTML in Markdown)        │
 │  - Tailwind CSS                         │
 │                                         │
-│  Content: static .md files bundled in   │
+│  Content: static .md files bundled in the repository │
 │  No API calls — fully self-contained    │
 └─────────────────────────────────────────┘
 ```

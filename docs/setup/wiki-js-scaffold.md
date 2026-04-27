@@ -188,7 +188,7 @@ DOMAIN=localhost
 CERTBOT_EMAIL=local@example.com
 SSL_ACTIVE=false
 
-# Required for script authentication to Wiki.js
+# Optional — only required if enabling script authentication to Wiki.js
 ADMIN_EMAIL=admin@localhost.com
 ADMIN_PASSWORD=choose-a-strong-admin-password
 
@@ -406,8 +406,8 @@ docker-compose -f docker/docker-compose.yml down -v
 | `WIKIJS_TOKEN` | Yes (for import/export) | — | Wiki.js API access token |
 | `DOMAIN` | No | `wiki.example.com` | Domain for Nginx/SSL (production only) |
 | `CERTBOT_EMAIL` | No | `admin@example.com` | Email for Let's Encrypt SSL cert |
-| `ADMIN_EMAIL` | No | — | Wiki.js admin account email |
-| `ADMIN_PASSWORD` | No | — | Wiki.js admin account password |
+| `ADMIN_EMAIL` | No | — | Wiki.js admin account email (only required if enabling script authentication) |
+| `ADMIN_PASSWORD` | No | — | Wiki.js admin account password (only required if enabling script authentication) |
 | `SESSION_SECRET` | No | — | Session signing secret |
 | `JWT_SECRET` | No | — | JWT signing secret |
 | `SSL_ACTIVE` | No | `false` | Enable HTTPS (production only) |
