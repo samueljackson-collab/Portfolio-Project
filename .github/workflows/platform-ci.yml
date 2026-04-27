@@ -2,9 +2,9 @@ name: Platform CI
 
 on:
   push:
-    branches: [ work ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ work ]
+    branches: [ main, master ]
 
 jobs:
   backend:
