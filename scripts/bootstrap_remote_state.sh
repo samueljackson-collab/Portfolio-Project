@@ -1,13 +1,33 @@
 #!/usr/bin/env bash
-# Creates S3 bucket (with versioning/encryption) and DynamoDB table for Terraform remote state lock.
-# Usage:
-#   AWS_PROFILE=deploy ./scripts/bootstrap_remote_state.sh <bucket-name> <dynamodb-table> <region>
+usage() {
+  cat <<'USAGE'
+Creates S3 bucket (with versioning/encryption) and DynamoDB table for Terraform remote state lock.
+
+Usage:
+  AWS_PROFILE=deploy ./scripts/bootstrap_remote_state.sh <bucket-name> [dynamodb-table] [region]
+
+Arguments:
+  bucket-name     Required. Must be lower-case letters, numbers, or hyphens (3-63 chars).
+  dynamodb-table  Optional. Defaults to "twisted-monk-terraform-locks".
+  region          Optional. Defaults to "us-east-1".
+USAGE
+}
 
 set -euo pipefail
 
-BUCKET_NAME="${1:-twisted-monk-terraform-state-REPLACE_ME}"
+if [[ $# -lt 1 ]] || [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+  usage
+  exit 1
+fi
+
+BUCKET_NAME="$1"
 DDB_TABLE="${2:-twisted-monk-terraform-locks}"
 REGION="${3:-us-east-1}"
+
+if [[ ! "${BUCKET_NAME}" =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]; then
+  echo "Error: Bucket name '${BUCKET_NAME}' is invalid. Use only lowercase letters, numbers, or hyphens (3-63 chars, cannot start/end with hyphen)." >&2
+  exit 1
+fi
 
 echo "Bootstrapping remote state in region ${REGION}"
 echo "Bucket: ${BUCKET_NAME}"
