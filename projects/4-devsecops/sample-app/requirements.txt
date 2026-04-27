@@ -2,23 +2,23 @@
 # The vulnerable.py uses basic stdlib + flask for demonstration
 
 # Web framework
-flask>=2.3.0
+flask>=3.1.3
 
 # Security middleware
-flask-talisman>=1.0.0
-flask-limiter>=3.0.0
+flask-talisman>=1.1.0
+flask-limiter>=4.1.1
 
 # Password hashing
-bcrypt>=4.0.0
+bcrypt>=5.0.0
 
 # SQL with parameterized queries
-sqlalchemy>=2.0.0
+sqlalchemy>=2.0.49
 
 # Safe XML parsing
-defusedxml>=0.7.0
+defusedxml>=0.7.1
 
 # HTTP client
-requests>=2.31.0
+requests>=2.33.1
 
 # HTML escaping (included with Flask, but explicit)
-markupsafe>=2.1.0
+markupsafe>=3.0.3
