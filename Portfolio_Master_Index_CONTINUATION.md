@@ -13,6 +13,7 @@ This continuation extends the Complete Edition with deeper cross-links, doc clus
 | **Remediation & Fixes** | `CRITICAL_FIXES_APPLIED.md`, `CODE_ENHANCEMENTS_SUMMARY.md`, `REMEDIATION_PLAN.md`, `STRUCTURE_COMPLETION_NOTES.md` | Track historical fixes and planned improvements. |
 | **Program Management** | `PORTFOLIO_COMPLETION_PROGRESS.md`, `PORTFOLIO_ASSESSMENT_REPORT.md`, `PROJECT_COMPLETION_CHECKLIST.md`, `SESSION_SUMMARY_2025-11-10.md` | Provide stakeholder-ready progress updates. |
 | **Specialty Guides** | `PORTFOLIO_INFRASTRUCTURE_GUIDE.md`, `PORTFOLIO_SURVEY.md`, `PORTFOLIO_VALIDATION.md`, `PORTFOLIO_NAVIGATION_GUIDE.md` | Bridge high-level indexes with task-level instructions. |
+| **Architecture Decisions** | `adr/ADR-001-architecture-runway.md` → `adr/ADR-007-resilience-playbooks.md` | Trace Master Factory decision history and delivery guardrails. |
 
 ---
 
