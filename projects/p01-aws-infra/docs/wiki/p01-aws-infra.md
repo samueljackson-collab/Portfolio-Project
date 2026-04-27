@@ -144,7 +144,7 @@ aws secretsmanager rotate-secret --secret-id /myapp/prod/db-password
 
 ### Future Phases
 - [ ] Multi-region replication (us-west-2 Read Replicas)
-- [ ] Terraform migration for multi-cloud support (see ADR-0002)
+- [ ] Terraform migration for multi-cloud support (future ADR)
 - [ ] Automated cost optimization (right-sizing recommendations)
 
 ## Links
@@ -155,5 +155,9 @@ aws secretsmanager rotate-secret --secret-id /myapp/prod/db-password
   - [RUNBOOK](../RUNBOOK.md) — Operational procedures
   - [PLAYBOOK](../PLAYBOOK.md) — Deployment and DR plays
   - [HANDBOOK](../HANDBOOK.md) — Team collaboration guide
-  - [ADR-0001](../docs/ADR/0001-initial-decision.md) — Architecture decisions
+  - [ADR-0001](../docs/ADR/0001-initial-decision.md) — Initial technical direction
+  - [ADR-0002](../docs/ADR/0002-data-storage-choice.md) — Data storage choice
+  - [ADR-0003](../docs/ADR/0003-deployment-topology.md) — Deployment topology
+  - [ADR-0004](../docs/ADR/0004-observability-stack.md) — Observability stack
+  - [ADR-0005](../docs/ADR/0005-security-posture.md) — Security posture
 - **Diagrams**: [Architecture](../docs/diagrams/architecture.mmd) | [Data Flow](../docs/diagrams/dataflow.mmd)

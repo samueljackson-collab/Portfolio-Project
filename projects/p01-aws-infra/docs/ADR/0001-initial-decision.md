@@ -30,7 +30,7 @@ Use **AWS CloudFormation** as primary IaC tool for AWS resource provisioning wit
 ### Mitigation
 - Use Python scripts for complex orchestration
 - Document rollback procedures in RUNBOOK.md
-- Evaluate Terraform for future multi-cloud requirements (see ADR-0002)
+- Evaluate Terraform for future multi-cloud requirements (future ADR)
 
 ## Alternatives Considered
 - **Terraform**: Better multi-cloud support, but requires state management (S3 + DynamoDB locking)

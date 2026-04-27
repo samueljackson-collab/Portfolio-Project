@@ -50,8 +50,10 @@ This handbook defines how the infrastructure team collaborates on AWS environmen
 
 ### ADR Index
 - [ADR-0001: Initial Technical Direction](./docs/ADR/0001-initial-decision.md)
-- [ADR-0002: CloudFormation vs Terraform](./docs/ADR/0002-cfn-vs-terraform.md)
-- [ADR-0003: Multi-AZ RDS Design](./docs/ADR/0003-multi-az-rds.md)
+- [ADR-0002: Data Storage Choice](./docs/ADR/0002-data-storage-choice.md)
+- [ADR-0003: Deployment Topology](./docs/ADR/0003-deployment-topology.md)
+- [ADR-0004: Observability Stack](./docs/ADR/0004-observability-stack.md)
+- [ADR-0005: Security Posture](./docs/ADR/0005-security-posture.md)
 
 ## Onboarding Checklist
 
