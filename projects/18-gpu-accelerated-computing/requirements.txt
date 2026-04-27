@@ -1,15 +1,15 @@
 # GPU computing
-cupy-cuda12x>=12.0
+cupy-cuda12x>=14.0.1
 
 # Numerical computing
-numpy>=1.25
-scipy>=1.11
+numpy>=2.4.4
+scipy>=1.17.1
 
 # Distributed computing
-dask[distributed]>=2024.1
+dask[distributed]>=2026.3.0
 
 # Monitoring
-prometheus-client>=0.18
+prometheus-client>=0.25.0
 
 # Utilities
-pyyaml>=6.0
+pyyaml>=6.0.3
