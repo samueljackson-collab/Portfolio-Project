@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spire-agent
+  namespace: spire
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: spire-agent
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes/proxy"]
+    verbs: ["get"]
+  - apiGroups: ["authentication.k8s.io"]
+    resources: ["tokenreviews"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: spire-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: spire-agent
+subjects:
+  - kind: ServiceAccount
+    name: spire-agent
+    namespace: spire
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-agent
+  namespace: spire
+  labels:
+    app: spire-agent
+data:
+  agent.conf: |
+    agent {
+        data_dir = "/run/spire"
+        log_level = "INFO"
+        trust_domain = "example.org"
+        server_address = "spire-server"
+        server_port = "8081"
+        socket_path = "/run/spire/sockets/agent.sock"
+    }
+
+    plugins {
+        NodeAttestor "k8s_psat" {
+            plugin_data {
+                cluster = "demo-cluster"
+            }
+        }
+
+        KeyManager "memory" {}
+
+        WorkloadAttestor "k8s" {
+            plugin_data {
+                skip_kubelet_verification = true
+            }
+        }
+    }
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: spire-agent
+  namespace: spire
+  labels:
+    app: spire-agent
+spec:
+  selector:
+    matchLabels:
+      app: spire-agent
+  template:
+    metadata:
+      labels:
+        app: spire-agent
+    spec:
+      hostPID: true
+      serviceAccountName: spire-agent
+      tolerations:
+        - operator: "Exists"
+      containers:
+        - name: spire-agent
+          image: ghcr.io/spiffe/spire-agent:1.9.5
+          args:
+            - "-config"
+            - "/run/spire/config/agent.conf"
+          volumeMounts:
+            - name: spire-agent-config
+              mountPath: /run/spire/config
+            - name: spire-agent-sockets
+              mountPath: /run/spire/sockets
+            - name: spire-agent-data
+              mountPath: /run/spire/data
+            - name: socket-dir
+              mountPath: /var/run
+      volumes:
+        - name: spire-agent-config
+          configMap:
+            name: spire-agent
+            items:
+              - key: agent.conf
+                path: agent.conf
+        - name: spire-agent-sockets
+          hostPath:
+            path: /run/spire/sockets
+            type: DirectoryOrCreate
+        - name: spire-agent-data
+          emptyDir: {}
+        - name: socket-dir
+          hostPath:
+            path: /var/run
+            type: Directory
