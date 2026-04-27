@@ -1,25 +1,25 @@
 # Quantum computing
-qiskit>=0.45
-qiskit-aer>=0.13
-qiskit-algorithms>=0.2
+qiskit>=2.4.0
+qiskit-aer>=0.17.2
+qiskit-algorithms>=0.4.0
 
 # Web framework
-fastapi>=0.104
-uvicorn[standard]>=0.24
-pydantic>=2.5
+fastapi>=0.136.0
+uvicorn[standard]>=0.45.0
+pydantic>=2.13.3
 
 # Optimization
-numpy>=1.25
-scipy>=1.11
+numpy>=2.4.4
+scipy>=1.17.1
 
 # Monitoring
-prometheus-client>=0.18
+prometheus-client>=0.25.0
 
 # Configuration
-pyyaml>=6.0
+pyyaml>=6.0.3
 
 # AWS integration (optional)
-boto3>=1.33
+boto3>=1.42.93
 
 # Utilities
-python-multipart>=0.0.6
+python-multipart>=0.0.26
