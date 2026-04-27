@@ -58,7 +58,7 @@ docker run --rm \
 Because the container entrypoint is `sam`, you can override the command for other workflows, for example to build or package artefacts:
 
 ```bash
-docker run --rm -v "$(pwd):/app" serverless-data-platform build --use-container
+docker run --rm -v "$(pwd):/app" serverless-data-platform build
 ```
 
 ## Operations
