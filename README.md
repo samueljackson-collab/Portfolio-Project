@@ -35,6 +35,13 @@ runbooks, dashboards, and repeatable processes.***
 - [Security Overview](./SECURITY.md)
 - [Deployment Guide](./DEPLOYMENT.md)
 
+> 📚 **New:** [Missing Documents Analysis](./MISSING_DOCUMENTS_ANALYSIS.md) | [Quick Start Guide](./QUICK_START_GUIDE.md) | [Completion Checklist](./PROJECT_COMPLETION_CHECKLIST.md)
+>
+> 📓 **Portfolio Master Index (75k words):**
+>
+> - [Continuation (4.1.1–4.1.7)](./Portfolio_Master_Index_CONTINUATION.md)
+> - [Complete Edition (4.1.8–11)](./Portfolio_Master_Index_COMPLETE.md)
+> - [Navigation Guide](./Portfolio_Navigation_Guide.md)
 ### Ops & Observability
 
 - [Observability Stack](./observability/README.md)
