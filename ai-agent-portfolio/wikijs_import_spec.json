@@ -1,0 +1,75 @@
+{
+  "wiki_config": {
+    "name": "AI Agent Builder Documentation",
+    "description": "Complete documentation for AI Agent development lifecycle",
+    "auto_sync": {
+      "enabled": true,
+      "sync_interval": "30m",
+      "trigger_sources": ["github", "agent_registry", "documentation_updates"]
+    }
+  },
+  "content_structure": {
+    "path": "docs/",
+    "auto_categories": [
+      {
+        "name": "Getting Started",
+        "path": "getting-started/",
+        "priority": 1,
+        "content_sources": ["README.md", "QUICKSTART.md"]
+      },
+      {
+        "name": "Agent Development",
+        "path": "agent-development/",
+        "priority": 2,
+        "content_sources": ["agents/**/README.md", "templates/"]
+      },
+      {
+        "name": "API Reference",
+        "path": "api-reference/",
+        "priority": 3,
+        "content_sources": ["openapi/", "api-docs/"]
+      },
+      {
+        "name": "Best Practices",
+        "path": "best-practices/",
+        "priority": 4,
+        "content_sources": ["guidelines/", "examples/"]
+      }
+    ]
+  },
+  "import_rules": {
+    "markdown_processing": {
+      "frontmatter_extraction": true,
+      "link_rewriting": true,
+      "image_optimization": true,
+      "code_syntax_highlighting": true
+    },
+    "version_control": {
+      "branch_based_staging": true,
+      "change_tracking": true,
+      "rollback_support": true
+    },
+    "access_control": {
+      "role_based_permissions": true,
+      "page_level_security": true,
+      "audit_logging": true
+    }
+  },
+  "integration_webhooks": {
+    "github_events": [
+      "push",
+      "pull_request",
+      "release"
+    ],
+    "agent_registry_events": [
+      "agent_created",
+      "agent_updated",
+      "agent_deployed"
+    ],
+    "monitoring_events": [
+      "health_check_failed",
+      "performance_alert",
+      "security_incident"
+    ]
+  }
+}

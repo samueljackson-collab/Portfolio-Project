@@ -1,0 +1,30 @@
+{
+  "agent_name": "quality_validator",
+  "version": "1.2.0",
+  "description": "Comprehensive testing and validation framework",
+  "test_types": [
+    "unit_tests",
+    "integration_tests",
+    "security_scans",
+    "performance_benchmarks",
+    "compliance_checks"
+  ],
+  "validation_rules": {
+    "terraform_validation": [
+      "terraform validate",
+      "tflint",
+      "tfsec",
+      "checkov"
+    ],
+    "security_validation": [
+      "vulnerability_scanning",
+      "secret_detection",
+      "policy_compliance",
+      "license_checks"
+    ]
+  },
+  "reporting": {
+    "formats": ["junit_xml", "html", "json", "markdown"],
+    "destinations": ["github_pr", "slack", "email", "dashboard"]
+  }
+}
