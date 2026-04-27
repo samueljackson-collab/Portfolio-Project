@@ -66,7 +66,7 @@ When running locally you will have:
 Option 1 — Homebrew (recommended):
 ```bash
 brew install python@3.11
-echo 'export PATH="/opt/homebrew/opt/python@3.11/bin:$PATH"' >> ~/.zshrc
+echo "export PATH=\"$(brew --prefix python@3.11)/bin:\$PATH\"" >> ~/.zshrc
 source ~/.zshrc
 python3.11 --version
 ```
