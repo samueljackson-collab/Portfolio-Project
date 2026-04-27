@@ -52,6 +52,53 @@ data:
           processors: [batch, resource]
           exporters: [logging, prometheus]
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: monitoring
+  labels:
+    app: tempo
+    component: observability
+data:
+  tempo.yaml: |
+    server:
+      http_listen_port: 3200
+      grpc_listen_port: 4317
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            http:
+            grpc:
+
+    ingester:
+      trace_idle_period: 10s
+      max_block_duration: 1m
+      wal:
+        enabled: true
+        dir: /tmp/tempo/wal
+
+    compactor:
+      compaction:
+        block_retention: 1h
+
+    metrics_generator:
+      registry:
+        external_labels:
+          source: tempo
+      storage:
+        path: /tmp/tempo/generator/wal
+
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /tmp/tempo/blocks
+        wal:
+          path: /tmp/tempo/wal
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -92,6 +139,46 @@ spec:
               - key: otel-collector.yaml
                 path: otel-collector.yaml
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempo
+  namespace: monitoring
+  labels:
+    app: tempo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tempo
+  template:
+    metadata:
+      labels:
+        app: tempo
+    spec:
+      containers:
+        - name: tempo
+          image: grafana/tempo:2.4.1
+          args: ["-config.file=/etc/tempo/tempo.yaml"]
+          volumeMounts:
+            - name: tempo-config
+              mountPath: /etc/tempo
+              readOnly: true
+          ports:
+            - containerPort: 3200
+              name: tempo-http
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+      volumes:
+        - name: tempo-config
+          configMap:
+            name: tempo-config
+            items:
+              - key: tempo.yaml
+                path: tempo.yaml
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -110,3 +197,22 @@ spec:
     - name: prom-exporter
       port: 9464
       targetPort: 9464
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo
+  namespace: monitoring
+spec:
+  selector:
+    app: tempo
+  ports:
+    - name: tempo-http
+      port: 3200
+      targetPort: 3200
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318

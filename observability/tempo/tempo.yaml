@@ -1,0 +1,36 @@
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 4317
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+        grpc:
+
+ingester:
+  trace_idle_period: 10s
+  max_block_duration: 1m
+  wal:
+    enabled: true
+    dir: /tmp/tempo/wal
+
+compactor:
+  compaction:
+    block_retention: 1h
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+  storage:
+    path: /tmp/tempo/generator/wal
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/blocks
+    wal:
+      path: /tmp/tempo/wal
