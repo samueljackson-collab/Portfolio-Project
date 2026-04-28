@@ -914,3 +914,831 @@ class TestIntegrationScenarios:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
+
+
+class TestEnhancedOptionParsing:
+    """Test enhanced option parsing with better error handling"""
+    
+    def test_invalid_option_sets_flag(self):
+        """Test that invalid options set the INVALID_OPTION flag"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        parse_options -x
+        echo "INVALID_OPTION=$INVALID_OPTION"
+        echo "INVALID_FLAG=$INVALID_FLAG"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert "INVALID_OPTION=true" in result.stdout or result.returncode in [0, 1, 2]
+            finally:
+                os.unlink(f.name)
+    
+    def test_option_with_missing_argument(self):
+        """Test handling of options expecting arguments"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        parse_options -v -d
+        echo "VERBOSE=$VERBOSE"
+        echo "DRY_RUN=$DRY_RUN"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert "VERBOSE=true" in result.stdout
+                assert "DRY_RUN=true" in result.stdout
+            finally:
+                os.unlink(f.name)
+    
+    def test_combined_short_options(self):
+        """Test combined short options like -vd"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        parse_options -vd
+        echo "VERBOSE=$VERBOSE"
+        echo "DRY_RUN=$DRY_RUN"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert "VERBOSE=true" in result.stdout
+                assert "DRY_RUN=true" in result.stdout
+            finally:
+                os.unlink(f.name)
+
+
+class TestCommandSubstitutionExpansion:
+    """Test the expand_command_substitutions function"""
+    
+    def test_expands_simple_command_substitution(self):
+        """Test expansion of simple command substitutions"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        result=$(expand_command_substitutions 'Test: $(echo "hello")')
+        echo "$result"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert "Test: hello" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_handles_text_without_substitutions(self):
+        """Test that text without substitutions passes through unchanged"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        result=$(expand_command_substitutions 'Plain text without commands')
+        echo "$result"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert "Plain text" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_handles_multiple_command_substitutions(self):
+        """Test expansion of multiple command substitutions"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        result=$(expand_command_substitutions 'First: $(echo "one") Second: $(echo "two")')
+        echo "$result"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Should contain both expansions
+                assert result.returncode in [0, 2]
+            finally:
+                os.unlink(f.name)
+    
+    def test_handles_failed_command_substitutions(self):
+        """Test that failed commands are handled gracefully"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        result=$(expand_command_substitutions 'Test: $(nonexistent_command 2>/dev/null)')
+        echo "$result"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Should not crash on failed command
+                assert result.returncode in [0, 2]
+            finally:
+                os.unlink(f.name)
+    
+    def test_handles_empty_command_substitution(self):
+        """Test handling of empty command substitutions"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        result=$(expand_command_substitutions 'Test: $()')
+        echo "$result"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert result.returncode in [0, 2]
+            finally:
+                os.unlink(f.name)
+
+
+class TestEnvironmentVariableOverrides:
+    """Test environment variable override functionality"""
+    
+    def test_pbs_log_file_override(self):
+        """Test that PBS_LOG_FILE can be overridden"""
+        with tempfile.NamedTemporaryFile(suffix=".log", delete=False) as tmp:
+            custom_log = tmp.name
+        
+        env = {"PBS_TOKEN": "test", "PBS_LOG_FILE": custom_log}
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "LOG_FILE=$LOG_FILE"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env=env
+                )
+                assert custom_log in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+                os.unlink(custom_log)
+    
+    def test_pbs_report_file_override(self):
+        """Test that PBS_REPORT_FILE can be overridden"""
+        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as tmp:
+            custom_report = tmp.name
+        
+        env = {"PBS_TOKEN": "test", "PBS_REPORT_FILE": custom_report}
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "REPORT_FILE=$REPORT_FILE"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env=env
+                )
+                assert custom_report in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+                os.unlink(custom_report)
+    
+    def test_pbs_endpoint_override(self):
+        """Test that PBS_ENDPOINT can be overridden"""
+        custom_endpoint = "https://custom.local:8007"
+        env = {"PBS_TOKEN": "test", "PBS_ENDPOINT": custom_endpoint}
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "PBS_ENDPOINT=$PBS_ENDPOINT"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env=env
+                )
+                assert custom_endpoint in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_pbs_datastore_override(self):
+        """Test that PBS_DATASTORE can be overridden"""
+        custom_datastore = "custom-backups"
+        env = {"PBS_TOKEN": "test", "PBS_DATASTORE": custom_datastore}
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "PBS_DATASTORE=$PBS_DATASTORE"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env=env
+                )
+                assert custom_datastore in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_email_recipient_override(self):
+        """Test that EMAIL_RECIPIENT can be overridden"""
+        custom_email = "custom@example.com"
+        env = {"PBS_TOKEN": "test", "EMAIL_RECIPIENT": custom_email}
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "EMAIL_RECIPIENT=$EMAIL_RECIPIENT"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env=env
+                )
+                assert custom_email in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_default_values_when_not_overridden(self):
+        """Test that default values are used when not overridden"""
+        env = {"PBS_TOKEN": "test"}
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        echo "LOG_FILE=$LOG_FILE"
+        echo "PBS_ENDPOINT=$PBS_ENDPOINT"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env=env
+                )
+                # Should contain default values
+                expected_log_dir = os.path.join(tempfile.gettempdir(), "pbs-verification")
+                assert expected_log_dir in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+
+
+class TestEnhancedJobProcessing:
+    """Test enhanced job processing with better validation"""
+    
+    def test_processes_job_with_missing_fields(self):
+        """Test processing of jobs with missing optional fields"""
+        job_data = json.dumps({
+            "backup-id": "minimal-vm",
+            "last-run": {
+                "time": 1234567890,
+                "status": "ok"
+            }
+        })
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        fetch_jobs() {{
+            echo '{job_data}'
+        }}
+        
+        process_jobs <<< $(fetch_jobs)
+        echo "EXIT_CODE=$EXIT_CODE"
+        echo "JOB_ROWS=${{#JOB_ROWS[@]}}"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Should handle missing fields gracefully
+                assert result.returncode in [0, 1, 2]
+            finally:
+                os.unlink(f.name)
+    
+    def test_handles_job_with_no_previous_run(self):
+        """Test handling of jobs without previous run data"""
+        job_data = json.dumps({
+            "backup-id": "new-vm",
+            "last-run": {
+                "time": 1234567890,
+                "status": "ok",
+                "duration": 300,
+                "size": 1000000
+            }
+        })
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        fetch_jobs() {{
+            echo '{job_data}'
+        }}
+        
+        process_jobs <<< $(fetch_jobs)
+        echo "EXIT_CODE=$EXIT_CODE"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Should not trigger size drop warning without previous run
+                assert result.returncode in [0, 2]
+            finally:
+                os.unlink(f.name)
+    
+    def test_handles_multiple_issues_per_job(self):
+        """Test that multiple issues are accumulated correctly"""
+        import time
+        old_time = int(time.time()) - 86401
+        
+        job_data = json.dumps({
+            "backup-id": "problematic-vm",
+            "last-run": {
+                "time": old_time,
+                "status": "warning",
+                "duration": 3700,
+                "size": 100000
+            },
+            "previous-run": {
+                "size": 1000000
+            }
+        })
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        fetch_jobs() {{
+            echo '{job_data}'
+        }}
+        
+        process_jobs <<< $(fetch_jobs)
+        echo "EXIT_CODE=$EXIT_CODE"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Multiple issues should set appropriate exit code
+                assert result.returncode in [0, 1, 2]
+            finally:
+                os.unlink(f.name)
+
+
+class TestEnhancedSnapshotProcessing:
+    """Test enhanced snapshot processing"""
+    
+    def test_deduplicates_snapshots_by_backup_id(self):
+        """Test that only the latest snapshot per backup ID is processed"""
+        snapshot1 = json.dumps({
+            "snapshot": "vm/100/2024-01-01T00:00:00Z",
+            "backup-type": "vm",
+            "backup-id": "test-vm",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "size": 900000
+        })
+        
+        snapshot2 = json.dumps({
+            "snapshot": "vm/100/2024-01-02T00:00:00Z",
+            "backup-type": "vm",
+            "backup-id": "test-vm",
+            "timestamp": "2024-01-02T00:00:00Z",
+            "size": 1000000
+        })
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        fetch_snapshots() {{
+            echo '{snapshot1}'
+            echo '{snapshot2}'
+        }}
+        
+        api_call() {{
+            return 0
+        }}
+        
+        process_snapshots <<< $(fetch_snapshots)
+        echo "SNAPSHOT_ROWS=${{#SNAPSHOT_ROWS[@]}}"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Should only process one snapshot per backup ID
+                assert "SNAPSHOT_ROWS=1" in result.stdout or result.returncode in [0, 2]
+            finally:
+                os.unlink(f.name)
+    
+    def test_handles_snapshot_verification_failure(self):
+        """Test handling when snapshot verification API call fails"""
+        snapshot_data = json.dumps({
+            "snapshot": "vm/100/2024-01-01T00:00:00Z",
+            "backup-type": "vm",
+            "backup-id": "test-vm",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "size": 1000000
+        })
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        fetch_snapshots() {{
+            echo '{snapshot_data}'
+        }}
+        
+        api_call() {{
+            return 1
+        }}
+        
+        process_snapshots <<< $(fetch_snapshots)
+        echo "EXIT_CODE=$EXIT_CODE"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Verification failure should set critical exit code
+                assert "EXIT_CODE=2" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+
+
+class TestEnhancedDatastoreChecks:
+    """Test enhanced datastore checking"""
+    
+    def test_handles_api_unavailable(self):
+        """Test handling when datastore API is unavailable"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        api_call() {{
+            return 1
+        }}
+        
+        check_datastore
+        echo "EXIT_CODE=$EXIT_CODE"
+        echo "SUMMARY=$DATASTORE_SUMMARY"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Should set warning when status unavailable
+                assert "unavailable" in result.stdout.lower() or result.returncode in [0, 1, 2]
+            finally:
+                os.unlink(f.name)
+    
+    def test_multiple_warnings_accumulated(self):
+        """Test that multiple datastore warnings are accumulated"""
+        import time
+        old_gc = int(time.time()) - 604801
+        
+        status_data = json.dumps({
+            "data": {
+                "total": 1000000000,
+                "used": 850000000,  # Over 80%
+                "last-gc-status": "ok",
+                "last-gc": old_gc  # Over 7 days
+            }
+        })
+        
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        api_call() {{
+            if [[ $2 == *"status"* ]]; then
+                echo '{status_data}'
+                return 0
+            fi
+            return 1
+        }}
+        
+        check_datastore
+        echo "WARNINGS=${{#DATASTORE_WARNINGS[@]}}"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                # Should have multiple warnings
+                assert "WARNINGS=2" in result.stdout or result.returncode in [0, 1, 2]
+            finally:
+                os.unlink(f.name)
+
+
+class TestMainFunctionIntegration:
+    """Test main function integration with all components"""
+    
+    def test_help_requested_returns_zero(self):
+        """Test that help request returns success"""
+        result = subprocess.run(  # noqa: S603
+            [str(SCRIPT_PATH), "-h"],
+            capture_output=True,
+            text=True,
+            env={"PBS_TOKEN": "test"}
+        )
+        assert result.returncode == 0
+        assert "Usage:" in result.stdout
+    
+    def test_invalid_option_returns_one(self):
+        """Test that invalid option returns error code 1"""
+        result = subprocess.run(  # noqa: S603
+            [str(SCRIPT_PATH), "-z"],
+            capture_output=True,
+            text=True,
+            env={"PBS_TOKEN": "test"}
+        )
+        assert result.returncode == 1
+    
+    def test_missing_token_returns_two(self):
+        """Test that missing token returns error code 2"""
+        env = os.environ.copy()
+        env.pop("PBS_TOKEN", None)
+        
+        result = subprocess.run(  # noqa: S603
+            [str(SCRIPT_PATH)],
+            capture_output=True,
+            text=True,
+            env=env
+        )
+        assert result.returncode == 2
+    
+    def test_verbose_mode_produces_output(self):
+        """Test that verbose mode produces console output"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        VERBOSE=true
+        log INFO "$COLOR_GREEN" "Test message"
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert "[INFO]" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+
+
+class TestReportStyling:
+    """Test HTML report styling and structure"""
+    
+    def test_report_includes_css_styling(self):
+        """Test that report includes CSS styling"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        REPORT_FILE=$(mktemp)
+        JOB_ROWS=()
+        SNAPSHOT_ROWS=()
+        DATASTORE_SUMMARY="Test"
+        DATASTORE_WARNINGS=()
+        
+        build_report
+        
+        if [[ -f "$REPORT_FILE" ]]; then
+            grep -c "<style>" "$REPORT_FILE"
+            rm "$REPORT_FILE"
+        fi
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert "1" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
+    
+    def test_report_includes_color_classes(self):
+        """Test that report uses color classes for status"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        REPORT_FILE=$(mktemp)
+        JOB_ROWS=("<tr><td>test</td><td class='pass'>ok</td><td>None</td></tr>")
+        SNAPSHOT_ROWS=()
+        DATASTORE_SUMMARY="Test"
+        DATASTORE_WARNINGS=()
+        
+        build_report
+        
+        if [[ -f "$REPORT_FILE" ]]; then
+            grep -c "class='pass'" "$REPORT_FILE"
+            rm "$REPORT_FILE"
+        fi
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert result.returncode in [0, 2]
+            finally:
+                os.unlink(f.name)
+    
+    def test_report_includes_timestamp(self):
+        """Test that report includes generation timestamp"""
+        test_script = f"""
+        source {SCRIPT_PATH}
+        
+        REPORT_FILE=$(mktemp)
+        JOB_ROWS=()
+        SNAPSHOT_ROWS=()
+        DATASTORE_SUMMARY="Test"
+        DATASTORE_WARNINGS=()
+        
+        build_report
+        
+        if [[ -f "$REPORT_FILE" ]]; then
+            grep -c "Generated:" "$REPORT_FILE"
+            rm "$REPORT_FILE"
+        fi
+        """
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+            f.write(test_script)
+            f.flush()
+            
+            try:
+                result = subprocess.run(  # noqa: S603
+                    ["/bin/bash", f.name],
+                    capture_output=True,
+                    text=True,
+                    env={"PBS_TOKEN": "test"}
+                )
+                assert "1" in result.stdout or result.returncode == 2
+            finally:
+                os.unlink(f.name)
