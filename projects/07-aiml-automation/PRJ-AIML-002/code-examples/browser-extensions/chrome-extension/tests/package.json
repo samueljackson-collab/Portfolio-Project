@@ -1,0 +1,21 @@
+{
+  "name": "tab-organizer-extension-tests",
+  "version": "1.0.0",
+  "description": "Tests for Tab Organizer Chrome Extension",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "../scripts/**/*.js",
+      "!../scripts/**/*.test.js"
+    ]
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
