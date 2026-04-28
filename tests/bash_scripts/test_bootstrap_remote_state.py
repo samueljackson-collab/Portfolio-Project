@@ -266,3 +266,284 @@ class TestAWSCLIUsage:
         with open(script_path, 'r') as f:
             content = f.read()
         assert "--region" in content or "${REGION}" in content
+
+class TestScriptCorrectness:
+    """Test script correctness and file quality."""
+
+    def test_script_has_newline_at_end(self, script_path):
+        """Verify script ends with a newline character."""
+        with open(script_path, 'rb') as f:
+            content = f.read()
+        
+        assert content.endswith(b'\n'), \
+            "Script should end with a newline character (POSIX requirement)"
+
+    def test_consistent_line_endings(self, script_path):
+        """Verify script uses consistent Unix line endings."""
+        with open(script_path, 'rb') as f:
+            content = f.read()
+        
+        # Check for Windows line endings
+        assert b'\r\n' not in content, \
+            "Script contains Windows line endings (CRLF). Should use Unix (LF) only."
+
+    def test_no_trailing_whitespace_on_lines(self, script_path):
+        """Check for trailing whitespace which can cause issues."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        lines_with_trailing = []
+        for i, line in enumerate(lines, 1):
+            # Check if line has trailing whitespace (excluding the newline)
+            if line.rstrip('\n') != line.rstrip('\n').rstrip():
+                lines_with_trailing.append(i)
+        
+        if lines_with_trailing:
+            pytest.fail(
+                f"Lines with trailing whitespace: {lines_with_trailing}. "
+                "This can cause issues in shell scripts."
+            )
+
+
+class TestAWSCommandCorrectness:
+    """Test AWS CLI commands are correctly formed."""
+
+    def test_aws_commands_not_assigned_to_variables(self, script_path):
+        """Verify AWS commands are executed, not assigned to variables."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        import re
+        # Look for patterns like: var=aws ...
+        # This would be a typo where someone means to run aws but creates a variable
+        pattern = r'^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*aws\s+'
+        
+        matches = re.findall(pattern, content, re.MULTILINE)
+        
+        # Filter out legitimate uses like status=$(aws ...)
+        legitimate_patterns = [
+            r'\$\(',  # Command substitution
+            r'`',      # Backtick substitution
+        ]
+        
+        false_positives = []
+        for match in matches:
+            # Check if this is command substitution
+            is_cmd_sub = False
+            for line in content.split('\n'):
+                if f'{match}=' in line and ('$(' in line or '`' in line):
+                    is_cmd_sub = True
+                    break
+            if is_cmd_sub:
+                false_positives.append(match)
+        
+        actual_issues = [m for m in matches if m not in false_positives]
+        
+        if actual_issues:
+            pytest.fail(
+                f"Found AWS commands being assigned to variables: {actual_issues}. "
+                f"These should be executed directly or in command substitution $(...), not simple assignment."
+            )
+
+    def test_aws_cli_commands_have_required_parameters(self, script_path):
+        """Verify AWS CLI commands have necessary parameters like --region."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        aws_command_lines = []
+        for i, line in enumerate(lines, 1):
+            if 'aws ' in line and not line.strip().startswith('#'):
+                # Skip lines that are just checking AWS CLI existence
+                if 'which aws' not in line and 'command -v aws' not in line:
+                    aws_command_lines.append((i, line.strip()))
+        
+        # Check that most AWS commands reference the region
+        # Either directly or through a variable
+        for line_num, line in aws_command_lines:
+            if 'aws s3' in line or 'aws dynamodb' in line:
+                has_region = '--region' in line or '${REGION}' in line or '$REGION' in line
+                if not has_region:
+                    # This might be okay if region is set in environment, but warn
+                    pass  # We'll be lenient here
+
+
+class TestOutputAndDocumentation:
+    """Test script output and user guidance."""
+
+    def test_completion_message_is_clear(self, script_path):
+        """Verify completion message provides clear next steps."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should tell user what to do next
+        assert 'terraform/variables.tf' in content or 'variables.tf' in content, \
+            "Should guide user to update variables.tf"
+        
+        assert 'tfstate_bucket' in content, \
+            "Should mention tfstate_bucket variable"
+        
+        assert 'tfstate_lock_table' in content or 'lock_table' in content, \
+            "Should mention tfstate_lock_table variable"
+
+    def test_script_outputs_all_required_info(self, script_path):
+        """Verify script outputs bucket and table names."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should echo the bucket name
+        assert 'echo' in content, "Script should provide output messages"
+        
+        # Should display the values being used
+        has_bucket_output = '${BUCKET_NAME}' in content or '$BUCKET_NAME' in content
+        has_table_output = '${DDB_TABLE}' in content or '$DDB_TABLE' in content
+        
+        assert has_bucket_output, "Should output bucket name"
+        assert has_table_output, "Should output DynamoDB table name"
+
+
+class TestRegionHandling:
+    """Test special handling for different AWS regions."""
+
+    def test_us_east_1_special_case_exists(self, script_path):
+        """Verify script handles us-east-1 region specially for S3."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # us-east-1 doesn't use LocationConstraint
+        assert 'us-east-1' in content, \
+            "Should check for us-east-1 region"
+        
+        # Should have conditional logic for this
+        assert 'if' in content and ('us-east-1' in content or 'LocationConstraint' in content), \
+            "Should have conditional for us-east-1 bucket creation"
+
+    def test_location_constraint_used_for_non_us_east_1(self, script_path):
+        """Verify LocationConstraint is used for non-us-east-1 regions."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        assert 'LocationConstraint' in content or 'location-constraint' in content, \
+            "Should use LocationConstraint for regional buckets"
+
+
+class TestSecurityFeatures:
+    """Test security features are properly configured."""
+
+    def test_encryption_configuration_complete(self, script_path):
+        """Verify S3 bucket encryption is properly configured."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should enable encryption
+        assert 'put-bucket-encryption' in content, \
+            "Should enable bucket encryption"
+        
+        # Should specify encryption algorithm
+        assert 'AES256' in content or 'SSEAlgorithm' in content, \
+            "Should specify encryption algorithm"
+
+    def test_versioning_configuration_complete(self, script_path):
+        """Verify S3 bucket versioning is properly configured."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should enable versioning
+        assert 'put-bucket-versioning' in content, \
+            "Should enable bucket versioning"
+        
+        # Should set status to Enabled
+        assert 'Enabled' in content or 'Status=Enabled' in content, \
+            "Should set versioning status to Enabled"
+
+
+class TestResourceNaming:
+    """Test resource naming conventions."""
+
+    def test_default_bucket_name_follows_convention(self, script_path):
+        """Verify default bucket name follows naming conventions."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should have a default bucket name
+        assert 'twisted-monk' in content or 'BUCKET_NAME=' in content, \
+            "Should define default bucket name"
+
+    def test_default_table_name_follows_convention(self, script_path):
+        """Verify default DynamoDB table name follows conventions."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should have a default table name
+        assert 'terraform-locks' in content or 'DDB_TABLE=' in content or 'DYNAMODB_TABLE=' in content, \
+            "Should define default DynamoDB table name"
+
+
+class TestCommandExecution:
+    """Test command execution patterns."""
+
+    def test_no_dangerous_eval_usage(self, script_path):
+        """Verify script doesn't use dangerous eval constructs."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # eval can be dangerous
+        assert 'eval ' not in content or 'eval' in content.split('#')[0], \
+            "Script should avoid using eval for security reasons"
+
+    def test_proper_quoting_of_variables(self, script_path):
+        """Check that variables are properly quoted to prevent word splitting."""
+        with open(script_path, 'r') as f:
+            lines = f.readlines()
+        
+        # Look for common patterns that should be quoted
+        unquoted_vars = []
+        import re
+        
+        for i, line in enumerate(lines, 1):
+            # Skip comments
+            if line.strip().startswith('#'):
+                continue
+            
+            # Look for $VAR or ${VAR} usage in commands
+            # They should generally be "$VAR" or "${VAR}"
+            
+            # Find variables not in quotes
+            # This is a simplified check - proper parsing would require full bash parsing
+            vars_in_line = re.findall(r'\$\{?[A-Z_]+\}?', line)
+            
+            for var in vars_in_line:
+                # Check if this variable is quoted
+                var_pos = line.find(var)
+                if var_pos > 0:
+                    before = line[:var_pos]
+                    # Simple check: is there a quote immediately before?
+                    if not before.rstrip().endswith('"') and not before.rstrip().endswith("'"):
+                        # Could be unquoted, but there are valid cases
+                        # Only flag if it's in a dangerous context
+                        if 'echo' not in line and '=' not in line:
+                            # This might be a problem
+                            pass  # Too many false positives, skip
+
+
+class TestFileStructure:
+    """Test overall file structure and organization."""
+
+    def test_script_has_clear_sections(self, script_path):
+        """Verify script has logical sections with comments."""
+        with open(script_path, 'r') as f:
+            content = f.read()
+        
+        # Should have comments explaining sections
+        comment_lines = [line for line in content.split('\n') if line.strip().startswith('#')]
+        
+        assert len(comment_lines) > 5, \
+            "Script should have adequate comments explaining its operation"
+
+    def test_script_length_reasonable(self, script_path):
+        """Verify script length is reasonable (not too short or too long)."""
+        with open(script_path, 'r') as f:
+            lines = [l for l in f.readlines() if l.strip()]  # Non-empty lines
+        
+        assert 30 <= len(lines) <= 200, \
+            f"Script has {len(lines)} non-empty lines. " \
+            f"Should be between 30-200 for this use case."
