@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-04-27T22:37:54.887024+00:00",
-  "overall_completion": 91.1,
+  "timestamp": "2026-04-28T16:55:40.917360+00:00",
+  "overall_completion": 90.9,
   "projects": {
-    "total": 108,
+    "total": 109,
     "completed": 0,
     "in_progress": 0,
-    "planned": 108,
-    "with_code": 102,
-    "with_docs": 108,
+    "planned": 109,
+    "with_code": 103,
+    "with_docs": 109,
     "with_tests": 93,
     "with_demos": 0
   },
@@ -18,14 +18,14 @@
     "languages": {}
   },
   "documentation": {
-    "readme_files": 396,
-    "markdown_files": 2283,
-    "total_words": 2879662
+    "readme_files": 409,
+    "markdown_files": 2386,
+    "total_words": 2941142
   },
   "infrastructure": {
     "docker_compose_files": 47,
-    "terraform_files": 203,
-    "kubernetes_manifests": 87,
+    "terraform_files": 240,
+    "kubernetes_manifests": 93,
     "config_files": 0
   },
   "project_details": [
@@ -38,8 +38,9 @@
       "has_demo": false,
       "status": "planned",
       "completion": 100,
-      "file_count": 184,
+      "file_count": 267,
       "languages": [
+        "Go",
         "JSON",
         "JavaScript",
         "Shell",
@@ -760,7 +761,7 @@
       "has_demo": false,
       "status": "planned",
       "completion": 100,
-      "file_count": 29,
+      "file_count": 30,
       "languages": [
         "JSON",
         "Python",
@@ -981,7 +982,7 @@
       "has_demo": false,
       "status": "planned",
       "completion": 100,
-      "file_count": 60,
+      "file_count": 76,
       "languages": [
         "JSON",
         "Python",
@@ -999,7 +1000,7 @@
       "has_demo": false,
       "status": "planned",
       "completion": 100,
-      "file_count": 26,
+      "file_count": 39,
       "languages": [
         "JSON",
         "Python",
@@ -1366,6 +1367,20 @@
         "Python",
         "Terraform",
         "TypeScript",
+        "YAML"
+      ]
+    },
+    {
+      "name": "P11-ZERO-TRUST-SECURITY",
+      "path": "projects-new/P11-ZERO-TRUST-SECURITY",
+      "has_code": true,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 70,
+      "file_count": 10,
+      "languages": [
         "YAML"
       ]
     },
