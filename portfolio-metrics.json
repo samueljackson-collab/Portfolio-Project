@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-04-29T15:15:57.480363+00:00",
-  "overall_completion": 90.9,
+  "timestamp": "2026-04-29T15:17:22.616589+00:00",
+  "overall_completion": 90.0,
   "projects": {
-    "total": 109,
+    "total": 111,
     "completed": 0,
     "in_progress": 0,
-    "planned": 109,
-    "with_code": 103,
-    "with_docs": 109,
+    "planned": 111,
+    "with_code": 104,
+    "with_docs": 110,
     "with_tests": 93,
     "with_demos": 0
   },
@@ -18,12 +18,12 @@
     "languages": {}
   },
   "documentation": {
-    "readme_files": 443,
-    "markdown_files": 2429,
-    "total_words": 2945163
+    "readme_files": 452,
+    "markdown_files": 2480,
+    "total_words": 2951936
   },
   "infrastructure": {
-    "docker_compose_files": 47,
+    "docker_compose_files": 48,
     "terraform_files": 285,
     "kubernetes_manifests": 128,
     "config_files": 0
@@ -308,6 +308,18 @@
       ]
     },
     {
+      "name": "16-23",
+      "path": "projects/16-23",
+      "has_code": false,
+      "has_docs": true,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 40,
+      "file_count": 48,
+      "languages": []
+    },
+    {
       "name": "16-advanced-data-lake",
       "path": "projects/16-advanced-data-lake",
       "has_code": true,
@@ -388,6 +400,20 @@
         "SQL",
         "Shell",
         "YAML"
+      ]
+    },
+    {
+      "name": "20-blockchain-oracle",
+      "path": "projects/20-blockchain-oracle",
+      "has_code": true,
+      "has_docs": false,
+      "has_tests": false,
+      "has_demo": false,
+      "status": "planned",
+      "completion": 40,
+      "file_count": 1,
+      "languages": [
+        "Python"
       ]
     },
     {
