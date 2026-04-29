@@ -1,19 +1,19 @@
 # Database Migration Platform Dependencies
 
 # Database connectivity
-psycopg2-binary==2.9.11
+psycopg2-binary==2.9.12
 asyncpg==0.31.0
 
 # AWS SDK
-boto3==1.42.89
-botocore==1.42.89
+boto3==1.42.97
+botocore==1.42.97
 
 # Logging and monitoring
 python-json-logger==4.1.0
 
 # Configuration management
 python-dotenv==1.2.2
-pydantic==2.13.0
+pydantic==2.13.3
 
 # Testing
 pytest==9.0.3
@@ -24,4 +24,4 @@ pytest-mock==3.15.1
 # Development tools
 black==26.3.1
 flake8==7.3.0
-mypy==1.20.1
+mypy==1.20.2
