@@ -218,6 +218,10 @@ now exceeds 25 projects.
 - 🟢 **Project 42: IT Playbook (E2E Lifecycle)** — All 8 lifecycle phases (intake through decommission), completed project charter and ADR examples, playbook validator (10/10 checks), 51 passing tests.
 - 🟢 **Project 43: Engineer's Handbook (Standards/QA Gates)** — 6 handbook chapters, 13 machine-readable QA gates, gate-checker.py, compliant Python/Terraform examples, 48 passing tests.
 
+### Blockchain Oracle Service
+**Description** Simulated on-chain oracle network that aggregates weighted price feeds, performs anomaly filtering, and signs payloads before durable blockchain publication.
+**Links**: [Repo/Folder](./projects/20-blockchain-oracle/) · [Source](./projects/20-blockchain-oracle/blockchain_oracle_service.py)
+
 ---
 
 ## 📊 Current Portfolio State (Actionable)
