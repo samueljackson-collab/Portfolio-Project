@@ -1,0 +1,125 @@
+{% comment %}
+  Urgency Banner Snippet
+  Usage: {% render 'urgency-banner', product: product %}
+{% endcomment %}
+
+{%- if product -%}
+  {%- assign total_quantity = 0 -%}
+  {%- assign low_stock_threshold = 10 -%}
+  {%- assign critical_stock_threshold = 3 -%}
+  
+  {%- for variant in product.variants -%}
+    {%- assign total_quantity = total_quantity | plus: variant.inventory_quantity -%}
+  {%- endfor -%}
+  
+  {%- if total_quantity > 0 and total_quantity <= low_stock_threshold -%}
+    <div class="urgency-banner" 
+         role="alert" 
+         aria-live="polite"
+         data-product-id="{{ product.id }}"
+         data-stock-level="{{ total_quantity }}">
+      
+      <div class="urgency-banner__content">
+        <div class="urgency-banner__icon">⚠️</div>
+        
+        <div class="urgency-banner__message">
+          {%- if total_quantity <= critical_stock_threshold -%}
+            <strong>Almost Gone!</strong> Only {{ total_quantity }} item{% if total_quantity != 1 %}s{% endif %} left in stock.
+          {%- else -%}
+            <strong>Selling Fast!</strong> Limited stock available.
+          {%- endif -%}
+        </div>
+        
+        <div class="urgency-banner__progress">
+          <div class="progress-bar">
+            <div class="progress-bar__fill" 
+                 style="width: {{ total_quantity | times: 10 }}%"
+                 aria-valuenow="{{ total_quantity }}"
+                 aria-valuemin="0"
+                 aria-valuemax="{{ low_stock_threshold }}">
+            </div>
+          </div>
+          <div class="progress-bar__label">
+            {{ total_quantity }}/{{ low_stock_threshold }} remaining
+          </div>
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
+{%- endif -%}
+
+<style>
+  .urgency-banner {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fcd34d;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    animation: pulse 2s infinite;
+  }
+  
+  .urgency-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  
+  .urgency-banner__icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+  
+  .urgency-banner__message {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #92400e;
+  }
+  
+  .urgency-banner__message strong {
+    font-weight: 600;
+  }
+  
+  .urgency-banner__progress {
+    flex-basis: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  .progress-bar {
+    background-color: #fef3c7;
+    border-radius: 0.25rem;
+    height: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+  }
+  
+  .progress-bar__fill {
+    background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+    height: 100%;
+    border-radius: 0.25rem;
+    transition: width 0.5s ease;
+  }
+  
+  .progress-bar__label {
+    font-size: 0.75rem;
+    color: #92400e;
+    text-align: center;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.9; }
+  }
+  
+  @media (min-width: 768px) {
+    .urgency-banner__content {
+      flex-wrap: nowrap;
+    }
+    
+    .urgency-banner__progress {
+      flex-basis: auto;
+      margin-top: 0;
+      min-width: 150px;
+    }
+  }
+</style>

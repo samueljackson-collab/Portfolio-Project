@@ -1,0 +1,83 @@
+{
+  "name": "Twisted Monk Inventory Alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "cronExpression": "*/30 * * * *"
+      },
+      "id": "1",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$json[\"API_BASE_URL\"]}}/health",
+        "options": {
+          "ignoreResponse": false
+        }
+      },
+      "id": "2",
+      "name": "API Health Check",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json[\"API_BASE_URL\"]}}/inventory/update",
+        "jsonParameters": true,
+        "options": {
+          "ignoreResponse": false
+        },
+        "bodyParametersJson": "={\"product_id\":$json[\"product_id\"],\"variant_id\":$json[\"variant_id\"],\"quantity\":$json[\"quantity\"],\"location_id\":$json[\"location_id\"]}"
+      },
+      "id": "3",
+      "name": "Update Inventory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "operation": "sendEmail",
+        "fromEmail": "alerts@twistedmonk.com",
+        "toEmail": "={{$json[\"alert_email\"]}}",
+        "subject": "Twisted Monk Inventory Alert",
+        "text": "={{$json[\"message\"]}}"
+      },
+      "id": "4",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "API Health Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Health Check": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
