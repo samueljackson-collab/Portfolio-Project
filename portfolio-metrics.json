@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-28T16:55:40.917360+00:00",
+  "timestamp": "2026-04-29T15:15:57.480363+00:00",
   "overall_completion": 90.9,
   "projects": {
     "total": 109,
@@ -18,14 +18,14 @@
     "languages": {}
   },
   "documentation": {
-    "readme_files": 409,
-    "markdown_files": 2386,
-    "total_words": 2941142
+    "readme_files": 443,
+    "markdown_files": 2429,
+    "total_words": 2945163
   },
   "infrastructure": {
     "docker_compose_files": 47,
-    "terraform_files": 240,
-    "kubernetes_manifests": 93,
+    "terraform_files": 285,
+    "kubernetes_manifests": 128,
     "config_files": 0
   },
   "project_details": [
@@ -365,7 +365,7 @@
       "has_demo": false,
       "status": "planned",
       "completion": 90,
-      "file_count": 19,
+      "file_count": 20,
       "languages": [
         "JSON",
         "Python",
@@ -982,7 +982,7 @@
       "has_demo": false,
       "status": "planned",
       "completion": 100,
-      "file_count": 76,
+      "file_count": 77,
       "languages": [
         "JSON",
         "Python",
@@ -1379,7 +1379,7 @@
       "has_demo": false,
       "status": "planned",
       "completion": 70,
-      "file_count": 10,
+      "file_count": 11,
       "languages": [
         "YAML"
       ]
