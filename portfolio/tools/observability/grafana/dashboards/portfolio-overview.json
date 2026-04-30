@@ -1,0 +1,16 @@
+{
+  "title": "Portfolio Overview",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "API Latency",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"fastapi\"}[5m])) by (le))"
+        }
+      ],
+      "datasource": "Prometheus"
+    }
+  ]
+}

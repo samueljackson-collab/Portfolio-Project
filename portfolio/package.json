@@ -1,0 +1,17 @@
+{
+  "name": "portfolio-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "lint": "npm run lint --workspace frontend",
+    "build": "npm run build --workspace frontend",
+    "test": "npm run test --workspace frontend",
+    "audit": "npm audit --workspace frontend"
+  },
+  "devDependencies": {
+    "npm-run-all": "4.1.5"
+  }
+}

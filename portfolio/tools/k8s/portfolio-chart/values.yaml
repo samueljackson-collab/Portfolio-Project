@@ -1,0 +1,15 @@
+image:
+  backend: ghcr.io/example/portfolio-backend:latest
+  frontend: ghcr.io/example/portfolio-frontend:latest
+
+env:
+  SECRET_KEY: please-change-me
+  DATABASE_URL: postgresql+asyncpg://portfolio:password@postgres:5432/portfolio
+
+replicaCount:
+  backend: 1
+  frontend: 1
+
+service:
+  backendPort: 8000
+  frontendPort: 80
