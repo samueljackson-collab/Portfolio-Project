@@ -1,4 +1,4 @@
-boto3>=1.42.93
+boto3>=1.42.97
 pytest>=9.0.3
 pyyaml>=6.0.3
 jinja2>=3.1.6
