@@ -85,7 +85,7 @@ export function LiveScanFeed({ scanId, filename, platform, onComplete }: Props) 
           }
           es.close()
         }
-      } catch { /* ignore parse errors */ }
+      } catch (err) { console.error('[SSE parse error]', err) }
     }
 
     es.onerror = () => es.close()

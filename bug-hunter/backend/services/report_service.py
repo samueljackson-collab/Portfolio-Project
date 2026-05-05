@@ -79,7 +79,9 @@ async def generate_report(session_id: str, db: AsyncSession) -> Report:
     result = await db.execute(
         select(ScanSession).where(ScanSession.id == session_id)
     )
-    session = result.scalar_one()
+    session = result.scalar_one_or_none()
+    if not session:
+        raise ValueError(f"Scan session {session_id} not found")
 
     findings_result = await db.execute(
         select(BugFinding)
@@ -92,13 +94,18 @@ async def generate_report(session_id: str, db: AsyncSession) -> Report:
     executive_summary = _build_executive_summary(session, findings)
     generated_at = datetime.utcnow()
 
+    # Determine the report ID before rendering so the template gets the real ID
+    # and we avoid a fragile second-pass string replacement.
+    existing_result = await db.execute(select(Report).where(Report.session_id == session_id))
+    existing_report = existing_result.scalar_one_or_none()
+    report_id = existing_report.id if existing_report else str(uuid.uuid4())
+
     template = jinja_env.get_template("report.html")
     html_content = template.render(
         session=session,
-        report_placeholder=True,
         findings=findings,
         report=type("R", (), {
-            "id": "pending",
+            "id": report_id,
             "risk_score": session.risk_score,
             "total_findings": len(findings),
             "executive_summary": executive_summary,
@@ -107,17 +114,14 @@ async def generate_report(session_id: str, db: AsyncSession) -> Report:
         risk_class=_risk_class(session.risk_score),
     )
 
-    existing = await db.execute(select(Report).where(Report.session_id == session_id))
-    report = existing.scalar_one_or_none()
-
-    if report:
-        report.executive_summary = executive_summary
-        report.total_findings = len(findings)
-        report.risk_score = session.risk_score
-        report.html_content = html_content
-        report.generated_at = generated_at
+    if existing_report:
+        existing_report.executive_summary = executive_summary
+        existing_report.total_findings = len(findings)
+        existing_report.risk_score = session.risk_score
+        existing_report.html_content = html_content
+        existing_report.generated_at = generated_at
+        report = existing_report
     else:
-        report_id = str(uuid.uuid4())
         report = Report(
             id=report_id,
             session_id=session_id,
@@ -131,9 +135,4 @@ async def generate_report(session_id: str, db: AsyncSession) -> Report:
 
     await db.commit()
     await db.refresh(report)
-
-    html_content = html_content.replace("pending", report.id, 1)
-    report.html_content = html_content
-    await db.commit()
-
     return report

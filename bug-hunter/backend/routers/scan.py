@@ -22,6 +22,8 @@ logger = logging.getLogger("bughunter.scan")
 router = APIRouter(prefix="/api/scans", tags=["scans"])
 
 VALID_PLATFORMS = {"android", "ios", "windows", "macos", "web"}
+VALID_STATUSES = {"pending", "running", "complete", "failed"}
+_MAX_SSE_SECONDS = 600  # 10-minute hard cap per SSE connection
 
 
 @router.post("", response_model=ScanSessionSummary, status_code=201,
@@ -82,9 +84,13 @@ async def list_scans(
     platform: str | None = Query(None),
     status: str | None = Query(None),
     limit: int = Query(50, le=200),
-    offset: int = Query(0),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
+    if platform and platform not in VALID_PLATFORMS:
+        raise HTTPException(status_code=422, detail=f"platform must be one of: {', '.join(sorted(VALID_PLATFORMS))}")
+    if status and status not in VALID_STATUSES:
+        raise HTTPException(status_code=422, detail=f"status must be one of: {', '.join(sorted(VALID_STATUSES))}")
     q = select(ScanSession).order_by(ScanSession.created_at.desc()).limit(limit).offset(offset)
     if platform:
         q = q.where(ScanSession.platform == platform)
@@ -108,68 +114,77 @@ async def get_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
     return session
 
 
-@router.get("/{scan_id}/events", dependencies=[Depends(require_api_key)])
+@router.get("/{scan_id}/events")
 async def scan_events(scan_id: str):
-    """SSE endpoint that streams findings as the scan progresses."""
+    """SSE endpoint that streams findings as the scan progresses.
+
+    Auth is intentionally omitted: EventSource cannot send custom headers, so the
+    API key cannot be forwarded from the browser.  The scan_id itself acts as an
+    unguessable token (UUID v4).
+    """
 
     async def generate():
         from database import AsyncSessionLocal
         sent_ids: set[str] = set()
 
-        async with AsyncSessionLocal() as db:
-            while True:
-                db.expire_all()
+        try:
+            async with asyncio.timeout(_MAX_SSE_SECONDS):
+                async with AsyncSessionLocal() as db:
+                    while True:
+                        db.expire_all()
 
-                result = await db.execute(select(ScanSession).where(ScanSession.id == scan_id))
-                scan = result.scalar_one_or_none()
-                if not scan:
-                    yield f"data: {json.dumps({'error': 'scan not found'})}\n\n"
-                    break
+                        result = await db.execute(select(ScanSession).where(ScanSession.id == scan_id))
+                        scan = result.scalar_one_or_none()
+                        if not scan:
+                            yield f"data: {json.dumps({'error': 'scan not found'})}\n\n"
+                            break
 
-                findings_result = await db.execute(
-                    select(BugFinding)
-                    .where(BugFinding.session_id == scan_id)
-                    .order_by(BugFinding.severity)
-                )
-                all_findings = list(findings_result.scalars().all())
-                new_findings = [f for f in all_findings if f.id not in sent_ids]
+                        findings_result = await db.execute(
+                            select(BugFinding)
+                            .where(BugFinding.session_id == scan_id)
+                            .order_by(BugFinding.severity)
+                        )
+                        all_findings = list(findings_result.scalars().all())
+                        new_findings = [f for f in all_findings if f.id not in sent_ids]
 
-                for f in new_findings:
-                    sent_ids.add(f.id)
+                        for f in new_findings:
+                            sent_ids.add(f.id)
 
-                if new_findings or scan.status in ("complete", "failed"):
-                    payload = {
-                        "status": scan.status,
-                        "critical_count": scan.critical_count,
-                        "high_count": scan.high_count,
-                        "medium_count": scan.medium_count,
-                        "low_count": scan.low_count,
-                        "risk_score": scan.risk_score,
-                        "new_findings": [
-                            {
-                                "id": f.id,
-                                "session_id": f.session_id,
-                                "title": f.title,
-                                "description": f.description,
-                                "severity": f.severity,
-                                "category": f.category,
-                                "platform": f.platform,
-                                "line_number": f.line_number,
-                                "code_snippet": f.code_snippet,
-                                "recommendation": f.recommendation,
-                                "cwe_id": f.cwe_id,
-                                "cvss_score": f.cvss_score,
-                                "evidence": f.evidence,
+                        if new_findings or scan.status in ("complete", "failed"):
+                            payload = {
+                                "status": scan.status,
+                                "critical_count": scan.critical_count,
+                                "high_count": scan.high_count,
+                                "medium_count": scan.medium_count,
+                                "low_count": scan.low_count,
+                                "risk_score": scan.risk_score,
+                                "new_findings": [
+                                    {
+                                        "id": f.id,
+                                        "session_id": f.session_id,
+                                        "title": f.title,
+                                        "description": f.description,
+                                        "severity": f.severity,
+                                        "category": f.category,
+                                        "platform": f.platform,
+                                        "line_number": f.line_number,
+                                        "code_snippet": f.code_snippet,
+                                        "recommendation": f.recommendation,
+                                        "cwe_id": f.cwe_id,
+                                        "cvss_score": f.cvss_score,
+                                        "evidence": f.evidence,
+                                    }
+                                    for f in new_findings
+                                ],
                             }
-                            for f in new_findings
-                        ],
-                    }
-                    yield f"data: {json.dumps(payload)}\n\n"
+                            yield f"data: {json.dumps(payload)}\n\n"
 
-                if scan.status in ("complete", "failed"):
-                    break
+                        if scan.status in ("complete", "failed"):
+                            break
 
-                await asyncio.sleep(0.5)
+                        await asyncio.sleep(0.5)
+        except asyncio.TimeoutError:
+            yield f"data: {json.dumps({'error': 'stream timeout', 'status': 'failed'})}\n\n"
 
     return StreamingResponse(
         generate(),

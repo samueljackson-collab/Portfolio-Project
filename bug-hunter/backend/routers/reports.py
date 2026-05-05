@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+import re
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,11 @@ from schemas import ReportOut, ReportSummary
 
 logger = logging.getLogger("bughunter.reports")
 router = APIRouter(prefix="/api/reports", tags=["reports"])
+
+
+def _safe_filename(name: str) -> str:
+    """Strip characters that could enable HTTP response splitting via Content-Disposition."""
+    return re.sub(r"[^\w\-.]", "_", name)[:100]
 
 
 @router.get("", response_model=list[ReportSummary],
@@ -47,7 +53,7 @@ async def download_report_html(report_id: str, db: AsyncSession = Depends(get_db
 
     session_result = await db.execute(select(ScanSession).where(ScanSession.id == report.session_id))
     session = session_result.scalar_one_or_none()
-    filename = session.filename if session else "report"
+    filename = _safe_filename(session.filename if session else "report")
 
     return HTMLResponse(
         content=report.html_content,
@@ -64,7 +70,7 @@ async def download_report_pdf(report_id: str, db: AsyncSession = Depends(get_db)
 
     session_result = await db.execute(select(ScanSession).where(ScanSession.id == report.session_id))
     session = session_result.scalar_one_or_none()
-    filename = session.filename if session else "report"
+    filename = _safe_filename(session.filename if session else "report")
 
     try:
         from weasyprint import HTML
@@ -75,10 +81,7 @@ async def download_report_pdf(report_id: str, db: AsyncSession = Depends(get_db)
             headers={"Content-Disposition": f'attachment; filename="bughunt-{filename}.pdf"'},
         )
     except ImportError:
-        raise HTTPException(
-            status_code=503,
-            detail="PDF generation requires WeasyPrint. Install it with: pip install weasyprint",
-        )
+        raise HTTPException(status_code=503, detail="PDF generation is temporarily unavailable")
     except Exception as exc:
         logger.error("PDF generation failed for report %s", report_id, exc_info=exc)
         raise HTTPException(status_code=500, detail="PDF generation failed")

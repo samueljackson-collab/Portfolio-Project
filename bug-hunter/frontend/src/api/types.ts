@@ -41,7 +41,7 @@ export interface Report {
   executive_summary: string
   total_findings: number
   risk_score: number
-  html_content?: string
+  html_content: string
 }
 
 export interface ScanCreateRequest {

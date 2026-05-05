@@ -116,9 +116,9 @@ async def _run_analyzers(session: ScanSession, db: AsyncSession) -> None:
                 session.medium_count += 1
             elif raw.severity == "Low":
                 session.low_count += 1
-            session.risk_score = compute_risk_score(all_raw)
-            await db.commit()
 
+    # Compute risk score once and flush all findings + status in a single commit.
+    session.risk_score = compute_risk_score(all_raw)
     session.status = "complete"
     session.completed_at = datetime.utcnow()
     await db.commit()
@@ -132,6 +132,7 @@ async def run_scan(session_id: str, db: AsyncSession) -> None:
     result = await db.execute(select(ScanSession).where(ScanSession.id == session_id))
     session = result.scalar_one_or_none()
     if not session:
+        logger.warning("Scan %s not found — skipping analysis", session_id)
         return
 
     try:

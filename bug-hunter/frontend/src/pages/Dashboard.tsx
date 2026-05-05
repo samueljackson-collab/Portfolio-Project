@@ -29,10 +29,14 @@ function StatusPill({ status }: { status: string }) {
 export function Dashboard() {
   const [scans, setScans] = useState<ScanSession[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
-    scansApi.list({ limit: 20 }).then(setScans).finally(() => setLoading(false))
+    scansApi.list({ limit: 20 })
+      .then(setScans)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false))
   }, [])
 
   const totalFindings = scans.reduce((s, sc) => s + sc.critical_count + sc.high_count + sc.medium_count + sc.low_count, 0)
@@ -100,6 +104,8 @@ export function Dashboard() {
 
         {loading ? (
           <div className="p-10 text-center text-gray-400 text-sm animate-pulse">Loading scans...</div>
+        ) : error ? (
+          <div className="p-10 text-center text-red-500 text-sm">{error}</div>
         ) : scans.length === 0 ? (
           <div className="p-10 text-center">
             <p className="text-gray-400 text-sm mb-3">No scans yet. Submit your first code scan to get started.</p>

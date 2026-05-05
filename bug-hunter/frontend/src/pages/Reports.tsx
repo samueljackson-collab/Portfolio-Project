@@ -8,9 +8,13 @@ export function Reports() {
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    reportsApi.list({ limit: 100 }).then(setReports).finally(() => setLoading(false))
+    reportsApi.list({ limit: 100 })
+      .then(setReports)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false))
   }, [])
 
   const filtered = reports.filter(r => {
@@ -41,6 +45,8 @@ export function Reports() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-10 text-center text-gray-400 text-sm animate-pulse">Loading reports...</div>
+        ) : error ? (
+          <div className="p-10 text-center text-red-500 text-sm">{error}</div>
         ) : filtered.length === 0 ? (
           <div className="p-10 text-center">
             <p className="text-gray-400 text-sm mb-3">

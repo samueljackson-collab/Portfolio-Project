@@ -1,5 +1,9 @@
+import hmac
+import logging
 from fastapi import Header, HTTPException
 import config
+
+logger = logging.getLogger("bughunter.auth")
 
 
 async def require_api_key(x_api_key: str = Header(default="")) -> None:
@@ -10,5 +14,7 @@ async def require_api_key(x_api_key: str = Header(default="")) -> None:
     """
     if not config.API_KEY:
         return
-    if x_api_key != config.API_KEY:
+    # Constant-time comparison prevents timing-based brute-force of the API key.
+    if not hmac.compare_digest(x_api_key, config.API_KEY):
+        logger.warning("Invalid API key attempt")
         raise HTTPException(status_code=401, detail="Invalid or missing API key")

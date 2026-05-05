@@ -14,33 +14,58 @@ export function ScanDetail() {
   const [search, setSearch] = useState('')
   const [filterSeverity, setFilterSeverity] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!id) return
+    let mounted = true
     let interval: ReturnType<typeof setInterval>
+    let inflight = false
 
     const fetchScan = async () => {
-      const data = await scansApi.get(id)
-      setScan(data)
-      setLoading(false)
-      if (data.status === 'complete' || data.status === 'failed') {
-        clearInterval(interval)
-        if (data.status === 'complete') {
-          const reports = await reportsApi.list()
-          const r = reports.find(rep => rep.session_id === id)
-          if (r) setReport(r)
+      if (inflight) return
+      inflight = true
+      try {
+        const data = await scansApi.get(id)
+        if (!mounted) return
+        setScan(data)
+        setLoading(false)
+        if (data.status === 'complete' || data.status === 'failed') {
+          clearInterval(interval)
+          if (data.status === 'complete') {
+            const reports = await reportsApi.list()
+            if (!mounted) return
+            const r = reports.find(rep => rep.session_id === id)
+            if (r) setReport(r)
+          }
         }
+      } catch (err) {
+        if (!mounted) return
+        setLoading(false)
+        setError(err instanceof Error ? err.message : 'Failed to load scan')
+        clearInterval(interval)
+      } finally {
+        inflight = false
       }
     }
 
     fetchScan()
     interval = setInterval(fetchScan, 2000)
-    return () => clearInterval(interval)
+    return () => {
+      mounted = false
+      clearInterval(interval)
+    }
   }, [id])
 
   if (loading) return (
     <div className="max-w-5xl mx-auto px-4 py-16 text-center text-gray-400 text-sm animate-pulse">
       Loading scan...
+    </div>
+  )
+
+  if (error) return (
+    <div className="max-w-5xl mx-auto px-4 py-16 text-center text-red-500 text-sm">
+      {error} — <Link to="/" className="underline">Back to dashboard</Link>
     </div>
   )
 

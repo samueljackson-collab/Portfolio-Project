@@ -8,15 +8,25 @@ export function ReportDetail() {
   const { id } = useParams<{ id: string }>()
   const [report, setReport] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!id) return
-    reportsApi.get(id).then(setReport).finally(() => setLoading(false))
+    reportsApi.get(id)
+      .then(setReport)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false))
   }, [id])
 
   if (loading) return (
     <div className="max-w-5xl mx-auto px-4 py-16 text-center text-gray-400 text-sm animate-pulse">
       Loading report...
+    </div>
+  )
+
+  if (error) return (
+    <div className="max-w-5xl mx-auto px-4 py-16 text-center text-red-500 text-sm">
+      {error} — <Link to="/reports" className="underline">Back to reports</Link>
     </div>
   )
 

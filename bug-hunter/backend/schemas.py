@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class BugFindingOut(BaseModel):
@@ -58,7 +58,7 @@ class ScanSessionSummary(BaseModel):
 
 class ScanCreateRequest(BaseModel):
     platform: str
-    filename: str
+    filename: str = Field(..., max_length=255)
     code_content: str
     scan_options: dict | None = None
 
