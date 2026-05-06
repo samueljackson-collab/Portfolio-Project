@@ -1,6 +1,6 @@
 pytest>=9.0.3
 pytest-cov>=7.1.0
-web3>=7.15.0
+web3>=7.16.0
 eth-account>=0.13.7
 fastapi>=0.136.1
 uvicorn[standard]>=0.46.0
