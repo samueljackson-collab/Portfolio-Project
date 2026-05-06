@@ -1,6 +1,6 @@
 # ML Training Dependencies
 tensorflow==2.21.0
-transformers==5.7.0
+transformers==5.8.0
 torch==2.11.0
 scikit-learn==1.8.0
 pandas==3.0.2
