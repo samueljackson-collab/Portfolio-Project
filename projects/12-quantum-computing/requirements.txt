@@ -19,7 +19,7 @@ prometheus-client>=0.25.0
 pyyaml>=6.0.3
 
 # AWS integration (optional)
-boto3>=1.42.97
+boto3>=1.43.4
 
 # Utilities
 python-multipart>=0.0.27
