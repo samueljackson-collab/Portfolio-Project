@@ -61,5 +61,6 @@ export const reportsApi = {
 }
 
 export const healthApi = {
-  check: () => api.get<{ status: string; version: string; db: string }>('/health').then(r => r.data),
+  check: () =>
+    axios.get<{ status: string; version: string; db: string }>('/health').then(r => r.data),
 }
