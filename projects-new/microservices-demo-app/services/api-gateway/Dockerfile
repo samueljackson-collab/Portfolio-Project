@@ -1,9 +1,9 @@
-FROM node:25-alpine AS base
+FROM node:26-alpine AS base
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --production
 
-FROM node:25-alpine
+FROM node:26-alpine
 WORKDIR /app
 COPY --from=base /app/node_modules ./node_modules
 COPY src ./src
