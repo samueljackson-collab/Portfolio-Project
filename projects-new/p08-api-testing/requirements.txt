@@ -1,7 +1,7 @@
 # API Testing Dependencies
 
 # HTTP Client and Requests
-requests==2.33.1
+requests==2.34.0
 httpx==0.28.1
 
 # Testing Framework
@@ -24,10 +24,10 @@ newman==6.0.1
 
 # Data Handling
 jsonschema==4.26.0
-pydantic==2.13.3
+pydantic==2.13.4
 
 # Performance Testing
-locust==2.43.4
+locust==2.44.0
 
 # Reporting
 pytest-html==4.2.0
@@ -61,4 +61,4 @@ pytest-benchmark==5.2.3
 prometheus-client==0.25.0
 
 # Optional: Secrets management
-pydantic-settings==2.14.0
+pydantic-settings==2.14.1
