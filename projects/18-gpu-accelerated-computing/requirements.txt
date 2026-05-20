@@ -2,7 +2,7 @@
 cupy-cuda12x>=14.0.1
 
 # Numerical computing
-numpy>=2.4.4
+numpy>=2.4.6
 scipy>=1.17.1
 
 # Distributed computing
