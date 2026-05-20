@@ -5,15 +5,15 @@ psycopg2-binary==2.9.12
 asyncpg==0.31.0
 
 # AWS SDK
-boto3==1.42.97
-botocore==1.42.97
+boto3==1.43.11
+botocore==1.43.11
 
 # Logging and monitoring
 python-json-logger==4.1.0
 
 # Configuration management
 python-dotenv==1.2.2
-pydantic==2.13.3
+pydantic==2.13.4
 
 # Testing
 pytest==9.0.3
@@ -22,6 +22,6 @@ pytest-cov==7.1.0
 pytest-mock==3.15.1
 
 # Development tools
-black==26.3.1
+black==26.5.1
 flake8==7.3.0
-mypy==1.20.2
+mypy==2.1.0
