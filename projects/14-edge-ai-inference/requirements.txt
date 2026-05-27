@@ -1,20 +1,20 @@
 # ONNX Runtime (GPU version includes CPU fallback)
-onnxruntime-gpu>=1.25.1
+onnxruntime-gpu>=1.26.0
 
 # Image processing
 Pillow>=12.2.0
 
 # Numerical computing
-numpy>=2.4.4
+numpy>=2.4.6
 
 # Visualization (evidence charts)
 matplotlib>=3.10.9
 
 # Web framework
-fastapi>=0.136.1
-uvicorn[standard]>=0.46.0
-pydantic>=2.13.3
-python-multipart>=0.0.27
+fastapi>=0.136.3
+uvicorn[standard]>=0.48.0
+pydantic>=2.13.4
+python-multipart>=0.0.29
 
 # Monitoring
 prometheus-client>=0.25.0
