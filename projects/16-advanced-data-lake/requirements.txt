@@ -1,12 +1,12 @@
 # Data processing
-pandas>=3.0.2
+pandas>=3.0.3
 pyarrow>=24.0.0
 
 # Streaming
-confluent-kafka>=2.14.0
+confluent-kafka>=2.14.2
 
 # Validation
-pydantic>=2.13.3
+pydantic>=2.13.4
 
 # Monitoring
 prometheus-client>=0.25.0
