@@ -1,10 +1,10 @@
 # ML Training Dependencies
 tensorflow==2.21.0
-transformers==5.7.0
-torch==2.11.0
-scikit-learn==1.8.0
-pandas==3.0.2
-numpy==2.4.4
+transformers==5.10.1
+torch==2.12.0
+scikit-learn==1.9.0
+pandas==3.0.3
+numpy==2.4.6
 matplotlib==3.10.9
 seaborn==0.13.2
 
