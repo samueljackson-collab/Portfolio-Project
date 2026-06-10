@@ -5,7 +5,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -o /bin/custom-exporter ./cmd/exporter
 
-FROM alpine:3.23
+FROM alpine:3.24
 RUN addgroup -S exporter && adduser -S exporter -G exporter
 USER exporter
 WORKDIR /app
