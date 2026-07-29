@@ -1,16 +1,16 @@
 # Data processing
-pandas>=3.0.2
-pyarrow>=24.0.0
+pandas>=3.0.5
+pyarrow>=25.0.0
 
 # Streaming
-confluent-kafka>=2.14.0
+confluent-kafka>=2.15.0
 
 # Validation
-pydantic>=2.13.3
+pydantic>=2.13.4
 
 # Monitoring
-prometheus-client>=0.25.0
+prometheus-client>=0.26.0
 
 # Utilities
 python-json-logger>=4.1.0
-matplotlib>=3.10.9
+matplotlib>=3.11.1
